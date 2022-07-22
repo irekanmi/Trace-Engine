@@ -25,7 +25,28 @@ public:
 	virtual void Run() override
 	{
 		printf("Application Running\n");
+
+		try
+		{
+			TRC_EXCEPTION("Trace Exceptions");
+		}
+		catch (trace::Exception &ex)
+		{
+			printf("%s", ex.what());
+		}
+
+		try
+		{
+			TRC_EXCEPTION("Handle Case");
+		}
+		catch (trace::Exception &ex)
+		{
+			printf("%s", ex.what());
+		}
+	
 	}
+
+
 
 	virtual void End() override
 	{
