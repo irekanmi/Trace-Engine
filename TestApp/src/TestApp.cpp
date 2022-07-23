@@ -43,6 +43,11 @@ public:
 		{
 			printf("%s", ex.what());
 		}
+
+		TRC_TRACE("Trace Engine")
+		TRC_CRITICAL("Check logger")
+
+
 	
 	}
 

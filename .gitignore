@@ -6,3 +6,4 @@ bin/
 externals/
 bin-int/
 *.opensdf
+logs.txt

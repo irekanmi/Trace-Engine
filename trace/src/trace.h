@@ -5,3 +5,4 @@
 #include "core/io/Logging.h"
 
 #include "core/EntryPoint.h"
+#include "core/io/Logging.h"
