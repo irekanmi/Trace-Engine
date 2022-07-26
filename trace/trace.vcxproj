@@ -142,6 +142,8 @@
     <ClInclude Include="src\core\Core.h" />
     <ClInclude Include="src\core\EntryPoint.h" />
     <ClInclude Include="src\core\Enums.h" />
+    <ClInclude Include="src\core\input\Input.h" />
+    <ClInclude Include="src\core\input\Keys.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Window.h" />
@@ -158,6 +160,7 @@
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\events\KeyEvents.cpp" />
+    <ClCompile Include="src\core\input\Input.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />

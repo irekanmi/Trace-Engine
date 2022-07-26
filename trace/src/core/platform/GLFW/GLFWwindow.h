@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Window.h"
-#include "GLFW/glfw3.h""
+#include "GLFW/glfw3.h"
 
 namespace trace {
 
@@ -17,6 +17,7 @@ namespace trace {
 		virtual unsigned int GetHeight() override;
 		virtual void Update(float deltaTime) override;
 		virtual void ShutDown() override;
+		virtual void SetVsync(bool enable) override;
 	private:
 		struct WindowData
 		{

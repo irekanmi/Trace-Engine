@@ -3,6 +3,7 @@
 #include <core/Object.h>
 #include <core/pch.h>
 #include "core/Enums.h"
+#include "core/input/Keys.h"
 
 
 namespace trace {
@@ -17,10 +18,12 @@ namespace trace {
 		TRC_APP_START,
 		TRC_APP_END,
 		TRC_WND_CLOSE,
+		TRC_WND_RESIZE,
 		TRC_KEY_PRESSED,
 		TRC_KEY_RELEASED,
 		TRC_BUTTON_PRESSED,
 		TRC_BUTTON_RELEASED,
+		TRC_MOUSE_MOVE,
 
 		MAX_EVENTS
 	};
@@ -112,11 +115,11 @@ namespace trace {
 	{
 
 	public:
-		KeyPressed(int keycode);
+		KeyPressed(Keys keycode);
 		~KeyPressed();
 
 		virtual const char* GetName() override { return _STR(KeyPressed); }
-		int m_keycode;
+		Keys m_keycode;
 	private:
 	protected:
 
@@ -126,13 +129,75 @@ namespace trace {
 	{
 
 	public:
-		KeyReleased(int keycode);
+		KeyReleased(Keys keycode);
 		~KeyReleased();
 
 		virtual const char* GetName() override { return _STR(KeyReleased); }
-		int m_keycode;
+		Keys m_keycode;
 	private:
 	protected:
 
 	};
+
+	class TRACE_API WindowResize : public Event
+	{
+
+	public:
+		WindowResize();
+		WindowResize(unsigned int width, unsigned int height);
+		~WindowResize();
+
+		virtual const char* GetName() override { return _STR(WindowResize); }
+
+		unsigned int m_width;
+		unsigned int m_height;
+	private:
+	protected:
+
+	};
+
+	class TRACE_API MousePressed : public Event
+	{
+
+	public:
+		MousePressed(Buttons buttons);
+		~MousePressed();
+
+		virtual const char* GetName() override { return _STR(MousePressed); }
+		Buttons m_button;
+	private:
+	protected:
+
+	};
+
+	class TRACE_API MouseReleased : public Event
+	{
+
+	public:
+		MouseReleased(Buttons buttons);
+		~MouseReleased();
+
+		virtual const char* GetName() override { return _STR(MouseReleased); }
+		Buttons m_button;
+	private:
+	protected:
+
+	};
+
+	class TRACE_API MouseMove : public Event
+	{
+		
+
+	public:
+		MouseMove();
+		MouseMove(float x, float y);
+		~MouseMove();
+
+
+		float m_x;
+		float m_y;
+	private:
+	protected:
+	};
+
 }

@@ -70,6 +70,8 @@
       <Filter>core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
+    <ClInclude Include="src\core\input\Keys.h" />
+    <ClInclude Include="src\core\input\Input.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -106,5 +108,6 @@
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\core\events\KeyEvents.cpp" />
+    <ClCompile Include="src\core\input\Input.cpp" />
   </ItemGroup>
 </Project>

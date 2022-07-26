@@ -11,8 +11,8 @@ namespace trace {
 		EventsSystem();
 		~EventsSystem();
 
-		void AddEventListener(EventType event_type, EventCallbackFunc func);
-		void AddEvent(EventType event_type, Event* p_event);
+		void DispatchEventListener(EventType event_type, EventCallbackFunc func);
+		void DispatchEvent(EventType event_type, Event* p_event);
 
 		static EventsSystem* s_instance;
 		static EventsSystem* get_instance();

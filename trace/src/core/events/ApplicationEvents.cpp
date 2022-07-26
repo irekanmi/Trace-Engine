@@ -44,4 +44,20 @@ namespace trace {
 
 	}
 
+	WindowResize::WindowResize()
+	{
+		m_type = EventType::TRC_WND_RESIZE;
+	}
+
+	WindowResize::WindowResize(unsigned int width, unsigned int height)
+	{
+		m_type = EventType::TRC_WND_RESIZE;
+		m_width = width;
+		m_height = height;
+	}
+
+	WindowResize::~WindowResize()
+	{
+
+	}
 }

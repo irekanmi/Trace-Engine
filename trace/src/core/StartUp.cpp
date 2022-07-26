@@ -4,6 +4,7 @@
 #include "io/Logging.h"
 #include "events/EventsSystem.h"
 #include "Enums.h"
+#include "input\Input.h"
 
 
 namespace trace {
@@ -28,6 +29,12 @@ namespace trace {
 		if (EventsSystem::get_instance() == nullptr)
 		{
 			TRC_ERROR("Events System failed to initialize");
+			return false;
+		}
+
+		if (InputSystem::get_instance() == nullptr)
+		{
+			TRC_ERROR("Input System failed to initialize");
 			return false;
 		}
 

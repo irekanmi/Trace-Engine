@@ -42,6 +42,7 @@ namespace trace {
 		virtual unsigned int GetHeight() = 0;
 		virtual void Update(float deltaTime) = 0;
 		virtual void ShutDown() = 0;
+		virtual void SetVsync(bool enable) = 0;
 	private:
 	protected:
 	};

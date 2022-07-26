@@ -12,6 +12,7 @@ namespace trace
 		trc_app_data(){}
 		WindowDecl winprop;
 		WindowType wintype;
+		bool windowed;
 	};
 
 	class TRACE_API Application

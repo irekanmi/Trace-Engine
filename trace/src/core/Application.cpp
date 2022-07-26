@@ -5,6 +5,7 @@
 #include "events/Events.h"
 #include "events/EventsSystem.h"
 #include "platform\GLFW\GLFWwindow.h"
+#include "input\Input.h"
 
 
 namespace trace
@@ -20,11 +21,11 @@ namespace trace
 			break;
 		}
 		}
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_APP_START, BIND_EVENT_FN(Application::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_APP_END, BIND_EVENT_FN(Application::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Application::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Application::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Application::OnEvent));
+
+		for (unsigned int i = 1; i < EventType::MAX_EVENTS; i++)
+		{
+			trace::EventsSystem::get_instance()->DispatchEventListener((EventType)i, BIND_EVENT_FN(Application::OnEvent));
+		}
 	}
 
 	Application::~Application()
@@ -35,7 +36,9 @@ namespace trace
 	void Application::Start()
 	{
 		trace::ApplicationStart app_start;
-		trace::EventsSystem::get_instance()->AddEvent(trace::EventType::TRC_APP_START, &app_start);
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
+
+		m_Window->SetVsync(true);
 	}
 	
 	void Application::Run()
@@ -52,16 +55,42 @@ namespace trace
 
 		while (m_isRunning)
 		{
-			glClearColor(0.2f, 0.15f, 0.3f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			
 			m_Window->Update(0.0f);
+
+			InputSystem* input = InputSystem::get_instance();
+
+			KeyState key_state = input->GetKeyState(Keys::KEY_A);
+
+			switch (key_state)
+			{
+			case KeyState::KEY_PRESS:
+			{
+				printf("Press\n");
+				break;
+			}
+			case KeyState::KEY_HELD:
+			{
+				printf("Held\n");
+			}
+			case KeyState::KEY_RELEASE:
+			{
+				printf("Release\n");
+				break;
+			}
+			}
+
+
+			InputSystem::get_instance()->Update(0.0f);
+
+
 		}
 	}
 
 	void Application::End()
 	{
 		trace::ApplicationEnd app_end;
-		trace::EventsSystem::get_instance()->AddEvent(trace::EventType::TRC_APP_END, &app_end);
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
 
 		SAFE_DELETE(m_Window, Window);
 	}
@@ -101,7 +130,41 @@ namespace trace
 		case trace::EventType::TRC_KEY_RELEASED:
 		{
 			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
-			TRC_DEBUG("key: %d", release->m_keycode);
+			TRC_DEBUG("key: %d",release->m_keycode);
+			if (release->m_keycode == Keys::KEY_ESCAPE)
+			{
+				m_isRunning = false;
+			}
+			break;
+		}
+
+		case EventType::TRC_WND_RESIZE:
+		{
+			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
+			TRC_WARN("Width: %d", wnd->m_width);
+			TRC_ERROR("Height: %d", wnd->m_height);
+			break;
+		}
+
+		case EventType::TRC_BUTTON_PRESSED:
+		{
+			MousePressed* mouse = reinterpret_cast<MousePressed*>(p_event);
+			TRC_CRITICAL("Button: %d", mouse->m_button);
+			break;
+		}
+
+		case EventType::TRC_BUTTON_RELEASED:
+		{
+			MouseReleased* mouse = reinterpret_cast<MouseReleased*>(p_event);
+			TRC_CRITICAL("Button: %d", mouse->m_button);
+			break;
+		}
+
+		case EventType::TRC_MOUSE_MOVE:
+		{
+			MouseMove* mouse = reinterpret_cast<MouseMove*>(p_event);
+			TRC_WARN("X: %f", mouse->m_x);
+			TRC_WARN("Y: %f", mouse->m_y);
 			break;
 		}
 		}

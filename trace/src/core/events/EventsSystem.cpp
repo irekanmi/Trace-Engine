@@ -16,13 +16,13 @@ namespace trace {
 
 	}
 
-	void EventsSystem::AddEventListener(EventType event_type, EventCallbackFunc func)
+	void EventsSystem::DispatchEventListener(EventType event_type, EventCallbackFunc func)
 	{
 		// TODO: check if listener is already added
 		m_events[event_type].push_back(func);
 	}
 
-	void EventsSystem::AddEvent(EventType event_type, Event* p_event)
+	void EventsSystem::DispatchEvent(EventType event_type, Event* p_event)
 	{
 		//TODO: create a container to hold events "for multithreading"
 		for (size_t i = 0; i < m_events[event_type].size(); i++)
