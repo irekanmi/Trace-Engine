@@ -21,6 +21,9 @@
     <ClInclude Include="src\core\io\Logging.h">
       <Filter>core\io</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\pch.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
@@ -29,6 +32,9 @@
     </ClCompile>
     <ClCompile Include="src\core\io\Logging.cpp">
       <Filter>core\io</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\pch.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

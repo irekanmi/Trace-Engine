@@ -26,28 +26,29 @@ public:
 	{
 		printf("Application Running\n");
 
-		//try
-		//{
-		//	TRC_EXCEPTION("Trace Exceptions");
-		//}
-		//catch (trace::Exception &ex)
-		//{
-		//	printf("%s", ex.what());
-		//}
-		//
-		//try
-		//{
-		//	TRC_EXCEPTION("Handle Case");
-		//}
-		//catch (trace::Exception &ex)
-		//{
-		//	printf("%s", ex.what());
-		//}
+		try
+		{
+			TRC_EXCEPTION("Trace Exceptions");
+		}
+		catch (trace::Exception &ex)
+		{
+			printf("%s", ex.what());
+		}
+		
+		try
+		{
+			TRC_EXCEPTION("Handle Case");
+		}
+		catch (trace::Exception &ex)
+		{
+			printf("%s", ex.what());
+		}
 
-		TRC_TRACE("Trace Engine")
-		TRC_CRITICAL("Check premake")
-		TRC_DEBUG("testing fopen()")
-		TRC_INFO("fopen_s() function")
+		trace::Logger* log = trace::Logger::get_instance();
+
+		TRC_TRACE("Trace Engine %s", "in progress")
+		
+		
 
 
 	

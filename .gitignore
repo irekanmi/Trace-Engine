@@ -7,3 +7,4 @@ externals/
 bin-int/
 *.opensdf
 logs.txt
+ipch/

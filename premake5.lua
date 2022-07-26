@@ -12,11 +12,15 @@ OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 project "trace"
 	location "trace"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
+	staticruntime "On"
 
-	targetdir ("bin/" .. OutputDir .. "/%{prj.name}");
-	objdir ("bin-int/" .. OutputDir .. "/%{prj.name}");
+	targetdir ("bin/" .. OutputDir .. "/%{prj.name}")
+	objdir ("bin-int/" .. OutputDir .. "/%{prj.name}")
+
+	pchheader ( "pch.h" )
+	pchsource ( "trace/src/core/pch.cpp" )
 
 	files
 	{
@@ -24,24 +28,33 @@ project "trace"
 		"%{prj.name}/src/**.cpp"
 	}
 
+	includedirs
+	{
+		"trace/src/core"
+	}
+
 	filter "system:windows"
-		staticruntime "On"
+		staticruntime "off"
 
 	defines
 	{
 		"TRC_WINDOWS",
-		"TRC_CORE"
+		"TRC_CORE",
+		"TRC_DLL_BUILD"
 	}
 
-	postbuildcommands
-	{
-		( "{COPY} %{cfg.buildtarget.relpath} ../bin/" .. OutputDir .. "/TestApp" )
-	}
+	
 
 	filter "configurations:Debug"
 		symbols "On"
+		runtime "Debug"
 
 	filter "configurations:Release"
+		runtime "Release"
+		optimize "On"
+
+	filter "configurations:Public"
+		runtime "Release"
 		optimize "On"
 
 
@@ -49,6 +62,7 @@ project "TestApp"
 	kind "ConsoleApp"
 	language "C++"
 	location "TestApp"
+	
 	
 	targetdir ( "bin/" .. OutputDir .. "/%{prj.name}" )		
 	objdir ( "bin-int/" .. OutputDir .. "/%{prj.name}" )
@@ -68,7 +82,8 @@ project "TestApp"
 	
 	defines
 	{
-		"TRC_WINDOWS"
+		"TRC_WINDOWS",
+		"TRC_APP"
 	}
 
 	links
