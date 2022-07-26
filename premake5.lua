@@ -40,7 +40,6 @@ project "trace"
 	{
 		"TRC_WINDOWS",
 		"TRC_CORE",
-		"TRC_DLL_BUILD"
 	}
 
 	

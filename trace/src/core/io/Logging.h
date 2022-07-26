@@ -76,10 +76,8 @@ namespace trace {
 		}
 
 		
-
 		Logger();
 		
-
 		~Logger();
 		
 	private:

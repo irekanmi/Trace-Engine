@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Application.h"
+#include "Enums.h"
 
 
 #ifdef TRC_WINDOWS
@@ -20,8 +21,8 @@ int main(int argc, char** argv)
 	app->Run();
 	app->End();
 
-	SAFE_DELETE(logger)
-	SAFE_DELETE(app)
+	SAFE_DELETE(trace::Logger::get_instance(), 1)
+	SAFE_DELETE(app, 2)
 
 	return 0;
 }

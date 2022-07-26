@@ -47,11 +47,13 @@ public:
 		trace::Logger* log = trace::Logger::get_instance();
 
 		TRC_TRACE("Trace Engine %s", "in progress")
-		
-		
 
+		trace::MemoryPoolLL<uint64_t> pool;
 
-	
+		pool.Reserve(3);
+
+		uint64_t* value = pool.Malloc();
+
 	}
 
 
