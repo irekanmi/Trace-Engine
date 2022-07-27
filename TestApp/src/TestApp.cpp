@@ -46,6 +46,8 @@ public:
 
 		TRC_TRACE("Trace Engine")
 		TRC_CRITICAL("Check logger")
+		TRC_DEBUG("testing fopen()")
+		TRC_INFO("fopen_s() function")
 
 
 	

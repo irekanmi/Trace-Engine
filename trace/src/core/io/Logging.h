@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 #include <mutex>
+#include <time.h>
+#include <iomanip>
 
 
 namespace trace {
@@ -68,7 +70,9 @@ namespace trace {
 
 			filepath = "logs.txt";
 
-			file = fopen(filepath, "w");
+			
+
+			fopen_s(&file, filepath, "w");
 
 			if (!file)
 			{
@@ -88,7 +92,8 @@ namespace trace {
 
 			filepath = file_path;
 
-			file = fopen(filepath, "w");
+
+			fopen_s(&file, filepath, "w");
 
 			if (!file)
 			{
@@ -142,13 +147,16 @@ namespace trace {
 
 		~Logger()
 		{
-			fclose(file);
+			if (file)
+			{
+				fclose(file);
+			}
 
 		}
 	private:
 
 		template<typename ...Args>
-		void log(LogLevel logLV, const char* msg, Args... args)
+		void log(LogLevel logLV, const char* msg, Args &&... args)
 		{
 
 			if (logLV >= log_level)
@@ -186,13 +194,28 @@ namespace trace {
 
 				}
 
+				std::stringstream timeStr;
+
+				tm pTime;
+				time_t ctime;
+				time(&ctime);
+
+				localtime_s(&pTime, &ctime);
+
+				timeStr << std::setw(2) << "[" << std::setfill('0') << pTime.tm_hour << ":";
+				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_min << ":";
+				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_sec << "] ";
+
+
 				printf("[%s] :: %s ->", level, log_name);
+				printf("%s", timeStr.str().c_str());
 				printf(msg, args...);
 				printf("\n");
 
 				if (file)
 				{
 					fprintf(file, "[%s]  :: ", level);
+					fprintf(file, "%s", timeStr.str().c_str());
 					fprintf(file, msg, args...);
 					fprintf(file, "\n");
 				}

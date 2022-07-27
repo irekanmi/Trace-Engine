@@ -1,6 +1,6 @@
 #pragma once
 
-#define _CRT_SECURE_NO_WARNINGS
+
 
 #ifdef TRC_WINDOWS
 	#ifdef TRC_CORE
@@ -10,3 +10,5 @@
 	#endif
 
 #endif
+
+#define SAFE_DELETE(a) delete a; a = nullptr;
