@@ -27,6 +27,8 @@
     <ClInclude Include="src\trace.h" />
     <ClInclude Include="src\core\Enums.h" />
     <ClInclude Include="src\core\memory\memory.h" />
+    <ClInclude Include="src\core\Object.h" />
+    <ClInclude Include="src\core\io\Console.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -38,5 +40,7 @@
     <ClCompile Include="src\core\pch.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\Object.cpp" />
+    <ClCompile Include="src\core\io\Console.cpp" />
   </ItemGroup>
 </Project>

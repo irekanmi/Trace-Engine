@@ -44,15 +44,12 @@ public:
 			printf("%s", ex.what());
 		}
 
-		trace::Logger* log = trace::Logger::get_instance();
 
-		TRC_TRACE("Trace Engine %s", "in progress")
+		TRC_TRACE("Trace Engine %s", "in progress");
 
-		trace::MemoryPoolLL<uint64_t> pool;
+		trace::Console* console = new trace::Console();
+		console->Write("Hello %s ", "World");
 
-		pool.Reserve(3);
-
-		uint64_t* value = pool.Malloc();
 
 	}
 

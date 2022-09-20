@@ -131,14 +131,18 @@
     <ClInclude Include="src\core\Core.h" />
     <ClInclude Include="src\core\EntryPoint.h" />
     <ClInclude Include="src\core\Enums.h" />
+    <ClInclude Include="src\core\io\Console.h" />
     <ClInclude Include="src\core\io\Logging.h" />
     <ClInclude Include="src\core\memory\memory.h" />
+    <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\pch.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp" />
+    <ClCompile Include="src\core\io\Console.cpp" />
     <ClCompile Include="src\core\io\Logging.cpp" />
+    <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

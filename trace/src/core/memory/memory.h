@@ -47,9 +47,10 @@ namespace trace {
 		{
 			if (!cleaned)
 			{
-				for (auto ptr : p_blocks)
+				for (block_t::iterator it = p_blocks.begin(); it != p_blocks.end(); it++)
 				{
-					std::free(ptr);
+					auto val = *it;
+					std::free(val);
 				}
 				cleaned = true;
 			}
@@ -80,7 +81,7 @@ namespace trace {
 			};
 		};
 
-		using block_t = std::list<void*>;
+		using block_t = std::vector<void*>;
 
 		block_t p_blocks;
 		size_t chunk_per_block = ChunksPerBlock;
@@ -98,12 +99,12 @@ namespace trace {
 				p_blocks.push_back(block);
 				chunk_t* chunk = block;
 
-				for (size_t i = 0; i < chunk_per_block; i++)
+				for (size_t i = 0; i < chunk_per_block - 1; i++)
 				{
 					(*chunk) = chunk_t(chunk + 1);
 					chunk = chunk->m_next;
 				}
-				(*chunk) = chunk_t(nullptr);
+				(*chunk) = chunk_t(tail);
 				return block;
 			}
 			else

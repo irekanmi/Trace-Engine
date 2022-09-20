@@ -5,4 +5,7 @@
 	delete x_##placeholder;						\
 	x_##placeholder = nullptr;
 
-#define BLOCK_SIZE 1024
+#define KB 1024
+
+#define BLOCK_SIZE KB
+
