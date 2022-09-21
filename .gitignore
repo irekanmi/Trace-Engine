@@ -1,5 +1,6 @@
 #Directories
 .vs/
+.vscode/
 bin/
 *.sdf
 *.user
@@ -8,3 +9,7 @@ bin-int/
 *.opensdf
 logs.txt
 ipch/
+*.log
+.vscode/configurationCache.log
+.vscode/dryrun.log
+.vscode/targets.log

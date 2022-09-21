@@ -2,6 +2,8 @@
 
 #include "../Core.h"
 #include "../pch.h"
+#include "TrcConsole.h"
+
 
 
 
@@ -10,13 +12,13 @@ namespace trace {
 
 	typedef enum {
 
-		trace,
-		debug,
-		info,
-		warn,
-		error,
-		critical,
-		log_none
+		trace      = ConsoleAttribLevel::Trace ,
+		debug      = ConsoleAttribLevel::Debug,
+		info       = ConsoleAttribLevel::Info,
+		warn       = ConsoleAttribLevel::Warn,
+		error      = ConsoleAttribLevel::Error,
+		critical   = ConsoleAttribLevel::Critical,
+		log_none   = ConsoleAttribLevel::Default
 
 
 
@@ -83,8 +85,11 @@ namespace trace {
 	private:
 
 		template<typename ...Args>
-		void Logger::log(LogLevel logLV, const char * msg, Args && ...args)
+		void log(LogLevel logLV, const char * msg, Args && ...args)
 		{
+
+
+			ConsoleAttribLevel prev = m_console->GetAttribLevel();
 
 			if (logLV >= log_level)
 			{
@@ -133,11 +138,14 @@ namespace trace {
 				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_min << ":";
 				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_sec << "] ";
 
+				m_console->SetAttribLevel((ConsoleAttribLevel)logLV);
 
-				printf("[%s] :: %s ->", level, logger_name);
-				printf("%s", timeStr.str().c_str());
-				printf(msg, args...);
-				printf("\n");
+				m_console->Write("[%s] :: %s ->", level, logger_name);
+				m_console->Write("%s", timeStr.str().c_str());
+				m_console->Write(msg, args...);
+				m_console->Write("\n");
+
+				m_console->SetAttribLevel(prev);
 
 				if (file)
 				{
@@ -151,7 +159,7 @@ namespace trace {
 
 		}
 		
-
+		TrcConsole* m_console;
 		LogLevel log_level;
 		const char* filepath;
 		const char* logger_name;
@@ -159,7 +167,7 @@ namespace trace {
 		std::mutex log_mutex;
 		bool file_logging;
 		static Logger* s_instance;
-
+		
 
 	};
 
@@ -171,7 +179,7 @@ namespace trace {
 		Exception(int line, std::string errdesc, std::string function, std::string file);
 		~Exception();
 
-		const char* what() const override;
+		const char* what() const noexcept override ;
 
 		int Line;
 		std::string mErrDesc, mFunction, mFile, mErrText;
@@ -191,3 +199,4 @@ namespace trace {
 #define TRC_CRITICAL(MSG,...)    trace::Logger::get_instance()->Critical(MSG, __VA_ARGS__);
 
 
+ 

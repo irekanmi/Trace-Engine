@@ -30,7 +30,8 @@ project "trace"
 
 	includedirs
 	{
-		"trace/src/core"
+		"trace/src/core",
+		"trace/src"
 	}
 
 	filter "system:windows"

@@ -57,18 +57,21 @@
     <IntDir>..\bin-int\Debug-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
+    <IncludePath>C:\Dev\VisualSutdio\Cpp\Trace\trace\src;src\core;src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\bin\Release-windows-x86_64\trace\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
+    <IncludePath>C:\Dev\VisualSutdio\Cpp\Trace\trace\src;src\core;src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Public|x64'">
     <OutDir>..\bin\Public-windows-x86_64\trace\</OutDir>
     <IntDir>..\bin-int\Public-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
+    <IncludePath>C:\Dev\VisualSutdio\Cpp\Trace\trace\src;src\core;src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -76,7 +79,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -92,7 +95,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -112,7 +115,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -131,21 +134,23 @@
     <ClInclude Include="src\core\Core.h" />
     <ClInclude Include="src\core\EntryPoint.h" />
     <ClInclude Include="src\core\Enums.h" />
-    <ClInclude Include="src\core\io\Console.h" />
-    <ClInclude Include="src\core\io\Logging.h" />
-    <ClInclude Include="src\core\memory\memory.h" />
     <ClInclude Include="src\core\Object.h" />
+    <ClInclude Include="src\core\io\Logging.h" />
+    <ClInclude Include="src\core\io\TrcConsole.h" />
+    <ClInclude Include="src\core\memory\memory.h" />
     <ClInclude Include="src\core\pch.h" />
+    <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp" />
-    <ClCompile Include="src\core\io\Console.cpp" />
-    <ClCompile Include="src\core\io\Logging.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
+    <ClCompile Include="src\core\io\Logging.cpp" />
+    <ClCompile Include="src\core\io\TrcConsole.cpp" />
     <ClCompile Include="src\core\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Windows\WinConsole.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

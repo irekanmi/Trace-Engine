@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Logging.h"
+#include "../platform/Windows/WinConsole.h"
 
 namespace trace {
 
@@ -21,7 +22,7 @@ namespace trace {
 
 	Exception::~Exception() {}
 
-	const char* Exception::what() const
+	const char* Exception::what() const noexcept
 	{
 		return mErrText.c_str();
 	}
@@ -47,6 +48,16 @@ namespace trace {
 		if (s_instance == nullptr)
 		{
 			s_instance = new Logger();
+			
+			if (s_instance->m_console == nullptr)
+			{
+
+#ifdef TRC_WINDOWS
+				s_instance->m_console = new WinConsole();
+				s_instance->m_console->SetAttribLevel(ConsoleAttribLevel::Default);
+#endif
+			}
+
 			return s_instance;
 		}
 
@@ -100,12 +111,15 @@ namespace trace {
 	}
 
 	Logger::Logger()
-		:log_level(LogLevel::trace),
+		:
+		m_console(nullptr),
+		log_level(LogLevel::trace),
 		filepath(""),
 		logger_name("default"),
 		file(NULL),
 		file_logging(false)
 	{
+		
 
 	}
 

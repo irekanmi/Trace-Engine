@@ -18,7 +18,7 @@ ifeq ($(config),debug)
   PCH = src/core/pch.h
   GCH = $(OBJDIR)/$(notdir $(PCH)).gch
   DEFINES += -DTRC_WINDOWS -DTRC_CORE
-  INCLUDES += -Isrc/core
+  INCLUDES += -Isrc/core -Isrc
   FORCE_INCLUDE += -include $(OBJDIR)/$(notdir $(PCH))
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
@@ -47,7 +47,7 @@ ifeq ($(config),release)
   PCH = src/core/pch.h
   GCH = $(OBJDIR)/$(notdir $(PCH)).gch
   DEFINES += -DTRC_WINDOWS -DTRC_CORE
-  INCLUDES += -Isrc/core
+  INCLUDES += -Isrc/core -Isrc
   FORCE_INCLUDE += -include $(OBJDIR)/$(notdir $(PCH))
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
@@ -76,7 +76,7 @@ ifeq ($(config),public)
   PCH = src/core/pch.h
   GCH = $(OBJDIR)/$(notdir $(PCH)).gch
   DEFINES += -DTRC_WINDOWS -DTRC_CORE
-  INCLUDES += -Isrc/core
+  INCLUDES += -Isrc/core -Isrc
   FORCE_INCLUDE += -include $(OBJDIR)/$(notdir $(PCH))
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
@@ -100,9 +100,10 @@ endif
 OBJECTS := \
 	$(OBJDIR)/Application.o \
 	$(OBJDIR)/Object.o \
-	$(OBJDIR)/Console.o \
 	$(OBJDIR)/Logging.o \
+	$(OBJDIR)/TrcConsole.o \
 	$(OBJDIR)/pch.o \
+	$(OBJDIR)/WinConsole.o \
 
 RESOURCES := \
 
@@ -167,13 +168,16 @@ $(OBJDIR)/Application.o: src/core/Application.cpp
 $(OBJDIR)/Object.o: src/core/Object.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/Console.o: src/core/io/Console.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/Logging.o: src/core/io/Logging.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/TrcConsole.o: src/core/io/TrcConsole.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/pch.o: src/core/pch.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/WinConsole.o: src/core/platform/Windows/WinConsole.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

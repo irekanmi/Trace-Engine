@@ -46,10 +46,13 @@ public:
 
 
 		TRC_TRACE("Trace Engine %s", "in progress");
+		TRC_DEBUG("Trace Engine %s", "in progress");
+		TRC_INFO("Trace Engine %s", "in progress");
+		TRC_WARN("Trace Engine %s", "in progress");
+		TRC_ERROR("Trace Engine %s", "in progress");
+		TRC_CRITICAL("Trace Engine %s", "in progress");
 
-		trace::Console* console = new trace::Console();
-		console->Write("Hello %s ", "World");
-
+		std::cin.get();
 
 	}
 

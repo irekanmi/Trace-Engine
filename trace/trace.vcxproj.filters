@@ -7,6 +7,15 @@
     <Filter Include="core\io">
       <UniqueIdentifier>{75DBB8D3-E1BA-376F-EAD2-C24556319ED0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\memory">
+      <UniqueIdentifier>{16E8D07B-829D-4971-0B92-434877464075}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\platform">
+      <UniqueIdentifier>{82509E77-EE10-1AAE-B74B-632B23CB5E8A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\platform\Windows">
+      <UniqueIdentifier>{BC5C2DC6-28C9-E8C0-F1BC-801E5DE80A29}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\Application.h">
@@ -18,29 +27,45 @@
     <ClInclude Include="src\core\EntryPoint.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\Enums.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Object.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\io\Logging.h">
       <Filter>core\io</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\io\TrcConsole.h">
+      <Filter>core\io</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\memory\memory.h">
+      <Filter>core\memory</Filter>
     </ClInclude>
     <ClInclude Include="src\core\pch.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\Enums.h" />
-    <ClInclude Include="src\core\memory\memory.h" />
-    <ClInclude Include="src\core\Object.h" />
-    <ClInclude Include="src\core\io\Console.h" />
+    <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\Object.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\io\Logging.cpp">
+      <Filter>core\io</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\io\TrcConsole.cpp">
       <Filter>core\io</Filter>
     </ClCompile>
     <ClCompile Include="src\core\pch.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\Object.cpp" />
-    <ClCompile Include="src\core\io\Console.cpp" />
+    <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
+      <Filter>core\platform\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

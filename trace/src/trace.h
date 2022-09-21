@@ -7,4 +7,4 @@
 
 #include "core/EntryPoint.h"
 #include "core/io/Logging.h"
-#include "core/io/Console.h"
+#include "core/io/TrcConsole.h"
