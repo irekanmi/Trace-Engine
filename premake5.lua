@@ -41,6 +41,8 @@ project "trace"
 	{
 		"TRC_WINDOWS",
 		"TRC_CORE",
+		"TRC_ASSERT_ENABLED",
+		"TRC_DEBUG_BUILD"
 	}
 
 	
@@ -83,7 +85,9 @@ project "TestApp"
 	defines
 	{
 		"TRC_WINDOWS",
-		"TRC_APP"
+		"TRC_APP",
+		"TRC_ASSERT_ENABLED",
+		"TRC_DEBUG_BUILD"
 	}
 
 	links

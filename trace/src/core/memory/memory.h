@@ -7,6 +7,7 @@
 
 namespace trace {
 
+	// TODO: change pool allocator to none template pool
 	template<typename T, size_t ChunksPerBlock = BLOCK_SIZE>
 	class MemoryPoolLL
 	{

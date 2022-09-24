@@ -6,48 +6,35 @@ make.exe --no-print-directory -C trace -f Makefile config=debug
 echo Creating ../bin-int/Debug-windows-x86_64/trace
 mkdir -p ../bin-int/Debug-windows-x86_64/trace
 echo pch.h
- 
-g++ -x c++-header   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -m64 -g -o "../bin-int/Debug-windows-x86_64/trace/pch.h.gch" -MF "../bin-int/Debug-windows-x86_64/trace/pch.h.d" -c "src/core/pch.h"
- 
+g++ -x c++-header   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -o "../bin-int/Debug-windows-x86_64/trace/pch.h.gch" -MF "../bin-int/Debug-windows-x86_64/trace/pch.h.d" -c "src/core/pch.h"
 echo Application.cpp
-g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Application.o" -MF "../bin-int/Debug-windows-x86_64/trace/Application.d" -c "src/core/Application.cpp"
- 
+g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Application.o" -MF "../bin-int/Debug-windows-x86_64/trace/Application.d" -c "src/core/Application.cpp"
 echo Object.cpp
-g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Object.o" -MF "../bin-int/Debug-windows-x86_64/trace/Object.d" -c "src/core/Object.cpp"
- 
-echo Console.cpp
-g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Console.o" -MF "../bin-int/Debug-windows-x86_64/trace/Console.d" -c "src/core/io/Console.cpp"
- 
+g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Object.o" -MF "../bin-int/Debug-windows-x86_64/trace/Object.d" -c "src/core/Object.cpp"
 echo Logging.cpp
- 
-g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Logging.o" -MF "../bin-int/Debug-windows-x86_64/trace/Logging.d" -c "src/core/io/Logging.cpp"
- 
+g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/Logging.o" -MF "../bin-int/Debug-windows-x86_64/trace/Logging.d" -c "src/core/io/Logging.cpp"
+echo TrcConsole.cpp
+g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/TrcConsole.o" -MF "../bin-int/Debug-windows-x86_64/trace/TrcConsole.d" -c "src/core/io/TrcConsole.cpp"
 echo pch.cpp
- 
-g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/pch.o" -MF "../bin-int/Debug-windows-x86_64/trace/pch.d" -c "src/core/pch.cpp"
+g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/pch.o" -MF "../bin-int/Debug-windows-x86_64/trace/pch.d" -c "src/core/pch.cpp"
+echo WinConsole.cpp
+g++   -MMD -MP -DTRC_WINDOWS -DTRC_CORE -Isrc/core -Isrc -m64 -g -include ../bin-int/Debug-windows-x86_64/trace/pch.h -o "../bin-int/Debug-windows-x86_64/trace/WinConsole.o" -MF "../bin-int/Debug-windows-x86_64/trace/WinConsole.d" -c "src/core/platform/Windows/WinConsole.cpp"
 echo Creating ../bin/Debug-windows-x86_64/trace
 mkdir -p ../bin/Debug-windows-x86_64/trace
 echo Linking trace
-ar -rcs "../bin/Debug-windows-x86_64/trace/trace.lib" ../bin-int/Debug-windows-x86_64/trace/Application.o ../bin-int/Debug-windows-x86_64/trace/Object.o ../bin-int/Debug-windows-x86_64/trace/Console.o ../bin-int/Debug-windows-x86_64/trace/Logging.o ../bin-int/Debug-windows-x86_64/trace/pch.o 
+ar -rcs "../bin/Debug-windows-x86_64/trace/trace.lib" ../bin-int/Debug-windows-x86_64/trace/Application.o ../bin-int/Debug-windows-x86_64/trace/Object.o ../bin-int/Debug-windows-x86_64/trace/Logging.o ../bin-int/Debug-windows-x86_64/trace/TrcConsole.o ../bin-int/Debug-windows-x86_64/trace/pch.o ../bin-int/Debug-windows-x86_64/trace/WinConsole.o 
 :
- 
 echo "==== Building TestApp (debug) ===="
- 
 make.exe --no-print-directory -C TestApp -f Makefile config=debug
  
 echo Creating ../bin-int/Debug-windows-x86_64/TestApp
 mkdir -p ../bin-int/Debug-windows-x86_64/TestApp
- 
 echo TestApp.cpp
- 
 g++   -MMD -MP -DTRC_WINDOWS -DTRC_APP -I../trace/src -m64 -g  -o "../bin-int/Debug-windows-x86_64/TestApp/TestApp.o" -MF "../bin-int/Debug-windows-x86_64/TestApp/TestApp.d" -c "src/TestApp.cpp"
- 
 echo Creating ../bin/Debug-windows-x86_64/TestApp
- 
 mkdir -p ../bin/Debug-windows-x86_64/TestApp
 echo Linking TestApp
 g++ -o "../bin/Debug-windows-x86_64/TestApp/TestApp.exe" ../bin-int/Debug-windows-x86_64/TestApp/TestApp.o    -L/usr/lib64 -m64 ../bin/Debug-windows-x86_64/trace/trace.lib
 :
- 
 make.exe: Leaving directory 'c:/Dev/VisualSutdio/Cpp/Trace'
  

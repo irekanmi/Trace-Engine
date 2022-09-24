@@ -57,28 +57,25 @@
     <IntDir>..\bin-int\Debug-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>C:\Dev\VisualSutdio\Cpp\Trace\trace\src;src\core;src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\bin\Release-windows-x86_64\trace\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>C:\Dev\VisualSutdio\Cpp\Trace\trace\src;src\core;src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Public|x64'">
     <OutDir>..\bin\Public-windows-x86_64\trace\</OutDir>
     <IntDir>..\bin-int\Public-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>C:\Dev\VisualSutdio\Cpp\Trace\trace\src;src\core;src;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src\core;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -94,7 +91,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src\core;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -114,7 +111,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src\core;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -134,6 +131,8 @@
     <ClInclude Include="src\core\Core.h" />
     <ClInclude Include="src\core\EntryPoint.h" />
     <ClInclude Include="src\core\Enums.h" />
+    <ClInclude Include="src\core\events\Events.h" />
+    <ClInclude Include="src\core\events\EventsSystem.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\io\Logging.h" />
     <ClInclude Include="src\core\io\TrcConsole.h" />
@@ -144,6 +143,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp" />
+    <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
+    <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
+    <ClCompile Include="src\core\events\EventsSystem.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\io\Logging.cpp" />
     <ClCompile Include="src\core\io\TrcConsole.cpp" />

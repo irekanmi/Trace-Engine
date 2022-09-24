@@ -16,9 +16,9 @@ namespace trace {
 
 	private:
 
-		unsigned int m_id;
 
 	protected:
+		unsigned int m_id;
 
 	};
 

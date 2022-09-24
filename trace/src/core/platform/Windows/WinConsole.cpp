@@ -52,7 +52,7 @@ namespace trace {
 					FOREGROUND_GREEN,
 					FOREGROUND_RED | FOREGROUND_GREEN,
 					FOREGROUND_RED,
-					BACKGROUND_RED
+					BACKGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED
 				};
 
 				::SetConsoleTextAttribute(m_handle, color[level]);

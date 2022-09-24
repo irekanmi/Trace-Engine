@@ -4,7 +4,10 @@
 #include "core/Core.h"
 #include "core/Application.h"
 #include "core/memory/memory.h"
+#include "core/Enums.h"
 
 #include "core/EntryPoint.h"
 #include "core/io/Logging.h"
 #include "core/io/TrcConsole.h"
+#include "core/events/Events.h"
+#include "core/events/EventsSystem.h"

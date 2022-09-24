@@ -26,7 +26,7 @@ namespace trace {
 
 
 
-	class TRACE_API Logger
+	class TRACE_API Logger : public Object
 	{
 
 	public:
@@ -199,4 +199,28 @@ namespace trace {
 #define TRC_CRITICAL(MSG,...)    trace::Logger::get_instance()->Critical(MSG, __VA_ARGS__);
 
 
+#ifdef TRC_ASSERT_ENABLED
+#ifdef _MSC_VER
+#define TRC_ASSERT(exp, MSG_FMT, ...)     \
+  if(exp){}                               \
+	else{                                 \
+TRC_CRITICAL(MSG_FMT, __VA_ARGS__);       \
+      __debugbreak();                     \
+}                                         
+
+
+
+#else
+#define TRC_ASSERT(exp, MSG_FMT, ...)     \
+  if(exp){}                               \
+	else{                                 \
+TRC_CRITICAL(MSG_FMT, __VA_ARGS__);       \
+      __builtin_trap();                   \
+}                                         
+#endif
+
+#else
+#define TRC_ASSERT(exp, ...)
+
+#endif
  

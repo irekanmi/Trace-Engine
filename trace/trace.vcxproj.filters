@@ -45,8 +45,12 @@
     <ClInclude Include="src\core\pch.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Windows\WinConsole.h">
+      <Filter>core\platform\Windows</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
+    <ClInclude Include="src\core\events\Events.h" />
+    <ClInclude Include="src\core\events\EventsSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -67,5 +71,8 @@
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\events\EventsSystem.cpp" />
+    <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
+    <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
   </ItemGroup>
 </Project>

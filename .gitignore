@@ -4,7 +4,6 @@
 bin/
 *.sdf
 *.user
-externals/
 bin-int/
 *.opensdf
 logs.txt
@@ -13,3 +12,18 @@ ipch/
 .vscode/configurationCache.log
 .vscode/dryrun.log
 .vscode/targets.log
+*.sln
+*.filters
+*.vcxproj
+Debug/
+
+#Code lite
+*.project
+*.workspace
+*.json
+.cache/
+.codelite/
+.ctagsd/
+
+#Makefile
+Makefile
