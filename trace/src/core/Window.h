@@ -15,9 +15,9 @@ namespace trace {
 	struct WindowDecl
 	{
 
-		WindowDecl(std::string name = "Trace",
-				   unsigned int width = 640,
-				   unsigned int height = 480)
+		WindowDecl(std::string name = "Trace Engine",
+				   unsigned int width = 800,
+				   unsigned int height = 600)
 		{
 			m_window_name = name;
 			m_width = width;

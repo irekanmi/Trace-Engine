@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	}
 
 	trace::trc_app_data app_data = trace::CreateApp();
-	trace::Application* app = new trace::Application(app_data.winprop,app_data.wintype);
+	trace::Application* app = new trace::Application(app_data);
 
 	app->Start();
 	app->Run();

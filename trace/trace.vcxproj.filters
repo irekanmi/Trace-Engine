@@ -16,6 +16,9 @@
     <Filter Include="core\platform">
       <UniqueIdentifier>{82509E77-EE10-1AAE-B74B-632B23CB5E8A}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\platform\GLFW">
+      <UniqueIdentifier>{01ADC9B9-ED90-8A0F-56F1-846242F47491}</UniqueIdentifier>
+    </Filter>
     <Filter Include="core\platform\Windows">
       <UniqueIdentifier>{BC5C2DC6-28C9-E8C0-F1BC-801E5DE80A29}</UniqueIdentifier>
     </Filter>
@@ -39,6 +42,9 @@
     <ClInclude Include="src\core\StartUp.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\Window.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\events\Events.h">
       <Filter>core\events</Filter>
     </ClInclude>
@@ -57,12 +63,13 @@
     <ClInclude Include="src\core\pch.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\GLFW\GLFWwindow.h">
+      <Filter>core\platform\GLFW</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Windows\WinConsole.h">
       <Filter>core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\Window.h" />
-    <ClInclude Include="src\core\platform\GLFW\GLFWwindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -92,9 +99,12 @@
     <ClCompile Include="src\core\pch.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\GLFW\GLFWwindow.cpp">
+      <Filter>core\platform\GLFW</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\platform\GLFW\GLFWwindow.cpp" />
+    <ClCompile Include="src\core\events\KeyEvents.cpp" />
   </ItemGroup>
 </Project>

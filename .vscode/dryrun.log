@@ -2,7 +2,6 @@ make.exe --dry-run --always-make --keep-going --print-directory
 make.exe: Entering directory 'c:/Dev/VisualSutdio/Cpp/Trace'
 echo "==== Building trace (debug) ===="
 make.exe --no-print-directory -C trace -f Makefile config=debug
- 
 echo Creating ../bin-int/Debug-windows-x86_64/trace
 mkdir -p ../bin-int/Debug-windows-x86_64/trace
 echo pch.h
@@ -26,7 +25,6 @@ ar -rcs "../bin/Debug-windows-x86_64/trace/trace.lib" ../bin-int/Debug-windows-x
 :
 echo "==== Building TestApp (debug) ===="
 make.exe --no-print-directory -C TestApp -f Makefile config=debug
- 
 echo Creating ../bin-int/Debug-windows-x86_64/TestApp
 mkdir -p ../bin-int/Debug-windows-x86_64/TestApp
 echo TestApp.cpp

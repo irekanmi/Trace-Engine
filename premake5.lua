@@ -44,8 +44,16 @@ project "trace"
 		"externals/libs"
 	}
 
-	filter "system:windows"
-		staticruntime "off"
+
+	links
+	{
+		"opengl32.lib",
+		"glfw3.lib"
+	}	
+
+	filter "configurations:Debug"
+		symbols "On"
+		runtime "Debug"
 
 	defines
 	{
@@ -55,26 +63,26 @@ project "trace"
 		"TRC_DEBUG_BUILD"
 	}
 
-	links
-	{
-		"opengl32.lib",
-		"gdi32.lib",
-		"user32.lib",
-		"glfw3.lib"
-	}	
-
-	filter "configurations:Debug"
-		symbols "On"
-		runtime "Debug"
-
 	filter "configurations:Release"
 		runtime "Release"
 		optimize "On"
 
+		defines
+		{
+			"TRC_WINDOWS",
+			"TRC_CORE",
+			"TRC_RELEASE_BUILD"
+		}
+
+	
 	filter "configurations:Public"
 		runtime "Release"
 		optimize "On"
 
+	filter "system:windows"
+		staticruntime "off"
+
+	
 
 project "TestApp"
 	kind "ConsoleApp"

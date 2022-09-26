@@ -18,6 +18,7 @@ namespace trace {
 
 	void EventsSystem::AddEventListener(EventType event_type, EventCallbackFunc func)
 	{
+		// TODO: check if listener is already added
 		m_events[event_type].push_back(func);
 	}
 

@@ -18,8 +18,7 @@ namespace trace
 	{
 
 	public:
-		Application();
-		Application(WindowDecl WinProp, WindowType WinType);
+		Application(trc_app_data appData);
 		virtual ~Application();
 
 		virtual void Start();

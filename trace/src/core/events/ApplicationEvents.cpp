@@ -34,4 +34,14 @@ namespace trace {
 		return "Application ended";
 	}
 
+	WindowClose::WindowClose()
+	{
+		m_type = EventType::TRC_WND_CLOSE;
+	}
+
+	WindowClose::~WindowClose()
+	{
+
+	}
+
 }

@@ -2,6 +2,8 @@
 
 #include "GLFWwindow.h"
 #include "core/io/Logging.h"
+#include "core/events/Events.h"
+#include "core/events/EventsSystem.h"
 
 namespace trace {
 	GLFW_Window::GLFW_Window(const WindowDecl & win_prop)
@@ -37,6 +39,30 @@ namespace trace {
 		glfwMakeContextCurrent(m_pWindow);
 		glfwSetWindowUserPointer(m_pWindow, &m_Data);
 
+		glfwSetWindowCloseCallback(m_pWindow, [](GLFWwindow* window)
+		{
+			WindowClose wndclose;
+			EventsSystem::get_instance()->AddEvent(EventType::TRC_WND_CLOSE, &wndclose);
+		});
+
+		glfwSetKeyCallback(m_pWindow, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+		{
+			switch (action)
+			{
+			case GLFW_PRESS:
+			{
+				KeyPressed keypress(key);
+				EventsSystem::get_instance()->AddEvent(EventType::TRC_KEY_PRESSED, &keypress);
+				break;
+			}
+			case GLFW_RELEASE:
+			{
+				KeyReleased keyrelease(key);
+				EventsSystem::get_instance()->AddEvent(EventType::TRC_KEY_RELEASED, &keyrelease);
+				break;
+			}
+			}
+		});
 	}
 	unsigned int GLFW_Window::GetWidth()
 	{

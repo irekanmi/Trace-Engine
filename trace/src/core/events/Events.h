@@ -2,6 +2,7 @@
 #include <core/Core.h>
 #include <core/Object.h>
 #include <core/pch.h>
+#include "core/Enums.h"
 
 
 namespace trace {
@@ -15,6 +16,11 @@ namespace trace {
 		TRC_CONSOLE_WRITE,
 		TRC_APP_START,
 		TRC_APP_END,
+		TRC_WND_CLOSE,
+		TRC_KEY_PRESSED,
+		TRC_KEY_RELEASED,
+		TRC_BUTTON_PRESSED,
+		TRC_BUTTON_RELEASED,
 
 		MAX_EVENTS
 	};
@@ -33,6 +39,8 @@ namespace trace {
 		{
 
 		}
+
+		virtual const char* GetName() { return _STR(Event); }
 		bool m_handled = false;
 		EventType m_type = EventType::NONE;
 	private:
@@ -58,7 +66,7 @@ namespace trace {
 		~ConsoleWriteEvent();
 		void SetData(std::string data);
 		std::string GetData();
-
+		virtual const char* GetName() override { return _STR(ConsoleWriteEvent); }
 	private:
 		std::string m_data;
 	protected:
@@ -71,7 +79,7 @@ namespace trace {
 		~ApplicationStart();
 
 		const char* Log();
-
+		virtual const char* GetName() override { return _STR(ApplicationStart); }
 	private:
 	protected:
 	};
@@ -83,8 +91,48 @@ namespace trace {
 		~ApplicationEnd();
 
 		const char* Log();
-
+		virtual const char* GetName() override { return _STR(ApplicationEnd); }
 	private:
 	protected:
+	};
+
+	class TRACE_API WindowClose : public Event
+	{
+
+	public:
+		WindowClose();
+		~WindowClose();
+		virtual const char* GetName() override { return _STR(WindowClose); }
+	private:
+	protected:
+
+	};
+
+	class TRACE_API KeyPressed : public Event
+	{
+
+	public:
+		KeyPressed(int keycode);
+		~KeyPressed();
+
+		virtual const char* GetName() override { return _STR(KeyPressed); }
+		int m_keycode;
+	private:
+	protected:
+
+	};
+
+	class TRACE_API KeyReleased : public Event
+	{
+
+	public:
+		KeyReleased(int keycode);
+		~KeyReleased();
+
+		virtual const char* GetName() override { return _STR(KeyReleased); }
+		int m_keycode;
+	private:
+	protected:
+
 	};
 }

@@ -10,24 +10,21 @@
 namespace trace
 {
 
-	Application::Application()
+	Application::Application(trc_app_data appData)
 	{
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_APP_START, BIND_EVENT_FN(Application::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_APP_END, BIND_EVENT_FN(Application::OnEvent));
-	}
-
-	Application::Application(WindowDecl WinProp, WindowType WinType)
-	{
-		switch (WinType)
+		switch (appData.wintype)
 		{
 		case WindowType::GLFW_WINDOW:
 		{
-			this->m_Window = new GLFW_Window(WinProp);
+			this->m_Window = new GLFW_Window(appData.winprop);
 			break;
 		}
 		}
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_APP_START, BIND_EVENT_FN(Application::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_APP_END, BIND_EVENT_FN(Application::OnEvent));
+		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Application::OnEvent));
+		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Application::OnEvent));
+		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Application::OnEvent));
 	}
 
 	Application::~Application()
@@ -46,7 +43,7 @@ namespace trace
 		printf("Application Running\n");
 
 
-		TRC_TRACE("Trace Engine %s", "in progress");
+		TRC_WARN("Trace Engine %s", "in progress");
 
 
 		TRC_INFO("%d", KB);
@@ -71,6 +68,7 @@ namespace trace
 
 	void Application::OnEvent(Event* p_event)
 	{
+		TRC_TRACE("Event: %s", p_event->GetName());
 		switch (p_event->m_type)
 		{
 		case trace::EventType::TRC_APP_START:
@@ -85,6 +83,25 @@ namespace trace
 			trace::ApplicationEnd* app_end = reinterpret_cast<trace::ApplicationEnd*>(p_event);
 			TRC_WARN(app_end->Log());
 			app_end->m_handled = true;
+			break;
+		}
+		case trace::EventType::TRC_WND_CLOSE:
+		{
+			trace::WindowClose* wnd_close = reinterpret_cast<trace::WindowClose*>(p_event);
+			m_isRunning = false;
+			wnd_close->m_handled = true;
+			break;
+		}
+		case trace::EventType::TRC_KEY_PRESSED:
+		{
+			KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
+			TRC_INFO("key: %d", press->m_keycode);
+			break;
+		}
+		case trace::EventType::TRC_KEY_RELEASED:
+		{
+			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
+			TRC_DEBUG("key: %d", release->m_keycode);
 			break;
 		}
 		}
