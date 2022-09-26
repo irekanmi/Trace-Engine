@@ -23,10 +23,9 @@ namespace trace {
 
 	void EventsSystem::AddEvent(EventType event_type, Event* p_event)
 	{
+		//TODO: create a container to hold events "for multithreading"
 		for (size_t i = 0; i < m_events[event_type].size(); i++)
 		{
-			
-			
 			m_events[event_type][i](p_event);
 			if (p_event->m_handled)
 			{
@@ -44,6 +43,10 @@ namespace trace {
 		}
 
 		return s_instance;
+	}
+
+	void EventsSystem::shutdown()
+	{
 	}
 
 }

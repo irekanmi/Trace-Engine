@@ -4,6 +4,9 @@
     <Filter Include="core">
       <UniqueIdentifier>{4E40957C-3A77-960D-E363-7C10CF79120F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\events">
+      <UniqueIdentifier>{92DC566A-FE91-CF5F-8786-C936F33AC663}</UniqueIdentifier>
+    </Filter>
     <Filter Include="core\io">
       <UniqueIdentifier>{75DBB8D3-E1BA-376F-EAD2-C24556319ED0}</UniqueIdentifier>
     </Filter>
@@ -33,6 +36,15 @@
     <ClInclude Include="src\core\Object.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\StartUp.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\events\Events.h">
+      <Filter>core\events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\events\EventsSystem.h">
+      <Filter>core\events</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\io\Logging.h">
       <Filter>core\io</Filter>
     </ClInclude>
@@ -49,8 +61,8 @@
       <Filter>core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\events\Events.h" />
-    <ClInclude Include="src\core\events\EventsSystem.h" />
+    <ClInclude Include="src\core\Window.h" />
+    <ClInclude Include="src\core\platform\GLFW\GLFWwindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -58,6 +70,18 @@
     </ClCompile>
     <ClCompile Include="src\core\Object.cpp">
       <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\StartUp.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\events\ApplicationEvents.cpp">
+      <Filter>core\events</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\events\ConsoleEvents.cpp">
+      <Filter>core\events</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\events\EventsSystem.cpp">
+      <Filter>core\events</Filter>
     </ClCompile>
     <ClCompile Include="src\core\io\Logging.cpp">
       <Filter>core\io</Filter>
@@ -71,8 +95,6 @@
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\events\EventsSystem.cpp" />
-    <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
-    <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
+    <ClCompile Include="src\core\platform\GLFW\GLFWwindow.cpp" />
   </ItemGroup>
 </Project>

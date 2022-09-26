@@ -11,4 +11,5 @@
 #define GB MB * KB
 
 #define BLOCK_SIZE KB
+#define BIND_EVENT_FN(func) std::bind(&func, this, std::placeholders::_1)
 

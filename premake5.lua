@@ -10,6 +10,9 @@ workspace "Trace"
 
 OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+IncludeDir = {}
+IncludeDir["GLFW"] = "externals/GLFW/include"
+
 project "trace"
 	location "trace"
 	kind "StaticLib"
@@ -31,7 +34,14 @@ project "trace"
 	includedirs
 	{
 		"trace/src/core",
-		"trace/src"
+		"trace/src",
+		"%{IncludeDir.GLFW}"
+	}
+
+
+	libdirs
+	{
+		"externals/libs"
 	}
 
 	filter "system:windows"
@@ -45,7 +55,13 @@ project "trace"
 		"TRC_DEBUG_BUILD"
 	}
 
-	
+	links
+	{
+		"opengl32.lib",
+		"gdi32.lib",
+		"user32.lib",
+		"glfw3.lib"
+	}	
 
 	filter "configurations:Debug"
 		symbols "On"
@@ -92,7 +108,7 @@ project "TestApp"
 
 	links
 	{
-		"trace"
+		"trace",
 	}
 
 	filter "configurations:Debug"

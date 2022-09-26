@@ -2,31 +2,28 @@
 
 #include "Core.h"
 #include "Application.h"
-#include "Enums.h"
-#include "events\EventsSystem.h"
-
+#include "StartUp.h"
 
 #ifdef TRC_WINDOWS
-extern trace::Application* trace::CreateApp();
+extern trace::trc_app_data trace::CreateApp();
 
 int main(int argc, char** argv)
 {
-	trace::Logger* logger = trace::Logger::get_instance();
-	logger->set_log_level(trace::LogLevel::trace);
-	logger->set_logger_name("TRACE");
-	logger->EnableFileLogging();
+	
+	if (!trace::INIT())
+	{
+		TRC_CRITICAL("Engine Startup failed");
+		return -1;
+	}
 
-	trace::EventsSystem* evs = trace::EventsSystem::get_instance();
-
-	trace::Application* app = trace::CreateApp();
+	trace::trc_app_data app_data = trace::CreateApp();
+	trace::Application* app = new trace::Application(app_data.winprop,app_data.wintype);
 
 	app->Start();
 	app->Run();
 	app->End();
 
-	SAFE_DELETE(trace::Logger::get_instance(), 1);
-	SAFE_DELETE(evs, e);
-	SAFE_DELETE(app, 2)
+	trace::SHUTDOWN();
 
 	return 0;
 }

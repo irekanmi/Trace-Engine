@@ -16,6 +16,7 @@ namespace trace {
 
 		static EventsSystem* s_instance;
 		static EventsSystem* get_instance();
+		static void shutdown();
 
 	private:
 		std::unordered_map<EventType, std::vector<EventCallbackFunc>> m_events;

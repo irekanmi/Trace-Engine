@@ -30,16 +30,14 @@ namespace trace {
 	{
 
 	public:
+
 		void set_log_level(LogLevel logLevel);
-
 		void set_logger_name(const char* LogName);
-
-		static Logger* get_instance();
-
 		void EnableFileLogging();
-
 		void EnableFileLogging(const char* file_path);
 		
+		static Logger* get_instance();
+		static void shutdown();
 
 		template<typename ...Args>
 		void Trace(const char * message, Args ...args)

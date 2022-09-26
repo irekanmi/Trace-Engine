@@ -65,6 +65,13 @@ namespace trace {
 
 	}
 
+	void Logger::shutdown()
+	{
+		delete s_instance->m_console;
+		s_instance->m_console = nullptr;
+
+	}
+
 	
 
 	void Logger::EnableFileLogging()

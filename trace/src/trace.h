@@ -11,3 +11,4 @@
 #include "core/io/TrcConsole.h"
 #include "core/events/Events.h"
 #include "core/events/EventsSystem.h"
+#include "core/Window.h"
