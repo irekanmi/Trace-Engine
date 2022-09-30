@@ -49,9 +49,6 @@ namespace trace
 		TRC_WARN("Trace Engine %s", "in progress");
 
 
-		TRC_INFO("%d", KB);
-		TRC_INFO("%d", MB);
-		TRC_INFO("%d", GB);
 
 		while (m_isRunning)
 		{
