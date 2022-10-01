@@ -17,11 +17,11 @@ int main(int argc, char** argv)
 	}
 
 	trace::trc_app_data app_data = trace::CreateApp();
-	trace::Application* app = new trace::Application(app_data);
+	trace::Application::s_instance = new trace::Application(app_data);
 
-	app->Start();
-	app->Run();
-	app->End();
+	trace::Application::s_instance->Start();
+	trace::Application::s_instance->Run();
+	trace::Application::s_instance->End();
 
 	trace::SHUTDOWN();
 

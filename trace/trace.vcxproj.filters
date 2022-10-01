@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="core">
@@ -6,6 +6,9 @@
     </Filter>
     <Filter Include="core\events">
       <UniqueIdentifier>{92DC566A-FE91-CF5F-8786-C936F33AC663}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\input">
+      <UniqueIdentifier>{ED821051-D93A-529E-4242-2BFA2E19ED8E}</UniqueIdentifier>
     </Filter>
     <Filter Include="core\io">
       <UniqueIdentifier>{75DBB8D3-E1BA-376F-EAD2-C24556319ED0}</UniqueIdentifier>
@@ -36,6 +39,9 @@
     <ClInclude Include="src\core\Enums.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\Layer.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\Object.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -50,6 +56,12 @@
     </ClInclude>
     <ClInclude Include="src\core\events\EventsSystem.h">
       <Filter>core\events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\input\Input.h">
+      <Filter>core\input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\input\Keys.h">
+      <Filter>core\input</Filter>
     </ClInclude>
     <ClInclude Include="src\core\io\Logging.h">
       <Filter>core\io</Filter>
@@ -70,11 +82,12 @@
       <Filter>core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\input\Keys.h" />
-    <ClInclude Include="src\core\input\Input.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Layer.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Object.cpp">
@@ -92,6 +105,12 @@
     <ClCompile Include="src\core\events\EventsSystem.cpp">
       <Filter>core\events</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\events\KeyEvents.cpp">
+      <Filter>core\events</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\input\Input.cpp">
+      <Filter>core\input</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\io\Logging.cpp">
       <Filter>core\io</Filter>
     </ClCompile>
@@ -107,7 +126,5 @@
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\events\KeyEvents.cpp" />
-    <ClCompile Include="src\core\input\Input.cpp" />
   </ItemGroup>
 </Project>

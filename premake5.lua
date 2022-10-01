@@ -12,6 +12,7 @@ OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "externals/GLFW/include"
+IncludeDir["GLEW"] = "externals/GLEW/include"
 
 project "trace"
 	location "trace"
@@ -35,7 +36,8 @@ project "trace"
 	{
 		"trace/src/core",
 		"trace/src",
-		"%{IncludeDir.GLFW}"
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.GLEW}"
 	}
 
 
@@ -48,6 +50,7 @@ project "trace"
 	links
 	{
 		"opengl32.lib",
+		"glew32s.lib",
 		"glfw3.lib"
 	}	
 
@@ -60,7 +63,8 @@ project "trace"
 		"TRC_WINDOWS",
 		"TRC_CORE",
 		"TRC_ASSERT_ENABLED",
-		"TRC_DEBUG_BUILD"
+		"TRC_DEBUG_BUILD",
+		"GLEW_STATIC"
 	}
 
 	filter "configurations:Release"

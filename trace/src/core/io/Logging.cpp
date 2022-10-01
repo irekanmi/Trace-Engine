@@ -55,6 +55,9 @@ namespace trace {
 #ifdef TRC_WINDOWS
 				s_instance->m_console = new WinConsole();
 				s_instance->m_console->SetAttribLevel(ConsoleAttribLevel::Default);
+#else
+				s_instance->m_console = new TrcConsole();
+				s_instance->m_console->SetAttribLevel(ConsoleAttribLevel::Default);
 #endif
 			}
 

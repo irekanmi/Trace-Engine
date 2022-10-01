@@ -193,6 +193,7 @@ namespace trace {
 		MouseMove(float x, float y);
 		~MouseMove();
 
+		virtual const char* GetName() override { return _STR(MouseMove); }
 
 		float m_x;
 		float m_y;

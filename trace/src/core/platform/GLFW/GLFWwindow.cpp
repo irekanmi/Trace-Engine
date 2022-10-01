@@ -307,6 +307,15 @@ namespace trace {
 		glfwMakeContextCurrent(m_pWindow);
 		glfwSetWindowUserPointer(m_pWindow, &m_Data);
 
+		//TODO: set glew initialization to opengl specific
+		if (glewInit() != GLEW_OK)
+		{
+			TRC_ERROR("Unable to create an OpenGL context glewInit()");
+			TRC_ASSERT(false, "glew failed");
+			return;
+		}
+
+
 		glfwSetWindowCloseCallback(m_pWindow, [](GLFWwindow* window)
 		{
 			WindowClose wndclose;
