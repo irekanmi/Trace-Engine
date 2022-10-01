@@ -320,7 +320,6 @@ namespace trace {
 			case GLFW_PRESS:
 			{
 				Keys _key = translateKeyGLFW(key);
-				InputSystem::get_instance()->SetKey(_key, 1);
 				KeyPressed keypress(_key);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_KEY_PRESSED, &keypress);
 				break;
@@ -328,16 +327,8 @@ namespace trace {
 			case GLFW_RELEASE:
 			{
 				Keys _key = translateKeyGLFW(key);
-				InputSystem::get_instance()->SetKey(_key, 0);
 				KeyReleased keyrelease(_key);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_KEY_RELEASED, &keyrelease);
-				break;
-			}
-
-			case GLFW_REPEAT:
-			{
-				Keys _key = translateKeyGLFW(key);
-				InputSystem::get_instance()->SetKey(_key, 1);
 				break;
 			}
 			}
@@ -369,15 +360,8 @@ namespace trace {
 			case GLFW_RELEASE:
 			{
 				Buttons _button = translateButtonGLFW(button);
-				InputSystem::get_instance()->SetButton(_button, 0);
 				MouseReleased mouse(_button);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_BUTTON_RELEASED, &mouse);
-				break;
-			}
-			case GLFW_REPEAT:
-			{
-				Buttons _button = translateButtonGLFW(button);
-				InputSystem::get_instance()->SetButton(_button, 1);
 				break;
 			}
 			}
@@ -404,6 +388,34 @@ namespace trace {
 	void GLFW_Window::Update(float deltaTime)
 	{
 		glfwPollEvents();
+
+		InputSystem* input = InputSystem::get_instance();
+		for (int i = 0; i < GLFW_KEY_LAST + 1; i++)
+		{
+			Keys _key = translateKeyGLFW(i);
+			switch (glfwGetKey(m_pWindow, i))
+			{
+			case GLFW_PRESS:
+			{
+				input->SetKey(_key, 1);
+				break;
+			}
+			}	
+		}
+
+		for (int i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++)
+		{
+			Buttons _button = translateButtonGLFW(i);
+			switch (glfwGetMouseButton(m_pWindow, i))
+			{
+			case GLFW_PRESS:
+			{
+				input->SetButton(_button, 1);
+				break;
+			}
+			}
+		}
+
 		glfwSwapBuffers(m_pWindow);
 
 	}

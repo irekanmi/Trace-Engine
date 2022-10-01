@@ -57,7 +57,7 @@ namespace trace
 
 			InputSystem* input = InputSystem::get_instance();
 
-			KeyState key_state = input->GetKeyState(Keys::KEY_A);
+			KeyState key_state = input->GetButtonState(Buttons::BUTTON_RIGHT);
 
 			switch (key_state)
 			{
@@ -69,12 +69,18 @@ namespace trace
 			case KeyState::KEY_HELD:
 			{
 				printf("Held\n");
+				break;
 			}
 			case KeyState::KEY_RELEASE:
 			{
 				printf("Release\n");
 				break;
 			}
+			}
+
+			if (input->GetKeyState(Keys::KEY_TAB) == KeyState::KEY_RELEASE)
+			{
+				m_isRunning = false;
 			}
 
 
@@ -121,13 +127,13 @@ namespace trace
 		case trace::EventType::TRC_KEY_PRESSED:
 		{
 			KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
-			TRC_INFO("key: %d", press->m_keycode);
+			TRC_INFO("key: %c", press->m_keycode);
 			break;
 		}
 		case trace::EventType::TRC_KEY_RELEASED:
 		{
 			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
-			TRC_DEBUG("key: %d",release->m_keycode);
+			TRC_DEBUG("key: %c",release->m_keycode);
 			if (release->m_keycode == Keys::KEY_ESCAPE)
 			{
 				m_isRunning = false;
