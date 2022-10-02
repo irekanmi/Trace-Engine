@@ -75,7 +75,8 @@ project "trace"
 		{
 			"TRC_WINDOWS",
 			"TRC_CORE",
-			"TRC_RELEASE_BUILD"
+			"TRC_RELEASE_BUILD",
+			"GLEW_STATIC"
 		}
 
 	

@@ -27,3 +27,4 @@ Debug/
 
 #Makefile
 Makefile
+.vscode/dryrun.log

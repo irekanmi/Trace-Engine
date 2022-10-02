@@ -6,7 +6,7 @@ make.exe all --print-data-base --no-builtin-variables --no-builtin-rules --quest
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Sep 26 19:44:01 2022
+# Make data base, printed on Sun Oct 02 17:37:26 2022
 
 # Variables
 
@@ -49,7 +49,8 @@ PATHEXT = .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
 # makefile (from 'Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # environment
-FPS_BROWSER_USER_PROFILE_STRING = Default
+FPS_BROWSER_ 
+USER_PROFILE_STRING = Default
 # environment
 TMP = C:\Users\Ayanfe\AppData\Local\Temp
 # environment
@@ -61,9 +62,9 @@ PROGRAMW6432 = C:\Program Files
 # environment
 PROGRAMDATA = C:\ProgramData
 # environment
-VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-d9ddd424-92bf-48c9-adde-340d53b5ec53-sock
+VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-c09e03c9-7c67-4e42-80ad-06cdd34c3d69-sock
 # environment
-VSCODE_CWD = C:\Users\Ayanfe\AppData\Local\Programs\Microsoft VS Code
+VSCODE_CWD = C:\windows\System32
 # default
 MAKE_HOST := x86_64-w64-mingw32
 # environment
@@ -91,7 +92,7 @@ trace_config = debug
 # automatic
 %F = $(notdir $%)
 # environment
-CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_8716_NJQYJXGORPPHGNMO
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_8112_CYFTPTBMOAUBJBIC
 # environment
 VSCODE_PIPE_LOGGING = true
 # environment
@@ -209,7 +210,7 @@ PROCESSOR_LEVEL = 23
 # environment
 FPS_BROWSER_APP_PROFILE_STRING = Internet Explorer
 # environment
-VSCODE_PID = 8716
+VSCODE_PID = 8112
 # environment
 USERDOMAIN_ROAMINGPROFILE = LAPTOP-G7U8E3OU
 # variable set hash-table stats:
@@ -221,7 +222,7 @@ USERDOMAIN_ROAMINGPROFILE = LAPTOP-G7U8E3OU
 
 # Directories
 
-# . (key c:/Dev/VisualSutdio/Cpp/Trace, mtime 1658789989): 24 files, no impossibilities.
+# . (key c:/Dev/VisualSutdio/Cpp/Trace, mtime 1658790721): 24 files, no impossibilities.
 
 # 24 files, no impossibilities in 1 directories.
 
@@ -352,6 +353,6 @@ TestApp: trace
 # strcache performance: lookups = 53 / hit rate = 41%
 # hash-table stats:
 # Load=31/8192=0%, Rehash=0, Collisions=1/53=2%
-# Finished Make data base on Mon Sep 26 19:44:01 2022
+# Finished Make data base on Sun Oct 02 17:37:26 2022
 
  

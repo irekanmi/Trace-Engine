@@ -105,7 +105,7 @@ namespace trace
 			glBegin(GL_TRIANGLES);
 			glColor3f(0.45f, 0.355f, 0.54f);
 			glVertex2f(-0.5f, -0.5f);
-			glColor3f(0.45f, 0.455f, 0.54f);
+			glColor3f(0.85f, 0.655f, 0.54f);
 			glVertex2f(0.5f, -0.5f);
 			glColor3f(0.75f, 0.355f, 0.54f);
 			glVertex2f(0.0f, 0.5f);

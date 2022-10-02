@@ -57,10 +57,55 @@ protected:
 
 };
 
+class SampleOverLay : public trace::Layer
+{
+
+public:
+	SampleOverLay()
+		:trace::Layer("SampleOverlay")
+	{
+
+	}
+	~SampleOverLay()
+	{
+
+	}
+
+	virtual void OnAttach() override
+	{
+		TRC_DEBUG("SampleOverlay Attached");
+	}
+	virtual void OnDetach() override
+	{
+
+	}
+	virtual void Update(float deltaTime) override
+	{
+
+	}
+	virtual void OnEvent(trace::Event* p_event) override
+	{
+		switch (p_event->m_type)
+		{
+		case trace::EventType::TRC_KEY_PRESSED:
+		{
+			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
+			TRC_DEBUG("'%c'", press->m_keycode);
+			break;
+		}
+		}
+	}
+
+private:
+protected:
+
+};
+
 void Start()
 {
 	TRC_INFO("Client Start");
 	trace::Application::get_instance()->PushLayer(new SampleLayer);
+	trace::Application::get_instance()->PushOverLay(new SampleOverLay());
 }
 
 void Update(float deltaTime)
