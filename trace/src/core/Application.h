@@ -4,24 +4,14 @@
 #include "events\Events.h"
 #include "Window.h"
 #include "Layer.h"
+#include "Coretypes.h"
+#include "render/GPUtypes.h"
+#include "EASTL/vector.h"
 
 
 namespace trace
 {
-	typedef void(*ClientUpdateCallback)(float deltaTime);
-	typedef void(*ClientStartCallback)();
-	typedef void(*ClientEndCallback)();
-
-	struct trc_app_data
-	{
-		trc_app_data(){}
-		WindowDecl winprop;
-		WindowType wintype;
-		bool windowed;
-		ClientEndCallback client_end;
-		ClientStartCallback client_start;
-		ClientUpdateCallback client_update;
-	};
+	
 
 	class TRACE_API Application
 	{
@@ -48,6 +38,16 @@ namespace trace
 		ClientEndCallback     m_client_end;
 		ClientStartCallback   m_client_start;
 		ClientUpdateCallback  m_client_update;
+
+		eastl::vector<Vertex> m_vertices;
+		eastl::vector<uint32_t> m_indices;
+
+		// Temp
+		uint32_t VertexBuffer;
+		uint32_t IndexBuffer;
+
+		uint32_t Shader;
+
 	protected:
 		Window* m_Window;
 		bool m_isRunning = true;

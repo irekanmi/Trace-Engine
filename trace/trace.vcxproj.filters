@@ -22,8 +22,14 @@
     <Filter Include="core\platform\GLFW">
       <UniqueIdentifier>{01ADC9B9-ED90-8A0F-56F1-846242F47491}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\platform\OpenGL">
+      <UniqueIdentifier>{76132F68-62A2-B831-0BC1-CC2CF72EC9D7}</UniqueIdentifier>
+    </Filter>
     <Filter Include="core\platform\Windows">
       <UniqueIdentifier>{BC5C2DC6-28C9-E8C0-F1BC-801E5DE80A29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render">
+      <UniqueIdentifier>{E5CF2C19-D171-57EF-BA2C-6B43A66DDE3F}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -31,6 +37,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Core.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Coretypes.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\EntryPoint.h">
@@ -78,8 +87,23 @@
     <ClInclude Include="src\core\platform\GLFW\GLFWwindow.h">
       <Filter>core\platform\GLFW</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\OpenGL\OpenGLContext.h">
+      <Filter>core\platform\OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Windows\WinConsole.h">
       <Filter>core\platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GBuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GContext.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GDevice.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GPUtypes.h">
+      <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
@@ -123,8 +147,20 @@
     <ClCompile Include="src\core\platform\GLFW\GLFWwindow.cpp">
       <Filter>core\platform\GLFW</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\OpenGL\OpenGLContext.cpp">
+      <Filter>core\platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
       <Filter>core\platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GBuffer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GContext.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GDevice.cpp">
+      <Filter>render</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

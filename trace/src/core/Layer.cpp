@@ -28,7 +28,9 @@ namespace trace {
 
 	void LayerStack::PopOverLay(Layer* layer)
 	{
-		auto it = std::find(begin(), end(), layer);
+		
+		auto it = eastl::find(begin(), end(), layer);
+		
 		if (it != end())
 		{
 			layer->OnDetach();

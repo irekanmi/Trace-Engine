@@ -434,7 +434,8 @@ namespace trace {
 	}
 	void GLFW_Window::SetVsync(bool enable)
 	{
-		if (enable)
+		m_isVsync = enable;
+		if (m_isVsync)
 		{
 			glfwSwapInterval(1);
 		}

@@ -5,6 +5,7 @@
 #include "core/Enums.h"
 #include "core/input/Keys.h"
 
+#include <functional>
 
 namespace trace {
 

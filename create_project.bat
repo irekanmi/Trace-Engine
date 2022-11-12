@@ -1,2 +1,2 @@
-call externals\premake\premake5 vs2015
+call externals\premake\premake5 vs2022
 PAUSE

@@ -14,3 +14,5 @@
 #define BIND_EVENT_FN(func) std::bind(&func, this, std::placeholders::_1)
 
 #define _STR(x) #x
+
+#define BIT(n) 1U << n

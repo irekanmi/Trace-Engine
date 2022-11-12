@@ -6,6 +6,7 @@
 #include "core/memory/memory.h"
 #include "core/Enums.h"
 
+#include "core/Coretypes.h"
 #include "core/EntryPoint.h"
 #include "core/io/Logging.h"
 #include "core/io/TrcConsole.h"
@@ -13,3 +14,5 @@
 #include "core/events/EventsSystem.h"
 #include "core/Window.h"
 #include "core/Layer.h"
+
+#include "render/GPUtypes.h"

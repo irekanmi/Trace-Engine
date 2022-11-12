@@ -29,14 +29,13 @@ public:
 		case trace::EventType::TRC_KEY_PRESSED:
 		{
 			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
-			printf("%c", press->m_keycode);
+			//printf("%c", press->m_keycode);
 			press->m_handled = true;
 			break;
 		}
 		case trace::EventType::TRC_KEY_RELEASED:
 		{
 			trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
-			release->m_handled = true;
 			break;
 		}
 		}
@@ -90,7 +89,7 @@ public:
 		case trace::EventType::TRC_KEY_PRESSED:
 		{
 			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
-			TRC_DEBUG("'%c'", press->m_keycode);
+			//TRC_DEBUG("'%c'", press->m_keycode);
 			break;
 		}
 		}
@@ -123,7 +122,9 @@ trace::trc_app_data trace::CreateApp()
 	trace::trc_app_data app_data;
 	app_data.winprop = trace::WindowDecl();
 	app_data.wintype = trace::WindowType::GLFW_WINDOW;
+	app_data.graphics_api = trace::RenderAPI::OpenGL;
 	app_data.windowed = true;
+	app_data.enable_vsync = true;
 	app_data.client_start = Start;
 	app_data.client_update = Update;
 	app_data.client_end = End;

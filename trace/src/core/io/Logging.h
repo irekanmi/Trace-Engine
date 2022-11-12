@@ -138,6 +138,8 @@ namespace trace {
 
 				m_console->SetAttribLevel((ConsoleAttribLevel)logLV);
 
+				//TODO: find a way to write logs in a buffer to be able to send messages to the console in one Write call
+
 				m_console->Write("[%s] :: %s ->", level, logger_name);
 				m_console->Write("%s", timeStr.str().c_str());
 				m_console->Write(msg, args...);
@@ -147,6 +149,7 @@ namespace trace {
 
 				if (file)
 				{
+				//TODO: find a way to write logs in a buffer to be able to send messages to the FILE in one Write call
 					fprintf(file, "[%s]  :: ", level);
 					fprintf(file, "%s", timeStr.str().c_str());
 					fprintf(file, msg, args...);

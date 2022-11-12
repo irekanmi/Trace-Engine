@@ -2,34 +2,11 @@
 
 #include "Core.h"
 #include "pch.h"
+#include "Coretypes.h"
 
 
 namespace trace {
 
-	enum WindowType
-	{
-		GLFW_WINDOW,
-		WIN32_WINDOW
-	};
-
-	struct WindowDecl
-	{
-
-		WindowDecl(std::string name = "Trace Engine",
-				   unsigned int width = 800,
-				   unsigned int height = 600)
-		{
-			m_window_name = name;
-			m_width = width;
-			m_height = height;
-		}
-		
-		std::string m_window_name;
-		unsigned int m_width;
-		unsigned int m_height;
-	};
-
-	
 	class TRACE_API Window
 	{
 		
@@ -45,6 +22,7 @@ namespace trace {
 		virtual void SetVsync(bool enable) = 0;
 	private:
 	protected:
+		bool m_isVsync = false;
 	};
 
 }

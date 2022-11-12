@@ -5,6 +5,8 @@
 #include "events/EventsSystem.h"
 #include "Enums.h"
 #include "input\Input.h"
+#include "render/GContext.h"
+#include "platform/OpenGL/OpenGLContext.h"
 
 
 namespace trace {
@@ -39,6 +41,41 @@ namespace trace {
 		}
 
 		return true;
+	}
+
+	bool TRACE_API _INIT(trc_app_data app_data)
+	{
+		RenderAPI api = app_data.graphics_api;
+		GContext::s_API = api;
+
+		switch (GContext::get_render_api())
+		{
+		case RenderAPI::OpenGL:
+		{
+			GContext::s_instance = new OpenGLContext();
+			if (GContext::s_instance == nullptr)
+			{
+				TRC_ERROR(" Failed to create a graphics context ");
+				return false;
+			}
+			GContext::s_instance->Init();
+			break;
+		}
+
+		default:
+			TRC_ASSERT(false, "Graphics context can not be null");
+			return false;
+		}
+		
+
+		return true;
+	}
+
+	void TRACE_API _SHUTDOWN(trc_app_data app_data)
+	{
+
+		SAFE_DELETE(GContext::get_instance(), GContext);
+		return;
 	}
 
 	void SHUTDOWN()

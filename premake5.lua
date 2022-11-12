@@ -1,3 +1,4 @@
+
 workspace "Trace"
 	architecture "x64"
 
@@ -13,6 +14,7 @@ OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "externals/GLFW/include"
 IncludeDir["GLEW"] = "externals/GLEW/include"
+IncludeDir["EASTL"] = "externals/EASTL/include"
 
 project "trace"
 	location "trace"
@@ -37,7 +39,10 @@ project "trace"
 		"trace/src/core",
 		"trace/src",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.GLEW}"
+		"%{IncludeDir.GLEW}",
+		"%{IncludeDir.EASTL}",
+		-- please remove these includes before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
 
 
@@ -51,7 +56,7 @@ project "trace"
 	{
 		"opengl32.lib",
 		"glew32s.lib",
-		"glfw3.lib"
+		"glfw3.lib",
 	}	
 
 	filter "configurations:Debug"
@@ -66,6 +71,10 @@ project "trace"
 		"TRC_DEBUG_BUILD",
 		"GLEW_STATIC"
 	}
+	links
+	{
+		"EASTL_d.lib"
+	}
 
 	filter "configurations:Release"
 		runtime "Release"
@@ -77,6 +86,11 @@ project "trace"
 			"TRC_CORE",
 			"TRC_RELEASE_BUILD",
 			"GLEW_STATIC"
+		}
+
+		links
+		{
+			"EASTL.lib"
 		}
 
 	
@@ -106,7 +120,17 @@ project "TestApp"
 
 	includedirs
 	{
-		"trace/src"
+		"trace/src",
+		"%{IncludeDir.EASTL}",
+		-- please remove these includes before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
+	}
+
+	libdirs
+	{
+		"externals/libs",
+		-- please remove these lib directory before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.10150.0\\ucrt\\x64"
 	}
 
 	filter "system:windows"
