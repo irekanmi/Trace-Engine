@@ -1,6 +1,10 @@
 #include <pch.h>
 
 #include "GBuffer.h"
+#include "GContext.h"
+#include "core/platform/OpenGL/OpenGLBuffer.h"
+#include "core/io/Logging.h"
+#include "Renderer.h"
 
 namespace trace {
 
@@ -16,6 +20,18 @@ namespace trace {
 
 	GBuffer* GBuffer::Create_(const BufferInfo& buffer_info)
 	{
+
+		switch (Renderer::get_api())
+		{
+		case RenderAPI::OpenGL:
+		{
+			return new OpenGLBuffer(buffer_info);
+			break;
+		}
+
+		}
+
+		TRC_ASSERT(false, "Render API can't be null");
 		return nullptr;
 	}
 
@@ -23,51 +39,12 @@ namespace trace {
 	{
 		return;
 	}
-	GBuffer GBuffer::Create(const BufferInfo& buffer_info)
-	{
-		return GBuffer();
-	}
+
 
 	void* GBuffer::GetNativeHandle()
 	{
 		return nullptr;
 	}
 
-	VertexBuffer::VertexBuffer()
-		: m_buffer(nullptr)
-	{
-	}
-
-	VertexBuffer::~VertexBuffer()
-	{
-	}
-
-	void* VertexBuffer::GetNativeHandle()
-	{
-		return nullptr;
-	}
-
-	void VertexBuffer::Bind()
-	{
-	}
-
-	VertexBuffer* VertexBuffer::Create_(size_t stride, size_t count)
-	{
-		return nullptr;
-	}
-
-	void VertexBuffer::Create_(VertexBuffer* dst)
-	{
-	}
-
-	VertexBuffer VertexBuffer::Create(size_t stride, size_t count)
-	{
-		return VertexBuffer();
-	}
-
-	VertexBuffer* VertexBuffer::Create_(Vertex* vertices, size_t count)
-	{
-		return nullptr;
-	}
-
+	
 }

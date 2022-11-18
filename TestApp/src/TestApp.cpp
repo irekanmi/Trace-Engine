@@ -3,6 +3,55 @@
 #include <stdio.h>
 #include <unordered_map>
 
+
+class SampleOverLay : public trace::Layer
+{
+
+public:
+	SampleOverLay()
+		:trace::Layer("SampleOverlay")
+	{
+
+	}
+	~SampleOverLay()
+	{
+
+	}
+
+	virtual void OnAttach() override
+	{
+		TRC_DEBUG("SampleOverlay Attached");
+	}
+	virtual void OnDetach() override
+	{
+		TRC_DEBUG("SampleOverlay Detached");
+	}
+	virtual void Update(float deltaTime) override
+	{
+
+	}
+	virtual void OnEvent(trace::Event* p_event) override
+	{
+		switch (p_event->m_type)
+		{
+		case trace::EventType::TRC_KEY_RELEASED:
+		{
+			trace::KeyReleased* press = reinterpret_cast<trace::KeyReleased*>(p_event);
+			if (press->m_keycode == trace::Keys::KEY_ESCAPE)
+			{
+				press->m_handled = true;
+				trace::Application::get_instance()->PopOverLay(this);
+			}
+			break;
+		}
+		}
+	}
+
+private:
+protected:
+
+};
+
 class SampleLayer : public trace::Layer
 {
 
@@ -48,7 +97,25 @@ public:
 
 	virtual void Update(float deltaTime) override
 	{
+		if (trace::InputSystem::get_instance()->GetKeyState(trace::Keys::KEY_T) == trace::KeyState::KEY_RELEASE)
+		{
+			TRC_INFO(" ------____----TRACE------______----");
+		}
 
+		if (trace::InputSystem::get_instance()->GetKeyState(trace::Keys::KEY_A) == trace::KeyState::KEY_RELEASE)
+		{
+			TRC_WARN("Added new overlay");
+			trace::Application::get_instance()->PushOverLay(new SampleOverLay());
+		}
+		if (trace::InputSystem::get_instance()->GetKeyState(trace::Keys::KEY_E) == trace::KeyState::KEY_RELEASE)
+		{
+			TRC_TRACE("Engine systems ID:");
+			auto sys_ptr = trace::Application::get_instance()->GetEngineSystemsID();
+			for (trace::Object*& i : sys_ptr)
+			{
+				TRC_INFO("Name: %s ID: %d", i->GetName(), i->GetID());
+			}
+		}
 	}
 private:
 protected:
@@ -56,49 +123,7 @@ protected:
 
 };
 
-class SampleOverLay : public trace::Layer
-{
 
-public:
-	SampleOverLay()
-		:trace::Layer("SampleOverlay")
-	{
-
-	}
-	~SampleOverLay()
-	{
-
-	}
-
-	virtual void OnAttach() override
-	{
-		TRC_DEBUG("SampleOverlay Attached");
-	}
-	virtual void OnDetach() override
-	{
-
-	}
-	virtual void Update(float deltaTime) override
-	{
-
-	}
-	virtual void OnEvent(trace::Event* p_event) override
-	{
-		switch (p_event->m_type)
-		{
-		case trace::EventType::TRC_KEY_PRESSED:
-		{
-			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
-			//TRC_DEBUG("'%c'", press->m_keycode);
-			break;
-		}
-		}
-	}
-
-private:
-protected:
-
-};
 
 void Start()
 {

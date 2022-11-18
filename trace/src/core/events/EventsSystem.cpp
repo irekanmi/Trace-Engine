@@ -1,12 +1,13 @@
 #include "pch.h"
 #include "EventsSystem.h"
+#include "core/Enums.h"
 
 namespace trace {
 
 	EventsSystem* EventsSystem::s_instance = nullptr;
 
 	EventsSystem::EventsSystem()
-		:Object::Object()
+		:Object::Object(_STR(EventsSystem))
 	{
 
 	}

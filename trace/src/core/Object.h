@@ -4,21 +4,24 @@
 
 namespace trace {
 
+
 	class TRACE_API Object
 	{
 	public:
 
 		Object();
+		Object(const char* name);
 		virtual ~Object();
 
-		unsigned int GetID() { return m_id; }
-		void SetID(unsigned int id) { m_id = id; }
+		uint32_t GetID() { return m_id; }
+		const char* GetName();
 
 	private:
 
 
 	protected:
-		unsigned int m_id;
+		uint32_t m_id;
+		const char* m_name;
 
 	};
 

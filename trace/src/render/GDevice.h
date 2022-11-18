@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core.h>
+#include "core/Core.h"
 
 
 namespace trace {
@@ -12,6 +12,8 @@ namespace trace {
 	public:
 		GDevice();
 		virtual ~GDevice();
+
+		
 
 	private:
 	protected:

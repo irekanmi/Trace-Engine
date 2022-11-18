@@ -2,13 +2,14 @@
 #include <stdarg.h>
 
 #include "TrcConsole.h"
+#include "core/Enums.h"
 
 namespace trace {
 
 
 
 	TrcConsole::TrcConsole()
-		:Object::Object()
+		:Object::Object(_STR(TrcConsole))
 	{
 	}
 

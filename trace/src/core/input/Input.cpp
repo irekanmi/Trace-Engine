@@ -1,12 +1,14 @@
 #include "pch.h"
 
 #include "Input.h"
+#include "core/Enums.h"
 
 namespace trace {
 
 	InputSystem* InputSystem::s_instance = nullptr;
 
 	InputSystem::InputSystem()
+		: Object(_STR(InputSystem))
 	{
 		keyboard_curr = { 0 };
 		keyboard_prev = { 0 };

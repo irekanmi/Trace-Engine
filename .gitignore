@@ -16,6 +16,7 @@ ipch/
 *.filters
 *.vcxproj
 Debug/
+*.exe
 
 #Code lite
 *.project

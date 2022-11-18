@@ -22,6 +22,7 @@ namespace trace {
 		{
 			layer->OnDetach();
 			m_Layers.erase(it);
+			SAFE_DELETE(*it, it);
 		}
 		m_index--;
 	}
@@ -35,6 +36,7 @@ namespace trace {
 		{
 			layer->OnDetach();
 			m_Layers.erase(it);
+			SAFE_DELETE(*it, it);
 		}
 	}
 

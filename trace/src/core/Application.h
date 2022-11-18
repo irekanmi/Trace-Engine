@@ -7,6 +7,7 @@
 #include "Coretypes.h"
 #include "render/GPUtypes.h"
 #include "EASTL/vector.h"
+#include "render/GBuffer.h"
 
 
 namespace trace
@@ -31,6 +32,7 @@ namespace trace
 		virtual void PushOverLay(Layer* layer);
 		virtual void PopLayer(Layer* layer);
 		virtual void PopOverLay(Layer* layer);
+		virtual eastl::vector<Object*> GetEngineSystemsID();
 
 		static Application* get_instance();
 		static Application* s_instance;
@@ -43,8 +45,8 @@ namespace trace
 		eastl::vector<uint32_t> m_indices;
 
 		// Temp
-		uint32_t VertexBuffer;
-		uint32_t IndexBuffer;
+		GBuffer* VertexBuffer;
+		GBuffer* IndexBuffer;
 
 		uint32_t Shader;
 

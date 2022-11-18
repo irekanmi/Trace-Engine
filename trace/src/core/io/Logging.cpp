@@ -122,6 +122,7 @@ namespace trace {
 
 	Logger::Logger()
 		:
+		Object(_STR(Logger)),
 		m_console(nullptr),
 		log_level(LogLevel::trace),
 		filepath(""),

@@ -20,9 +20,10 @@ namespace trace {
 
 	struct BufferInfo
 	{
-		size_t m_size = 0;
-		size_t m_stide = 0;
+		uint32_t m_size = 0;
+		uint32_t m_stide = 0;
 		BufferUsage m_usage = BufferUsage::Null;
+		void* m_data = nullptr;
 	};
 
 	struct Vertex

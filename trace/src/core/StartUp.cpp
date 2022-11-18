@@ -7,6 +7,7 @@
 #include "input\Input.h"
 #include "render/GContext.h"
 #include "platform/OpenGL/OpenGLContext.h"
+#include "render/Renderer.h"
 
 
 namespace trace {
@@ -45,36 +46,18 @@ namespace trace {
 
 	bool TRACE_API _INIT(trc_app_data app_data)
 	{
-		RenderAPI api = app_data.graphics_api;
-		GContext::s_API = api;
-
-		switch (GContext::get_render_api())
+		if (!Renderer::get_instance()->Init(app_data.graphics_api))
 		{
-		case RenderAPI::OpenGL:
-		{
-			GContext::s_instance = new OpenGLContext();
-			if (GContext::s_instance == nullptr)
-			{
-				TRC_ERROR(" Failed to create a graphics context ");
-				return false;
-			}
-			GContext::s_instance->Init();
-			break;
-		}
-
-		default:
-			TRC_ASSERT(false, "Graphics context can not be null");
+			TRC_ERROR("Failed to initialize renderer");
 			return false;
 		}
-		
-
 		return true;
 	}
 
 	void TRACE_API _SHUTDOWN(trc_app_data app_data)
 	{
 
-		SAFE_DELETE(GContext::get_instance(), GContext);
+		SAFE_DELETE(Renderer::get_instance(), Renderer);
 		return;
 	}
 

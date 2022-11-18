@@ -12,6 +12,7 @@
 #include "core/io/TrcConsole.h"
 #include "core/events/Events.h"
 #include "core/events/EventsSystem.h"
+#include "core/input/Input.h"
 #include "core/Window.h"
 #include "core/Layer.h"
 

@@ -6,6 +6,7 @@
 #include "events/EventsSystem.h"
 #include "platform\GLFW\GLFWwindow.h"
 #include "input\Input.h"
+#include "render/Renderer.h"
 
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -17,8 +18,11 @@ void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, cons
 	return new char[size];
 }
 
+
 namespace trace
 {
+	extern eastl::vector<trace::Object*> g_SystemPtrs;
+	
 
 	Application* Application::s_instance = nullptr;
 
@@ -43,6 +47,11 @@ namespace trace
 	void Application::PopOverLay(Layer* layer)
 	{
 		m_LayerStack->PopOverLay(layer);
+	}
+
+	eastl::vector<Object*> Application::GetEngineSystemsID()
+	{
+		return g_SystemPtrs;
 	}
 
 	Application::Application(trc_app_data appData)
@@ -150,11 +159,19 @@ namespace trace
 			glGetProgramInfoLog(Shader, lenght, &lenght, buffer);
 			TRC_ERROR("Link Error: \n %s", buffer);
 		}
+		BufferInfo vertex_buffer_info;
+		vertex_buffer_info.m_size = m_vertices.size() * sizeof(Vertex);
+		vertex_buffer_info.m_stide = sizeof(Vertex);
+		vertex_buffer_info.m_usage = BufferUsage::VERTEX_BUFFER;
+		vertex_buffer_info.m_data = m_vertices.data();
 
+		BufferInfo index_buffer_info;
+		index_buffer_info.m_size = m_indices.size() * sizeof(uint32_t);
+		index_buffer_info.m_stide = sizeof(uint32_t);
+		index_buffer_info.m_usage = BufferUsage::INDEX_BUFFER;
+		index_buffer_info.m_data = m_indices.data();
 
-		glGenBuffers(1, &VertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, VertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(Vertex), m_vertices.data(), GL_STATIC_DRAW);
+		VertexBuffer = GBuffer::Create_(vertex_buffer_info);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
@@ -162,9 +179,8 @@ namespace trace
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)offsetof(Vertex, color));
 
-		glGenBuffers(1, &IndexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
+
+		IndexBuffer = GBuffer::Create_(index_buffer_info);
 
 
 	}
@@ -198,32 +214,39 @@ namespace trace
 
 		
 
+		InputSystem* input = InputSystem::get_instance();
+		Renderer* renderer = Renderer::get_instance();
+		
 
 		while (m_isRunning)
 		{
 			
 			m_Window->Update(0.0f);
-			InputSystem* input = InputSystem::get_instance();
 
 			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
 			{
 				Layer* layer = m_LayerStack->m_Layers[i];
 				layer->Update(0.0f);
 			}
-			
-			glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			glUseProgram(Shader);
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBuffer);
-			glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, nullptr);
 
 			//------CLIENT-------//
 
 			m_client_update(0.0f);
 
 			//___________________//
+
+			renderer->BeginScene();
+			
+			glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			glUseProgram(Shader);
+
+			renderer->Draw(VertexBuffer, BufferUsage::VERTEX_BUFFER);
+
+			renderer->EndScene();
+
+			
 
 
 			input->Update(0.0f);
@@ -232,8 +255,6 @@ namespace trace
 
 	void Application::End()
 	{
-		trace::ApplicationEnd app_end;
-		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
 
 
 		//------CLIENT-------//
@@ -241,6 +262,8 @@ namespace trace
 		m_client_end();
 
 		//___________________//
+		trace::ApplicationEnd app_end;
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
 
 
 		SAFE_DELETE(m_Window, Window);
@@ -256,7 +279,10 @@ namespace trace
 		for (; i >= 0; --i)
 		{
 			Layer* layer = m_LayerStack->m_Layers[i];
-			layer->OnEvent(p_event);
+			if(!p_event->m_handled)
+			{
+				layer->OnEvent(p_event);
+			}
 		}
 
 		if (!p_event->m_handled) {
