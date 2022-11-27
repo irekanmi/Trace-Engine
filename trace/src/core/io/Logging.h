@@ -132,28 +132,26 @@ namespace trace {
 
 				localtime_s(&pTime, &ctime);
 
+				char buf[512]{ 0 };
+				sprintf(buf, msg, args...);
+
+				timeStr << "[" << level << "]";
 				timeStr << std::setw(2) << "[" << std::setfill('0') << pTime.tm_hour << ":";
 				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_min << ":";
 				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_sec << "] ";
+				timeStr << buf << "\n";
 
 				m_console->SetAttribLevel((ConsoleAttribLevel)logLV);
 
 				//TODO: find a way to write logs in a buffer to be able to send messages to the console in one Write call
-
-				m_console->Write("[%s] :: %s ->", level, logger_name);
 				m_console->Write("%s", timeStr.str().c_str());
-				m_console->Write(msg, args...);
-				m_console->Write("\n");
 
 				m_console->SetAttribLevel(prev);
 
 				if (file)
 				{
 				//TODO: find a way to write logs in a buffer to be able to send messages to the FILE in one Write call
-					fprintf(file, "[%s]  :: ", level);
 					fprintf(file, "%s", timeStr.str().c_str());
-					fprintf(file, msg, args...);
-					fprintf(file, "\n");
 				}
 				log_mutex.unlock();
 			}

@@ -16,6 +16,7 @@ namespace trace {
 
 		uint32_t GetSize() { return m_info.m_size; }
 		uint32_t GetCount() { return m_info.m_size / m_info.m_stide; }
+		BufferUsage GetUsage() { return m_info.m_usage; }
 
 		virtual void* GetNativeHandle() = 0;
 		virtual void SetData(void* data, size_t size) = 0;

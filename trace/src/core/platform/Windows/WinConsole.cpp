@@ -33,7 +33,7 @@ namespace trace {
 			vsprintf_s(out, KB, msg, arg_ptr);
 			va_end(arg_ptr);
 
-			printf("%s", out);
+			printf_s("%s", out);
 
 		}
 

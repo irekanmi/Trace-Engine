@@ -16,3 +16,4 @@
 #define _STR(x) #x
 
 #define BIT(n) 1U << n
+constexpr auto _NAME_ = "TRACE";

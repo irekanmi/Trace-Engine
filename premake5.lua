@@ -15,6 +15,8 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "externals/GLFW/include"
 IncludeDir["GLEW"] = "externals/GLEW/include"
 IncludeDir["EASTL"] = "externals/EASTL/include"
+IncludeDir["glm"] = "externals/glm"
+IncludeDir["Vulkan"] = "externals/Vulkan"
 
 project "trace"
 	location "trace"
@@ -41,6 +43,8 @@ project "trace"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLEW}",
 		"%{IncludeDir.EASTL}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.Vulkan}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -57,6 +61,7 @@ project "trace"
 		"opengl32.lib",
 		"glew32s.lib",
 		"glfw3.lib",
+		"vulkan-1.lib"
 	}	
 
 	filter "configurations:Debug"
@@ -122,6 +127,7 @@ project "TestApp"
 	{
 		"trace/src",
 		"%{IncludeDir.EASTL}",
+		"%{IncludeDir.glm}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

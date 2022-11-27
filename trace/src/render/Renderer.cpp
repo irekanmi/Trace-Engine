@@ -5,10 +5,14 @@
 #include "core/Enums.h"
 #include "core/io/Logging.h"
 #include "core/platform/OpenGL/OpenGLContext.h"
+#include "core/platform/OpenGL/OpenGLDevice.h"
+#include "core/platform/Vulkan/VKContext.h"
+
 
 namespace trace {
 
 	Renderer* Renderer::s_instance = nullptr;
+	RenderAPI Renderer::s_api = RenderAPI::None;
 
 	Renderer::Renderer()
 		: Object(_STR(Renderer))
@@ -34,6 +38,20 @@ namespace trace {
 				return false;
 			}
 			m_context->Init();
+			m_device = new OpenGLDevice();
+			m_device->Init();
+			break;
+
+		}
+
+		case RenderAPI::Vulkan:
+		{
+
+			m_context = new VKContext();
+			m_context->Init();
+			// TODO: replace with vulkan device
+			m_device = new OpenGLDevice();
+
 			break;
 		}
 
@@ -43,6 +61,11 @@ namespace trace {
 		}
 
 		return true;
+	}
+
+	void Renderer::Update(float deltaTime)
+	{
+		m_context->Update(deltaTime);
 	}
 
 	void Renderer::BeginScene()
@@ -57,12 +80,32 @@ namespace trace {
 	{
 		if (usage & BufferUsage::VERTEX_BUFFER)
 		{
-			m_context->DrawElements(buffer);
+			m_device->DrawElements(buffer);
 		}
 		else if (usage & BufferUsage::INDEX_BUFFER)
 		{
-			m_context->DrawIndexed(buffer);
+			m_device->DrawIndexed(buffer);
 		}
+	}
+
+	void Renderer::Draw(GBuffer* buffer)
+	{
+		BufferUsage buf_use = buffer->GetUsage();
+		if (buf_use & BufferUsage::VERTEX_BUFFER)
+		{
+			m_device->DrawElements(buffer);
+		}
+		else if (buf_use & BufferUsage::INDEX_BUFFER)
+		{
+			m_device->DrawIndexed(buffer);
+		}
+	}
+
+	void Renderer::ShutDown()
+	{
+		m_device->ShutDown();
+		m_context->ShutDown();
+
 	}
 
 	Renderer* Renderer::get_instance()

@@ -5,6 +5,7 @@
 #include "core/events/Events.h"
 #include "core/events/EventsSystem.h"
 #include "core/input/Input.h"
+#include "render/Renderer.h"
 
 
 
@@ -291,6 +292,15 @@ namespace trace {
 		int success = glfwInit();
 		TRC_ASSERT(success, "glfwInit() Failed");
 
+		switch (Renderer::s_api)
+		{
+		case RenderAPI::Vulkan:
+		{
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+			break;
+		}
+		}
+
 		m_pWindow = glfwCreateWindow(
 			m_Data.Width,
 			m_Data.Height,
@@ -307,13 +317,7 @@ namespace trace {
 		glfwMakeContextCurrent(m_pWindow);
 		glfwSetWindowUserPointer(m_pWindow, &m_Data);
 
-		//TODO: set glew initialization to opengl specific
-		if (glewInit() != GLEW_OK)
-		{
-			TRC_ERROR("Unable to create an OpenGL context glewInit()");
-			TRC_ASSERT(false, "glew failed");
-			return;
-		}
+
 
 
 		glfwSetWindowCloseCallback(m_pWindow, [](GLFWwindow* window)
@@ -425,7 +429,6 @@ namespace trace {
 			}
 		}
 
-		glfwSwapBuffers(m_pWindow);
 
 	}
 	void GLFW_Window::ShutDown()
@@ -443,5 +446,9 @@ namespace trace {
 		{
 			glfwSwapInterval(0);
 		}
+	}
+	void* GLFW_Window::GetNativeHandle()
+	{
+		return m_pWindow;
 	}
 }

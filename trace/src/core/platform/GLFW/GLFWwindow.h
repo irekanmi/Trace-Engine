@@ -3,6 +3,7 @@
 #include "core/Window.h"
 #include <GL/glew.h>
 #include "GLFW/glfw3.h"
+#include "EASTL/string.h"
 
 namespace trace {
 
@@ -19,12 +20,13 @@ namespace trace {
 		virtual void Update(float deltaTime) override;
 		virtual void ShutDown() override;
 		virtual void SetVsync(bool enable) override;
+		virtual void* GetNativeHandle() override;
 	private:
 		struct WindowData
 		{
 			unsigned int Width;
 			unsigned int Height;
-			std::string Name;
+			eastl::string Name;
 		};
 
 		GLFWwindow* m_pWindow;

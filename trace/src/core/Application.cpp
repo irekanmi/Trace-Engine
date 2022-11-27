@@ -7,6 +7,7 @@
 #include "platform\GLFW\GLFWwindow.h"
 #include "input\Input.h"
 #include "render/Renderer.h"
+#include "core/platform/Windows/Win32Window.h"
 
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -25,6 +26,7 @@ namespace trace
 	
 
 	Application* Application::s_instance = nullptr;
+	WindowType Application::win_type = WindowType::DEFAULT;
 
 	Application* Application::get_instance()
 	{
@@ -56,12 +58,18 @@ namespace trace
 
 	Application::Application(trc_app_data appData)
 	{
+
 		m_LayerStack = new LayerStack();
 		switch (appData.wintype)
 		{
 		case WindowType::GLFW_WINDOW:
 		{
 			this->m_Window = new GLFW_Window(appData.winprop);
+			break;
+		}
+		case WindowType::WIN32_WINDOW:
+		{
+			this->m_Window = new Win32Window(appData.winprop);
 			break;
 		}
 		}
@@ -77,21 +85,44 @@ namespace trace
 			trace::EventsSystem::get_instance()->AddEventListener((EventType)i, BIND_EVENT_FN(Application::OnEvent));
 		}
 
-		eastl::vector<Vertex> verts = {
-			{ {-0.5f, -0.5f, 0.0f}, { 0.85f, 0.55f, 0.75f }},
-			{ {0.5f, -0.5f, 0.0f}, {0.55f, .75f, .85f} },
-			{ {0.0f, 0.5f, 0.0f}, {.75f, .85f, .55f} }
+
+	}
+
+	Application::~Application()
+	{
+
+
+
+	}
+
+	void Application::Start()
+	{
+		
+
+
+		trace::ApplicationStart app_start;
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
+
+		//----------CLIENT--------------//
+		m_client_start();
+		//______________________________//
+
+		m_vertices = {
+	{ {-0.5f, -0.5f, 0.0f}, { 0.85f, 0.55f, 0.75f }},
+	{ {0.5f, -0.5f, 0.0f}, {0.55f, .75f, .85f} },
+	{ {0.5f, 0.5f, 0.0f}, {.75f, .25f, .55f} },
+	{ {-.5f, .5f, .0f}, {0.45f, 0.56f, 0.67f }}
 		};
 
-		m_vertices = verts;
 
 
-		eastl::vector<uint32_t> indices = {
-			0, 1, 2
+
+		m_indices = {
+			0, 1, 2,
+			0, 2, 3
 		};
 
-		m_indices = indices;
-
+#if 0
 		std::string vert_src = R"(
 			#version 330 core
 
@@ -116,7 +147,7 @@ namespace trace
 
 			void main()
 			{
-				FragColor = vec4(_color, 1.0f);
+				FragColor = vec4(_color , 1.0f);
 			}
 		)";
 
@@ -181,26 +212,8 @@ namespace trace
 
 
 		IndexBuffer = GBuffer::Create_(index_buffer_info);
+#endif
 
-
-	}
-
-	Application::~Application()
-	{
-
-	}
-
-	void Application::Start()
-	{
-		
-
-
-		trace::ApplicationStart app_start;
-		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
-
-		//----------CLIENT--------------//
-		m_client_start();
-		//______________________________//
 
 	}
 	
@@ -234,7 +247,7 @@ namespace trace
 			m_client_update(0.0f);
 
 			//___________________//
-
+#if 0
 			renderer->BeginScene();
 			
 			glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -242,13 +255,13 @@ namespace trace
 
 			glUseProgram(Shader);
 
-			renderer->Draw(VertexBuffer, BufferUsage::VERTEX_BUFFER);
+			renderer->Draw(IndexBuffer);
 
 			renderer->EndScene();
 
-			
+#endif			
 
-
+			renderer->Update(0.0f);
 			input->Update(0.0f);
 		}
 	}
@@ -338,14 +351,14 @@ namespace trace
 			case EventType::TRC_BUTTON_PRESSED:
 			{
 				MousePressed* mouse = reinterpret_cast<MousePressed*>(p_event);
-				//TRC_CRITICAL("Button: %d", mouse->m_button);
+				TRC_CRITICAL("Button: %d", mouse->m_button);
 				break;
 			}
 
 			case EventType::TRC_BUTTON_RELEASED:
 			{
 				MouseReleased* mouse = reinterpret_cast<MouseReleased*>(p_event);
-				//TRC_CRITICAL("Button: %d", mouse->m_button);
+				TRC_TRACE("Button: %d", mouse->m_button);
 				break;
 			}
 

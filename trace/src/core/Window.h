@@ -20,6 +20,8 @@ namespace trace {
 		virtual void Update(float deltaTime) = 0;
 		virtual void ShutDown() = 0;
 		virtual void SetVsync(bool enable) = 0;
+		virtual void* GetNativeHandle() = 0;
+
 	private:
 	protected:
 		bool m_isVsync = false;

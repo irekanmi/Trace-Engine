@@ -8,6 +8,8 @@
 #include "render/GContext.h"
 #include "platform/OpenGL/OpenGLContext.h"
 #include "render/Renderer.h"
+#include "core/Platform.h"
+#include "core/Application.h"
 
 
 namespace trace {
@@ -44,8 +46,16 @@ namespace trace {
 		return true;
 	}
 
+	void TRACE_API init(trc_app_data app_data)
+	{
+		Platform::s_api = app_data.platform_api;
+		Application::win_type = app_data.wintype;
+		Renderer::s_api = app_data.graphics_api;
+	}
+
 	bool TRACE_API _INIT(trc_app_data app_data)
 	{
+		
 		if (!Renderer::get_instance()->Init(app_data.graphics_api))
 		{
 			TRC_ERROR("Failed to initialize renderer");
@@ -56,7 +66,7 @@ namespace trace {
 
 	void TRACE_API _SHUTDOWN(trc_app_data app_data)
 	{
-
+		Renderer::get_instance()->ShutDown();
 		SAFE_DELETE(Renderer::get_instance(), Renderer);
 		return;
 	}

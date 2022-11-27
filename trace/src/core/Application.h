@@ -33,9 +33,12 @@ namespace trace
 		virtual void PopLayer(Layer* layer);
 		virtual void PopOverLay(Layer* layer);
 		virtual eastl::vector<Object*> GetEngineSystemsID();
+		virtual Window* GetWindow() { return m_Window; }
 
 		static Application* get_instance();
 		static Application* s_instance;
+		static WindowType win_type;
+
 	private:
 		ClientEndCallback     m_client_end;
 		ClientStartCallback   m_client_start;

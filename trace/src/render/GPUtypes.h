@@ -4,6 +4,7 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "glm/glm.hpp"
 
 namespace trace {
 	
@@ -28,8 +29,8 @@ namespace trace {
 
 	struct Vertex
 	{
-		float pos[3];
-		float color[3];
+		glm::vec3 pos;
+		glm::vec3 color;
 	};
 
 	enum RenderAPI

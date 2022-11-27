@@ -54,6 +54,9 @@
     <ClInclude Include="src\core\Object.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\Platform.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\StartUp.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -87,8 +90,17 @@
     <ClInclude Include="src\core\platform\GLFW\GLFWwindow.h">
       <Filter>core\platform\GLFW</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\OpenGL\OpenGLBuffer.h">
+      <Filter>core\platform\OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\OpenGL\OpenGLContext.h">
       <Filter>core\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\OpenGL\OpenGLDevice.h">
+      <Filter>core\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Windows\Win32Window.h">
+      <Filter>core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Windows\WinConsole.h">
       <Filter>core\platform\Windows</Filter>
@@ -105,10 +117,13 @@
     <ClInclude Include="src\render\GPUtypes.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\Renderer.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\platform\OpenGL\OpenGLBuffer.h" />
-    <ClInclude Include="src\render\Renderer.h" />
-    <ClInclude Include="src\core\platform\Windows\Win32Window.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VKContext.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VKtypes.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VkUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -118,6 +133,9 @@
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Object.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Platform.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\StartUp.cpp">
@@ -150,8 +168,17 @@
     <ClCompile Include="src\core\platform\GLFW\GLFWwindow.cpp">
       <Filter>core\platform\GLFW</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\OpenGL\OpenGLBuffer.cpp">
+      <Filter>core\platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\OpenGL\OpenGLContext.cpp">
       <Filter>core\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\OpenGL\OpenGLDevice.cpp">
+      <Filter>core\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Windows\Win32Window.cpp">
+      <Filter>core\platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
       <Filter>core\platform\Windows</Filter>
@@ -165,7 +192,10 @@
     <ClCompile Include="src\render\GDevice.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\platform\OpenGL\OpenGLBuffer.cpp" />
-    <ClCompile Include="src\render\Renderer.cpp" />
+    <ClCompile Include="src\render\Renderer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp" />
   </ItemGroup>
 </Project>

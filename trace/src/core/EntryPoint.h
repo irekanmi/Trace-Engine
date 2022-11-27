@@ -17,14 +17,14 @@ int main(int argc, char** argv)
 	}
 
 	trace::trc_app_data app_data = trace::CreateApp();
+	trace::init(app_data);
 
+	trace::Application::s_instance = new trace::Application(app_data);
 	if (!trace::_INIT(app_data))
 	{
 		TRC_CRITICAL("Engine / Application Startup failed");
 		return -1;
 	}
-
-	trace::Application::s_instance = new trace::Application(app_data);
 
 	trace::Application::s_instance->Start();
 	trace::Application::s_instance->Run();
