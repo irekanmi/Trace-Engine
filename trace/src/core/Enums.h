@@ -4,7 +4,7 @@
 #define SAFE_DELETE(a, placeholder)	            \
 	void* x_##placeholder = a;					\
 	delete x_##placeholder;						\
-	x_##placeholder = nullptr;                  \
+	x_##placeholder = nullptr;                  
 
 #define KB 1024
 #define MB KB * KB
@@ -17,3 +17,6 @@
 
 #define BIT(n) 1U << n
 constexpr auto _NAME_ = "TRACE";
+constexpr auto _ENGINE_NAME_ = "TRACE ENGINE";
+
+#define TRC_CLAMP(value, low, high) (value <= low) ? low : ( value >= high ) ? high : value

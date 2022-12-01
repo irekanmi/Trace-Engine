@@ -91,7 +91,6 @@ namespace trace {
 
 			if (logLV >= log_level)
 			{
-				log_mutex.lock();
 
 				const char* level = "Unknow";
 
@@ -132,7 +131,7 @@ namespace trace {
 
 				localtime_s(&pTime, &ctime);
 
-				char buf[512]{ 0 };
+				char buf[1024]{ 0 };
 				sprintf(buf, msg, args...);
 
 				timeStr << "[" << level << "]";
@@ -153,7 +152,6 @@ namespace trace {
 				//TODO: find a way to write logs in a buffer to be able to send messages to the FILE in one Write call
 					fprintf(file, "%s", timeStr.str().c_str());
 				}
-				log_mutex.unlock();
 			}
 
 		}
@@ -163,7 +161,6 @@ namespace trace {
 		const char* filepath;
 		const char* logger_name;
 		FILE* file;
-		std::mutex log_mutex;
 		bool file_logging;
 		static Logger* s_instance;
 		

@@ -142,6 +142,11 @@ namespace trace {
 		return m_handle;
 	}
 
+	void* Win32Window::GetHandle()
+	{
+		return m_handle;
+	}
+
 }
 
 static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM lparam)

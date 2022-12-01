@@ -20,8 +20,10 @@ namespace trace {
 
 		bool Init(RenderAPI api);
 		void Update(float deltaTime);
+		void BeginFrame();
 		void BeginScene();
 		void EndScene();
+		void EndFrame();
 		void Draw(GBuffer* buffer, BufferUsage usage);
 		void Draw(GBuffer* buffer);
 

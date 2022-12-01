@@ -1,11 +1,15 @@
 #include "pch.h"
 
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include "GLFWwindow.h"
 #include "core/io/Logging.h"
 #include "core/events/Events.h"
 #include "core/events/EventsSystem.h"
 #include "core/input/Input.h"
 #include "render/Renderer.h"
+#include "GLFW/glfw3native.h"
+#include "core/Platform.h"
+
 
 
 
@@ -448,6 +452,21 @@ namespace trace {
 		}
 	}
 	void* GLFW_Window::GetNativeHandle()
+	{
+		void* value = nullptr;
+		switch (Platform::s_api)
+		{
+		case PlatformAPI::WINDOWS:
+		{
+			value = glfwGetWin32Window(m_pWindow);
+			break;
+		}
+
+		}
+
+		return value;
+	}
+	void* GLFW_Window::GetHandle()
 	{
 		return m_pWindow;
 	}

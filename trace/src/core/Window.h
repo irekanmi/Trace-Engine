@@ -21,6 +21,7 @@ namespace trace {
 		virtual void ShutDown() = 0;
 		virtual void SetVsync(bool enable) = 0;
 		virtual void* GetNativeHandle() = 0;
+		virtual void* GetHandle() = 0;
 
 	private:
 	protected:

@@ -1,15 +1,18 @@
 #pragma once
 
+#include "core/Enums.h"
+#include "render/GPUtypes.h"
 #include "render/GDevice.h"
+#include "VKtypes.h"
 
 namespace trace {
 
-	class OpenGLDevice : public GDevice
+	class VKDevice : public GDevice
 	{
 
 	public:
-		OpenGLDevice();
-		~OpenGLDevice();
+		VKDevice();
+		~VKDevice();
 
 		virtual void Init() override;
 		virtual void DrawElements(GBuffer* vertex_buffer) override;
@@ -22,6 +25,10 @@ namespace trace {
 		virtual void EndFrame() override;
 
 	private:
+		VkDeviceHandle* m_handle;
+		VkHandle* m_instance;
+		VkSwapChain m_swapChain;
+
 	protected:
 
 	};

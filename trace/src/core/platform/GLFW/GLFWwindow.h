@@ -21,6 +21,9 @@ namespace trace {
 		virtual void ShutDown() override;
 		virtual void SetVsync(bool enable) override;
 		virtual void* GetNativeHandle() override;
+		virtual void* GetHandle() override;
+
+
 	private:
 		struct WindowData
 		{

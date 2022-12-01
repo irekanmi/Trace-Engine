@@ -7,6 +7,7 @@
 #include "core/platform/OpenGL/OpenGLContext.h"
 #include "core/platform/OpenGL/OpenGLDevice.h"
 #include "core/platform/Vulkan/VKContext.h"
+#include "core/platform/Vulkan/VKDevice.h"
 
 
 namespace trace {
@@ -49,8 +50,9 @@ namespace trace {
 
 			m_context = new VKContext();
 			m_context->Init();
-			// TODO: replace with vulkan device
-			m_device = new OpenGLDevice();
+
+			m_device = new VKDevice();
+			m_device->Init();
 
 			break;
 		}
@@ -68,6 +70,11 @@ namespace trace {
 		m_context->Update(deltaTime);
 	}
 
+	void Renderer::BeginFrame()
+	{
+		m_device->BeginFrame();
+	}
+
 	void Renderer::BeginScene()
 	{
 	}
@@ -76,15 +83,25 @@ namespace trace {
 	{
 	}
 
+	void Renderer::EndFrame()
+	{
+		m_device->EndFrame();
+	}
+
 	void Renderer::Draw(GBuffer* buffer, BufferUsage usage)
 	{
-		if (usage & BufferUsage::VERTEX_BUFFER)
+		switch (usage)
+		{
+		case BufferUsage::VERTEX_BUFFER:
 		{
 			m_device->DrawElements(buffer);
+			break;
 		}
-		else if (usage & BufferUsage::INDEX_BUFFER)
+		case BufferUsage::INDEX_BUFFER:
 		{
 			m_device->DrawIndexed(buffer);
+			break;
+		}
 		}
 	}
 

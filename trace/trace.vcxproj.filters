@@ -25,6 +25,9 @@
     <Filter Include="core\platform\OpenGL">
       <UniqueIdentifier>{76132F68-62A2-B831-0BC1-CC2CF72EC9D7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\platform\Vulkan">
+      <UniqueIdentifier>{C277E178-AE06-6B42-5725-7F3D43937BE8}</UniqueIdentifier>
+    </Filter>
     <Filter Include="core\platform\Windows">
       <UniqueIdentifier>{BC5C2DC6-28C9-E8C0-F1BC-801E5DE80A29}</UniqueIdentifier>
     </Filter>
@@ -99,6 +102,18 @@
     <ClInclude Include="src\core\platform\OpenGL\OpenGLDevice.h">
       <Filter>core\platform\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VKContext.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VKDevice.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VKtypes.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VkUtils.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Windows\Win32Window.h">
       <Filter>core\platform\Windows</Filter>
     </ClInclude>
@@ -121,9 +136,6 @@
       <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VKContext.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VKtypes.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VkUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -177,6 +189,15 @@
     <ClCompile Include="src\core\platform\OpenGL\OpenGLDevice.cpp">
       <Filter>core\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VKDevice.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp">
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
@@ -195,7 +216,5 @@
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp" />
   </ItemGroup>
 </Project>

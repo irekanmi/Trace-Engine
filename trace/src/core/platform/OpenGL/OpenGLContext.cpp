@@ -96,7 +96,7 @@ namespace trace {
 		{
 			wglMakeCurrent(NULL, NULL);
 			wglDeleteContext(m_win32data->openGLContext);
-			ReleaseDC((HWND)Application::get_instance()->GetWindow()->GetNativeHandle(), m_win32data->deviceContext);
+			ReleaseDC((HWND)m_winHandle, m_win32data->deviceContext);
 
 
 			delete m_win32data;

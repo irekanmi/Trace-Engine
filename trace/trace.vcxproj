@@ -149,9 +149,6 @@
     <ClInclude Include="src\core\Layer.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VKContext.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VKtypes.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VkUtils.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\core\events\Events.h" />
@@ -166,6 +163,10 @@
     <ClInclude Include="src\core\platform\OpenGL\OpenGLBuffer.h" />
     <ClInclude Include="src\core\platform\OpenGL\OpenGLContext.h" />
     <ClInclude Include="src\core\platform\OpenGL\OpenGLDevice.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VKContext.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VKDevice.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VKtypes.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VkUtils.h" />
     <ClInclude Include="src\core\platform\Windows\Win32Window.h" />
     <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
     <ClInclude Include="src\render\GBuffer.h" />
@@ -180,8 +181,6 @@
     <ClCompile Include="src\core\Layer.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
     <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
@@ -197,6 +196,9 @@
     <ClCompile Include="src\core\platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="src\core\platform\OpenGL\OpenGLContext.cpp" />
     <ClCompile Include="src\core\platform\OpenGL\OpenGLDevice.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VKDevice.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp" />
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp" />
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp" />
     <ClCompile Include="src\render\GBuffer.cpp" />

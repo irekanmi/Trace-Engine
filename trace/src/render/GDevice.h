@@ -21,6 +21,9 @@ namespace trace {
 		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) = 0;
 		virtual void ShutDown() = 0;
 
+		virtual void BeginFrame() = 0;
+		virtual void EndFrame() = 0;
+
 		virtual void* GetNativePtr() { return nullptr; }
 
 	private:

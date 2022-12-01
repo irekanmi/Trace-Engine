@@ -247,6 +247,7 @@ namespace trace
 			m_client_update(0.0f);
 
 			//___________________//
+			renderer->BeginFrame();
 #if 0
 			renderer->BeginScene();
 			
@@ -259,7 +260,9 @@ namespace trace
 
 			renderer->EndScene();
 
-#endif			
+#endif		
+
+			renderer->EndFrame();
 
 			renderer->Update(0.0f);
 			input->Update(0.0f);

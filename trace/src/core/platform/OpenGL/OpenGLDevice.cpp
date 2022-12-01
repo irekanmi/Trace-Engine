@@ -35,4 +35,10 @@ namespace trace {
 	void OpenGLDevice::ShutDown()
 	{
 	}
+	void OpenGLDevice::BeginFrame()
+	{
+	}
+	void OpenGLDevice::EndFrame()
+	{
+	}
 }

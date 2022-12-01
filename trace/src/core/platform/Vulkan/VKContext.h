@@ -20,7 +20,7 @@ namespace trace {
 		virtual void ShutDown() override;
 
 	private:
-		VkHandle m_handle;
+		VkHandle* m_handle;
 
 	protected:
 
