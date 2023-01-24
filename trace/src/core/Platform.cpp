@@ -26,7 +26,7 @@ namespace trace {
 		}
 		}
 
-		TRC_ASSERT(false, " Platform type has to be specified ");
+		TRC_ASSERT(false, "A vaild platform type has to be specified ");
 		return nullptr;
 
 	}
@@ -59,17 +59,17 @@ namespace trace {
 		TRC_ASSERT(false, " Platform type has to be specified ");
 	}
 
-	const char** Platform::GetExtensions(uint32_t& count)
+	void Platform::GetExtensions(uint32_t& count, eastl::vector<const char*>& extensions)
 	{
 
 		switch (Platform::s_api)
 		{
 		case PlatformAPI::WINDOWS:
 		{
-			const char* ret[] = { "VK_KHR_win32_surface" };
+			extensions.push_back("VK_KHR_win32_surface");
 			count = 1;
 
-			return ret;
+			return;
 		}
 		}
 

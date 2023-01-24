@@ -15,19 +15,19 @@ struct PhyScr
 
 /* 
 
-		createInstance();
-		setupDebugMessenger();
-		createSurface();
-		pickPhysicalDevice();
-		createLogicalDevice();
-		createSwapChain();
-		createImageViews();
-		createRenderpass();
+		createInstance();	|_/
+		setupDebugMessenger();	|_/
+		createSurface();	|_/
+		pickPhysicalDevice();	|_/
+		createLogicalDevice();	|_/
+		createSwapChain();	|_/
+		createImageViews(); |_/
+		createRenderpass(); |_/
 		createDescriptorSetLayout();
 		createGraphicsPipeline();
-		createDepthResources();
-		createFramebuffers();
-		createCommandPool();
+		createDepthResources();	|_/
+		createFramebuffers(); |_/
+		createCommandPool(); |_/
 		createTextureImage();
 		createTextureImageView();
 		createTextureSampler();
@@ -36,10 +36,43 @@ struct PhyScr
 		createUniformBuffers();
 		createDescriptorPool();
 		createDescriptorSet();
-		createCommandBuffer();
+		createCommandBuffer(); |_/
 		createSyncObjects();
 
 */
+
+static bool FindDepthFormat(trace::VKDeviceHandle* device)
+{
+	eastl::vector<VkFormat> formats = {
+		VK_FORMAT_D32_SFLOAT_S8_UINT,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_FORMAT_D16_UNORM_S8_UINT,
+		VK_FORMAT_D32_SFLOAT,
+		VK_FORMAT_D16_UNORM
+	};
+
+	uint32_t flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	for (auto& i : formats)
+	{
+		VkFormatProperties fmt_prop;
+		vkGetPhysicalDeviceFormatProperties(device->m_physicalDevice, i, &fmt_prop);
+
+		if ((fmt_prop.linearTilingFeatures & flags) == flags)
+		{
+			device->m_depthFormat = i;
+			return true;
+		}
+		else if ((fmt_prop.optimalTilingFeatures & flags) == flags)
+		{
+			device->m_depthFormat = i;
+			return true;
+		}
+
+	}
+
+	TRC_ERROR("Unable to find depth format");
+	return false;
+}
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 
@@ -95,8 +128,8 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
-extern trace::VkHandle g_Vkhandle;
-extern trace::VkDeviceHandle g_VkDevice;
+extern trace::VKHandle g_Vkhandle;
+extern trace::VKDeviceHandle g_VkDevice;
 
 namespace vk {
 
@@ -110,7 +143,7 @@ namespace vk {
 
 
 
-	VkResult _CreateInstance(trace::VkHandle* instance)
+	VkResult _CreateInstance(trace::VKHandle* instance)
 	{
 		VkApplicationInfo app_info = {};
 		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -123,7 +156,8 @@ namespace vk {
 
 
 		uint32_t ext_count = 0;
-		const char** plat_ext = trace::Platform::GetExtensions(ext_count);
+		eastl::vector<const char*> plat_ext;
+		trace::Platform::GetExtensions(ext_count, plat_ext);
 
 		eastl::vector<const char*> extensions;
 
@@ -194,7 +228,7 @@ namespace vk {
 		return vkCreateInstance(&create_info, instance->m_alloc_callback, &instance->m_instance);
 	}
 
-	void _DestroyInstance(trace::VkHandle* instance)
+	void _DestroyInstance(trace::VKHandle* instance)
 	{
 		vkDestroyInstance(instance->m_instance, instance->m_alloc_callback);
 	}
@@ -231,7 +265,7 @@ namespace vk {
 		return found;
 	}
 
-	void EnableValidationlayers(trace::VkHandle* instance)
+	void EnableValidationlayers(trace::VKHandle* instance)
 	{
 
 		uint32_t layer_count = 0;
@@ -267,19 +301,24 @@ namespace vk {
 		create_info.pfnUserCallback = debugCallback;
 		create_info.pUserData = nullptr; // Optional
 
+#ifdef TRC_DEBUG_BUILD
 		VkResult res = CreateDebugUtilsMessengerEXT(instance->m_instance, &create_info, instance->m_alloc_callback, &instance->m_debugutils);
 
 		VK_ASSERT(res);
+#endif
 
 	}
 
-	void DisableValidationlayers(trace::VkHandle* instance)
+	void DisableValidationlayers(trace::VKHandle* instance)
 	{
+#ifdef TRC_DEBUG_BUILD
 		DestroyDebugUtilsMessengerEXT(instance->m_instance, instance->m_debugutils, instance->m_alloc_callback);
+#endif
 	}
 
-	VkResult _CreateDevice(trace::VkDeviceHandle* device, trace::VkHandle* instance)
+	VkResult _CreateDevice(trace::VKDeviceHandle* device, trace::VKHandle* instance)
 	{
+		device->frames_in_flight = 2;
 		device->m_physicalDevice = GetPhysicalDevice(instance);
 
 
@@ -428,18 +467,32 @@ namespace vk {
 		vkGetDeviceQueue(device->m_device, device->m_queues.graphics_queue, 0, &device->m_graphicsQueue);
 		vkGetDeviceQueue(device->m_device, device->m_queues.present_queue, 0, &device->m_presentQueue);
 		vkGetDeviceQueue(device->m_device, device->m_queues.transfer_queue, 0, &device->m_transferQueue);
-		TRC_INFO("Queues Acquired")
+		TRC_INFO("Queues Acquired");
+
+		TRC_ASSERT(FindDepthFormat(device), "DepthFormat not found");
+
+		VkCommandPoolCreateInfo graphics_pool_info = {};
+		graphics_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		graphics_pool_info.queueFamilyIndex = device->m_queues.graphics_queue;
+		graphics_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+		VK_ASSERT(vkCreateCommandPool(device->m_device, &graphics_pool_info, instance->m_alloc_callback, &device->m_graphicsCommandPool));
+		TRC_INFO("Graphics command pool created");
 
 		return device_created;
 	}
 
-	void _DestoryDevice(trace::VkDeviceHandle* device, trace::VkHandle* instance)
+	void _DestoryDevice(trace::VKDeviceHandle* device, trace::VKHandle* instance)
 	{
+		vkDestroyCommandPool(device->m_device, device->m_graphicsCommandPool, instance->m_alloc_callback);
+
 		vkDestroyDevice(device->m_device, instance->m_alloc_callback);
 	}
 
-	VkResult _CreateSurface(trace::VkHandle* instance)
+	VkResult _CreateSurface(trace::VKHandle* instance)
 	{
+		VkResult res = VK_ERROR_INITIALIZATION_FAILED;
+
 		switch (trace::Platform::s_api)
 		{
 		case trace::PlatformAPI::WINDOWS:
@@ -450,24 +503,29 @@ namespace vk {
 			create_info.hinstance = (HINSTANCE)trace::Platform::GetAppHandle();
 			create_info.hwnd = (HWND)trace::Application::s_instance->GetWindow()->GetNativeHandle();
 
-			return vkCreateWin32SurfaceKHR(instance->m_instance, &create_info, instance->m_alloc_callback, &instance->m_surface);
+			res = vkCreateWin32SurfaceKHR(instance->m_instance, &create_info, instance->m_alloc_callback, &instance->m_surface);
 
 			break;
 		}
+
+		default:
+		{
+			TRC_ASSERT(false, " Platform type has to be specified ");
 		}
 
-		TRC_ASSERT(false, " Platform type has to be specified ");
-		return VK_ERROR_INITIALIZATION_FAILED;
+		}
+
+		return res;
 	}
 
-	void _DestorySurface(trace::VkHandle* instance)
+	void _DestorySurface(trace::VKHandle* instance)
 	{
 
 		vkDestroySurfaceKHR(instance->m_instance, instance->m_surface, instance->m_alloc_callback);
 
 	}
 
-	VkPhysicalDevice GetPhysicalDevice(trace::VkHandle* instance)
+	VkPhysicalDevice GetPhysicalDevice(trace::VKHandle* instance)
 	{
 		uint32_t device_count = 0;
 		vkEnumeratePhysicalDevices(instance->m_instance, &device_count, nullptr);
@@ -498,7 +556,6 @@ namespace vk {
 
 	void RatePhysicalDevice(VkPhysicalDevice phy_device, uint32_t& score)
 	{
-		score;
 		
 		VkPhysicalDeviceProperties phy_prop;
 		VkPhysicalDeviceFeatures phy_feat;
@@ -568,10 +625,11 @@ namespace vk {
 		return;
 	}
 
-	VkResult _CreateSwapchain(trace::VkHandle* instance, trace::VkDeviceHandle* device, trace::VkSwapChain* swapchain, uint32_t width, uint32_t height)
+	VkResult _CreateSwapchain(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, uint32_t width, uint32_t height)
 	{
+		
 		VkExtent2D extent = { width, height };
-		swapchain->frames_in_flight = 2;
+		//device->frames_in_flight = 2;
 
 
 		VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
@@ -605,7 +663,6 @@ namespace vk {
 		{
 			image_count = device->m_swapchainInfo.surface_capabilities.maxImageCount;
 		}
-		swapchain->image_count = image_count;
 
 
 		VkExtent2D min = device->m_swapchainInfo.surface_capabilities.minImageExtent;
@@ -644,14 +701,615 @@ namespace vk {
 		}
 
 		VkResult swapchain_create_result = vkCreateSwapchainKHR(device->m_device, &create_info, instance->m_alloc_callback, &swapchain->m_handle);
+		VK_ASSERT(swapchain_create_result);
 
+		device->m_frameBufferWidth = width;
+		device->m_frameBufferHeight = height;
+
+		TRC_TRACE("Obtaining Vulkan swapchain images...");
+		image_count = 0;
+		vkGetSwapchainImagesKHR(device->m_device, swapchain->m_handle, &image_count, nullptr);
+		eastl::vector<VkImage> swap_images(image_count);
+		vkGetSwapchainImagesKHR(device->m_device, swapchain->m_handle, &image_count, swap_images.data());
+
+		swapchain->image_count = image_count;
+		swapchain->m_images = swap_images;
+		TRC_INFO("Vulkan swapchain images obtained");
+
+		TRC_TRACE("Creating Vulkan Swapchain image views...");
+		swapchain->m_imageViews.resize(image_count);
+		int n = 0;
+		for (auto& i : swapchain->m_images)
+		{
+			_CreateImageView(instance, device, &swapchain->m_imageViews[n], swapchain->m_format.format, VK_IMAGE_ASPECT_COLOR_BIT, &swapchain->m_images[n]);
+			n++;
+		}
+		TRC_INFO("Vulkan Swapchain image views created");
+
+		_CreateImage(
+			instance,
+			device,
+			&swapchain->m_depthimage,
+			device->m_depthFormat,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			VK_IMAGE_ASPECT_DEPTH_BIT,
+			extent.width,
+			extent.height
+		);
+
+		_CreateImageView(instance, device, &swapchain->m_depthimage.m_view, device->m_depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &swapchain->m_depthimage.m_handle);
 
 		return swapchain_create_result;
 	}
 
-	void _DestroySwapchain(trace::VkHandle* instance, trace::VkDeviceHandle* device, trace::VkSwapChain* swapchain)
+	void _DestroySwapchain(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain)
 	{
+		vkDeviceWaitIdle(device->m_device);
+		_DestroyImage(instance, device, &swapchain->m_depthimage);
+
+		for (auto& i : swapchain->m_imageViews)
+		{
+			_DestroyImageView(instance, device, &i);
+		}
+
 		vkDestroySwapchainKHR(device->m_device, swapchain->m_handle, instance->m_alloc_callback);
+	}
+
+	VkResult _RecreateSwapchain(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, uint32_t width, uint32_t height)
+	{
+		_DestroySwapchain(instance, device, swapchain);
+		return _CreateSwapchain(instance, device, swapchain, width, height);
+	}
+
+	bool _AcquireSwapchainImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, VkSemaphore image_acquired_sem, trace::VKFence* fence, uint32_t* image_index, uint32_t timeout_ns)
+	{
+		VkFence _fence = VK_NULL_HANDLE;
+		if (fence)
+		{
+			_fence = fence->m_handle;
+		}
+
+		VkResult result = vkAcquireNextImageKHR(device->m_device, swapchain->m_handle, timeout_ns, image_acquired_sem, _fence, image_index);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			_RecreateSwapchain(instance, device, swapchain, device->m_frameBufferWidth, device->m_frameBufferHeight);
+			return false;
+		}
+		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		{
+			TRC_CRITICAL(" Failed to acquire swapchain image ");
+			return false;
+		}
+
+		return true;
+	}
+
+	void _PresentSwapchainImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, VkQueue graphics_queue, VkQueue present_queue, VkSemaphore render_complete, uint32_t* present_image_index)
+	{
+
+		VkPresentInfoKHR present_info = {};
+		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.swapchainCount = 1;
+		present_info.pSwapchains = &swapchain->m_handle;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = &render_complete;
+		present_info.pImageIndices = present_image_index;
+		present_info.pResults = nullptr;
+
+		VkResult result = vkQueuePresentKHR(present_queue, &present_info);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			_RecreateSwapchain(instance, device, swapchain, device->m_frameBufferWidth, device->m_frameBufferHeight);
+		}
+		else if (result != VK_SUCCESS)
+		{
+			TRC_CRITICAL("Failed to present swapchain image");
+		}
+
+		return;
+	}
+
+	VkResult _CreateImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* out_image, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memory_prop, VkImageAspectFlags aspect_flags, uint32_t width, uint32_t height)
+	{
+		VkImageCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		create_info.imageType = VK_IMAGE_TYPE_2D;
+		create_info.extent.width = width;
+		create_info.extent.height = height;
+		create_info.extent.depth = 1;
+		create_info.format = format;
+		create_info.tiling = tiling;
+		create_info.arrayLayers = 1;	// TODO: Configurable
+		create_info.mipLevels = 4;	// TODO: Configurable
+		create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+		create_info.usage = usage;
+		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		
+
+		VkResult result = vkCreateImage(device->m_device, &create_info, instance->m_alloc_callback, &out_image->m_handle);
+		VK_ASSERT(result);
+
+		out_image->m_width = width;
+		out_image->m_height = height;
+
+		VkMemoryRequirements mem_req;
+		vkGetImageMemoryRequirements(device->m_device, out_image->m_handle, &mem_req);
+
+		uint32_t heap_index = FindMemoryIndex(device, mem_req.memoryTypeBits, memory_prop);
+		if (heap_index == -1)
+		{
+			TRC_ERROR("Required memory type not found, vulkan image not valid");
+		}
+
+		VkMemoryAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		alloc_info.allocationSize = mem_req.size;
+		alloc_info.memoryTypeIndex = heap_index;
+
+		VK_ASSERT(vkAllocateMemory(device->m_device, &alloc_info, instance->m_alloc_callback, &out_image->m_mem));
+
+		vkBindImageMemory(device->m_device, out_image->m_handle, out_image->m_mem, 0); // TODO : Configurable Offset
+
+		return result;
+	}
+
+	VkResult _CreateImageView(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkImageView* out_image_view, VkFormat format, VkImageAspectFlags aspect_flags, VkImage* image)
+	{
+		VkImageViewCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		create_info.format = format;
+		create_info.viewType = VK_IMAGE_VIEW_TYPE_2D; // TODO: Configurable view type
+		create_info.image = (*image);
+		create_info.subresourceRange.aspectMask = aspect_flags;
+		create_info.subresourceRange.baseArrayLayer = 0; // TODO: Configurable array layer
+		create_info.subresourceRange.baseMipLevel = 0; // TODO: Configurable
+		create_info.subresourceRange.layerCount = 1; // TODO: Configurable
+		create_info.subresourceRange.levelCount = 1; // TODO: Configurable
+
+		VkResult result = (vkCreateImageView(device->m_device, &create_info, instance->m_alloc_callback, out_image_view));
+
+		VK_ASSERT(result);
+
+		return result;
+	}
+
+	void _DestroyImageView(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkImageView* image_view)
+	{
+		VkImageView& view = (*image_view);
+		if (view != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(device->m_device, view, instance->m_alloc_callback);
+			view = VK_NULL_HANDLE;
+			return;
+		}
+
+		TRC_ERROR("Vulkan Image is null : Can't destory invaild image");
+		return;
+	}
+
+	void _DestroyImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image)
+	{
+		if (image->m_handle != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(device->m_device, image->m_mem, instance->m_alloc_callback);
+			image->m_width = 0;
+			image->m_height = 0;
+			if (image->m_view != VK_NULL_HANDLE)
+			{
+				_DestroyImageView(instance, device, &image->m_view);
+			}
+			vkDestroyImage(device->m_device, image->m_handle, instance->m_alloc_callback);
+			image->m_handle = VK_NULL_HANDLE;
+		}
+	}
+
+	uint32_t FindMemoryIndex(trace::VKDeviceHandle* device, uint32_t memory_type, VkMemoryPropertyFlags mem_prop)
+	{
+		VkPhysicalDeviceMemoryProperties phy_mem_prop;
+		vkGetPhysicalDeviceMemoryProperties(device->m_physicalDevice, &phy_mem_prop);
+
+		for (uint32_t i = 0; i < phy_mem_prop.memoryTypeCount; i++)
+		{
+			if (memory_type & (1 << i) && (phy_mem_prop.memoryTypes[i].propertyFlags & mem_prop) == mem_prop)
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	void _AllocateCommandBuffer(trace::VKDeviceHandle* device, VkCommandPool command_pool, trace::VKCommmandBuffer* out_command_buffer, bool is_primary)
+	{
+
+		VkCommandBufferAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		alloc_info.commandPool = command_pool;
+		alloc_info.level = is_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+		alloc_info.commandBufferCount = 1;
+
+		VK_ASSERT(vkAllocateCommandBuffers(device->m_device, &alloc_info, &out_command_buffer->m_handle));
+		out_command_buffer->m_state = trace::CommandBufferState::COMMAND_READY;
+
+	}
+
+
+	void _FreeCommandBuffer(trace::VKDeviceHandle* device, VkCommandPool command_pool, trace::VKCommmandBuffer* command_buffer)
+	{
+		vkFreeCommandBuffers(device->m_device, command_pool, 1, &command_buffer->m_handle);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_NOT_ALLOCATED;
+		command_buffer->m_handle = VK_NULL_HANDLE;
+
+	}
+
+	void _BeginCommandBuffer(trace::VKCommmandBuffer* command_buffer, trace::CommandBufferUsage usage)
+	{
+
+		VkCommandBufferBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.flags = VK_NO_FLAGS;
+
+		switch (usage)
+		{
+		case trace::CommandBufferUsage::SINGLE_USE:
+		{
+			begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			break;
+		}
+
+		case trace::CommandBufferUsage::RENDER_PASS_CONTINUE:
+		{
+			begin_info.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+			break;
+		}
+
+		case trace::CommandBufferUsage::SIMULTANEOUS_USE:
+		{
+			begin_info.flags |= VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+			break;
+		}
+
+		}
+
+
+		vkBeginCommandBuffer(command_buffer->m_handle, &begin_info);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_RECORDING;
+
+	}
+
+	void _BeginCommandBufferSingleUse(trace::VKDeviceHandle* device,VkCommandPool command_pool ,trace::VKCommmandBuffer* command_buffer)
+	{
+		trace::CommandBufferUsage usage = trace::CommandBufferUsage::SINGLE_USE;
+		_AllocateCommandBuffer(device, command_pool, command_buffer);
+		_BeginCommandBuffer(command_buffer, usage);
+
+	}
+
+	void _EndCommandBuffer(trace::VKCommmandBuffer* command_buffer)
+	{
+		vkEndCommandBuffer(command_buffer->m_handle);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_RECORDING_ENDED;
+	}
+
+	void _EndCommandBufferSingleUse(trace::VKDeviceHandle* device, VkCommandPool command_pool, VkQueue queue, trace::VKCommmandBuffer* command_buffer)
+	{
+
+		_EndCommandBuffer(command_buffer);
+		
+		VkSubmitInfo submit_info = {};
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &command_buffer->m_handle;
+
+		VK_ASSERT(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+
+		VK_ASSERT(vkQueueWaitIdle(queue));
+
+		_FreeCommandBuffer(device, command_pool, command_buffer);
+
+	}
+
+	void _CommandBufferSubmitted(trace::VKCommmandBuffer* command_buffer)
+	{
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_SUBMMITED;
+	}
+
+	void _CommandBuffer_Reset(trace::VKCommmandBuffer* command_buffer)
+	{
+		vkResetCommandBuffer(command_buffer->m_handle, 0);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_READY;
+	}
+
+	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, eastl::vector<trace::VKCommmandBuffer>& buffers)
+	{
+
+		if (device->m_graphicsCommandBuffers.empty())
+		{
+			buffers.resize(device->m_swapChain.image_count);
+
+			for (uint32_t i = 0; i < device->m_swapChain.image_count; i++)
+			{
+				_AllocateCommandBuffer(device, command_pool, &buffers[i]);
+			}
+		}
+		else
+		{
+			device->m_graphicsCommandBuffers.clear();
+			buffers.resize(device->m_swapChain.image_count);
+
+			for (uint32_t i = 0; i < device->m_swapChain.image_count; i++)
+			{
+				_AllocateCommandBuffer(device, command_pool, &buffers[i]);
+			}
+		}
+
+	}
+
+	VkResult _CreateFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer, eastl::vector<VkImageView> attachments, trace::VKRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t attachment_count)
+	{
+		VkResult result;
+
+		frame_buffer->m_attachments.resize(attachment_count);
+		for (uint32_t i = 0; i < attachment_count; i++)
+		{
+			frame_buffer->m_attachments[i] = attachments[i];
+		}
+
+
+		VkFramebufferCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		create_info.renderPass = render_pass->m_handle;
+		create_info.layers = 1;
+		create_info.attachmentCount = attachment_count;
+		create_info.height = height;
+		create_info.width = width;
+		create_info.pAttachments = frame_buffer->m_attachments.data();
+		
+		
+		result = vkCreateFramebuffer(device->m_device, &create_info, instance->m_alloc_callback, &frame_buffer->m_handle);
+
+		VK_ASSERT(result);
+		frame_buffer->m_height = height;
+		frame_buffer->m_width = width;
+		frame_buffer->m_attachmentCount = attachment_count;
+
+		return result;
+	}
+
+	void _DestoryFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer)
+	{
+		vkDestroyFramebuffer(device->m_device, frame_buffer->m_handle, instance->m_alloc_callback);
+	}
+
+	void _RegenerateFrameBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, trace::VKRenderPass* render_pass)
+	{
+		swapchain->m_frameBuffers.resize(swapchain->image_count);
+		for (uint32_t i = 0; i < swapchain->image_count; i++)
+		{
+
+			uint32_t attachment_count = 2;
+			eastl::vector<VkImageView> attachments = {
+				swapchain->m_imageViews[i],
+				swapchain->m_depthimage.m_view
+			};
+
+			_CreateFrameBuffer(instance, device, &swapchain->m_frameBuffers[i], attachments, &device->m_renderPass, device->m_frameBufferWidth, device->m_frameBufferHeight, attachment_count);
+
+		}
+	}
+
+	void _CreateFence(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFence* out_fence, bool signaled)
+	{
+
+		VkFenceCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+		if (signaled)
+		{
+			create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+			out_fence->m_isSignaled = true;
+		}
+
+		VK_ASSERT(vkCreateFence(device->m_device, &create_info, instance->m_alloc_callback, &out_fence->m_handle));
+
+	}
+
+	bool _WaitFence(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFence* out_fence, uint64_t timeout_ns)
+	{
+		if (out_fence->m_isSignaled)
+			return true;
+
+		VkResult result = vkWaitForFences(device->m_device, 1, &out_fence->m_handle, VK_TRUE, timeout_ns);
+
+		switch (result)
+		{
+		case VK_SUCCESS:
+		{
+			out_fence->m_isSignaled = true;
+			return true;
+		}
+		case VK_TIMEOUT:
+		{
+			TRC_WARN("Fence timeout");
+			break;
+		}
+		// resolve for other response
+		}
+
+		return false;
+	}
+
+	void _DestroyFence(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFence* out_fence)
+	{
+		if (out_fence->m_handle)
+		{
+			vkDestroyFence(device->m_device, out_fence->m_handle, instance->m_alloc_callback);
+			return;
+		}
+		TRC_ERROR("Can't destory an invaild fence line: %d \n ==>Function: %s", __LINE__, __FUNCTION__);
+	}
+
+	void _FenceReset(trace::VKDeviceHandle* device, trace::VKFence* fence)
+	{
+		fence->m_isSignaled = false;
+		vkResetFences(device->m_device, 1, &fence->m_handle);
+	}
+
+	VkResult _CreateRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKRenderPass* render_pass, glm::vec4 clear_color, glm::vec4 render_area, float depth_value, uint32_t stencil_value, trace::VKSwapChain* swapchain)
+	{
+		VkResult result = VK_ERROR_INITIALIZATION_FAILED;
+
+		uint32_t attachment_count = 2; // TODO: Configurable
+		eastl::vector<VkAttachmentDescription> attachments;
+		attachments.resize(attachment_count);
+
+		VkAttachmentDescription color_attachment = {};
+
+		color_attachment.samples = VK_SAMPLE_COUNT_1_BIT; // TODO: Configurable
+		color_attachment.format = swapchain->m_format.format;
+		color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+		//TODO: Check why values can't be assigned to by indexing
+		attachments[0] = color_attachment;
+
+		VkAttachmentReference color_attach_ref = {};
+		color_attach_ref.attachment = 0;
+		color_attach_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentDescription depth_attachment = {};
+
+		depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT; // TODO: Configurable
+		depth_attachment.format = device->m_depthFormat;
+		depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		
+		//TODO: Check why values can't be assigned to by indexing
+		attachments[1] = (depth_attachment);
+
+		VkAttachmentReference depth_attach_ref = {};
+		depth_attach_ref.attachment = 1;
+		depth_attach_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		// TODO: other attachent { resolve, input, preserve }
+
+		VkSubpassDescription subpass_info = {};
+		subpass_info.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass_info.colorAttachmentCount = 1;
+		subpass_info.pColorAttachments = &color_attach_ref;
+		subpass_info.pDepthStencilAttachment = &depth_attach_ref;
+
+		// TODO: Configurable
+		VkSubpassDependency subpass_dependency = {};
+		subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		subpass_dependency.dstSubpass = 0;
+		subpass_dependency.srcAccessMask = 0;
+		subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		subpass_dependency.dependencyFlags = 0;
+
+
+		VkRenderPassCreateInfo render_pass_info = {};
+		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		render_pass_info.dependencyCount = 1;
+		render_pass_info.pDependencies = &subpass_dependency;
+		render_pass_info.attachmentCount = attachment_count;
+		render_pass_info.pAttachments = attachments.data();
+		render_pass_info.subpassCount = 1;
+		render_pass_info.pSubpasses = &subpass_info;
+
+		result = vkCreateRenderPass(device->m_device, &render_pass_info, instance->m_alloc_callback, &render_pass->m_handle);
+
+		VK_ASSERT(result);
+		render_pass->clear_color = clear_color;
+		render_pass->depth_value = depth_value;
+		render_pass->stencil_value = stencil_value;
+		render_pass->render_area = render_area;
+
+
+		return result;
+	}
+
+	void _DestroyRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKRenderPass* render_pass)
+	{
+		vkDestroyRenderPass(device->m_device, render_pass->m_handle, instance->m_alloc_callback);
+	}
+
+	void _BeginRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKRenderPass* render_pass, trace::VKCommmandBuffer* command_buffer, VkFramebuffer framebuffer)
+	{
+
+		VkRenderPassBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		begin_info.renderPass = render_pass->m_handle;
+		begin_info.renderArea.offset.x = render_pass->render_area.x;
+		begin_info.renderArea.offset.y = render_pass->render_area.y;
+		begin_info.renderArea.extent.width = render_pass->render_area.z;
+		begin_info.renderArea.extent.height = render_pass->render_area.w;
+		begin_info.framebuffer = framebuffer;
+		
+		VkClearValue clear_colors[2] = {};
+		clear_colors[0].color.float32[0] = render_pass->clear_color.r;
+		clear_colors[0].color.float32[1] = render_pass->clear_color.g;
+		clear_colors[0].color.float32[2] = render_pass->clear_color.b;
+		clear_colors[0].color.float32[3] = render_pass->clear_color.a;
+
+		clear_colors[1].depthStencil.depth = render_pass->depth_value;
+		clear_colors[1].depthStencil.stencil = render_pass->stencil_value;
+
+		begin_info.clearValueCount = 2;
+		begin_info.pClearValues = clear_colors;
+
+		vkCmdBeginRenderPass(command_buffer->m_handle, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_IN_RENDER_PASS;
+		
+
+
+	}
+
+	void _EndRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer)
+	{
+		vkCmdEndRenderPass(command_buffer->m_handle);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_RECORDING;
+	}
+
+	bool _ResultIsSuccess(VkResult result)
+	{
+
+
+		switch (result)
+		{
+		case VK_SUCCESS:
+		{
+			return true;
+		}
+		}
+
+		return false;
+	}
+
+	const char* _GetResultString(VkResult result)
+	{
+		switch (result)
+		{
+		case VK_SUCCESS:
+		{
+			return "Successful";
+		}
+		}
+		return nullptr;
 	}
 
 

@@ -37,7 +37,7 @@ namespace trace {
 		void EnableFileLogging(const char* file_path);
 		
 		static Logger* get_instance();
-		static void shutdown();
+		void Shutdown();
 
 		template<typename ...Args>
 		void Trace(const char * message, Args ...args)

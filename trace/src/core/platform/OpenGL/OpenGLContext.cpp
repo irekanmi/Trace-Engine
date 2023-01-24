@@ -26,7 +26,7 @@ namespace trace {
 		{
 		case WindowType::GLFW_WINDOW:
 		{
-			glfwSwapBuffers((GLFWwindow*)m_winHandle);
+			glfwSwapBuffers((GLFWwindow*)Application::get_instance()->GetWindow()->GetHandle());
 			break;
 		}
 		case WindowType::WIN32_WINDOW:

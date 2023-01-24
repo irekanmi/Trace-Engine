@@ -76,7 +76,7 @@ namespace trace {
 		EventsSystem::shutdown();
 		SAFE_DELETE(EventsSystem::get_instance(), EventsSystem);
 
-		Logger::shutdown();
+		Logger::get_instance()->Shutdown();
 		SAFE_DELETE(Logger::get_instance(), Logger);
 
 	}

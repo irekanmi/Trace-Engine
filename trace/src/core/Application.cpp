@@ -12,8 +12,12 @@
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
 {
+	//TRC_INFO("size: %d, name: %s, file: %s, line: %d");
+	//printf("size: %d, name: %s, file: %s, line: %d \n", size, pName, file, line);
 	return new char[size];
 }
+
+// implement alignment
 void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
 {
 	return new char[size];
@@ -247,7 +251,6 @@ namespace trace
 			m_client_update(0.0f);
 
 			//___________________//
-			renderer->BeginFrame();
 #if 0
 			renderer->BeginScene();
 			
@@ -262,7 +265,11 @@ namespace trace
 
 #endif		
 
-			renderer->EndFrame();
+			if (renderer->BeginFrame())
+			{
+
+				renderer->EndFrame();
+			}
 
 			renderer->Update(0.0f);
 			input->Update(0.0f);
@@ -283,6 +290,7 @@ namespace trace
 
 
 		SAFE_DELETE(m_Window, Window);
+		m_LayerStack->Shutdown();
 		SAFE_DELETE(m_LayerStack, LayerStack);
 	}
 

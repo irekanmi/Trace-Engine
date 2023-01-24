@@ -18,7 +18,7 @@ namespace trace {
 		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
 		virtual void ShutDown() override;
 
-		virtual void BeginFrame() override;
+		virtual bool BeginFrame() override;
 		virtual void EndFrame() override;
 
 	private:

@@ -68,11 +68,18 @@ namespace trace {
 
 	}
 
-	void Logger::shutdown()
+	void Logger::Shutdown()
 	{
-		delete s_instance->m_console;
-		s_instance->m_console = nullptr;
-
+		if (file)
+		{
+			fclose(file);
+			file = nullptr;
+		}
+		if (this->m_console)
+		{
+			delete this->m_console;
+			this->m_console = nullptr;
+		}
 	}
 
 	
@@ -136,11 +143,7 @@ namespace trace {
 
 	Logger::~Logger()
 	{
-		if (file)
-		{
-			fclose(file);
-		}
-
+		Shutdown();
 	}
 
 }

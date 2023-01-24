@@ -20,7 +20,7 @@ namespace trace {
 
 		bool Init(RenderAPI api);
 		void Update(float deltaTime);
-		void BeginFrame();
+		bool BeginFrame();
 		void BeginScene();
 		void EndScene();
 		void EndFrame();

@@ -4,6 +4,7 @@
 #include "render/GPUtypes.h"
 #include "render/GDevice.h"
 #include "VKtypes.h"
+#include "core/events/Events.h"
 
 namespace trace {
 
@@ -21,13 +22,18 @@ namespace trace {
 		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
 		virtual void ShutDown() override;
 
-		virtual void BeginFrame() override;
+		virtual bool BeginFrame() override;
 		virtual void EndFrame() override;
 
+		void OnEvent(Event* p_Event);
+
 	private:
-		VkDeviceHandle* m_handle;
-		VkHandle* m_instance;
-		VkSwapChain m_swapChain;
+		bool recreateSwapchain();
+
+	private:
+		VKDeviceHandle* m_handle;
+		VKHandle* m_instance;
+
 
 	protected:
 

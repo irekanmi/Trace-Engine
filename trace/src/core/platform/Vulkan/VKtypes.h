@@ -4,6 +4,7 @@
 #include "core/io/Logging.h"
 #include "vulkan/vulkan.h"
 #include "EASTL/vector.h"
+#include "glm/glm.hpp"
 
 
 namespace trace {
@@ -13,6 +14,8 @@ namespace trace {
 #else
 #define VK_ASSERT(func) func
 #endif
+
+#define VK_NO_FLAGS 0
 
 	struct SwapchainInfo
 	{
@@ -31,17 +34,95 @@ namespace trace {
 		uint32_t compute_queue = -1;
 	};
 
-	struct VkSwapChain
+	enum CommandBufferUsage
+	{
+		NO_USE,
+		SINGLE_USE,
+		RENDER_PASS_CONTINUE,
+		SIMULTANEOUS_USE
+	};
+
+	enum CommandBufferState
+	{
+		COMMAND_READY,
+		COMMAND_RECORDING,
+		COMMAND_IN_RENDER_PASS,
+		COMMAND_RECORDING_ENDED,
+		COMMAND_SUBMMITED,
+		COMMAND_NOT_ALLOCATED
+	};
+
+	struct VKCommmandBuffer
+	{
+		VkCommandBuffer m_handle;
+		CommandBufferState m_state;
+//		CommandBufferUsage m_usage;
+	};
+
+	enum RenderPassState
+	{
+		READY,
+		RECORDING,
+		IN_RENDER_PASS,
+		RECORDING_ENDED,
+		SUBMMITED,
+		NOT_ALLOCATED
+	};
+
+	struct VKRenderPass
+	{
+		VkRenderPass m_handle;
+
+		glm::vec4 clear_color;
+		glm::vec4 render_area;
+
+		float depth_value;
+		uint32_t stencil_value;
+
+		RenderPassState m_state;
+	};
+
+	struct VKImage
+	{
+		VkImage m_handle = VK_NULL_HANDLE;
+		VkImageView m_view = VK_NULL_HANDLE;
+		VkDeviceMemory m_mem = VK_NULL_HANDLE;
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+	};
+
+	struct VKFrameBuffer
+	{
+		VkFramebuffer m_handle = VK_NULL_HANDLE;
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint32_t m_attachmentCount = 0;
+		eastl::vector<VkImageView> m_attachments = {};
+		VKRenderPass m_renderPass = {};
+	};
+
+	struct VKFence
+	{
+		VkFence m_handle = VK_NULL_HANDLE;
+		bool m_isSignaled = false;
+	};
+
+	struct VKSwapChain
 	{
 		VkSwapchainKHR m_handle;
 		VkSurfaceFormatKHR m_format;
+		VKImage m_depthimage;
+
 		eastl::vector<VkImage> m_images;
 		eastl::vector<VkImageView> m_imageViews;
+
 		uint32_t image_count;
-		uint8_t frames_in_flight;
+
+		eastl::vector<VKFrameBuffer> m_frameBuffers;
+
 	};
 
-	struct VkHandle
+	struct VKHandle
 	{
 		VkInstance m_instance;
 		VkAllocationCallbacks* m_alloc_callback = nullptr;
@@ -51,7 +132,7 @@ namespace trace {
 #endif
 	};
 
-	struct VkDeviceHandle
+	struct VKDeviceHandle
 	{
 		VkPhysicalDevice m_physicalDevice;
 		VkDevice m_device;
@@ -59,6 +140,32 @@ namespace trace {
 		VkQueue m_graphicsQueue;
 		VkQueue m_presentQueue;
 		VkQueue m_transferQueue;
+
+		VkFormat m_depthFormat;
+
+		eastl::vector<VKCommmandBuffer> m_graphicsCommandBuffers;
+		VkCommandPool m_graphicsCommandPool;
+
+		bool m_recreatingSwapcahin = false;
+
+		VKSwapChain m_swapChain;
+		VKRenderPass m_renderPass;
+
+
+		eastl::vector<VkSemaphore> m_imageAvailableSemaphores;
+		eastl::vector<VkSemaphore> m_queueCompleteSemaphores;
+
+		uint32_t m_numInFlightFence;
+		eastl::vector<VKFence> m_inFlightFence;
+
+		eastl::vector<VKFence*> m_imagesFence;
+
+		uint32_t m_frameBufferWidth;
+		uint32_t m_frameBufferHeight;
+
+		uint32_t frames_in_flight;
+		uint32_t m_currentFrame = 0;
+		uint32_t m_imageIndex;
 
 		QueueFamilyIndices m_queues;
 		VkPhysicalDeviceProperties m_properties;

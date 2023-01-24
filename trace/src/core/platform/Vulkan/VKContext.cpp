@@ -7,7 +7,7 @@
 #include "EASTL/array.h"
 #include "VkUtils.h"
 
-trace::VkHandle g_Vkhandle;
+trace::VKHandle g_Vkhandle;
 namespace trace {
 
 

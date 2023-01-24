@@ -92,7 +92,7 @@ public:
 
 	virtual void OnDetach() override
 	{
-
+		TRC_WARN("Sample Layer detached");
 	}
 
 	virtual void Update(float deltaTime) override
@@ -148,7 +148,7 @@ trace::trc_app_data trace::CreateApp()
 {
 	trace::trc_app_data app_data;
 	app_data.winprop = trace::WindowDecl();
-	app_data.wintype = trace::WindowType::GLFW_WINDOW;
+	app_data.wintype = trace::WindowType::WIN32_WINDOW;
 	app_data.graphics_api = trace::RenderAPI::Vulkan;
 	app_data.platform_api = trace::PlatformAPI::WINDOWS;
 	app_data.windowed = true;

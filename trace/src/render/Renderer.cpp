@@ -70,9 +70,9 @@ namespace trace {
 		m_context->Update(deltaTime);
 	}
 
-	void Renderer::BeginFrame()
+	bool Renderer::BeginFrame()
 	{
-		m_device->BeginFrame();
+		 return m_device->BeginFrame();
 	}
 
 	void Renderer::BeginScene()

@@ -35,8 +35,9 @@ namespace trace {
 	void OpenGLDevice::ShutDown()
 	{
 	}
-	void OpenGLDevice::BeginFrame()
+	bool OpenGLDevice::BeginFrame()
 	{
+		return true;
 	}
 	void OpenGLDevice::EndFrame()
 	{

@@ -23,8 +23,8 @@ namespace trace {
 			layer->OnDetach();
 			m_Layers.erase(it);
 			SAFE_DELETE(*it, it);
+			m_index--;
 		}
-		m_index--;
 	}
 
 	void LayerStack::PopOverLay(Layer* layer)
@@ -55,12 +55,17 @@ namespace trace {
 
 	void LayerStack::Shutdown()
 	{
-		for (auto& i : m_Layers)
+		int i = Size() - 1;
+		for (; i >= 0; --i)
 		{
-			if (i != nullptr)
+			Layer* &layer = m_Layers[i];
+			if (layer != nullptr)
 			{
-				SAFE_DELETE(i, i);
+				layer->OnDetach();
+				SAFE_DELETE(layer, layer);
 			}
 		}
+
+
 	}
 }

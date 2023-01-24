@@ -16,7 +16,7 @@ namespace trace {
 		static void* GetAppHandle();
 		static void ZeroMem(void* dst, uint32_t lenght);
 		static void Sleep(float milleseconds);
-		static const char** GetExtensions(uint32_t& count);
+		static void GetExtensions(uint32_t& count, eastl::vector<const char*>& extensions);
 		
 
 		static PlatformAPI s_api;
