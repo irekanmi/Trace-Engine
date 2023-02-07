@@ -15,5 +15,6 @@
 #include "core/input/Input.h"
 #include "core/Window.h"
 #include "core/Layer.h"
+#include "core/FileSystem.h"
 
 #include "render/GPUtypes.h"

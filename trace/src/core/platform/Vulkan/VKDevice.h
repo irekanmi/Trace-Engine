@@ -5,8 +5,13 @@
 #include "render/GDevice.h"
 #include "VKtypes.h"
 #include "core/events/Events.h"
+#include "VulkanShader.h"
+#include "VulkanBuffer.h"
+
+
 
 namespace trace {
+
 
 	class VKDevice : public GDevice
 	{
@@ -15,7 +20,7 @@ namespace trace {
 		VKDevice();
 		~VKDevice();
 
-		virtual void Init() override;
+		virtual bool Init() override;
 		virtual void DrawElements(GBuffer* vertex_buffer) override;
 		virtual void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) override;
 		virtual void DrawIndexed(GBuffer* index_buffer) override;
@@ -33,6 +38,21 @@ namespace trace {
 	private:
 		VKDeviceHandle* m_handle;
 		VKHandle* m_instance;
+
+		// temp------------
+		VKPipeline _pipeline;
+
+		VulkanShader Vert;
+		VulkanShader Frag;
+
+		eastl::vector<Vertex> m_vertices;
+		eastl::vector<uint32_t> m_indices;
+
+		VulkanBuffer vertex_buffer;
+		VulkanBuffer index_buffer;
+
+		//------------------
+
 
 
 	protected:

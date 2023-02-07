@@ -3,6 +3,9 @@
 #include "VKtypes.h"
 #include "EASTL/vector.h"
 #include "core/Window.h"
+#include "render/Graphics.h"
+#include "EASTL/map.h"
+#include <map>
 
 namespace vk {
 
@@ -76,7 +79,36 @@ namespace vk {
 	void _BeginRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKRenderPass* render_pass, trace::VKCommmandBuffer* command_buffer, VkFramebuffer framebuffer);
 	void _EndRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer);
 
+	// Pipeline
+	VkResult _CreatePipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, uint32_t view_port_count, VkViewport* view_ports, uint32_t scissor_count, VkRect2D* scissors, trace::PipelineStateDesc desc, trace::VKPipeline* out_pipeline);
+	void _DestroyPipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKPipeline* pipeline);
+
+	// Shaders
+	VkResult _CreateShader(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKShader* out_shader, trace::ShaderStage stage, std::vector<uint32_t>& code);
+	void _DestoryShader(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKShader* shader);
+
+	// Buffers
+	VkResult _CreateBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* out_buffer, trace::BufferInfo buffer_info);
+	void _DestoryBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer);
+	void _BindBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer);
+	void _BindBufferMem(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkBuffer buffer, VkDeviceMemory device_mem, uint32_t offset);
+	void _MapMemory(trace::VKDeviceHandle* device,void* data, VkDeviceMemory memory, uint32_t offset, uint32_t size, uint32_t flags = 0);
+	void _UnMapMemory(trace::VKDeviceHandle* device, VkDeviceMemory memory);
+	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t offset);
+
+
 	// Utils
 	bool _ResultIsSuccess(VkResult result);
 	const char* _GetResultString(VkResult result);
+	void parseInputLayout(trace::InputLayout& layout, VkVertexInputBindingDescription& binding, eastl::vector<VkVertexInputAttributeDescription>& attrs);
+	void parseRasterizerState(trace::RaterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info);
+	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info);
+	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
+	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment);
+
+	VkFormat convertFmt(trace::Format format);
+	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
+	VkPolygonMode convertPolygonMode(trace::FillMode fillmode);
+	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);
+	std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> convertBufferUsage(trace::BufferUsage usage);
 }

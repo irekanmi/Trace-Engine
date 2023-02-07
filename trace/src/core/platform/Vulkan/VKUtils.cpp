@@ -6,6 +6,7 @@
 #include "core/Application.h"
 #include "vulkan/vulkan_win32.h"
 #include "EASTL/map.h"
+#include "VulkanShader.h"
 
 struct PhyScr
 {
@@ -1002,6 +1003,7 @@ namespace vk {
 		_EndCommandBuffer(command_buffer);
 		
 		VkSubmitInfo submit_info = {};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_info.commandBufferCount = 1;
 		submit_info.pCommandBuffers = &command_buffer->m_handle;
 
@@ -1283,6 +1285,517 @@ namespace vk {
 	{
 		vkCmdEndRenderPass(command_buffer->m_handle);
 		command_buffer->m_state = trace::CommandBufferState::COMMAND_RECORDING;
+	}
+
+	VkResult _CreatePipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, uint32_t view_port_count, VkViewport* view_ports, uint32_t scissor_count, VkRect2D* scissors, trace::PipelineStateDesc desc, trace::VKPipeline* out_pipeline)
+	{
+		VkResult result = VK_ERROR_INITIALIZATION_FAILED;
+
+		eastl::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+
+		if (desc.vertex_shader != nullptr)
+		{
+			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.vertex_shader);
+			shader_stages.push_back(shader->m_handle.create_info);
+		}
+		if (desc.pixel_shader != nullptr)
+		{
+			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.pixel_shader);
+			shader_stages.push_back(shader->m_handle.create_info);
+		}
+
+		VkVertexInputBindingDescription binding;
+		eastl::vector<VkVertexInputAttributeDescription> attrs;
+
+		parseInputLayout(desc.input_layout, binding, attrs);
+	
+		VkPipelineVertexInputStateCreateInfo vert_info = {};
+		vert_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vert_info.vertexBindingDescriptionCount = 1; // TODO
+		vert_info.pVertexBindingDescriptions = &binding;
+		vert_info.vertexAttributeDescriptionCount = attrs.size();
+		vert_info.pVertexAttributeDescriptions = attrs.data();
+
+
+		VkPipelineInputAssemblyStateCreateInfo input_info = {};
+		input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		input_info.primitiveRestartEnable = VK_FALSE; // TODO
+		input_info.topology = convertTopology(desc.topology);
+		
+
+		VkPipelineViewportStateCreateInfo viewport_info = {};
+		viewport_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewport_info.viewportCount = view_port_count;
+		viewport_info.pViewports = view_ports;
+		viewport_info.scissorCount = scissor_count;
+		viewport_info.pScissors = scissors;
+
+
+		VkPipelineRasterizationStateCreateInfo raster_info = {};
+		raster_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		parseRasterizerState( desc.rateriser_state,raster_info);
+
+		VkPipelineMultisampleStateCreateInfo multi_info = {};
+		multi_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		parseMultiState(multi_info);
+
+		/*
+		// TODO: Implement tesallation state
+		VkPipelineTessellationStateCreateInfo tess_info = {};
+		tess_info.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+		*/
+
+		// =============== TODO========
+		uint32_t dynamic_state_count = 3;
+
+		VkDynamicState dyn_states[] =
+		{
+			VK_DYNAMIC_STATE_LINE_WIDTH,
+			VK_DYNAMIC_STATE_SCISSOR,
+			VK_DYNAMIC_STATE_VIEWPORT
+		};
+		//===============================
+
+		VkPipelineDynamicStateCreateInfo dynamic_info = {};
+		dynamic_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamic_info.dynamicStateCount = dynamic_state_count;
+		dynamic_info.pDynamicStates = dyn_states;
+
+		VkPipelineDepthStencilStateCreateInfo depth_sten_info = {};
+		depth_sten_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		parseDepthStenState(desc.depth_sten_state, depth_sten_info);
+
+
+		VkPipelineColorBlendAttachmentState attach_state;
+		VkPipelineColorBlendStateCreateInfo color_blend_info = {};
+		color_blend_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		parseColorBlendState(desc.blend_state, color_blend_info, attach_state);
+
+		// TODO: complete pipeline layout creation info
+		VkPipelineLayoutCreateInfo layout_info = {};
+		layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		layout_info.setLayoutCount = 0;
+		layout_info.pSetLayouts = nullptr;
+		
+		result = vkCreatePipelineLayout(
+			device->m_device,
+			&layout_info,
+			instance->m_alloc_callback,
+			&out_pipeline->m_layout
+		);
+
+		VK_ASSERT(result);
+
+		VkGraphicsPipelineCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		create_info.pColorBlendState = &color_blend_info;
+		create_info.pDepthStencilState = &depth_sten_info;
+		create_info.pDynamicState = &dynamic_info;
+		create_info.pInputAssemblyState = &input_info;
+		create_info.pMultisampleState = &multi_info;
+		create_info.pRasterizationState = &raster_info;
+		create_info.pTessellationState = nullptr;
+		create_info.pVertexInputState = &vert_info;
+		create_info.pViewportState = &viewport_info;
+		create_info.renderPass = device->m_renderPass.m_handle; // TODO: Maybe can be dynamic
+		create_info.basePipelineHandle = VK_NULL_HANDLE; // TODO:  Check Docs
+		create_info.basePipelineIndex = -1; // TODO
+		create_info.stageCount = shader_stages.size();
+		create_info.pStages = shader_stages.data();
+		create_info.subpass = 0; // TODO
+		create_info.layout = out_pipeline->m_layout;
+
+		result = vkCreateGraphicsPipelines(
+			device->m_device,
+			VK_NULL_HANDLE, // TODO: Check Docs for more info
+			1,
+			&create_info,
+			instance->m_alloc_callback,
+			&out_pipeline->m_handle
+			);
+
+		VK_ASSERT(result);
+
+		return result;
+	}
+
+	void _DestroyPipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKPipeline* pipeline)
+	{
+		if (pipeline->m_layout)
+		{
+			vkDestroyPipelineLayout(device->m_device, pipeline->m_layout, instance->m_alloc_callback);
+			if (pipeline->m_handle)
+			{
+				vkDestroyPipeline(device->m_device, pipeline->m_handle, instance->m_alloc_callback);
+				pipeline->m_handle = VK_NULL_HANDLE;
+			}
+
+			pipeline->m_layout = VK_NULL_HANDLE;
+		}
+		
+
+	}
+
+	VkResult _CreateShader(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKShader* out_shader, trace::ShaderStage stage, std::vector<uint32_t>& code)
+	{
+		VkResult result;
+
+		VkShaderModuleCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		create_info.codeSize = code.size() * 4;
+		create_info.pCode = code.data();
+
+		result = vkCreateShaderModule(device->m_device, &create_info, instance->m_alloc_callback, &out_shader->m_module);
+
+		VK_ASSERT(result);
+
+		out_shader->create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		out_shader->create_info.module = out_shader->m_module;
+		out_shader->create_info.pName = "main";
+		out_shader->create_info.stage = convertShaderStage(stage);
+		out_shader->create_info.pSpecializationInfo = nullptr; // TODO: Check Docs for more info
+
+
+		return result;
+	}
+
+	void _DestoryShader(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKShader* shader)
+	{
+		if (shader->m_module)
+		{
+			vkDestroyShaderModule(device->m_device, shader->m_module, instance->m_alloc_callback);
+		}
+	}
+
+	VkResult _CreateBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* out_buffer, trace::BufferInfo buffer_info)
+	{
+		VkResult result;
+
+		auto usage = convertBufferUsage(buffer_info.m_usage);
+
+		VkBufferCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // TODO: Check Docs for more info
+		create_info.size = buffer_info.m_size;
+		create_info.usage = usage.first;
+
+		result = vkCreateBuffer(device->m_device, &create_info, instance->m_alloc_callback, &out_buffer->m_handle);
+
+		VK_ASSERT(result);
+
+		VkMemoryRequirements mem_requirements;
+		vkGetBufferMemoryRequirements(device->m_device, out_buffer->m_handle, &mem_requirements);
+
+		VkMemoryAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		alloc_info.allocationSize = mem_requirements.size;
+		alloc_info.memoryTypeIndex = FindMemoryIndex(device, mem_requirements.memoryTypeBits, usage.second);
+
+		if (vkAllocateMemory(device->m_device, &alloc_info, instance->m_alloc_callback, &out_buffer->m_memory) != VK_SUCCESS)
+		{
+			TRC_ERROR("failed to allocate buffer memory");
+		}
+
+		_BindBufferMem(instance, device, out_buffer->m_handle, out_buffer->m_memory, 0);
+
+
+		return result;
+	}
+
+	void _DestoryBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer)
+	{
+
+		if (buffer->m_memory)
+		{
+			vkFreeMemory(device->m_device, buffer->m_memory, instance->m_alloc_callback);
+			buffer->m_memory = VK_NULL_HANDLE;
+		}
+
+		if (buffer->m_handle)
+		{
+			vkDestroyBuffer(device->m_device, buffer->m_handle, instance->m_alloc_callback);
+			buffer->m_handle = VK_NULL_HANDLE;
+		}
+
+	}
+
+	void _BindBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer)
+	{
+	}
+
+	void _BindBufferMem(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkBuffer buffer, VkDeviceMemory device_mem, uint32_t offset)
+	{
+		vkBindBufferMemory(device->m_device, buffer, device_mem, offset);
+	}
+
+	void _MapMemory(trace::VKDeviceHandle* device, void* data, VkDeviceMemory memory, uint32_t offset, uint32_t size, uint32_t flags)
+	{
+
+		vkMapMemory(device->m_device, memory, offset, size, flags, &data);
+
+
+	}
+
+	void _UnMapMemory(trace::VKDeviceHandle* device, VkDeviceMemory memory)
+	{
+		vkUnmapMemory(device->m_device, memory);
+	}
+
+	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t offset)
+	{
+		trace::VKCommmandBuffer cmd_buf;
+		_BeginCommandBufferSingleUse(device, device->m_graphicsCommandPool, &cmd_buf);
+
+		VkBufferCopy copy_region = {};
+		copy_region.size = size;
+		copy_region.dstOffset = 0;
+		copy_region.srcOffset = offset;
+
+		vkCmdCopyBuffer(cmd_buf.m_handle, src->m_handle, dst->m_handle, 1, &copy_region);
+
+		_EndCommandBufferSingleUse(device, device->m_graphicsCommandPool, device->m_graphicsQueue, &cmd_buf);
+
+
+
+
+	}
+
+	void parseInputLayout(trace::InputLayout& layout, VkVertexInputBindingDescription& binding, eastl::vector<VkVertexInputAttributeDescription>& attrs)
+	{
+		VkPipelineVertexInputStateCreateInfo result;
+
+		VkVertexInputRate input_rate = VK_VERTEX_INPUT_RATE_VERTEX;
+		switch (layout.input_class)
+		{
+		case trace::InputClassification::PER_VERTEX_DATA:
+		{
+			input_rate = VK_VERTEX_INPUT_RATE_VERTEX;
+			break;
+		}
+		case trace::InputClassification::PER_INSTANCE_DATA:
+		{
+			input_rate = VK_VERTEX_INPUT_RATE_INSTANCE;
+			break;
+		}
+		}
+
+		VkVertexInputBindingDescription& bind_desc = binding;
+		bind_desc.binding = 0; // TODO
+		bind_desc.stride = layout.stride;
+		bind_desc.inputRate = input_rate;
+
+		eastl::vector<VkVertexInputAttributeDescription>& attr_desc = attrs;
+
+		for (trace::InputLayout::Element& elem : layout.elements)
+		{
+			VkVertexInputAttributeDescription _att = {};
+			_att.binding = 0; // TODO
+			_att.location = elem.index;
+			_att.format = convertFmt(elem.format);
+			_att.offset = elem.offset;
+
+			attr_desc.push_back(_att);
+		}
+
+	}
+
+	void parseRasterizerState(trace::RaterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info)
+	{
+
+		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		create_info.lineWidth = 1.0f; // TODO
+		create_info.polygonMode = convertPolygonMode(raterizer.fill_mode);
+		create_info.cullMode = raterizer.cull_mode == trace::CullMode::FRONT ? VK_CULL_MODE_FRONT_BIT : VK_CULL_MODE_BACK_BIT;
+		create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // TODO
+		create_info.rasterizerDiscardEnable = VK_FALSE; // TODO
+		create_info.depthClampEnable = VK_FALSE; // TODO
+		create_info.depthBiasEnable = VK_FALSE; // TODO
+		create_info.depthBiasConstantFactor = 0.0f; // TODO
+		create_info.depthBiasClamp = 0.0f; // TODO
+		create_info.depthBiasSlopeFactor = 0.0f; // TODO
+
+
+
+	}
+
+	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info)
+	{
+		// --------------- TODO ----------------------
+		create_info.sType =
+			VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		create_info.sampleShadingEnable = VK_FALSE;
+		create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		create_info.minSampleShading = 1.0f; // Optional
+		create_info.pSampleMask = nullptr; // Optional
+		create_info.alphaToCoverageEnable = VK_FALSE; // Optional
+		create_info.alphaToOneEnable = VK_FALSE;
+		//--------------------------------------------
+
+	}
+
+	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info)
+	{
+
+		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		create_info.depthTestEnable = state.depth_test_enable ? VK_TRUE : VK_FALSE;
+		create_info.depthWriteEnable = state.depth_test_enable ? VK_TRUE : VK_FALSE;
+		create_info.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; // TODO
+		create_info.depthBoundsTestEnable = VK_FALSE; // TODO
+		create_info.minDepthBounds = state.minDepth; // Check docs
+		create_info.maxDepthBounds = state.maxDepth; // Chech docs
+		create_info.stencilTestEnable = state.stencil_test_enable ? VK_TRUE : VK_FALSE;
+		create_info.front = {}; // TODO
+		create_info.back = {}; // TODO
+
+	}
+
+	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment)
+	{
+
+		// ------------------ TODO----------------------------------------
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+			VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+			VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_FALSE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; //
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; //
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; //
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+		//------------------------------------------------------------------
+
+
+		// Read Through docs and check tutorials
+		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		create_info.logicOpEnable = VK_FALSE;
+		create_info.logicOp = VK_LOGIC_OP_COPY;
+		create_info.attachmentCount = 1;
+		create_info.pAttachments = &colorBlendAttachment;
+		create_info.blendConstants[0] = 0.0f;
+		create_info.blendConstants[1] = 0.0f;
+		create_info.blendConstants[2] = 0.0f;
+		create_info.blendConstants[3] = 0.0f;
+
+	}
+
+	VkFormat convertFmt(trace::Format format)
+	{
+		VkFormat result;
+
+		switch (format)
+		{
+		case trace::Format::R32G32B32_FLOAT:
+		{
+			result = VK_FORMAT_R32G32B32_SFLOAT;
+			break;
+		}
+		case trace::Format::R32G32B32_UINT:
+		{
+			result = VK_FORMAT_R32G32B32_UINT;
+			break;
+		}
+		case trace::Format::R32G32_FLOAT:
+		{
+			result = VK_FORMAT_R32G32_SFLOAT;
+			break;
+		}
+		case trace::Format::R32G32_UINT:
+		{
+			result = VK_FORMAT_R32G32_UINT;
+			break;
+		}
+		}
+
+		return result;
+	}
+
+	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology)
+	{
+		VkPrimitiveTopology result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+		switch (topology)
+		{
+		case trace::PrimitiveTopology::TRIANGLE_LIST:
+		{
+			result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			break;
+		}
+		case trace::PrimitiveTopology::TRIANGLE_STRIP:
+		{
+			result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+			break;
+		}
+		}
+
+		return result;
+	}
+
+	VkPolygonMode convertPolygonMode(trace::FillMode fillmode)
+	{
+		VkPolygonMode mode;
+
+		switch (fillmode)
+		{
+		case trace::FillMode::SOLID:
+		{
+			mode = VK_POLYGON_MODE_FILL;
+			break;
+		}
+		case trace::FillMode::WIREFRAME:
+		{
+			mode = VK_POLYGON_MODE_LINE;
+			break;
+		}
+		}
+
+		return mode;
+	}
+
+	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage)
+	{
+		VkShaderStageFlagBits result;
+
+		switch (stage)
+		{
+		case trace::ShaderStage::VERTEX_SHADER:
+		{
+			result = VK_SHADER_STAGE_VERTEX_BIT;
+			break;
+		}
+		case trace::ShaderStage::PIXEL_SHADER:
+		{
+			result = VK_SHADER_STAGE_FRAGMENT_BIT;
+			break;
+		}
+		}
+
+		return result;
+	}
+
+	std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> convertBufferUsage(trace::BufferUsage usage)
+	{
+		std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> result;
+
+		if (TRC_HAS_FLAG(usage, trace::BufferUsage::VERTEX_BUFFER))
+		{
+			result.first = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			result.second = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		}
+
+		if (TRC_HAS_FLAG(usage, trace::BufferUsage::INDEX_BUFFER))
+		{
+			result.first = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			result.second = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		}
+
+		if (TRC_HAS_FLAG(usage, trace::BufferUsage::STAGING_BUFFER))
+		{
+			result.first = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			result.second = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+
+		return result;
 	}
 
 	bool _ResultIsSuccess(VkResult result)

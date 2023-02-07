@@ -404,7 +404,6 @@ namespace trace {
 	}
 	void GLFW_Window::Update(float deltaTime)
 	{
-		glfwPollEvents();
 
 		InputSystem* input = InputSystem::get_instance();
 		for (int i = 0; i < GLFW_KEY_LAST + 1; i++)
@@ -434,6 +433,7 @@ namespace trace {
 		}
 
 
+		glfwPollEvents();
 	}
 	void GLFW_Window::ShutDown()
 	{

@@ -8,6 +8,7 @@
 #include "input\Input.h"
 #include "render/Renderer.h"
 #include "core/platform/Windows/Win32Window.h"
+#include "render/Graphics.h"
 
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -237,8 +238,8 @@ namespace trace
 
 		while (m_isRunning)
 		{
-			
 			m_Window->Update(0.0f);
+			
 
 			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
 			{

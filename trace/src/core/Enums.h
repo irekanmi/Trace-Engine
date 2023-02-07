@@ -20,3 +20,4 @@ constexpr auto _NAME_ = "TRACE";
 constexpr auto _ENGINE_NAME_ = "TRACE ENGINE";
 
 #define TRC_CLAMP(value, low, high) (value <= low) ? low : ( value >= high ) ? high : value
+#define TRC_HAS_FLAG(lhs, rhs) (lhs & rhs) == rhs ? true : false

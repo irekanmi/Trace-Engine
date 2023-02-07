@@ -6,6 +6,11 @@
 #include "core/Application.h"
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
+#include "core/input/Input.h"
+#include "core/FileSystem.h"
+#include "render/ShaderParser.h"
+#include "core/Coretypes.h"
+#include "render/Graphics.h"
 
 extern trace::VKHandle g_Vkhandle;
 trace::VKDeviceHandle g_VkDevice;
@@ -22,7 +27,7 @@ namespace trace {
 	{
 	}
 
-	void VKDevice::Init()
+	bool VKDevice::Init()
 	{
 		VK_ASSERT(vk::_CreateDevice(m_handle, m_instance));
 
@@ -38,7 +43,7 @@ namespace trace {
 			m_instance,
 			m_handle,
 			&m_handle->m_renderPass,
-			glm::vec4(0.0f, 0.0f, .2f, 1.0f),
+			glm::vec4(0.0f, 0.6f, .2f, 1.0f),
 			glm::vec4(0, 0, Application::get_instance()->GetWindow()->GetWidth(), Application::get_instance()->GetWindow()->GetHeight()),
 			1.0f,
 			0,
@@ -82,6 +87,197 @@ namespace trace {
 		}
 		
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(VKDevice::OnEvent));
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_MOUSE_MOVE, BIND_EVENT_FN(VKDevice::OnEvent));
+
+
+		// temp-----
+		
+		trace::FileHandle vert_shad;
+		trace::FileHandle frag_shad;
+
+		std::string vert_src;
+		std::string frag_src;
+
+		if (!trace::FileSystem::open_file("../assets/shaders/trace_core.shader.vert.glsl", trace::FileMode::READ, vert_shad))
+		{
+			TRC_ERROR("Failed to open file");
+		}
+
+		if (!trace::FileSystem::open_file("../assets/shaders/trace_core.shader.frag.glsl", trace::FileMode::READ, frag_shad))
+		{
+			TRC_ERROR("Failed to open file");
+		}
+
+		trace::FileSystem::read_all_lines(vert_shad, vert_src);
+		trace::FileSystem::read_all_lines(frag_shad, frag_src);
+
+		std::cout << vert_src;
+		std::cout << frag_src;
+
+		trace::FileSystem::close_file(vert_shad);
+		trace::FileSystem::close_file(frag_shad);
+
+
+		std::vector<uint32_t> vert_code = ShaderParser::glsl_to_spirv(vert_src, ShaderStage::VERTEX_SHADER);
+		std::vector<uint32_t> frag_code = ShaderParser::glsl_to_spirv(frag_src, ShaderStage::PIXEL_SHADER);
+
+		vk::_CreateShader(m_instance, m_handle, &Vert.m_handle, ShaderStage::VERTEX_SHADER, vert_code);
+		vk::_CreateShader(m_instance, m_handle, &Frag.m_handle, ShaderStage::PIXEL_SHADER, frag_code);
+
+		ColorBlendState blend_state;
+		blend_state.alpha_to_blend_coverage = false;
+
+		DepthStencilState depth_stenc_state;
+		depth_stenc_state.depth_test_enable = true;
+		depth_stenc_state.maxDepth = 1.0f;
+		depth_stenc_state.minDepth = 0.0f;
+		depth_stenc_state.stencil_test_enable = false;
+
+		InputLayout layout;
+		layout.stride = sizeof(Vertex);
+		layout.input_class = InputClassification::PER_VERTEX_DATA;
+		
+		InputLayout::Element _pos;
+		_pos.format = Format::R32G32B32_FLOAT;
+		_pos.index = 0;
+		_pos.offset = 0;
+		_pos.stride = sizeof(glm::vec3);
+
+		layout.elements.push_back(_pos);
+
+		InputLayout::Element _color;
+		_color.format = Format::R32G32B32_FLOAT;
+		_color.index = 1;
+		_color.offset = 12;
+		_color.stride = sizeof(glm::vec3);
+
+		layout.elements.push_back(_color);
+
+		RaterizerState raterizer_state;
+		raterizer_state.cull_mode = CullMode::BACK;
+		raterizer_state.fill_mode = FillMode::SOLID;
+
+		PipelineStateDesc desc ;
+		desc.blend_state = blend_state;
+		desc.depth_sten_state = depth_stenc_state;
+		desc.input_layout = layout;
+		desc.pixel_shader = &Frag;
+		desc.rateriser_state = raterizer_state;
+		desc.topology = PrimitiveTopology::TRIANGLE_LIST;
+		desc.vertex_shader = &Vert;
+
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = m_handle->m_frameBufferHeight;
+		viewport.width = m_handle->m_frameBufferWidth;
+		viewport.height = -(float)m_handle->m_frameBufferHeight;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor = {};
+		scissor.offset.x = scissor.offset.y = 0;
+		scissor.extent.width = m_handle->m_frameBufferWidth;
+		scissor.extent.height = m_handle->m_frameBufferHeight;
+
+		VkResult pipeline_result = vk::_CreatePipeline(
+			m_instance,
+			m_handle,
+			1,
+			&viewport,
+			1,
+			&scissor,
+			desc,
+			&_pipeline
+		);
+
+		if (pipeline_result == VK_SUCCESS)
+		{
+			TRC_INFO("Pipeline created  |__// ...");
+		}
+
+		// buffers
+
+		m_vertices = {
+			{ {-0.5f, -0.5f, 0.0f}, { 0.85f, 0.55f, 0.75f }},
+			{ {0.5f, -0.5f, 0.0f}, {0.55f, .75f, .85f} },
+			{ {0.5f, 0.5f, 0.0f}, {.75f, .25f, .55f} },
+			{ { -0.5f, 0.5f, 0.0f }, { 0.95f, 0.25f, .00f }}
+		};
+
+
+
+
+		m_indices = {
+			0, 1, 2,
+			0, 2, 3
+		};
+
+		BufferInfo vertex_buffer_info;
+		vertex_buffer_info.m_size = m_vertices.size() * sizeof(Vertex);
+		vertex_buffer_info.m_stide = sizeof(Vertex);
+		vertex_buffer_info.m_usage = BufferUsage::VERTEX_BUFFER;
+		vertex_buffer_info.m_data = m_vertices.data();
+
+		BufferInfo index_buffer_info;
+		index_buffer_info.m_size = m_indices.size() * sizeof(uint32_t);
+		index_buffer_info.m_stide = sizeof(uint32_t);
+		index_buffer_info.m_usage = BufferUsage::INDEX_BUFFER;
+		index_buffer_info.m_data = m_indices.data();
+		
+		VkResult buffer_create_result;
+
+		buffer_create_result = vk::_CreateBuffer(m_instance, m_handle, &vertex_buffer.m_handle, vertex_buffer_info);
+		buffer_create_result = vk::_CreateBuffer(m_instance, m_handle, &index_buffer.m_handle, index_buffer_info);
+
+		if (buffer_create_result == VK_SUCCESS)
+		{
+			TRC_INFO(" Buffer creation successful ");
+		}
+
+		VKBuffer stage_vert_buffer;
+
+		BufferInfo stage_vertex_buffer_info;
+		stage_vertex_buffer_info.m_size = m_vertices.size() * sizeof(Vertex);
+		stage_vertex_buffer_info.m_stide = sizeof(Vertex);
+		stage_vertex_buffer_info.m_usage = BufferUsage::STAGING_BUFFER;
+		stage_vertex_buffer_info.m_data = nullptr;
+
+		vk::_CreateBuffer(m_instance, m_handle, &stage_vert_buffer, stage_vertex_buffer_info);
+
+		void* data0;
+		vkMapMemory(m_handle->m_device, stage_vert_buffer.m_memory, 0, stage_vertex_buffer_info.m_size, 0, &data0);
+		memcpy(data0, vertex_buffer_info.m_data, vertex_buffer_info.m_size);
+		vkUnmapMemory(m_handle->m_device, stage_vert_buffer.m_memory);
+
+
+		vk::_CopyBuffer(m_instance, m_handle, &stage_vert_buffer, &vertex_buffer.m_handle, stage_vertex_buffer_info.m_size, 0);
+
+		vk::_DestoryBuffer(m_instance, m_handle, &stage_vert_buffer);
+
+		VKBuffer stage_frag_buffer;
+
+		BufferInfo stage_frag_buffer_info;
+		stage_frag_buffer_info.m_size = m_indices.size() * sizeof(uint32_t);
+		stage_frag_buffer_info.m_stide = sizeof(uint32_t);
+		stage_frag_buffer_info.m_usage = BufferUsage::STAGING_BUFFER;
+		stage_frag_buffer_info.m_data = nullptr;
+
+		vk::_CreateBuffer(m_instance, m_handle, &stage_frag_buffer, stage_frag_buffer_info);
+
+		void* data1;
+		vkMapMemory(m_handle->m_device, stage_frag_buffer.m_memory, 0, stage_frag_buffer_info.m_size, 0, &data1);
+		memcpy(data1, index_buffer_info.m_data, index_buffer_info.m_size);
+		vkUnmapMemory(m_handle->m_device, stage_frag_buffer.m_memory);
+
+		vk::_CopyBuffer(m_instance, m_handle, &stage_frag_buffer, &index_buffer.m_handle, stage_frag_buffer_info.m_size, 0);
+
+		vk::_DestoryBuffer(m_instance, m_handle, &stage_frag_buffer);
+
+		//----------
+
+
+
+		return true;
 	}
 
 	void VKDevice::DrawElements(GBuffer* vertex_buffer)
@@ -103,6 +299,20 @@ namespace trace {
 	void VKDevice::ShutDown()
 	{
 		vkDeviceWaitIdle(m_handle->m_device);
+
+
+		//temp--------------
+
+		vk::_DestoryBuffer(m_instance, m_handle, &vertex_buffer.m_handle);
+		vk::_DestoryBuffer(m_instance, m_handle, &index_buffer.m_handle);
+
+		vk::_DestoryShader(m_instance, m_handle, &Vert.m_handle);
+		vk::_DestoryShader(m_instance, m_handle, &Frag.m_handle);
+
+		vk::_DestroyPipeline(m_instance, m_handle, &_pipeline);
+
+		//-------------------
+
 
 		// Sync objects
 		for (uint32_t i = 0; i < m_handle->frames_in_flight; i++)
@@ -183,6 +393,17 @@ namespace trace {
 		m_handle->m_renderPass.render_area.z = m_handle->m_frameBufferWidth;
 		m_handle->m_renderPass.render_area.w = m_handle->m_frameBufferHeight;
 
+		//temp---------
+
+		vkCmdBindPipeline(command_buffer->m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.m_handle);
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(command_buffer->m_handle, 0, 1, &vertex_buffer.m_handle.m_handle, offsets);
+		vkCmdBindIndexBuffer(command_buffer->m_handle, index_buffer.m_handle.m_handle, 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdDrawIndexed(command_buffer->m_handle, 6, 1, 0, 0, 0);
+
+		//-------------
+
 		return true;
 	}
 
@@ -245,7 +466,30 @@ namespace trace {
 			m_handle->m_recreatingSwapcahin = true;
 			m_handle->m_frameBufferWidth = resize->m_width;
 			m_handle->m_frameBufferHeight = resize->m_height;
+			break;
+		}
 
+		case EventType::TRC_MOUSE_MOVE:
+		{
+			MouseMove* move = reinterpret_cast<MouseMove*>(p_Event);
+			
+			bool control_key = InputSystem::get_instance()->GetKeyState(Keys::KEY_LCONTROL) == KeyState::KEY_HELD || InputSystem::get_instance()->GetKeyState(Keys::KEY_RCONTROL) == KeyState::KEY_HELD || InputSystem::get_instance()->GetKeyState(Keys::KEY_CONTROL) == KeyState::KEY_HELD;
+			if (control_key)
+			{
+
+				float r = (float)(move->m_x / m_handle->m_frameBufferWidth);
+				float g = (float)(move->m_y / m_handle->m_frameBufferHeight);
+				float b = (g + r) / 2;
+				float a = (r + g + b) / 3;
+
+				m_handle->m_renderPass.clear_color.r = r;
+				m_handle->m_renderPass.clear_color.g = g;
+				m_handle->m_renderPass.clear_color.b = b;
+				m_handle->m_renderPass.clear_color.a = a;
+
+			}
+
+			break;
 		}
 		}
 

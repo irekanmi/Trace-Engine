@@ -11,7 +11,7 @@ namespace trace {
 		OpenGLDevice();
 		~OpenGLDevice();
 
-		virtual void Init() override;
+		virtual bool Init() override;
 		virtual void DrawElements(GBuffer* vertex_buffer) override;
 		virtual void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) override;
 		virtual void DrawIndexed(GBuffer* index_buffer) override;

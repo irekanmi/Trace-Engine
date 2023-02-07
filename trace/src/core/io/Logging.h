@@ -3,6 +3,7 @@
 #include "../Core.h"
 #include "../pch.h"
 #include "TrcConsole.h"
+#include "core/Platform.h"
 
 
 
@@ -131,7 +132,9 @@ namespace trace {
 
 				localtime_s(&pTime, &ctime);
 
-				char buf[1024]{ 0 };
+				//char buf[1024]{ 0 };
+				Platform::ZeroMem(buf, 1024 * 3);
+
 				sprintf(buf, msg, args...);
 
 				timeStr << "[" << level << "]";
@@ -163,6 +166,7 @@ namespace trace {
 		FILE* file;
 		bool file_logging;
 		static Logger* s_instance;
+		char* buf;
 		
 
 	};

@@ -70,6 +70,7 @@ namespace trace {
 
 	void Logger::Shutdown()
 	{
+		delete[] buf;
 		if (file)
 		{
 			fclose(file);
@@ -94,7 +95,7 @@ namespace trace {
 
 		file_logging = true;
 
-		filepath = "logs.txt";
+		filepath = "../logs.txt";
 
 
 
@@ -138,7 +139,7 @@ namespace trace {
 		file_logging(false)
 	{
 		
-
+		buf = new char[1024 * 3];
 	}
 
 	Logger::~Logger()

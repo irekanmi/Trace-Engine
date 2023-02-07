@@ -4,6 +4,8 @@
 #include <unordered_map>
 
 
+trace::FileHandle g_fileTest;
+
 class SampleOverLay : public trace::Layer
 {
 
@@ -132,6 +134,16 @@ void Start()
 	TRC_INFO("Client Start");
 	trace::Application::get_instance()->PushLayer(new SampleLayer);
 	trace::Application::get_instance()->PushOverLay(new SampleOverLay());
+
+	
+	if (!trace::FileSystem::open_file("f_test.txt", trace::FileMode::READ, g_fileTest))
+	{
+		TRC_ERROR("Failed to open file");
+	}
+
+	
+
+	trace::FileSystem::close_file(g_fileTest);
 }
 
 void Update(float deltaTime)

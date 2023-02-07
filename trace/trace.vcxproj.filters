@@ -51,6 +51,9 @@
     <ClInclude Include="src\core\Enums.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\FileSystem.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\Layer.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -114,6 +117,12 @@
     <ClInclude Include="src\core\platform\Vulkan\VkUtils.h">
       <Filter>core\platform\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanPipeline.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanShader.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Windows\Win32Window.h">
       <Filter>core\platform\Windows</Filter>
     </ClInclude>
@@ -132,13 +141,29 @@
     <ClInclude Include="src\render\GPUtypes.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\GPipeline.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GShader.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\Graphics.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\Renderer.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\ShaderParser.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\FileSystem.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Layer.cpp">
@@ -198,6 +223,12 @@
     <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp">
       <Filter>core\platform\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanPipeline.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanShader.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp">
       <Filter>core\platform\Windows</Filter>
     </ClCompile>
@@ -213,8 +244,18 @@
     <ClCompile Include="src\render\GDevice.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\GPipeline.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GShader.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\ShaderParser.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanBuffer.cpp" />
   </ItemGroup>
 </Project>

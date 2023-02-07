@@ -27,11 +27,8 @@ namespace trace {
 		void* m_data = nullptr;
 	};
 
-	struct Vertex
-	{
-		glm::vec3 pos;
-		glm::vec3 color;
-	};
+
+
 
 	enum RenderAPI
 	{

@@ -9,8 +9,9 @@ namespace trace {
 	OpenGLDevice::~OpenGLDevice()
 	{
 	}
-	void OpenGLDevice::Init()
+	bool OpenGLDevice::Init()
 	{
+		return true;
 	}
 	void OpenGLDevice::DrawElements(GBuffer* vertex_buffer)
 	{

@@ -26,6 +26,7 @@ namespace trace {
 
 	bool Renderer::Init(RenderAPI api)
 	{
+		bool result = false;
 	
 		GContext::s_API = api;
 		switch (api)
@@ -40,7 +41,7 @@ namespace trace {
 			}
 			m_context->Init();
 			m_device = new OpenGLDevice();
-			m_device->Init();
+			result = m_device->Init();
 			break;
 
 		}
@@ -52,17 +53,17 @@ namespace trace {
 			m_context->Init();
 
 			m_device = new VKDevice();
-			m_device->Init();
+			result = m_device->Init();
 
 			break;
 		}
 
 		default:
 			TRC_ASSERT(false, "Graphics context can not be null");
-			return false;
+			return result;
 		}
 
-		return true;
+		return result;
 	}
 
 	void Renderer::Update(float deltaTime)

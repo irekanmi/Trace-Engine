@@ -82,6 +82,24 @@ namespace trace {
 		RenderPassState m_state;
 	};
 
+	struct VKBuffer
+	{
+		VkBuffer m_handle = VK_NULL_HANDLE;
+		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+	};
+
+	struct VKPipeline
+	{
+		VkPipeline m_handle;
+		VkPipelineLayout m_layout;
+	};
+
+	struct VKShader
+	{
+		VkShaderModule m_module;
+		VkPipelineShaderStageCreateInfo create_info;
+	};
+
 	struct VKImage
 	{
 		VkImage m_handle = VK_NULL_HANDLE;

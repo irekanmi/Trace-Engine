@@ -8,6 +8,7 @@
 #include "render/GPUtypes.h"
 #include "EASTL/vector.h"
 #include "render/GBuffer.h"
+#include "render/Graphics.h"
 
 
 namespace trace

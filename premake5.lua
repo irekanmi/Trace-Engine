@@ -23,6 +23,7 @@ project "trace"
 	kind "StaticLib"
 	language "C++"
 	staticruntime "On"
+	cppdialect "C++17"
 
 	targetdir ("bin/" .. OutputDir .. "/%{prj.name}")
 	objdir ("bin-int/" .. OutputDir .. "/%{prj.name}")
@@ -61,12 +62,17 @@ project "trace"
 		"opengl32.lib",
 		"glew32s.lib",
 		"glfw3.lib",
-		"vulkan-1.lib"
+		"vulkan-1.lib",
+		"shaderc_combined.lib",
+		"spirv-cross-core.lib",
+		"spirv-cross-cpp.lib",
+		"spirv-cross-glsl.lib"
 	}	
 
 	filter "configurations:Debug"
 		symbols "On"
 		runtime "Debug"
+		buildoptions "/MD"
 
 	defines
 	{
@@ -112,6 +118,7 @@ project "TestApp"
 	kind "ConsoleApp"
 	language "C++"
 	location "TestApp"
+	cppdialect "C++17"
 	
 	
 	targetdir ( "bin/" .. OutputDir .. "/%{prj.name}" )		
@@ -156,6 +163,7 @@ project "TestApp"
 
 	filter "configurations:Debug"
 		symbols "On"
+		buildoptions "/MD"
 
 	filter "configurations:Release"
 		optimize "On"

@@ -17,6 +17,7 @@ ipch/
 *.vcxproj
 Debug/
 *.exe
+externals/
 
 #Code lite
 *.project

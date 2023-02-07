@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <sstream>
 #include <exception>
+#include <fstream>
 
 
 #include <string>

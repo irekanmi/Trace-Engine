@@ -14,7 +14,7 @@ namespace trace {
 		GDevice();
 		virtual ~GDevice();
 
-		virtual void Init() = 0;
+		virtual bool Init() = 0;
 		virtual void DrawElements(GBuffer* vertex_buffer) = 0;
 		virtual void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) = 0;
 		virtual void DrawIndexed(GBuffer* index_buffer) = 0;
