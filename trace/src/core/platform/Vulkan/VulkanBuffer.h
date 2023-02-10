@@ -19,6 +19,8 @@ namespace trace {
 
 		VKBuffer m_handle;
 	private:
+		VKHandle* m_instance;
+		VKDeviceHandle* m_device;
 
 	protected:
 

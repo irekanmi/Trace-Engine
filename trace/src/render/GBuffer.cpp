@@ -5,6 +5,7 @@
 #include "core/platform/OpenGL/OpenGLBuffer.h"
 #include "core/io/Logging.h"
 #include "Renderer.h"
+#include "core/platform/Vulkan/VulkanBuffer.h"
 
 namespace trace {
 
@@ -26,6 +27,12 @@ namespace trace {
 		case RenderAPI::OpenGL:
 		{
 			return new OpenGLBuffer(buffer_info);
+			break;
+		}
+
+		case RenderAPI::Vulkan:
+		{
+			return new VulkanBuffer(buffer_info);
 			break;
 		}
 

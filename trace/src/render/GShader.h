@@ -11,9 +11,9 @@ namespace trace {
 	{
 	public:
 		GShader();
-		~GShader();
+		virtual ~GShader();
 
-		static GShader* Create_(std::string& src);
+		static GShader* Create_(std::string& src, ShaderStage stage);
 		static GShader* Create_(FileHandle& file);
 
 	public:

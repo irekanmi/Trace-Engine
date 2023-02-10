@@ -7,6 +7,7 @@
 #include "core/events/Events.h"
 #include "VulkanShader.h"
 #include "VulkanBuffer.h"
+#include "VulkanPipeline.h"
 
 
 
@@ -27,6 +28,14 @@ namespace trace {
 		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
 		virtual void ShutDown() override;
 
+		virtual void UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0) override;
+		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0) override;
+		virtual void BindPipeline(GPipeline* pipeline) override;
+		virtual void BindVertexBuffer(GBuffer* buffer) override;
+		virtual void BindIndexBuffer(GBuffer* buffer) override;
+		virtual void Draw(uint32_t start_vertex, uint32_t count) override;
+		virtual void DrawIndexed(uint32_t first_index, uint32_t count) override;
+
 		virtual bool BeginFrame() override;
 		virtual void EndFrame() override;
 
@@ -39,19 +48,7 @@ namespace trace {
 		VKDeviceHandle* m_handle;
 		VKHandle* m_instance;
 
-		// temp------------
-		VKPipeline _pipeline;
 
-		VulkanShader Vert;
-		VulkanShader Frag;
-
-		eastl::vector<Vertex> m_vertices;
-		eastl::vector<uint32_t> m_indices;
-
-		VulkanBuffer vertex_buffer;
-		VulkanBuffer index_buffer;
-
-		//------------------
 
 
 

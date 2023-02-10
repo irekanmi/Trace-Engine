@@ -10,11 +10,14 @@ namespace trace {
 
 	public:
 		VulkanShader();
+		VulkanShader(std::string& src, ShaderStage stage);
 		~VulkanShader();
 
 		
 		VKShader m_handle;
 	private:
+		VKHandle* m_instance;
+		VKDeviceHandle* m_device;
 
 	protected:
 

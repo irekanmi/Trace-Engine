@@ -9,6 +9,8 @@
 #include "render/Renderer.h"
 #include "core/platform/Windows/Win32Window.h"
 #include "render/Graphics.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/glm.hpp"
 
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -112,13 +114,84 @@ namespace trace
 		m_client_start();
 		//______________________________//
 
+
+		trace::FileHandle vert_shad;
+		trace::FileHandle frag_shad;
+
+		std::string vert_src;
+		std::string frag_src;
+
+		if (!trace::FileSystem::open_file("../assets/shaders/trace_core.shader.vert.glsl", trace::FileMode::READ, vert_shad))
+		{
+			TRC_ERROR("Failed to open file");
+		}
+
+		if (!trace::FileSystem::open_file("../assets/shaders/trace_core.shader.frag.glsl", trace::FileMode::READ, frag_shad))
+		{
+			TRC_ERROR("Failed to open file");
+		}
+
+		trace::FileSystem::read_all_lines(vert_shad, vert_src);
+		trace::FileSystem::read_all_lines(frag_shad, frag_src);
+
+		std::cout << vert_src;
+		std::cout << frag_src;
+
+		trace::FileSystem::close_file(vert_shad);
+		trace::FileSystem::close_file(frag_shad);
+
+		VertShader = GShader::Create_(vert_src, ShaderStage::VERTEX_SHADER);
+		FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
+
+		ColorBlendState blend_state;
+		blend_state.alpha_to_blend_coverage = false;
+
+		DepthStencilState depth_stenc_state;
+		depth_stenc_state.depth_test_enable = true;
+		depth_stenc_state.maxDepth = 1.0f;
+		depth_stenc_state.minDepth = 0.0f;
+		depth_stenc_state.stencil_test_enable = false;
+
+		InputLayout _layout = Vertex::get_input_layout();
+
+		RaterizerState raterizer_state;
+		raterizer_state.cull_mode = CullMode::BACK;
+		raterizer_state.fill_mode = FillMode::SOLID;
+
+		Viewport vp = {};
+		vp.minDepth = 0.0f;
+		vp.maxDepth = 1.0f;
+		vp.width = GetWindow()->GetWidth();
+		vp.height = GetWindow()->GetHeight();
+		vp.x = 0;
+		vp.y = 0;
+
+		PipelineStateDesc desc;
+		desc.blend_state = blend_state;
+		desc.depth_sten_state = depth_stenc_state;
+		desc.input_layout = _layout;
+		desc.pixel_shader = FragShader;
+		desc.rateriser_state = raterizer_state;
+		desc.topology = PrimitiveTopology::TRIANGLE_LIST;
+		desc.vertex_shader = VertShader;
+		desc.view_port = vp;
+		
+		_pipeline = GPipeline::Create_(desc);
+
+		const float scale = 10;
+
+
 		m_vertices = {
-	{ {-0.5f, -0.5f, 0.0f}, { 0.85f, 0.55f, 0.75f }},
-	{ {0.5f, -0.5f, 0.0f}, {0.55f, .75f, .85f} },
-	{ {0.5f, 0.5f, 0.0f}, {.75f, .25f, .55f} },
-	{ {-.5f, .5f, .0f}, {0.45f, 0.56f, 0.67f }}
+			{ {-0.5f, -0.5f, 0.0f}, { 0.85f, 0.55f, 0.75f }},
+			{ {0.5f, -0.5f, 0.0f}, {0.55f, .75f, .85f} },
+			{ {0.5f, 0.5f, 0.0f}, {.75f, .25f, .55f} },
+			{ { -0.5f, 0.5f, 0.0f }, { 0.95f, 0.25f, .00f }}
 		};
 
+		for (auto& i : m_vertices)
+		{
+			i.pos *= scale;
+		}
 
 
 
@@ -126,6 +199,21 @@ namespace trace
 			0, 1, 2,
 			0, 2, 3
 		};
+
+		BufferInfo vertex_buffer_info;
+		vertex_buffer_info.m_size = m_vertices.size() * sizeof(Vertex);
+		vertex_buffer_info.m_stide = sizeof(Vertex);
+		vertex_buffer_info.m_usage = BufferUsage::VERTEX_BUFFER;
+		vertex_buffer_info.m_data = m_vertices.data();
+
+		BufferInfo index_buffer_info;
+		index_buffer_info.m_size = m_indices.size() * sizeof(uint32_t);
+		index_buffer_info.m_stide = sizeof(uint32_t);
+		index_buffer_info.m_usage = BufferUsage::INDEX_BUFFER;
+		index_buffer_info.m_data = m_indices.data();
+
+		VertexBuffer = GBuffer::Create_(vertex_buffer_info);
+		IndexBuffer = GBuffer::Create_(index_buffer_info);
 
 #if 0
 		std::string vert_src = R"(
@@ -235,6 +323,9 @@ namespace trace
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
 		
+		//Temp------------------------
+		renderer->UsePipeline(_pipeline);
+		//----------------------------
 
 		while (m_isRunning)
 		{
@@ -268,6 +359,22 @@ namespace trace
 
 			if (renderer->BeginFrame())
 			{
+				SceneGlobals scene_data = {};
+				scene_data.view = glm::identity<glm::mat4>();
+				static float z = -5.0f;
+				z -= 0.01f;
+
+				scene_data.view = glm::translate(scene_data.view, glm::vec3(.0f, .0f, z));
+				scene_data.projection = glm::identity<glm::mat4>();
+				scene_data.projection = glm::perspective(45.0f, 800.0f / 600.0f, 0.1f, 500.0f);
+
+				renderer->UpdateSceneGlobalData(scene_data);
+
+				renderer->BindPipeline(_pipeline);
+				renderer->BindVertexBuffer(VertexBuffer);
+				renderer->BindIndexBuffer(IndexBuffer);
+
+				renderer->DrawIndexed(0, 6);
 
 				renderer->EndFrame();
 			}
@@ -289,6 +396,18 @@ namespace trace
 		trace::ApplicationEnd app_end;
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
 
+
+		// Temp-----------------------------
+
+		delete _pipeline;
+
+		delete VertexBuffer;
+		delete IndexBuffer;
+
+		delete VertShader;
+		delete FragShader;
+
+		//----------------------------------
 
 		SAFE_DELETE(m_Window, Window);
 		m_LayerStack->Shutdown();

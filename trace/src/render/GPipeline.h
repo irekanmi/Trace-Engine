@@ -11,7 +11,7 @@ namespace trace {
 
 	public:
 		GPipeline();
-		~GPipeline();
+		virtual ~GPipeline();
 
 		PipelineStateDesc& GetDesc() { return m_desc; }
 

@@ -5,10 +5,16 @@
 #include "Window.h"
 #include "Layer.h"
 #include "Coretypes.h"
-#include "render/GPUtypes.h"
 #include "EASTL/vector.h"
+
+// temp -------------------------
+#include "render/GPUtypes.h"
 #include "render/GBuffer.h"
 #include "render/Graphics.h"
+#include "render/GPipeline.h"
+#include "render/GShader.h"
+
+// ------------------------------------
 
 
 namespace trace
@@ -48,11 +54,15 @@ namespace trace
 		eastl::vector<Vertex> m_vertices;
 		eastl::vector<uint32_t> m_indices;
 
-		// Temp
+		// Temp-----------------------------
 		GBuffer* VertexBuffer;
 		GBuffer* IndexBuffer;
 
-		uint32_t Shader;
+		GShader* VertShader;
+		GShader* FragShader;
+
+		GPipeline* _pipeline;
+		//------------------------------------
 
 	protected:
 		Window* m_Window;

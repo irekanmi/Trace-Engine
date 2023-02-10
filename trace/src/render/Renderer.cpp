@@ -40,7 +40,9 @@ namespace trace {
 				return false;
 			}
 			m_context->Init();
-			m_device = new OpenGLDevice();
+
+			// TODO: Implement OpenGl Device
+			//m_device = new OpenGLDevice();
 			result = m_device->Init();
 			break;
 
@@ -89,6 +91,11 @@ namespace trace {
 		m_device->EndFrame();
 	}
 
+	void Renderer::UsePipeline(GPipeline* pipeline)
+	{
+		m_device->m_pipeline = pipeline;
+	}
+
 	void Renderer::Draw(GBuffer* buffer, BufferUsage usage)
 	{
 		switch (usage)
@@ -117,6 +124,48 @@ namespace trace {
 		{
 			m_device->DrawIndexed(buffer);
 		}
+	}
+
+	void Renderer::UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot, uint32_t index)
+	{
+		m_device->UpdateSceneGlobalData(data, size, slot, index);
+	}
+
+	void Renderer::UpdateSceneGlobalData(SceneGlobals data, uint32_t slot, uint32_t index)
+	{
+		m_device->UpdateSceneGlobalData(data, slot, index);
+	}
+
+	void Renderer::BindPipeline(GPipeline* pipeline)
+	{
+		m_device->BindPipeline(pipeline);
+	}
+
+	void Renderer::BindVertexBuffer(GBuffer* buffer)
+	{
+		if (TRC_HAS_FLAG(buffer->GetUsage(), BufferUsage::VERTEX_BUFFER))
+		{
+			m_device->BindVertexBuffer(buffer);
+		}
+	}
+
+	void Renderer::BindIndexBuffer(GBuffer* buffer)
+	{
+		if (TRC_HAS_FLAG(buffer->GetUsage(), BufferUsage::INDEX_BUFFER))
+		{
+			m_device->BindIndexBuffer(buffer);
+		}
+
+	}
+
+	void Renderer::Draw(uint32_t start_vertex, uint32_t count)
+	{
+		m_device->Draw(start_vertex, count);
+	}
+
+	void Renderer::DrawIndexed(uint32_t first_index, uint32_t count)
+	{
+		m_device->DrawIndexed(first_index, count);
 	}
 
 	void Renderer::ShutDown()

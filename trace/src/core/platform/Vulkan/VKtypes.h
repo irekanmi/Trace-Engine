@@ -17,6 +17,12 @@ namespace trace {
 
 #define VK_NO_FLAGS 0
 
+	struct Setlayout
+	{
+		VkDescriptorSetLayout m_layout;
+		bool m_vaild;
+	};
+
 	struct SwapchainInfo
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
@@ -90,14 +96,23 @@ namespace trace {
 
 	struct VKPipeline
 	{
-		VkPipeline m_handle;
-		VkPipelineLayout m_layout;
+		VkPipeline m_handle = VK_NULL_HANDLE;
+		VkPipelineLayout m_layout = VK_NULL_HANDLE;
+
+		VkDescriptorSetLayoutBinding Scene_bindings[16] = {};
+		VKBuffer Scene_buffers[16] = {};
+		VkDescriptorSet Scene_sets[3] = {};
+		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
+
 	};
 
 	struct VKShader
 	{
-		VkShaderModule m_module;
-		VkPipelineShaderStageCreateInfo create_info;
+		VkShaderModule m_module = VK_NULL_HANDLE;
+		VkPipelineShaderStageCreateInfo create_info = {};
+		// TODO 
+		std::vector<uint32_t> m_code = {};
 	};
 
 	struct VKImage
@@ -111,12 +126,12 @@ namespace trace {
 
 	struct VKFrameBuffer
 	{
-		VkFramebuffer m_handle = VK_NULL_HANDLE;
 		uint32_t m_width = 0;
 		uint32_t m_height = 0;
 		uint32_t m_attachmentCount = 0;
-		eastl::vector<VkImageView> m_attachments = {};
+		VkFramebuffer m_handle = VK_NULL_HANDLE;
 		VKRenderPass m_renderPass = {};
+		eastl::vector<VkImageView> m_attachments = {};
 	};
 
 	struct VKFence

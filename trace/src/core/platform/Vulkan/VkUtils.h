@@ -105,10 +105,13 @@ namespace vk {
 	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info);
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment);
+	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline);
 
 	VkFormat convertFmt(trace::Format format);
 	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
 	VkPolygonMode convertPolygonMode(trace::FillMode fillmode);
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);
 	std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> convertBufferUsage(trace::BufferUsage usage);
+	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
+
 }

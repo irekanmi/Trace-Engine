@@ -12,7 +12,11 @@ namespace trace {
 		VulkanPipeline(PipelineStateDesc desc);
 		~VulkanPipeline();
 
+		VKPipeline m_handle;
 	private:
+		VKHandle* m_instance;
+		VKDeviceHandle* m_device;
+
 	protected:
 
 	};

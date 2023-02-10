@@ -8,11 +8,7 @@ namespace trace {
 
 	class GShader;
 
-	struct Vertex
-	{
-		glm::vec3 pos;
-		glm::vec3 color;
-	};
+	
 
 	enum class ShaderStage
 	{
@@ -108,7 +104,48 @@ namespace trace {
 		DepthStencilState depth_sten_state = {};
 		ColorBlendState blend_state = {};
 		PrimitiveTopology topology = PrimitiveTopology::NONE;
+		Viewport view_port = {};
 	};
 
+
+	struct Vertex
+	{
+		glm::vec3 pos;
+		glm::vec3 color;
+
+
+		static InputLayout get_input_layout()
+		{
+			InputLayout layout;
+			layout.stride = sizeof(Vertex);
+			layout.input_class = InputClassification::PER_VERTEX_DATA;
+
+			InputLayout::Element _pos;
+			_pos.format = Format::R32G32B32_FLOAT;
+			_pos.index = 0;
+			_pos.offset = offsetof(Vertex, pos);
+			_pos.stride = sizeof(glm::vec3);
+
+			layout.elements.push_back(_pos);
+
+			InputLayout::Element _color;
+			_color.format = Format::R32G32B32_FLOAT;
+			_color.index = 1;
+			_color.offset = offsetof(Vertex, color);
+			_color.stride = sizeof(glm::vec3);
+
+			layout.elements.push_back(_color);
+
+			return layout;
+		}
+
+	};
+
+	struct SceneGlobals
+	{
+		glm::mat4 view;
+		glm::mat4 projection;
+		glm::vec2 _test;
+	};
 
 }
