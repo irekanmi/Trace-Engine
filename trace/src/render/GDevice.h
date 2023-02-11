@@ -4,6 +4,7 @@
 #include "GBuffer.h"
 #include "GPipeline.h"
 #include "Graphics.h"
+#include "GTexture.h"
 
 
 namespace trace {
@@ -25,6 +26,8 @@ namespace trace {
 
 		virtual void UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0) = 0;
 		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0) = 0;
+		virtual void UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot = 1, uint32_t index = 0) = 0;
+		virtual void UpdateSceneGlobalTextures(GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) = 0;
 		virtual void BindPipeline(GPipeline* pipeline) = 0;
 		virtual void BindVertexBuffer(GBuffer* buffer) = 0;
 		virtual void BindIndexBuffer(GBuffer* buffer) = 0;

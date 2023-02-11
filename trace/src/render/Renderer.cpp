@@ -136,6 +136,11 @@ namespace trace {
 		m_device->UpdateSceneGlobalData(data, slot, index);
 	}
 
+	void Renderer::UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot, uint32_t index)
+	{
+		m_device->UpdateSceneGlobalTexture(texture, slot, index);
+	}
+
 	void Renderer::BindPipeline(GPipeline* pipeline)
 	{
 		m_device->BindPipeline(pipeline);

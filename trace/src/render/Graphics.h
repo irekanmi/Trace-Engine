@@ -36,8 +36,19 @@ namespace trace {
 		R32G32B32_FLOAT,
 		R32G32B32_UINT,
 		R32G32_FLOAT,
-		R32G32_UINT
+		R32G32_UINT,
+		R8G8B8A8_SNORM,
+		R8G8B8A8_SRBG,
+		R8G8B8_SRBG,
+		R8G8B8_SNORM
 	};
+
+	enum class InputClassification
+	{
+		PER_VERTEX_DATA,
+		PER_INSTANCE_DATA,
+	};
+
 
 	struct Viewport
 	{
@@ -49,11 +60,6 @@ namespace trace {
 		float maxDepth = 1.0f;
 	};
 
-	enum class InputClassification
-	{
-		PER_VERTEX_DATA,
-		PER_INSTANCE_DATA,
-	};
 
 	struct InputLayout
 	{
@@ -111,7 +117,7 @@ namespace trace {
 	struct Vertex
 	{
 		glm::vec3 pos;
-		glm::vec3 color;
+		glm::vec2 texCoord;
 
 
 		static InputLayout get_input_layout()
@@ -128,13 +134,13 @@ namespace trace {
 
 			layout.elements.push_back(_pos);
 
-			InputLayout::Element _color;
-			_color.format = Format::R32G32B32_FLOAT;
-			_color.index = 1;
-			_color.offset = offsetof(Vertex, color);
-			_color.stride = sizeof(glm::vec3);
+			InputLayout::Element _texCoord;
+			_texCoord.format = Format::R32G32_FLOAT;
+			_texCoord.index = 1;
+			_texCoord.offset = offsetof(Vertex, texCoord);
+			_texCoord.stride = sizeof(glm::vec2);
 
-			layout.elements.push_back(_color);
+			layout.elements.push_back(_texCoord);
 
 			return layout;
 		}

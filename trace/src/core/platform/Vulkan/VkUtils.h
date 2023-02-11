@@ -6,6 +6,8 @@
 #include "render/Graphics.h"
 #include "EASTL/map.h"
 #include <map>
+#include "render/GTexture.h"
+
 
 namespace vk {
 
@@ -43,7 +45,12 @@ namespace vk {
 	VkResult _CreateImageView(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkImageView* out_image_view, VkFormat format, VkImageAspectFlags aspect_flags, VkImage* image);
 	void _DestroyImageView(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkImageView* image_view);
 	void _DestroyImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image);
+	void _CopyBufferToImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, trace::VKBuffer* buffer);
+	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
+	// Samplers
+	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler);
+	void _DestroySampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkSampler& sampler);
 
 	uint32_t FindMemoryIndex(trace::VKDeviceHandle* device, uint32_t memory_type, VkMemoryPropertyFlags mem_prop);
 
@@ -111,6 +118,8 @@ namespace vk {
 	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
 	VkPolygonMode convertPolygonMode(trace::FillMode fillmode);
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);
+	VkSamplerAddressMode convertAddressMode(trace::AddressMode address_mode);
+	VkFilter convertFilter(trace::FilterMode filter);
 	std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> convertBufferUsage(trace::BufferUsage usage);
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
 

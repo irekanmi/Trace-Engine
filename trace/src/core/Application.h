@@ -13,6 +13,8 @@
 #include "render/Graphics.h"
 #include "render/GPipeline.h"
 #include "render/GShader.h"
+#include "render/Camera.h"
+#include "render/GTexture.h"
 
 // ------------------------------------
 
@@ -62,6 +64,10 @@ namespace trace
 		GShader* FragShader;
 
 		GPipeline* _pipeline;
+		Camera* _camera;
+
+		GTexture* _texture;
+
 		//------------------------------------
 
 	protected:

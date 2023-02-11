@@ -911,6 +911,149 @@ namespace vk {
 		}
 	}
 
+	void _CopyBufferToImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, trace::VKBuffer* buffer)
+	{
+
+		VkBufferImageCopy copy = {};
+		copy.bufferOffset = 0;
+		copy.bufferRowLength = 0;
+		copy.bufferImageHeight = 0;
+
+		copy.imageOffset = { 0 };
+		copy.imageExtent.depth = 1;
+
+		copy.imageExtent.width = image->m_width;
+		copy.imageExtent.height = image->m_height;
+
+		copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy.imageSubresource.baseArrayLayer = 0;
+		copy.imageSubresource.mipLevel = 0;
+		copy.imageSubresource.layerCount = 1;
+
+		
+
+		vkCmdCopyBufferToImage(
+			command_buffer->m_handle,
+			buffer->m_handle,
+			image->m_handle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&copy
+		);
+
+
+		
+
+	}
+
+	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer,trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
+	{
+
+		VkImageMemoryBarrier image_barrier = {};
+		image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_barrier.image = image->m_handle;
+		image_barrier.oldLayout = old_layout;
+		image_barrier.newLayout = new_layout;
+		image_barrier.srcQueueFamilyIndex = device->m_queues.graphics_queue;
+		image_barrier.dstQueueFamilyIndex = device->m_queues.graphics_queue;
+
+		image_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		image_barrier.subresourceRange.baseArrayLayer = 0;
+		image_barrier.subresourceRange.baseMipLevel = 0;
+		image_barrier.subresourceRange.layerCount = 1;
+		image_barrier.subresourceRange.levelCount = 1;
+
+		VkPipelineStageFlags src_stage_flag;
+		VkPipelineStageFlags dst_stage_flag;
+
+		if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+		{
+			image_barrier.srcAccessMask = 0;
+			image_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+			//TODO Check docs for more info
+			src_stage_flag = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dst_stage_flag = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}
+		else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		{
+			image_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			image_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			//TODO Check docs for more info
+			src_stage_flag = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			dst_stage_flag = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else
+		{
+			TRC_ERROR("Image tranfer layout not yet supported");
+			return false;
+		}
+
+		vkCmdPipelineBarrier(
+			command_buffer->m_handle,
+			src_stage_flag,
+			dst_stage_flag,
+			0,
+			0,
+			nullptr,
+			0,
+			nullptr,
+			1,
+			&image_barrier
+		);
+
+		return true;
+	}
+
+	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler)
+	{
+		VkResult result;
+
+		VkSamplerCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		create_info.addressModeU = convertAddressMode(desc.m_addressModeU);
+		create_info.addressModeV = convertAddressMode(desc.m_addressModeV);
+		create_info.addressModeW = convertAddressMode(desc.m_addressModeW);
+		create_info.anisotropyEnable = VK_TRUE;
+		create_info.maxAnisotropy = 16;
+		create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		create_info.unnormalizedCoordinates = VK_FALSE;
+		create_info.minFilter = convertFilter(desc.m_minFilterMode);
+		create_info.magFilter = convertFilter(desc.m_magFilterMode);
+		/// TODO Check Docs for more info
+		create_info.compareEnable = VK_FALSE;
+		create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+		create_info.maxLod = 0.0f;
+		create_info.minLod = 0.0f;
+		create_info.mipLodBias = 0.0f;
+		create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+		result = vkCreateSampler(
+			device->m_device,
+			&create_info,
+			instance->m_alloc_callback,
+			&sampler
+		);
+
+		if (result != VK_SUCCESS)
+		{
+			TRC_ERROR("Unable to create sampler");
+		}
+
+		return result;
+	}
+
+	void _DestroySampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkSampler& sampler)
+	{
+
+		if (sampler)
+		{
+			vkDestroySampler(device->m_device, sampler, instance->m_alloc_callback);
+		}
+
+	}
+
 	uint32_t FindMemoryIndex(trace::VKDeviceHandle* device, uint32_t memory_type, VkMemoryPropertyFlags mem_prop)
 	{
 		VkPhysicalDeviceMemoryProperties phy_mem_prop;
@@ -1465,7 +1608,7 @@ namespace vk {
 
 		VkShaderModuleCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		create_info.codeSize = out_shader->m_code.size() * 4;
+		create_info.codeSize = out_shader->m_code.size() * sizeof(uint32_t);
 		create_info.pCode = out_shader->m_code.data();
 
 		result = vkCreateShaderModule(device->m_device, &create_info, instance->m_alloc_callback, &out_shader->m_module);
@@ -1773,6 +1916,52 @@ namespace vk {
 
 			}
 
+			for (auto& resource : resources.sampled_images)
+			{
+				auto type = compiler.get_type(resource.type_id);
+				uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+
+				std::cout << "Name: " << resource.name << std::endl;
+				std::cout << "Set: " << set << std::endl;
+				std::cout << "Binding: " << binding << std::endl;
+
+				VkDescriptorSetLayoutBinding bind = {};
+				bind.binding = binding;
+				bind.descriptorCount = 1;
+				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				bind.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+				VkDescriptorPoolSize pool_size = {};
+				pool_size.descriptorCount = 1 * 3;
+				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+				if (!type.array.empty())
+				{
+					std::cout << "Array size: " << type.array[0] << std::endl;
+					bind.descriptorCount = type.array[0];
+					pool_size.descriptorCount = type.array[0] * 3;
+				}
+
+
+				switch (set)
+				{
+				case 0:
+				{
+
+					SceneGlobalData_bindings.push_back(bind);
+					SceneGlobalData_poolSizes.push_back(pool_size);
+
+					pipeline->Scene_bindings[bind.binding] = bind;
+					break;
+				}
+				}
+
+				std::cout << std::endl;
+
+			}
+
+
 
 
 		}
@@ -1802,7 +1991,7 @@ namespace vk {
 				bind.binding = binding;
 				bind.descriptorCount = 1;
 				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				bind.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+				bind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 				VkDescriptorPoolSize pool_size = {};
 				pool_size.descriptorCount = 1 * 3;
@@ -1826,6 +2015,50 @@ namespace vk {
 					SceneGlobalData_poolSizes.push_back(pool_size);
 
 					Scene_buffersSizes[bind.binding] = size;
+					pipeline->Scene_bindings[bind.binding] = bind;
+					break;
+				}
+				}
+				std::cout << std::endl;
+
+			}
+
+			for (auto& resource : resources.sampled_images)
+			{
+				auto type = compiler.get_type(resource.type_id);
+				uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+
+				std::cout << "Name: " << resource.name << std::endl;
+				std::cout << "Set: " << set << std::endl;
+				std::cout << "Binding: " << binding << std::endl;
+
+				VkDescriptorSetLayoutBinding bind = {};
+				bind.binding = binding;
+				bind.descriptorCount = 1;
+				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				bind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+				VkDescriptorPoolSize pool_size = {};
+				pool_size.descriptorCount = 1 * 3;
+				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+				if (!type.array.empty())
+				{
+					std::cout << "Array size: " << type.array[0] << std::endl;
+					bind.descriptorCount = type.array[0];
+					pool_size.descriptorCount = type.array[0] * 3;
+				}
+
+
+				switch (set)
+				{
+				case 0:
+				{
+
+					SceneGlobalData_bindings.push_back(bind);
+					SceneGlobalData_poolSizes.push_back(pool_size);
+
 					pipeline->Scene_bindings[bind.binding] = bind;
 					break;
 				}
@@ -1921,6 +2154,27 @@ namespace vk {
 			result = VK_FORMAT_R32G32_UINT;
 			break;
 		}
+		
+		case trace::Format::R8G8B8A8_SNORM:
+		{
+			result = VK_FORMAT_R8G8B8A8_SNORM;
+			break;
+		}
+		case trace::Format::R8G8B8A8_SRBG:
+		{
+			result = VK_FORMAT_R8G8B8A8_SRGB;
+			break;
+		}
+		case trace::Format::R8G8B8_SRBG:
+		{
+			result = VK_FORMAT_R8G8B8_SRGB;
+			break;
+		}
+		case trace::Format::R8G8B8_SNORM:
+		{
+			result = VK_FORMAT_R8G8B8_SNORM;
+			break;
+		}
 		}
 
 		return result;
@@ -1984,6 +2238,44 @@ namespace vk {
 			result = VK_SHADER_STAGE_FRAGMENT_BIT;
 			break;
 		}
+		}
+
+		return result;
+	}
+
+	VkSamplerAddressMode convertAddressMode(trace::AddressMode address_mode)
+	{
+		VkSamplerAddressMode mode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		switch (address_mode)
+		{
+		case trace::AddressMode::REPEAT:
+		{
+			mode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			break;
+		}
+		
+		case trace::AddressMode::MIRRORED_REPEAT:
+		{
+			mode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			break;
+		}
+		}
+
+		return mode;
+	}
+
+	VkFilter convertFilter(trace::FilterMode filter)
+	{
+		VkFilter result = VK_FILTER_LINEAR;
+
+		switch (filter)
+		{
+		case trace::FilterMode::LINEAR:
+			{
+				result = VK_FILTER_LINEAR;
+				break;
+			}
 		}
 
 		return result;

@@ -30,6 +30,8 @@ namespace trace {
 
 		virtual void UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0) override;
 		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0) override;
+		virtual void UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot = 1, uint32_t index = 0) override;
+		virtual void UpdateSceneGlobalTextures(GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) override;
 		virtual void BindPipeline(GPipeline* pipeline) override;
 		virtual void BindVertexBuffer(GBuffer* buffer) override;
 		virtual void BindIndexBuffer(GBuffer* buffer) override;

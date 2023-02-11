@@ -202,6 +202,7 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 
 		break;
 	}
+	// TODO : Fix, check why event is still being sent when it is already held
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 	{
@@ -216,6 +217,7 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 
 		break;
 	}
+
 
 	case WM_MOUSEMOVE:
 	{

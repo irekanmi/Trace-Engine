@@ -11,7 +11,12 @@
 #include "render/Graphics.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/glm.hpp"
+#include "render/PerspectiveCamera.h"
 
+// Temp---------------
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+//--------------------
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
 {
@@ -115,6 +120,8 @@ namespace trace
 		//______________________________//
 
 
+
+		// Temp------------------------------------------------------------------------------------------------
 		trace::FileHandle vert_shad;
 		trace::FileHandle frag_shad;
 
@@ -182,10 +189,10 @@ namespace trace
 
 
 		m_vertices = {
-			{ {-0.5f, -0.5f, 0.0f}, { 0.85f, 0.55f, 0.75f }},
-			{ {0.5f, -0.5f, 0.0f}, {0.55f, .75f, .85f} },
-			{ {0.5f, 0.5f, 0.0f}, {.75f, .25f, .55f} },
-			{ { -0.5f, 0.5f, 0.0f }, { 0.95f, 0.25f, .00f }}
+			{ {-0.5f, -0.5f, 0.0f}, { 0.0f, 0.0f}},
+			{ {0.5f, -0.5f, 0.0f}, {1.0f, 0.0f} },
+			{ {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f} },
+			{ { -0.5f, 0.5f, 0.0f }, {0.0f, 1.0f }}
 		};
 
 		for (auto& i : m_vertices)
@@ -215,6 +222,80 @@ namespace trace
 		VertexBuffer = GBuffer::Create_(vertex_buffer_info);
 		IndexBuffer = GBuffer::Create_(index_buffer_info);
 
+
+		_camera = new PerspectiveCamera(
+			glm::vec3(0.0f, 0.0f, 15.0f),
+			glm::vec3(0.0f, 0.0f, -1.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			(float)(GetWindow()->GetWidth() / GetWindow()->GetHeight()),
+			45.0f,
+			0.1f,
+			500.0f
+		);
+
+		uint32_t dimension = 256;
+		uint32_t channels = 4;
+		
+		unsigned char* pixel = new unsigned char[dimension * dimension * channels];
+		memset(pixel, 255, dimension * dimension * channels);
+
+		for (uint32_t row = 0; row < dimension; row++)
+		{
+			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
+			{
+				uint32_t index = (row * dimension) + coloumn;
+				uint32_t _idx = index * channels;
+				if (row % 2)
+				{
+					if (coloumn % 2)
+					{
+						pixel[_idx + 0] = 0;
+						pixel[_idx + 1] = 0;
+					}
+				}
+				else
+				{
+					if (!(coloumn % 2))
+					{
+						pixel[_idx + 0] = 0;
+						pixel[_idx + 1] = 0;
+					}
+				}
+			}
+
+		}
+
+		int _width, _height, _channels;
+		unsigned char* pixel_data = nullptr;
+
+		stbi_set_flip_vertically_on_load(true);
+		pixel_data = stbi_load("../assets/textures/trace_core.texture2.jpg", &_width, &_height, &_channels, STBI_rgb_alpha);
+
+		TextureDesc texture_desc;
+		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
+		texture_desc.m_channels = channels;
+		texture_desc.m_data = pixel;
+		texture_desc.m_format = Format::R8G8B8A8_SRBG;
+		texture_desc.m_height = texture_desc.m_width = dimension;
+		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
+
+		if (pixel_data)
+		{
+			texture_desc.m_channels = (uint32_t)4;
+			texture_desc.m_width = (uint32_t)_width;
+			texture_desc.m_height = (uint32_t)_height;
+			texture_desc.m_data = pixel_data;
+		}
+
+		_texture =  GTexture::Create_(texture_desc);
+
+		if (pixel_data)
+		{
+			stbi_image_free(pixel_data);
+		}
+
+		delete[] pixel;
+		//---------------------------------------------------------------------------------------------
 #if 0
 		std::string vert_src = R"(
 			#version 330 core
@@ -357,18 +438,18 @@ namespace trace
 
 #endif		
 
+			// Temp--------------------
+			_camera->Update(0.0f);
+			//-------------------------
+
 			if (renderer->BeginFrame())
 			{
 				SceneGlobals scene_data = {};
-				scene_data.view = glm::identity<glm::mat4>();
-				static float z = -5.0f;
-				z -= 0.01f;
-
-				scene_data.view = glm::translate(scene_data.view, glm::vec3(.0f, .0f, z));
-				scene_data.projection = glm::identity<glm::mat4>();
-				scene_data.projection = glm::perspective(45.0f, 800.0f / 600.0f, 0.1f, 500.0f);
+				scene_data.view = _camera->GetViewMatrix();
+				scene_data.projection = _camera->GetProjectionMatix();
 
 				renderer->UpdateSceneGlobalData(scene_data);
+				renderer->UpdateSceneGlobalTexture(_texture);
 
 				renderer->BindPipeline(_pipeline);
 				renderer->BindVertexBuffer(VertexBuffer);
@@ -406,6 +487,9 @@ namespace trace
 
 		delete VertShader;
 		delete FragShader;
+
+		delete _camera;
+		delete _texture;
 
 		//----------------------------------
 
@@ -457,13 +541,11 @@ namespace trace
 			case trace::EventType::TRC_KEY_PRESSED:
 			{
 				KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
-				//TRC_INFO("key: %c", press->m_keycode);
 				break;
 			}
 			case trace::EventType::TRC_KEY_RELEASED:
 			{
 				KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
-				//TRC_DEBUG("key: %c", release->m_keycode);
 				if (release->m_keycode == Keys::KEY_ESCAPE)
 				{
 					m_isRunning = false;
@@ -474,8 +556,7 @@ namespace trace
 			case EventType::TRC_WND_RESIZE:
 			{
 				WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-				//TRC_WARN("Width: %d", wnd->m_width);
-				//TRC_ERROR("Height: %d", wnd->m_height);
+				_camera->SetAspectRatio((float)(wnd->m_width / wnd->m_height));
 				break;
 			}
 

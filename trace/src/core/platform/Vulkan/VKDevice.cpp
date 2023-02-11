@@ -12,6 +12,7 @@
 #include "core/Coretypes.h"
 #include "render/Graphics.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "VulkanTexture.h"
 
 extern trace::VKHandle g_Vkhandle;
 trace::VKDeviceHandle g_VkDevice;
@@ -214,6 +215,45 @@ namespace trace {
 
 		vkUpdateDescriptorSets(m_handle->m_device, 1, &write, 0, nullptr);
 
+	}
+
+	void VKDevice::UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot, uint32_t index)
+	{
+		VulkanPipeline* pipeline = reinterpret_cast<VulkanPipeline*>(m_pipeline);
+		VulkanTexture* _tex = reinterpret_cast<VulkanTexture*>(texture);
+
+		VKPipeline& _pipe = pipeline->m_handle;
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+
+		switch (_pipe.Scene_bindings[slot].descriptorType)
+		{
+		case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+		{
+
+
+			VkDescriptorImageInfo image_info = {};
+			image_info.sampler = _tex->m_sampler;
+			image_info.imageView = _tex->m_handle.m_view;
+			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			write.descriptorCount = _pipe.Scene_bindings[slot].descriptorCount;
+			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			write.dstBinding = _pipe.Scene_bindings[slot].binding;
+			write.dstSet = _pipe.Scene_sets[m_handle->m_imageIndex];
+			write.pImageInfo = &image_info;
+
+			break;
+		}
+		}
+
+		vkUpdateDescriptorSets(m_handle->m_device, 1, &write, 0, nullptr);
+
+	}
+
+	void VKDevice::UpdateSceneGlobalTextures(GTexture* texture, uint32_t count, uint32_t slot, uint32_t index)
+	{
 	}
 
 	void VKDevice::BindPipeline(GPipeline* pipeline)

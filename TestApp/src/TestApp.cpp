@@ -81,7 +81,6 @@ public:
 		{
 			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
 			//printf("%c", press->m_keycode);
-			press->m_handled = true;
 			break;
 		}
 		case trace::EventType::TRC_KEY_RELEASED:
@@ -106,20 +105,6 @@ public:
 			TRC_INFO(" ------____----TRACE------______----");
 		}
 
-		if (trace::InputSystem::get_instance()->GetKeyState(trace::Keys::KEY_A) == trace::KeyState::KEY_RELEASE)
-		{
-			TRC_WARN("Added new overlay");
-			trace::Application::get_instance()->PushOverLay(new SampleOverLay());
-		}
-		if (trace::InputSystem::get_instance()->GetKeyState(trace::Keys::KEY_E) == trace::KeyState::KEY_RELEASE)
-		{
-			TRC_TRACE("Engine systems ID:");
-			auto sys_ptr = trace::Application::get_instance()->GetEngineSystemsID();
-			for (trace::Object*& i : sys_ptr)
-			{
-				TRC_INFO("Name: %s ID: %d", i->GetName(), i->GetID());
-			}
-		}
 	}
 private:
 protected:
@@ -160,7 +145,7 @@ trace::trc_app_data trace::CreateApp()
 {
 	trace::trc_app_data app_data;
 	app_data.winprop = trace::WindowDecl();
-	app_data.wintype = trace::WindowType::WIN32_WINDOW;
+	app_data.wintype = trace::WindowType::GLFW_WINDOW;
 	app_data.graphics_api = trace::RenderAPI::Vulkan;
 	app_data.platform_api = trace::PlatformAPI::WINDOWS;
 	app_data.windowed = true;

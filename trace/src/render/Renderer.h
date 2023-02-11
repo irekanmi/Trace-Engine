@@ -33,6 +33,7 @@ namespace trace {
 		// TODO: Renderer API is going to change
 		virtual void UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0);
 		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0);
+		virtual void UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot = 1, uint32_t index = 0);
 		virtual void BindPipeline(GPipeline* pipeline);
 		virtual void BindVertexBuffer(GBuffer* buffer);
 		virtual void BindIndexBuffer(GBuffer* buffer);
