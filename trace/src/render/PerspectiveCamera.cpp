@@ -50,7 +50,7 @@ namespace trace {
 
 	glm::mat4 PerspectiveCamera::GetViewMatrix()
 	{
-		glm::mat4 result = glm::lookAt(m_position, m_lookDirection, m_upDirection);
+		glm::mat4 result = glm::lookAt(m_position, m_lookDirection + m_position, m_upDirection);
 
 		return result;
 	}
@@ -93,13 +93,13 @@ namespace trace {
 
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_D) == KeyState::KEY_HELD)
 		{
-			glm::vec3 value = glm::cross(m_upDirection, m_lookDirection);
-			m_position -= value;
+			glm::vec3 value = glm::cross(m_lookDirection, m_upDirection);
+			m_position += value;
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_A) == KeyState::KEY_HELD)
 		{
-			glm::vec3 value = glm::cross(m_upDirection, m_lookDirection);
-			m_position += value;
+			glm::vec3 value = glm::cross(m_lookDirection, m_upDirection);
+			m_position -= value;
 		}
 	}
 

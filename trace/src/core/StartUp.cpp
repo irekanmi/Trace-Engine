@@ -6,10 +6,10 @@
 #include "Enums.h"
 #include "input\Input.h"
 #include "render/GContext.h"
-#include "platform/OpenGL/OpenGLContext.h"
 #include "render/Renderer.h"
 #include "core/Platform.h"
 #include "core/Application.h"
+#include "resource/ResourceSystem.h"
 
 
 namespace trace {
@@ -61,12 +61,23 @@ namespace trace {
 			TRC_ERROR("Failed to initialize renderer");
 			return false;
 		}
+
+		if (!ResourceSystem::get_instance()->Init())
+		{
+			TRC_ERROR("Failed to initialize Resource System");
+			return false;
+		}
+
 		return true;
 	}
 
 	void TRACE_API _SHUTDOWN(trc_app_data app_data)
 	{
+
+
+		ResourceSystem::get_instance()->ShutDown();
 		Renderer::get_instance()->ShutDown();
+		SAFE_DELETE(ResourceSystem::get_instance(), ResourceSystem);
 		SAFE_DELETE(Renderer::get_instance(), Renderer);
 		return;
 	}

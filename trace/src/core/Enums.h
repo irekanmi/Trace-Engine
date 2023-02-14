@@ -12,6 +12,10 @@
 
 #define BLOCK_SIZE KB
 #define BIND_EVENT_FN(func) std::bind(&func, this, std::placeholders::_1)
+#define BIND_RESOURCE_UNLOAD_FN(func, ptr) std::bind(&func, ptr, std::placeholders::_1)
+
+#define INVAILD_ID 4294967295
+
 
 #define _STR(x) #x
 

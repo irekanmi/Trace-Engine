@@ -178,6 +178,8 @@
     <ClInclude Include="src\core\platform\Vulkan\VulkanTexture.h" />
     <ClInclude Include="src\core\platform\Windows\Win32Window.h" />
     <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
+    <ClInclude Include="src\resource\HashTable.h" />
+    <ClInclude Include="src\resource\Ref.h" />
     <ClInclude Include="src\render\Camera.h" />
     <ClInclude Include="src\render\GBuffer.h" />
     <ClInclude Include="src\render\GContext.h" />
@@ -190,6 +192,9 @@
     <ClInclude Include="src\render\PerspectiveCamera.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
+    <ClInclude Include="src\resource\Resource.h" />
+    <ClInclude Include="src\resource\ResourceSystem.h" />
+    <ClInclude Include="src\resource\TextureManager.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
@@ -231,6 +236,9 @@
     <ClCompile Include="src\render\PerspectiveCamera.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
+    <ClCompile Include="src\resource\Resource.cpp" />
+    <ClCompile Include="src\resource\ResourceSystem.cpp" />
+    <ClCompile Include="src\resource\TextureManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

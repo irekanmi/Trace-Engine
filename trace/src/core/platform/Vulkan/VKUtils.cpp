@@ -648,7 +648,7 @@ namespace vk {
 		bool surface_found = false;
 		for (auto& i : device->m_swapchainInfo.formats)
 		{
-			if (i.format == VK_FORMAT_R8G8B8_SRGB && i.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			if (i.format == VK_FORMAT_R8G8B8A8_SRGB && i.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			{
 				surface_found = true;
 				surface_format = i;

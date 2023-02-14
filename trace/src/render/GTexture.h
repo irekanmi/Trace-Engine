@@ -3,6 +3,7 @@
 #include "core/Core.h"
 #include "core/Enums.h"
 #include "Graphics.h"
+#include "resource/Resource.h"
 
 namespace trace {
 
@@ -33,7 +34,7 @@ namespace trace {
 		FilterMode m_magFilterMode = FilterMode::NONE;
 	};
 
-	class TRACE_API GTexture
+	class TRACE_API GTexture : public Resource
 	{
 
 	public:

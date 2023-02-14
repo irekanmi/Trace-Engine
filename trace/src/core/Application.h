@@ -8,6 +8,9 @@
 #include "EASTL/vector.h"
 
 // temp -------------------------
+
+#include "resource/ResourceSystem.h"
+
 #include "render/GPUtypes.h"
 #include "render/GBuffer.h"
 #include "render/Graphics.h"
@@ -67,6 +70,11 @@ namespace trace
 		Camera* _camera;
 
 		GTexture* _texture;
+
+		Texture_Ref _texture_ref;
+		Texture_Ref _texture_ref0;
+		Texture_Ref _texture_ref1;
+		Texture_Ref _texture_ref2;
 
 		//------------------------------------
 

@@ -13,10 +13,10 @@
 #include "glm/glm.hpp"
 #include "render/PerspectiveCamera.h"
 
-// Temp---------------
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-//--------------------
+//// Temp---------------
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
+////--------------------
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
 {
@@ -189,10 +189,10 @@ namespace trace
 
 
 		m_vertices = {
-			{ {-0.5f, -0.5f, 0.0f}, { 0.0f, 0.0f}},
-			{ {0.5f, -0.5f, 0.0f}, {1.0f, 0.0f} },
-			{ {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f} },
-			{ { -0.5f, 0.5f, 0.0f }, {0.0f, 1.0f }}
+			{ {-0.75f, -0.5f, 0.0f}, { 0.0f, 0.0f}},
+			{ {0.75f, -0.5f, 0.0f}, {1.0f, 0.0f} },
+			{ {0.75f, 0.5f, 0.0f}, {1.0f, 1.0f} },
+			{ { -0.75f, 0.5f, 0.0f }, {0.0f, 1.0f }}
 		};
 
 		for (auto& i : m_vertices)
@@ -227,74 +227,82 @@ namespace trace
 			glm::vec3(0.0f, 0.0f, 15.0f),
 			glm::vec3(0.0f, 0.0f, -1.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f),
-			(float)(GetWindow()->GetWidth() / GetWindow()->GetHeight()),
+			((float)GetWindow()->GetWidth()) / ((float)GetWindow()->GetHeight()),
 			45.0f,
 			0.1f,
 			500.0f
 		);
 
-		uint32_t dimension = 256;
-		uint32_t channels = 4;
-		
-		unsigned char* pixel = new unsigned char[dimension * dimension * channels];
-		memset(pixel, 255, dimension * dimension * channels);
+//		uint32_t dimension = 256;
+//		uint32_t channels = 4;
+//		
+//		unsigned char* pixel = new unsigned char[dimension * dimension * channels];
+//		memset(pixel, 255, dimension * dimension * channels);
+//
+//		for (uint32_t row = 0; row < dimension; row++)
+//		{
+//			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
+//			{
+//				uint32_t index = (row * dimension) + coloumn;
+//				uint32_t _idx = index * channels;
+//				if (row % 2)
+//				{
+//					if (coloumn % 2)
+//					{
+//						pixel[_idx + 0] = 0;
+//						pixel[_idx + 1] = 0;
+//					}
+//				}
+//				else
+//				{
+//					if (!(coloumn % 2))
+//					{
+//						pixel[_idx + 0] = 0;
+//						pixel[_idx + 1] = 0;
+//					}
+//				}
+//			}
+//
+//		}
+//
+//		int _width, _height, _channels;
+//		unsigned char* pixel_data = nullptr;
+//
+//		stbi_set_flip_vertically_on_load(true);
+//		pixel_data = stbi_load("../assets/textures/trace_core.texture0.jpg", &_width, &_height, &_channels, STBI_rgb_alpha);
+//
+//		TextureDesc texture_desc;
+//		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
+//		texture_desc.m_channels = channels;
+//		texture_desc.m_data = pixel;
+//		texture_desc.m_format = Format::R8G8B8A8_SRBG;
+//		texture_desc.m_height = texture_desc.m_width = dimension;
+//		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
+//
+//		if (pixel_data)
+//		{
+//			texture_desc.m_channels = (uint32_t)4;
+//			texture_desc.m_width = (uint32_t)_width;
+//			texture_desc.m_height = (uint32_t)_height;
+//			texture_desc.m_data = pixel_data;
+//		}
+//
+//		_texture =  GTexture::Create_(texture_desc);
+//
+//		if (pixel_data)
+//		{
+//			stbi_image_free(pixel_data);
+//		}
+//
+//		delete[] pixel;
 
-		for (uint32_t row = 0; row < dimension; row++)
-		{
-			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
-			{
-				uint32_t index = (row * dimension) + coloumn;
-				uint32_t _idx = index * channels;
-				if (row % 2)
-				{
-					if (coloumn % 2)
-					{
-						pixel[_idx + 0] = 0;
-						pixel[_idx + 1] = 0;
-					}
-				}
-				else
-				{
-					if (!(coloumn % 2))
-					{
-						pixel[_idx + 0] = 0;
-						pixel[_idx + 1] = 0;
-					}
-				}
-			}
 
-		}
+		_texture_ref = ResourceSystem::s_instance->GetTexture("trace_core.texture0.jpg");
+		_texture_ref0 = ResourceSystem::s_instance->GetTexture("trace_core.texture0.jpg");
+		_texture_ref1 = ResourceSystem::s_instance->GetTexture("trace_core.texture1.jpg");
+		_texture_ref2 = ResourceSystem::s_instance->GetTexture("trace_core.texture2.jpg");
 
-		int _width, _height, _channels;
-		unsigned char* pixel_data = nullptr;
 
-		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load("../assets/textures/trace_core.texture2.jpg", &_width, &_height, &_channels, STBI_rgb_alpha);
-
-		TextureDesc texture_desc;
-		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
-		texture_desc.m_channels = channels;
-		texture_desc.m_data = pixel;
-		texture_desc.m_format = Format::R8G8B8A8_SRBG;
-		texture_desc.m_height = texture_desc.m_width = dimension;
-		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
-
-		if (pixel_data)
-		{
-			texture_desc.m_channels = (uint32_t)4;
-			texture_desc.m_width = (uint32_t)_width;
-			texture_desc.m_height = (uint32_t)_height;
-			texture_desc.m_data = pixel_data;
-		}
-
-		_texture =  GTexture::Create_(texture_desc);
-
-		if (pixel_data)
-		{
-			stbi_image_free(pixel_data);
-		}
-
-		delete[] pixel;
 		//---------------------------------------------------------------------------------------------
 #if 0
 		std::string vert_src = R"(
@@ -449,7 +457,7 @@ namespace trace
 				scene_data.projection = _camera->GetProjectionMatix();
 
 				renderer->UpdateSceneGlobalData(scene_data);
-				renderer->UpdateSceneGlobalTexture(_texture);
+				renderer->UpdateSceneGlobalTexture(_texture_ref.get());
 
 				renderer->BindPipeline(_pipeline);
 				renderer->BindVertexBuffer(VertexBuffer);
@@ -489,7 +497,6 @@ namespace trace
 		delete FragShader;
 
 		delete _camera;
-		delete _texture;
 
 		//----------------------------------
 
@@ -550,13 +557,28 @@ namespace trace
 				{
 					m_isRunning = false;
 				}
+				if (release->m_keycode == Keys::KEY_1)
+				{
+					_texture_ref = _texture_ref0;
+				}
+				if (release->m_keycode == Keys::KEY_2)
+				{
+					_texture_ref = _texture_ref1;
+				}
+				if (release->m_keycode == Keys::KEY_3)
+				{
+					_texture_ref = _texture_ref2;
+				}
 				break;
 			}
 
 			case EventType::TRC_WND_RESIZE:
 			{
 				WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-				_camera->SetAspectRatio((float)(wnd->m_width / wnd->m_height));
+				if (wnd->m_width == 0 || wnd->m_height == 0)
+					break;
+
+				_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));
 				break;
 			}
 

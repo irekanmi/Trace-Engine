@@ -30,6 +30,8 @@ int main(int argc, char** argv)
 	trace::Application::s_instance->Run();
 	trace::Application::s_instance->End();
 
+	delete trace::Application::s_instance;
+
 	trace::_SHUTDOWN(app_data);
 
 	trace::SHUTDOWN();
