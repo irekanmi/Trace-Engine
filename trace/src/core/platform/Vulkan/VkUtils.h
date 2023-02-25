@@ -68,9 +68,8 @@ namespace vk {
 	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, eastl::vector<trace::VKCommmandBuffer> &buffers);
 
 	// FrameBuffers
-	VkResult _CreateFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer, eastl::vector<VkImageView> attachments, trace::VKRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t attachment_count);
+	VkResult _CreateFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer,const eastl::vector<VkImageView>& attachments, trace::VKRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t attachment_count);
 	void _DestoryFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer);
-	void _RegenerateFrameBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, trace::VKRenderPass* render_pass);
 
 	// Fences
 	void _CreateFence(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFence* out_fence, bool signaled);
@@ -87,7 +86,7 @@ namespace vk {
 	void _EndRenderPass(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer);
 
 	// Pipeline
-	VkResult _CreatePipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, uint32_t view_port_count, VkViewport* view_ports, uint32_t scissor_count, VkRect2D* scissors, trace::PipelineStateDesc desc, trace::VKPipeline* out_pipeline);
+	VkResult _CreatePipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, uint32_t view_port_count, VkViewport* view_ports, uint32_t scissor_count, VkRect2D* scissors, trace::PipelineStateDesc desc, trace::VKPipeline* out_pipeline, trace::VKRenderPass* render_pass, uint32_t subpass_index);
 	void _DestroyPipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKPipeline* pipeline);
 
 	// Shaders
@@ -112,7 +111,7 @@ namespace vk {
 	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info);
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment);
-	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline);
+	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts);
 
 	VkFormat convertFmt(trace::Format format);
 	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
@@ -120,7 +119,9 @@ namespace vk {
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);
 	VkSamplerAddressMode convertAddressMode(trace::AddressMode address_mode);
 	VkFilter convertFilter(trace::FilterMode filter);
-	std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> convertBufferUsage(trace::BufferUsage usage);
+	VkImageLayout convertTextureFmt(trace::TextureFormat fmt);
+	VkAttachmentLoadOp convertAttachmentLoadOp(trace::AttachmentLoadOp op);
+	VkAttachmentStoreOp convertAttachmentStoreOp(trace::AttachmentStoreOp op);
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
 
 }

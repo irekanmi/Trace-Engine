@@ -36,7 +36,7 @@ namespace trace {
 	void OpenGLDevice::ShutDown()
 	{
 	}
-	bool OpenGLDevice::BeginFrame()
+	bool OpenGLDevice::BeginFrame(GSwapchain* swapchain)
 	{
 		return true;
 	}

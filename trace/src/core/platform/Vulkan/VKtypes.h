@@ -79,11 +79,11 @@ namespace trace {
 	{
 		VkRenderPass m_handle;
 
-		glm::vec4 clear_color;
-		glm::vec4 render_area;
+		glm::vec4* clear_color;
+		glm::vec4* render_area;
 
-		float depth_value;
-		uint32_t stencil_value;
+		float* depth_value;
+		uint32_t* stencil_value;
 
 		RenderPassState m_state;
 	};
@@ -94,17 +94,27 @@ namespace trace {
 		VkDeviceMemory m_memory = VK_NULL_HANDLE;
 	};
 
+	
+
 	struct VKPipeline
 	{
 		VkPipeline m_handle = VK_NULL_HANDLE;
 		VkPipelineLayout m_layout = VK_NULL_HANDLE;
 
-		VkDescriptorSetLayoutBinding Scene_bindings[16] = {};
-		VKBuffer Scene_buffers[16] = {};
+		VKBuffer Scene_buffers = {};
 		VkDescriptorSet Scene_sets[3] = {};
 		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
 
+		VkDescriptorSet Instance_sets[3] = {};
+		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
+
+		VkDescriptorSet Local_sets[3] = {};
+		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
+
+		eastl::vector<UniformMetaData> Scene_uniforms = {};
 	};
 
 	struct VKShader
@@ -145,14 +155,12 @@ namespace trace {
 		VkSwapchainKHR m_handle;
 		VkSurfaceFormatKHR m_format;
 		VKImage m_depthimage;
+		VkFormat m_depthFormat;
 
 		eastl::vector<VkImage> m_images;
 		eastl::vector<VkImageView> m_imageViews;
 
 		uint32_t image_count;
-
-		eastl::vector<VKFrameBuffer> m_frameBuffers;
-
 	};
 
 	struct VKHandle

@@ -9,15 +9,16 @@ namespace trace {
 	{
 
 	public:
+		VulkanTexture(){}
 		VulkanTexture(TextureDesc desc);
 		~VulkanTexture();
 
 
 		VKImage m_handle;
 		VkSampler m_sampler;
-	private:
 		VKHandle* m_instance;
 		VKDeviceHandle* m_device;
+	private:
 
 	protected:
 

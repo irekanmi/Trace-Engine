@@ -35,6 +35,7 @@ namespace trace {
 	VulkanShader::~VulkanShader()
 	{
 		vk::_DestoryShader(m_instance, m_device, &m_handle);
+
 	}
 
 }

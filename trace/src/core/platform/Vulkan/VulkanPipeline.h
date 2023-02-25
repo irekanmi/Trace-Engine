@@ -12,10 +12,24 @@ namespace trace {
 		VulkanPipeline(PipelineStateDesc desc);
 		~VulkanPipeline();
 
+		virtual bool Initialize() override;
+
+		virtual void SetData(ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0) override;
+		virtual void SetTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t slot = 1, uint32_t index = 0) override;
+
+		virtual void SetData(const eastl::string resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size) override;
+		virtual void SetTextureData(const eastl::string resource_name, ShaderResourceStage resource_scope, GTexture* texture) override;
+
+		virtual void SetMultipleData(ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t count, uint32_t slot = 0, uint32_t index = 0) override;
+		virtual void SetMultipleTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) override;
+
+		virtual void Shutdown() override;
+
 		VKPipeline m_handle;
 	private:
 		VKHandle* m_instance;
 		VKDeviceHandle* m_device;
+		char* _mapped_data;
 
 	protected:
 

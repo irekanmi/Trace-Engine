@@ -11,7 +11,7 @@
 
 #include "resource/ResourceSystem.h"
 
-#include "render/GPUtypes.h"
+#include "render/Graphics.h"
 #include "render/GBuffer.h"
 #include "render/Graphics.h"
 #include "render/GPipeline.h"
@@ -56,27 +56,6 @@ namespace trace
 		ClientStartCallback   m_client_start;
 		ClientUpdateCallback  m_client_update;
 
-		eastl::vector<Vertex> m_vertices;
-		eastl::vector<uint32_t> m_indices;
-
-		// Temp-----------------------------
-		GBuffer* VertexBuffer;
-		GBuffer* IndexBuffer;
-
-		GShader* VertShader;
-		GShader* FragShader;
-
-		GPipeline* _pipeline;
-		Camera* _camera;
-
-		GTexture* _texture;
-
-		Texture_Ref _texture_ref;
-		Texture_Ref _texture_ref0;
-		Texture_Ref _texture_ref1;
-		Texture_Ref _texture_ref2;
-
-		//------------------------------------
 
 	protected:
 		Window* m_Window;

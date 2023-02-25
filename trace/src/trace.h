@@ -17,4 +17,4 @@
 #include "core/Layer.h"
 #include "core/FileSystem.h"
 
-#include "render/GPUtypes.h"
+#include "render/Graphics.h"

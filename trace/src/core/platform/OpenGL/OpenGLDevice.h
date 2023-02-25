@@ -18,7 +18,7 @@ namespace trace {
 		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
 		virtual void ShutDown() override;
 
-		virtual bool BeginFrame() override;
+		virtual bool BeginFrame(GSwapchain* swapchain) override;
 		virtual void EndFrame() override;
 
 	private:

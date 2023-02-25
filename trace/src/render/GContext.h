@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Core.h>
-#include "GPUtypes.h"
+#include "Graphics.h"
 #include "GBuffer.h"
 
 namespace trace {

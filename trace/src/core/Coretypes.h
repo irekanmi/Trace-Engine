@@ -2,7 +2,7 @@
 
 #include "Core.h"
 #include "Enums.h"
-#include "render/GPUtypes.h"
+#include "render/Graphics.h"
 #include "EASTL/string.h"
 
 namespace trace {

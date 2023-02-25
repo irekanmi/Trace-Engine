@@ -729,6 +729,8 @@ namespace vk {
 		}
 		TRC_INFO("Vulkan Swapchain image views created");
 
+		swapchain->m_depthFormat = device->m_depthFormat;
+
 		_CreateImage(
 			instance,
 			device,
@@ -812,6 +814,8 @@ namespace vk {
 		{
 			TRC_CRITICAL("Failed to present swapchain image");
 		}
+
+		device->m_currentFrame = (device->m_currentFrame + 1) % device->frames_in_flight;
 
 		return;
 	}
@@ -899,6 +903,7 @@ namespace vk {
 	{
 		if (image->m_handle != VK_NULL_HANDLE)
 		{
+			vkDeviceWaitIdle(device->m_device);
 			vkFreeMemory(device->m_device, image->m_mem, instance->m_alloc_callback);
 			image->m_width = 0;
 			image->m_height = 0;
@@ -1196,7 +1201,7 @@ namespace vk {
 
 	}
 
-	VkResult _CreateFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer, eastl::vector<VkImageView> attachments, trace::VKRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t attachment_count)
+	VkResult _CreateFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer,const eastl::vector<VkImageView>& attachments, trace::VKRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t attachment_count)
 	{
 		VkResult result;
 
@@ -1230,23 +1235,6 @@ namespace vk {
 	void _DestoryFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer)
 	{
 		vkDestroyFramebuffer(device->m_device, frame_buffer->m_handle, instance->m_alloc_callback);
-	}
-
-	void _RegenerateFrameBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, trace::VKRenderPass* render_pass)
-	{
-		swapchain->m_frameBuffers.resize(swapchain->image_count);
-		for (uint32_t i = 0; i < swapchain->image_count; i++)
-		{
-
-			uint32_t attachment_count = 2;
-			eastl::vector<VkImageView> attachments = {
-				swapchain->m_imageViews[i],
-				swapchain->m_depthimage.m_view
-			};
-
-			_CreateFrameBuffer(instance, device, &swapchain->m_frameBuffers[i], attachments, &device->m_renderPass, device->m_frameBufferWidth, device->m_frameBufferHeight, attachment_count);
-
-		}
 	}
 
 	void _CreateFence(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFence* out_fence, bool signaled)
@@ -1321,11 +1309,10 @@ namespace vk {
 		color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-		//TODO: Check why values can't be assigned to by indexing
 		attachments[0] = color_attachment;
 
 		VkAttachmentReference color_attach_ref = {};
@@ -1343,7 +1330,6 @@ namespace vk {
 		depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		
-		//TODO: Check why values can't be assigned to by indexing
 		attachments[1] = (depth_attachment);
 
 		VkAttachmentReference depth_attach_ref = {};
@@ -1381,10 +1367,10 @@ namespace vk {
 		result = vkCreateRenderPass(device->m_device, &render_pass_info, instance->m_alloc_callback, &render_pass->m_handle);
 
 		VK_ASSERT(result);
-		render_pass->clear_color = clear_color;
-		render_pass->depth_value = depth_value;
-		render_pass->stencil_value = stencil_value;
-		render_pass->render_area = render_area;
+		render_pass->clear_color = &clear_color;
+		render_pass->depth_value = &depth_value;
+		render_pass->stencil_value = &stencil_value;
+		render_pass->render_area = &render_area;
 
 
 		return result;
@@ -1401,20 +1387,20 @@ namespace vk {
 		VkRenderPassBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		begin_info.renderPass = render_pass->m_handle;
-		begin_info.renderArea.offset.x = render_pass->render_area.x;
-		begin_info.renderArea.offset.y = render_pass->render_area.y;
-		begin_info.renderArea.extent.width = render_pass->render_area.z;
-		begin_info.renderArea.extent.height = render_pass->render_area.w;
+		begin_info.renderArea.offset.x = render_pass->render_area->x;
+		begin_info.renderArea.offset.y = render_pass->render_area->y;
+		begin_info.renderArea.extent.width = render_pass->render_area->z;
+		begin_info.renderArea.extent.height = render_pass->render_area->w;
 		begin_info.framebuffer = framebuffer;
 		
 		VkClearValue clear_colors[2] = {};
-		clear_colors[0].color.float32[0] = render_pass->clear_color.r;
-		clear_colors[0].color.float32[1] = render_pass->clear_color.g;
-		clear_colors[0].color.float32[2] = render_pass->clear_color.b;
-		clear_colors[0].color.float32[3] = render_pass->clear_color.a;
+		clear_colors[0].color.float32[0] = render_pass->clear_color->r;
+		clear_colors[0].color.float32[1] = render_pass->clear_color->g;
+		clear_colors[0].color.float32[2] = render_pass->clear_color->b;
+		clear_colors[0].color.float32[3] = render_pass->clear_color->a;
 
-		clear_colors[1].depthStencil.depth = render_pass->depth_value;
-		clear_colors[1].depthStencil.stencil = render_pass->stencil_value;
+		clear_colors[1].depthStencil.depth = *render_pass->depth_value;
+		clear_colors[1].depthStencil.stencil = *render_pass->stencil_value;
 
 		begin_info.clearValueCount = 2;
 		begin_info.pClearValues = clear_colors;
@@ -1432,7 +1418,7 @@ namespace vk {
 		command_buffer->m_state = trace::CommandBufferState::COMMAND_RECORDING;
 	}
 
-	VkResult _CreatePipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, uint32_t view_port_count, VkViewport* view_ports, uint32_t scissor_count, VkRect2D* scissors, trace::PipelineStateDesc desc, trace::VKPipeline* out_pipeline)
+	VkResult _CreatePipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, uint32_t view_port_count, VkViewport* view_ports, uint32_t scissor_count, VkRect2D* scissors, trace::PipelineStateDesc desc, trace::VKPipeline* out_pipeline, trace::VKRenderPass* render_pass, uint32_t subpass_index)
 	{
 		VkResult result = VK_ERROR_INITIALIZATION_FAILED;
 
@@ -1519,7 +1505,8 @@ namespace vk {
 		// TODO: complete pipeline layout creation info
 		VkPipelineLayoutCreateInfo layout_info = {};
 		layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		parsePipelineLayout(instance, device, desc, layout_info, out_pipeline);
+		VkDescriptorSetLayout _layouts[3];
+		parsePipelineLayout(instance, device, desc, layout_info, out_pipeline, _layouts);
 		
 		result = vkCreatePipelineLayout(
 			device->m_device,
@@ -1541,12 +1528,12 @@ namespace vk {
 		create_info.pTessellationState = nullptr;
 		create_info.pVertexInputState = &vert_info;
 		create_info.pViewportState = &viewport_info;
-		create_info.renderPass = device->m_renderPass.m_handle; // TODO: Maybe can be dynamic
+		create_info.renderPass = render_pass->m_handle; // TODO: Maybe can be dynamic
 		create_info.basePipelineHandle = VK_NULL_HANDLE; // TODO:  Check Docs
 		create_info.basePipelineIndex = -1; // TODO
 		create_info.stageCount = shader_stages.size();
 		create_info.pStages = shader_stages.data();
-		create_info.subpass = 0; // TODO
+		create_info.subpass = subpass_index; // TODO
 		create_info.layout = out_pipeline->m_layout;
 
 		result = vkCreateGraphicsPipelines(
@@ -1565,12 +1552,10 @@ namespace vk {
 
 	void _DestroyPipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKPipeline* pipeline)
 	{
-		for (uint32_t i = 0; i < 16; i++)
+
+		if (pipeline->Scene_buffers.m_handle != VK_NULL_HANDLE)
 		{
-			if (pipeline->Scene_buffers[i].m_handle != VK_NULL_HANDLE)
-			{
-				_DestoryBuffer(instance, device, &pipeline->Scene_buffers[i]);
-			}
+			_DestoryBuffer(instance, device, &pipeline->Scene_buffers);
 		}
 
 		if (pipeline->Scene_layout)
@@ -1630,21 +1615,46 @@ namespace vk {
 	{
 		if (shader->m_module)
 		{
+			vkDeviceWaitIdle(device->m_device);
 			vkDestroyShaderModule(device->m_device, shader->m_module, instance->m_alloc_callback);
 		}
+
 	}
 
 	VkResult _CreateBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* out_buffer, trace::BufferInfo buffer_info)
 	{
 		VkResult result;
 
-		auto usage = convertBufferUsage(buffer_info.m_usage);
+		//auto usage = convertBufferUsage(buffer_info.m_usage);
 
 		VkBufferCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // TODO: Check Docs for more info
 		create_info.size = buffer_info.m_size;
-		create_info.usage = usage.first;
+
+		VkBufferUsageFlags usage_flag = 0;
+		VkMemoryPropertyFlags memory_property = 0;
+
+		if (TRC_HAS_FLAG(buffer_info.m_flag, trace::BindFlag::VERTEX_BIT))
+		{
+			usage_flag |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		}
+		if (TRC_HAS_FLAG(buffer_info.m_flag, trace::BindFlag::INDEX_BIT))
+		{
+			usage_flag |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		}
+		if (buffer_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		{
+			memory_property |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			usage_flag |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		}
+
+		if (buffer_info.m_usageFlag == trace::UsageFlag::DEFAULT)
+		{
+			memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		}
+		create_info.usage = usage_flag;
+
 
 		result = vkCreateBuffer(device->m_device, &create_info, instance->m_alloc_callback, &out_buffer->m_handle);
 
@@ -1656,7 +1666,7 @@ namespace vk {
 		VkMemoryAllocateInfo alloc_info = {};
 		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		alloc_info.allocationSize = mem_requirements.size;
-		alloc_info.memoryTypeIndex = FindMemoryIndex(device, mem_requirements.memoryTypeBits, usage.second);
+		alloc_info.memoryTypeIndex = FindMemoryIndex(device, mem_requirements.memoryTypeBits, memory_property);
 
 		if (vkAllocateMemory(device->m_device, &alloc_info, instance->m_alloc_callback, &out_buffer->m_memory) != VK_SUCCESS)
 		{
@@ -1846,7 +1856,7 @@ namespace vk {
 
 	}
 
-	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline)
+	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts)
 	{
 
 
@@ -1854,11 +1864,15 @@ namespace vk {
 
 
 		std::vector<VkDescriptorPoolSize> SceneGlobalData_poolSizes;
-		std::vector<VkDescriptorSet> SceneGlobalData_sets;
 		std::vector<VkDescriptorSetLayoutBinding> SceneGlobalData_bindings;
-		uint32_t Scene_buffersSizes[16] = {};
 
-		if (desc.vertex_shader != nullptr)
+		std::vector<VkDescriptorPoolSize> Instance_poolSizes;
+		std::vector<VkDescriptorSetLayoutBinding> Instance_bindings;
+
+		std::vector<VkDescriptorPoolSize> Local_poolSizes;
+		std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
+
+		/*if (desc.vertex_shader != nullptr)
 		{
 			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.vertex_shader);
 			spirv_cross::Compiler compiler(shader->m_handle.m_code);
@@ -2120,11 +2134,215 @@ namespace vk {
 				}
 			}
 
+
+			//===============================================================
+
+			
+
+		}*/
+
+		for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
+		{
+			switch (desc.resource_bindings[i].resource_type)
+			{
+			case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER:
+			{
+				VkDescriptorSetLayoutBinding bind = {};
+				bind.descriptorCount = desc.resource_bindings[i].count;
+				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
+
+				VkDescriptorPoolSize pool_size = {};
+				pool_size.descriptorCount = 1 * 3;
+				pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+				{
+					bind.binding = desc.resource_bindings[i].slot;
+
+					SceneGlobalData_bindings.push_back(bind);
+					SceneGlobalData_poolSizes.push_back(pool_size);
+
+				}
+				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+				{
+					bind.binding = desc.resource_bindings[i].slot;
+
+					Instance_bindings.push_back(bind);
+					Instance_poolSizes.push_back(pool_size);
+
+				}
+				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+				{
+					bind.binding = desc.resource_bindings[i].slot;
+
+					Local_bindings.push_back(bind);
+					Local_poolSizes.push_back(pool_size);
+
+				}
+
+				break;
+			}
+			case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
+			{
+				VkDescriptorSetLayoutBinding bind = {};
+				bind.descriptorCount = desc.resource_bindings[i].count;
+				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
+
+				VkDescriptorPoolSize pool_size = {};
+				pool_size.descriptorCount = 1 * 3;
+				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+				{
+					bind.binding = desc.resource_bindings[i].slot;
+
+					SceneGlobalData_bindings.push_back(bind);
+					SceneGlobalData_poolSizes.push_back(pool_size);
+
+				}
+				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+				{
+					bind.binding = desc.resource_bindings[i].slot;
+
+					Instance_bindings.push_back(bind);
+					Instance_poolSizes.push_back(pool_size);
+
+				}
+				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+				{
+					bind.binding = desc.resource_bindings[i].slot;
+
+					Local_bindings.push_back(bind);
+					Local_poolSizes.push_back(pool_size);
+
+				}
+
+				break;
+			}
+			}
+		}
+
+		uint32_t set_layout_count = 0;
+		
+
+		if (desc.resource_bindings)
+		{
+
+			if (SceneGlobalData_bindings.empty() == false)
+			{
+				VkDescriptorSetLayoutCreateInfo _info = {};
+				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				_info.bindingCount = SceneGlobalData_bindings.size();
+				_info.pBindings = SceneGlobalData_bindings.data();
+
+				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Scene_layout);
+
+				VkDescriptorPoolCreateInfo pool_info = {};
+				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+				pool_info.maxSets = 3;
+				pool_info.poolSizeCount = SceneGlobalData_poolSizes.size();
+				pool_info.pPoolSizes = SceneGlobalData_poolSizes.data();
+
+				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
+
+				VkDescriptorSetLayout test[3] = {
+					pipeline->Scene_layout,
+					pipeline->Scene_layout,
+					pipeline->Scene_layout
+				};
+
+				VkDescriptorSetAllocateInfo alloc_info = {};
+				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				alloc_info.descriptorPool = pipeline->Scene_pool;
+				alloc_info.descriptorSetCount = 3;
+				alloc_info.pSetLayouts = test;
+
+
+				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Scene_sets);
+				_layouts[set_layout_count++] = pipeline->Scene_layout;
+
+				//===============================================================
+			}
+			if (Instance_bindings.empty() == false)
+			{
+				VkDescriptorSetLayoutCreateInfo _info = {};
+				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				_info.bindingCount = Instance_bindings.size();
+				_info.pBindings = Instance_bindings.data();
+
+				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Instance_layout);
+
+				VkDescriptorPoolCreateInfo pool_info = {};
+				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+				pool_info.maxSets = 3;
+				pool_info.poolSizeCount = Instance_poolSizes.size();
+				pool_info.pPoolSizes = Instance_poolSizes.data();
+
+				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Instance_pool);
+
+				VkDescriptorSetLayout test[3] = {
+					pipeline->Instance_layout,
+					pipeline->Instance_layout,
+					pipeline->Instance_layout
+				};
+
+				VkDescriptorSetAllocateInfo alloc_info = {};
+				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				alloc_info.descriptorPool = pipeline->Instance_pool;
+				alloc_info.descriptorSetCount = 3;
+				alloc_info.pSetLayouts = test;
+
+
+				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Instance_sets);
+
+				_layouts[set_layout_count++] = pipeline->Instance_layout;
+
+				//===============================================================
+			}
+			if (!Local_bindings.empty())
+			{
+				VkDescriptorSetLayoutCreateInfo _info = {};
+				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				_info.bindingCount = Local_bindings.size();
+				_info.pBindings = Local_bindings.data();
+
+				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Local_layout);
+
+				VkDescriptorPoolCreateInfo pool_info = {};
+				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+				pool_info.maxSets = 3;
+				pool_info.poolSizeCount = Local_poolSizes.size();
+				pool_info.pPoolSizes = Local_poolSizes.data();
+
+				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Local_pool);
+
+				VkDescriptorSetLayout test[3] = {
+					pipeline->Local_layout,
+					pipeline->Local_layout,
+					pipeline->Local_layout
+				};
+
+				VkDescriptorSetAllocateInfo alloc_info = {};
+				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				alloc_info.descriptorPool = pipeline->Local_pool;
+				alloc_info.descriptorSetCount = 3;
+				alloc_info.pSetLayouts = test;
+
+
+				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Local_sets);
+				_layouts[set_layout_count++] = pipeline->Local_layout;
+
+				//===============================================================
+			}
+
+
 		}
 
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		create_info.setLayoutCount = 1;
-		create_info.pSetLayouts = &pipeline->Scene_layout;
+		create_info.setLayoutCount = set_layout_count;
+		create_info.pSetLayouts = _layouts;
 
 	}
 
@@ -2173,6 +2391,11 @@ namespace vk {
 		case trace::Format::R8G8B8_SNORM:
 		{
 			result = VK_FORMAT_R8G8B8_SNORM;
+			break;
+		}
+		case trace::Format::D32_SFLOAT_S8_SUINT:
+		{
+			result = VK_FORMAT_D32_SFLOAT_S8_UINT;
 			break;
 		}
 		}
@@ -2281,30 +2504,95 @@ namespace vk {
 		return result;
 	}
 
-	std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> convertBufferUsage(trace::BufferUsage usage)
+	VkImageLayout convertTextureFmt(trace::TextureFormat fmt)
 	{
-		std::pair<VkBufferUsageFlags, VkMemoryPropertyFlags> result;
 
-		if (TRC_HAS_FLAG(usage, trace::BufferUsage::VERTEX_BUFFER))
+		switch (fmt)
 		{
-			result.first = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-			result.second = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		case trace::TextureFormat::COLOR_ATTACHMENT:
+		{
+
+			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			break;
+		}
+		case trace::TextureFormat::DEPTH_STENCIL:
+		{
+
+			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			break;
+		}
+		case trace::TextureFormat::PRESENT:
+		{
+
+			return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			break;
+		}
+		case trace::TextureFormat::SHADER_READ:
+		{
+
+			return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			break;
+		}
+		case trace::TextureFormat::UNKNOWN:
+		{
+
+			return VK_IMAGE_LAYOUT_UNDEFINED;
+			break;
+		}
 		}
 
-		if (TRC_HAS_FLAG(usage, trace::BufferUsage::INDEX_BUFFER))
-		{
-			result.first = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-			result.second = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		}
-
-		if (TRC_HAS_FLAG(usage, trace::BufferUsage::STAGING_BUFFER))
-		{
-			result.first = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-			result.second = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		}
-
-		return result;
+		return VK_IMAGE_LAYOUT_MAX_ENUM;
 	}
+
+	VkAttachmentLoadOp convertAttachmentLoadOp(trace::AttachmentLoadOp op)
+	{
+
+		switch (op)
+		{
+		case trace::AttachmentLoadOp::LOAD_OP_CLEAR:
+		{
+			return VK_ATTACHMENT_LOAD_OP_CLEAR;
+			break;
+		}
+		case trace::AttachmentLoadOp::LOAD_OP_DISCARD:
+		{
+			return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			break;
+		}
+		case trace::AttachmentLoadOp::LOAD_OP_LOAD:
+		{
+			return VK_ATTACHMENT_LOAD_OP_LOAD;
+			break;
+		}
+
+		}
+
+		return VK_ATTACHMENT_LOAD_OP_MAX_ENUM;
+	}
+
+	VkAttachmentStoreOp convertAttachmentStoreOp(trace::AttachmentStoreOp op)
+	{
+
+		switch (op)
+		{
+		case trace::AttachmentStoreOp::STORE_OP_STORE:
+		{
+			return VK_ATTACHMENT_STORE_OP_STORE;
+			break;
+		}
+		case trace::AttachmentStoreOp::STORE_OP_DISCARD:
+		{
+			return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			break;
+		}
+		}
+
+		return VK_ATTACHMENT_STORE_OP_MAX_ENUM;
+	}
+
+	
+
+	
 
 	bool _ResultIsSuccess(VkResult result)
 	{

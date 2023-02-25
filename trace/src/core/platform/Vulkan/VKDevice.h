@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Enums.h"
-#include "render/GPUtypes.h"
+#include "render/Graphics.h"
 #include "render/GDevice.h"
 #include "VKtypes.h"
 #include "core/events/Events.h"
@@ -32,13 +32,19 @@ namespace trace {
 		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0) override;
 		virtual void UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot = 1, uint32_t index = 0) override;
 		virtual void UpdateSceneGlobalTextures(GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) override;
+
+		virtual void BindViewport(Viewport view_port) override;
+		virtual void BindRect(Rect2D rect) override;
 		virtual void BindPipeline(GPipeline* pipeline) override;
 		virtual void BindVertexBuffer(GBuffer* buffer) override;
 		virtual void BindIndexBuffer(GBuffer* buffer) override;
 		virtual void Draw(uint32_t start_vertex, uint32_t count) override;
 		virtual void DrawIndexed(uint32_t first_index, uint32_t count) override;
+		virtual void BeginRenderPass(GRenderPass* render_pass, GFramebuffer* frame_buffer) override;
+		virtual void NextSubpass(GRenderPass* render_pass) override;
+		virtual void EndRenderPass(GRenderPass* render_pass) override;
 
-		virtual bool BeginFrame() override;
+		virtual bool BeginFrame(GSwapchain* swapchain) override;
 		virtual void EndFrame() override;
 
 		void OnEvent(Event* p_Event);
@@ -46,8 +52,13 @@ namespace trace {
 	private:
 		bool recreateSwapchain();
 
-	private:
+
+	public:
 		VKDeviceHandle* m_handle;
+		VKRenderPass* m_activeRanderPass = nullptr;
+
+
+	private:
 		VKHandle* m_instance;
 
 

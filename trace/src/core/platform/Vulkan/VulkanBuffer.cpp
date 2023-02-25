@@ -38,7 +38,8 @@ namespace trace {
 			BufferInfo stage_info;
 			stage_info.m_size = info.m_size;
 			stage_info.m_stide = info.m_stide;
-			stage_info.m_usage = BufferUsage::STAGING_BUFFER;
+			stage_info.m_usageFlag = UsageFlag::UPLOAD;
+			stage_info.m_flag = BindFlag::NIL;
 			stage_info.m_data = nullptr;
 
 			vk::_CreateBuffer(m_instance, m_device, &stage_buffer, stage_info);
@@ -76,7 +77,8 @@ namespace trace {
 		BufferInfo stage_info;
 		stage_info.m_size = size;
 		stage_info.m_stide = 0;
-		stage_info.m_usage = BufferUsage::STAGING_BUFFER;
+		stage_info.m_usageFlag = UsageFlag::UPLOAD;
+		stage_info.m_flag = BindFlag::NIL;
 		stage_info.m_data = nullptr;
 
 		vk::_CreateBuffer(m_instance, m_device, &stage_buffer, stage_info);

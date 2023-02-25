@@ -2,13 +2,69 @@
 #include "core/Enums.h"
 #include "core/Core.h"
 #include "EASTL/vector.h"
+#include "EASTL/string.h"
 #include "glm/glm.hpp"
 
 namespace trace {
 
 	class GShader;
+	class GRenderPass;
 
-	
+	enum class AddressMode
+	{
+		NONE,
+		REPEAT,
+		MIRRORED_REPEAT
+	};
+
+	enum class FilterMode
+	{
+		NONE,
+		LINEAR
+	};
+
+
+	enum class UsageFlag
+	{
+		NONE,
+		DEFAULT,
+		UPLOAD,
+		READBACK
+	};
+
+
+	enum BindFlag
+	{
+		NIL,
+		VERTEX_BIT = BIT(1),
+		INDEX_BIT = BIT(2),
+		CONSTANT_BUFFER_BIT = BIT(3),
+		RENDER_TARGET_BIT = BIT(4),
+		DEPTH_STENCIL_BIT = BIT(5),
+		SHADER_RESOURCE_BIT = BIT(6)
+	};
+
+	struct BufferInfo
+	{
+		uint32_t m_size = 0;
+		uint32_t m_stide = 0;
+		BindFlag m_flag = BindFlag::NIL;
+		UsageFlag m_usageFlag = UsageFlag::NONE;
+		void* m_data = nullptr;
+	};
+
+
+
+
+	enum RenderAPI
+	{
+		None,
+		OpenGL,
+		Vulkan
+	};
+
+
+
 
 	enum class ShaderStage
 	{
@@ -40,7 +96,8 @@ namespace trace {
 		R8G8B8A8_SNORM,
 		R8G8B8A8_SRBG,
 		R8G8B8_SRBG,
-		R8G8B8_SNORM
+		R8G8B8_SNORM,
+		D32_SFLOAT_S8_SUINT
 	};
 
 	enum class InputClassification
@@ -49,6 +106,37 @@ namespace trace {
 		PER_INSTANCE_DATA,
 	};
 
+	enum class TextureFormat
+	{
+		UNKNOWN,
+		SHADER_READ,
+		COLOR_ATTACHMENT,
+		DEPTH_STENCIL,
+		PRESENT
+	};
+
+	enum class AttachmentLoadOp
+	{
+		OP_NONE,
+		LOAD_OP_LOAD,
+		LOAD_OP_CLEAR,
+		LOAD_OP_DISCARD,
+	};
+	
+	enum class AttachmentStoreOp
+	{
+		OP_NONE,
+		STORE_OP_STORE,
+		STORE_OP_DISCARD
+	};
+
+	enum class AttachmentType
+	{
+		NONE,
+		COLOR,
+		DEPTH,
+		SWAPCHAIN
+	};
 
 	struct Viewport
 	{
@@ -101,6 +189,61 @@ namespace trace {
 		TRIANGLE_STRIP
 	};
 
+	enum class ShaderResourceType
+	{
+		SHADER_RESOURCE_TYPE_NOUSE,
+		SHADER_RESOURCE_TYPE_UNIFORM_BUFFER,
+		SHADER_RESOURCE_TYPE_COMBINED_SAMPLER
+	};
+
+	enum class ShaderResourceStage
+	{
+		RESOURCE_STAGE_NONE = -1,
+		RESOURCE_STAGE_GLOBAL,
+		RESOURCE_STAGE_INSTANCE,
+		RESOURCE_STAGE_LOCAL
+	};
+
+	struct UniformMetaData
+	{
+		uint32_t _id = INVAILD_ID;
+		uint32_t _offset = INVAILD_ID;
+		uint32_t _size = 0;
+		uint32_t _slot = 0;
+		uint32_t _index = 0;
+		uint32_t _count = 0;
+		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+	};
+
+	struct Rect2D
+	{
+		uint32_t left = 0;
+		uint32_t right = 0;
+		uint32_t top = 0;
+		uint32_t bottom = 0;
+	};
+	
+	struct Rect2D_f
+	{
+		float left = .0f;
+		float right = .0f;
+		float top = .0f;
+		float bottom = .0f;
+	};
+
+	struct ShaderResourceBinding
+	{
+		ShaderStage shader_stage = ShaderStage::NONE;
+		eastl::string resource_name = "";
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		uint32_t resource_size = 0;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t slot = 0;
+		uint32_t index = 0;
+		uint32_t count = 1;
+		
+	};
+
 	struct PipelineStateDesc
 	{
 		GShader* vertex_shader = nullptr;
@@ -111,6 +254,10 @@ namespace trace {
 		ColorBlendState blend_state = {};
 		PrimitiveTopology topology = PrimitiveTopology::NONE;
 		Viewport view_port = {};
+		uint32_t resource_bindings_count = 0;
+		ShaderResourceBinding* resource_bindings = {};
+		GRenderPass* render_pass = nullptr;
+		uint32_t subpass_index = uint32_t(-1);
 	};
 
 
@@ -153,5 +300,23 @@ namespace trace {
 		glm::mat4 projection;
 		glm::vec2 _test;
 	};
+
+	struct TextureDesc
+	{
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		Format m_format = Format::NONE;
+		BindFlag m_flag = BindFlag::NIL;
+		UsageFlag m_usage = UsageFlag::NONE;
+		uint32_t m_channels = 0;
+		unsigned char* m_data = nullptr;
+		AddressMode m_addressModeU = AddressMode::NONE;
+		AddressMode m_addressModeV = AddressMode::NONE;
+		AddressMode m_addressModeW = AddressMode::NONE;
+		FilterMode m_minFilterMode = FilterMode::NONE;
+		FilterMode m_magFilterMode = FilterMode::NONE;
+	};
+
+	
 
 }

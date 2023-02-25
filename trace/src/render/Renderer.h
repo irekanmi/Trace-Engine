@@ -2,9 +2,18 @@
 
 #include "core/Core.h"
 #include "core/Object.h"
-#include "GPUtypes.h"
+#include "Graphics.h"
+
+// Temp--------------------------------
 #include "GBuffer.h"
 #include "GDevice.h"
+#include "core/events/Events.h"
+#include "Camera.h"
+#include "resource/ResourceSystem.h"
+#include "GFramebuffer.h"
+#include "GRenderPass.h"
+#include "GSwapchain.h";
+//----------------------------------------
 
 
 namespace trace {
@@ -25,27 +34,50 @@ namespace trace {
 		void EndScene();
 		void EndFrame();
 		void UsePipeline(GPipeline* pipeline);
-
-		// TODO
-		void Draw(GBuffer* buffer, BufferUsage usage);
-		void Draw(GBuffer* buffer);
-
-		// TODO: Renderer API is going to change
-		virtual void UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0);
-		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0);
-		virtual void UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot = 1, uint32_t index = 0);
-		virtual void BindPipeline(GPipeline* pipeline);
-		virtual void BindVertexBuffer(GBuffer* buffer);
-		virtual void BindIndexBuffer(GBuffer* buffer);
-		virtual void Draw(uint32_t start_vertex, uint32_t count);
-		virtual void DrawIndexed(uint32_t first_index, uint32_t count);
-
+		void Start();
+		void End();
 		void ShutDown();
+		void OnEvent(Event* p_event);
+		
 
 		static Renderer* s_instance;
 		static RenderAPI s_api;
 		static Renderer* get_instance();
 		static RenderAPI get_api();
+
+
+
+		// Temp-----------------------------
+		eastl::vector<Vertex> m_vertices;
+		eastl::vector<uint32_t> m_indices;
+
+		GBuffer* VertexBuffer;
+		GBuffer* IndexBuffer;
+
+		GShader* VertShader;
+		GShader* FragShader;
+
+		GPipeline* _pipeline;
+		Camera* _camera;
+
+		GTexture* _texture;
+
+		Texture_Ref _texture_ref;
+		Texture_Ref _texture_ref0;
+		Texture_Ref _texture_ref1;
+		Texture_Ref _texture_ref2;
+
+		GPipeline* _pipeline0;
+		GRenderPass* _renderPass;
+		GFramebuffer* _framebuffer;
+		GSwapchain* _swapChain;
+
+		Viewport _viewPort;
+		Rect2D _rect;
+
+		//------------------------------------
+
+
 	private:
 		GContext* m_context;
 		GDevice* m_device;

@@ -104,10 +104,8 @@ namespace trace {
 		int _width, _height, _channels;
 		unsigned char* pixel_data = nullptr;
 
-		TRC_TRACE("Texture load begin %s", name.c_str());
 		stbi_set_flip_vertically_on_load(true);
 		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
-		TRC_TRACE("Texture loaded %s", name.c_str());
 
 
 		TextureDesc texture_desc;
@@ -116,6 +114,8 @@ namespace trace {
 		//texture_desc.m_data = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_SRBG;
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
+		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+		texture_desc.m_usage = UsageFlag::DEFAULT;
 
 		switch (Renderer::s_api)
 		{
@@ -141,7 +141,6 @@ namespace trace {
 				{
 					VulkanTexture* texture = textures + i;
 					new(texture) VulkanTexture(texture_desc);
-					TRC_TRACE("Texture constructed %s", name.c_str());
 					texture->m_id = i;
 					TextureHash _hash;
 					_hash._id = i;

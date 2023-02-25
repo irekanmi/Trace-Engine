@@ -147,9 +147,6 @@
     <ClInclude Include="src\render\GDevice.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\GPUtypes.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\GPipeline.h">
       <Filter>render</Filter>
     </ClInclude>
@@ -177,6 +174,13 @@
     <ClInclude Include="src\resource\ResourceSystem.h" />
     <ClInclude Include="src\resource\HashTable.h" />
     <ClInclude Include="src\resource\TextureManager.h" />
+    <ClInclude Include="src\render\GSwapchain.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanSwapchain.h" />
+    <ClInclude Include="src\render\GFramebuffer.h" />
+    <ClInclude Include="src\render\GRenderPass.h" />
+    <ClInclude Include="src\render\RenderPassInfo.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -290,5 +294,11 @@
     <ClCompile Include="src\resource\Resource.cpp" />
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
+    <ClCompile Include="src\render\GSwapchain.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanSwapchain.cpp" />
+    <ClCompile Include="src\render\GFramebuffer.cpp" />
+    <ClCompile Include="src\render\GRenderpass.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp" />
   </ItemGroup>
 </Project>
