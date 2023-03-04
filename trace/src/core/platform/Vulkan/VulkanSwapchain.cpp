@@ -97,6 +97,10 @@ namespace trace {
 	{
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_physicalDevice, m_instance->m_surface, &m_device->m_swapchainInfo.surface_capabilities);
 
+		if (m_width == 0 || m_height == 0)
+		{
+			return false;
+		}
 
 		VkResult result = vk::_RecreateSwapchain(
 			m_instance,
@@ -106,10 +110,7 @@ namespace trace {
 			m_height
 		);
 
-		if (m_width == 0 || m_height == 0)
-		{
-			return false;
-		}
+		
 
 		if (result != VK_SUCCESS)
 		{

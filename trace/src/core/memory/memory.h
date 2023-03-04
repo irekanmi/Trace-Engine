@@ -120,4 +120,8 @@ namespace trace {
 	
 
 	};
+
+	uintptr_t AlignAddress(uintptr_t* addr, uint32_t align);
+	void* AllocAligned(uint32_t size_in_bytes, uint32_t align);
+	void FreeAligned(void* ptr);
 }

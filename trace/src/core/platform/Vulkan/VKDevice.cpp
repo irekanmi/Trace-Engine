@@ -140,118 +140,6 @@ namespace trace {
 		vk::_DestoryDevice(m_handle, m_instance);
 	}
 
-	void VKDevice::UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot, uint32_t index)
-	{
-	//	VulkanPipeline* pipeline = reinterpret_cast<VulkanPipeline*>(m_pipeline);
-	//
-	//	VKPipeline& _pipe = pipeline->m_handle;
-	//
-	//	VkWriteDescriptorSet write = {};
-	//	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//
-	//	switch (_pipe.Scene_bindings[slot].descriptorType)
-	//	{
-	//	case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-	//	{
-	//		void* _data;
-	//		vkMapMemory(m_handle->m_device, _pipe.Scene_buffers[slot].m_memory, 0, size, 0, &_data);
-	//		memcpy(_data, data, size);
-	//		vkUnmapMemory(m_handle->m_device, _pipe.Scene_buffers[slot].m_memory);
-	//
-	//		VkDescriptorBufferInfo buf_info = {};
-	//		buf_info.offset = 0;
-	//		buf_info.range = size;
-	//		buf_info.buffer = _pipe.Scene_buffers[slot].m_handle;
-	//
-	//		write.descriptorCount = _pipe.Scene_bindings[slot].descriptorCount;
-	//		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//		write.dstBinding = _pipe.Scene_bindings[slot].binding;
-	//		write.dstSet = _pipe.Scene_sets[m_handle->m_imageIndex];
-	//		write.pBufferInfo = &buf_info;
-	//
-	//		break;
-	//	}
-	//}
-	//
-	//	vkUpdateDescriptorSets(m_handle->m_device, 1, &write, 0, nullptr);
-	//
-	}
-	//
-	void VKDevice::UpdateSceneGlobalData(SceneGlobals data, uint32_t slot, uint32_t index)
-	{
-	//	VulkanPipeline* pipeline = reinterpret_cast<VulkanPipeline*>(m_pipeline);
-	//
-	//	VKPipeline& _pipe = pipeline->m_handle;
-	//
-	//	VkWriteDescriptorSet write = {};
-	//	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//
-	//	switch (_pipe.Scene_bindings[slot].descriptorType)
-	//	{
-	//	case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-	//	{
-	//		void* _data;
-	//		vkMapMemory(m_handle->m_device, _pipe.Scene_buffers[slot].m_memory, 0, sizeof(SceneGlobals), 0, &_data);
-	//		memcpy(_data, &data, sizeof(SceneGlobals));
-	//		vkUnmapMemory(m_handle->m_device, _pipe.Scene_buffers[slot].m_memory);
-	//
-	//		VkDescriptorBufferInfo buf_info = {};
-	//		buf_info.offset = 0;
-	//		buf_info.range = sizeof(SceneGlobals);
-	//		buf_info.buffer = _pipe.Scene_buffers[slot].m_handle;
-	//
-	//		write.descriptorCount = _pipe.Scene_bindings[slot].descriptorCount;
-	//		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//		write.dstBinding = _pipe.Scene_bindings[slot].binding;
-	//		write.dstSet = _pipe.Scene_sets[m_handle->m_imageIndex];
-	//		write.pBufferInfo = &buf_info;
-	//
-	//		break;
-	//	}
-	//	}
-	//
-	//	vkUpdateDescriptorSets(m_handle->m_device, 1, &write, 0, nullptr);
-	//
-	}
-	//
-	void VKDevice::UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot, uint32_t index)
-	{
-	//	VulkanPipeline* pipeline = reinterpret_cast<VulkanPipeline*>(m_pipeline);
-	//	VulkanTexture* _tex = reinterpret_cast<VulkanTexture*>(texture);
-	//
-	//	VKPipeline& _pipe = pipeline->m_handle;
-	//
-	//	VkWriteDescriptorSet write = {};
-	//	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//
-	//	switch (_pipe.Scene_bindings[slot].descriptorType)
-	//	{
-	//	case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-	//	{
-	//
-	//
-	//		VkDescriptorImageInfo image_info = {};
-	//		image_info.sampler = _tex->m_sampler;
-	//		image_info.imageView = _tex->m_handle.m_view;
-	//		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	//
-	//		write.descriptorCount = _pipe.Scene_bindings[slot].descriptorCount;
-	//		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//		write.dstBinding = _pipe.Scene_bindings[slot].binding;
-	//		write.dstSet = _pipe.Scene_sets[m_handle->m_imageIndex];
-	//		write.pImageInfo = &image_info;
-	//
-	//		break;
-	//	}
-	//	}
-	//
-	//	vkUpdateDescriptorSets(m_handle->m_device, 1, &write, 0, nullptr);
-	//
-	}
-	//
-	void VKDevice::UpdateSceneGlobalTextures(GTexture* texture, uint32_t count, uint32_t slot, uint32_t index)
-	{
-	}
 
 	void VKDevice::BindViewport(Viewport view_port)
 	{
@@ -303,17 +191,23 @@ namespace trace {
 		uint32_t set_count = 0;
 		VkDescriptorSet _sets[3];
 
+		
+		
+		
+		
 		if (_pipeline->m_handle.Scene_sets[0])
 		{
 			_sets[set_count++] = _pipeline->m_handle.Scene_sets[m_handle->m_imageIndex];
 		}
+
 		if (_pipeline->m_handle.Instance_sets[0])
 		{
 			_sets[set_count++] = _pipeline->m_handle.Instance_sets[m_handle->m_imageIndex];
 		}
+
 		if (_pipeline->m_handle.Local_sets[0])
 		{
-			_sets[set_count++] = _pipeline->m_handle.Scene_sets[m_handle->m_imageIndex];
+			_sets[set_count++] = _pipeline->m_handle.Local_sets[m_handle->m_imageIndex];
 		}
 
 		vkCmdBindDescriptorSets(

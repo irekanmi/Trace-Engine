@@ -12,6 +12,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/glm.hpp"
 #include "render/PerspectiveCamera.h"
+#include "memory/memory.h"
 
 //// Temp---------------
 //#define STB_IMAGE_IMPLEMENTATION
@@ -28,6 +29,7 @@ void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, cons
 {
 	return new char[size];
 }
+
 
 
 namespace trace
@@ -69,6 +71,7 @@ namespace trace
 	Application::Application(trc_app_data appData)
 	{
 
+
 		m_LayerStack = new LayerStack();
 		switch (appData.wintype)
 		{
@@ -88,13 +91,12 @@ namespace trace
 		m_client_update = appData.client_update;
 		m_client_end = appData.client_end;
 
-		m_Window->SetVsync(appData.enable_vsync);
+		m_vsync = appData.enable_vsync;
 
 		for (unsigned int i = 1; i < EventType::MAX_EVENTS; i++)
 		{
 			trace::EventsSystem::get_instance()->AddEventListener((EventType)i, BIND_EVENT_FN(Application::OnEvent));
 		}
-
 
 	}
 
@@ -113,6 +115,40 @@ namespace trace
 		trace::ApplicationStart app_start;
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
 
+		//Temp=======================
+		
+
+		eastl::vector<Vertex> _vertices;
+		eastl::vector<uint32_t> _indices;
+		
+		generateDefaultCube(_vertices, _indices);
+		generateVertexTangent(_vertices, _indices);
+
+
+
+		TextureDesc texture_desc;
+		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
+		texture_desc.m_format = Format::R8G8B8A8_UNORM;
+		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
+		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+		texture_desc.m_usage = UsageFlag::DEFAULT;
+
+
+		Material _mat;
+		//_mat.m_albedoMap = ResourceSystem::s_instance->LoadTexture("bricks2.jpg");
+		_mat.m_albedoMap = ResourceSystem::s_instance->GetDefaultTexture("albedo_map");
+		_mat.m_diffuseColor = glm::vec4(0.3f, 0.5f, 0.45f, 1.0f);
+		_mat.m_shininess = 256.0f;
+		_mat.m_specularMap = ResourceSystem::s_instance->GetDefaultTexture("specular_map");
+		//_mat.m_specularMap = ResourceSystem::s_instance->LoadTexture("paving_SPEC.png");
+		//_mat.m_normalMap = ResourceSystem::s_instance->LoadTexture("bricks2_normal.jpg", texture_desc);
+		_mat.m_normalMap = ResourceSystem::s_instance->GetDefaultTexture("normal_map");
+
+		_squareModel.Init(_vertices, _indices);
+		_squareModel.SetMaterial(_mat);
+		
+		//=============================
+
 		//----------CLIENT--------------//
 		m_client_start();
 		//______________________________//
@@ -120,13 +156,7 @@ namespace trace
 	
 	void Application::Run()
 	{
-		printf("Application Running\n");
-
-
 		TRC_WARN("Trace Engine %s", "in progress");
-
-
-		
 
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
@@ -135,26 +165,49 @@ namespace trace
 		renderer->Start();
 		//----------------------------
 
+		m_clock.Begin();
+
 		while (m_isRunning)
 		{
-			m_Window->Update(0.0f);
-			
+			float _time = m_clock.GetElapsedTime();
+			float deltaTime = _time - m_lastTime;
+			m_lastTime = _time;
 
+			m_Window->Update(0.0f);
 			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
 			{
 				Layer* layer = m_LayerStack->m_Layers[i];
-				layer->Update(0.0f);
+				layer->Update(deltaTime);
 			}
 
 			//------CLIENT-------//
 
-			m_client_update(0.0f);
+			m_client_update(deltaTime);
 
 			//___________________//	
 
 
-			renderer->Update(0.0f);
-			input->Update(0.0f);
+			if (renderer->BeginFrame())
+			{
+				renderer->Update(deltaTime);
+				renderer->Draw(&_squareModel);
+				renderer->EndFrame();
+			}
+
+			input->Update(deltaTime);
+			float end_time = m_clock.GetElapsedTime();
+			float total_frame_time = end_time - _time;
+			float frame_per_sec = 1.0f / 55;
+
+			//TODO fix 
+			if (m_vsync)
+			{
+				if (total_frame_time < frame_per_sec && total_frame_time > 0.0f)
+				{
+					float value = frame_per_sec - total_frame_time;
+					Platform::Sleep((value * 1000.0f));
+				}
+			}
 		}
 	}
 

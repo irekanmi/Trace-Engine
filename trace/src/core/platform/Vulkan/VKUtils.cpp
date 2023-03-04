@@ -1556,19 +1556,46 @@ namespace vk {
 		if (pipeline->Scene_buffers.m_handle != VK_NULL_HANDLE)
 		{
 			_DestoryBuffer(instance, device, &pipeline->Scene_buffers);
+			
 		}
 
 		if (pipeline->Scene_layout)
 		{
 			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Scene_layout, instance->m_alloc_callback);
 			pipeline->Scene_layout = VK_NULL_HANDLE;
+			if (pipeline->Scene_pool)
+			{
+				vkDestroyDescriptorPool(device->m_device, pipeline->Scene_pool, instance->m_alloc_callback);
+				pipeline->Scene_pool = VK_NULL_HANDLE;
+			}
 		}
-
-		if (pipeline->Scene_pool)
+		
+		if (pipeline->Instance_layout)
 		{
-			vkDestroyDescriptorPool(device->m_device, pipeline->Scene_pool, instance->m_alloc_callback);
-			pipeline->Scene_pool = VK_NULL_HANDLE;
+			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Instance_layout, instance->m_alloc_callback);
+			pipeline->Instance_layout = VK_NULL_HANDLE;
+			if (pipeline->Instance_pool)
+			{
+				vkDestroyDescriptorPool(device->m_device, pipeline->Instance_pool, instance->m_alloc_callback);
+				pipeline->Instance_pool = VK_NULL_HANDLE;
+			}
 		}
+		
+		if (pipeline->Local_layout)
+		{
+			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Local_layout, instance->m_alloc_callback);
+			pipeline->Local_layout = VK_NULL_HANDLE;
+			if (pipeline->Local_pool)
+			{
+				vkDestroyDescriptorPool(device->m_device, pipeline->Local_pool, instance->m_alloc_callback);
+				pipeline->Local_pool = VK_NULL_HANDLE;
+			}
+		}
+		
+
+		
+
+		
 
 		if (pipeline->m_layout)
 		{
@@ -2153,7 +2180,7 @@ namespace vk {
 				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
 
 				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = 1 * 3;
+				pool_size.descriptorCount = desc.resource_bindings[i].count * 3;
 				pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
 				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
@@ -2191,7 +2218,7 @@ namespace vk {
 				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
 
 				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = 1 * 3;
+				pool_size.descriptorCount = desc.resource_bindings[i].count * 3;
 				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
@@ -2357,6 +2384,11 @@ namespace vk {
 			result = VK_FORMAT_R32G32B32_SFLOAT;
 			break;
 		}
+		case trace::Format::R32G32B32A32_FLOAT:
+		{
+			result = VK_FORMAT_R32G32B32A32_SFLOAT;
+			break;
+		}
 		case trace::Format::R32G32B32_UINT:
 		{
 			result = VK_FORMAT_R32G32B32_UINT;
@@ -2383,6 +2415,11 @@ namespace vk {
 			result = VK_FORMAT_R8G8B8A8_SRGB;
 			break;
 		}
+		case trace::Format::R8G8B8A8_RBG:
+		{
+			result = VK_FORMAT_R8G8B8A8_SRGB;
+			break;
+		}
 		case trace::Format::R8G8B8_SRBG:
 		{
 			result = VK_FORMAT_R8G8B8_SRGB;
@@ -2391,6 +2428,11 @@ namespace vk {
 		case trace::Format::R8G8B8_SNORM:
 		{
 			result = VK_FORMAT_R8G8B8_SNORM;
+			break;
+		}
+		case trace::Format::R8G8B8A8_UNORM:
+		{
+			result = VK_FORMAT_R8G8B8A8_UNORM;
 			break;
 		}
 		case trace::Format::D32_SFLOAT_S8_SUINT:

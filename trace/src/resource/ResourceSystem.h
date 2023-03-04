@@ -19,11 +19,18 @@ namespace trace {
 		bool Init();
 		void ShutDown();
 
+		Texture_Ref GetDefaultTexture(const std::string& name);
+		void CreateTexture(const std::string& name, TextureDesc desc);
+		Texture_Ref LoadTexture(const std::string& name, TextureDesc desc);
+		Texture_Ref LoadTexture(const std::string& name);
 		Texture_Ref GetTexture(const std::string& name);
 		void ReleaseTexture(const std::string& name);
 
 		static ResourceSystem* s_instance;
 		static ResourceSystem* get_instance();
+
+	private:
+		bool LoadDefaults();
 
 	private:
 		TextureManager m_textureManager;

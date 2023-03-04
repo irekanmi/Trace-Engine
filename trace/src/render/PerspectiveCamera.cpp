@@ -24,9 +24,14 @@ namespace trace {
 		m_fov = fov;
 		m_zNear = z_near;
 		m_zFar = z_far;
+		yaw = -90.0f;
+		pitch = 0.0f;
+
+		//m_upDirection = glm::normalize(glm::cross(m_lookDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
+		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
 
 		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
-
+		recompute();
 	}
 
 	PerspectiveCamera::~PerspectiveCamera()
@@ -82,25 +87,64 @@ namespace trace {
 
 	void PerspectiveCamera::Update(float deltaTime)
 	{
+		float move_speed = 2.0f;
+		float rotate_speed = 50.0f;
+
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_W) == KeyState::KEY_HELD)
 		{
-			m_position += m_lookDirection;
+			m_position += m_lookDirection * move_speed * deltaTime;
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_S) == KeyState::KEY_HELD)
 		{
-			m_position -= m_lookDirection;
+			m_position -= m_lookDirection * move_speed * deltaTime;
 		}
+		
 
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_D) == KeyState::KEY_HELD)
 		{
-			glm::vec3 value = glm::cross(m_lookDirection, m_upDirection);
-			m_position += value;
+			m_position += m_rightDirection * move_speed * deltaTime;
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_A) == KeyState::KEY_HELD)
 		{
-			glm::vec3 value = glm::cross(m_lookDirection, m_upDirection);
-			m_position -= value;
+			m_position -= m_rightDirection * move_speed * deltaTime;
 		}
+		
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_Q) == KeyState::KEY_HELD)
+		{
+			m_position += m_upDirection * move_speed * deltaTime;
+		}
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_E) == KeyState::KEY_HELD)
+		{
+			m_position -= m_upDirection * move_speed * deltaTime;
+		}
+
+
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_UP) == KeyState::KEY_HELD)
+		{
+			pitch += rotate_speed * deltaTime;
+			recompute();
+		}
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_DOWN) == KeyState::KEY_HELD)
+		{
+			pitch -= rotate_speed * deltaTime;
+			recompute();
+		}
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_RIGHT) == KeyState::KEY_HELD)
+		{
+			yaw += rotate_speed * deltaTime;
+			recompute();
+		}
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_LEFT) == KeyState::KEY_HELD)
+		{
+			yaw -= rotate_speed * deltaTime;
+			recompute();
+		}
+
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		else if (pitch < -89.0f)
+			pitch = -89.0f;
+
 	}
 
 	void PerspectiveCamera::SetPosition(glm::vec3 position)
@@ -144,6 +188,19 @@ namespace trace {
 		m_aspectRatio = aspect_ratio;
 
 		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
+	}
+
+	void PerspectiveCamera::recompute()
+	{
+		m_lookDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		m_lookDirection.y = sin(glm::radians(pitch));
+		m_lookDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		
+		m_lookDirection = glm::normalize(m_lookDirection);
+
+		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
+		m_upDirection = glm::normalize(glm::cross( m_rightDirection, m_lookDirection));
+
 	}
 
 }

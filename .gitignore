@@ -20,6 +20,7 @@ trace.vcxproj.filters
 Debug/
 *.exe
 externals/
+assets/textures
 
 #Code lite
 *.project

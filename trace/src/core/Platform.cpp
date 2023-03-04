@@ -5,6 +5,8 @@
 #endif
 #include "core/io/Logging.h"
 #include "EASTL/vector.h"
+#include <dos.h>
+
 
 namespace trace {
 	PlatformAPI Platform::s_api = PlatformAPI::NO;
@@ -51,7 +53,8 @@ namespace trace {
 		{
 		case PlatformAPI::WINDOWS:
 		{
-			Sleep(milleseconds);
+			::DWORD value = (::DWORD)milleseconds;
+			::Sleep(value);
 			return;
 		}
 		}

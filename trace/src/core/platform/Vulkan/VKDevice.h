@@ -28,11 +28,6 @@ namespace trace {
 		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
 		virtual void ShutDown() override;
 
-		virtual void UpdateSceneGlobalData(void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0) override;
-		virtual void UpdateSceneGlobalData(SceneGlobals data, uint32_t slot = 0, uint32_t index = 0) override;
-		virtual void UpdateSceneGlobalTexture(GTexture* texture, uint32_t slot = 1, uint32_t index = 0) override;
-		virtual void UpdateSceneGlobalTextures(GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) override;
-
 		virtual void BindViewport(Viewport view_port) override;
 		virtual void BindRect(Rect2D rect) override;
 		virtual void BindPipeline(GPipeline* pipeline) override;
@@ -50,7 +45,6 @@ namespace trace {
 		void OnEvent(Event* p_Event);
 
 	private:
-		bool recreateSwapchain();
 
 
 	public:

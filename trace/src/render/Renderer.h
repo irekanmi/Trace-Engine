@@ -13,6 +13,7 @@
 #include "GFramebuffer.h"
 #include "GRenderPass.h"
 #include "GSwapchain.h";
+#include "Model.h"
 //----------------------------------------
 
 
@@ -39,6 +40,7 @@ namespace trace {
 		void ShutDown();
 		void OnEvent(Event* p_event);
 		
+		void Draw(Model* model);
 
 		static Renderer* s_instance;
 		static RenderAPI s_api;
@@ -62,10 +64,6 @@ namespace trace {
 
 		GTexture* _texture;
 
-		Texture_Ref _texture_ref;
-		Texture_Ref _texture_ref0;
-		Texture_Ref _texture_ref1;
-		Texture_Ref _texture_ref2;
 
 		GPipeline* _pipeline0;
 		GRenderPass* _renderPass;

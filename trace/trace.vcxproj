@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\core\Application.h" />
+    <ClInclude Include="src\core\Clock.h" />
     <ClInclude Include="src\core\Core.h" />
     <ClInclude Include="src\core\Coretypes.h" />
     <ClInclude Include="src\core\EntryPoint.h" />
@@ -184,6 +185,8 @@
     <ClInclude Include="src\render\GFramebuffer.h" />
     <ClInclude Include="src\render\GRenderPass.h" />
     <ClInclude Include="src\render\GSwapchain.h" />
+    <ClInclude Include="src\render\Material.h" />
+    <ClInclude Include="src\render\Model.h" />
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\resource\HashTable.h" />
     <ClInclude Include="src\resource\Ref.h" />
@@ -205,8 +208,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp" />
+    <ClCompile Include="src\core\Clock.cpp" />
     <ClCompile Include="src\core\FileSystem.cpp" />
     <ClCompile Include="src\core\Layer.cpp" />
+    <ClCompile Include="src\core\memory\memory.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp" />
@@ -245,6 +250,7 @@
     <ClCompile Include="src\render\GShader.cpp" />
     <ClCompile Include="src\render\GSwapchain.cpp" />
     <ClCompile Include="src\render\GTexture.cpp" />
+    <ClCompile Include="src\render\Model.cpp" />
     <ClCompile Include="src\render\PerspectiveCamera.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />

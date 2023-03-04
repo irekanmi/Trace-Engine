@@ -24,7 +24,7 @@ namespace trace {
 		virtual void SetTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t slot = 1, uint32_t index = 0) = 0;
 
 		virtual void SetData(const eastl::string resource_name ,ShaderResourceStage resource_scope, void* data, uint32_t size) = 0;
-		virtual void SetTextureData(const eastl::string resource_name, ShaderResourceStage resource_scope, GTexture* texture) = 0;
+		virtual void SetTextureData(const eastl::string resource_name, ShaderResourceStage resource_scope, GTexture* texture, uint32_t index = 0) = 0;
 
 		virtual void SetMultipleData(ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t count, uint32_t slot = 0, uint32_t index = 0) = 0;
 		virtual void SetMultipleTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) = 0;

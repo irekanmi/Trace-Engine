@@ -35,18 +35,25 @@ namespace trace {
 		virtual void SetAspectRatio(float aspect_ratio) override;
 
 	private:
+		void recompute();
+
+	private:
 		glm::vec3 m_position;
 		glm::vec3 m_lookDirection;
 		glm::vec3 m_upDirection;
+		glm::vec3 m_rightDirection;
 
 		float m_fov;
 		float m_zNear;
 		float m_zFar;
 		float m_aspectRatio;
 
+		float yaw;
+		float pitch;
+
 		glm::mat4 m_projection;
 
-
+		
 	protected:
 
 	};

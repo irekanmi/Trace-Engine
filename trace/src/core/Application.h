@@ -6,6 +6,7 @@
 #include "Layer.h"
 #include "Coretypes.h"
 #include "EASTL/vector.h"
+#include "Clock.h"
 
 // temp -------------------------
 
@@ -18,13 +19,13 @@
 #include "render/GShader.h"
 #include "render/Camera.h"
 #include "render/GTexture.h"
+#include "render/Model.h"
 
 // ------------------------------------
 
 
 namespace trace
 {
-	
 
 	class TRACE_API Application
 	{
@@ -56,11 +57,17 @@ namespace trace
 		ClientStartCallback   m_client_start;
 		ClientUpdateCallback  m_client_update;
 
+		//Temp ==================
+		Model _squareModel;
+		//=======================
 
 	protected:
+		Clock m_clock;
+		float m_lastTime = 0.0f;
 		Window* m_Window;
-		bool m_isRunning = true;
 		LayerStack* m_LayerStack;
+		bool m_isRunning = true;
+		bool m_vsync = false;
 
 	};
 

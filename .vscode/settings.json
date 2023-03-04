@@ -1,4 +1,7 @@
 {
     "makefile.extensionOutputFolder": "./.vscode",
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "files.associations": {
+        "cmath": "cpp"
+    }
 }

@@ -65,10 +65,12 @@ public:
 
 	Ref(Ref& other)
 	{
-		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<%s>", _STR(T));
-		other.get()->m_refCount++;
-		_ptr = other._ptr;
-		Unload = other.Unload;
+		if (other.is_valid())
+		{
+			other.get()->m_refCount++;
+			_ptr = other._ptr;
+			Unload = other.Unload;
+		}
 	}
 
 	~Ref()

@@ -4,6 +4,9 @@
 #include "HashTable.h"
 #include "render/GTexture.h"
 #include <string>
+#include "Ref.h"
+
+using Texture_Ref = Ref<trace::GTexture>;
 
 namespace trace {
 
@@ -24,15 +27,25 @@ namespace trace {
 		void ShutDown();
 
 		GTexture* GetTexture(const std::string& name);
+		Texture_Ref GetDefault(const std::string& name);
 		bool LoadTexture(const std::string& name);
+		bool LoadTexture(const std::string& name, TextureDesc desc);
 		void UnloadTexture(GTexture* texture);
 		void ReleaseTexture(const std::string& name);
+
+		bool LoadDefaultTextures();
+
+	private:
+		void UnloadDefaults(GTexture* texture);
 
 	private:
 		HashTable<TextureHash> m_hashTable;
 		char* m_textures = nullptr;
 		uint32_t m_textureUnits;
 		uint32_t m_textureTypeSize;
+		Texture_Ref default_diffuse_map;
+		Texture_Ref default_specular_map;
+		Texture_Ref default_normal_map;
 
 	protected:
 

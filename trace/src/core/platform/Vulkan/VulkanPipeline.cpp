@@ -4,7 +4,7 @@
 #include "VkUtils.h"
 #include "VulkanRenderPass.h"
 #include "VulkanTexture.h"
-#include <memory>
+#include "core/memory/memory.h"
 
 	extern trace::VKHandle g_Vkhandle;
 	extern trace::VKDeviceHandle g_VkDevice;
@@ -90,15 +90,16 @@ namespace trace {
 		);
 
 		//_mapped_data = new char[map_data_size];
-		_mapped_data = (char*)std::malloc(map_data_size);
+		_mapped_data = (char*)AllocAligned(map_data_size, m_device->m_properties.limits.minMemoryMapAlignment);
 
+		cache_data = _mapped_data;
 		vkMapMemory(
 			m_device->m_device,
 			m_handle.Scene_buffers.m_memory,
 			0,
 			map_data_size,
 			0,
-			(void**) & _mapped_data
+			(void**) &cache_data
 		);
 
 		return result;
@@ -124,7 +125,7 @@ namespace trace {
 		}
 
 		UniformMetaData& meta_data = m_handle.Scene_uniforms[hash_id];
-		void* map_point = _mapped_data + meta_data._offset;
+		void* map_point = cache_data + meta_data._offset;
 
 		if (size > meta_data._size)
 			TRC_ERROR("Please ensure data size is not greater than resource data");
@@ -135,7 +136,7 @@ namespace trace {
 
 	}
 
-	void VulkanPipeline::SetTextureData(const eastl::string resource_name, ShaderResourceStage resource_scope, GTexture* texture)
+	void VulkanPipeline::SetTextureData(const eastl::string resource_name, ShaderResourceStage resource_scope, GTexture* texture, uint32_t index)
 	{
 
 		uint32_t hash_id = _hashTable.Get(resource_name.c_str());
@@ -153,6 +154,15 @@ namespace trace {
 
 
 		UniformMetaData& meta_data = m_handle.Scene_uniforms[hash_id];
+		VkDescriptorImageInfo image_info = {};
+		image_info.sampler = _tex->m_sampler;
+		image_info.imageView = _tex->m_handle.m_view;
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		write.descriptorCount = 1; //HACK: Fix
+		write.dstBinding = meta_data._slot;
+		write.pImageInfo = &image_info;
+		write.dstArrayElement = index;
 		switch (meta_data._resource_type)
 		{
 		case ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
@@ -169,48 +179,20 @@ namespace trace {
 		case ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
 
-			VkDescriptorImageInfo image_info = {};
-			image_info.sampler = _tex->m_sampler;
-			image_info.imageView = _tex->m_handle.m_view;
-			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			write.descriptorCount = meta_data._count;
-			write.dstBinding = meta_data._slot;
 			write.dstSet = m_handle.Scene_sets[m_device->m_imageIndex];
-			write.pImageInfo = &image_info;
 
 			break;
 		}
 		
 		case ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
 		{
-
-			VkDescriptorImageInfo image_info = {};
-			image_info.sampler = _tex->m_sampler;
-			image_info.imageView = _tex->m_handle.m_view;
-			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			write.descriptorCount = meta_data._count;
-			write.dstBinding = meta_data._slot;
 			write.dstSet = m_handle.Instance_sets[m_device->m_imageIndex];
-			write.pImageInfo = &image_info;
-
 			break;
 		}
 		
 		case ShaderResourceStage::RESOURCE_STAGE_LOCAL:
 		{
-
-			VkDescriptorImageInfo image_info = {};
-			image_info.sampler = _tex->m_sampler;
-			image_info.imageView = _tex->m_handle.m_view;
-			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			write.descriptorCount = meta_data._count;
-			write.dstBinding = meta_data._slot;
 			write.dstSet = m_handle.Instance_sets[m_device->m_imageIndex];
-			write.pImageInfo = &image_info;
-
 			break;
 		}
 
@@ -245,7 +227,7 @@ namespace trace {
 		vk::_DestroyPipeline(m_instance, m_device, &m_handle);
 
 		// TODO: Fix bug ___> unknow error source
-		std::free(_mapped_data);
+		FreeAligned(_mapped_data);
 
 	}
 
@@ -274,6 +256,7 @@ namespace trace {
 					_pipeline.Scene_uniforms[j]._count = resource_bindings[i].count;
 					_pipeline.Scene_uniforms[j]._resource_type = resource_bindings[i].resource_type;
 					total_size_global += resource_bindings[i].resource_size;
+					total_size_global = get_alignment(total_size_global, device->m_properties.limits.minMemoryMapAlignment);
 					break;
 				}
 			}

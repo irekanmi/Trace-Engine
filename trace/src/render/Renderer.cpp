@@ -13,6 +13,9 @@
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
 
+//Temp============
+#include "glm/gtc/matrix_transform.hpp"
+
 
 namespace trace {
 
@@ -78,43 +81,25 @@ namespace trace {
 	{
 
 		// Temp--------------------
-		_camera->Update(0.0f);
+		_camera->Update(deltaTime);
 		//-------------------------
 		
-
-			if (m_device->BeginFrame(_swapChain))
-			{
-				SceneGlobals scene_data = {};
-				scene_data.view = _camera->GetViewMatrix();
-				scene_data.projection = _camera->GetProjectionMatix();
-
-				m_device->BeginRenderPass(_renderPass, _framebuffer);
-				m_device->BindViewport(_viewPort);
-				m_device->BindRect(_rect);
-
-
-				_pipeline0->SetData("scene_globals", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data, sizeof(SceneGlobals));
-				_pipeline0->SetTextureData("testing", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, _texture_ref.get());
-
-				m_device->BindPipeline(_pipeline0);
-				m_device->BindVertexBuffer(VertexBuffer);
-				m_device->BindIndexBuffer(IndexBuffer);
-
-				m_device->DrawIndexed(0, 6);
-				m_device->EndRenderPass(_renderPass);
-
-
-				m_device->EndFrame();
-				_swapChain->Present();
-			}
-
 
 		m_context->Update(deltaTime);
 	}
 
 	bool Renderer::BeginFrame()
 	{
-		 return m_device->BeginFrame(_swapChain);
+		bool result = m_device->BeginFrame(_swapChain);
+		if (result)
+		{
+			m_device->BeginRenderPass(_renderPass, _framebuffer);
+			m_device->BindViewport(_viewPort);
+			m_device->BindRect(_rect);
+		}
+
+
+		return result;
 	}
 
 	void Renderer::BeginScene()
@@ -127,7 +112,9 @@ namespace trace {
 
 	void Renderer::EndFrame()
 	{
+		m_device->EndRenderPass(_renderPass);
 		m_device->EndFrame();
+		_swapChain->Present();
 	}
 
 	void Renderer::UsePipeline(GPipeline* pipeline)
@@ -176,7 +163,7 @@ namespace trace {
 		FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
 
 		ColorBlendState blend_state;
-		blend_state.alpha_to_blend_coverage = false;
+		blend_state.alpha_to_blend_coverage = true;
 
 		DepthStencilState depth_stenc_state;
 		depth_stenc_state.depth_test_enable = true;
@@ -219,17 +206,39 @@ namespace trace {
 
 		ShaderResourceBinding scene_tex;
 		scene_tex.shader_stage = ShaderStage::PIXEL_SHADER;
-		scene_tex.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		scene_tex.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
 		scene_tex.resource_size = 0;
 		scene_tex.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
 		scene_tex.resource_name = "testing";
-		scene_tex.count = 1;
+		scene_tex.count = 3;
 		scene_tex.index = 0;
 		scene_tex.slot = 1;
 
+		ShaderResourceBinding instance_data;
+		instance_data.shader_stage = ShaderStage::PIXEL_SHADER;
+		instance_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
+		instance_data.resource_size = sizeof(MaterialRenderData);
+		instance_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		instance_data.resource_name = "instance_data";
+		instance_data.count = 1;
+		instance_data.index = 0;
+		instance_data.slot = 0;
+
+		ShaderResourceBinding local_data;
+		local_data.shader_stage = ShaderStage::VERTEX_SHADER;
+		local_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
+		local_data.resource_size = sizeof(glm::mat4);
+		local_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		local_data.resource_name = "local_data";
+		local_data.count = 1;
+		local_data.index = 0;
+		local_data.slot = 3;
+
 		ShaderResourceBinding scene[] = {
 			scene_data,
-			scene_tex
+			scene_tex,
+			instance_data,
+			local_data
 		};
 
 		PipelineStateDesc desc;
@@ -241,10 +250,9 @@ namespace trace {
 		desc.topology = PrimitiveTopology::TRIANGLE_LIST;
 		desc.vertex_shader = VertShader;
 		desc.view_port = vp;
-		desc.resource_bindings_count = 2;
+		desc.resource_bindings_count = 4;
 		desc.resource_bindings = scene;
 
-		//_pipeline = GPipeline::Create_(desc);
 
 
 		AttachmentInfo color_attach;
@@ -314,48 +322,9 @@ namespace trace {
 			1,
 			_swapChain
 		);
-		const float scale = 10;
-
-
-		m_vertices = {
-			{ {-0.75f, -0.5f, 0.0f}, { 0.0f, 0.0f}},
-			{ {0.75f, -0.5f, 0.0f}, {1.0f, 0.0f} },
-			{ {0.75f, 0.5f, 0.0f}, {1.0f, 1.0f} },
-			{ { -0.75f, 0.5f, 0.0f }, {0.0f, 1.0f }}
-		};
-
-		for (auto& i : m_vertices)
-		{
-			i.pos *= scale;
-		}
-
-
-
-		m_indices = {
-			0, 1, 2,
-			0, 2, 3
-		};
-
-		BufferInfo vertex_buffer_info;
-		vertex_buffer_info.m_size = m_vertices.size() * sizeof(Vertex);
-		vertex_buffer_info.m_stide = sizeof(Vertex);
-		vertex_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
-		vertex_buffer_info.m_flag = BindFlag::VERTEX_BIT;
-		vertex_buffer_info.m_data = m_vertices.data();
-
-		BufferInfo index_buffer_info;
-		index_buffer_info.m_size = m_indices.size() * sizeof(uint32_t);
-		index_buffer_info.m_stide = sizeof(uint32_t);
-		index_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
-		index_buffer_info.m_flag = BindFlag::INDEX_BIT;
-		index_buffer_info.m_data = m_indices.data();
-
-		VertexBuffer = GBuffer::Create_(vertex_buffer_info);
-		IndexBuffer = GBuffer::Create_(index_buffer_info);
-
 
 		_camera = new PerspectiveCamera(
-			glm::vec3(0.0f, 0.0f, 15.0f),
+			glm::vec3(0.0f, 0.0f, 3.0f),
 			glm::vec3(0.0f, 0.0f, -1.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f),
 			((float)800.0f) / ((float)600.0f),
@@ -366,45 +335,7 @@ namespace trace {
 
 		UsePipeline(_pipeline0);
 
-		//		uint32_t dimension = 256;
-		//		uint32_t channels = 4;
-		//		
-		//		unsigned char* pixel = new unsigned char[dimension * dimension * channels];
-		//		memset(pixel, 255, dimension * dimension * channels);
-		//
-		//		for (uint32_t row = 0; row < dimension; row++)
-		//		{
-		//			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
-		//			{
-		//				uint32_t index = (row * dimension) + coloumn;
-		//				uint32_t _idx = index * channels;
-		//				if (row % 2)
-		//				{
-		//					if (coloumn % 2)
-		//					{
-		//						pixel[_idx + 0] = 0;
-		//						pixel[_idx + 1] = 0;
-		//					}
-		//				}
-		//				else
-		//				{
-		//					if (!(coloumn % 2))
-		//					{
-		//						pixel[_idx + 0] = 0;
-		//						pixel[_idx + 1] = 0;
-		//					}
-		//				}
-		//			}
-		//
-		//		}
-		//
-
-
-
-		_texture_ref = ResourceSystem::s_instance->GetTexture("trace_core.texture0.jpg");
-		_texture_ref0 = ResourceSystem::s_instance->GetTexture("trace_core.texture0.jpg");
-		_texture_ref1 = ResourceSystem::s_instance->GetTexture("trace_core.texture1.jpg");
-		_texture_ref2 = ResourceSystem::s_instance->GetTexture("trace_core.texture2.jpg");
+		
 
 
 		//---------------------------------------------------------------------------------------------
@@ -416,12 +347,6 @@ namespace trace {
 
 		// Temp-----------------------------
 		
-		_texture_ref.~Ref();
-		_texture_ref0.~Ref();
-		_texture_ref1.~Ref();
-		_texture_ref2.~Ref();
-		
-		
 		delete _swapChain;
 		delete _framebuffer;
 		delete _renderPass;
@@ -429,11 +354,7 @@ namespace trace {
 		_pipeline0->Shutdown();
 		delete _pipeline0;
 
-		//delete _pipeline;
-		
-		delete VertexBuffer;
-		delete IndexBuffer;
-		
+
 		delete VertShader;
 		delete FragShader;
 		
@@ -465,8 +386,7 @@ namespace trace {
 		case trace::EventType::TRC_WND_CLOSE:
 		{
 			//trace::WindowClose* wnd_close = reinterpret_cast<trace::WindowClose*>(p_event);
-			//shouldRender = false;
-			//
+
 			
 
 			break;
@@ -474,18 +394,7 @@ namespace trace {
 		case trace::EventType::TRC_KEY_RELEASED:
 		{
 			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
-			if (release->m_keycode == Keys::KEY_1)
-			{
-				_texture_ref = _texture_ref0;
-			}
-			if (release->m_keycode == Keys::KEY_2)
-			{
-				_texture_ref = _texture_ref1;
-			}
-			if (release->m_keycode == Keys::KEY_3)
-			{
-				_texture_ref = _texture_ref2;
-			}
+
 			break;
 		}
 
@@ -495,6 +404,18 @@ namespace trace {
 			_renderPass->m_desc.render_area = { 0.0f, 0.0f, (float)wnd->m_width, (float)wnd->m_height };
 
 			_swapChain->Resize(wnd->m_width, wnd->m_height);
+
+			
+
+
+			_viewPort.width = wnd->m_width;
+			_viewPort.height = wnd->m_height;
+
+			_rect.right = wnd->m_width;
+			_rect.bottom = wnd->m_height;
+
+			if (wnd->m_width == 0 || wnd->m_height == 0)
+				break;
 
 			delete _framebuffer;
 			GTexture* attachments[] = {
@@ -511,22 +432,57 @@ namespace trace {
 				1,
 				_swapChain
 			);
-
-
-			_viewPort.width = wnd->m_width;
-			_viewPort.height = wnd->m_height;
-
-			_rect.right = wnd->m_width;
-			_rect.bottom = wnd->m_height;
-
-			if (wnd->m_width == 0 || wnd->m_height == 0)
-				break;
-
 			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));
 			break;
 		}
 
 		}
+
+	}
+
+	void Renderer::Draw(Model* _model)
+	{
+		Material* _mat = _model->GetMaterial();
+		SceneGlobals scene_data = {};
+		scene_data.view = _camera->GetViewMatrix();
+		scene_data.view_position = _camera->GetPosition();
+		static float x = 70.0f;
+		static float r = -0.5f;
+
+		x += r;
+		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::rotate(model, glm::radians(x), glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		scene_data.projection = _camera->GetProjectionMatix();
+
+		MaterialRenderData mat_render_data;
+		mat_render_data.diffuse_color = _mat->m_diffuseColor;
+		mat_render_data.shininess = _mat->m_shininess;
+
+		_pipeline0->SetData("scene_globals", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data, sizeof(SceneGlobals));
+		_pipeline0->SetData("local_data", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
+		_pipeline0->SetData("instance_data", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &mat_render_data, sizeof(MaterialRenderData));
+
+		if (_mat->m_albedoMap.is_valid())
+		{
+			_pipeline0->SetTextureData("testing", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, _mat->m_albedoMap.get(), 0);
+		}
+		if (_mat->m_specularMap.is_valid())
+		{
+			_pipeline0->SetTextureData("testing", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, _mat->m_specularMap.get(), 1);
+		}
+		if (_mat->m_normalMap.is_valid())
+		{
+			_pipeline0->SetTextureData("testing", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, _mat->m_normalMap.get(), 2);
+		}
+
+
+		m_device->BindPipeline(_pipeline0);
+		m_device->BindVertexBuffer(_model->GetVertexBuffer());
+		m_device->BindIndexBuffer(_model->GetIndexBuffer());
+
+		m_device->DrawIndexed(0, _model->GetIndexCount());
 
 	}
 

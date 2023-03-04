@@ -181,6 +181,9 @@
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h" />
+    <ClInclude Include="src\core\Clock.h" />
+    <ClInclude Include="src\render\Model.h" />
+    <ClInclude Include="src\render\Material.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -300,5 +303,8 @@
     <ClCompile Include="src\render\GRenderpass.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp" />
+    <ClCompile Include="src\core\memory\memory.cpp" />
+    <ClCompile Include="src\core\Clock.cpp" />
+    <ClCompile Include="src\render\Model.cpp" />
   </ItemGroup>
 </Project>
