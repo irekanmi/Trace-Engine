@@ -60,6 +60,8 @@ namespace trace {
 		GShader* FragShader;
 
 		GPipeline* _pipeline;
+		GPipeline* skybox_pipeline;
+		GPipeline* reflect_pipeline;
 		Camera* _camera;
 
 		GTexture* _texture;
@@ -72,6 +74,7 @@ namespace trace {
 
 		Viewport _viewPort;
 		Rect2D _rect;
+		Texture_Ref CubeMap;
 
 		//------------------------------------
 

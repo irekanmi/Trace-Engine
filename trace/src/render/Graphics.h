@@ -14,7 +14,8 @@ namespace trace {
 	{
 		NONE,
 		REPEAT,
-		MIRRORED_REPEAT
+		MIRRORED_REPEAT,
+		CLAMP_TO_EDGE
 	};
 
 	enum class FilterMode
@@ -116,6 +117,15 @@ namespace trace {
 		COLOR_ATTACHMENT,
 		DEPTH_STENCIL,
 		PRESENT
+	};
+
+	enum class ImageType
+	{
+		NO_TYPE,
+		IMAGE_1D,
+		IMAGE_2D,
+		IMAGE_3D,
+		CUBE_MAP
 	};
 
 	enum class AttachmentLoadOp
@@ -337,12 +347,14 @@ namespace trace {
 		BindFlag m_flag = BindFlag::NIL;
 		UsageFlag m_usage = UsageFlag::NONE;
 		uint32_t m_channels = 0;
-		unsigned char* m_data = nullptr;
+		uint32_t m_numLayers = 0;
+		ImageType m_image_type = ImageType::NO_TYPE;
 		AddressMode m_addressModeU = AddressMode::NONE;
 		AddressMode m_addressModeV = AddressMode::NONE;
 		AddressMode m_addressModeW = AddressMode::NONE;
 		FilterMode m_minFilterMode = FilterMode::NONE;
 		FilterMode m_magFilterMode = FilterMode::NONE;
+		std::vector<unsigned char*> m_data;
 	};
 
 	

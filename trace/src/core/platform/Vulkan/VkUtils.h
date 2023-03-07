@@ -41,12 +41,12 @@ namespace vk {
 	void _PresentSwapchainImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKSwapChain* swapchain, VkQueue graphics_queue, VkQueue present_queue, VkSemaphore render_complete, uint32_t* present_image_index);
 
 	// Images
-	VkResult _CreateImage(trace::VKHandle* instance,trace::VKDeviceHandle* device, trace::VKImage* out_image, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memory_prop , VkImageAspectFlags aspect_flags, uint32_t width, uint32_t height);
+	VkResult _CreateImage(trace::VKHandle* instance,trace::VKDeviceHandle* device, trace::VKImage* out_image, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memory_prop , VkImageAspectFlags aspect_flags, VkImageCreateFlags flags,  VkImageType image_type, uint32_t width, uint32_t height, uint32_t layers, uint32_t mip_levels);
 	VkResult _CreateImageView(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkImageView* out_image_view, VkFormat format, VkImageAspectFlags aspect_flags, VkImage* image);
 	void _DestroyImageView(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkImageView* image_view);
 	void _DestroyImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image);
 	void _CopyBufferToImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, trace::VKBuffer* buffer);
-	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange sub_resource_range);
 
 	// Samplers
 	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler);
@@ -114,6 +114,8 @@ namespace vk {
 	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts);
 
 	VkFormat convertFmt(trace::Format format);
+	VkImageViewType convertImageViewType(trace::ImageType image_type);
+	VkImageType convertImageType(trace::ImageType image_type);
 	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
 	VkPolygonMode convertPolygonMode(trace::FillMode fillmode);
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);

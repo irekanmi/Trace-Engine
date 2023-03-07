@@ -22,6 +22,7 @@ namespace trace {
 		Texture_Ref GetDefaultTexture(const std::string& name);
 		void CreateTexture(const std::string& name, TextureDesc desc);
 		Texture_Ref LoadTexture(const std::string& name, TextureDesc desc);
+		Texture_Ref LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc, const std::string& name);
 		Texture_Ref LoadTexture(const std::string& name);
 		Texture_Ref GetTexture(const std::string& name);
 		void ReleaseTexture(const std::string& name);

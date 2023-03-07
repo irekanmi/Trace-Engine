@@ -135,14 +135,14 @@ namespace trace
 
 
 		Material _mat;
-		//_mat.m_albedoMap = ResourceSystem::s_instance->LoadTexture("bricks2.jpg");
-		_mat.m_albedoMap = ResourceSystem::s_instance->GetDefaultTexture("albedo_map");
+		_mat.m_albedoMap = ResourceSystem::get_instance()->LoadTexture("cobblestone.png");
+		//_mat.m_albedoMap = ResourceSystem::s_instance->GetDefaultTexture("albedo_map");
 		_mat.m_diffuseColor = glm::vec4(0.3f, 0.5f, 0.45f, 1.0f);
-		_mat.m_shininess = 256.0f;
-		_mat.m_specularMap = ResourceSystem::s_instance->GetDefaultTexture("specular_map");
-		//_mat.m_specularMap = ResourceSystem::s_instance->LoadTexture("paving_SPEC.png");
-		//_mat.m_normalMap = ResourceSystem::s_instance->LoadTexture("bricks2_normal.jpg", texture_desc);
-		_mat.m_normalMap = ResourceSystem::s_instance->GetDefaultTexture("normal_map");
+		_mat.m_shininess = 64.0f;
+		//_mat.m_specularMap = ResourceSystem::s_instance->GetDefaultTexture("specular_map");
+		_mat.m_specularMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_SPEC.png");
+		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("paving_NRM.png", texture_desc);
+		//_mat.m_normalMap = ResourceSystem::s_instance->GetDefaultTexture("normal_map");
 
 		_squareModel.Init(_vertices, _indices);
 		_squareModel.SetMaterial(_mat);

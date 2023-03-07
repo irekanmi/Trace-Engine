@@ -740,8 +740,12 @@ namespace vk {
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			VK_IMAGE_ASPECT_DEPTH_BIT,
+			0,
+			VK_IMAGE_TYPE_2D,
 			extent.width,
-			extent.height
+			extent.height,
+			1,
+			1
 		);
 
 		_CreateImageView(instance, device, &swapchain->m_depthimage.m_view, device->m_depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &swapchain->m_depthimage.m_handle);
@@ -820,22 +824,23 @@ namespace vk {
 		return;
 	}
 
-	VkResult _CreateImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* out_image, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memory_prop, VkImageAspectFlags aspect_flags, uint32_t width, uint32_t height)
+	VkResult _CreateImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* out_image, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags memory_prop, VkImageAspectFlags aspect_flags, VkImageCreateFlags flags, VkImageType image_type, uint32_t width, uint32_t height, uint32_t layers, uint32_t mip_levels)
 	{
 		VkImageCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		create_info.imageType = VK_IMAGE_TYPE_2D;
+		create_info.imageType = image_type;
 		create_info.extent.width = width;
 		create_info.extent.height = height;
 		create_info.extent.depth = 1;
 		create_info.format = format;
 		create_info.tiling = tiling;
-		create_info.arrayLayers = 1;	// TODO: Configurable
-		create_info.mipLevels = 4;	// TODO: Configurable
+		create_info.arrayLayers = layers;	// TODO: Configurable
+		create_info.mipLevels = mip_levels;	// TODO: Configurable
 		create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 		create_info.usage = usage;
 		create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		create_info.flags = flags;
 		
 
 		VkResult result = vkCreateImage(device->m_device, &create_info, instance->m_alloc_callback, &out_image->m_handle);
@@ -951,7 +956,7 @@ namespace vk {
 
 	}
 
-	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer,trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
+	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer,trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange sub_resource_range)
 	{
 
 		VkImageMemoryBarrier image_barrier = {};
@@ -962,11 +967,7 @@ namespace vk {
 		image_barrier.srcQueueFamilyIndex = device->m_queues.graphics_queue;
 		image_barrier.dstQueueFamilyIndex = device->m_queues.graphics_queue;
 
-		image_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_barrier.subresourceRange.baseArrayLayer = 0;
-		image_barrier.subresourceRange.baseMipLevel = 0;
-		image_barrier.subresourceRange.layerCount = 1;
-		image_barrier.subresourceRange.levelCount = 1;
+		image_barrier.subresourceRange = sub_resource_range;
 
 		VkPipelineStageFlags src_stage_flag;
 		VkPipelineStageFlags dst_stage_flag;
@@ -2445,6 +2446,57 @@ namespace vk {
 		return result;
 	}
 
+	VkImageViewType convertImageViewType(trace::ImageType image_type)
+	{
+
+		switch (image_type)
+		{
+		case trace::ImageType::IMAGE_1D:
+		{
+			return VK_IMAGE_VIEW_TYPE_1D;
+		}
+		case trace::ImageType::IMAGE_2D:
+		{
+			return VK_IMAGE_VIEW_TYPE_2D;
+		}
+		case trace::ImageType::IMAGE_3D:
+		{
+			return VK_IMAGE_VIEW_TYPE_3D;
+		}
+		case trace::ImageType::CUBE_MAP:
+		{
+			return VK_IMAGE_VIEW_TYPE_CUBE;
+		}
+		}
+
+		return VK_IMAGE_VIEW_TYPE_2D;
+	}
+
+	VkImageType convertImageType(trace::ImageType image_type)
+	{
+		switch (image_type)
+		{
+		case trace::ImageType::IMAGE_1D:
+		{
+			return VK_IMAGE_TYPE_1D;
+		}
+		case trace::ImageType::IMAGE_2D:
+		{
+			return VK_IMAGE_TYPE_2D;
+		}
+		case trace::ImageType::IMAGE_3D:
+		{
+			return VK_IMAGE_TYPE_3D;
+		}
+		case trace::ImageType::CUBE_MAP:
+		{
+			return VK_IMAGE_TYPE_2D;
+		}
+		}
+
+		return VK_IMAGE_TYPE_2D;
+	}
+
 	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology)
 	{
 		VkPrimitiveTopology result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -2523,6 +2575,11 @@ namespace vk {
 		case trace::AddressMode::MIRRORED_REPEAT:
 		{
 			mode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			break;
+		}
+		case trace::AddressMode::CLAMP_TO_EDGE:
+		{
+			mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			break;
 		}
 		}

@@ -47,6 +47,17 @@ namespace trace {
 
 		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, &m_textureManager) };
 	}
+	Texture_Ref ResourceSystem::LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc, const std::string& name)
+	{
+		if (m_textureManager.LoadTexture(filenames,desc,name))
+		{
+			return { m_textureManager.GetTexture(name), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, &m_textureManager) };
+		}
+
+		TRC_WARN("Failed to load texture %s", name.c_str());
+
+		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, &m_textureManager) };
+	}
 	Texture_Ref ResourceSystem::LoadTexture(const std::string& name)
 	{
 		if (m_textureManager.LoadTexture(name))

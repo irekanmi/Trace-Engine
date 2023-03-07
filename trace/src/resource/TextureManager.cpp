@@ -150,6 +150,7 @@ namespace trace {
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;
+		texture_desc.m_image_type = ImageType::IMAGE_2D;
 
 		switch (Renderer::s_api)
 		{
@@ -160,8 +161,8 @@ namespace trace {
 
 			texture_desc.m_width = (uint32_t)_width;
 			texture_desc.m_height = (uint32_t)_height;
-			texture_desc.m_data = pixel_data;
-
+			texture_desc.m_data.push_back(pixel_data);
+			texture_desc.m_numLayers = 1;
 			VulkanTexture* textures = (VulkanTexture*)m_textures;
 
 			for (uint32_t i = 0; i < m_textureUnits; i++)
@@ -222,7 +223,10 @@ namespace trace {
 		desc.m_width = _width;
 		desc.m_height = _height;
 		desc.m_channels = 4;
-		desc.m_data = pixel_data;
+		desc.m_data.push_back(pixel_data);
+		desc.m_numLayers = 1;
+		desc.m_image_type = ImageType::IMAGE_2D;
+
 
 		switch (Renderer::s_api)
 		{
@@ -265,6 +269,78 @@ namespace trace {
 		return true;
 	}
 
+	bool TextureManager::LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc,const std::string& name)
+	{
+
+		for (uint32_t i = 0; i < desc.m_numLayers; i++)
+		{
+			int _width, _height, _channels;
+			unsigned char* pixel_data = nullptr;
+
+			stbi_set_flip_vertically_on_load(false);
+			pixel_data = stbi_load(("../assets/textures/" + filenames[i]).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+			//if (stbi_failure_reason())
+				//{
+				//	TRC_ERROR("Unable to load texture %s: Error=> %s", name.c_str(), stbi_failure_reason());
+				//	stbi__err(0, 0);
+				//	return false;
+				//}
+
+			//Temp ===================
+			if (_width == 0 || _width > 260000)
+			{
+				TRC_ERROR("Unable to load texture %s", name.c_str())
+					return false;
+			}
+
+			desc.m_width = _width;
+			desc.m_height = _height;
+			desc.m_channels = 4;
+			desc.m_data.push_back(pixel_data);
+
+			
+		}
+		stbi_set_flip_vertically_on_load(true);
+
+
+		switch (Renderer::s_api)
+		{
+		case RenderAPI::Vulkan:
+		{
+
+			VulkanTexture* textures = (VulkanTexture*)m_textures;
+
+			for (uint32_t i = 0; i < m_textureUnits; i++)
+			{
+				if (textures[i].m_id == INVAILD_ID)
+				{
+					VulkanTexture* texture = textures + i;
+					new(texture) VulkanTexture(desc);
+					texture->m_id = i;
+					TextureHash _hash;
+					_hash._id = i;
+					m_hashTable.Set(name, _hash);
+					return true;
+					break;
+				}
+			}
+
+			TRC_WARN("Failed to find a vaild slot for the texture %s", name.c_str());
+			return false;
+
+			break;
+		}
+		default:
+		{
+			TRC_ASSERT(false, "Render API Texture not suppoted");
+			return false;
+			break;
+		}
+		}
+
+		return true;
+	}
+
 	void TextureManager::UnloadTexture(GTexture* texture)
 	{
 		if (texture->m_refCount > 0)
@@ -277,7 +353,9 @@ namespace trace {
 		value->m_id = INVAILD_ID;
 
 		//TODO: maybe the texture should be freed immediatly it is loaded to the GPU
-		stbi_image_free(texture->GetTextureDescription().m_data);
+		for(uint32_t i = 0; i < texture->GetTextureDescription().m_numLayers; i++)
+			stbi_image_free(texture->GetTextureDescription().m_data[i]);
+
 		texture->~GTexture();
 	}
 
@@ -333,13 +411,16 @@ namespace trace {
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
 		texture_desc.m_channels = 4;
-		texture_desc.m_data = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_SRBG;
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;
 		texture_desc.m_width = (uint32_t)dimension;
 		texture_desc.m_height = (uint32_t)dimension;
+		texture_desc.m_image_type = ImageType::IMAGE_2D;
+		texture_desc.m_data.push_back(pixel);
+		texture_desc.m_numLayers = 1;
+
 
 		default_diffuse_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
@@ -354,8 +435,8 @@ namespace trace {
 		texture_desc.m_width = (uint32_t)dimension;
 		texture_desc.m_height = (uint32_t)dimension;
 		texture_desc.m_channels = 4;
-		texture_desc.m_data = pixel;
-
+		texture_desc.m_data[0] = (pixel);
+		
 		default_specular_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
 		dimension = 16;
@@ -368,7 +449,7 @@ namespace trace {
 		texture_desc.m_width = (uint32_t)dimension;
 		texture_desc.m_height = (uint32_t)dimension;
 		texture_desc.m_channels = 4;
-		texture_desc.m_data = pixel;
+		texture_desc.m_data[0] = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_UNORM;
 
 		for (uint32_t row = 0; row < dimension; row++)
@@ -402,7 +483,7 @@ namespace trace {
 
 
 		//TODO: maybe the texture should be freed immediatly it is loaded to the GPU
-		delete[] texture->GetTextureDescription().m_data;
+		delete[] texture->GetTextureDescription().m_data[0];
 		texture->~GTexture();
 	}
 

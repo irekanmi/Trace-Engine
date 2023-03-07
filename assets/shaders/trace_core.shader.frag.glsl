@@ -9,7 +9,6 @@ layout(location = 0)in data_object
     vec3 _view_position;
     vec2 _texCoord;
     vec4 _tangent;
-    mat3 tbn;
 } _data;
 
 #define DIFFUSE_MAP 0
@@ -21,6 +20,7 @@ layout(set = 1, binding = 0)uniform InstanceBufferObject{
     vec4 diffuse_color;
     float shininess;
 } instance_data;
+
 
 
 struct Light
@@ -59,9 +59,9 @@ Light point_light = {
 };
 
 Light spot_light = {
-    { 0.0, 2.5, 2.0 },
+    { 0.0, 2.0, 2.0 },
     { 0.0, 0.0, -1.0f },
-    { 0.0f, 0.8f, 0.0f, 1.0f },
+    { 0.6f, 0.8f, 0.0f, 1.0f },
     1.0,
     0.07,
     0.017,
@@ -79,13 +79,18 @@ void main()
     vec3 _normal = texture(testing[NORMAL_MAP], _data._texCoord).rgb;
     _normal = 2.0 * _normal - 1.0f;
     
+    vec3 obj_norm = normalize(_data._normal);
+    vec3 _tangent = normalize( _data._tangent.xyz - (dot(_data._tangent.xyz, obj_norm) * obj_norm) );
+    vec3 _bitangent = cross(obj_norm, _tangent) * _data._tangent.w;
+    mat3 TBN = mat3(_tangent, _bitangent, obj_norm);
 
-    _normal = normalize(_data.tbn * _normal);
+
+    _normal = normalize(TBN * _normal);
 
     vec3 view_dir = _data._view_position - _data._fragPos;
     FragColor = calculate_spot_light(spot_light, _normal, view_dir);
+    FragColor += calculate_directional_light(dir_light, _normal, view_dir);
     FragColor = calculate_point_light(point_light, _normal, view_dir);
-    FragColor = calculate_directional_light(dir_light, _normal, view_dir);
     //FragColor = vec4(abs(_normal), 1.0);
    // FragColor = vec4(vec3(-0.316f, 0.011f, -0.948f), 1.0);
 }
@@ -112,7 +117,7 @@ vec4 calculate_directional_light(Light light, vec3 normal, vec3 view_direction)
 
     ambient *= diffuse_samp_color;
     diffuse *= diffuse_samp_color;
-    //specular *= specular_intensity;
+    specular *= specular_intensity;
 
     return ( ambient + diffuse + specular);
 
