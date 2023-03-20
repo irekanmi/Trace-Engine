@@ -60,7 +60,15 @@ public:
 		_ptr->m_refCount++;
 	}
 
-	Ref(Ref&& other) = delete;
+	Ref(Ref&& other)
+	{
+		if (other.is_valid())
+		{
+			other.get()->m_refCount++;
+			_ptr = other._ptr;
+			Unload = other.Unload;
+		}
+	}
 
 
 	Ref(Ref& other)
@@ -70,6 +78,17 @@ public:
 			other.get()->m_refCount++;
 			_ptr = other._ptr;
 			Unload = other.Unload;
+		}
+	}
+	
+	Ref(const Ref& other)
+	{
+
+		_ptr = other._ptr;
+		Unload = other.Unload;
+		if (_ptr)
+		{
+			_ptr->m_refCount++;
 		}
 	}
 

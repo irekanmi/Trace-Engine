@@ -20,6 +20,7 @@
 #include "render/Camera.h"
 #include "render/GTexture.h"
 #include "render/Model.h"
+#include "render/SkyBox.h"
 
 // ------------------------------------
 
@@ -50,7 +51,6 @@ namespace trace
 
 		static Application* get_instance();
 		static Application* s_instance;
-		static WindowType win_type;
 
 	private:
 		ClientEndCallback     m_client_end;
@@ -58,7 +58,8 @@ namespace trace
 		ClientUpdateCallback  m_client_update;
 
 		//Temp ==================
-		Model _squareModel;
+		Ref<Mesh> _squareModel;
+		SkyBox sky_box;
 		//=======================
 
 	protected:

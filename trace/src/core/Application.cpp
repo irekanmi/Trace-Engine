@@ -14,10 +14,7 @@
 #include "render/PerspectiveCamera.h"
 #include "memory/memory.h"
 
-//// Temp---------------
-//#define STB_IMAGE_IMPLEMENTATION
-//#include "stb_image.h"
-////--------------------
+
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
 {
@@ -38,7 +35,6 @@ namespace trace
 	
 	
 	Application* Application::s_instance = nullptr;
-	WindowType Application::win_type = WindowType::DEFAULT;
 
 	Application* Application::get_instance()
 	{
@@ -118,12 +114,6 @@ namespace trace
 		//Temp=======================
 		
 
-		eastl::vector<Vertex> _vertices;
-		eastl::vector<uint32_t> _indices;
-		
-		generateDefaultCube(_vertices, _indices);
-		generateVertexTangent(_vertices, _indices);
-
 
 
 		TextureDesc texture_desc;
@@ -141,11 +131,44 @@ namespace trace
 		_mat.m_shininess = 64.0f;
 		//_mat.m_specularMap = ResourceSystem::s_instance->GetDefaultTexture("specular_map");
 		_mat.m_specularMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_SPEC.png");
-		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("paving_NRM.png", texture_desc);
+		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_NRM.png", texture_desc);
 		//_mat.m_normalMap = ResourceSystem::s_instance->GetDefaultTexture("normal_map");
 
-		_squareModel.Init(_vertices, _indices);
-		_squareModel.SetMaterial(_mat);
+		//_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
+		_squareModel = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+
+		ResourceSystem::get_instance()->CreateMaterial(
+			"Material",
+			_mat,
+			ResourceSystem::get_instance()->GetDefaultPipeline("standard")
+			);
+
+		//for (auto& i : _squareModel->GetModels())
+		//{
+		//	i->m_matInstance = ResourceSystem::get_instance()->GetMaterial("Material");
+		//}
+
+		std::vector<std::string> cube_maps = {
+			"sky_right.jpg",
+			"sky_left.jpg",
+			"sky_top.jpg",
+			"sky_bottom.jpg",
+			"sky_front.jpg",
+			"sky_back.jpg"
+		};
+
+		TextureDesc cubeMapDesc;
+		cubeMapDesc.m_image_type = ImageType::CUBE_MAP;
+		cubeMapDesc.m_addressModeU = cubeMapDesc.m_addressModeV = cubeMapDesc.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
+		cubeMapDesc.m_numLayers = 6;
+		cubeMapDesc.m_format = Format::R8G8B8A8_SRBG;
+		cubeMapDesc.m_minFilterMode = cubeMapDesc.m_magFilterMode = FilterMode::LINEAR;
+		cubeMapDesc.m_usage = UsageFlag::DEFAULT;
+		cubeMapDesc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+
+		Texture_Ref temp = ResourceSystem::get_instance()->LoadTexture(cube_maps, cubeMapDesc, "cube_map");
+
+		sky_box = SkyBox(temp);
 		
 		//=============================
 
@@ -187,12 +210,16 @@ namespace trace
 			//___________________//	
 
 
-			if (renderer->BeginFrame())
-			{
-				renderer->Update(deltaTime);
-				renderer->Draw(&_squareModel);
-				renderer->EndFrame();
-			}
+			CommandList cmd_list = renderer->BeginCommandList();
+			renderer->DrawMesh(cmd_list, _squareModel);
+			renderer->SubmitCommandList(cmd_list);
+
+			cmd_list = renderer->BeginCommandList();
+			renderer->DrawSky(cmd_list, &sky_box);
+			renderer->SubmitCommandList(cmd_list);
+
+
+			renderer->Render(deltaTime);
 
 			input->Update(deltaTime);
 			float end_time = m_clock.GetElapsedTime();
@@ -214,7 +241,6 @@ namespace trace
 	void Application::End()
 	{
 
-
 		//------CLIENT-------//
 
 		m_client_end();
@@ -222,8 +248,8 @@ namespace trace
 		//___________________//
 		trace::ApplicationEnd app_end;
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
-
-
+		_squareModel.~Ref();
+		
 		Renderer::get_instance()->End();
 
 		SAFE_DELETE(m_Window, Window);

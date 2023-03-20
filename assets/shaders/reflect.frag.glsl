@@ -30,6 +30,8 @@ void main()
     
     vec3 view_dir = _data._view_position - _data._fragPos;
     vec3 reflect_dir = reflect(-view_dir, _normal);
-    FragColor = texture(CubeMap, reflect_dir);
+    float refract_ratio = 1.0/1.52;
+    vec3 refract_dir = refract(-view_dir, _normal, refract_ratio);
+    FragColor = texture(CubeMap, refract_dir);
     
 }

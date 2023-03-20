@@ -1,13 +1,13 @@
 #pragma once
 #include "core/Enums.h"
 #include "core/Core.h"
-#include "EASTL/vector.h"
 #include "EASTL/string.h"
 #include "glm/glm.hpp"
 
 namespace trace {
 
 	class GShader;
+	class GTexture;
 	class GRenderPass;
 
 	enum class AddressMode
@@ -173,7 +173,7 @@ namespace trace {
 			uint32_t stride = 0;
 			Format format = Format::NONE;
 		};
-		eastl::vector<Element> elements;
+		std::vector<Element> elements;
 	};
 
 	struct RaterizerState
@@ -217,10 +217,19 @@ namespace trace {
 		RESOURCE_STAGE_LOCAL
 	};
 
+	enum RENDERPASS
+	{
+		PRE_PASS,
+		MAIN_PASS,
+		POST_PASS,
+		UI_PASS,
+		RENDER_PASS_COUNT
+	};
+
 	struct UniformMetaData
 	{
-		uint32_t _id = INVAILD_ID;
-		uint32_t _offset = INVAILD_ID;
+		uint32_t _id = INVALID_ID;
+		uint32_t _offset = INVALID_ID;
 		uint32_t _size = 0;
 		uint32_t _slot = 0;
 		uint32_t _index = 0;
@@ -254,7 +263,7 @@ namespace trace {
 		uint32_t slot = 0;
 		uint32_t index = 0;
 		uint32_t count = 1;
-		
+	
 	};
 
 	struct PipelineStateDesc
@@ -268,9 +277,10 @@ namespace trace {
 		PrimitiveTopology topology = PrimitiveTopology::NONE;
 		Viewport view_port = {};
 		uint32_t resource_bindings_count = 0;
-		ShaderResourceBinding* resource_bindings = {};
+		std::vector<ShaderResourceBinding> resource_bindings = {};
 		GRenderPass* render_pass = nullptr;
 		uint32_t subpass_index = uint32_t(-1);
+		RENDERPASS _renderPass = RENDERPASS::MAIN_PASS;
 	};
 
 

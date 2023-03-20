@@ -21,6 +21,7 @@ Debug/
 *.exe
 externals/
 assets/textures
+assets/meshes
 
 #Code lite
 *.project

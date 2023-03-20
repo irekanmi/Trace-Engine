@@ -18,8 +18,6 @@ namespace trace {
 		virtual void Init() = 0;
 		virtual void ShutDown() = 0;
 
-		static RenderAPI get_render_api() { return s_API; }
-		static RenderAPI s_API;
 
 	private:
 	protected:

@@ -114,7 +114,6 @@ namespace trace {
 		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
 
-		eastl::vector<UniformMetaData> Scene_uniforms = {};
 	};
 
 	struct VKShader

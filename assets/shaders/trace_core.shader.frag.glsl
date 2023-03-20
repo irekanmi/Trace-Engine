@@ -39,10 +39,10 @@ const float ambeint_factor = 0.25f * 0.2;
 Light dir_light = {
     { -0.57735, -0.57735, -0.57735 },
     { -0.57735, -0.57735, -0.57735 },
-    { 0.8f, 0.8f, 0.8f, 1.0f },
+    { 0.0f, 0.8f, 0.8f, 1.0f },
     1.0,
-    0.2,
-    0.37,
+    0.467,
+    0.896,
     0.0,
     0.0
 };
@@ -52,8 +52,8 @@ Light point_light = {
     { -0.57735, -0.57735, -0.57735 },
     { 0.8f, 0.8f, 0.8f, 1.0f },
     1.0,
-    0.22,
-    0.20,
+    0.007,
+    0.0002,
     0.0,
     0.0
 };
@@ -88,9 +88,9 @@ void main()
     _normal = normalize(TBN * _normal);
 
     vec3 view_dir = _data._view_position - _data._fragPos;
-    FragColor = calculate_spot_light(spot_light, _normal, view_dir);
+    //FragColor = calculate_spot_light(spot_light, _normal, view_dir);
     FragColor += calculate_directional_light(dir_light, _normal, view_dir);
-    FragColor = calculate_point_light(point_light, _normal, view_dir);
+    FragColor += calculate_point_light(point_light, _normal, view_dir);
     //FragColor = vec4(abs(_normal), 1.0);
    // FragColor = vec4(vec3(-0.316f, 0.011f, -0.948f), 1.0);
 }

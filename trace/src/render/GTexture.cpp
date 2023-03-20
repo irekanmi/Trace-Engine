@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "GTexture.h"
-#include "Renderer.h"
 #include "core/io/Logging.h"
 #include "core/platform/Vulkan/VulkanTexture.h"
 
@@ -11,7 +10,7 @@ namespace trace {
 
 	GTexture* GTexture::Create_(TextureDesc description)
 	{
-		switch (Renderer::get_api())
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{

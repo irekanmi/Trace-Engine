@@ -6,29 +6,28 @@
 #include "Graphics.h"
 #include "GBuffer.h"
 #include "Material.h"
+#include "resource/Resource.h"
 
 namespace trace {
 
-	class TRACE_API Model
+	class TRACE_API Model : public Resource
 	{
 
 	public:
 		Model();
-		Model(const eastl::vector<Vertex>& data, const eastl::vector<uint32_t> indices);
+		Model(const std::vector<Vertex>& data, const std::vector<uint32_t> indices);
 		~Model();
 
-		void Init(const eastl::vector<Vertex>& data, const eastl::vector<uint32_t>& indices);
+		void Init(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices);
 		uint32_t GetIndexCount() { return m_indices.size(); }
 		GBuffer* GetIndexBuffer() { return m_indexBuffer; }
 		GBuffer* GetVertexBuffer() { return m_vertexBuffer; }
-		Material* GetMaterial() { return &m_material; }
 
-		void SetMaterial(Material material);
 
+		Ref<MaterialInstance> m_matInstance;
 	private:
-		eastl::vector<Vertex> m_vertices;
-		eastl::vector<uint32_t> m_indices;
-		Material m_material;
+		std::vector<Vertex> m_vertices;
+		std::vector<uint32_t> m_indices;
 		GBuffer* m_vertexBuffer;
 		GBuffer* m_indexBuffer;
 
@@ -36,7 +35,7 @@ namespace trace {
 
 	};
 
-	void generateDefaultCube(eastl::vector<Vertex>& data, eastl::vector<uint32_t>& indices);
-	void generateVertexTangent(eastl::vector<Vertex>& data, eastl::vector<uint32_t>& indices);
+	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices);
+	void generateVertexTangent(std::vector<Vertex>& data, std::vector<uint32_t>& indices);
 
 }

@@ -18,6 +18,8 @@ IncludeDir["EASTL"] = "externals/EASTL/include"
 IncludeDir["glm"] = "externals/glm"
 IncludeDir["Vulkan"] = "externals/Vulkan"
 IncludeDir["stb_image"] = "externals/stb_image"
+IncludeDir["obj_loader"] = "externals/obj_loader"
+
 
 project "trace"
 	location "trace"
@@ -48,6 +50,7 @@ project "trace"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.Vulkan}",
 		"%{IncludeDir.stb_image}",
+		"%{IncludeDir.obj_loader}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "GRenderPass.h"
-#include "Renderer.h"
 #include "core/platform/Vulkan/VulkanRenderPass.h"
 
 namespace trace {
@@ -17,7 +16,7 @@ namespace trace {
 
 	GRenderPass* GRenderPass::Create_(RenderPassDescription desc)
 	{
-		switch (Renderer::get_api())
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{

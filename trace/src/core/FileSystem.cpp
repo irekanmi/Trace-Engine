@@ -102,6 +102,7 @@ namespace trace {
 		if (file.m_isVaild)
 		{
 			_file->close();
+			file.m_isVaild = false;
 			delete _file;
 		}
 	}

@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "GShader.h"
-#include "Renderer.h"
 #include "core/io/Logging.h"
 #include "core/platform/Vulkan/VulkanShader.h"
 
@@ -14,7 +13,7 @@ namespace trace {
 	}
 	GShader* GShader::Create_(std::string& src, ShaderStage stage)
 	{
-		switch (Renderer::get_api())
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{

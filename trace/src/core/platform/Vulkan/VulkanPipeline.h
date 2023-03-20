@@ -23,14 +23,17 @@ namespace trace {
 		virtual void SetMultipleData(ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t count, uint32_t slot = 0, uint32_t index = 0) override;
 		virtual void SetMultipleTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) override;
 
+		virtual void Bind() override;
+
 		virtual void Shutdown() override;
 
 		VKPipeline m_handle;
+		char* cache_data;
+		char* _mapped_data;
 	private:
 		VKHandle* m_instance;
 		VKDeviceHandle* m_device;
-		char* _mapped_data;
-		char* cache_data;
+		GTexture* last_tex_update[3] = {};
 
 	protected:
 

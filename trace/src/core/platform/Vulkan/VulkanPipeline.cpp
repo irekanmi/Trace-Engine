@@ -13,7 +13,7 @@ namespace trace {
 	bool processShaderBindings(
 		uint32_t& resource_bindings_count,
 		ShaderResourceBinding* resource_bindings,
-		VKPipeline& _pipeline,
+		VulkanPipeline*_pipeline,
 		HashTable<uint32_t>& _hashTable,
 		VKHandle* instance,
 		VKDeviceHandle* device,
@@ -29,7 +29,7 @@ namespace trace {
 
 		_hashTable.Init(512);// TODO: let number be configurable or more dynamic
 
-		uint32_t _ids = INVAILD_ID;
+		uint32_t _ids = INVALID_ID;
 		_hashTable.Fill(_ids);
 
 		VkViewport viewport = {};
@@ -68,6 +68,9 @@ namespace trace {
 
 	VulkanPipeline::~VulkanPipeline()
 	{
+		if(m_handle.m_handle)
+			Shutdown();
+
 	}
 
 	bool VulkanPipeline::Initialize()
@@ -75,14 +78,14 @@ namespace trace {
 		uint32_t total_size_global = 0;
 		uint32_t& resource_bindings_count = m_desc.resource_bindings_count;
 
-		ShaderResourceBinding* resource_bindings = m_desc.resource_bindings;
+		std::vector<ShaderResourceBinding>& resource_bindings = m_desc.resource_bindings;
 		
 		uint32_t map_data_size;
 
 		bool result = processShaderBindings(
 			resource_bindings_count,
-			resource_bindings,
-			m_handle,
+			resource_bindings.data(),
+			this,
 			_hashTable,
 			m_instance,
 			m_device,
@@ -118,13 +121,13 @@ namespace trace {
 
 		uint32_t hash_id = _hashTable.Get(resource_name.c_str());
 
-		if (hash_id == INVAILD_ID)
+		if (hash_id == INVALID_ID)
 		{
 			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
 			return;
 		}
 
-		UniformMetaData& meta_data = m_handle.Scene_uniforms[hash_id];
+		UniformMetaData& meta_data = Scene_uniforms[hash_id];
 		void* map_point = cache_data + meta_data._offset;
 
 		if (size > meta_data._size)
@@ -141,11 +144,15 @@ namespace trace {
 
 		uint32_t hash_id = _hashTable.Get(resource_name.c_str());
 
-		if (hash_id == INVAILD_ID)
+		if (hash_id == INVALID_ID)
 		{
 			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
 			return;
 		}
+
+		if (last_tex_update[m_device->m_imageIndex] == texture)
+			return;
+
 		VulkanTexture* _tex = reinterpret_cast<VulkanTexture*>(texture);
 
 
@@ -153,7 +160,7 @@ namespace trace {
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
 
-		UniformMetaData& meta_data = m_handle.Scene_uniforms[hash_id];
+		UniformMetaData& meta_data = Scene_uniforms[hash_id];
 		VkDescriptorImageInfo image_info = {};
 		image_info.sampler = _tex->m_sampler;
 		image_info.imageView = _tex->m_handle.m_view;
@@ -178,7 +185,6 @@ namespace trace {
 
 		case ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
-
 			write.dstSet = m_handle.Scene_sets[m_device->m_imageIndex];
 
 			break;
@@ -206,6 +212,7 @@ namespace trace {
 			0,
 			nullptr
 		);
+		last_tex_update[m_device->m_imageIndex] = texture;
 
 	}
 
@@ -215,6 +222,39 @@ namespace trace {
 
 	void VulkanPipeline::SetMultipleTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t count, uint32_t slot, uint32_t index)
 	{
+	}
+
+	void VulkanPipeline::Bind()
+	{
+		uint32_t set_count = 0;
+		VkDescriptorSet _sets[3];
+
+		if (m_handle.Scene_sets[0])
+		{
+			_sets[set_count++] = m_handle.Scene_sets[m_device->m_imageIndex];
+		}
+
+		if (m_handle.Instance_sets[0])
+		{
+			_sets[set_count++] = m_handle.Instance_sets[m_device->m_imageIndex];
+		}
+
+		if (m_handle.Local_sets[0])
+		{
+			_sets[set_count++] = m_handle.Local_sets[m_device->m_imageIndex];
+		}
+
+		vkCmdBindDescriptorSets(
+			m_device->m_graphicsCommandBuffers[m_device->m_imageIndex].m_handle,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			m_handle.m_layout,
+			0,
+			set_count,
+			_sets,
+			0,
+			nullptr
+		);
+
 	}
 
 	void VulkanPipeline::Shutdown()
@@ -231,30 +271,30 @@ namespace trace {
 
 	}
 
-	bool processShaderBindings(uint32_t& resource_bindings_count, ShaderResourceBinding* resource_bindings, VKPipeline& _pipeline, HashTable<uint32_t>& _hashTable, VKHandle* instance, VKDeviceHandle* device, uint32_t& out_size)
+	bool processShaderBindings(uint32_t& resource_bindings_count, ShaderResourceBinding* resource_bindings, VulkanPipeline* _pipeline, HashTable<uint32_t>& _hashTable, VKHandle* instance, VKDeviceHandle* device, uint32_t& out_size)
 	{
 		bool result = false;
 
 		uint32_t total_size_global = 0;
-		_pipeline.Scene_uniforms.resize(resource_bindings_count);
+		_pipeline->Scene_uniforms.resize(resource_bindings_count);
 
 		for (uint32_t i = 0; i < resource_bindings_count; i++)
 		{
 
 
 			uint32_t& hash_id = _hashTable.Get_Ref(resource_bindings[i].resource_name.c_str());
-			for (uint32_t j = 0; j < _pipeline.Scene_uniforms.size(); j++)
+			for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
 			{
-				if (_pipeline.Scene_uniforms[j]._id == INVAILD_ID)
+				if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
 				{
 					hash_id = j;
-					_pipeline.Scene_uniforms[j]._id = j;
-					_pipeline.Scene_uniforms[j]._size = resource_bindings[i].resource_size;
-					_pipeline.Scene_uniforms[j]._offset = total_size_global;
-					_pipeline.Scene_uniforms[j]._slot = resource_bindings[i].slot;
-					_pipeline.Scene_uniforms[j]._index = resource_bindings[i].index;
-					_pipeline.Scene_uniforms[j]._count = resource_bindings[i].count;
-					_pipeline.Scene_uniforms[j]._resource_type = resource_bindings[i].resource_type;
+					_pipeline->Scene_uniforms[j]._id = j;
+					_pipeline->Scene_uniforms[j]._size = resource_bindings[i].resource_size;
+					_pipeline->Scene_uniforms[j]._offset = total_size_global;
+					_pipeline->Scene_uniforms[j]._slot = resource_bindings[i].slot;
+					_pipeline->Scene_uniforms[j]._index = resource_bindings[i].index;
+					_pipeline->Scene_uniforms[j]._count = resource_bindings[i].count;
+					_pipeline->Scene_uniforms[j]._resource_type = resource_bindings[i].resource_type;
 					total_size_global += resource_bindings[i].resource_size;
 					total_size_global = get_alignment(total_size_global, device->m_properties.limits.minMemoryMapAlignment);
 					break;
@@ -271,8 +311,8 @@ namespace trace {
 			total_size_global,
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			_pipeline.Scene_buffers.m_handle,
-			_pipeline.Scene_buffers.m_memory
+			_pipeline->m_handle.Scene_buffers.m_handle,
+			_pipeline->m_handle.Scene_buffers.m_memory
 		);
 
 
@@ -295,9 +335,9 @@ namespace trace {
 					case ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER:
 					{
 						VkDescriptorBufferInfo buffer_info = {};
-						buffer_info.buffer = _pipeline.Scene_buffers.m_handle;
-						buffer_info.offset = _pipeline.Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._offset;
-						buffer_info.range = _pipeline.Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._size;
+						buffer_info.buffer = _pipeline->m_handle.Scene_buffers.m_handle;
+						buffer_info.offset = _pipeline->Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._offset;
+						buffer_info.range = _pipeline->Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._size;
 
 						VkWriteDescriptorSet write = {};
 						write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -305,7 +345,7 @@ namespace trace {
 						write.descriptorCount = resource_bindings[i].count;
 						write.dstArrayElement = resource_bindings[i].index;
 						write.dstBinding = resource_bindings[i].slot;
-						write.dstSet = _pipeline.Scene_sets[j];
+						write.dstSet = _pipeline->m_handle.Scene_sets[j];
 						write.pBufferInfo = &buffer_info;
 
 						_writes.push_back(write);
@@ -323,9 +363,9 @@ namespace trace {
 					case ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER:
 					{
 						VkDescriptorBufferInfo buffer_info = {};
-						buffer_info.buffer = _pipeline.Scene_buffers.m_handle;
-						buffer_info.offset = _pipeline.Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._offset;
-						buffer_info.range = _pipeline.Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._size;
+						buffer_info.buffer = _pipeline->m_handle.Scene_buffers.m_handle;
+						buffer_info.offset = _pipeline->Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._offset;
+						buffer_info.range = _pipeline->Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._size;
 
 						VkWriteDescriptorSet write = {};
 						write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -333,7 +373,7 @@ namespace trace {
 						write.descriptorCount = resource_bindings[i].count;
 						write.dstArrayElement = resource_bindings[i].index;
 						write.dstBinding = resource_bindings[i].slot;
-						write.dstSet = _pipeline.Instance_sets[j];
+						write.dstSet = _pipeline->m_handle.Instance_sets[j];
 						write.pBufferInfo = &buffer_info;
 
 						_writes.push_back(write);
@@ -351,9 +391,9 @@ namespace trace {
 					case ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER:
 					{
 						VkDescriptorBufferInfo buffer_info = {};
-						buffer_info.buffer = _pipeline.Scene_buffers.m_handle;
-						buffer_info.offset = _pipeline.Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._offset;
-						buffer_info.range = _pipeline.Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._size;
+						buffer_info.buffer = _pipeline->m_handle.Scene_buffers.m_handle;
+						buffer_info.offset = _pipeline->Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._offset;
+						buffer_info.range = _pipeline->Scene_uniforms[_hashTable.Get(resource_bindings[i].resource_name.data())]._size;
 
 						VkWriteDescriptorSet write = {};
 						write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -361,7 +401,7 @@ namespace trace {
 						write.descriptorCount = resource_bindings[i].count;
 						write.dstArrayElement = resource_bindings[i].index;
 						write.dstBinding = resource_bindings[i].slot;
-						write.dstSet = _pipeline.Local_sets[j];
+						write.dstSet = _pipeline->m_handle.Local_sets[j];
 						write.pBufferInfo = &buffer_info;
 
 						_writes.push_back(write);

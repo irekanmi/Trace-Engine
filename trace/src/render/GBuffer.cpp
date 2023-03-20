@@ -4,8 +4,8 @@
 #include "GContext.h"
 #include "core/platform/OpenGL/OpenGLBuffer.h"
 #include "core/io/Logging.h"
-#include "Renderer.h"
 #include "core/platform/Vulkan/VulkanBuffer.h"
+#include "core/Coretypes.h"
 
 namespace trace {
 
@@ -22,7 +22,7 @@ namespace trace {
 	GBuffer* GBuffer::Create_(const BufferInfo& buffer_info)
 	{
 
-		switch (Renderer::get_api())
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{

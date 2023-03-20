@@ -2,7 +2,6 @@
 
 #include "VkUtils.h"
 #include "EASTL/vector.h"
-#include "core/Platform.h"
 #include "core/Application.h"
 #include "vulkan/vulkan_win32.h"
 #include "EASTL/map.h"
@@ -496,7 +495,7 @@ namespace vk {
 	{
 		VkResult res = VK_ERROR_INITIALIZATION_FAILED;
 
-		switch (trace::Platform::s_api)
+		switch (trace::AppSettings::platform_api)
 		{
 		case trace::PlatformAPI::WINDOWS:
 		{
@@ -1767,7 +1766,6 @@ namespace vk {
 
 	void parseInputLayout(trace::InputLayout& layout, VkVertexInputBindingDescription& binding, eastl::vector<VkVertexInputAttributeDescription>& attrs)
 	{
-		VkPipelineVertexInputStateCreateInfo result;
 
 		VkVertexInputRate input_rate = VK_VERTEX_INPUT_RATE_VERTEX;
 		switch (layout.input_class)
@@ -1891,14 +1889,18 @@ namespace vk {
 		VkResult result;
 
 
-		std::vector<VkDescriptorPoolSize> SceneGlobalData_poolSizes;
 		std::vector<VkDescriptorSetLayoutBinding> SceneGlobalData_bindings;
 
-		std::vector<VkDescriptorPoolSize> Instance_poolSizes;
 		std::vector<VkDescriptorSetLayoutBinding> Instance_bindings;
 
-		std::vector<VkDescriptorPoolSize> Local_poolSizes;
 		std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
+
+		const uint32_t pool_sizes_count = 2;
+		VkDescriptorPoolSize pool_sizes[] =
+		{
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4096},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4096}
+		};
 
 		/*if (desc.vertex_shader != nullptr)
 		{
@@ -2180,16 +2182,11 @@ namespace vk {
 				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
 
-				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = desc.resource_bindings[i].count * 3;
-				pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-
 				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 				{
 					bind.binding = desc.resource_bindings[i].slot;
 
 					SceneGlobalData_bindings.push_back(bind);
-					SceneGlobalData_poolSizes.push_back(pool_size);
 
 				}
 				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
@@ -2197,7 +2194,6 @@ namespace vk {
 					bind.binding = desc.resource_bindings[i].slot;
 
 					Instance_bindings.push_back(bind);
-					Instance_poolSizes.push_back(pool_size);
 
 				}
 				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
@@ -2205,7 +2201,6 @@ namespace vk {
 					bind.binding = desc.resource_bindings[i].slot;
 
 					Local_bindings.push_back(bind);
-					Local_poolSizes.push_back(pool_size);
 
 				}
 
@@ -2218,16 +2213,12 @@ namespace vk {
 				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
 
-				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = desc.resource_bindings[i].count * 3;
-				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 				{
 					bind.binding = desc.resource_bindings[i].slot;
 
 					SceneGlobalData_bindings.push_back(bind);
-					SceneGlobalData_poolSizes.push_back(pool_size);
 
 				}
 				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
@@ -2235,7 +2226,6 @@ namespace vk {
 					bind.binding = desc.resource_bindings[i].slot;
 
 					Instance_bindings.push_back(bind);
-					Instance_poolSizes.push_back(pool_size);
 
 				}
 				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
@@ -2243,7 +2233,6 @@ namespace vk {
 					bind.binding = desc.resource_bindings[i].slot;
 
 					Local_bindings.push_back(bind);
-					Local_poolSizes.push_back(pool_size);
 
 				}
 
@@ -2255,7 +2244,7 @@ namespace vk {
 		uint32_t set_layout_count = 0;
 		
 
-		if (desc.resource_bindings)
+		if (!desc.resource_bindings.empty())
 		{
 
 			if (SceneGlobalData_bindings.empty() == false)
@@ -2269,9 +2258,9 @@ namespace vk {
 
 				VkDescriptorPoolCreateInfo pool_info = {};
 				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 3;
-				pool_info.poolSizeCount = SceneGlobalData_poolSizes.size();
-				pool_info.pPoolSizes = SceneGlobalData_poolSizes.data();
+				pool_info.maxSets = 1000 * pool_sizes_count;
+				pool_info.poolSizeCount = pool_sizes_count;
+				pool_info.pPoolSizes = pool_sizes;
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
 
@@ -2304,9 +2293,9 @@ namespace vk {
 
 				VkDescriptorPoolCreateInfo pool_info = {};
 				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 3;
-				pool_info.poolSizeCount = Instance_poolSizes.size();
-				pool_info.pPoolSizes = Instance_poolSizes.data();
+				pool_info.maxSets = 1000 * pool_sizes_count;
+				pool_info.poolSizeCount = pool_sizes_count;
+				pool_info.pPoolSizes = pool_sizes;
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Instance_pool);
 
@@ -2340,9 +2329,9 @@ namespace vk {
 
 				VkDescriptorPoolCreateInfo pool_info = {};
 				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 3;
-				pool_info.poolSizeCount = Local_poolSizes.size();
-				pool_info.pPoolSizes = Local_poolSizes.data();
+				pool_info.maxSets = 1000 * pool_sizes_count;
+				pool_info.poolSizeCount = pool_sizes_count;
+				pool_info.pPoolSizes = pool_sizes;
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Local_pool);
 

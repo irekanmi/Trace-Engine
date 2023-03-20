@@ -12,7 +12,7 @@ namespace trace {
 	{
 	}
 
-	Model::Model(const eastl::vector<Vertex>& data, const eastl::vector<uint32_t> indices)
+	Model::Model(const std::vector<Vertex>& data, const std::vector<uint32_t> indices)
 		:m_vertexBuffer(nullptr),
 		m_indexBuffer(nullptr)
 	{
@@ -21,11 +21,21 @@ namespace trace {
 
 	Model::~Model()
 	{
-		delete m_vertexBuffer;
-		delete m_indexBuffer;
+		if (m_vertexBuffer)
+		{
+			delete m_vertexBuffer;
+			m_vertexBuffer = nullptr;
+		}
+		if (m_indexBuffer)
+		{
+			delete m_indexBuffer;
+			m_indexBuffer = nullptr;
+		}
+
+		//m_matInstance.~Ref();
 	}
 
-	void Model::Init(const eastl::vector<Vertex>& data, const eastl::vector<uint32_t>& indices)
+	void Model::Init(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices)
 	{
 		m_vertices = data;
 		m_indices = indices;
@@ -47,15 +57,8 @@ namespace trace {
 
 		m_indexBuffer = GBuffer::Create_(index_buffer_info);
 	}
-	void Model::SetMaterial(Material material)
-	{
-		m_material.m_albedoMap = material.m_albedoMap;
-		m_material.m_diffuseColor = material.m_diffuseColor;
-		m_material.m_shininess = material.m_shininess;
-		m_material.m_specularMap = material.m_specularMap;
-		m_material.m_normalMap = material.m_normalMap;
-	}
-	void generateDefaultCube(eastl::vector<Vertex>& data, eastl::vector<uint32_t>& indices)
+
+	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices)
 	{
 
 
@@ -75,7 +78,7 @@ namespace trace {
 		
 		
 		
-		eastl::vector<Vertex> verts(24);
+		std::vector<Vertex> verts(24);
 		
 		// Front face
 		verts[(0 * 4) + 0].pos = { min_x, min_y, max_z };
@@ -161,7 +164,7 @@ namespace trace {
 		verts[(5 * 4) + 2].normal = { 0.0f, 1.0f, 0.0f };
 		verts[(5 * 4) + 3].normal = { 0.0f, 1.0f, 0.0f };
 
-		eastl::vector<uint32_t> _ind(36);
+		std::vector<uint32_t> _ind(36);
 
 		for (uint32_t i = 0; i < 6; ++i) {
 			uint32_t v_offset = i * 4;
@@ -178,7 +181,7 @@ namespace trace {
 		indices = _ind;
 
 	}
-	void generateVertexTangent(eastl::vector<Vertex>& data, eastl::vector<uint32_t>& indices)
+	void generateVertexTangent(std::vector<Vertex>& data, std::vector<uint32_t>& indices)
 	{
 
 

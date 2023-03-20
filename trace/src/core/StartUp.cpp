@@ -3,8 +3,7 @@
 #include "StartUp.h"
 #include "io/Logging.h"
 #include "events/EventsSystem.h"
-#include "Enums.h"
-#include "input\Input.h"
+#include "input/Input.h"
 #include "render/GContext.h"
 #include "render/Renderer.h"
 #include "core/Platform.h"
@@ -48,9 +47,15 @@ namespace trace {
 
 	void TRACE_API init(trc_app_data app_data)
 	{
-		Platform::s_api = app_data.platform_api;
-		Application::win_type = app_data.wintype;
-		Renderer::s_api = app_data.graphics_api;
+
+		AppSettings::winprop      = app_data.winprop;
+		AppSettings::wintype      = app_data.wintype;
+		AppSettings::graphics_api = app_data.graphics_api;
+		AppSettings::platform_api = app_data.platform_api;
+		AppSettings::enable_vsync = app_data.enable_vsync;
+		AppSettings::windowed = app_data.windowed;
+
+
 	}
 
 	bool TRACE_API _INIT(trc_app_data app_data)

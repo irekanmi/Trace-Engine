@@ -34,9 +34,15 @@
     <Filter Include="render">
       <UniqueIdentifier>{E5CF2C19-D171-57EF-BA2C-6B43A66DDE3F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{0D091A24-F9D5-742F-22EF-62D70E1BAABD}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\Application.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Clock.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Core.h">
@@ -120,10 +126,19 @@
     <ClInclude Include="src\core\platform\Vulkan\VulkanBuffer.h">
       <Filter>core\platform\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanPipeline.h">
       <Filter>core\platform\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanShader.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanSwapchain.h">
       <Filter>core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanTexture.h">
@@ -138,6 +153,9 @@
     <ClInclude Include="src\render\Camera.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\Commands.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GBuffer.h">
       <Filter>render</Filter>
     </ClInclude>
@@ -147,10 +165,19 @@
     <ClInclude Include="src\render\GDevice.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\GFramebuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GPipeline.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\GRenderPass.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GShader.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GSwapchain.h">
       <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GTexture.h">
@@ -159,7 +186,19 @@
     <ClInclude Include="src\render\Graphics.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\Material.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\Mesh.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\Model.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\PerspectiveCamera.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\RenderPassInfo.h">
       <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Renderer.h">
@@ -168,25 +207,43 @@
     <ClInclude Include="src\render\ShaderParser.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\SkyBox.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\HashTable.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\MeshManager.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\ModelManager.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\Ref.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\Resource.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\ResourceSystem.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\TextureManager.h">
+      <Filter>resource</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\resource\Ref.h" />
-    <ClInclude Include="src\resource\Resource.h" />
-    <ClInclude Include="src\resource\ResourceSystem.h" />
-    <ClInclude Include="src\resource\HashTable.h" />
-    <ClInclude Include="src\resource\TextureManager.h" />
-    <ClInclude Include="src\render\GSwapchain.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanSwapchain.h" />
-    <ClInclude Include="src\render\GFramebuffer.h" />
-    <ClInclude Include="src\render\GRenderPass.h" />
-    <ClInclude Include="src\render\RenderPassInfo.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h" />
-    <ClInclude Include="src\core\Clock.h" />
-    <ClInclude Include="src\render\Model.h" />
-    <ClInclude Include="src\render\Material.h" />
+    <ClInclude Include="src\resource\MaterialManager.h" />
+    <ClInclude Include="src\resource\PipelineManager.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Clock.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Coretypes.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\FileSystem.cpp">
@@ -225,6 +282,9 @@
     <ClCompile Include="src\core\io\TrcConsole.cpp">
       <Filter>core\io</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\memory\memory.cpp">
+      <Filter>core\memory</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\pch.cpp">
       <Filter>core</Filter>
     </ClCompile>
@@ -252,10 +312,19 @@
     <ClCompile Include="src\core\platform\Vulkan\VulkanBuffer.cpp">
       <Filter>core\platform\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanPipeline.cpp">
       <Filter>core\platform\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanShader.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanSwapchain.cpp">
       <Filter>core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanTexture.cpp">
@@ -276,13 +345,28 @@
     <ClCompile Include="src\render\GDevice.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\GFramebuffer.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\GPipeline.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GRenderpass.cpp">
       <Filter>render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GShader.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\GSwapchain.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\GTexture.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\Mesh.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\Model.cpp">
       <Filter>render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\PerspectiveCamera.cpp">
@@ -294,17 +378,27 @@
     <ClCompile Include="src\render\ShaderParser.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\resource\Resource.cpp" />
-    <ClCompile Include="src\resource\ResourceSystem.cpp" />
-    <ClCompile Include="src\resource\TextureManager.cpp" />
-    <ClCompile Include="src\render\GSwapchain.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanSwapchain.cpp" />
-    <ClCompile Include="src\render\GFramebuffer.cpp" />
-    <ClCompile Include="src\render\GRenderpass.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp" />
-    <ClCompile Include="src\core\memory\memory.cpp" />
-    <ClCompile Include="src\core\Clock.cpp" />
-    <ClCompile Include="src\render\Model.cpp" />
+    <ClCompile Include="src\render\SkyBox.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\MeshManager.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\ModelManager.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\Resource.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\ResourceSystem.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\TextureManager.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\MaterialManager.cpp" />
+    <ClCompile Include="src\render\Material.cpp" />
+    <ClCompile Include="src\resource\PipelineManager.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp" />
   </ItemGroup>
 </Project>

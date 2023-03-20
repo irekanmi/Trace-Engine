@@ -4,7 +4,6 @@
 #include "GL/glew.h"
 #include "core/Application.h"
 #include "core/io/Logging.h"
-#include "core/Platform.h"
 #include "GLFW/glfw3.h"
 
 namespace trace {
@@ -22,7 +21,7 @@ namespace trace {
 
 	void OpenGLContext::Update(float deltaTime)
 	{
-		switch (Application::win_type)
+		switch (AppSettings::wintype)
 		{
 		case WindowType::GLFW_WINDOW:
 		{
@@ -41,7 +40,7 @@ namespace trace {
 	void OpenGLContext::Init()
 	{
 		m_winHandle = Application::get_instance()->GetWindow()->GetNativeHandle();
-		switch (Application::win_type)
+		switch (AppSettings::wintype)
 		{
 		case WindowType::GLFW_WINDOW:
 		{

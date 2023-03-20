@@ -1,8 +1,8 @@
 #include "pch.h"
 
 #include "GFramebuffer.h"
-#include "Renderer.h"
 #include "core/platform/Vulkan/VulkanFramebuffer.h"
+#include "core/Coretypes.h"
 
 
 namespace trace {
@@ -19,7 +19,7 @@ namespace trace {
 
 	GFramebuffer* GFramebuffer::Create_(uint32_t num_attachment, GTexture** attachments, GRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t swapchain_image_index, GSwapchain* swapchain)
 	{
-		switch (Renderer::get_api())
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{

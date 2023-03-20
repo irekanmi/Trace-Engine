@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "GPipeline.h"
-#include "Renderer.h"
 #include "core/io/Logging.h"
 #include "core/platform/Vulkan/VulkanPipeline.h"
 
@@ -19,7 +18,7 @@ namespace trace {
 
 	GPipeline* GPipeline::Create_(PipelineStateDesc desc)
 	{
-		switch (Renderer::get_api())
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{

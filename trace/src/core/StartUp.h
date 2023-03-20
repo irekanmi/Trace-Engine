@@ -2,6 +2,8 @@
 
 #include "Core.h"
 #include "Coretypes.h"
+#include "Enums.h"
+
 
 namespace trace {
 

@@ -6,10 +6,10 @@
 #include "core/io/Logging.h"
 #include "EASTL/vector.h"
 #include <dos.h>
+#include "Coretypes.h"
 
 
 namespace trace {
-	PlatformAPI Platform::s_api = PlatformAPI::NO;
 
 	void Platform::OpenDir()
 	{
@@ -18,7 +18,7 @@ namespace trace {
 
 	void* Platform::GetAppHandle()
 	{
-		switch (s_api)
+		switch (AppSettings::platform_api)
 		{
 		case PlatformAPI::WINDOWS:
 		{
@@ -35,7 +35,7 @@ namespace trace {
 
 	void Platform::ZeroMem(void* dst, uint32_t lenght)
 	{
-		switch (s_api)
+		switch (AppSettings::platform_api)
 		{
 		case PlatformAPI::WINDOWS:
 		{
@@ -49,7 +49,7 @@ namespace trace {
 
 	void Platform::Sleep(float milleseconds)
 	{
-		switch (s_api)
+		switch (AppSettings::platform_api)
 		{
 		case PlatformAPI::WINDOWS:
 		{
@@ -65,7 +65,7 @@ namespace trace {
 	void Platform::GetExtensions(uint32_t& count, eastl::vector<const char*>& extensions)
 	{
 
-		switch (Platform::s_api)
+		switch (AppSettings::platform_api)
 		{
 		case PlatformAPI::WINDOWS:
 		{

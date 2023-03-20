@@ -61,6 +61,17 @@ namespace trace {
 		ClientUpdateCallback client_update = nullptr;
 	};
 
+	class AppSettings
+	{
+	public:
+		static WindowDecl winprop;
+		static WindowType wintype;
+		static RenderAPI graphics_api;
+		static PlatformAPI platform_api;
+		static bool enable_vsync;
+		static bool windowed;
+	};
+
 	
 
 }

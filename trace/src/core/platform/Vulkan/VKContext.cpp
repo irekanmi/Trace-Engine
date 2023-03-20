@@ -3,7 +3,6 @@
 #include "core/Enums.h"
 #include "core/io/Logging.h"
 #include "VKtypes.h"
-#include "core/Platform.h"
 #include "EASTL/array.h"
 #include "VkUtils.h"
 

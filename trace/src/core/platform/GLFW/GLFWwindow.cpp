@@ -6,9 +6,8 @@
 #include "core/events/Events.h"
 #include "core/events/EventsSystem.h"
 #include "core/input/Input.h"
-#include "render/Renderer.h"
 #include "GLFW/glfw3native.h"
-#include "core/Platform.h"
+#include "core/Coretypes.h"
 
 
 
@@ -296,7 +295,7 @@ namespace trace {
 		int success = glfwInit();
 		TRC_ASSERT(success, "glfwInit() Failed");
 
-		switch (Renderer::s_api)
+		switch (AppSettings::graphics_api)
 		{
 		case RenderAPI::Vulkan:
 		{
@@ -454,7 +453,7 @@ namespace trace {
 	void* GLFW_Window::GetNativeHandle()
 	{
 		void* value = nullptr;
-		switch (Platform::s_api)
+		switch (AppSettings::platform_api)
 		{
 		case PlatformAPI::WINDOWS:
 		{

@@ -3,6 +3,8 @@
 #include "core/Enums.h"
 #include <iostream>
 
+
+
 namespace trace {
 
 
@@ -15,7 +17,7 @@ namespace trace {
 
 	public:
 		uint32_t m_refCount = 0;
-		uint32_t m_id = INVAILD_ID;
+		uint32_t m_id = INVALID_ID;
 
 	private:
 	protected:

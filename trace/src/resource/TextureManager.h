@@ -13,7 +13,7 @@ namespace trace {
 	//TODO: Add more parameter for more info
 	struct TextureHash
 	{
-		uint32_t _id = INVAILD_ID;
+		uint32_t _id = INVALID_ID;
 	};
 
 	class TRACE_API TextureManager
@@ -36,8 +36,12 @@ namespace trace {
 
 		bool LoadDefaultTextures();
 
+		static TextureManager* get_instance();
+
 	private:
 		void UnloadDefaults(GTexture* texture);
+
+		static TextureManager* s_instance;
 
 	private:
 		HashTable<TextureHash> m_hashTable;

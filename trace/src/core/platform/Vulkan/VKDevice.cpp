@@ -3,7 +3,6 @@
 #include "VKDevice.h"
 #include "VKtypes.h"
 #include "VkUtils.h"
-#include "core/Application.h"
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
 #include "core/input/Input.h"
@@ -39,7 +38,7 @@ namespace trace {
 		TRC_INFO("Created Vulkan Device");
 
 		TRC_TRACE("Creating Swapchain...");
-		VK_ASSERT(vk::_CreateSwapchain(m_instance, m_handle, &m_handle->m_swapChain, Application::get_instance()->GetWindow()->GetWidth(), Application::get_instance()->GetWindow()->GetHeight()));
+		VK_ASSERT(vk::_CreateSwapchain(m_instance, m_handle, &m_handle->m_swapChain, 800.0f, 600.0f));
 
 		TRC_INFO("Vulkan SwapChain Created");
 
@@ -49,7 +48,7 @@ namespace trace {
 			m_handle,
 			&m_handle->m_renderPass,
 			glm::vec4(0.03f, 0.05f, .05f, 1.0f),
-			glm::vec4(0, 0, Application::get_instance()->GetWindow()->GetWidth(), Application::get_instance()->GetWindow()->GetHeight()),
+			glm::vec4(0, 0, 800.0f, 600.0f),
 			1.0f,
 			0,
 			&m_handle->m_swapChain
@@ -179,48 +178,9 @@ namespace trace {
 	void VKDevice::BindPipeline(GPipeline* pipeline)
 	{
 		m_pipeline = pipeline;
-
 		VulkanPipeline* _pipeline = reinterpret_cast<VulkanPipeline*>(m_pipeline);
-
-
 		VKCommmandBuffer* command_buffer = &m_handle->m_graphicsCommandBuffers[m_handle->m_imageIndex];
-
-
 		vkCmdBindPipeline(command_buffer->m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->m_handle.m_handle);
-
-		uint32_t set_count = 0;
-		VkDescriptorSet _sets[3];
-
-		
-		
-		
-		
-		if (_pipeline->m_handle.Scene_sets[0])
-		{
-			_sets[set_count++] = _pipeline->m_handle.Scene_sets[m_handle->m_imageIndex];
-		}
-
-		if (_pipeline->m_handle.Instance_sets[0])
-		{
-			_sets[set_count++] = _pipeline->m_handle.Instance_sets[m_handle->m_imageIndex];
-		}
-
-		if (_pipeline->m_handle.Local_sets[0])
-		{
-			_sets[set_count++] = _pipeline->m_handle.Local_sets[m_handle->m_imageIndex];
-		}
-
-		vkCmdBindDescriptorSets(
-			command_buffer->m_handle,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			_pipeline->m_handle.m_layout,
-			0,
-			set_count,
-			_sets,
-			0,
-			nullptr
-		);
-
 	}
 
 	void VKDevice::BindVertexBuffer(GBuffer* buffer)

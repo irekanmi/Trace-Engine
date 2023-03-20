@@ -3,7 +3,6 @@
 #include "VulkanSwapchain.h"
 #include "VKDevice.h"
 #include "VkUtils.h"
-#include "core/Platform.h"
 
 extern trace::VKHandle g_Vkhandle;
 
