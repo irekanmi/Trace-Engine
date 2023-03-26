@@ -83,7 +83,7 @@ namespace trace {
 		Rect2D _rect;
 		SkyBox _sky;
 	
-
+		glm::ivec4 render_mode;
 		//------------------------------------
 	private:
 		void Draw_Mesh(CommandParams params);

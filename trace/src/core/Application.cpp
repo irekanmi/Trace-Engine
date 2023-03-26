@@ -8,12 +8,15 @@
 #include "input\Input.h"
 #include "render/Renderer.h"
 #include "core/platform/Windows/Win32Window.h"
-#include "render/Graphics.h"
 #include "glm/gtc/matrix_transform.hpp"
-#include "glm/glm.hpp"
-#include "render/PerspectiveCamera.h"
 #include "memory/memory.h"
 
+//Temp==================
+#include "render/Graphics.h"
+#include "glm/glm.hpp"
+#include "render/Renderutils.h"
+#include "render/ShaderParser.h"
+//======================
 
 
 void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -116,6 +119,9 @@ namespace trace
 
 
 
+
+
+
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
 		texture_desc.m_format = Format::R8G8B8A8_UNORM;
@@ -137,17 +143,7 @@ namespace trace
 		//_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
 		_squareModel = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 
-		ResourceSystem::get_instance()->CreateMaterial(
-			"Material",
-			_mat,
-			ResourceSystem::get_instance()->GetDefaultPipeline("standard")
-			);
-
-		//for (auto& i : _squareModel->GetModels())
-		//{
-		//	i->m_matInstance = ResourceSystem::get_instance()->GetMaterial("Material");
-		//}
-
+		
 		std::vector<std::string> cube_maps = {
 			"sky_right.jpg",
 			"sky_left.jpg",
@@ -170,6 +166,155 @@ namespace trace
 
 		sky_box = SkyBox(temp);
 		
+
+
+
+		std::string vert_src;
+		std::string frag_src;
+
+		vert_src = ShaderParser::load_shader_file("../assets/shaders/trace_core.shader.vert.glsl");
+		frag_src = ShaderParser::load_shader_file("../assets/shaders/reflect.frag.glsl");
+
+		std::cout << vert_src;
+		std::cout << frag_src;
+
+		GShader* VertShader = GShader::Create_(vert_src, ShaderStage::VERTEX_SHADER);
+		GShader* FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
+
+		ShaderResourceBinding projection;
+		projection.shader_stage = ShaderStage::VERTEX_SHADER;
+		projection.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		projection.resource_size = sizeof(glm::mat4);
+		projection.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		projection.resource_name = "projection";
+		projection.count = 1;
+		projection.index = 0;
+		projection.slot = 0;
+		projection.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+
+		ShaderResourceBinding view;
+		view.shader_stage = ShaderStage::VERTEX_SHADER;
+		view.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		view.resource_size = sizeof(glm::mat4);
+		view.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		view.resource_name = "view";
+		view.count = 1;
+		view.index = 0;
+		view.slot = 0;
+		view.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+
+		ShaderResourceBinding view_position;
+		view_position.shader_stage = ShaderStage::VERTEX_SHADER;
+		view_position.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		view_position.resource_size = sizeof(glm::vec3);
+		view_position.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		view_position.resource_name = "view_position";
+		view_position.count = 1;
+		view_position.index = 0;
+		view_position.slot = 0;
+		view_position.resource_data_type = ShaderData::CUSTOM_DATA_VEC3;
+
+		ShaderResourceBinding _test;
+		_test.shader_stage = ShaderStage::VERTEX_SHADER;
+		_test.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		_test.resource_size = sizeof(glm::vec2);
+		_test.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		_test.resource_name = "_test";
+		_test.count = 1;
+		_test.index = 0;
+		_test.slot = 0;
+		_test.resource_data_type = ShaderData::CUSTOM_DATA_VEC2;
+
+		ShaderResourceBinding normal_map;
+		normal_map.shader_stage = ShaderStage::PIXEL_SHADER;
+		normal_map.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
+		normal_map.resource_size = 0;
+		normal_map.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+		normal_map.resource_name = "normal_map";
+		normal_map.count = 1;
+		normal_map.index = 0;
+		normal_map.slot = 1;
+		normal_map.resource_data_type = ShaderData::MATERIAL_NORMAL;
+
+
+		ShaderResourceBinding rest;
+		rest.shader_stage = ShaderStage::PIXEL_SHADER;
+		rest.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		rest.resource_size = sizeof(glm::ivec4);
+		rest.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		rest.resource_name = "rest";
+		rest.count = 1;
+		rest.index = 0;
+		rest.slot = 2;
+		rest.resource_data_type = ShaderData::CUSTOM_DATA_VEC4;
+
+		ShaderResourceBinding cube_data;
+		cube_data.shader_stage = ShaderStage::PIXEL_SHADER;
+		cube_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		cube_data.resource_size = 0;
+		cube_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+		cube_data.resource_name = "CubeMap";
+		cube_data.count = 1;
+		cube_data.index = 0;
+		cube_data.slot = 1;
+		cube_data.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+		cube_data.data = temp.get();
+
+		ShaderResourceBinding model;
+		model.shader_stage = ShaderStage::VERTEX_SHADER;
+		model.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
+		model.resource_size = sizeof(glm::mat4);
+		model.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		model.resource_name = "model";
+		model.count = 1;
+		model.index = 0;
+		model.slot = 3;
+		model.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+
+		std::vector<ShaderResourceBinding> scene = {
+			projection,
+			view,
+			view_position,
+			_test,
+			normal_map,
+			cube_data,
+			model,
+			rest
+		};
+
+		PipelineStateDesc _ds;
+		_ds.resource_bindings_count = 8;
+		_ds.resource_bindings = scene;
+		_ds.vertex_shader = VertShader;
+		_ds.pixel_shader = FragShader;
+
+		AutoFillPipelineDesc(
+			_ds
+		);
+
+		if (!ResourceSystem::get_instance()->CreatePipeline(_ds, "reflect_pipeline"))
+		{
+			TRC_ERROR("Failed to initialize or create reflect pipeline");
+		}
+
+		Ref<GPipeline> reflect_p = ResourceSystem::get_instance()->GetPipeline("reflect_pipeline");
+		delete VertShader;
+		delete FragShader;
+
+
+		ResourceSystem::get_instance()->CreateMaterial(
+			"Material",
+			_mat,
+			//ResourceSystem::get_instance()->GetDefaultPipeline("standard")
+			reflect_p
+		);
+
+		//for (auto& i : _squareModel->GetModels())
+		//{
+		//	i->m_matInstance = ResourceSystem::get_instance()->GetMaterial("Material");
+		//}
+
+
 		//=============================
 
 		//----------CLIENT--------------//
@@ -226,7 +371,7 @@ namespace trace
 			float total_frame_time = end_time - _time;
 			float frame_per_sec = 1.0f / 55;
 
-			//TODO fix 
+			//TODO fix, Application is lock to 60 FPS and not found the reason
 			if (m_vsync)
 			{
 				if (total_frame_time < frame_per_sec && total_frame_time > 0.0f)
@@ -248,7 +393,6 @@ namespace trace
 		//___________________//
 		trace::ApplicationEnd app_end;
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
-		_squareModel.~Ref();
 		
 		Renderer::get_instance()->End();
 

@@ -15,13 +15,16 @@ ipch/
 *.sln
 *.filters
 *.vcxproj
-trace.vcxproj
-trace.vcxproj.filters
+trace/trace.vcxproj
+trace/trace.vcxproj.filters
 Debug/
 *.exe
 externals/
 assets/textures
 assets/meshes
+
+#Project Config Files
+.claudiaideconfig
 
 #Code lite
 *.project

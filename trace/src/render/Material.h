@@ -40,6 +40,6 @@ namespace trace {
 	protected:
 		Ref<GPipeline> m_renderPipeline;
 		Material m_material;
-
+		std::unordered_map<ShaderData, std::pair<void*, uint32_t>> m_shaderData;
 	};
 }

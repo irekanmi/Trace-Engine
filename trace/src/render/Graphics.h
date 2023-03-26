@@ -67,11 +67,11 @@ namespace trace {
 
 
 
-	enum class ShaderStage
+	enum ShaderStage
 	{
-		NONE,
-		VERTEX_SHADER,
-		PIXEL_SHADER
+		STAGE_NONE = BIT(1),
+		VERTEX_SHADER = BIT(2),
+		PIXEL_SHADER = BIT(3)
 	};
 
 	enum class FillMode
@@ -151,55 +151,34 @@ namespace trace {
 		SWAPCHAIN
 	};
 
-	struct Viewport
-	{
-		float x = 0.0f;
-		float y = 0.0f;
-		float width = 0.0f;
-		float height = 0.0f;
-		float minDepth = 0.0f;
-		float maxDepth = 1.0f;
-	};
-
-
-	struct InputLayout
-	{
-		uint32_t stride = 0;
-		InputClassification input_class = InputClassification::PER_VERTEX_DATA;
-		struct Element
-		{
-			uint32_t index = 0;
-			uint32_t offset = 0;
-			uint32_t stride = 0;
-			Format format = Format::NONE;
-		};
-		std::vector<Element> elements;
-	};
-
-	struct RaterizerState
-	{
-		CullMode cull_mode = CullMode::NONE;
-		FillMode fill_mode = FillMode::NONE;
-	};
-
-	struct DepthStencilState
-	{
-		bool depth_test_enable = false;
-		bool stencil_test_enable = false;
-		float minDepth = 0.0f;
-		float maxDepth = 1.0f;
-	};
-
-	struct ColorBlendState
-	{
-		bool alpha_to_blend_coverage = false; // TODO
-	};
+	
 
 	enum class PrimitiveTopology
 	{
 		NONE,
 		TRIANGLE_LIST,
 		TRIANGLE_STRIP
+	};
+
+	enum class ShaderData
+	{
+		NONE,
+		MATERIAL_ALBEDO,
+		MATERIAL_SPECULAR,
+		MATERIAL_NORMAL,
+		MATERIAL_DIFFUSE_COLOR,
+		MATERIAL_SHININESS,
+		CUSTOM_DATA_UNKNOWN,
+		CUSTOM_DATA_TEXTURE,
+		CUSTOM_DATA_INT,
+		CUSTOM_DATA_FLOAT,
+		CUSTOM_DATA_BOOL,
+		CUSTOM_DATA_VEC2,
+		CUSTOM_DATA_VEC3,
+		CUSTOM_DATA_VEC4,
+		CUSTOM_DATA_MAT2,
+		CUSTOM_DATA_MAT3,
+		CUSTOM_DATA_MAT4,
 	};
 
 	enum class ShaderResourceType
@@ -253,17 +232,62 @@ namespace trace {
 		float bottom = .0f;
 	};
 
+	struct Viewport
+	{
+		float x = 0.0f;
+		float y = 0.0f;
+		float width = 0.0f;
+		float height = 0.0f;
+		float minDepth = 0.0f;
+		float maxDepth = 1.0f;
+	};
+
+
+	struct InputLayout
+	{
+		uint32_t stride = 0;
+		InputClassification input_class = InputClassification::PER_VERTEX_DATA;
+		struct Element
+		{
+			uint32_t index = 0;
+			uint32_t offset = 0;
+			uint32_t stride = 0;
+			Format format = Format::NONE;
+		};
+		std::vector<Element> elements;
+	};
+
+	struct RaterizerState
+	{
+		CullMode cull_mode = CullMode::NONE;
+		FillMode fill_mode = FillMode::NONE;
+	};
+
+	struct DepthStencilState
+	{
+		bool depth_test_enable = false;
+		bool stencil_test_enable = false;
+		float minDepth = 0.0f;
+		float maxDepth = 1.0f;
+	};
+
+	struct ColorBlendState
+	{
+		bool alpha_to_blend_coverage = false; // TODO
+	};
+
 	struct ShaderResourceBinding
 	{
-		ShaderStage shader_stage = ShaderStage::NONE;
-		eastl::string resource_name = "";
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		std::string resource_name = "";
 		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 		uint32_t resource_size = 0;
 		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
 		uint32_t slot = 0;
 		uint32_t index = 0;
 		uint32_t count = 1;
-	
+		ShaderData resource_data_type = ShaderData::NONE;
+		void* data = nullptr;
 	};
 
 	struct PipelineStateDesc

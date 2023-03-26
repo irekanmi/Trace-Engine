@@ -201,6 +201,7 @@
     <ClInclude Include="src\render\PerspectiveCamera.h" />
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
+    <ClInclude Include="src\render\Renderutils.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
     <ClInclude Include="src\resource\HashTable.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="src\render\Model.cpp" />
     <ClCompile Include="src\render\PerspectiveCamera.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
+    <ClCompile Include="src\render\Renderutils.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />
     <ClCompile Include="src\resource\MaterialManager.cpp" />

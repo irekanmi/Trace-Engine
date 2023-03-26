@@ -13,13 +13,6 @@ namespace trace {
 
 	Mesh::~Mesh()
 	{
-
-		for (Ref<Model>& model : m_models)
-		{
-			model.~Ref();
-		}
-
-		m_models.clear();
 	}
 
 	bool Mesh::Init(const std::vector<Ref<Model>>& models)

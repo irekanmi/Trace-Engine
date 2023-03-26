@@ -14,6 +14,10 @@ layout(location = 0)in data_object
 layout(set = 0, binding = 1) uniform samplerCube CubeMap;
 layout(set = 1, binding = 1) uniform sampler2D normal_map;
 
+layout(set = 0, binding = 2)uniform Testing{
+    ivec4 rest;
+};
+
 void main()
 {
 
@@ -32,6 +36,36 @@ void main()
     vec3 reflect_dir = reflect(-view_dir, _normal);
     float refract_ratio = 1.0/1.52;
     vec3 refract_dir = refract(-view_dir, _normal, refract_ratio);
-    FragColor = texture(CubeMap, refract_dir);
     
+    if(rest.x == 0)
+    {
+        FragColor = vec4(_data._fragPos, 1.0);
+    }
+   else if(rest.x == 1)
+   {
+        FragColor = vec4(abs(_normal), 1.0);
+        return;
+   }
+   else if(rest.x == 2)
+   {
+        FragColor = texture(CubeMap, refract_dir);
+        return;
+   }
+   else if(rest.x == 3)
+   {
+        FragColor = texture(CubeMap, reflect_dir);
+        return;
+   }
+   else if(rest.x == 4)
+   {
+        FragColor = texture(CubeMap, mix(reflect_dir, refract_dir, refract_ratio));
+        return;
+   }
+   else if(rest.x == 5)
+   {
+        FragColor = texture(CubeMap, refract_dir);
+        FragColor += texture(CubeMap, reflect_dir);
+        return;
+   }
+
 }

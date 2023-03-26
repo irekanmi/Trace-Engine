@@ -145,6 +145,15 @@ namespace trace {
 			0.1f,
 			1500.0f
 		);
+		_viewPort.width = 800.0f;
+		_viewPort.height = 600.0f;
+		Rect2D rect;
+		rect.top = rect.left = 0;
+		rect.right = 800;
+		rect.bottom = 600;
+
+		_rect = rect;
+		
 
 		return result;
 	}
@@ -202,143 +211,7 @@ namespace trace {
 		EventsSystem::s_instance->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
 
 		_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("standard");
-		{
-		trace::FileHandle vert_shad;
-		trace::FileHandle frag_shad;
-
-		std::string vert_src;
-		std::string frag_src;
-
-		if (!trace::FileSystem::open_file("../assets/shaders/trace_core.shader.vert.glsl", trace::FileMode::READ, vert_shad))
-		{
-			TRC_ERROR("Failed to open file");
-		}
-
-		if (!trace::FileSystem::open_file("../assets/shaders/reflect.frag.glsl", trace::FileMode::READ, frag_shad))
-		{
-			TRC_ERROR("Failed to open file");
-		}
-
-		trace::FileSystem::read_all_lines(vert_shad, vert_src);
-		trace::FileSystem::read_all_lines(frag_shad, frag_src);
-
-		std::cout << vert_src;
-		std::cout << frag_src;
-
-		trace::FileSystem::close_file(vert_shad);
-		trace::FileSystem::close_file(frag_shad);
-
-		VertShader = GShader::Create_(vert_src, ShaderStage::VERTEX_SHADER);
-		FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
-
-		ColorBlendState blend_state;
-		blend_state.alpha_to_blend_coverage = true;
-
-		DepthStencilState depth_stenc_state;
-		depth_stenc_state.depth_test_enable = true;
-		depth_stenc_state.maxDepth = 1.0f;
-		depth_stenc_state.minDepth = 0.0f;
-		depth_stenc_state.stencil_test_enable = false;
-
-		InputLayout _layout = Vertex::get_input_layout();
-
-		RaterizerState raterizer_state;
-		raterizer_state.cull_mode = CullMode::BACK;
-		raterizer_state.fill_mode = FillMode::SOLID;
-
-		Viewport vp = {};
-		vp.minDepth = 0.0f;
-		vp.maxDepth = 1.0f;
-		vp.width = 800;
-		vp.height = 600;
-		vp.x = 0;
-		vp.y = 0;
-
-		_viewPort = vp;
-
-		Rect2D rect;
-		rect.top = rect.left = 0;
-		rect.right = 800;
-		rect.bottom = 600;
-
-		_rect = rect;
-
-		ShaderResourceBinding scene_data;
-		scene_data.shader_stage = ShaderStage::VERTEX_SHADER;
-		scene_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		scene_data.resource_size = sizeof(SceneGlobals);
-		scene_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		scene_data.resource_name = "scene_globals";
-		scene_data.count = 1;
-		scene_data.index = 0;
-		scene_data.slot = 0;
-
-		ShaderResourceBinding scene_tex;
-		scene_tex.shader_stage = ShaderStage::PIXEL_SHADER;
-		scene_tex.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		scene_tex.resource_size = 0;
-		scene_tex.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		scene_tex.resource_name = "CubeMap";
-		scene_tex.count = 1;
-		scene_tex.index = 0;
-		scene_tex.slot = 1;
-
-
-		ShaderResourceBinding local_data;
-		local_data.shader_stage = ShaderStage::VERTEX_SHADER;
-		local_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
-		local_data.resource_size = sizeof(glm::mat4);
-		local_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		local_data.resource_name = "local_data";
-		local_data.count = 1;
-		local_data.index = 0;
-		local_data.slot = 3;
-
-		ShaderResourceBinding normal_data;
-		normal_data.shader_stage = ShaderStage::PIXEL_SHADER;
-		normal_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		normal_data.resource_size = 0;
-		normal_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		normal_data.resource_name = "normal_map";
-		normal_data.count = 1;
-		normal_data.index = 0;
-		normal_data.slot = 1;
-
-
-
-		std::vector<ShaderResourceBinding> scene = {
-			scene_data,
-			scene_tex,
-			local_data,
-			normal_data
-		};
-
-		PipelineStateDesc desc;
-		desc.blend_state = blend_state;
-		desc.depth_sten_state = depth_stenc_state;
-		desc.input_layout = _layout;
-		desc.pixel_shader = FragShader;
-		desc.rateriser_state = raterizer_state;
-		desc.topology = PrimitiveTopology::TRIANGLE_LIST;
-		desc.vertex_shader = VertShader;
-		desc.view_port = vp;
-		desc.resource_bindings_count = 4;
-		desc.resource_bindings = scene;
-		desc.render_pass = _renderPass[RENDERPASS::MAIN_PASS];
-		desc.subpass_index = 0;
-
-		reflect_pipeline = GPipeline::Create_(desc);
-		if (reflect_pipeline)
-		{
-			if (!reflect_pipeline->Initialize())
-			{
-				TRC_ERROR("Failed to initialize pipeline");
-			}
-			delete VertShader;
-			delete FragShader;
-		}
-
-		}
+		
 		skybox_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
 		
 
@@ -368,6 +241,8 @@ namespace trace {
 
 		_sky = SkyBox(temp);
 
+		render_mode = {};
+
 		//---------------------------------------------------------------------------------------------
 
 	}
@@ -383,8 +258,6 @@ namespace trace {
 
 		_pipeline.~Ref();
 		skybox_pipeline.~Ref();
-		reflect_pipeline->Shutdown();
-		delete reflect_pipeline;
 
 		_sky.~SkyBox();
 		
@@ -424,6 +297,31 @@ namespace trace {
 		case trace::EventType::TRC_KEY_RELEASED:
 		{
 			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
+
+			if (release->m_keycode == Keys::KEY_1)
+			{
+				render_mode.x = 1;
+			}
+			else if (release->m_keycode == Keys::KEY_2)
+			{
+				render_mode.x = 2;
+			}
+			else if (release->m_keycode == Keys::KEY_3)
+			{
+				render_mode.x = 3;
+			}
+			else if (release->m_keycode == Keys::KEY_4)
+			{
+				render_mode.x = 4;
+			}
+			else if (release->m_keycode == Keys::KEY_0)
+			{
+				render_mode.x = 0;
+			}
+			else if (release->m_keycode == Keys::KEY_5)
+			{
+				render_mode.x = 5;
+			}
 
 			break;
 		}
@@ -508,7 +406,6 @@ namespace trace {
 	{
 		Mesh* mesh = (Mesh*)params.ptrs[0];
 
-		Material* _mat;
 		SceneGlobals scene_data = {};
 		scene_data.view = _camera->GetViewMatrix();
 		scene_data.view_position = _camera->GetPosition();
@@ -552,10 +449,13 @@ namespace trace {
 			//	reflect_pipeline->SetTextureData("normal_map", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, _mat->m_normalMap.get());
 			//}
 
-			sp->SetData("scene_globals", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data, sizeof(SceneGlobals));
-			sp->SetData("local_data", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
-			m_device->BindPipeline(sp.get());
+			sp->SetData("projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
+			sp->SetData("view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
+			sp->SetData("view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
+			sp->SetData("model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
+			sp->SetData("rest", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &render_mode, sizeof(glm::ivec4));
 			_mi->Apply();
+			m_device->BindPipeline(sp.get());
 			m_device->BindVertexBuffer(_model->GetVertexBuffer());
 			m_device->BindIndexBuffer(_model->GetIndexBuffer());
 
@@ -573,24 +473,24 @@ namespace trace {
 		scene_data.view_position = _camera->GetPosition();
 		scene_data.projection = _camera->GetProjectionMatix();
 
+		Ref<GPipeline> sp = skybox_pipeline;
 
-		skybox_pipeline->SetTextureData(
+		sp->SetTextureData(
 			"CubeMap",
 			ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 			sky_box->GetCubeMap()
 		);
-		skybox_pipeline->SetData(
-			"scene_globals",
-			ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-			&scene_data,
-			sizeof(SceneGlobals)
-		);
-		skybox_pipeline->Bind();
-		m_device->BindPipeline(skybox_pipeline.get());
-		m_device->BindVertexBuffer(sky_box->GetCube()->GetModels()[0]->GetVertexBuffer());
-		m_device->BindIndexBuffer(sky_box->GetCube()->GetModels()[0]->GetIndexBuffer());
+		sp->SetData("projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
+		sp->SetData("view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
+		sp->SetData("view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
+		sp->Bind();
+
+		Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
+		m_device->BindPipeline(sp.get());
+		m_device->BindVertexBuffer(mod->GetVertexBuffer());
+		m_device->BindIndexBuffer(mod->GetIndexBuffer());
 		
-		m_device->DrawIndexed(0, sky_box->GetCube()->GetModels()[0]->GetIndexCount());
+		m_device->DrawIndexed(0, mod->GetIndexCount());
 	}
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh)

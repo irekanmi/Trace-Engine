@@ -32,7 +32,6 @@ namespace trace {
 			m_indexBuffer = nullptr;
 		}
 
-		//m_matInstance.~Ref();
 	}
 
 	void Model::Init(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices)

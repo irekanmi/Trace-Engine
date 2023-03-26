@@ -17,19 +17,14 @@ namespace trace {
 
 #define VK_NO_FLAGS 0
 
-	struct Setlayout
-	{
-		VkDescriptorSetLayout m_layout;
-		bool m_vaild;
-	};
 
 	struct SwapchainInfo
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
 		uint32_t format_count;
-		eastl::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkSurfaceFormatKHR> formats;
 		uint32_t present_count;
-		eastl::vector<VkPresentModeKHR> present_modes;
+		std::vector<VkPresentModeKHR> present_modes;
 	};
 
 	struct QueueFamilyIndices
@@ -106,6 +101,7 @@ namespace trace {
 		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
 
+
 		VkDescriptorSet Instance_sets[3] = {};
 		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
@@ -156,8 +152,8 @@ namespace trace {
 		VKImage m_depthimage;
 		VkFormat m_depthFormat;
 
-		eastl::vector<VkImage> m_images;
-		eastl::vector<VkImageView> m_imageViews;
+		std::vector<VkImage> m_images;
+		std::vector<VkImageView> m_imageViews;
 
 		uint32_t image_count;
 	};
@@ -192,13 +188,13 @@ namespace trace {
 		VKRenderPass m_renderPass;
 
 
-		eastl::vector<VkSemaphore> m_imageAvailableSemaphores;
-		eastl::vector<VkSemaphore> m_queueCompleteSemaphores;
+		std::vector<VkSemaphore> m_imageAvailableSemaphores;
+		std::vector<VkSemaphore> m_queueCompleteSemaphores;
 
 		uint32_t m_numInFlightFence;
-		eastl::vector<VKFence> m_inFlightFence;
+		std::vector<VKFence> m_inFlightFence;
 
-		eastl::vector<VKFence*> m_imagesFence;
+		std::vector<VKFence*> m_imagesFence;
 
 		uint32_t m_frameBufferWidth;
 		uint32_t m_frameBufferHeight;

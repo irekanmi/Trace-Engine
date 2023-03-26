@@ -62,10 +62,10 @@ namespace trace {
 
 		// Sync Objects
 		uint32_t frames_in_flight = m_handle->frames_in_flight;
-		eastl::vector<VkSemaphore>& image_avaliable_sem = m_handle->m_imageAvailableSemaphores;
-		eastl::vector<VkSemaphore>& queue_completed_sem = m_handle->m_queueCompleteSemaphores;
-		eastl::vector<VKFence>& in_flight_fence = m_handle->m_inFlightFence;
-		eastl::vector<VKFence*>& images_fence = m_handle->m_imagesFence;
+		std::vector<VkSemaphore>& image_avaliable_sem = m_handle->m_imageAvailableSemaphores;
+		std::vector<VkSemaphore>& queue_completed_sem = m_handle->m_queueCompleteSemaphores;
+		std::vector<VKFence>& in_flight_fence = m_handle->m_inFlightFence;
+		std::vector<VKFence*>& images_fence = m_handle->m_imagesFence;
 
 		image_avaliable_sem.resize(frames_in_flight);
 		queue_completed_sem.resize(frames_in_flight);

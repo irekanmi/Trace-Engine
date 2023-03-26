@@ -338,8 +338,8 @@ namespace vk {
 		vkGetPhysicalDeviceQueueFamilyProperties(device->m_physicalDevice, &queue_count, queue_props.data());
 
 
-		TRC_INFO(" Graphics | Compute | Transfer | Present ")
-			int n = 0;
+		TRC_INFO(" Graphics | Compute | Transfer | Present ");
+		int n = 0;
 		for (auto& i : queue_props)
 		{
 
@@ -414,7 +414,7 @@ namespace vk {
 
 		uint32_t present_count = 0;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device->m_physicalDevice, instance->m_surface, &present_count, nullptr);
-		eastl::vector<VkPresentModeKHR> present_modes(present_count);
+		std::vector<VkPresentModeKHR> present_modes(present_count);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device->m_physicalDevice, instance->m_surface, &present_count, present_modes.data());
 
 		device->m_swapchainInfo.present_count = present_count;
@@ -422,7 +422,7 @@ namespace vk {
 
 		uint32_t format_count = 0;
 		vkGetPhysicalDeviceSurfaceFormatsKHR(device->m_physicalDevice, instance->m_surface, &format_count, nullptr);
-		eastl::vector<VkSurfaceFormatKHR> format_modes(format_count);
+		std::vector<VkSurfaceFormatKHR> format_modes(format_count);
 		vkGetPhysicalDeviceSurfaceFormatsKHR(device->m_physicalDevice, instance->m_surface, &format_count, format_modes.data());
 
 		device->m_swapchainInfo.format_count = format_count;
@@ -452,6 +452,7 @@ namespace vk {
 
 		phy_feat = {};
 		phy_feat.samplerAnisotropy = VK_TRUE;
+		phy_feat.geometryShader = VK_TRUE;
 
 		VkDeviceCreateInfo device_info = {};
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -711,7 +712,7 @@ namespace vk {
 		TRC_TRACE("Obtaining Vulkan swapchain images...");
 		image_count = 0;
 		vkGetSwapchainImagesKHR(device->m_device, swapchain->m_handle, &image_count, nullptr);
-		eastl::vector<VkImage> swap_images(image_count);
+		std::vector<VkImage> swap_images(image_count);
 		vkGetSwapchainImagesKHR(device->m_device, swapchain->m_handle, &image_count, swap_images.data());
 
 		swapchain->image_count = image_count;
@@ -1808,7 +1809,7 @@ namespace vk {
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		create_info.lineWidth = 1.0f; // TODO
 		create_info.polygonMode = convertPolygonMode(raterizer.fill_mode);
-		create_info.cullMode = raterizer.cull_mode == trace::CullMode::FRONT ? VK_CULL_MODE_FRONT_BIT : VK_CULL_MODE_BACK_BIT;
+		create_info.cullMode = convertCullMode(raterizer.cull_mode);
 		create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // TODO
 		create_info.rasterizerDiscardEnable = VK_FALSE; // TODO
 		create_info.depthClampEnable = VK_FALSE; // TODO
@@ -2171,7 +2172,7 @@ namespace vk {
 
 		}*/
 
-		for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
+		/*for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
 		{
 			switch (desc.resource_bindings[i].resource_type)
 			{
@@ -2239,11 +2240,68 @@ namespace vk {
 				break;
 			}
 			}
+		}*/
+
+		VkDescriptorSetLayoutBinding bd = {};
+		bd.binding = 0;
+		bd.descriptorCount = 0;
+		bd.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+		bd.pImmutableSamplers = nullptr;
+		bd.stageFlags = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+		trace::ShaderResourceStage last_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
+
+		for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
+		{
+			VkDescriptorSetLayoutBinding bind = {};
+
+			bind.binding = desc.resource_bindings[i].slot;
+			bind.pImmutableSamplers = nullptr;
+			bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
+			bind.descriptorCount = desc.resource_bindings[i].count;
+			if (desc.resource_bindings[i].resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+			{
+				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			}
+			if (desc.resource_bindings[i].resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+			{
+				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			}
+			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+			{
+				if(bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
+				{ }
+				else
+				{
+					SceneGlobalData_bindings.push_back(bind);
+					bd = bind;
+					last_stage = desc.resource_bindings[i].resource_stage;
+				}
+			}
+			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+			{
+				if (bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
+				{ }
+				else
+				{
+					Instance_bindings.push_back(bind);
+					bd = bind;
+					last_stage = desc.resource_bindings[i].resource_stage;
+				}
+			}
+			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+			{
+				if (bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
+				{ }
+				else
+				{
+					Local_bindings.push_back(bind);
+					bd = bind;
+					last_stage = desc.resource_bindings[i].resource_stage;
+				}
+			}
 		}
 
 		uint32_t set_layout_count = 0;
-		
-
 		if (!desc.resource_bindings.empty())
 		{
 
@@ -2509,42 +2567,37 @@ namespace vk {
 
 	VkPolygonMode convertPolygonMode(trace::FillMode fillmode)
 	{
-		VkPolygonMode mode;
 
 		switch (fillmode)
 		{
 		case trace::FillMode::SOLID:
 		{
-			mode = VK_POLYGON_MODE_FILL;
-			break;
+			return VK_POLYGON_MODE_FILL;
 		}
 		case trace::FillMode::WIREFRAME:
 		{
-			mode = VK_POLYGON_MODE_LINE;
-			break;
+			return VK_POLYGON_MODE_LINE;
 		}
 		}
 
-		return mode;
 	}
 
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage)
 	{
-		VkShaderStageFlagBits result;
+		VkShaderStageFlagBits result = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+		uint32_t val = 0;
 
-		switch (stage)
+		if (TRC_HAS_FLAG(stage, trace::ShaderStage::VERTEX_SHADER))
 		{
-		case trace::ShaderStage::VERTEX_SHADER:
+			val |= VK_SHADER_STAGE_VERTEX_BIT;
+		}
+		if (TRC_HAS_FLAG(stage, trace::ShaderStage::PIXEL_SHADER))
 		{
-			result = VK_SHADER_STAGE_VERTEX_BIT;
-			break;
+			val |= VK_SHADER_STAGE_FRAGMENT_BIT;
 		}
-		case trace::ShaderStage::PIXEL_SHADER:
-		{
-			result = VK_SHADER_STAGE_FRAGMENT_BIT;
-			break;
-		}
-		}
+
+
+		result = (VkShaderStageFlagBits)val;
 
 		return result;
 	}
@@ -2678,6 +2731,27 @@ namespace vk {
 		return VK_ATTACHMENT_STORE_OP_MAX_ENUM;
 	}
 
+	VkCullModeFlagBits convertCullMode(trace::CullMode mode)
+	{
+		
+		switch (mode)
+		{
+		case trace::CullMode::NONE:
+		{
+			return VK_CULL_MODE_NONE;
+		}
+		case trace::CullMode::FRONT:
+		{
+			return VK_CULL_MODE_FRONT_BIT;
+		}
+		case trace::CullMode::BACK:
+		{
+			return VK_CULL_MODE_BACK_BIT;
+		}
+		}
+
+	}
+
 	
 
 	
@@ -2737,6 +2811,15 @@ namespace vk {
 		}
 
 		vkBindBufferMemory(device->m_device, buffer, buffer_mem, 0);
+	}
+
+	bool operator==(VkDescriptorSetLayoutBinding lhs, VkDescriptorSetLayoutBinding rhs)
+	{
+		bool result = (lhs.binding == rhs.binding) &&
+			(lhs.descriptorCount == rhs.descriptorCount) &&
+			(lhs.descriptorType == rhs.descriptorType) &&
+			(lhs.stageFlags == rhs.stageFlags);
+		return result;
 	}
 
 }

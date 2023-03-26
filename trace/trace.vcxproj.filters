@@ -235,6 +235,7 @@
     <ClInclude Include="src\resource\MaterialManager.h" />
     <ClInclude Include="src\resource\PipelineManager.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h" />
+    <ClInclude Include="src\render\Renderutils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -400,5 +401,6 @@
     <ClCompile Include="src\render\Material.cpp" />
     <ClCompile Include="src\resource\PipelineManager.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp" />
+    <ClCompile Include="src\render\Renderutils.cpp" />
   </ItemGroup>
 </Project>

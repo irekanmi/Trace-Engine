@@ -24,6 +24,7 @@ namespace trace {
 
 		static std::string spirv_to_glsl(std::vector<uint32_t> spir_v, ShaderStage shader_stage);
 		static std::vector<uint32_t> glsl_to_spirv(std::string& glsl, ShaderStage shader_stage);
+		static std::string load_shader_file(const std::string& filename);
 
 	private:
 	protected:

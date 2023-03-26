@@ -17,7 +17,7 @@ namespace trace {
 		static GShader* Create_(FileHandle& file);
 
 	public:
-		ShaderStage m_stage = ShaderStage::NONE;
+		ShaderStage m_stage = ShaderStage::STAGE_NONE;
 
 	private:
 	protected:

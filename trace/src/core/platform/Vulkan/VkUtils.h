@@ -124,6 +124,11 @@ namespace vk {
 	VkImageLayout convertTextureFmt(trace::TextureFormat fmt);
 	VkAttachmentLoadOp convertAttachmentLoadOp(trace::AttachmentLoadOp op);
 	VkAttachmentStoreOp convertAttachmentStoreOp(trace::AttachmentStoreOp op);
+	VkCullModeFlagBits convertCullMode(trace::CullMode mode);
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
+
+	//Processing
+	void processGlobalResource();
+	bool operator ==(VkDescriptorSetLayoutBinding lhs, VkDescriptorSetLayoutBinding rhs);
 
 }

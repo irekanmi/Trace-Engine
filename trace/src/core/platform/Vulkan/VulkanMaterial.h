@@ -19,7 +19,7 @@ namespace trace {
 		virtual void Apply() override;
 
 	private:
-		VkDescriptorSet m_sets[3];
+		VkDescriptorSet m_sets[3] = {};
 		VKHandle* m_instance;
 		VKDeviceHandle* m_device;
 	protected:
