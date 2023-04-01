@@ -123,7 +123,7 @@ namespace trace {
 	{
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
-			TRC_WARN("Texture has alredy being loaded");
+			TRC_WARN("Texture has already being loaded {}", name);
 			return true;
 		}
 		int _width, _height, _channels;
@@ -133,7 +133,7 @@ namespace trace {
 		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
-			TRC_ERROR("Unable to load texture %s: Error=> %s", name.c_str(), stbi_failure_reason());
+			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
 			stbi__err(0, 0);
 			return false;
 		}
@@ -179,7 +179,7 @@ namespace trace {
 				}
 			}
 
-			TRC_WARN("Failed to find a vaild slot for the texture %s", name.c_str());
+			TRC_WARN("Failed to find a vaild slot for the texture {}", name.c_str());
 			return false;
 
 			break;
@@ -203,7 +203,7 @@ namespace trace {
 
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
-			TRC_WARN("Texture has alredy being loaded");
+			TRC_WARN("Texture has already being loaded {}", name);
 			return true;
 		}
 
@@ -214,7 +214,7 @@ namespace trace {
 		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
-			TRC_ERROR("Unable to load texture %s: Error=> %s", name.c_str(), stbi_failure_reason());
+			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
 			stbi__err(0, 0);
 			return false;
 		}
@@ -249,7 +249,7 @@ namespace trace {
 				}
 			}
 
-			TRC_WARN("Failed to find a vaild slot for the texture %s", name.c_str());
+			TRC_WARN("Failed to find a vaild slot for the texture {}", name.c_str());
 			return false;
 
 			break;
@@ -272,7 +272,7 @@ namespace trace {
 	{
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
-			TRC_WARN("Texture has alredy being loaded");
+			TRC_WARN("Texture has already being loaded {}", name);
 			return true;
 		}
 
@@ -283,18 +283,11 @@ namespace trace {
 
 			stbi_set_flip_vertically_on_load(false);
 			pixel_data = stbi_load(("../assets/textures/" + filenames[i]).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
-			//if (stbi_failure_reason())
-				//{
-				//	TRC_ERROR("Unable to load texture %s: Error=> %s", name.c_str(), stbi_failure_reason());
-				//	stbi__err(0, 0);
-				//	return false;
-				//}
-
-			//Temp ===================
-			if (_width == 0 || _width > 260000)
+			if (!pixel_data)
 			{
-				TRC_ERROR("Unable to load texture %s", name.c_str())
-					return false;
+				TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
+				stbi__err(0, 0);
+				return false;
 			}
 
 			desc.m_width = _width;
@@ -329,7 +322,7 @@ namespace trace {
 				}
 			}
 
-			TRC_WARN("Failed to find a vaild slot for the texture %s", name.c_str());
+			TRC_WARN("Failed to find a vaild slot for the texture {}", name.c_str());
 			return false;
 
 			break;

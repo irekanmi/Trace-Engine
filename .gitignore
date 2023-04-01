@@ -13,8 +13,8 @@ ipch/
 .vscode/dryrun.log
 .vscode/targets.log
 *.sln
-*.filters
-*.vcxproj
+**.filters
+**.vcxproj
 trace/trace.vcxproj
 trace/trace.vcxproj.filters
 Debug/

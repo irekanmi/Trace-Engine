@@ -101,7 +101,7 @@ namespace trace {
 
 		if (m_hashtable.Get(name) != INVALID_ID)
 		{
-			TRC_WARN("Material %s already exists", name.c_str());
+			TRC_WARN("Material {} already exists", name);
 			return true;
 		}
 
@@ -148,7 +148,7 @@ namespace trace {
 			return (MaterialInstance*)(m_materials + (hash * m_matTypeSize));
 		}
 
-		TRC_WARN("Failed to create material %s please ensure material has been created", name.c_str());
+		TRC_WARN("Failed to create material {} please ensure material has been created", name);
 		return nullptr;
 	}
 

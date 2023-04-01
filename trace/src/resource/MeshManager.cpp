@@ -74,7 +74,7 @@ namespace trace {
 		if (m_hashtable.Get(name) != INVALID_ID)
 		{
 			result = true;
-			TRC_WARN("mesh has already loaded %s", name.c_str());
+			TRC_WARN("mesh has already loaded {}", name);
 			return result;
 		}
 
@@ -220,7 +220,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture %s", mesh.MeshMaterial.map_Kd.c_str());
+						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Kd.c_str());
 					}
 				}
 				if (!mesh.MeshMaterial.map_Ks.empty())
@@ -231,7 +231,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture %s", mesh.MeshMaterial.map_Ks.c_str());
+						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Ks.c_str());
 					}
 				}
 				if (!mesh.MeshMaterial.map_bump.empty())
@@ -248,7 +248,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture %s", mesh.MeshMaterial.map_bump.c_str());
+						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_bump.c_str());
 					}
 				}
 				mat.m_diffuseColor = {

@@ -4,6 +4,9 @@
 #include "../pch.h"
 #include "TrcConsole.h"
 #include "core/Platform.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 
 
@@ -20,8 +23,6 @@ namespace trace {
 		error      = ConsoleAttribLevel::Error,
 		critical   = ConsoleAttribLevel::Critical,
 		log_none   = ConsoleAttribLevel::Default
-
-
 
 	} LogLevel;
 
@@ -41,39 +42,59 @@ namespace trace {
 		void Shutdown();
 
 		template<typename ...Args>
-		void Trace(const char * message, Args ...args)
+		void Trace(Args ...args)
 		{
-			log(LogLevel::trace, message, args...);
+			logger->trace(args...);
+			if (file_logging)
+			{
+				file_logger->trace(args...);
+			}
 		}
 
 		template<typename ...Args>
-		void Debug(const char * message, Args ...args)
+		void Debug(Args ...args)
 		{
-			log(LogLevel::debug, message, args...);
+			logger->debug(args...);
+			if (file_logging)
+			{
+				file_logger->debug(args...);
+			}
 		}
 
 		template<typename ...Args>
-		void Warn(const char * message, Args ...args)
+		void Warn(Args ...args)
 		{
-			log(LogLevel::warn, message, args...);
+			logger->warn(args...);
+			if (file_logging)
+			{
+				file_logger->warn(args...);
+			}
 		}
 
 		template<typename ...Args>
-		void Error(const char * message, Args ...args)
+		void Error(Args ...args)
 		{
-			log(LogLevel::error, message, args...);
+			logger->error(args...);
 		}
 
 		template<typename ...Args>
-		void Critical(const char * message, Args ...args)
+		void Critical(Args ...args)
 		{
-			log(LogLevel::critical, message, args...);
+			logger->critical(args...);
+			if (file_logging)
+			{
+				file_logger->critical(args...);
+			}
 		}
 
 		template<typename ...Args>
-		void Info(const char * message, Args ...args)
+		void Info(Args ...args)
 		{
-			log(LogLevel::info, message, args...);
+			logger->info(args...);
+			if (file_logging)
+			{
+				file_logger->info(args...);
+			}
 		}
 
 		
@@ -83,92 +104,15 @@ namespace trace {
 		
 	private:
 
-		template<typename ...Args>
-		void log(LogLevel logLV, const char * msg, Args && ...args)
-		{
 
-
-			ConsoleAttribLevel prev = m_console->GetAttribLevel();
-
-			if (logLV >= log_level)
-			{
-
-				const char* level = "Unknow";
-
-				switch (logLV)
-				{
-
-				case LogLevel::trace:
-					level = "Trace";
-					break;
-
-				case LogLevel::debug:
-					level = "Debug";
-					break;
-
-				case LogLevel::info:
-					level = "Info";
-					break;
-
-				case LogLevel::warn:
-					level = "Warn";
-					break;
-
-				case LogLevel::error:
-					level = "Error";
-					break;
-
-				case LogLevel::critical:
-					level = "Critical";
-					break;
-
-				}
-
-				std::stringstream timeStr;
-
-				tm pTime;
-				time_t ctime;
-				time(&ctime);
-
-				localtime_s(&pTime, &ctime);
-
-				//char buf[1024]{ 0 };
-				Platform::ZeroMem(buf, 1024 * 3);
-
-				sprintf(buf, msg, args...);
-
-				timeStr << "[" << level << "]";
-				timeStr << std::setw(2) << "[" << std::setfill('0') << pTime.tm_hour << ":";
-				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_min << ":";
-				timeStr << std::setw(2) << std::setfill('0') << pTime.tm_sec << "] ";
-				timeStr << buf << "\n";
-
-				m_console->SetAttribLevel((ConsoleAttribLevel)logLV);
-
-				//TODO: find a way to write logs in a buffer to be able to send messages to the console in one Write call
-				m_console->Write("%s", timeStr.str().c_str());
-
-				m_console->SetAttribLevel(prev);
-
-				if (file)
-				{
-				//TODO: find a way to write logs in a buffer to be able to send messages to the FILE in one Write call
-					fprintf(file, "%s", timeStr.str().c_str());
-				}
-			}
-
-		}
-		
-		TrcConsole* m_console;
-		LogLevel log_level;
 		const char* filepath;
 		const char* logger_name;
-		FILE* file;
 		bool file_logging;
 		static Logger* s_instance;
-		char* buf;
 		
-
+		//spdlog
+		std::shared_ptr<spdlog::logger> logger;
+		std::shared_ptr<spdlog::logger> file_logger;
 	};
 
 
@@ -191,20 +135,20 @@ namespace trace {
 }
 
 #define TRC_EXCEPTION(ERR) throw trace::Exception(__LINE__, ERR, __FUNCTION__,__FILE__);
-#define TRC_TRACE(MSG,...)       trace::Logger::get_instance()->Trace(MSG, __VA_ARGS__);
-#define TRC_INFO(MSG,...)        trace::Logger::get_instance()->Info(MSG, __VA_ARGS__);
-#define TRC_DEBUG(MSG,...)       trace::Logger::get_instance()->Debug(MSG, __VA_ARGS__);
-#define TRC_WARN(MSG,...)        trace::Logger::get_instance()->Warn(MSG, __VA_ARGS__);
-#define TRC_ERROR(MSG,...)       trace::Logger::get_instance()->Error(MSG, __VA_ARGS__);
-#define TRC_CRITICAL(MSG,...)    trace::Logger::get_instance()->Critical(MSG, __VA_ARGS__);
+#define TRC_TRACE(...)       trace::Logger::get_instance()->Trace(__VA_ARGS__);
+#define TRC_INFO(...)        trace::Logger::get_instance()->Info(__VA_ARGS__);
+#define TRC_DEBUG(...)       trace::Logger::get_instance()->Debug(__VA_ARGS__);
+#define TRC_WARN(...)        trace::Logger::get_instance()->Warn(__VA_ARGS__);
+#define TRC_ERROR(...)       trace::Logger::get_instance()->Error( __VA_ARGS__);
+#define TRC_CRITICAL(...)    trace::Logger::get_instance()->Critical( __VA_ARGS__);
 
 
 #ifdef TRC_ASSERT_ENABLED
 #ifdef _MSC_VER
-#define TRC_ASSERT(exp, MSG_FMT, ...)     \
+#define TRC_ASSERT(exp, ...)     \
   if(exp){}                               \
 	else{                                 \
-TRC_CRITICAL(MSG_FMT, __VA_ARGS__);       \
+TRC_CRITICAL(__VA_ARGS__);       \
       __debugbreak();                     \
 }                                         
 

@@ -129,6 +129,9 @@
     <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h">
       <Filter>core\platform\Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanPipeline.h">
       <Filter>core\platform\Vulkan</Filter>
     </ClInclude>
@@ -204,6 +207,9 @@
     <ClInclude Include="src\render\Renderer.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\Renderutils.h">
+      <Filter>render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\ShaderParser.h">
       <Filter>render</Filter>
     </ClInclude>
@@ -213,10 +219,16 @@
     <ClInclude Include="src\resource\HashTable.h">
       <Filter>resource</Filter>
     </ClInclude>
+    <ClInclude Include="src\resource\MaterialManager.h">
+      <Filter>resource</Filter>
+    </ClInclude>
     <ClInclude Include="src\resource\MeshManager.h">
       <Filter>resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\ModelManager.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\PipelineManager.h">
       <Filter>resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\Ref.h">
@@ -232,10 +244,6 @@
       <Filter>resource</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\resource\MaterialManager.h" />
-    <ClInclude Include="src\resource\PipelineManager.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h" />
-    <ClInclude Include="src\render\Renderutils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -316,6 +324,9 @@
     <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp">
       <Filter>core\platform\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp">
+      <Filter>core\platform\Vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanPipeline.cpp">
       <Filter>core\platform\Vulkan</Filter>
     </ClCompile>
@@ -364,6 +375,9 @@
     <ClCompile Include="src\render\GTexture.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\Material.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\Mesh.cpp">
       <Filter>render</Filter>
     </ClCompile>
@@ -376,16 +390,25 @@
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\Renderutils.cpp">
+      <Filter>render</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\ShaderParser.cpp">
       <Filter>render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\SkyBox.cpp">
       <Filter>render</Filter>
     </ClCompile>
+    <ClCompile Include="src\resource\MaterialManager.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
     <ClCompile Include="src\resource\MeshManager.cpp">
       <Filter>resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\ModelManager.cpp">
+      <Filter>resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\PipelineManager.cpp">
       <Filter>resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\Resource.cpp">
@@ -397,10 +420,5 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>resource</Filter>
     </ClCompile>
-    <ClCompile Include="src\resource\MaterialManager.cpp" />
-    <ClCompile Include="src\render\Material.cpp" />
-    <ClCompile Include="src\resource\PipelineManager.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp" />
-    <ClCompile Include="src\render\Renderutils.cpp" />
   </ItemGroup>
 </Project>

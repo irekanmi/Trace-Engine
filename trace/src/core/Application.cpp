@@ -141,7 +141,7 @@ namespace trace
 		//_mat.m_normalMap = ResourceSystem::s_instance->GetDefaultTexture("normal_map");
 
 		//_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
-		_squareModel = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		_squareModel = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 
 		
 		std::vector<std::string> cube_maps = {
@@ -324,7 +324,7 @@ namespace trace
 	
 	void Application::Run()
 	{
-		TRC_WARN("Trace Engine %s", "in progress");
+		TRC_WARN("Trace Engine {}", "in progress");
 
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
@@ -417,7 +417,7 @@ namespace trace
 		}
 
 		if (!p_event->m_handled) {
-			//TRC_TRACE("Event: %s", p_event->GetName());
+			//TRC_TRACE("Event: {}", p_event->GetName());
 			switch (p_event->m_type)
 			{
 			case trace::EventType::TRC_APP_START:
@@ -468,22 +468,22 @@ namespace trace
 			case EventType::TRC_BUTTON_PRESSED:
 			{
 				MousePressed* mouse = reinterpret_cast<MousePressed*>(p_event);
-				TRC_CRITICAL("Button: %d", mouse->m_button);
+				TRC_CRITICAL("Button: {}", mouse->m_button);
 				break;
 			}
 
 			case EventType::TRC_BUTTON_RELEASED:
 			{
 				MouseReleased* mouse = reinterpret_cast<MouseReleased*>(p_event);
-				TRC_TRACE("Button: %d", mouse->m_button);
+				TRC_TRACE("Button: {}", mouse->m_button);
 				break;
 			}
 
 			case EventType::TRC_MOUSE_MOVE:
 			{
 				MouseMove* mouse = reinterpret_cast<MouseMove*>(p_event);
-				//TRC_WARN("X: %f", mouse->m_x);
-				//TRC_WARN("Y: %f", mouse->m_y);
+				//TRC_WARN("X: {}", mouse->m_x);
+				//TRC_WARN("Y: {}", mouse->m_y);
 				break;
 			}
 			}

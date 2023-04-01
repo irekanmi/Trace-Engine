@@ -40,7 +40,7 @@ namespace trace {
 		uint32_t _id = m_hashtable.Get(name);
 		if (_id == INVALID_ID)
 		{
-			TRC_ERROR("Please ensure model has been loaded => %s", name.c_str());
+			TRC_ERROR("Please ensure model has been loaded => {}", name.c_str());
 			return nullptr;
 		}
 

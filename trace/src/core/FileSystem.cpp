@@ -116,7 +116,7 @@ namespace trace {
 			_file->read((char*)destination, sizeBytes);
 			return;
 		}
-		TRC_ERROR("File has to be vaild to be able to read from %p", file.m_handle);
+		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 
 	}
 	void FileSystem::write(void* data, size_t sizeBytes, FileHandle& file)
@@ -127,7 +127,7 @@ namespace trace {
 			_file->write((const char*)data, sizeBytes);
 			return;
 		}
-		TRC_ERROR("File has to be vaild to be able to write to %p", file.m_handle);
+		TRC_ERROR("File has to be vaild to be able to write to {}", file.m_handle);
 
 	}
 	void FileSystem::readline(FileHandle& file,std::string& out_line)
@@ -138,7 +138,7 @@ namespace trace {
 			std::getline(*_file, out_line);
 			return;
 		}
-		TRC_ERROR("File has to be vaild to be able to read from %p", file.m_handle);
+		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 	}
 	void FileSystem::writeline(FileHandle& file, const std::string& line)
 	{
@@ -148,7 +148,7 @@ namespace trace {
 			*_file << line;
 			return;
 		}
-		TRC_ERROR("File has to be vaild to be able to write to %p", file.m_handle);
+		TRC_ERROR("File has to be vaild to be able to write to {}", file.m_handle);
 	}
 	void FileSystem::read_all_bytes(FileHandle& file, void* data, uint32_t& read_bytes)
 	{
@@ -160,7 +160,7 @@ namespace trace {
 			read(data, read_bytes, file);
 			return;
 		}
-		TRC_ERROR("File has to be vaild to be able to read from %p", file.m_handle);
+		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 	}
 	void FileSystem::read_all_lines(FileHandle& file, std::string& out)
 	{
@@ -178,6 +178,6 @@ namespace trace {
 			out = result.str();
 			return;
 		}
-		TRC_ERROR("File has to be vaild to be able to read from %p", file.m_handle);
+		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 	}
 }

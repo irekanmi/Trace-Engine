@@ -76,7 +76,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -99,7 +99,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_RELEASE_BUILD;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,7 +124,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -155,7 +155,6 @@
     <ClInclude Include="src\core\Layer.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\core\events\Events.h" />
@@ -176,6 +175,7 @@
     <ClInclude Include="src\core\platform\Vulkan\VkUtils.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanShader.h" />
@@ -223,7 +223,6 @@
     <ClCompile Include="src\core\Layer.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
     <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
@@ -245,6 +244,7 @@
     <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanShader.cpp" />

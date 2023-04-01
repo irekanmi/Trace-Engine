@@ -104,7 +104,7 @@ namespace trace {
 
 			if (!found)
 			{
-				TRC_ERROR("Failed to create pipeline %s", name.c_str());
+				TRC_ERROR("Failed to create pipeline {}", name.c_str());
 				return false;
 			}
 

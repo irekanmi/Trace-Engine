@@ -34,7 +34,11 @@ namespace trace {
 
 	void Logger::set_log_level(LogLevel logLevel)
 	{
-		log_level = logLevel;
+		logger->set_level((spdlog::level::level_enum)logLevel);
+		if (file_logging)
+		{
+			file_logger->set_level((spdlog::level::level_enum)logLevel);
+		}
 	}
 
 	void Logger::set_logger_name(const char * LogName)
@@ -48,20 +52,7 @@ namespace trace {
 		if (s_instance == nullptr)
 		{
 			s_instance = new Logger();
-			
-			if (s_instance->m_console == nullptr)
-			{
 
-#ifdef TRC_WINDOWS
-				s_instance->m_console = new WinConsole();
-				s_instance->m_console->SetAttribLevel(ConsoleAttribLevel::Default);
-#else
-				s_instance->m_console = new TrcConsole();
-				s_instance->m_console->SetAttribLevel(ConsoleAttribLevel::Default);
-#endif
-			}
-
-			return s_instance;
 		}
 
 		return s_instance;
@@ -70,17 +61,7 @@ namespace trace {
 
 	void Logger::Shutdown()
 	{
-		delete[] buf;
-		if (file)
-		{
-			fclose(file);
-			file = nullptr;
-		}
-		if (this->m_console)
-		{
-			delete this->m_console;
-			this->m_console = nullptr;
-		}
+
 	}
 
 	
@@ -98,13 +79,9 @@ namespace trace {
 		filepath = "../logs.txt";
 
 
+		file_logger = spdlog::basic_logger_mt("TRACE_FILE", filepath, true);
+		file_logger->set_pattern("[%n][%H:%M:%S:%e]%^[%l] %v%$");
 
-		fopen_s(&file, filepath, "w");
-
-		if (!file)
-		{
-			Critical("Unable to open log file");
-		}
 	}
 
 	void Logger::EnableFileLogging(const char * file_path)
@@ -118,28 +95,22 @@ namespace trace {
 		file_logging = true;
 
 		filepath = file_path;
+		file_logger = spdlog::basic_logger_mt("TRACE", filepath, true);
+		file_logger->set_pattern("[%n][%H:%M:%S:%e]%^[%l] %v%$");
 
 
-		fopen_s(&file, filepath, "w");
-
-		if (!file)
-		{
-			Critical("Unable to open log file");
-		}
 	}
 
 	Logger::Logger()
 		:
 		Object(_STR(Logger)),
-		m_console(nullptr),
-		log_level(LogLevel::trace),
 		filepath(""),
 		logger_name("default"),
-		file(NULL),
 		file_logging(false)
 	{
 		
-		buf = new char[1024 * 3];
+		logger = spdlog::stdout_color_mt("TRACE");
+		logger->set_pattern("%^[%n][%H:%M:%S:%e][%l] %v%$");
 	}
 
 	Logger::~Logger()

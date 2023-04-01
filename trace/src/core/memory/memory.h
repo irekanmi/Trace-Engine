@@ -110,7 +110,7 @@ namespace trace {
 			}
 			else
 			{
-				TRC_CRITICAL("unable to allocate block %p", block)
+				TRC_CRITICAL("unable to allocate block {}", block)
 				return nullptr;
 			}
 

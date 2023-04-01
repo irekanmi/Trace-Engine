@@ -29,7 +29,7 @@ public:
 			}
 		}
 
-		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<%s>", _STR(T));
+		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<{}>", _STR(T));
 		other.get()->m_refCount++;
 		_ptr = other._ptr;
 		Unload = other.Unload;
@@ -45,7 +45,7 @@ public:
 			}
 		}
 
-		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<%s>", _STR(T));
+		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<{}>", _STR(T));
 		other.get()->m_refCount++;
 		_ptr = other._ptr;
 		Unload = other.Unload;
@@ -54,7 +54,7 @@ public:
 
 	Ref(T* value, _action<T> unload)
 	{
-		TRC_ASSERT(value != nullptr, "Can't not construct from a null pointer Ref<%s>", _STR(T));
+		TRC_ASSERT(value != nullptr, "Can't not construct from a null pointer Ref<{}>", _STR(T));
 		Unload = unload;
 		_ptr = value;
 		_ptr->m_refCount++;
@@ -107,14 +107,14 @@ public:
 
 	T* operator->()
 	{
-		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<%s>", _STR(T));
+		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<{}>", _STR(T));
 		return _ptr;
 
 	}
 
 	T* get()
 	{
-		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<%s>", _STR(T));
+		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<{}>", _STR(T));
 		return _ptr;
 	}
 

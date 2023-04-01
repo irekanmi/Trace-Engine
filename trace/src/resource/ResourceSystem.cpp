@@ -80,7 +80,7 @@ namespace trace {
 			return { m_textureManager->GetTexture(name), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 		}
 
-		TRC_WARN("Failed to load texture %s", name.c_str());
+		TRC_WARN("Failed to load texture {}", name.c_str());
 
 		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 	}
@@ -91,7 +91,7 @@ namespace trace {
 			return { m_textureManager->GetTexture(name), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 		}
 
-		TRC_WARN("Failed to load texture %s", name.c_str());
+		TRC_WARN("Failed to load texture {}", name.c_str());
 
 		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 	}
@@ -102,7 +102,7 @@ namespace trace {
 			return { m_textureManager->GetTexture(name), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 		}
 
-		TRC_WARN("Failed to load texture %s", name.c_str());
+		TRC_WARN("Failed to load texture {}", name.c_str());
 
 		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 	}
@@ -121,7 +121,7 @@ namespace trace {
 			return { m_meshManager->GetMesh(name), BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, m_meshManager) };
 		}
 
-		TRC_ERROR("Failed to load mesh %s", name.c_str());
+		TRC_ERROR("Failed to load mesh {}", name.c_str());
 
 		return Ref<Mesh>();
 	}

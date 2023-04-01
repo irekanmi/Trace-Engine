@@ -32,7 +32,7 @@ namespace trace {
 		{
 			std::string error = result.GetErrorMessage();
 			std::cout << error;
-			//TRC_ERROR("Error compiling shader\n %s", error.c_str()); --- fix error;
+			//TRC_ERROR("Error compiling shader\n {}", error.c_str()); --- fix error;
 			return std::vector<uint32_t>();
 		}
 
@@ -46,7 +46,7 @@ namespace trace {
 
 		if (!FileSystem::open_file(filename, FileMode::READ, file_handle))
 		{
-			TRC_ERROR("File to open file %s", filename.c_str());
+			TRC_ERROR("File to open file {}", filename.c_str());
 			return result;
 		}
 

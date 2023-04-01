@@ -186,8 +186,8 @@ namespace vk {
 
 			if (!layer_found)
 			{
-				TRC_ERROR("Vaildation layer not found %s", i);
-				TRC_ASSERT(false, "Vaildation layer not found %s", i);
+				TRC_ERROR("Vaildation layer not found {}", i);
+				TRC_ASSERT(false, "Vaildation layer not found {}", i);
 				break;
 			}
 		}
@@ -209,8 +209,8 @@ namespace vk {
 			}
 			else
 			{
-				TRC_ERROR("Extension not found %s", i);
-				TRC_ASSERT(false, "Extension not found %s", i);
+				TRC_ERROR("Extension not found {}", i);
+				TRC_ASSERT(false, "Extension not found {}", i);
 				break;
 			}
 
@@ -284,7 +284,7 @@ namespace vk {
 			
 			if (!layer_found)
 			{
-				TRC_ERROR("Vaildation layer not found %s", i);
+				TRC_ERROR("Vaildation layer not found {}", i);
 				break;
 			}
 		}
@@ -369,7 +369,7 @@ namespace vk {
 		}
 		
 
-		TRC_TRACE(" %d | %d | %d | %d ", device->m_queues.graphics_queue, device->m_queues.compute_queue, device->m_queues.transfer_queue, device->m_queues.present_queue);
+		TRC_TRACE(" {} | {} | {} | {} ", device->m_queues.graphics_queue, device->m_queues.compute_queue, device->m_queues.transfer_queue, device->m_queues.present_queue);
 
 
 		bool present_share_graphics = device->m_queues.present_queue == device->m_queues.graphics_queue;
@@ -1286,7 +1286,7 @@ namespace vk {
 			vkDestroyFence(device->m_device, out_fence->m_handle, instance->m_alloc_callback);
 			return;
 		}
-		TRC_ERROR("Can't destory an invaild fence line: %d \n ==>Function: %s", __LINE__, __FUNCTION__);
+		TRC_ERROR("Can't destory an invaild fence line: {} \n ==>Function: {}", __LINE__, __FUNCTION__);
 	}
 
 	void _FenceReset(trace::VKDeviceHandle* device, trace::VKFence* fence)
@@ -2172,75 +2172,7 @@ namespace vk {
 
 		}*/
 
-		/*for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
-		{
-			switch (desc.resource_bindings[i].resource_type)
-			{
-			case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER:
-			{
-				VkDescriptorSetLayoutBinding bind = {};
-				bind.descriptorCount = desc.resource_bindings[i].count;
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
-
-				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-				{
-					bind.binding = desc.resource_bindings[i].slot;
-
-					SceneGlobalData_bindings.push_back(bind);
-
-				}
-				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-				{
-					bind.binding = desc.resource_bindings[i].slot;
-
-					Instance_bindings.push_back(bind);
-
-				}
-				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-				{
-					bind.binding = desc.resource_bindings[i].slot;
-
-					Local_bindings.push_back(bind);
-
-				}
-
-				break;
-			}
-			case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
-			{
-				VkDescriptorSetLayoutBinding bind = {};
-				bind.descriptorCount = desc.resource_bindings[i].count;
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
-
-
-				if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-				{
-					bind.binding = desc.resource_bindings[i].slot;
-
-					SceneGlobalData_bindings.push_back(bind);
-
-				}
-				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-				{
-					bind.binding = desc.resource_bindings[i].slot;
-
-					Instance_bindings.push_back(bind);
-
-				}
-				else if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-				{
-					bind.binding = desc.resource_bindings[i].slot;
-
-					Local_bindings.push_back(bind);
-
-				}
-
-				break;
-			}
-			}
-		}*/
+		
 
 		VkDescriptorSetLayoutBinding bd = {};
 		bd.binding = 0;

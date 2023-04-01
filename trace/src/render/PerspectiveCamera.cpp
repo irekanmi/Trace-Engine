@@ -87,7 +87,7 @@ namespace trace {
 
 	void PerspectiveCamera::Update(float deltaTime)
 	{
-		float move_speed = 75.0f;
+		float move_speed = 2.0f;
 		float rotate_speed = 50.0f;
 
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_W) == KeyState::KEY_HELD)
