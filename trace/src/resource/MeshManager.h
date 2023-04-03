@@ -38,6 +38,7 @@ namespace trace {
 
 		void unloadDefaultModels(Model* model);
 		bool LoadMesh_OBJ(const std::string& name);
+		bool LoadMesh__OBJ(const std::string& name);
 
 	protected:
 

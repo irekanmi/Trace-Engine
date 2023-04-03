@@ -131,17 +131,17 @@ namespace trace
 
 
 		Material _mat;
-		_mat.m_albedoMap = ResourceSystem::get_instance()->LoadTexture("cobblestone.png");
+		_mat.m_albedoMap = ResourceSystem::get_instance()->LoadTexture("paving.png");
 		//_mat.m_albedoMap = ResourceSystem::s_instance->GetDefaultTexture("albedo_map");
 		_mat.m_diffuseColor = glm::vec4(0.3f, 0.5f, 0.45f, 1.0f);
-		_mat.m_shininess = 64.0f;
+		_mat.m_shininess = 128.0f;
 		//_mat.m_specularMap = ResourceSystem::s_instance->GetDefaultTexture("specular_map");
-		_mat.m_specularMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_SPEC.png");
-		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_NRM.png", texture_desc);
+		_mat.m_specularMap = ResourceSystem::get_instance()->LoadTexture("paving_SPEC.png");
+		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("paving_NRM.png", texture_desc);
 		//_mat.m_normalMap = ResourceSystem::s_instance->GetDefaultTexture("normal_map");
 
 		//_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
-		_squareModel = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
+		_squareModel = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 
 		
 		std::vector<std::string> cube_maps = {
@@ -305,8 +305,8 @@ namespace trace
 		ResourceSystem::get_instance()->CreateMaterial(
 			"Material",
 			_mat,
-			//ResourceSystem::get_instance()->GetDefaultPipeline("standard")
-			reflect_p
+			ResourceSystem::get_instance()->GetDefaultPipeline("standard")
+			//reflect_p
 		);
 
 		//for (auto& i : _squareModel->GetModels())
@@ -468,14 +468,14 @@ namespace trace
 			case EventType::TRC_BUTTON_PRESSED:
 			{
 				MousePressed* mouse = reinterpret_cast<MousePressed*>(p_event);
-				TRC_CRITICAL("Button: {}", mouse->m_button);
+				TRC_CRITICAL("Button: {}", (unsigned char)mouse->m_button);
 				break;
 			}
 
 			case EventType::TRC_BUTTON_RELEASED:
 			{
 				MouseReleased* mouse = reinterpret_cast<MouseReleased*>(p_event);
-				TRC_TRACE("Button: {}", mouse->m_button);
+				TRC_TRACE("Button: {}", (unsigned char)mouse->m_button);
 				break;
 			}
 

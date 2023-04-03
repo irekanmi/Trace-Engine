@@ -1,12 +1,25 @@
 #include "pch.h"
 
 #include "MeshManager.h"
-#include "OBJ_Loader.h"
 #include "ModelManager.h"
 #include "TextureManager.h"
 #include "PipelineManager.h"
 #include "MaterialManager.h"
+#include "OBJ_Loader.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/hash.hpp"
+
+namespace std {
+	template<> struct hash<trace::Vertex> {
+		size_t operator()(trace::Vertex const& vertex) const {
+			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+		}
+	};
+}
 
 namespace trace {
 	MeshManager* MeshManager::s_instance = nullptr;
@@ -78,7 +91,7 @@ namespace trace {
 			return result;
 		}
 
-		result = LoadMesh_OBJ(name);
+		result = LoadMesh__OBJ(name);
 
 		return result;
 	}
@@ -248,7 +261,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_bump.c_str());
+						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_bump);
 					}
 				}
 				mat.m_diffuseColor = {
@@ -284,6 +297,166 @@ namespace trace {
 			}
 
 		}
+
+		return result;
+	}
+
+	bool MeshManager::LoadMesh__OBJ(const std::string& name)
+	{
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		std::string err;
+
+		bool result = true;
+
+		result = tinyobj::LoadObj(
+			&attrib,
+			&shapes,
+			&materials,
+			&err,
+			("../assets/meshes/" + name).c_str(),
+			"../assets/meshes/"
+		);
+
+		if (!result)
+		{
+			TRC_ERROR("Failed to load mesh {}", name);
+			TRC_ERROR(err);
+			return result;
+		}
+
+		ModelManager* model_manager = ModelManager::get_instance();
+		TextureManager* texture_manager = TextureManager::get_instance();
+		PipelineManager* pipeline_manager = PipelineManager::get_instance();
+		MaterialManager* material_manager = MaterialManager::get_instance();
+		Mesh* _mesh = nullptr;
+		uint32_t _id = INVALID_ID;
+		for (uint32_t k = 0; k < m_numEntries; k++)
+		{
+			if (m_meshes[k].m_id == INVALID_ID)
+			{
+				m_meshes[k].m_id = k;
+				_id = k;
+				m_hashtable.Set(name, k);
+				_mesh = &m_meshes[k];
+				break;
+			}
+		}
+		std::unordered_map<Vertex, uint32_t> uniqueVerties;
+
+		// process mesh
+		for (tinyobj::shape_t& s : shapes)
+		{
+			std::vector<Vertex> verts;
+			std::vector<uint32_t> _inds;
+			for (tinyobj::index_t& index : s.mesh.indices)
+			{
+				Vertex vert = {};
+				glm::vec3 pos = {
+					attrib.vertices[3 * index.vertex_index + 0],
+					attrib.vertices[3 * index.vertex_index + 1],
+					attrib.vertices[3 * index.vertex_index + 2]
+				};
+
+				glm::vec3 nrm = {
+					attrib.normals[3 * index.normal_index + 0],
+					attrib.normals[3 * index.normal_index + 1],
+					attrib.normals[3 * index.normal_index + 2]
+				};
+
+				glm::vec2 texCoord = {
+					attrib.texcoords[2 * index.texcoord_index + 0],
+					attrib.texcoords[2 * index.texcoord_index + 1]
+				};
+
+				vert.pos = pos;
+				vert.normal = nrm;
+				vert.texCoord = texCoord;
+
+				if (uniqueVerties[vert] == uint32_t(0))
+				{
+					uniqueVerties[vert] = static_cast<uint32_t>(verts.size());
+					verts.push_back(vert);
+				}
+
+				_inds.push_back(uniqueVerties[vert]);
+			}
+			generateVertexTangent(verts, _inds);
+
+			// process material
+			Material mat;
+			mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
+			mat.m_normalMap = texture_manager->GetDefault("normal_map");
+			mat.m_specularMap = texture_manager->GetDefault("specular_map");
+			mat.m_diffuseColor = glm::vec4(1.0f);
+			mat.m_shininess = 32.0f;
+			int mat_id = s.mesh.material_ids[0];
+			tinyobj::material_t& material = materials[mat_id];
+			if (mat_id >= 0)
+			{
+
+				if (!material.diffuse_texname.empty())
+				{
+					if (texture_manager->LoadTexture(material.diffuse_texname))
+						mat.m_albedoMap = { texture_manager->GetTexture(material.diffuse_texname), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+					else
+						TRC_ERROR("Failed to load texture {}", material.diffuse_texname);
+				}
+				if (!material.specular_texname.empty())
+				{
+					if (texture_manager->LoadTexture(material.specular_texname))
+						mat.m_specularMap = { texture_manager->GetTexture(material.specular_texname), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+					else
+						TRC_ERROR("Failed to load texture {}", material.specular_texname);
+				}
+
+				if (!material.bump_texname.empty())
+				{
+					TextureDesc texture_desc;
+					texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
+					texture_desc.m_format = Format::R8G8B8A8_UNORM;
+					texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
+					texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+					texture_desc.m_usage = UsageFlag::DEFAULT;
+					if (texture_manager->LoadTexture(material.bump_texname, texture_desc))
+						mat.m_normalMap = { texture_manager->GetTexture(material.bump_texname), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+					else
+						TRC_ERROR("Failed to load texture {}", material.bump_texname);
+				}
+
+				mat.m_shininess = material.shininess;
+				mat.m_diffuseColor = glm::vec4(
+					material.diffuse[0],
+					material.diffuse[1],
+					material.diffuse[2],
+					1.0f
+				);
+			}
+
+			Model* _model = nullptr;
+			if (model_manager->LoadModel(
+				verts,
+				_inds,
+				s.name
+			))
+			{
+				_model = model_manager->GetModel(s.name);
+				Ref<GPipeline> sp = pipeline_manager->GetDefault("standard");
+				material_manager->CreateMaterial(
+					material.name,
+					mat,
+					sp
+				);
+
+				Ref<MaterialInstance> _mi = { material_manager->GetMaterial(material.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager) };
+				_model->m_matInstance = _mi;
+			}
+
+			_mesh->GetModels().push_back({ _model, BIND_RESOURCE_UNLOAD_FN(ModelManager::UnLoadModel, model_manager) });
+		}
+
+		
 
 		return result;
 	}

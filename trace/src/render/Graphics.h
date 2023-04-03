@@ -357,6 +357,10 @@ namespace trace {
 			return layout;
 		}
 
+		bool operator==(const Vertex& other) const {
+			return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
+		}
+
 	};
 
 	struct SceneGlobals

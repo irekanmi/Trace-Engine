@@ -21,4 +21,9 @@ namespace trace {
 		return true;
 	}
 
+	uint32_t Mesh::GetCount()
+	{
+		return static_cast<uint32_t>(m_models.size());
+	}
+
 }

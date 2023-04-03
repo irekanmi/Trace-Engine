@@ -20,7 +20,7 @@ namespace trace {
 
 		bool Init(const std::vector<Ref<Model>>& models);
 
-		uint32_t GetCount() { return m_models.size(); }
+		uint32_t GetCount();
 		std::vector<Ref<Model>>& GetModels() { return m_models; }
 
 	private:

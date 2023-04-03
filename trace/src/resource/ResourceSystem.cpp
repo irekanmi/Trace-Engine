@@ -79,8 +79,8 @@ namespace trace {
 		{
 			return { m_textureManager->GetTexture(name), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 		}
-
-		TRC_WARN("Failed to load texture {}", name.c_str());
+		
+		TRC_WARN("Failed to load texture {}", name);
 
 		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 	}
