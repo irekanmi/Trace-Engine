@@ -371,16 +371,17 @@ namespace trace {
 		alignas(16) glm::vec2 _test;
 	};
 
-	struct MaterialRenderData
-	{
-		alignas(16) glm::vec4 diffuse_color;
-		alignas(16) float shininess;
-	};
+	//struct MaterialRenderData
+	//{
+	//	alignas(16) glm::vec4 diffuse_color;
+	//	alignas(16) float shininess;
+	//};
 
 	struct TextureDesc
 	{
 		uint32_t m_width = 0;
 		uint32_t m_height = 0;
+		uint32_t m_mipLevels = 1;
 		Format m_format = Format::NONE;
 		BindFlag m_flag = BindFlag::NIL;
 		UsageFlag m_usage = UsageFlag::NONE;

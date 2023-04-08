@@ -133,7 +133,7 @@ namespace trace {
 				attachments_ref[j].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			}
 
-			subpasses[i].colorAttachmentCount = attachments_ref.size() - has_depth;
+			subpasses[i].colorAttachmentCount = static_cast<uint32_t>(attachments_ref.size() - has_depth);
 			subpasses[i].pColorAttachments = attachments_ref.data();
 			subpasses[i].pDepthStencilAttachment = has_depth ? &depth_attach_ref : nullptr;
 
@@ -143,9 +143,9 @@ namespace trace {
 
 		VkRenderPassCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		create_info.attachmentCount = attachments.size();
+		create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
 		create_info.pAttachments = attachments.data();
-		create_info.subpassCount = subpasses.size();
+		create_info.subpassCount = static_cast<uint32_t>(subpasses.size());
 		create_info.pSubpasses = subpasses.data();
 
 

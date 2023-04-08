@@ -75,7 +75,7 @@ namespace trace {
 		VKBuffer stage_buffer;
 
 		BufferInfo stage_info;
-		stage_info.m_size = size;
+		stage_info.m_size = static_cast<uint32_t>(size);
 		stage_info.m_stide = 0;
 		stage_info.m_usageFlag = UsageFlag::UPLOAD;
 		stage_info.m_flag = BindFlag::NIL;

@@ -114,7 +114,7 @@ namespace trace {
 		pass_desc.render_area = { 0, 0, 800, 600 };
 		pass_desc.clear_color = { .0f, .01f, 0.015f, 1.0f };
 		pass_desc.depth_value = 1.0f;
-		pass_desc.stencil_value = 0.0f;
+		pass_desc.stencil_value = 0;
 
 
 		_renderPass[RENDERPASS::MAIN_PASS] = GRenderPass::Create_(pass_desc);

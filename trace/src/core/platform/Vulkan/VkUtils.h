@@ -47,9 +47,10 @@ namespace vk {
 	void _DestroyImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image);
 	void _CopyBufferToImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, trace::VKBuffer* buffer);
 	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange sub_resource_range);
+	bool _GenerateMipLevels(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, VkFormat format, uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layer_index);
 
 	// Samplers
-	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler);
+	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler, float max_lod);
 	void _DestroySampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkSampler& sampler);
 
 	uint32_t FindMemoryIndex(trace::VKDeviceHandle* device, uint32_t memory_type, VkMemoryPropertyFlags mem_prop);
@@ -128,7 +129,6 @@ namespace vk {
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
 
 	//Processing
-	void processGlobalResource();
 	bool operator ==(VkDescriptorSetLayoutBinding lhs, VkDescriptorSetLayoutBinding rhs);
 
 }

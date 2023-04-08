@@ -41,7 +41,7 @@ namespace trace {
 		BufferInfo vertex_buffer_info;
 		vertex_buffer_info.m_data = m_vertices.data();
 		vertex_buffer_info.m_flag = BindFlag::VERTEX_BIT;
-		vertex_buffer_info.m_size = m_vertices.size() * sizeof(Vertex);
+		vertex_buffer_info.m_size = static_cast<uint32_t>(m_vertices.size() * sizeof(Vertex));
 		vertex_buffer_info.m_stide = sizeof(Vertex);
 		vertex_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
 
@@ -50,7 +50,7 @@ namespace trace {
 		BufferInfo index_buffer_info;
 		index_buffer_info.m_data = m_indices.data();
 		index_buffer_info.m_flag = BindFlag::INDEX_BIT;
-		index_buffer_info.m_size = m_indices.size() * sizeof(uint32_t);
+		index_buffer_info.m_size = static_cast<uint32_t>(m_indices.size() * sizeof(uint32_t));
 		index_buffer_info.m_stide = sizeof(uint32_t);
 		index_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
 

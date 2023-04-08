@@ -49,7 +49,7 @@ namespace trace {
 			desc.m_width,
 			desc.m_height,
 			desc.m_numLayers,
-			1
+			m_desc.m_mipLevels
 		);
 
 		if (!desc.m_data.empty())
@@ -127,24 +127,48 @@ namespace trace {
 
 			
 
+				if (m_desc.m_mipLevels > 1)
+				{
+					vk::_EndCommandBufferSingleUse(
+						m_device,
+						m_device->m_graphicsCommandPool,
+						m_device->m_graphicsQueue,
+						&cmd_buf
+					);
+					vk::_GenerateMipLevels(
+						m_instance,
+						m_device,
+						&m_handle,
+						vk::convertFmt(m_desc.m_format),
+						m_desc.m_width,
+						m_desc.m_height,
+						m_desc.m_mipLevels,
+						i
+					);
+				}
+				else
+				{
+					vk::_TransitionImageLayout(
+						m_instance,
+						m_device,
+						&cmd_buf,
+						&m_handle,
+						vk::convertFmt(desc.m_format),
+						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+						VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+						range
+					);
 
+					vk::_EndCommandBufferSingleUse(
+						m_device,
+						m_device->m_graphicsCommandPool,
+						m_device->m_graphicsQueue,
+						&cmd_buf
+					);
+				}
 
-			vk::_TransitionImageLayout(
-				m_instance,
-				m_device,
-				&cmd_buf,
-				&m_handle,
-				vk::convertFmt(desc.m_format),
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				range
-			);
-			vk::_EndCommandBufferSingleUse(
-				m_device,
-				m_device->m_graphicsCommandPool,
-				m_device->m_graphicsQueue,
-				&cmd_buf
-			);
+			
+				
 			}
 
 
@@ -165,7 +189,7 @@ namespace trace {
 		create_info.subresourceRange.baseArrayLayer = 0; // TODO: Configurable array layer
 		create_info.subresourceRange.baseMipLevel = 0; // TODO: Configurable
 		create_info.subresourceRange.layerCount = desc.m_numLayers;
-		create_info.subresourceRange.levelCount = 1; // TODO: Configurable
+		create_info.subresourceRange.levelCount = m_desc.m_mipLevels; // TODO: Configurable
 
 		VkResult result = (vkCreateImageView(m_device->m_device, &create_info, m_instance->m_alloc_callback, &m_handle.m_view));
 
@@ -175,7 +199,8 @@ namespace trace {
 			m_instance,
 			m_device,
 			desc,
-			m_sampler
+			m_sampler,
+			static_cast<float>(m_desc.m_mipLevels)
 		);
 
 	}

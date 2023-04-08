@@ -220,10 +220,10 @@ namespace vk {
 		create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		create_info.pApplicationInfo = &app_info;
 #ifdef TRC_DEBUG_BUILD
-		create_info.enabledLayerCount = g_validation_layers.size();
+		create_info.enabledLayerCount = static_cast<uint32_t>(g_validation_layers.size());
 		create_info.ppEnabledLayerNames = g_validation_layers.data();
 #endif
-		create_info.enabledExtensionCount = extensions.size();
+		create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		create_info.ppEnabledExtensionNames = extensions.data();
 		create_info.pNext = nullptr;
 
@@ -456,7 +456,7 @@ namespace vk {
 
 		VkDeviceCreateInfo device_info = {};
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		device_info.queueCreateInfoCount = device_queue_infos.size();
+		device_info.queueCreateInfoCount = static_cast<uint32_t>(device_queue_infos.size());
 		device_info.pQueueCreateInfos = device_queue_infos.data();
 		device_info.pEnabledFeatures = &phy_feat;
 		device_info.enabledLayerCount = 0;
@@ -834,8 +834,8 @@ namespace vk {
 		create_info.extent.depth = 1;
 		create_info.format = format;
 		create_info.tiling = tiling;
-		create_info.arrayLayers = layers;	// TODO: Configurable
-		create_info.mipLevels = mip_levels;	// TODO: Configurable
+		create_info.arrayLayers = layers;	
+		create_info.mipLevels = mip_levels;	
 		create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 		create_info.usage = usage;
@@ -1012,7 +1012,172 @@ namespace vk {
 		return true;
 	}
 
-	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler)
+	bool _GenerateMipLevels(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, VkFormat format, uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layer_index)
+	{
+		bool result = true;
+
+		VkFormatProperties format_prop;
+		vkGetPhysicalDeviceFormatProperties(
+			device->m_physicalDevice,
+			format,
+			&format_prop
+		);
+
+		if (!(format_prop.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+		{
+			result = false;
+			TRC_ERROR("The image format does not support image bliting (SAMPLED_IMAGE_FILTER_LINEAR_BIT) feature");
+			return result;
+		}
+
+		trace::VKCommmandBuffer cmd_buf;
+		_BeginCommandBufferSingleUse(
+			device,
+			device->m_graphicsCommandPool,
+			&cmd_buf
+		);
+
+		VkImageMemoryBarrier mem_bar = {};
+		mem_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		mem_bar.image = image->m_handle;
+		mem_bar.pNext = nullptr;
+		mem_bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		mem_bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		mem_bar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		mem_bar.subresourceRange.baseArrayLayer = layer_index;
+		mem_bar.subresourceRange.layerCount = 1;
+		mem_bar.subresourceRange.levelCount = 1;
+
+		VkImageMemoryBarrier mem_bar1 = {};
+		mem_bar1.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		mem_bar1.image = image->m_handle;
+		mem_bar1.pNext = nullptr;
+		mem_bar1.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		mem_bar1.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		mem_bar1.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		mem_bar1.subresourceRange.baseArrayLayer = layer_index;
+		mem_bar1.subresourceRange.layerCount = 1;
+		mem_bar1.subresourceRange.levelCount = 1;
+
+		int32_t mip_width = static_cast<int32_t>(width);
+		int32_t mip_height = static_cast<int32_t>(height);
+		for (uint32_t i = 1; i < mip_levels; i++)
+		{
+			mem_bar.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			mem_bar.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			mem_bar.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			mem_bar.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			mem_bar.subresourceRange.baseMipLevel = i - 1;
+
+			mem_bar1.srcAccessMask = 0;
+			mem_bar1.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			mem_bar1.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			mem_bar1.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			mem_bar1.subresourceRange.baseMipLevel = i;
+
+			vkCmdPipelineBarrier(
+				cmd_buf.m_handle,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0,
+				0,
+				nullptr,
+				0,
+				nullptr,
+				1,
+				&mem_bar
+			);
+
+			vkCmdPipelineBarrier(
+				cmd_buf.m_handle,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0,
+				0,
+				nullptr,
+				0,
+				nullptr,
+				1,
+				&mem_bar1
+			);
+
+			VkImageBlit blit = {};
+			blit.srcOffsets[0] = {0, 0, 0};
+			blit.srcOffsets[1] = {mip_width, mip_height, 1};
+			blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit.srcSubresource.baseArrayLayer = layer_index;
+			blit.srcSubresource.layerCount = 1;
+			blit.srcSubresource.mipLevel = i - 1;
+
+			blit.dstOffsets[0] = { 0, 0, 0 };
+			blit.dstOffsets[1] = { mip_width > 1 ? mip_width / 2 : 1, mip_height > 1 ? mip_height / 2 : 1, 1 };
+			blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit.dstSubresource.baseArrayLayer = layer_index;
+			blit.dstSubresource.layerCount = 1;
+			blit.dstSubresource.mipLevel = i;
+
+
+			vkCmdBlitImage(
+				cmd_buf.m_handle,
+				image->m_handle,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				image->m_handle,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1,
+				&blit,
+				VK_FILTER_LINEAR // TODO: Get more info on image bliting to be able to make it more configurable
+			);
+
+
+			mem_bar.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			mem_bar.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			mem_bar.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			mem_bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			vkCmdPipelineBarrier(
+				cmd_buf.m_handle,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &mem_bar
+			);
+
+			if (mip_width > 1) mip_width /= 2;
+			if (mip_height > 1) mip_height /= 2;
+
+		}
+
+		mem_bar.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		mem_bar.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		mem_bar.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		mem_bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		mem_bar.subresourceRange.baseMipLevel = mip_levels - 1;
+
+		vkCmdPipelineBarrier(
+			cmd_buf.m_handle,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &mem_bar
+		);
+
+		_EndCommandBufferSingleUse(
+			device,
+			device->m_graphicsCommandPool,
+			device->m_graphicsQueue,
+			&cmd_buf
+		);
+
+
+
+		return result;
+	}
+
+	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler, float max_lod)
 	{
 		VkResult result;
 
@@ -1030,7 +1195,7 @@ namespace vk {
 		/// TODO Check Docs for more info
 		create_info.compareEnable = VK_FALSE;
 		create_info.compareOp = VK_COMPARE_OP_ALWAYS;
-		create_info.maxLod = 0.0f;
+		create_info.maxLod = max_lod;
 		create_info.minLod = 0.0f;
 		create_info.mipLodBias = 0.0f;
 		create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -1445,7 +1610,7 @@ namespace vk {
 		vert_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vert_info.vertexBindingDescriptionCount = 1; // TODO
 		vert_info.pVertexBindingDescriptions = &binding;
-		vert_info.vertexAttributeDescriptionCount = attrs.size();
+		vert_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attrs.size());
 		vert_info.pVertexAttributeDescriptions = attrs.data();
 
 
@@ -1532,7 +1697,7 @@ namespace vk {
 		create_info.renderPass = render_pass->m_handle; // TODO: Maybe can be dynamic
 		create_info.basePipelineHandle = VK_NULL_HANDLE; // TODO:  Check Docs
 		create_info.basePipelineIndex = -1; // TODO
-		create_info.stageCount = shader_stages.size();
+		create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 		create_info.pStages = shader_stages.data();
 		create_info.subpass = subpass_index; // TODO
 		create_info.layout = out_pipeline->m_layout;
@@ -2241,7 +2406,7 @@ namespace vk {
 			{
 				VkDescriptorSetLayoutCreateInfo _info = {};
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				_info.bindingCount = SceneGlobalData_bindings.size();
+				_info.bindingCount = static_cast<uint32_t>(SceneGlobalData_bindings.size());
 				_info.pBindings = SceneGlobalData_bindings.data();
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Scene_layout);
@@ -2276,7 +2441,7 @@ namespace vk {
 			{
 				VkDescriptorSetLayoutCreateInfo _info = {};
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				_info.bindingCount = Instance_bindings.size();
+				_info.bindingCount = static_cast<uint32_t>(Instance_bindings.size());
 				_info.pBindings = Instance_bindings.data();
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Instance_layout);
@@ -2312,7 +2477,7 @@ namespace vk {
 			{
 				VkDescriptorSetLayoutCreateInfo _info = {};
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				_info.bindingCount = Local_bindings.size();
+				_info.bindingCount = static_cast<uint32_t>(Local_bindings.size());
 				_info.pBindings = Local_bindings.data();
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Local_layout);

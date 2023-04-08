@@ -144,12 +144,12 @@ namespace trace {
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
 		texture_desc.m_channels = 4;
-		//texture_desc.m_data = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_SRBG;
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;
 		texture_desc.m_image_type = ImageType::IMAGE_2D;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
 
 		switch (AppSettings::graphics_api)
 		{
@@ -225,7 +225,7 @@ namespace trace {
 		desc.m_data.push_back(pixel_data);
 		desc.m_numLayers = 1;
 		desc.m_image_type = ImageType::IMAGE_2D;
-
+		desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
 
 		switch (AppSettings::graphics_api)
 		{
@@ -415,6 +415,7 @@ namespace trace {
 		texture_desc.m_image_type = ImageType::IMAGE_2D;
 		texture_desc.m_data.push_back(pixel);
 		texture_desc.m_numLayers = 1;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension)))) + 1;
 
 
 		default_diffuse_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
@@ -431,6 +432,8 @@ namespace trace {
 		texture_desc.m_height = (uint32_t)dimension;
 		texture_desc.m_channels = 4;
 		texture_desc.m_data[0] = (pixel);
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension)))) + 1;
+
 
 		for (uint32_t row = 0; row < dimension; row++)
 		{
@@ -459,6 +462,8 @@ namespace trace {
 		texture_desc.m_channels = 4;
 		texture_desc.m_data[0] = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_UNORM;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension)))) + 1;
+
 
 		for (uint32_t row = 0; row < dimension; row++)
 		{
