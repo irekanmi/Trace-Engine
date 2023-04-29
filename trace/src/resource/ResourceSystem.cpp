@@ -51,10 +51,10 @@ namespace trace {
 	}
 	void ResourceSystem::ShutDown()
 	{
-		m_materialManager->ShutDown();
-		m_pipelineManager->ShutDown();
 		m_meshManager->ShutDown();
 		m_modelManager->ShutDown();
+		m_materialManager->ShutDown();
+		m_pipelineManager->ShutDown();
 		m_textureManager->ShutDown();
 
 		SAFE_DELETE(m_materialManager, MaterialManager);

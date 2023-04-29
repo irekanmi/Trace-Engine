@@ -14,9 +14,12 @@ namespace trace {
 		void AddEventListener(EventType event_type, EventCallbackFunc func);
 		void DispatchEvent(EventType event_type, Event* p_event);
 
-		static EventsSystem* s_instance;
 		static EventsSystem* get_instance();
 		static void shutdown();
+
+	private:
+		static EventsSystem* s_instance;
+
 
 	private:
 		std::unordered_map<EventType, std::vector<EventCallbackFunc>> m_events;

@@ -62,6 +62,7 @@ namespace trace {
 			if (layer != nullptr)
 			{
 				layer->OnDetach();
+				layer->~Layer();
 				SAFE_DELETE(layer, layer);
 			}
 		}

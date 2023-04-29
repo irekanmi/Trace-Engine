@@ -1,0 +1,150 @@
+#include "pch.h"
+
+#include "Transform.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/quaternion.hpp"
+
+namespace trace {
+
+
+
+	Transform::Transform()
+	{
+		m_position = glm::vec3(0.0f);
+		m_rotation = glm::identity<glm::quat>();
+		m_scale = glm::vec3(1.0f);
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+	Transform::Transform(glm::vec3 position)
+	{
+		m_position = position;
+		m_rotation = glm::identity<glm::quat>();
+		m_scale = glm::vec3(1.0f);
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+	Transform::Transform(float scale_x, float scale_y, float scale_z)
+	{
+		m_position = glm::vec3(0.0f);
+		m_rotation = glm::identity<glm::quat>();
+		m_scale.x = scale_x, m_scale.y = scale_y, m_scale.z = scale_z;
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+	Transform::~Transform()
+	{
+	}
+
+	glm::vec3 Transform::GetPosition()
+	{
+		return m_position;
+	}
+
+	glm::vec3 Transform::GetScale()
+	{
+		return m_scale;
+	}
+
+	glm::quat Transform::GetRotation()
+	{
+		return m_rotation;
+	}
+
+	glm::mat4 Transform::GetLocalMatrix()
+	{
+		if (m_dirty)
+		{
+			recalculate_local_matrix();
+			m_dirty = false;
+		}
+
+		return m_model;
+	}
+
+	void Transform::SetPositon(glm::vec3 position)
+	{
+		m_position = position;
+		m_dirty = true;
+	}
+
+	void Transform::SetScale(glm::vec3 scale)
+	{
+		m_scale = scale;
+		m_dirty = true;
+	}
+
+	void Transform::SetRotation(glm::quat rotation)
+	{
+		m_rotation = rotation;
+		m_dirty = true;
+	}
+
+	void Transform::Translate(glm::vec3 value)
+	{
+		m_position += value;
+		m_dirty = true;
+	}
+
+	void Transform::Rotate(float value, glm::vec3 direction)
+	{
+		m_rotation = glm::rotate(m_rotation, value, direction);
+		m_dirty = true;
+	}
+
+	void Transform::Scale(float value)
+	{
+		m_scale += glm::vec3(value);
+		m_dirty = true;
+	}
+
+	void Transform::recalculate_local_matrix()
+	{
+		m_model = glm::identity<glm::mat4>();
+		m_model = glm::scale(m_model, m_scale);
+		m_model = glm::translate(m_model, m_position);
+		m_model *= glm::toMat4(m_rotation);
+	}
+
+	Transform::Transform(glm::vec3 position, glm::quat rotation)
+	{
+		m_position = position;
+		m_rotation = rotation;
+		m_scale = glm::vec3(1.0f);
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+	Transform::Transform(glm::vec3 position, glm::quat rotation, glm::vec3 scale)
+	{
+		m_position = position;
+		m_rotation = rotation;
+		m_scale = scale;
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+	Transform::Transform(glm::quat rotation)
+	{
+		m_position = glm::vec3(0.0f);
+		m_rotation = rotation;
+		m_scale = glm::vec3(1.0f);
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+	Transform::Transform(glm::quat rotation, glm::vec3 scale)
+	{
+		m_position = glm::vec3(0.0f);
+		m_rotation = rotation;
+		m_scale = scale;
+		m_model = glm::identity<glm::mat4>();
+		m_dirty = true;
+	}
+
+
+
+}

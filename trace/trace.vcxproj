@@ -204,6 +204,7 @@
     <ClInclude Include="src\render\Renderutils.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
+    <ClInclude Include="src\render\Transform.h" />
     <ClInclude Include="src\resource\HashTable.h" />
     <ClInclude Include="src\resource\MaterialManager.h" />
     <ClInclude Include="src\resource\MeshManager.h" />
@@ -269,6 +270,7 @@
     <ClCompile Include="src\render\Renderutils.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />
+    <ClCompile Include="src\render\Transform.cpp" />
     <ClCompile Include="src\resource\MaterialManager.cpp" />
     <ClCompile Include="src\resource\MeshManager.cpp" />
     <ClCompile Include="src\resource\ModelManager.cpp" />

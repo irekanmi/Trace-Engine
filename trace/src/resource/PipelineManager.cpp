@@ -186,17 +186,6 @@ namespace trace {
 		GShader* VertShader = GShader::Create_(vert_src, ShaderStage::VERTEX_SHADER);
 		GShader* FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
 
-
-		//ShaderResourceBinding scene_data;
-		//scene_data.shader_stage = ShaderStage::VERTEX_SHADER;
-		//scene_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		//scene_data.resource_size = sizeof(SceneGlobals);
-		//scene_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		//scene_data.resource_name = "scene_globals";
-		//scene_data.count = 1;
-		//scene_data.index = 0;
-		//scene_data.slot = 0;
-
 		ShaderResourceBinding projection;
 		projection.shader_stage = ShaderStage::VERTEX_SHADER;
 		projection.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
@@ -242,16 +231,6 @@ namespace trace {
 		_test.resource_data_type = ShaderData::CUSTOM_DATA_VEC2;
 
 
-		//ShaderResourceBinding scene_tex;
-		//scene_tex.shader_stage = ShaderStage::PIXEL_SHADER;
-		//scene_tex.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		//scene_tex.resource_size = 0;
-		//scene_tex.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		//scene_tex.resource_name = "testing";
-		//scene_tex.count = 3;
-		//scene_tex.index = 0;
-		//scene_tex.slot = 1;
-
 		ShaderResourceBinding diffuse_map;
 		diffuse_map.shader_stage = ShaderStage::PIXEL_SHADER;
 		diffuse_map.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
@@ -285,15 +264,7 @@ namespace trace {
 		normal_map.slot = 1;
 		normal_map.resource_data_type = ShaderData::MATERIAL_NORMAL;
 
-		//ShaderResourceBinding instance_data;
-		//instance_data.shader_stage = ShaderStage::PIXEL_SHADER;
-		//instance_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		//instance_data.resource_size = sizeof(MaterialRenderData);
-		//instance_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		//instance_data.resource_name = "instance_data";
-		//instance_data.count = 1;
-		//instance_data.index = 0;
-		//instance_data.slot = 0;
+		
 
 		ShaderResourceBinding diffuse_color;
 		diffuse_color.shader_stage = ShaderStage::PIXEL_SHADER;
@@ -328,15 +299,7 @@ namespace trace {
 		rest.slot = 2;
 		rest.resource_data_type = ShaderData::CUSTOM_DATA_VEC4;
 
-		//ShaderResourceBinding local_data;
-		//local_data.shader_stage = ShaderStage::VERTEX_SHADER;
-		//local_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
-		//local_data.resource_size = sizeof(glm::mat4);
-		//local_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		//local_data.resource_name = "local_data";
-		//local_data.count = 1;
-		//local_data.index = 0;
-		//local_data.slot = 3;
+		
 
 		ShaderResourceBinding model;
 		model.shader_stage = ShaderStage::VERTEX_SHADER;

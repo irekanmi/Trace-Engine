@@ -8,21 +8,7 @@
 #include "EASTL/vector.h"
 #include "Clock.h"
 
-// temp -------------------------
 
-#include "resource/ResourceSystem.h"
-
-#include "render/Graphics.h"
-#include "render/GBuffer.h"
-#include "render/Graphics.h"
-#include "render/GPipeline.h"
-#include "render/GShader.h"
-#include "render/Camera.h"
-#include "render/GTexture.h"
-#include "render/Model.h"
-#include "render/SkyBox.h"
-
-// ------------------------------------
 
 
 namespace trace
@@ -57,10 +43,7 @@ namespace trace
 		ClientStartCallback   m_client_start;
 		ClientUpdateCallback  m_client_update;
 
-		//Temp ==================
-		Ref<Mesh> _squareModel;
-		SkyBox sky_box;
-		//=======================
+		
 
 	protected:
 		Clock m_clock;

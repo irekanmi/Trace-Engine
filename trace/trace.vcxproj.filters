@@ -244,6 +244,7 @@
       <Filter>resource</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h" />
+    <ClInclude Include="src\render\Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -420,5 +421,6 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>resource</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\Transform.cpp" />
   </ItemGroup>
 </Project>

@@ -248,23 +248,9 @@ namespace trace {
 
     void VulkanMaterial::Apply()
     {
-        //MaterialRenderData mrd = {};
-        //mrd.diffuse_color = m_material.m_diffuseColor;
-        //mrd.shininess = m_material.m_shininess;
-        VulkanPipeline* sp = (VulkanPipeline*)m_renderPipeline.get();
-        //uint32_t hash_id = sp->_hashTable.Get("instance_data");
-        //
-        //if (hash_id == INVALID_ID)
-        //{
-        //    TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
-        //    return;
-        //}
 
-        //UniformMetaData& meta_data = sp->Scene_uniforms[hash_id];
-        //void* map_point = sp->cache_data + meta_data._offset;
-        //
-        //memcpy(map_point, &mrd, sizeof(MaterialRenderData));
-        
+        VulkanPipeline* sp = (VulkanPipeline*)m_renderPipeline.get();
+ 
 
         if (m_shaderData[ShaderData::MATERIAL_DIFFUSE_COLOR].first)
         {

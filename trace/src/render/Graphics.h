@@ -214,6 +214,7 @@ namespace trace {
 		uint32_t _index = 0;
 		uint32_t _count = 0;
 		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
 	};
 
 	struct Rect2D

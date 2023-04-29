@@ -23,7 +23,7 @@ layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
 
 
 
-layout(set = 2, binding = 3)uniform LocalBufferObject{
+layout( push_constant )uniform LocalBufferObject{
         mat4 model;
 } local_data;
 

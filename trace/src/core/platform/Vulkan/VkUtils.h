@@ -112,7 +112,7 @@ namespace vk {
 	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info);
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment);
-	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts);
+	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts, std::vector<VkPushConstantRange>& ranges);
 
 	VkFormat convertFmt(trace::Format format);
 	VkImageViewType convertImageViewType(trace::ImageType image_type);
@@ -126,6 +126,7 @@ namespace vk {
 	VkAttachmentLoadOp convertAttachmentLoadOp(trace::AttachmentLoadOp op);
 	VkAttachmentStoreOp convertAttachmentStoreOp(trace::AttachmentStoreOp op);
 	VkCullModeFlagBits convertCullMode(trace::CullMode mode);
+	std::vector<VkPushConstantRange> processShaderLocalData(std::vector<trace::ShaderResourceBinding>& bindings);
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
 
 	//Processing

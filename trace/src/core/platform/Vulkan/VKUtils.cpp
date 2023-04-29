@@ -1672,7 +1672,8 @@ namespace vk {
 		VkPipelineLayoutCreateInfo layout_info = {};
 		layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		VkDescriptorSetLayout _layouts[3];
-		parsePipelineLayout(instance, device, desc, layout_info, out_pipeline, _layouts);
+		std::vector<VkPushConstantRange> ranges;
+		parsePipelineLayout(instance, device, desc, layout_info, out_pipeline, _layouts, ranges);
 		
 		result = vkCreatePipelineLayout(
 			device->m_device,
@@ -2048,7 +2049,7 @@ namespace vk {
 
 	}
 
-	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts)
+	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts, std::vector<VkPushConstantRange>& ranges)
 	{
 
 
@@ -2059,7 +2060,7 @@ namespace vk {
 
 		std::vector<VkDescriptorSetLayoutBinding> Instance_bindings;
 
-		std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
+		//std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
 
 		const uint32_t pool_sizes_count = 2;
 		VkDescriptorPoolSize pool_sizes[] =
@@ -2347,8 +2348,14 @@ namespace vk {
 		bd.stageFlags = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
 		trace::ShaderResourceStage last_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
 
+		std::vector<trace::ShaderResourceBinding> _local_binds;
 		for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
 		{
+			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+			{
+				_local_binds.push_back(desc.resource_bindings[i]);
+				continue;
+			}
 			VkDescriptorSetLayoutBinding bind = {};
 
 			bind.binding = desc.resource_bindings[i].slot;
@@ -2385,19 +2392,20 @@ namespace vk {
 					last_stage = desc.resource_bindings[i].resource_stage;
 				}
 			}
-			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-			{
-				if (bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
-				{ }
-				else
-				{
-					Local_bindings.push_back(bind);
-					bd = bind;
-					last_stage = desc.resource_bindings[i].resource_stage;
-				}
-			}
+			//if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+			//{
+			//	if (bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
+			//	{ }
+			//	else
+			//	{
+			//		Local_bindings.push_back(bind);
+			//		bd = bind;
+			//		last_stage = desc.resource_bindings[i].resource_stage;
+			//	}
+			//}
 		}
 
+		ranges = processShaderLocalData(_local_binds);
 		uint32_t set_layout_count = 0;
 		if (!desc.resource_bindings.empty())
 		{
@@ -2473,48 +2481,50 @@ namespace vk {
 
 				//===============================================================
 			}
-			if (!Local_bindings.empty())
-			{
-				VkDescriptorSetLayoutCreateInfo _info = {};
-				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				_info.bindingCount = static_cast<uint32_t>(Local_bindings.size());
-				_info.pBindings = Local_bindings.data();
-
-				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Local_layout);
-
-				VkDescriptorPoolCreateInfo pool_info = {};
-				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 1000 * pool_sizes_count;
-				pool_info.poolSizeCount = pool_sizes_count;
-				pool_info.pPoolSizes = pool_sizes;
-
-				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Local_pool);
-
-				VkDescriptorSetLayout test[3] = {
-					pipeline->Local_layout,
-					pipeline->Local_layout,
-					pipeline->Local_layout
-				};
-
-				VkDescriptorSetAllocateInfo alloc_info = {};
-				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				alloc_info.descriptorPool = pipeline->Local_pool;
-				alloc_info.descriptorSetCount = 3;
-				alloc_info.pSetLayouts = test;
-
-
-				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Local_sets);
-				_layouts[set_layout_count++] = pipeline->Local_layout;
-
-				//===============================================================
-			}
-
+			//if (!Local_bindings.empty())
+			//{
+			//	VkDescriptorSetLayoutCreateInfo _info = {};
+			//	_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			//	_info.bindingCount = static_cast<uint32_t>(Local_bindings.size());
+			//	_info.pBindings = Local_bindings.data();
+			//
+			//	result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Local_layout);
+			//
+			//	VkDescriptorPoolCreateInfo pool_info = {};
+			//	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			//	pool_info.maxSets = 1000 * pool_sizes_count;
+			//	pool_info.poolSizeCount = pool_sizes_count;
+			//	pool_info.pPoolSizes = pool_sizes;
+			//
+			//	result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Local_pool);
+			//
+			//	VkDescriptorSetLayout test[3] = {
+			//		pipeline->Local_layout,
+			//		pipeline->Local_layout,
+			//		pipeline->Local_layout
+			//	};
+			//
+			//	VkDescriptorSetAllocateInfo alloc_info = {};
+			//	alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			//	alloc_info.descriptorPool = pipeline->Local_pool;
+			//	alloc_info.descriptorSetCount = 3;
+			//	alloc_info.pSetLayouts = test;
+			//
+			//
+			//	result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Local_sets);
+			//	_layouts[set_layout_count++] = pipeline->Local_layout;
+			//
+			//	//===============================================================
+			//}
+			//
 
 		}
 
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		create_info.setLayoutCount = set_layout_count;
 		create_info.pSetLayouts = _layouts;
+		create_info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
+		create_info.pPushConstantRanges = ranges.data();
 
 	}
 
@@ -2847,6 +2857,27 @@ namespace vk {
 		}
 		}
 
+	}
+
+	std::vector<VkPushConstantRange> processShaderLocalData(std::vector<trace::ShaderResourceBinding>& bindings)
+	{
+		std::vector<VkPushConstantRange> value;
+
+		uint32_t total_size = 0;
+
+		for (size_t i = 0; i < bindings.size(); i++)
+		{
+			trace::ShaderResourceBinding& resource = bindings[i];
+			VkPushConstantRange range = {};
+			range.offset = total_size;
+			range.size = resource.resource_size;
+			range.stageFlags = convertShaderStage(resource.shader_stage);
+			value.push_back(range);
+			total_size += range.size;
+			total_size = get_alignment(total_size, 16);
+		}
+
+		return value;
 	}
 
 	

@@ -12,6 +12,8 @@ namespace trace {
 	{
 		uint32_t val[4];
 		void* ptrs[4];
+		//TODO: Find another way to store data for each command
+		unsigned char data[256];
 	};
 
 	//typedef void (*CommandFunc)(CommandParams params);

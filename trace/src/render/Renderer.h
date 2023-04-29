@@ -44,7 +44,7 @@ namespace trace {
 		
 
 
-		void DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh);
+		void DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
 
 		// Command List
@@ -58,36 +58,18 @@ namespace trace {
 
 
 		// Temp-----------------------------
-		eastl::vector<Vertex> m_vertices;
-		eastl::vector<uint32_t> m_indices;
-
-		GBuffer* VertexBuffer;
-		GBuffer* IndexBuffer;
-
-		GShader* VertShader;
-		GShader* FragShader;
-
-		Ref<GPipeline> skybox_pipeline;
-		GPipeline* reflect_pipeline;
-		Camera* _camera;
-
-		GTexture* _texture;
-
-
-		Ref<GPipeline> _pipeline;
+		Ref<GPipeline> sky_pipeline;
 		GRenderPass* _renderPass[RENDERPASS::RENDER_PASS_COUNT];
 		GFramebuffer* _framebuffer;
 		GSwapchain* _swapChain;
-
 		Viewport _viewPort;
 		Rect2D _rect;
-		SkyBox _sky;
-	
+		Camera* _camera;
 		glm::ivec4 render_mode;
 		//------------------------------------
 	private:
-		void Draw_Mesh(CommandParams params);
-		void DrawSkyBox(CommandParams params);
+		void draw_mesh(CommandParams params);
+		void draw_skybox(CommandParams params);
 
 	private:
 		GContext* m_context;

@@ -58,12 +58,18 @@ namespace trace {
 
 	void MeshManager::ShutDown()
 	{
-		if (!m_meshes.empty())
-		{
-			DefaultCube.~Mesh();
+		DefaultCube.~Mesh();
 
-			m_meshes.clear();
+		if (m_meshes.empty())
+			return;
+
+		for (Mesh& mesh : m_meshes)
+		{
+			if (mesh.m_id != INVALID_ID)
+				Unload(&mesh);
 		}
+		m_meshes.clear();
+		DefaultCube.~Mesh();
 	}
 
 	Mesh* MeshManager::GetMesh(const std::string& name)

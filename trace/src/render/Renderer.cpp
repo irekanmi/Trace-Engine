@@ -205,41 +205,13 @@ namespace trace {
 		// Temp------------------------------------------------------------------------------------------------
 
 
-		EventsSystem::s_instance->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
-		EventsSystem::s_instance->AddEventListener(EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Renderer::OnEvent));
-		EventsSystem::s_instance->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
-		EventsSystem::s_instance->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Renderer::OnEvent));
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
 
-		_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("standard");
+		sky_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
 		
-		skybox_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
-		
-
-		
-
-
-		
-		std::vector<std::string> cube_maps = {
-			"sky_right.jpg",
-			"sky_left.jpg",
-			"sky_top.jpg",
-			"sky_bottom.jpg",
-			"sky_front.jpg",
-			"sky_back.jpg"
-		};
-
-		TextureDesc cubeMapDesc;
-		cubeMapDesc.m_image_type = ImageType::CUBE_MAP;
-		cubeMapDesc.m_addressModeU = cubeMapDesc.m_addressModeV = cubeMapDesc.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
-		cubeMapDesc.m_numLayers = 6;
-		cubeMapDesc.m_format = Format::R8G8B8A8_SRBG;
-		cubeMapDesc.m_minFilterMode = cubeMapDesc.m_magFilterMode = FilterMode::LINEAR;
-		cubeMapDesc.m_usage = UsageFlag::DEFAULT;
-		cubeMapDesc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
-
-		Texture_Ref temp = ResourceSystem::get_instance()->LoadTexture(cube_maps, cubeMapDesc, "cube_map");
-
-		_sky = SkyBox(temp);
 
 		render_mode = {};
 
@@ -256,11 +228,8 @@ namespace trace {
 		delete _framebuffer;
 		delete _renderPass[RENDERPASS::MAIN_PASS];
 
-		_pipeline.~Ref();
-		skybox_pipeline.~Ref();
+		sky_pipeline.~Ref();
 
-		_sky.~SkyBox();
-		
 		delete _camera;
 		
 		//----------------------------------
@@ -402,22 +371,14 @@ namespace trace {
 	}
 
 
-	void Renderer::Draw_Mesh(CommandParams params)
+	void Renderer::draw_mesh(CommandParams params)
 	{
 		Mesh* mesh = (Mesh*)params.ptrs[0];
 
 		SceneGlobals scene_data = {};
 		scene_data.view = _camera->GetViewMatrix();
 		scene_data.view_position = _camera->GetPosition();
-		static float x = 70.0f;
-		static float r = -0.5f;
-
-		x += r;
-		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(0.15f));
-		//model = glm::rotate(model, glm::radians(x), glm::vec3(0.0f, 1.0f, 0.0f));
-
+		glm::mat4* M_model = (glm::mat4*)(&params.data);
 		scene_data.projection = _camera->GetProjectionMatix();
 
 
@@ -428,31 +389,10 @@ namespace trace {
 			Ref<MaterialInstance> _mi = _model->m_matInstance;
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
-			//reflect_pipeline->SetData("scene_globals",
-			//	ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-			//	&scene_data,
-			//	sizeof(SceneGlobals)
-			//);
-			//reflect_pipeline->SetData("local_data",
-			//	ShaderResourceStage::RESOURCE_STAGE_LOCAL,
-			//	&model,
-			//	sizeof(glm::mat4)
-			//);
-			//reflect_pipeline->SetTextureData(
-			//	"CubeMap",
-			//	ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-			//	_sky.GetCubeMap()
-			//);
-			//
-			//if (_mat->m_normalMap.is_valid())
-			//{
-			//	reflect_pipeline->SetTextureData("normal_map", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, _mat->m_normalMap.get());
-			//}
-
 			sp->SetData("projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
 			sp->SetData("view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 			sp->SetData("view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
-			sp->SetData("model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
+			sp->SetData("model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
 			sp->SetData("rest", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &render_mode, sizeof(glm::ivec4));
 			_mi->Apply();
 			m_device->BindPipeline(sp.get());
@@ -464,7 +404,7 @@ namespace trace {
 
 	}
 
-	void Renderer::DrawSkyBox(CommandParams params)
+	void Renderer::draw_skybox(CommandParams params)
 	{
 		SkyBox* sky_box = (SkyBox*)params.ptrs[0];
 
@@ -473,7 +413,7 @@ namespace trace {
 		scene_data.view_position = _camera->GetPosition();
 		scene_data.projection = _camera->GetProjectionMatix();
 
-		Ref<GPipeline> sp = skybox_pipeline;
+		Ref<GPipeline> sp = sky_pipeline;
 
 		sp->SetTextureData(
 			"CubeMap",
@@ -493,11 +433,12 @@ namespace trace {
 		m_device->DrawIndexed(0, mod->GetIndexCount());
 	}
 
-	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh)
+	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)
 	{
 		Command cmd;
 		cmd.params.ptrs[0] = mesh.get();
-		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::Draw_Mesh);
+		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_mesh);
+		memcpy(cmd.params.data, &model, sizeof(glm::mat4));
 		cmd_list._commands.push_back(cmd);
 	}
 
@@ -506,7 +447,7 @@ namespace trace {
 
 		Command cmd;
 		cmd.params.ptrs[0] = sky;
-		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::DrawSkyBox);
+		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_skybox);
 		cmd_list._commands.push_back(cmd);
 	}
 

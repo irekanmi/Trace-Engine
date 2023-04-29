@@ -68,6 +68,35 @@ namespace trace {
 			default_diffuse_map.~Ref();
 			default_specular_map.~Ref();
 			default_normal_map.~Ref();
+			switch (AppSettings::graphics_api)
+			{
+			case RenderAPI::Vulkan:
+			{
+
+
+
+				
+				VulkanTexture* textures = (VulkanTexture*)m_textures;
+
+				for (uint32_t i = 0; i < m_textureUnits; i++)
+				{
+					if (textures[i].m_id != INVALID_ID)
+					{
+						TRC_DEBUG(textures[i].m_id);
+						break;
+					}
+				}
+
+				
+
+				break;
+			}
+			default:
+			{
+				TRC_ASSERT(false, "Render API Texture not suppoted");
+				break;
+			}
+			}
 			//TODO: Use a custom allocator for allocation
 			delete[] m_textures;
 
@@ -149,7 +178,7 @@ namespace trace {
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;
 		texture_desc.m_image_type = ImageType::IMAGE_2D;
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height))) / 2) + 1;
 
 		switch (AppSettings::graphics_api)
 		{
@@ -225,7 +254,7 @@ namespace trace {
 		desc.m_data.push_back(pixel_data);
 		desc.m_numLayers = 1;
 		desc.m_image_type = ImageType::IMAGE_2D;
-		desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height)))) + 1;
+		desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height))) / 2) + 1;
 
 		switch (AppSettings::graphics_api)
 		{
@@ -415,7 +444,7 @@ namespace trace {
 		texture_desc.m_image_type = ImageType::IMAGE_2D;
 		texture_desc.m_data.push_back(pixel);
 		texture_desc.m_numLayers = 1;
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension)))) + 1;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
 
 
 		default_diffuse_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
@@ -432,7 +461,7 @@ namespace trace {
 		texture_desc.m_height = (uint32_t)dimension;
 		texture_desc.m_channels = 4;
 		texture_desc.m_data[0] = (pixel);
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension)))) + 1;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
 
 
 		for (uint32_t row = 0; row < dimension; row++)
@@ -462,7 +491,7 @@ namespace trace {
 		texture_desc.m_channels = 4;
 		texture_desc.m_data[0] = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_UNORM;
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension)))) + 1;
+		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
 
 
 		for (uint32_t row = 0; row < dimension; row++)
