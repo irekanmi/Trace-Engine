@@ -19,87 +19,7 @@ namespace trace {
 		m_device = &g_VkDevice;
 		m_desc = desc;
 
-		/*VkResult result = VK_ERROR_INITIALIZATION_FAILED;
-
-		uint32_t attachment_count = 2; // TODO: Configurable
-		eastl::vector<VkAttachmentDescription> attachments;
-		attachments.resize(attachment_count);
-
-		VkAttachmentDescription color_attachment = {};
-
-		color_attachment.samples = VK_SAMPLE_COUNT_1_BIT; // TODO: Configurable
-		color_attachment.format = swapchain->m_format.format;
-		color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-		//TODO: Check why values can't be assigned to by indexing
-		attachments[0] = color_attachment;
-
-		VkAttachmentReference color_attach_ref = {};
-		color_attach_ref.attachment = 0;
-		color_attach_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentDescription depth_attachment = {};
-
-		depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT; // TODO: Configurable
-		depth_attachment.format = device->m_depthFormat;
-		depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-		//TODO: Check why values can't be assigned to by indexing
-		attachments[1] = (depth_attachment);
-
-		VkAttachmentReference depth_attach_ref = {};
-		depth_attach_ref.attachment = 1;
-		depth_attach_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		// TODO: other attachent { resolve, input, preserve }
-
-		VkSubpassDescription subpass_info = {};
-		subpass_info.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass_info.colorAttachmentCount = 1;
-		subpass_info.pColorAttachments = &color_attach_ref;
-		subpass_info.pDepthStencilAttachment = &depth_attach_ref;
-
-		// TODO: Configurable
-		VkSubpassDependency subpass_dependency = {};
-		subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		subpass_dependency.dstSubpass = 0;
-		subpass_dependency.srcAccessMask = 0;
-		subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		subpass_dependency.dependencyFlags = 0;
-
-
-		VkRenderPassCreateInfo render_pass_info = {};
-		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_info.dependencyCount = 1;
-		render_pass_info.pDependencies = &subpass_dependency;
-		render_pass_info.attachmentCount = attachment_count;
-		render_pass_info.pAttachments = attachments.data();
-		render_pass_info.subpassCount = 1;
-		render_pass_info.pSubpasses = &subpass_info;
-
-		result = vkCreateRenderPass(device->m_device, &render_pass_info, instance->m_alloc_callback, &render_pass->m_handle);
-
-		VK_ASSERT(result);
-		render_pass->clear_color = clear_color;
-		render_pass->depth_value = depth_value;
-		render_pass->stencil_value = stencil_value;
-		render_pass->render_area = render_area;*/
-
-
 		VkResult result;
-
 		eastl::vector<VkSubpassDescription> subpasses;
 		subpasses.resize(desc.subpass_count);
 		eastl::vector<VkAttachmentDescription> attachments;
@@ -139,7 +59,16 @@ namespace trace {
 
 		}
 
-
+		//Test =========================================
+		VkSubpassDependency dependency = {};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		//==============================================
 
 		VkRenderPassCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -147,6 +76,11 @@ namespace trace {
 		create_info.pAttachments = attachments.data();
 		create_info.subpassCount = static_cast<uint32_t>(subpasses.size());
 		create_info.pSubpasses = subpasses.data();
+
+		//Test =================================
+		create_info.dependencyCount = 1;
+		create_info.pDependencies = &dependency;
+		//==============================
 
 
 		result = vkCreateRenderPass(

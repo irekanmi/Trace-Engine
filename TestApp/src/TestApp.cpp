@@ -87,14 +87,11 @@ public:
 
 
 		Material _mat;
-		_mat.m_albedoMap = ResourceSystem::get_instance()->LoadTexture("paving.png");
-		//_mat.m_albedoMap = ResourceSystem::get_instance()->GetDefaultTexture("albedo_map");
+		_mat.m_albedoMap = ResourceSystem::get_instance()->LoadTexture("cobblestone.png");
 		_mat.m_diffuseColor = glm::vec4(0.3f, 0.5f, 0.45f, 1.0f);
 		_mat.m_shininess = 128.0f;
-		//_mat.m_specularMap = ResourceSystem::get_instance()->GetDefaultTexture("specular_map");
-		_mat.m_specularMap = ResourceSystem::get_instance()->LoadTexture("paving_SPEC.png");
-		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("paving_NRM.png", texture_desc);
-		//_mat.m_normalMap = ResourceSystem::get_instance()->GetDefaultTexture("normal_map");
+		_mat.m_specularMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_SPEC.png");
+		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_NRM.png", texture_desc);
 
 		_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
 		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
