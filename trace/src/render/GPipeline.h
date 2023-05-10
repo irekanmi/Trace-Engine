@@ -5,6 +5,7 @@
 #include "Graphics.h"
 #include "resource/HashTable.h"
 #include "resource/Resource.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -39,6 +40,8 @@ namespace trace {
 		HashTable<uint32_t> _hashTable;
 		std::vector<UniformMetaData> Scene_uniforms = {};
 	private:
+		GHandle m_renderHandle;
+
 	protected:
 		PipelineStateDesc m_desc;
 

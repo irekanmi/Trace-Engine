@@ -134,6 +134,7 @@ namespace trace
 
 		m_clock.Begin();
 
+
 		while (m_isRunning)
 		{
 			float _time = m_clock.GetElapsedTime();
@@ -156,7 +157,7 @@ namespace trace
 
 			
 
-
+			
 			renderer->Render(deltaTime);
 
 			input->Update(deltaTime);

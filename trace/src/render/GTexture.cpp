@@ -8,6 +8,11 @@ namespace trace {
 
 
 
+	TextureDesc GTexture::GetTextureDescription()
+	{
+		return m_desc;
+	}
+
 	GTexture* GTexture::Create_(TextureDesc description)
 	{
 		switch (AppSettings::graphics_api)

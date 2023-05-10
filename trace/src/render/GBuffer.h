@@ -2,6 +2,7 @@
 
 #include "core/Core.h"
 #include "Graphics.h"
+#include "GHandle.h"
 
 
 namespace trace {
@@ -24,6 +25,8 @@ namespace trace {
 		static GBuffer* Create_(const BufferInfo& buffer_info);
 		static void Create_(const BufferInfo& buffer_info, GBuffer* dst);
 	private:
+		GHandle m_renderHandle;
+
 	protected:
 		// TODO: suggesting maybe the gpu buffer info should only debug build ==> "BufferInfo m_info"
 		BufferInfo m_info;

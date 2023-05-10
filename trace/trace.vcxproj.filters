@@ -245,6 +245,7 @@
     </ClInclude>
     <ClInclude Include="src\trace.h" />
     <ClInclude Include="src\render\Transform.h" />
+    <ClInclude Include="src\render\GHandle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -422,5 +423,6 @@
       <Filter>resource</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Transform.cpp" />
+    <ClCompile Include="src\render\GHandle.cpp" />
   </ItemGroup>
 </Project>

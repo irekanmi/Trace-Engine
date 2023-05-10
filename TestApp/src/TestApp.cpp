@@ -94,8 +94,9 @@ public:
 		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_NRM.png", texture_desc);
 
 		_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
-		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
-		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 
 
 		std::vector<std::string> cube_maps = {
@@ -267,9 +268,11 @@ public:
 
 
 		M_sponzaScene.SetScale(glm::vec3(0.15f));
-		//M_falcon.SetScale(glm::vec3(3.0f));
+		M_falcon.SetScale(glm::vec3(3.0f));
 		M_falcon.Translate(glm::vec3(3.0f, 3.0f, 0.0f));
 		M_squareModel.SetScale(glm::vec3(11.0f));
+		M_boxStack.SetScale(glm::vec3(10.0f));
+		M_boxStack.Translate(glm::vec3(-8.0f, 3.5f, 0.0f));
 		M_squareModel.Translate(glm::vec3(0.0f, 0.0f, 0.0f));
 
 
@@ -313,10 +316,9 @@ public:
 			TRC_INFO(" ------____----TRACE------______----");
 		}
 		CommandList cmd_list = Renderer::get_instance()->BeginCommandList();
-		Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix() * M_falcon.GetLocalMatrix());
-		Renderer::get_instance()->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
-		Renderer::get_instance()->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
 		Renderer::get_instance()->DrawSky(cmd_list, &sky_box);
+		Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix());
+		Renderer::get_instance()->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		Renderer::get_instance()->SubmitCommandList(cmd_list);
 
 		
@@ -327,10 +329,12 @@ private:
 	Ref<Mesh> _squareModel;
 	Ref<Mesh> _sponzaScene;
 	Ref<Mesh> _falcon;
+	Ref<Mesh> _boxStack;
 
 	Transform M_squareModel;
 	Transform M_sponzaScene;
 	Transform M_falcon;
+	Transform M_boxStack;
 	SkyBox sky_box;
 	//=======================
 protected:

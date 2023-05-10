@@ -189,6 +189,7 @@
     <ClInclude Include="src\render\GContext.h" />
     <ClInclude Include="src\render\GDevice.h" />
     <ClInclude Include="src\render\GFramebuffer.h" />
+    <ClInclude Include="src\render\GHandle.h" />
     <ClInclude Include="src\render\GPipeline.h" />
     <ClInclude Include="src\render\GRenderPass.h" />
     <ClInclude Include="src\render\GShader.h" />
@@ -257,6 +258,7 @@
     <ClCompile Include="src\render\GContext.cpp" />
     <ClCompile Include="src\render\GDevice.cpp" />
     <ClCompile Include="src\render\GFramebuffer.cpp" />
+    <ClCompile Include="src\render\GHandle.cpp" />
     <ClCompile Include="src\render\GPipeline.cpp" />
     <ClCompile Include="src\render\GRenderpass.cpp" />
     <ClCompile Include="src\render\GShader.cpp" />

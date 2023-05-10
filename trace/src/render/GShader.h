@@ -4,6 +4,7 @@
 #include "core/Core.h"
 #include "Graphics.h"
 #include "core/FileSystem.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -20,6 +21,7 @@ namespace trace {
 		ShaderStage m_stage = ShaderStage::STAGE_NONE;
 
 	private:
+		GHandle m_renderHandle;
 	protected:
 	};
 

@@ -856,6 +856,9 @@ namespace vk {
 		if (heap_index == -1)
 		{
 			TRC_ERROR("Required memory type not found, vulkan image not valid");
+			TRC_ASSERT(false, "Note that the device is not actually out memory but a vaild memory heap has not been found, So find a better error description");
+			//TODO: Note that the device is not actually out memory but a vaild memory heap has not been found, So find a better error description
+			return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 		}
 
 		VkMemoryAllocateInfo alloc_info = {};
