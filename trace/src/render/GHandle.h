@@ -12,8 +12,9 @@ namespace trace {
 		GHandle();
 		~GHandle();
 
-	private:
+	public:
 		void* m_internalData;
+	private:
 	protected:
 
 

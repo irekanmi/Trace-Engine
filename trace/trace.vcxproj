@@ -155,6 +155,7 @@
     <ClInclude Include="src\core\Layer.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\core\events\Events.h" />

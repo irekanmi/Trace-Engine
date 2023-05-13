@@ -8,6 +8,7 @@
 namespace trace {
 
 
+
 	class TRACE_API GBuffer
 	{
 
@@ -22,6 +23,7 @@ namespace trace {
 		virtual void SetData(void* data, size_t size) = 0;
 		virtual void Bind() = 0;
 
+	public:
 		static GBuffer* Create_(const BufferInfo& buffer_info);
 		static void Create_(const BufferInfo& buffer_info, GBuffer* dst);
 	private:

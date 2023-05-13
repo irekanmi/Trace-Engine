@@ -1,17 +1,18 @@
 #include <pch.h>
 
 #include "Renderer.h"
+#include "Renderutils.h"
 #include "GContext.h"
 #include "core/Enums.h"
 #include "core/io/Logging.h"
 #include "core/platform/OpenGL/OpenGLContext.h"
 #include "core/platform/OpenGL/OpenGLDevice.h"
-#include "core/platform/Vulkan/VKContext.h"
 #include "core/platform/Vulkan/VKDevice.h"
 #include "resource/ResourceSystem.h"
 #include "render/PerspectiveCamera.h"
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
+#include "GContext.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -34,7 +35,7 @@ namespace trace {
 
 	bool Renderer::Init(RenderAPI api)
 	{
-		bool result = false;
+		bool result = true;
 
 		m_cmdList.resize(8);
 
@@ -48,30 +49,14 @@ namespace trace {
 		{
 		case RenderAPI::OpenGL:
 		{
-			m_context = new OpenGLContext();
-			if (m_context == nullptr)
-			{
-				TRC_ERROR(" Failed to create a graphics context ");
-				return false;
-			}
-			m_context->Init();
-
-			// TODO: Implement OpenGl Device
-			//m_device = new OpenGLDevice();
-			result = m_device->Init();
+			
 			break;
 
 		}
 
 		case RenderAPI::Vulkan:
 		{
-
-			m_context = new VKContext();
-			m_context->Init();
-
-			m_device = new VKDevice();
-			result = m_device->Init();
-
+			RenderFuncLoader::LoadVulkanRenderFunctions();
 			break;
 		}
 
@@ -80,7 +65,9 @@ namespace trace {
 			return result;
 		}
 
-		AttachmentInfo color_attach;
+		g_context.Init();
+		result = g_device.Init();
+		/*AttachmentInfo color_attach;
 		color_attach.attachmant_index = 0;
 		color_attach.attachment_format = Format::R8G8B8A8_SRBG;
 		color_attach.initial_format = TextureFormat::UNKNOWN;
@@ -152,7 +139,7 @@ namespace trace {
 		rect.right = 800;
 		rect.bottom = 600;
 
-		_rect = rect;
+		_rect = rect;*/
 		
 
 		return result;
@@ -161,12 +148,6 @@ namespace trace {
 	void Renderer::Update(float deltaTime)
 	{
 
-		// Temp--------------------
-		_camera->Update(deltaTime);
-		//-------------------------
-		
-
-		m_context->Update(deltaTime);
 	}
 
 	bool Renderer::BeginFrame()
@@ -206,13 +187,9 @@ namespace trace {
 
 
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Renderer::OnEvent));
-		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
+		//EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
-
-		sky_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
-		
-
 		render_mode = {};
 
 		//---------------------------------------------------------------------------------------------
@@ -224,13 +201,13 @@ namespace trace {
 
 		// Temp-----------------------------
 		
-		delete _swapChain;
+		/*delete _swapChain;
 		delete _framebuffer;
 		delete _renderPass[RENDERPASS::MAIN_PASS];
 
 		sky_pipeline.~Ref();
 
-		delete _camera;
+		delete _camera;*/
 		
 		//----------------------------------
 
@@ -239,9 +216,10 @@ namespace trace {
 	{
 
 		
-
-		m_device->ShutDown();
-		m_context->ShutDown();
+		g_device.ShutDown();
+		g_context.ShutDown();
+		/*m_device->ShutDown();
+		m_context->ShutDown();*/
 
 	}
 
@@ -298,7 +276,7 @@ namespace trace {
 		case EventType::TRC_WND_RESIZE:
 		{
 			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-			_renderPass[RENDERPASS::MAIN_PASS]->m_desc.render_area = { 0.0f, 0.0f, (float)wnd->m_width, (float)wnd->m_height };
+			/*_renderPass[RENDERPASS::MAIN_PASS]->m_desc.render_area = { 0.0f, 0.0f, (float)wnd->m_width, (float)wnd->m_height };
 
 			_swapChain->Resize(wnd->m_width, wnd->m_height);
 
@@ -329,7 +307,7 @@ namespace trace {
 				1,
 				_swapChain
 			);
-			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));
+			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));*/
 			break;
 		}
 

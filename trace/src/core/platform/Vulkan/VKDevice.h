@@ -21,26 +21,26 @@ namespace trace {
 		VKDevice();
 		~VKDevice();
 
-		virtual bool Init() override;
-		virtual void DrawElements(GBuffer* vertex_buffer) override;
-		virtual void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) override;
-		virtual void DrawIndexed(GBuffer* index_buffer) override;
-		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
-		virtual void ShutDown() override;
+		bool Init();
+		void DrawElements(GBuffer* vertex_buffer);
+		void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances);
+		void DrawIndexed(GBuffer* index_buffer);
+		void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances);
+		void ShutDown();
 
-		virtual void BindViewport(Viewport view_port) override;
-		virtual void BindRect(Rect2D rect) override;
-		virtual void BindPipeline(GPipeline* pipeline) override;
-		virtual void BindVertexBuffer(GBuffer* buffer) override;
-		virtual void BindIndexBuffer(GBuffer* buffer) override;
-		virtual void Draw(uint32_t start_vertex, uint32_t count) override;
-		virtual void DrawIndexed(uint32_t first_index, uint32_t count) override;
-		virtual void BeginRenderPass(GRenderPass* render_pass, GFramebuffer* frame_buffer) override;
-		virtual void NextSubpass(GRenderPass* render_pass) override;
-		virtual void EndRenderPass(GRenderPass* render_pass) override;
+		void BindViewport(Viewport view_port);
+		void BindRect(Rect2D rect);
+		void BindPipeline(GPipeline* pipeline);
+		void BindVertexBuffer(GBuffer* buffer);
+		void BindIndexBuffer(GBuffer* buffer);
+		void Draw(uint32_t start_vertex, uint32_t count);
+		void DrawIndexed(uint32_t first_index, uint32_t count);
+		void BeginRenderPass(GRenderPass* render_pass, GFramebuffer* frame_buffer);
+		void NextSubpass(GRenderPass* render_pass);
+		void EndRenderPass(GRenderPass* render_pass);
 
-		virtual bool BeginFrame(GSwapchain* swapchain) override;
-		virtual void EndFrame() override;
+		bool BeginFrame(GSwapchain* swapchain);
+		void EndFrame();
 
 		void OnEvent(Event* p_Event);
 
@@ -62,5 +62,12 @@ namespace trace {
 	protected:
 
 	};
+
+}
+
+namespace vk {
+
+	bool __CreateDevice(trace::GDevice* device);
+	bool __DestroyDevice(trace::GDevice* device);
 
 }

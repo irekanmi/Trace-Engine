@@ -16,7 +16,6 @@ namespace trace {
 		unsigned char data[256];
 	};
 
-	//typedef void (*CommandFunc)(CommandParams params);
 	using CommandFunc = std::function<void(CommandParams)>;
 
 	struct Command

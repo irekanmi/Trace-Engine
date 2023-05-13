@@ -27,38 +27,6 @@ namespace trace {
 		m_hashtable.Init(m_numEntries);
 		m_hashtable.Fill(INVALID_ID);
 
-		switch (AppSettings::graphics_api)
-		{
-		case RenderAPI::Vulkan:
-		{
-			m_matTypeSize = sizeof(VulkanMaterial);
-
-			//TODO: Use a custom allocator for allocation
-			m_materials = new unsigned char[m_matTypeSize * m_numEntries];
-
-			if (!m_materials)
-			{
-				TRC_ERROR("Failed to allocate materials storage memory");
-				return false;
-			}
-
-			VulkanMaterial* materials = (VulkanMaterial*)m_materials;
-
-			for (uint32_t i = 0; i < m_numEntries; i++)
-			{
-				materials[i].m_id = INVALID_ID;
-			}
-
-			break;
-		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
-		}
-
 		return true;
 	}
 

@@ -246,6 +246,7 @@
     <ClInclude Include="src\trace.h" />
     <ClInclude Include="src\render\Transform.h" />
     <ClInclude Include="src\render\GHandle.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">

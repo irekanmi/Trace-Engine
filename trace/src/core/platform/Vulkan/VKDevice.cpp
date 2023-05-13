@@ -371,3 +371,133 @@ namespace trace {
 
 
 }
+
+namespace vk {
+
+	bool __CreateDevice(trace::GDevice* device)
+	{
+		bool result = true;
+
+		TRC_INFO("Added Vulkan Device Create Function :)");
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		device->GetRenderHandle()->m_internalData = &g_VkDevice;
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		VK_ASSERT(vk::_CreateDevice(_handle, _instance));
+
+		TRC_INFO("Created Vulkan Device");
+
+		TRC_TRACE("Creating Swapchain...");
+		VK_ASSERT(vk::_CreateSwapchain(_instance, _handle, &_handle->m_swapChain, 800.0f, 600.0f));
+
+		TRC_INFO("Vulkan SwapChain Created");
+
+		TRC_TRACE("Creating Render Pass...");
+		vk::_CreateRenderPass(
+			_instance,
+			_handle,
+			&_handle->m_renderPass,
+			glm::vec4(0.03f, 0.05f, .05f, 1.0f),
+			glm::vec4(0, 0, 800.0f, 600.0f),
+			1.0f,
+			0,
+			&_handle->m_swapChain
+		);
+		TRC_INFO("Vulkan Render Pass Created");
+
+
+		TRC_TRACE("Creating graphics command buffers");
+		vk::_CreateCommandBuffers(_instance, _handle, _handle->m_graphicsCommandPool, _handle->m_graphicsCommandBuffers);
+		TRC_INFO("Graphics command buffers created");
+
+		// Sync Objects
+		uint32_t frames_in_flight = _handle->frames_in_flight;
+		std::vector<VkSemaphore>& image_avaliable_sem = _handle->m_imageAvailableSemaphores;
+		std::vector<VkSemaphore>& queue_completed_sem = _handle->m_queueCompleteSemaphores;
+		std::vector<trace::VKFence>& in_flight_fence = _handle->m_inFlightFence;
+		std::vector<trace::VKFence*>& images_fence = _handle->m_imagesFence;
+
+		image_avaliable_sem.resize(frames_in_flight);
+		queue_completed_sem.resize(frames_in_flight);
+		in_flight_fence.resize(frames_in_flight);
+		images_fence.resize(_handle->m_frameBufferHeight);
+
+		for (uint32_t i = 0; i < frames_in_flight; i++)
+		{
+			VkSemaphoreCreateInfo sem_create_info = {};
+			sem_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+			VK_ASSERT(vkCreateSemaphore(_handle->m_device, &sem_create_info, _instance->m_alloc_callback, &image_avaliable_sem[i]));
+			VK_ASSERT(vkCreateSemaphore(_handle->m_device, &sem_create_info, _instance->m_alloc_callback, &queue_completed_sem[i]));
+
+			vk::_CreateFence(_instance, _handle, &in_flight_fence[i], true);
+		}
+
+		for (uint32_t i = 0; i < _handle->m_frameBufferHeight; i++)
+		{
+			images_fence[i] = nullptr;
+		}
+
+		return result;
+	}
+
+	bool __DestroyDevice(trace::GDevice* device)
+	{
+		bool result = true;
+
+		TRC_INFO("Added Vulkan Device Destroy Function :)");
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These context is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+
+		vkDeviceWaitIdle(_handle->m_device);
+
+		// Sync objects
+		for (uint32_t i = 0; i < _handle->frames_in_flight; i++)
+		{
+			vkDestroySemaphore(_handle->m_device, _handle->m_imageAvailableSemaphores[i], _instance->m_alloc_callback);
+			vkDestroySemaphore(_handle->m_device, _handle->m_queueCompleteSemaphores[i], _instance->m_alloc_callback);
+
+		}
+
+		for (auto& i : _handle->m_inFlightFence)
+		{
+			vk::_DestroyFence(_instance, _handle, &i);
+		}
+
+
+
+		vk::_DestroyRenderPass(_instance, _handle, &_handle->m_renderPass);
+		vk::_DestroySwapchain(_instance, _handle, &_handle->m_swapChain);
+		vk::_DestoryDevice(_handle, _instance);
+
+		device->GetRenderHandle()->m_internalData = nullptr;
+
+		return result;
+	}
+
+
+}

@@ -15,12 +15,12 @@
 #include "GRenderPass.h"
 #include "GSwapchain.h"
 #include "SkyBox.h"
+#include "GContext.h"
 //----------------------------------------
 
 
 namespace trace {
 
-	class GContext;
 
 	class TRACE_API Renderer : public Object
 	{
@@ -72,8 +72,10 @@ namespace trace {
 		void draw_skybox(CommandParams params);
 
 	private:
+		GContext g_context;
 		GContext* m_context;
 		GDevice* m_device;
+		GDevice g_device;
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;
 

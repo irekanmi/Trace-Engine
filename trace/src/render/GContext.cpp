@@ -1,6 +1,7 @@
 #include <pch.h>
 
 #include "GContext.h"
+#include "Renderutils.h"
 
 namespace trace {
 
@@ -12,5 +13,16 @@ namespace trace {
 	GContext::~GContext()
 	{
 
+	}
+	void GContext::Update(float deltaTime)
+	{
+	}
+	void GContext::Init()
+	{
+		RenderFunc::CreateContext(this);
+	}
+	void GContext::ShutDown()
+	{
+		RenderFunc::DestroyContext(this);
 	}
 }

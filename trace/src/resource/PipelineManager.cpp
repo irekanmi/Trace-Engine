@@ -28,37 +28,7 @@ namespace trace {
 		m_hashtable.Init(m_numEntries);
 		m_hashtable.Fill(INVALID_ID);
 
-		switch (AppSettings::graphics_api)
-		{
-		case RenderAPI::Vulkan:
-		{
-			m_pipelineTypeSize = sizeof(VulkanPipeline);
-
-			//TODO: Use a custom allocator for allocation
-			m_pipelines = new unsigned char[m_pipelineTypeSize * m_numEntries];
-
-			if (!m_pipelines)
-			{
-				TRC_ERROR("Failed to allocate memory for Pipeline Manager");
-				return false;
-			}
-
-			VulkanPipeline* pipelines = (VulkanPipeline*)m_pipelines;
-
-			for (uint32_t i = 0; i < m_numEntries; i++)
-			{
-				pipelines[i].m_id = INVALID_ID;
-			}
-
-			break;
-		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
-		}
+		
 
 		return true;
 	}

@@ -1,6 +1,18 @@
 #include "pch.h"
 
 #include "Renderutils.h"
+#include "core/platform/Vulkan/VulkanRenderFunc.h"
+
+#define RENDER_FUNC_IS_VALID(function)                           \
+	if(!function)                                                \
+	{                                                            \
+		result = false;                                          \
+		TRC_ERROR(                                               \
+	"{} is not available, please check for any errors"           \
+		, #function);                                           \
+		return result;                                           \
+	}
+	
 
 namespace trace {
 
@@ -92,6 +104,84 @@ namespace trace {
 			(lhs.resource_type == rhs.resource_type) &&
 			(lhs.slot == rhs.slot);
 		return result;
+	}
+
+	__CreateContext RenderFunc::_createContext = nullptr;
+	__DestroyContext RenderFunc::_destroyContext = nullptr;
+
+	__CreateDevice RenderFunc::_createDevice = nullptr;
+	__DestroyDevice RenderFunc::_destroyDevice = nullptr;
+
+	__CreateBuffer RenderFunc::_createBuffer = nullptr;
+	__ValidateHandle RenderFunc::_validateHandle = nullptr;
+
+	bool RenderFunc::CreateContext(GContext* context)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_createContext);
+		result = _createContext(context);
+
+		return result;
+	}
+
+	bool RenderFunc::DestroyContext(GContext* context)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_destroyContext);
+		result = _destroyContext(context);
+
+		return result;
+	}
+
+	bool RenderFunc::CreateDevice(GDevice* device)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_createDevice);
+		result = _createDevice(device);
+
+		return result;
+	}
+
+	bool RenderFunc::DestroyDevice(GDevice* device)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_destroyDevice);
+		result = _destroyDevice(device);
+
+		return result;
+	}
+
+	bool RenderFunc::CreateBuffer(GBuffer* buffer, BufferInfo* buffer_info)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_createBuffer);
+		result = _createBuffer(buffer, buffer_info);
+
+		return result;
+	}
+
+	bool RenderFunc::ValidateHandle(GHandle* handle)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_validateHandle);
+		result = _validateHandle(handle);
+
+		return result;
+	}
+
+	bool RenderFuncLoader::LoadVulkanRenderFunctions()
+	{
+		RenderFunc::_createContext = vk::__CreateContext;
+		RenderFunc::_destroyContext = vk::__DestroyContext;
+		RenderFunc::_createDevice = vk::__CreateDevice;
+		RenderFunc::_destroyDevice = vk::__DestroyDevice;
+		return false;
 	}
 
 }

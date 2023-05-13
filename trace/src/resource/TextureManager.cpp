@@ -26,34 +26,7 @@ namespace trace {
 	{
 		m_textureUnits = maxTextureUnits;
 		m_hashTable.Init(maxTextureUnits);
-
-		switch (AppSettings::graphics_api)
-		{
-		case RenderAPI::Vulkan:
-		{
-			m_textureTypeSize = sizeof(VulkanTexture);
-
-			//TODO: Use a custom allocator for allocation
-			m_textures = new char[m_textureTypeSize * maxTextureUnits];
-
-			VulkanTexture* textures = (VulkanTexture*)m_textures;
-
-			for (uint32_t i = 0; i < m_textureUnits; i++)
-			{
-				textures[i].m_id = INVALID_ID;
-			}
-
-			break;
-		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
-		}
-
-			
+		
 
 		TextureHash _hash;
 		_hash._id = INVALID_ID;

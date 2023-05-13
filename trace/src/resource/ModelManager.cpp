@@ -21,10 +21,6 @@ namespace trace {
 
 		m_models.resize(m_numModelUnits);
 
-		
-
-		//Platform::ZeroMem(m_models, m_numModelUnits * sizeof(Model));
-
 		return true;
 	}
 	void ModelManager::ShutDown()

@@ -116,7 +116,7 @@ namespace trace {
 	{
 		VkShaderModule m_module = VK_NULL_HANDLE;
 		VkPipelineShaderStageCreateInfo create_info = {};
-		// TODO 
+		// TODO: Determine if "m_code" will be vulkan specific member variakble
 		std::vector<uint32_t> m_code = {};
 	};
 
