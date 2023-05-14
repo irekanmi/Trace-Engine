@@ -313,7 +313,7 @@ public:
 			TRC_INFO(" ------____----TRACE------______----");
 		}
 		CommandList cmd_list = Renderer::get_instance()->BeginCommandList();
-		Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix() * M_falcon.GetLocalMatrix());
+		Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix() );
 		Renderer::get_instance()->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
 		Renderer::get_instance()->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
 		Renderer::get_instance()->DrawSky(cmd_list, &sky_box);
