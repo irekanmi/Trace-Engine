@@ -2,6 +2,7 @@
 
 #include "core/Enums.h"
 #include "core/Core.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -21,10 +22,12 @@ namespace trace {
 		virtual GTexture* GetBackColorBuffer() = 0;
 		virtual GTexture* GetBackDepthBuffer() = 0;
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 		static GSwapchain* Create_(GDevice* device, GContext* context);
 
 	private:
+		GHandle m_renderHandle;
 	protected:
 
 	};

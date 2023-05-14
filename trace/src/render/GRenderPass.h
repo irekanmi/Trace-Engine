@@ -3,6 +3,7 @@
 #include "core/Enums.h"
 #include "core/Core.h"
 #include "RenderPassInfo.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -12,6 +13,7 @@ namespace trace {
 		GRenderPass();
 		virtual ~GRenderPass();
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 		static GRenderPass* Create_(RenderPassDescription desc);
 
@@ -19,6 +21,7 @@ namespace trace {
 		RenderPassDescription m_desc;
 
 	private:
+		GHandle m_renderHandle;
 	protected:
 
 	};

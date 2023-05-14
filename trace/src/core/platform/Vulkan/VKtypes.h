@@ -81,43 +81,25 @@ namespace trace {
 		uint32_t* stencil_value;
 
 		RenderPassState m_state;
-	};
 
-	struct VKBuffer
-	{
-		VkBuffer m_handle = VK_NULL_HANDLE;
-		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
 	};
 
 	
 
-	struct VKPipeline
-	{
-		VkPipeline m_handle = VK_NULL_HANDLE;
-		VkPipelineLayout m_layout = VK_NULL_HANDLE;
+	
 
-		VKBuffer Scene_buffers = {};
-		VkDescriptorSet Scene_sets[3] = {};
-		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
-
-
-		VkDescriptorSet Instance_sets[3] = {};
-		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
-
-		VkDescriptorSet Local_sets[3] = {};
-		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
-
-	};
-
+	
 	struct VKShader
 	{
 		VkShaderModule m_module = VK_NULL_HANDLE;
 		VkPipelineShaderStageCreateInfo create_info = {};
 		// TODO: Determine if "m_code" will be vulkan specific member variakble
 		std::vector<uint32_t> m_code = {};
+
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
 	};
 
 	struct VKImage
@@ -127,17 +109,12 @@ namespace trace {
 		VkDeviceMemory m_mem = VK_NULL_HANDLE;
 		uint32_t m_width = 0;
 		uint32_t m_height = 0;
+
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
 	};
 
-	struct VKFrameBuffer
-	{
-		uint32_t m_width = 0;
-		uint32_t m_height = 0;
-		uint32_t m_attachmentCount = 0;
-		VkFramebuffer m_handle = VK_NULL_HANDLE;
-		VKRenderPass m_renderPass = {};
-		eastl::vector<VkImageView> m_attachments = {};
-	};
+	
 
 	struct VKFence
 	{
@@ -145,18 +122,7 @@ namespace trace {
 		bool m_isSignaled = false;
 	};
 
-	struct VKSwapChain
-	{
-		VkSwapchainKHR m_handle;
-		VkSurfaceFormatKHR m_format;
-		VKImage m_depthimage;
-		VkFormat m_depthFormat;
-
-		std::vector<VkImage> m_images;
-		std::vector<VkImageView> m_imageViews;
-
-		uint32_t image_count;
-	};
+	
 
 	struct VKHandle
 	{
@@ -209,6 +175,69 @@ namespace trace {
 		SwapchainInfo m_swapchainInfo;
 	};
 
+	struct VKBuffer
+	{
+		VkBuffer m_handle = VK_NULL_HANDLE;
+		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+		VKDeviceHandle* m_device = nullptr;
+		VKHandle* m_instance = nullptr;
+	};
+
+	struct VKPipeline
+	{
+		VkPipeline m_handle = VK_NULL_HANDLE;
+		VkPipelineLayout m_layout = VK_NULL_HANDLE;
+
+		VKBuffer Scene_buffers = {};
+		VkDescriptorSet Scene_sets[3] = {};
+		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
+
+
+		VkDescriptorSet Instance_sets[3] = {};
+		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
+
+		VkDescriptorSet Local_sets[3] = {};
+		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
+
+		VKHandle* m_instance = nullptr;
+		VKDeviceHandle* m_device = nullptr;
+		char* cache_data = nullptr;
+		GTexture* last_tex_update[3] = {};
+
+	};
+
+	struct VKFrameBuffer
+	{
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint32_t m_attachmentCount = 0;
+		VkFramebuffer m_handle = VK_NULL_HANDLE;
+		VKRenderPass m_renderPass = {};
+		eastl::vector<VkImageView> m_attachments = {};
+		VKHandle* m_instance = nullptr;
+		VKDeviceHandle* m_device = nullptr;
+	};
+
+
+	struct VKSwapChain
+	{
+		VkSwapchainKHR m_handle;
+		VkSurfaceFormatKHR m_format;
+		VKImage m_depthimage;
+		VkFormat m_depthFormat;
+
+		std::vector<VkImage> m_images;
+		std::vector<VkImageView> m_imageViews;
+
+		uint32_t image_count;
+
+		VKHandle* m_instance = nullptr;
+		void* m_device = nullptr;
+
+	};
 
 
 }

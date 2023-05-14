@@ -18,6 +18,8 @@ namespace trace {
 
 		TextureDesc GetTextureDescription();
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
+
 		static GTexture* Create_(TextureDesc description);
 
 	private:

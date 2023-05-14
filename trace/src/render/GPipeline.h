@@ -35,6 +35,8 @@ namespace trace {
 
 		virtual void Shutdown() = 0;
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
+
 		static GPipeline* Create_(PipelineStateDesc desc);
 
 		HashTable<uint32_t> _hashTable;
@@ -49,3 +51,4 @@ namespace trace {
 	};
 
 }
+

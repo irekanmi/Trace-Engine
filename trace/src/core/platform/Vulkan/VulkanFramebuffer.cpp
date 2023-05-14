@@ -90,3 +90,48 @@ namespace trace {
 	}
 
 }
+
+
+namespace vk {
+
+	bool __CreateFrameBuffer(trace::GFramebuffer* framebuffer, uint32_t num_attachment, trace::GTexture** attachments, trace::GRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t swapchain_image_index, trace::GSwapchain* swapchain)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!framebuffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)framebuffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!framebuffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)framebuffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKFrameBuffer* _handle = new trace::VKFrameBuffer();
+		_handle->m_device = &g_VkDevice;
+		_handle->m_instance = &g_Vkhandle;
+		trace::VKHandle* _instance = _handle->m_instance;
+		trace::VKDeviceHandle* device = _handle->m_device;
+
+
+
+
+		framebuffer->GetRenderHandle()->m_internalData = _handle;
+
+		return result;
+	}
+	bool __DestroyFrameBuffer(trace::GFramebuffer* framebuffer)
+	{
+		bool result = true;
+
+
+
+		return result;
+	}
+
+}

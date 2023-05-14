@@ -23,15 +23,17 @@ namespace trace {
 		virtual void SetData(void* data, size_t size) = 0;
 		virtual void Bind() = 0;
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
+
 	public:
 		static GBuffer* Create_(const BufferInfo& buffer_info);
 		static void Create_(const BufferInfo& buffer_info, GBuffer* dst);
+		BufferInfo m_info;
 	private:
 		GHandle m_renderHandle;
 
 	protected:
 		// TODO: suggesting maybe the gpu buffer info should only debug build ==> "BufferInfo m_info"
-		BufferInfo m_info;
 
 
 	};

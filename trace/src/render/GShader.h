@@ -14,6 +14,8 @@ namespace trace {
 		GShader();
 		virtual ~GShader();
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
+
 		static GShader* Create_(std::string& src, ShaderStage stage);
 		static GShader* Create_(FileHandle& file);
 

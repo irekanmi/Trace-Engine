@@ -22,14 +22,11 @@ namespace trace {
 		virtual ~GDevice();
 
 		bool Init() ;
+		void ShutDown() ;
 		void DrawElements(GBuffer* vertex_buffer) ;
 		void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) ;
 		void DrawIndexed(GBuffer* index_buffer) ;
 		void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) ;
-		void ShutDown() ;
-
-
-
 		void BindViewport(Viewport view_port) ;
 		void BindRect(Rect2D rect) ;
 		void BindPipeline(GPipeline* pipeline) ;
@@ -40,8 +37,6 @@ namespace trace {
 		void BeginRenderPass(GRenderPass* render_pass, GFramebuffer* frame_buffer) ;
 		void NextSubpass(GRenderPass* render_pass) ;
 		void EndRenderPass(GRenderPass* render_pass) ;
-
-
 		bool BeginFrame(GSwapchain* swapchain) ;
 		void EndFrame() ;
 

@@ -76,6 +76,7 @@ namespace vk {
 #endif
 		vk::_DestroyInstance(_handle);
 
+		context->GetRenderHandle()->m_internalData = nullptr;
 
 		return result;
 	}

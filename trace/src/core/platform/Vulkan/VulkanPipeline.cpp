@@ -427,3 +427,173 @@ namespace trace {
 	}
 
 }
+
+namespace vk {
+
+	bool __CreatePipeline(trace::GPipeline* pipeline, trace::PipelineStateDesc description)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = new trace::VKPipeline(); //TODO: Use a custom allocator
+		_handle->m_device = &g_VkDevice;
+		_handle->m_instance = &g_Vkhandle;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+
+
+		return result;
+	}
+	bool __DestroyPipeline(trace::GPipeline* pipeline)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+
+
+		return result;
+	}
+	bool __InitializePipeline(trace::GPipeline* pipeline)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+
+
+		return result;
+	}
+	bool __ShutDownPipeline(trace::GPipeline* pipeline)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+
+
+		return result;
+	}
+	bool __SetPipelineData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+
+
+		return result;
+	}
+	bool __SetPipelineTextureData(trace::const std::string& resource_name, trace::ShaderResourceStage resource_scope, trace::GTexture* texture, uint32_t index = 0)
+	{
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+
+
+		return result;
+	}
+	bool __BindPipeline(trace::GPipeline* pipeline);
+
+}

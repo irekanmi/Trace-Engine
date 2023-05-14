@@ -454,7 +454,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		TRC_INFO("Added Vulkan Device Destroy Function :)");
+		TRC_INFO(__FUNCTION__);
 
 		if (!device)
 		{
@@ -464,7 +464,7 @@ namespace vk {
 
 		if (!device->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("These context is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
@@ -499,5 +499,406 @@ namespace vk {
 		return result;
 	}
 
+	bool __DrawElements(trace::GDevice* device, trace::GBuffer* vertex_buffer) 
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device || !vertex_buffer)
+		{
+			TRC_ERROR("please pass in valid pointer -> {} || {} , Function -> {}", (const void*)device, (const void*)vertex_buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData || !vertex_buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)vertex_buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+
+		return result;
+	}
+	bool __DrawInstanceElements(trace::GDevice* device, trace::GBuffer* vertex_buffer, uint32_t instances) 
+	{ 
+		
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result; 
+	}
+	bool __DrawIndexed_(trace::GDevice* device, trace::GBuffer* index_buffer)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __DrawInstanceIndexed(trace::GDevice* device, trace::GBuffer* index_buffer, uint32_t instances)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BindViewport(trace::GDevice* device, trace::Viewport view_port)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BindRect(trace::GDevice* device, trace::Rect2D rect)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BindPipeline(trace::GDevice* device, trace::GPipeline* pipeline)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BindVertexBuffer(trace::GDevice* device, trace::GBuffer* buffer)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BindIndexBuffer(trace::GDevice* device, trace::GBuffer* buffer)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __Draw(trace::GDevice* device, uint32_t start_vertex, uint32_t count)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __DrawIndexed(trace::GDevice* device, uint32_t first_index, uint32_t count)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BeginRenderPass(trace::GDevice* device, trace::GRenderPass* render_pass, trace::GFramebuffer* frame_buffer)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __NextSubpass(trace::GDevice* device, trace::GRenderPass* render_pass)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __EndRenderPass(trace::GDevice* device, trace::GRenderPass* render_pass)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __BeginFrame(trace::GDevice* device, trace::GSwapchain* swapchain)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
+	bool __EndFrame(trace::GDevice* device)
+	{
+
+		bool result = true;
+
+		TRC_INFO(__FUNCTION__);
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		return result;
+	}
 
 }

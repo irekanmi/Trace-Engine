@@ -34,9 +34,10 @@ namespace trace {
 
 		Ref<GPipeline> GetRenderPipline() { return m_renderPipeline; }
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 	private:
-
+		GHandle m_renderHandle;
 	protected:
 		Ref<GPipeline> m_renderPipeline;
 		Material m_material;
