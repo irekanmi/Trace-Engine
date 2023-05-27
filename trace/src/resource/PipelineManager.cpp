@@ -2,7 +2,6 @@
 
 #include "PipelineManager.h"
 #include "core/Coretypes.h"
-#include "core/platform/Vulkan/VulkanPipeline.h"
 #include "render/Renderer.h"
 #include "core/FileSystem.h"
 #include "render/GShader.h"
@@ -28,18 +27,29 @@ namespace trace {
 		m_hashtable.Init(m_numEntries);
 		m_hashtable.Fill(INVALID_ID);
 
-		
+		m_pipelines.resize(m_numEntries);
+
+		for (uint32_t i = 0; i < m_numEntries; i++)
+		{
+			m_pipelines[i].m_id = INVALID_ID;
+		}
 
 		return true;
 	}
 	void PipelineManager::ShutDown()
 	{
-		if (m_pipelines)
+		standard_pipeline.~Ref();
+		skybox_pipeline.~Ref();
+		if (!m_pipelines.empty())
 		{
-			standard_pipeline.~Ref();
-			skybox_pipeline.~Ref();
-			delete[] m_pipelines;
-			m_pipelines = nullptr;
+			
+			for (GPipeline& pipeline : m_pipelines)
+			{
+				if (pipeline.m_id == INVALID_ID)
+					continue;
+				pipeline.~GPipeline();
+			}
+			m_pipelines.clear();
 		}
 
 	}
@@ -51,41 +61,26 @@ namespace trace {
 			desc.render_pass = Renderer::get_instance()->GetRenderPass(desc._renderPass);
 		}
 
-		switch (AppSettings::graphics_api)
-		{
-		case RenderAPI::Vulkan:
-		{
-			VulkanPipeline* pipelines = (VulkanPipeline*)m_pipelines;
-			bool found = false;
-			for (uint32_t i = 0; i < m_numEntries; i++)
-			{
-				if (pipelines[i].m_id == INVALID_ID)
-				{
-					VulkanPipeline* pipeline = &pipelines[i];
-					new(pipeline) VulkanPipeline(desc);
-					if (!pipeline->Initialize())
-						return false;
-					pipeline->m_id = i;
-					m_hashtable.Set(name, i);
-					found = true;
-					break;
-				}
-			}
 
-			if (!found)
+		bool found = false;
+		for (uint32_t i = 0; i < m_numEntries; i++)
+		{
+			if (m_pipelines[i].m_id == INVALID_ID)
 			{
-				TRC_ERROR("Failed to create pipeline {}", name.c_str());
-				return false;
+				RenderFunc::CreatePipeline(&m_pipelines[i], desc);
+				if (!RenderFunc::InitializePipeline(&m_pipelines[i]))
+					return false;
+				m_pipelines[i].m_id = i;
+				m_hashtable.Set(name, i);
+				found = true;
+				break;
 			}
-
-			break;
 		}
-		default:
+
+		if (!found)
 		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
+			TRC_ERROR("Failed to create pipeline {}", name);
 			return false;
-			break;
-		}
 		}
 
 		return true;
@@ -96,21 +91,7 @@ namespace trace {
 
 		if (hash != INVALID_ID)
 		{
-			switch (AppSettings::graphics_api)
-			{
-			case RenderAPI::Vulkan:
-			{
-				VulkanPipeline* pipelines = (VulkanPipeline*)m_pipelines;
-				return &pipelines[hash];
-				break;
-			}
-			default:
-			{
-				TRC_ASSERT(false, "Render API Texture not suppoted");
-				return nullptr;
-				break;
-			}
-			}
+			return &m_pipelines[hash];
 		}
 
 		return nullptr;
@@ -137,6 +118,7 @@ namespace trace {
 		}
 
 		pipeline->m_id = INVALID_ID;
+		RenderFunc::DestroyPipeline(pipeline);
 		pipeline->~GPipeline();
 
 	}
@@ -153,8 +135,11 @@ namespace trace {
 		std::cout << vert_src;
 		std::cout << frag_src;
 
-		GShader* VertShader = GShader::Create_(vert_src, ShaderStage::VERTEX_SHADER);
-		GShader* FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
+		GShader VertShader;
+		GShader FragShader;
+
+		RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+		RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
 
 		ShaderResourceBinding projection;
 		projection.shader_stage = ShaderStage::VERTEX_SHADER;
@@ -299,8 +284,8 @@ namespace trace {
 		PipelineStateDesc _ds;
 		_ds.resource_bindings_count = 11;
 		_ds.resource_bindings = scene;
-		_ds.vertex_shader = VertShader;
-		_ds.pixel_shader = FragShader;
+		_ds.vertex_shader = &VertShader;
+		_ds.pixel_shader = &FragShader;
 
 		AutoFillPipelineDesc(
 			_ds
@@ -313,8 +298,8 @@ namespace trace {
 		}
 		
 		standard_pipeline = { GetPipeline("standard_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this)};
-		delete VertShader;
-		delete FragShader;
+		RenderFunc::DestroyShader(&VertShader);
+		RenderFunc::DestroyShader(&FragShader);
 
 		vert_src.clear();
 		frag_src.clear();
@@ -325,8 +310,8 @@ namespace trace {
 		std::cout << vert_src;
 		std::cout << frag_src;
 
-		VertShader = GShader::Create_(vert_src, ShaderStage::VERTEX_SHADER);
-		FragShader = GShader::Create_(frag_src, ShaderStage::PIXEL_SHADER);
+		RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+		RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
 
 		RaterizerState raterizer_state;
 		raterizer_state.cull_mode = CullMode::FRONT;
@@ -357,8 +342,8 @@ namespace trace {
 		_ds1.rateriser_state = raterizer_state;
 		_ds1.resource_bindings_count = 5;
 		_ds1.resource_bindings = bindings;
-		_ds1.vertex_shader = VertShader;
-		_ds1.pixel_shader = FragShader;
+		_ds1.vertex_shader = &VertShader;
+		_ds1.pixel_shader = &FragShader;
 
 		AutoFillPipelineDesc(
 			_ds1,
@@ -375,8 +360,8 @@ namespace trace {
 		}
 
 		skybox_pipeline = { GetPipeline("skybox_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this)};
-		delete VertShader;
-		delete FragShader;
+		RenderFunc::DestroyShader(&VertShader);
+		RenderFunc::DestroyShader(&FragShader);
 		return true;
 	}
 	PipelineManager* PipelineManager::get_instance()
@@ -397,6 +382,7 @@ namespace trace {
 		}
 
 		pipeline->m_id = INVALID_ID;
+		RenderFunc::DestroyPipeline(pipeline);
 		pipeline->~GPipeline();
 	}
 }

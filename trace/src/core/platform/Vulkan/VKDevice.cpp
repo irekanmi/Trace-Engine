@@ -386,6 +386,12 @@ namespace vk {
 			return false;
 		}
 
+		if (device->GetRenderHandle()->m_internalData)
+		{
+			TRC_WARN("These handle is valid can't recreate the device ::Try to destroy and then create, -> {}", (const void*)device->GetRenderHandle()->m_internalData);
+			return false;
+		}
+
 		device->GetRenderHandle()->m_internalData = &g_VkDevice;
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
@@ -454,7 +460,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -504,7 +510,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device || !vertex_buffer)
 		{
@@ -530,7 +536,7 @@ namespace vk {
 		
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -555,7 +561,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -580,7 +586,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -605,7 +611,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -622,6 +628,20 @@ namespace vk {
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		VkViewport viewport = {};
+		viewport.x = view_port.x;
+		viewport.y = view_port.height;
+		viewport.width = view_port.width;
+		viewport.height = -view_port.height;
+		viewport.minDepth = view_port.minDepth;
+		viewport.maxDepth = view_port.maxDepth;
+
+
+		vkCmdSetViewport(command_buffer->m_handle, 0, 1, &viewport);
+
 
 		return result;
 	}
@@ -630,7 +650,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -645,8 +665,18 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
+
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+
+		VkRect2D scissor = {};
+		scissor.offset.x = rect.top;
+		scissor.offset.y = rect.left;
+		scissor.extent.width = rect.right;
+		scissor.extent.height = rect.bottom;
+
+		vkCmdSetScissor(command_buffer->m_handle, 0, 1, &scissor);
 
 		return result;
 	}
@@ -655,7 +685,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -670,8 +700,11 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
+
+		device->m_pipeline = pipeline;
+		trace::VKPipeline* _pipeline = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		vkCmdBindPipeline(command_buffer->m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->m_handle);
 
 		return result;
 	}
@@ -680,23 +713,28 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
-		if (!device)
+		if (!device || !buffer)
 		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)buffer, __FUNCTION__);
 			return false;
 		}
 
-		if (!device->GetRenderHandle()->m_internalData)
+		if (!device->GetRenderHandle()->m_internalData || !buffer->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)!buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
+
+
+		trace::VKBuffer* buf = reinterpret_cast<trace::VKBuffer*>(buffer->GetRenderHandle()->m_internalData);
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(command_buffer->m_handle, 0, 1, &buf->m_handle, offsets);
 
 		return result;
 	}
@@ -705,23 +743,27 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
-		if (!device)
+		if (!device || !buffer)
 		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)buffer, __FUNCTION__);
 			return false;
 		}
 
-		if (!device->GetRenderHandle()->m_internalData)
+		if (!device->GetRenderHandle()->m_internalData || !buffer->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)!buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
+
+
+		trace::VKBuffer* buf = reinterpret_cast<trace::VKBuffer*>(buffer->GetRenderHandle()->m_internalData);
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vkCmdBindIndexBuffer(command_buffer->m_handle, buf->m_handle, 0, VK_INDEX_TYPE_UINT32);
 
 		return result;
 	}
@@ -730,7 +772,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -745,8 +787,17 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
+		
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vkCmdDraw(
+			command_buffer->m_handle,
+			count,
+			1,
+			start_vertex,
+			0
+		);
 
 		return result;
 	}
@@ -755,7 +806,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -770,8 +821,17 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
+		
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vkCmdDrawIndexed(
+			command_buffer->m_handle,
+			count,
+			1,
+			first_index,
+			0,
+			0
+		);
 
 		return result;
 	}
@@ -780,23 +840,35 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
-		if (!device)
+		if (!device || !render_pass || !frame_buffer)
 		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			TRC_ERROR("please pass in valid pointer -> {} || {} || {}, Function -> {}", (const void*)device, (const void*)render_pass, (const void*)frame_buffer, __FUNCTION__);
 			return false;
 		}
 
-		if (!device->GetRenderHandle()->m_internalData)
+		if (!device->GetRenderHandle()->m_internalData || !render_pass->GetRenderHandle()->m_internalData || !frame_buffer->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("These render handle is invalid -> {} || {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)!render_pass->GetRenderHandle()->m_internalData, (const void*)!frame_buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
+		
+		trace::VKRenderPass* pass = reinterpret_cast<trace::VKRenderPass*>(render_pass->GetRenderHandle()->m_internalData);
+		trace::Framebuffer_VK* frameBuffer = reinterpret_cast<trace::Framebuffer_VK*>(frame_buffer->GetRenderHandle()->m_internalData);
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vk::_BeginRenderPass(
+			_instance,
+			_handle,
+			pass,
+			command_buffer,
+			frameBuffer->m_handle[_handle->m_imageIndex].m_handle
+		);
 
 		return result;
 	}
@@ -805,7 +877,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -830,23 +902,27 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
-		if (!device)
+		if (!device || !render_pass)
 		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)render_pass, __FUNCTION__);
 			return false;
 		}
 
-		if (!device->GetRenderHandle()->m_internalData)
+		if (!device->GetRenderHandle()->m_internalData || !render_pass->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)render_pass->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vk::_EndRenderPass(_instance, _handle, command_buffer);
 
 		return result;
 	}
@@ -855,23 +931,57 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
-		if (!device)
+		if (!device || !swapchain)
 		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)swapchain, __FUNCTION__);
 			return false;
 		}
 
-		if (!device->GetRenderHandle()->m_internalData)
+		if (!device->GetRenderHandle()->m_internalData || !swapchain->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)swapchain->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
+
+		trace::VKSwapChain* swap_chain = reinterpret_cast<trace::VKSwapChain*>(swapchain->GetRenderHandle()->m_internalData);
+
+		if (swap_chain->m_recreating)
+		{
+			vkDeviceWaitIdle(_handle->m_device);
+
+			//if (!swap_chain->Recreate())
+			if(_recreate_swapchain(swapchain))
+			{
+				TRC_ERROR("Unable to recreate swapchain");
+				return false;
+			}
+			TRC_INFO("Recreating Swapchain...");
+			return false;
+		}
+
+
+
+		if (!vk::_WaitFence(_instance, _handle, &_handle->m_inFlightFence[_handle->m_currentFrame], UINT64_MAX))
+		{
+			TRC_WARN("Fence timeout or wait failure");
+			return false;
+		}
+
+		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT64_MAX))
+		{
+			return false;
+		}
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		vk::_CommandBuffer_Reset(command_buffer);
+		trace::CommandBufferUsage command_use = trace::CommandBufferUsage::NO_USE;
+		vk::_BeginCommandBuffer(command_buffer, command_use);
 
 		return result;
 	}
@@ -880,7 +990,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!device)
 		{
@@ -897,6 +1007,46 @@ namespace vk {
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
+
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		//vk::_EndRenderPass(m_instance, m_handle, command_buffer);
+
+		vk::_EndCommandBuffer(command_buffer);
+
+		if (_handle->m_imagesFence[_handle->m_imageIndex] != nullptr)
+		{
+			vk::_WaitFence(_instance, _handle, _handle->m_imagesFence[_handle->m_imageIndex], UINT64_MAX);
+		}
+
+		_handle->m_imagesFence[_handle->m_imageIndex] = &_handle->m_inFlightFence[_handle->m_currentFrame];
+
+		vk::_FenceReset(_handle, &_handle->m_inFlightFence[_handle->m_currentFrame]);
+
+		VkSubmitInfo sub_info = {};
+		sub_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		sub_info.commandBufferCount = 1;
+		sub_info.pCommandBuffers = &command_buffer->m_handle;
+		sub_info.waitSemaphoreCount = 1;
+		sub_info.pWaitSemaphores = &_handle->m_imageAvailableSemaphores[_handle->m_currentFrame];
+		sub_info.signalSemaphoreCount = 1;
+		sub_info.pSignalSemaphores = &_handle->m_queueCompleteSemaphores[_handle->m_currentFrame];
+
+		VkPipelineStageFlags pipeline_flag[1] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		sub_info.pWaitDstStageMask = pipeline_flag;
+
+		VkResult _result = vkQueueSubmit(_handle->m_graphicsQueue, 1, &sub_info, _handle->m_inFlightFence[_handle->m_currentFrame].m_handle);
+
+		if (_result != VK_SUCCESS)
+		{
+			TRC_ERROR("Unable to submit command buffer");
+			return false;
+		}
+
+		vk::_CommandBufferSubmitted(command_buffer);
+
+		//vk::_PresentSwapchainImage(m_instance, m_handle, &m_handle->m_swapChain, m_handle->m_graphicsQueue, m_handle->m_presentQueue, m_handle->m_queueCompleteSemaphores[m_handle->m_currentFrame], &m_handle->m_imageIndex);
 
 		return result;
 	}

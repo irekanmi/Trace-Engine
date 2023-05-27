@@ -19,9 +19,9 @@ namespace trace {
 		uint32_t GetSize() { return m_info.m_size; }
 		uint32_t GetCount() { return m_info.m_size / m_info.m_stide; }
 
-		virtual void* GetNativeHandle() = 0;
-		virtual void SetData(void* data, size_t size) = 0;
-		virtual void Bind() = 0;
+		virtual void* GetNativeHandle();
+		virtual void SetData(void* data, size_t size) {};
+		virtual void Bind() {};
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 

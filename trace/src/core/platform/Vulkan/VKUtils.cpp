@@ -1595,13 +1595,13 @@ namespace vk {
 
 		if (desc.vertex_shader != nullptr)
 		{
-			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.vertex_shader);
-			shader_stages.push_back(shader->m_handle.create_info);
+			trace::VKShader* shader = reinterpret_cast<trace::VKShader*>(desc.vertex_shader->GetRenderHandle()->m_internalData);
+			shader_stages.push_back(shader->create_info);
 		}
 		if (desc.pixel_shader != nullptr)
 		{
-			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.pixel_shader);
-			shader_stages.push_back(shader->m_handle.create_info);
+			trace::VKShader* shader = reinterpret_cast<trace::VKShader*>(desc.pixel_shader->GetRenderHandle()->m_internalData);
+			shader_stages.push_back(shader->create_info);
 		}
 
 		VkVertexInputBindingDescription binding;

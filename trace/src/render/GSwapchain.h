@@ -17,10 +17,10 @@ namespace trace {
 		GSwapchain();
 		virtual ~GSwapchain();
 
-		virtual void Resize(uint32_t width, uint32_t height) = 0;
-		virtual void Present() = 0;
-		virtual GTexture* GetBackColorBuffer() = 0;
-		virtual GTexture* GetBackDepthBuffer() = 0;
+		virtual void Resize(uint32_t width, uint32_t height) {};
+		virtual void Present() {};
+		virtual GTexture* GetBackColorBuffer() { return nullptr;};
+		virtual GTexture* GetBackDepthBuffer() { return nullptr;};
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 

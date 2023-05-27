@@ -27,3 +27,10 @@ namespace trace {
 	};
 
 }
+
+namespace vk {
+
+	bool __InitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline, trace::Material material);
+	bool __ApplyMaterial(trace::MaterialInstance* mat_instance);
+
+}

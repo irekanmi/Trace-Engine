@@ -25,3 +25,10 @@ namespace trace {
 	};
 
 }
+
+namespace vk {
+
+	bool __CreateTexture(trace::GTexture* texture, trace::TextureDesc desc);
+	bool __DestroyTexture(trace::GTexture* texture);
+
+}

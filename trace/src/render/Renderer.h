@@ -59,9 +59,9 @@ namespace trace {
 
 		// Temp-----------------------------
 		Ref<GPipeline> sky_pipeline;
-		GRenderPass* _renderPass[RENDERPASS::RENDER_PASS_COUNT];
-		GFramebuffer* _framebuffer;
-		GSwapchain* _swapChain;
+		GRenderPass _renderPass[RENDERPASS::RENDER_PASS_COUNT];
+		GFramebuffer _framebuffer;
+		GSwapchain _swapChain;
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera;

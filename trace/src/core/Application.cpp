@@ -158,7 +158,7 @@ namespace trace
 			
 
 			
-			//renderer->Render(deltaTime);
+			renderer->Render(deltaTime);
 
 			input->Update(deltaTime);
 			float end_time = m_clock.GetElapsedTime();

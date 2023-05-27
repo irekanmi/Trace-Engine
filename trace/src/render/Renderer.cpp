@@ -65,9 +65,10 @@ namespace trace {
 			return result;
 		}
 
-		g_context.Init();
-		result = g_device.Init();
-		/*AttachmentInfo color_attach;
+		RenderFunc::CreateContext(&g_context);
+		result = RenderFunc::CreateDevice(&g_device);
+		RenderFunc::CreateDevice(&g_device);
+		AttachmentInfo color_attach;
 		color_attach.attachmant_index = 0;
 		color_attach.attachment_format = Format::R8G8B8A8_SRBG;
 		color_attach.initial_format = TextureFormat::UNKNOWN;
@@ -104,23 +105,30 @@ namespace trace {
 		pass_desc.stencil_value = 0;
 
 
-		_renderPass[RENDERPASS::MAIN_PASS] = GRenderPass::Create_(pass_desc);
+		RenderFunc::CreateRenderPass(&_renderPass[RENDERPASS::MAIN_PASS], pass_desc);
+		RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
 
-		_swapChain = GSwapchain::Create_(m_device, m_context);
+		GTexture swapchain_color;
+		GTexture swapchain_depth;
+
+		RenderFunc::GetSwapchainColorBuffer(&_swapChain, &swapchain_color);
+		RenderFunc::GetSwapchainDepthBuffer(&_swapChain, &swapchain_depth);
 
 		GTexture* attachments[] = {
-			_swapChain->GetBackColorBuffer(),
-			_swapChain->GetBackDepthBuffer()
+			&swapchain_color,
+			&swapchain_depth
 		};
 
-		_framebuffer = GFramebuffer::Create_(
+
+		RenderFunc::CreateFramebuffer(
+			&_framebuffer,
 			2,
 			attachments,
-			_renderPass[RENDERPASS::MAIN_PASS],
+			&_renderPass[RENDERPASS::MAIN_PASS],
 			800,
 			600,
 			1,
-			_swapChain
+			&_swapChain
 		);
 
 		_camera = new PerspectiveCamera(
@@ -139,7 +147,7 @@ namespace trace {
 		rect.right = 800;
 		rect.bottom = 600;
 
-		_rect = rect;*/
+		_rect = rect;
 		
 
 		return result;
@@ -152,13 +160,7 @@ namespace trace {
 
 	bool Renderer::BeginFrame()
 	{
-		bool result = m_device->BeginFrame(_swapChain);
-		//if (result)
-		//{
-		//	m_device->BeginRenderPass(_renderPass, _framebuffer);
-		//	m_device->BindViewport(_viewPort);
-		//	m_device->BindRect(_rect);
-		//}
+		bool result = RenderFunc::BeginFrame(&g_device, &_swapChain);
 
 
 		return result;
@@ -174,9 +176,7 @@ namespace trace {
 
 	void Renderer::EndFrame()
 	{
-		//m_device->EndRenderPass(_renderPass);
-		m_device->EndFrame();
-		//_swapChain->Present();
+		RenderFunc::EndFrame(&g_device);
 	}
 
 
@@ -187,7 +187,7 @@ namespace trace {
 
 
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Renderer::OnEvent));
-		//EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
 		render_mode = {};
@@ -200,14 +200,15 @@ namespace trace {
 	{
 
 		// Temp-----------------------------
-		
-		/*delete _swapChain;
-		delete _framebuffer;
-		delete _renderPass[RENDERPASS::MAIN_PASS];
 
-		sky_pipeline.~Ref();
+
+		/*sky_pipeline.~Ref();
 
 		delete _camera;*/
+
+		RenderFunc::DestroySwapchain(&_swapChain);
+		RenderFunc::DestroyFramebuffer(&_framebuffer);
+		RenderFunc::DestroyRenderPass(&_renderPass[RENDERPASS::MAIN_PASS]);
 		
 		//----------------------------------
 
@@ -215,11 +216,8 @@ namespace trace {
 	void Renderer::ShutDown()
 	{
 
-		
-		g_device.ShutDown();
-		g_context.ShutDown();
-		/*m_device->ShutDown();
-		m_context->ShutDown();*/
+		RenderFunc::DestroyDevice(&g_device);
+		RenderFunc::DestroyContext(&g_context);
 
 	}
 
@@ -276,10 +274,7 @@ namespace trace {
 		case EventType::TRC_WND_RESIZE:
 		{
 			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-			/*_renderPass[RENDERPASS::MAIN_PASS]->m_desc.render_area = { 0.0f, 0.0f, (float)wnd->m_width, (float)wnd->m_height };
-
-			_swapChain->Resize(wnd->m_width, wnd->m_height);
-
+			RenderFunc::ResizeSwapchain(&_swapChain, wnd->m_width, wnd->m_height);
 			
 
 
@@ -292,22 +287,31 @@ namespace trace {
 			if (wnd->m_width == 0 || wnd->m_height == 0)
 				break;
 
-			delete _framebuffer;
+			RenderFunc::DestroyFramebuffer(&_framebuffer);
+			GTexture swapchain_color;
+			GTexture swapchain_depth;
+
+			RenderFunc::GetSwapchainColorBuffer(&_swapChain, &swapchain_color);
+			RenderFunc::GetSwapchainDepthBuffer(&_swapChain, &swapchain_depth);
+
 			GTexture* attachments[] = {
-			_swapChain->GetBackColorBuffer(),
-			_swapChain->GetBackDepthBuffer()
+				&swapchain_color,
+				&swapchain_depth
 			};
 
-			_framebuffer = GFramebuffer::Create_(
+			RenderFunc::CreateFramebuffer(
+				&_framebuffer,
 				2,
 				attachments,
-				_renderPass[RENDERPASS::MAIN_PASS],
+				&_renderPass[RENDERPASS::MAIN_PASS],
 				wnd->m_width,
 				wnd->m_height,
 				1,
-				_swapChain
+				&_swapChain
 			);
-			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));*/
+			_renderPass[RENDERPASS::MAIN_PASS].m_desc.render_area = { 0.0f, 0.0f, (float)wnd->m_width, (float)wnd->m_height };
+			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));
+
 			break;
 		}
 
@@ -317,7 +321,7 @@ namespace trace {
 
 	GRenderPass* Renderer::GetRenderPass(RENDERPASS render_pass)
 	{
-		return _renderPass[render_pass];
+		return &_renderPass[render_pass];
 	}
 
 	void Renderer::Render(float deltaTime)
@@ -328,9 +332,9 @@ namespace trace {
 			//Temp=====================
 			_camera->Update(deltaTime);
 			//=========================
-			m_device->BeginRenderPass(_renderPass[RENDERPASS::MAIN_PASS], _framebuffer);
-			m_device->BindViewport(_viewPort);
-			m_device->BindRect(_rect);
+			RenderFunc::BeginRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS], &_framebuffer);
+			RenderFunc::BindViewport(&g_device, _viewPort);
+			RenderFunc::BindRect(&g_device, _rect);
 
 
 			for (uint32_t i = 0; i < m_listCount; i++)
@@ -341,9 +345,9 @@ namespace trace {
 				}
 			}
 
-			m_device->EndRenderPass(_renderPass[RENDERPASS::MAIN_PASS]);
+			RenderFunc::EndRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS]);
 			EndFrame();
-			_swapChain->Present();
+			RenderFunc::PresentSwapchain(&_swapChain);
 		}
 		m_listCount = 0;
 	}
@@ -367,17 +371,17 @@ namespace trace {
 			Ref<MaterialInstance> _mi = _model->m_matInstance;
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
-			sp->SetData("projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
-			sp->SetData("view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
-			sp->SetData("view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
-			sp->SetData("model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
-			sp->SetData("rest", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &render_mode, sizeof(glm::ivec4));
-			_mi->Apply();
-			m_device->BindPipeline(sp.get());
-			m_device->BindVertexBuffer(_model->GetVertexBuffer());
-			m_device->BindIndexBuffer(_model->GetIndexBuffer());
+			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
+			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "rest", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &render_mode, sizeof(glm::ivec4));
+			RenderFunc::ApplyMaterial(_mi.get());
+			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
+			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
 
-			m_device->DrawIndexed(0, _model->GetIndexCount());
+			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
 		}
 
 	}
@@ -393,22 +397,24 @@ namespace trace {
 
 		Ref<GPipeline> sp = sky_pipeline;
 
-		sp->SetTextureData(
+		RenderFunc::SetPipelineTextureData(
+			sp.get(),
 			"CubeMap",
 			ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 			sky_box->GetCubeMap()
 		);
-		sp->SetData("projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
-		sp->SetData("view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
-		sp->SetData("view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
-		sp->Bind();
+		RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
+		RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
+		RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
+		RenderFunc::BindPipeline_(sp.get());
 
 		Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
-		m_device->BindPipeline(sp.get());
-		m_device->BindVertexBuffer(mod->GetVertexBuffer());
-		m_device->BindIndexBuffer(mod->GetIndexBuffer());
+		RenderFunc::BindPipeline(&g_device, sp.get());
+		RenderFunc::BindVertexBuffer(&g_device, mod->GetVertexBuffer());
+		RenderFunc::BindIndexBuffer(&g_device, mod->GetIndexBuffer());
 		
-		m_device->DrawIndexed(0, mod->GetIndexCount());
+		RenderFunc::DrawIndexed(&g_device, 0, mod->GetIndexCount());
+
 	}
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)

@@ -22,11 +22,11 @@ namespace trace {
 
 		static GTexture* Create_(TextureDesc description);
 
+		TextureDesc m_desc;
 	private:
 		GHandle m_renderHandle;
 
 	protected:
-		TextureDesc m_desc;
 
 	};
 

@@ -31,7 +31,6 @@ namespace trace {
 
 	MeshManager::MeshManager(uint32_t max_entries)
 	{
-		Init(max_entries);
 	}
 
 	MeshManager::~MeshManager()

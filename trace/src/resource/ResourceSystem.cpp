@@ -46,16 +46,16 @@ namespace trace {
 
 
 
-		//result = LoadDefaults();
+		result = LoadDefaults();
 		return result;
 	}
 	void ResourceSystem::ShutDown()
 	{
-		//m_meshManager->ShutDown();
-		//m_modelManager->ShutDown();
-		//m_materialManager->ShutDown();
-		//m_pipelineManager->ShutDown();
-		//m_textureManager->ShutDown();
+		m_meshManager->ShutDown();
+		m_modelManager->ShutDown();
+		m_materialManager->ShutDown();
+		m_pipelineManager->ShutDown();
+		m_textureManager->ShutDown();
 
 		SAFE_DELETE(m_materialManager, MaterialManager);
 		SAFE_DELETE(m_pipelineManager, PipelineManager);

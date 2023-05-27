@@ -76,6 +76,9 @@ public:
 	{
 		TRC_INFO("Sample Layer Attached");
 
+		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
+		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+
 	}
 
 	virtual void OnEvent(trace::Event* p_event) override
@@ -108,6 +111,12 @@ public:
 		{
 			TRC_INFO(" ------____----TRACE------______----");
 		}
+
+		Renderer* renderer = Renderer::get_instance();
+		CommandList cmd_list = renderer->BeginCommandList();
+		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
+		renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
+		renderer->SubmitCommandList(cmd_list);
 
 	}
 private:

@@ -1,36 +1,25 @@
 #include "pch.h"
 #include "Model.h"
 #include "glm/ext.hpp"
+#include "Renderutils.h"
 
 namespace trace {
 
 
 
 	Model::Model()
-		:m_vertexBuffer(nullptr),
-		m_indexBuffer(nullptr)
 	{
 	}
 
 	Model::Model(const std::vector<Vertex>& data, const std::vector<uint32_t> indices)
-		:m_vertexBuffer(nullptr),
-		m_indexBuffer(nullptr)
 	{
 		Init(data, indices);
 	}
 
 	Model::~Model()
 	{
-		if (m_vertexBuffer)
-		{
-			delete m_vertexBuffer;
-			m_vertexBuffer = nullptr;
-		}
-		if (m_indexBuffer)
-		{
-			delete m_indexBuffer;
-			m_indexBuffer = nullptr;
-		}
+		RenderFunc::DestroyBuffer(&m_vertexBuffer);
+		RenderFunc::DestroyBuffer(&m_indexBuffer);
 
 	}
 
@@ -45,7 +34,7 @@ namespace trace {
 		vertex_buffer_info.m_stide = sizeof(Vertex);
 		vertex_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
 
-		m_vertexBuffer = GBuffer::Create_(vertex_buffer_info);
+		RenderFunc::CreateBuffer(&m_vertexBuffer, vertex_buffer_info);
 
 		BufferInfo index_buffer_info;
 		index_buffer_info.m_data = m_indices.data();
@@ -54,7 +43,7 @@ namespace trace {
 		index_buffer_info.m_stide = sizeof(uint32_t);
 		index_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
 
-		m_indexBuffer = GBuffer::Create_(index_buffer_info);
+		RenderFunc::CreateBuffer(&m_indexBuffer, index_buffer_info);
 	}
 
 	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices)

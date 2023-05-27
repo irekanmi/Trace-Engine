@@ -110,6 +110,8 @@ namespace trace {
 		uint32_t m_width = 0;
 		uint32_t m_height = 0;
 
+		VkSampler m_sampler;
+
 		void* m_instance = nullptr;
 		void* m_device = nullptr;
 	};
@@ -132,6 +134,31 @@ namespace trace {
 #ifdef TRC_DEBUG_BUILD
 		VkDebugUtilsMessengerEXT m_debugutils;
 #endif
+	};
+
+	struct VKSwapChain
+	{
+		VkSwapchainKHR m_handle;
+		VkSurfaceFormatKHR m_format;
+		VKImage m_depthimage;
+		VkFormat m_depthFormat;
+
+		std::vector<VkImage> m_images;
+		std::vector<VkImageView> m_imageViews;
+
+		uint32_t image_count;
+		uint32_t m_currentImageIndex;
+		uint32_t m_width;
+		uint32_t m_height;
+		bool m_recreating;
+
+		//HACK: Find another way to solve problem of get a swapchain image
+		VKImage tempColor;
+
+
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
+
 	};
 
 	struct VKDeviceHandle
@@ -219,25 +246,26 @@ namespace trace {
 		eastl::vector<VkImageView> m_attachments = {};
 		VKHandle* m_instance = nullptr;
 		VKDeviceHandle* m_device = nullptr;
+
 	};
 
-
-	struct VKSwapChain
+	//Temp : fix the frame buffer structure, to prevent creating multiple strucuters the to hold the same type
+	struct Framebuffer_VK
 	{
-		VkSwapchainKHR m_handle;
-		VkSurfaceFormatKHR m_format;
-		VKImage m_depthimage;
-		VkFormat m_depthFormat;
-
-		std::vector<VkImage> m_images;
-		std::vector<VkImageView> m_imageViews;
-
-		uint32_t image_count;
-
+		std::vector<VKFrameBuffer> m_handle;
 		VKHandle* m_instance = nullptr;
-		void* m_device = nullptr;
-
+		VKDeviceHandle* m_device = nullptr;
 	};
+
+	struct VKMaterialData
+	{
+		VkDescriptorSet m_sets[3] = {};
+
+		void* m_instance;
+		void* m_device;
+	};
+
+
 
 
 }

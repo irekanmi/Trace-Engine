@@ -23,6 +23,12 @@ namespace vk {
 			return false;
 		}
 
+		if (context->GetRenderHandle()->m_internalData)
+		{
+			TRC_WARN("These handle is valid can't recreate the context ::Try to destroy and then create, -> {}", (const void*)context->GetRenderHandle()->m_internalData);
+			return false;
+		}
+
 		context->GetRenderHandle()->m_internalData = &g_Vkhandle;
 
 		trace::VKHandle* _handle =  (trace::VKHandle*)context->GetRenderHandle()->m_internalData;

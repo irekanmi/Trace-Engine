@@ -45,12 +45,15 @@ namespace trace {
 
 	private:
 		HashTable<TextureHash> m_hashTable;
-		char* m_textures = nullptr;
+		std::vector<GTexture> m_textures;
 		uint32_t m_textureUnits;
 		uint32_t m_textureTypeSize;
 		Texture_Ref default_diffuse_map;
 		Texture_Ref default_specular_map;
 		Texture_Ref default_normal_map;
+		GTexture default_diffuse_texture;
+		GTexture default_specular_texture;
+		GTexture default_normal_texture;
 
 	protected:
 

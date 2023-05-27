@@ -22,7 +22,7 @@ namespace trace {
 
 		return std::string();
 	}
-	std::vector<uint32_t> ShaderParser::glsl_to_spirv(std::string& glsl, ShaderStage shader_stage)
+	std::vector<uint32_t> ShaderParser::glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage)
 	{
 		shaderc::Compiler compiler;
 

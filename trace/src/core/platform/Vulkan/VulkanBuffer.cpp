@@ -107,7 +107,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!buffer)
 		{
@@ -115,9 +115,9 @@ namespace vk {
 			return false;
 		}
 
-		if (!buffer->GetRenderHandle()->m_internalData)
+		if (buffer->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_WARN("These handle is valid can't recreate the buffer ::Try to destroy and then create, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
 		}
 
@@ -173,7 +173,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!buffer)
 		{
@@ -205,7 +205,7 @@ namespace vk {
 
 		bool result = true;
 
-		TRC_INFO(__FUNCTION__);
+		
 
 		if (!buffer)
 		{

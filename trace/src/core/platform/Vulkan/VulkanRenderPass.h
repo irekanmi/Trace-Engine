@@ -28,3 +28,11 @@ namespace trace {
 	};
 
 }
+
+
+namespace vk {
+
+	bool __CreateRenderPass(trace::GRenderPass* render_pass, trace::RenderPassDescription desc);
+	bool __DestroyRenderPass(trace::GRenderPass* render_pass);
+
+}

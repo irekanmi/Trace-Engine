@@ -20,16 +20,16 @@ namespace trace {
 
 		void Init(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices);
 		uint32_t GetIndexCount() { return static_cast<uint32_t>(m_indices.size()); }
-		GBuffer* GetIndexBuffer() { return m_indexBuffer; }
-		GBuffer* GetVertexBuffer() { return m_vertexBuffer; }
+		GBuffer* GetIndexBuffer() { return &m_indexBuffer; }
+		GBuffer* GetVertexBuffer() { return &m_vertexBuffer; }
 
 
 		Ref<MaterialInstance> m_matInstance;
 	private:
 		std::vector<Vertex> m_vertices;
 		std::vector<uint32_t> m_indices;
-		GBuffer* m_vertexBuffer;
-		GBuffer* m_indexBuffer;
+		GBuffer m_vertexBuffer;
+		GBuffer m_indexBuffer;
 
 	protected:
 

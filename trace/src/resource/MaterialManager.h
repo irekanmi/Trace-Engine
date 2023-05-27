@@ -28,9 +28,8 @@ namespace trace {
 		static MaterialManager* s_instance;
 
 	private:
-		unsigned char* m_materials;
+		std::vector<MaterialInstance> m_materials;
 		uint32_t m_numEntries;
-		uint32_t m_matTypeSize;
 		HashTable<uint32_t> m_hashtable;
 
 	protected:

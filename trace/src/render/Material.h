@@ -29,18 +29,18 @@ namespace trace {
 		MaterialInstance();
 		virtual ~MaterialInstance();
 
-		virtual bool Init(Ref<GPipeline> pipeline, Material material) = 0;
-		virtual void Apply() = 0;
+		virtual bool Init(Ref<GPipeline> pipeline, Material material) { return false; };
+		virtual void Apply() {};
 
 		Ref<GPipeline> GetRenderPipline() { return m_renderPipeline; }
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
+		Ref<GPipeline> m_renderPipeline;
+		std::unordered_map<ShaderData, std::pair<void*, uint32_t>> m_shaderData;
+		Material m_material;
 	private:
 		GHandle m_renderHandle;
 	protected:
-		Ref<GPipeline> m_renderPipeline;
-		Material m_material;
-		std::unordered_map<ShaderData, std::pair<void*, uint32_t>> m_shaderData;
 	};
 }
