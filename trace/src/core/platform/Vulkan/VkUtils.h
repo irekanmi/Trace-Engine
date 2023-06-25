@@ -117,7 +117,7 @@ namespace vk {
 	VkFormat convertFmt(trace::Format format);
 	VkImageViewType convertImageViewType(trace::ImageType image_type);
 	VkImageType convertImageType(trace::ImageType image_type);
-	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
+	VkPrimitiveTopology convertTopology(trace::PRIMITIVETOPOLOGY topology);
 	VkPolygonMode convertPolygonMode(trace::FillMode fillmode);
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);
 	VkSamplerAddressMode convertAddressMode(trace::AddressMode address_mode);

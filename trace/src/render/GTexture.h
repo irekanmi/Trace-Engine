@@ -16,15 +16,14 @@ namespace trace {
 		GTexture(){};
 		virtual ~GTexture(){};
 
-		TextureDesc GetTextureDescription();
+		TextureDesc& GetTextureDescription();
+		void SetTextureDescription(TextureDesc& description) { m_desc = description; }
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
-		static GTexture* Create_(TextureDesc description);
-
-		TextureDesc m_desc;
 	private:
 		GHandle m_renderHandle;
+		TextureDesc m_desc;
 
 	protected:
 

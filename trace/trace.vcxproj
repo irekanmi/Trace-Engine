@@ -156,6 +156,7 @@
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\core\events\Events.h" />
@@ -204,6 +205,7 @@
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\Renderutils.h" />
+    <ClInclude Include="src\render\render_graph\RenderGraph.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
     <ClInclude Include="src\render\Transform.h" />
@@ -226,6 +228,7 @@
     <ClCompile Include="src\core\Layer.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
     <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
@@ -261,6 +264,7 @@
     <ClCompile Include="src\render\GFramebuffer.cpp" />
     <ClCompile Include="src\render\GHandle.cpp" />
     <ClCompile Include="src\render\GPipeline.cpp" />
+    <ClCompile Include="src\render\Graphics.cpp" />
     <ClCompile Include="src\render\GRenderpass.cpp" />
     <ClCompile Include="src\render\GShader.cpp" />
     <ClCompile Include="src\render\GSwapchain.cpp" />
@@ -271,6 +275,7 @@
     <ClCompile Include="src\render\PerspectiveCamera.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\Renderutils.cpp" />
+    <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />
     <ClCompile Include="src\render\Transform.cpp" />

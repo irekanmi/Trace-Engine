@@ -8,21 +8,18 @@
 
 namespace trace {
 
-	class TRACE_API GShader
+ 	class TRACE_API GShader
 	{
 	public:
 		GShader();
 		virtual ~GShader();
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
-
-		static GShader* Create_(std::string& src, ShaderStage stage);
-		static GShader* Create_(FileHandle& file);
-
-	public:
-		ShaderStage m_stage = ShaderStage::STAGE_NONE;
+		ShaderStage GetShaderStage() { return m_stage; }
+		void SetShaderStage(ShaderStage stage) { m_stage = stage; }
 
 	private:
+		ShaderStage m_stage = ShaderStage::STAGE_NONE;
 		GHandle m_renderHandle;
 	protected:
 	};

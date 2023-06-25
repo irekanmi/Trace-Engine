@@ -39,10 +39,10 @@ namespace trace {
 
 		void Shutdown();
 
-		eastl::vector<Layer*>::iterator begin() { return m_Layers.begin(); }
-		eastl::vector<Layer*>::iterator end() { return m_Layers.end(); }
+		std::vector<Layer*>::iterator begin() { return m_Layers.begin(); }
+		std::vector<Layer*>::iterator end() { return m_Layers.end(); }
 
-		eastl::vector<Layer*> m_Layers;
+		std::vector<Layer*> m_Layers;
 	private:
 		unsigned int m_index = 0;
 	protected:

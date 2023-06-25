@@ -5,6 +5,8 @@
 #include "vulkan/vulkan.h"
 #include "EASTL/vector.h"
 #include "glm/glm.hpp"
+#include <unordered_map>
+
 
 
 namespace trace {
@@ -16,8 +18,11 @@ namespace trace {
 #endif
 
 #define VK_NO_FLAGS 0
+#define VK_MAX_NUM_FRAMES 3
 
-
+	class RenderGraphPass;
+	class RenderGraph;
+	struct RenderGraphResource;
 	struct SwapchainInfo
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
@@ -85,11 +90,6 @@ namespace trace {
 		void* m_instance = nullptr;
 		void* m_device = nullptr;
 	};
-
-	
-
-	
-
 	
 	struct VKShader
 	{
@@ -177,17 +177,15 @@ namespace trace {
 
 		bool m_recreatingSwapcahin = false;
 
-		VKSwapChain m_swapChain;
-		VKRenderPass m_renderPass;
-
-
 		std::vector<VkSemaphore> m_imageAvailableSemaphores;
 		std::vector<VkSemaphore> m_queueCompleteSemaphores;
 
 		uint32_t m_numInFlightFence;
-		std::vector<VKFence> m_inFlightFence;
+		std::array<VKFence, VK_MAX_NUM_FRAMES> m_inFlightFence;
 
-		std::vector<VKFence*> m_imagesFence;
+		std::array<VKFence*, VK_MAX_NUM_FRAMES> m_imagesFence;
+
+		std::array<VkDescriptorPool, VK_MAX_NUM_FRAMES> m_frameDescriptorPool;
 
 		uint32_t m_frameBufferWidth;
 		uint32_t m_frameBufferHeight;
@@ -264,6 +262,45 @@ namespace trace {
 		void* m_instance;
 		void* m_device;
 	};
+
+	struct VKDrawData
+	{
+		VkDescriptorSet sets[3];
+		VkWriteDescriptorSet writes;
+	};
+
+	struct VKEvntPair
+	{
+		RenderGraphPass* pass = nullptr;
+		RenderGraphResource* resource = nullptr;
+		VkEvent evnt = VK_NULL_HANDLE;
+	};
+
+	struct VKRenderGraph
+	{
+		void* m_device = nullptr;
+		void* m_instance = nullptr;
+		std::vector<VKEvntPair> events;
+	};
+
+	struct VKRenderGraphPass
+	{
+		std::vector<VkEvent> wait_events;
+		std::vector<VkEvent> signal_events;
+		VKRenderPass physical_pass;
+		std::vector<VkImageMemoryBarrier> invalidate_image_barriers[VK_MAX_NUM_FRAMES];
+		std::vector<VkImageMemoryBarrier> flush_image_barriers[VK_MAX_NUM_FRAMES];
+		VkFramebuffer frame_buffers[VK_MAX_NUM_FRAMES];
+	};
+
+	struct VKRenderGraphResource
+	{
+		struct {
+			VKImage texture;
+			VKBuffer buffer;
+		} resource[VK_MAX_NUM_FRAMES];
+	};
+
 
 
 

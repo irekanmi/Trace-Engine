@@ -51,7 +51,7 @@ namespace trace {
 			{
 				if (tex.m_id == INVALID_ID)
 					continue;
-				TRC_DEBUG(tex.m_id);
+				TRC_DEBUG("Unloaded texture  id:{}", tex.m_id);
 				RenderFunc::DestroyTexture(&tex);
 				tex.~GTexture();
 			}
@@ -142,15 +142,16 @@ namespace trace {
 		uint32_t i = 0;
 		for (GTexture& tex : m_textures)
 		{
-			if (tex.m_id != INVALID_ID)
-				continue;
-
-			RenderFunc::CreateTexture(&tex, texture_desc);
-			tex.m_id = i;
-			TextureHash _hash;
-			_hash._id = i;
-			m_hashTable.Set(name, _hash);
-			return true;
+			if (tex.m_id == INVALID_ID)
+			{
+				RenderFunc::CreateTexture(&tex, texture_desc);
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
+			}
+	
 			i++;
 		}
 
@@ -190,15 +191,15 @@ namespace trace {
 		uint32_t i = 0;
 		for (GTexture& tex : m_textures)
 		{
-			if (tex.m_id != INVALID_ID)
-				continue;
-
-			RenderFunc::CreateTexture(&tex, desc);
-			tex.m_id = i;
-			TextureHash _hash;
-			_hash._id = i;
-			m_hashTable.Set(name, _hash);
-			return true;
+			if (tex.m_id == INVALID_ID)
+			{
+				RenderFunc::CreateTexture(&tex, desc);
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
+			}
 			i++;
 		}
 
@@ -213,6 +214,7 @@ namespace trace {
 			TRC_WARN("Texture has already being loaded {}", name);
 			return true;
 		}
+		desc.m_numLayers = static_cast<uint32_t>(filenames.size());
 
 		for (uint32_t i = 0; i < desc.m_numLayers; i++)
 		{
@@ -240,15 +242,15 @@ namespace trace {
 		uint32_t i = 0;
 		for (GTexture& tex : m_textures)
 		{
-			if (tex.m_id != INVALID_ID)
-				continue;
-
-			RenderFunc::CreateTexture(&tex, desc);
-			tex.m_id = i;
-			TextureHash _hash;
-			_hash._id = i;
-			m_hashTable.Set(name, _hash);
-			return true;
+			if (tex.m_id == INVALID_ID)
+			{
+				RenderFunc::CreateTexture(&tex, desc);
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
+			}
 			i++;
 		}
 

@@ -8,7 +8,6 @@ using namespace trace;
 #include "glm/gtc/matrix_transform.hpp"
 //========================
 
-trace::FileHandle g_fileTest;
 
 class SampleOverLay : public trace::Layer
 {
@@ -77,8 +76,38 @@ public:
 		TRC_INFO("Sample Layer Attached");
 
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
-		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 
+		TextureDesc sky = {};
+		sky.m_addressModeU = sky.m_addressModeV = sky.m_addressModeW = AddressMode::REPEAT;
+		sky.m_format = Format::R8G8B8A8_SRBG;
+		sky.m_image_type = ImageType::CUBE_MAP;
+		sky.m_usage = UsageFlag::DEFAULT;
+		sky.m_minFilterMode = sky.m_magFilterMode = FilterMode::LINEAR;
+		sky.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+
+		std::vector<std::string> sky_images = {
+			"sky_right.jpg",
+			"sky_left.jpg",
+			"sky_top.jpg",
+			"sky_bottom.jpg",
+			"sky_front.jpg",
+			"sky_back.jpg"
+		};
+
+		Ref<GTexture> sky_texture;
+		sky_texture = ResourceSystem::get_instance()->LoadTexture(sky_images, sky, "bright_sky");
+
+		sky_box = SkyBox(sky_texture);
+
+		M_sponzaScene.SetScale(glm::vec3(0.15f));
+		M_falcon.Translate(glm::vec3(3.0f, 7.5f, 0.0f));
+		M_boxStack.Translate(glm::vec3(3.0f, 17.5f, 0.0f));
+		M_Test.Translate(glm::vec3(13.0f, 17.5f, 0.0f));
+		M_falcon.SetScale(glm::vec3(3.0f));
+		M_boxStack.SetScale(glm::vec3(5.5f));
+		M_Test.SetScale(glm::vec3(7.5f));
 	}
 
 	virtual void OnEvent(trace::Event* p_event) override
@@ -112,10 +141,15 @@ public:
 			TRC_INFO(" ------____----TRACE------______----");
 		}
 
+		M_boxStack.Rotate(12.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+
 		Renderer* renderer = Renderer::get_instance();
 		CommandList cmd_list = renderer->BeginCommandList();
+		//renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
-		renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
+		renderer->DrawMesh(cmd_list, _boxStack, M_Test.GetLocalMatrix());
+		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
+		renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 
 	}
@@ -130,6 +164,7 @@ private:
 	Transform M_sponzaScene;
 	Transform M_falcon;
 	Transform M_boxStack;
+	Transform M_Test;
 	SkyBox sky_box;
 	//=======================
 protected:

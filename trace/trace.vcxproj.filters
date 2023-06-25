@@ -247,6 +247,8 @@
     <ClInclude Include="src\render\Transform.h" />
     <ClInclude Include="src\render\GHandle.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
+    <ClInclude Include="src\render\render_graph\RenderGraph.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -425,5 +427,8 @@
     </ClCompile>
     <ClCompile Include="src\render\Transform.cpp" />
     <ClCompile Include="src\render\GHandle.cpp" />
+    <ClCompile Include="src\render\Graphics.cpp" />
+    <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
   </ItemGroup>
 </Project>

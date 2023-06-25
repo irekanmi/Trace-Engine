@@ -5,14 +5,10 @@
 #include "GContext.h"
 #include "core/Enums.h"
 #include "core/io/Logging.h"
-#include "core/platform/OpenGL/OpenGLContext.h"
-#include "core/platform/OpenGL/OpenGLDevice.h"
-#include "core/platform/Vulkan/VKDevice.h"
 #include "resource/ResourceSystem.h"
 #include "render/PerspectiveCamera.h"
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
-#include "GContext.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -68,87 +64,125 @@ namespace trace {
 		RenderFunc::CreateContext(&g_context);
 		result = RenderFunc::CreateDevice(&g_device);
 		RenderFunc::CreateDevice(&g_device);
-		AttachmentInfo color_attach;
-		color_attach.attachmant_index = 0;
-		color_attach.attachment_format = Format::R8G8B8A8_SRBG;
-		color_attach.initial_format = TextureFormat::UNKNOWN;
-		color_attach.final_format = TextureFormat::PRESENT;
-		color_attach.is_depth = false;
-		color_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
-		color_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
+		{
+			AttachmentInfo color_attach;
+			color_attach.attachmant_index = 0;
+			color_attach.attachment_format = Format::R8G8B8A8_SRBG;
+			color_attach.initial_format = TextureFormat::UNKNOWN;
+			color_attach.final_format = TextureFormat::PRESENT;
+			color_attach.is_depth = false;
+			color_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
+			color_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
 
 
-		AttachmentInfo depth_attach;
-		depth_attach.attachmant_index = 1;
-		depth_attach.attachment_format = Format::D32_SFLOAT_S8_SUINT;
-		depth_attach.initial_format = TextureFormat::UNKNOWN;
-		depth_attach.final_format = TextureFormat::DEPTH_STENCIL;
-		depth_attach.is_depth = true;
-		depth_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
-		depth_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
+			AttachmentInfo depth_attach;
+			depth_attach.attachmant_index = 1;
+			depth_attach.attachment_format = Format::D32_SFLOAT_S8_SUINT;
+			depth_attach.initial_format = TextureFormat::UNKNOWN;
+			depth_attach.final_format = TextureFormat::DEPTH_STENCIL;
+			depth_attach.is_depth = true;
+			depth_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
+			depth_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
 
-		AttachmentInfo att_infos[] = {
-			color_attach,
-			depth_attach
-		};
+			AttachmentInfo att_infos[] = {
+				color_attach,
+				depth_attach
+			};
 
-		SubPassDescription subpass_desc;
-		subpass_desc.attachment_count = 2;
-		subpass_desc.attachments = att_infos;
+			SubPassDescription subpass_desc;
+			subpass_desc.attachment_count = 2;
+			subpass_desc.attachments = att_infos;
 
-		RenderPassDescription pass_desc;
-		pass_desc.subpass_count = 1;
-		pass_desc.subpasses = &subpass_desc;
-		pass_desc.render_area = { 0, 0, 800, 600 };
-		pass_desc.clear_color = { .0f, .01f, 0.015f, 1.0f };
-		pass_desc.depth_value = 1.0f;
-		pass_desc.stencil_value = 0;
-
-
-		RenderFunc::CreateRenderPass(&_renderPass[RENDERPASS::MAIN_PASS], pass_desc);
-		RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
-
-		GTexture swapchain_color;
-		GTexture swapchain_depth;
-
-		RenderFunc::GetSwapchainColorBuffer(&_swapChain, &swapchain_color);
-		RenderFunc::GetSwapchainDepthBuffer(&_swapChain, &swapchain_depth);
-
-		GTexture* attachments[] = {
-			&swapchain_color,
-			&swapchain_depth
-		};
+			RenderPassDescription pass_desc;
+			pass_desc.subpass_count = 1;
+			pass_desc.subpasses = &subpass_desc;
+			pass_desc.render_area = { 0, 0, 800, 600 };
+			pass_desc.clear_color = { .0f, .01f, 0.015f, 1.0f };
+			pass_desc.depth_value = 1.0f;
+			pass_desc.stencil_value = 0;
 
 
-		RenderFunc::CreateFramebuffer(
-			&_framebuffer,
-			2,
-			attachments,
-			&_renderPass[RENDERPASS::MAIN_PASS],
-			800,
-			600,
-			1,
-			&_swapChain
-		);
+			RenderFunc::CreateRenderPass(&_renderPass[RENDERPASS::MAIN_PASS], pass_desc);
+			RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
 
-		_camera = new PerspectiveCamera(
-			glm::vec3(0.0f, 0.0f, 3.0f),
-			glm::vec3(0.0f, 0.0f, -1.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f),
-			((float)800.0f) / ((float)600.0f),
-			45.0f,
-			0.1f,
-			1500.0f
-		);
-		_viewPort.width = 800.0f;
-		_viewPort.height = 600.0f;
-		Rect2D rect;
-		rect.top = rect.left = 0;
-		rect.right = 800;
-		rect.bottom = 600;
+			GTexture swapchain_color;
+			GTexture swapchain_depth;
 
-		_rect = rect;
-		
+			RenderFunc::GetSwapchainColorBuffer(&_swapChain, &swapchain_color);
+			RenderFunc::GetSwapchainDepthBuffer(&_swapChain, &swapchain_depth);
+
+			GTexture* attachments[] = {
+				&swapchain_color,
+				&swapchain_depth
+			};
+
+
+			RenderFunc::CreateFramebuffer(
+				&_framebuffer,
+				2,
+				attachments,
+				&_renderPass[RENDERPASS::MAIN_PASS],
+				800,
+				600,
+				1,
+				&_swapChain
+			);
+
+			_camera = new PerspectiveCamera(
+				glm::vec3(36.186146f, 38.094185f, -19.778137f),
+				glm::vec3(-0.92247f, -0.23771466f, 0.30420545f),
+				glm::vec3(0.0f, 1.0f, 0.0f),
+				((float)800.0f) / ((float)600.0f),
+				45.0f,
+				0.1f,
+				1500.0f
+			);
+			_viewPort.width = 800.0f;
+			_viewPort.height = 600.0f;
+			Rect2D rect;
+			rect.top = rect.left = 0;
+			rect.right = 800;
+			rect.bottom = 600;
+
+			_rect = rect;
+		}
+
+		{
+			auto pass = test_graph.AddPass("single_pass", GPU_QUEUE::GRAPHICS);
+			TextureDesc depth = {};
+			depth.m_addressModeU = depth.m_addressModeV = depth.m_addressModeW = AddressMode::REPEAT;
+			depth.m_attachmentType = AttachmentType::DEPTH;
+			depth.m_flag = BindFlag::DEPTH_STENCIL_BIT;
+			depth.m_format = Format::D32_SFLOAT_S8_SUINT;
+			depth.m_width = 800;
+			depth.m_height = 600;
+			depth.m_minFilterMode = depth.m_magFilterMode = FilterMode::LINEAR;
+			depth.m_mipLevels = depth.m_numLayers = 1;
+			depth.m_usage = UsageFlag::DEFAULT;
+			pass->SetSwapchainOutput("final_res", &_swapChain);
+
+			pass->SetDepthStencilOutput("depth", depth);
+
+			pass->SetRunCB([&](std::vector<RenderGraphResource*>& inputs)
+				{
+					RenderFunc::BindViewport(&g_device, _viewPort);
+					RenderFunc::BindRect(&g_device, _rect);
+
+
+					for (uint32_t i = 0; i < m_listCount; i++)
+					{
+						for (Command& cmd : m_cmdList[i]._commands)
+						{
+							cmd.func(cmd.params);
+						}
+					}
+				});
+
+			test_graph.SetFinalResourceOutput("final_res");
+			test_graph.SetRenderer(this);
+			test_graph.Compile();
+
+		}
 
 		return result;
 	}
@@ -192,6 +226,8 @@ namespace trace {
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
 		render_mode = {};
 
+		sky_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
+
 		//---------------------------------------------------------------------------------------------
 
 	}
@@ -201,10 +237,11 @@ namespace trace {
 
 		// Temp-----------------------------
 
+		test_graph.Destroy();
+		sky_pipeline.~Ref();
+		
 
-		/*sky_pipeline.~Ref();
-
-		delete _camera;*/
+		delete _camera;
 
 		RenderFunc::DestroySwapchain(&_swapChain);
 		RenderFunc::DestroyFramebuffer(&_framebuffer);
@@ -267,6 +304,19 @@ namespace trace {
 			{
 				render_mode.x = 5;
 			}
+			else if (release->m_keycode == Keys::KEY_C)
+			{
+				TRC_DEBUG(
+					"Position: x:{}, y:{}, z:{}\n \tLook Direction: x:{}, y:{}, z:{}", 
+					_camera->GetPosition().x, 
+					_camera->GetPosition().y, 
+					_camera->GetPosition().z, 
+					_camera->GetLookDir().x,
+					_camera->GetLookDir().y,
+					_camera->GetLookDir().z
+				);
+			}
+
 
 			break;
 		}
@@ -332,20 +382,23 @@ namespace trace {
 			//Temp=====================
 			_camera->Update(deltaTime);
 			//=========================
-			RenderFunc::BeginRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS], &_framebuffer);
-			RenderFunc::BindViewport(&g_device, _viewPort);
-			RenderFunc::BindRect(&g_device, _rect);
+			//RenderFunc::BeginRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS], &_framebuffer);
+			//RenderFunc::BindViewport(&g_device, _viewPort);
+			//RenderFunc::BindRect(&g_device, _rect);
+			//
+			//
+			//for (uint32_t i = 0; i < m_listCount; i++)
+			//{
+			//	for (Command& cmd : m_cmdList[i]._commands)
+			//	{
+			//		cmd.func(cmd.params);
+			//	}
+			//}
+			//
+			//RenderFunc::EndRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS]);
 
+			test_graph.Execute();
 
-			for (uint32_t i = 0; i < m_listCount; i++)
-			{
-				for (Command& cmd : m_cmdList[i]._commands)
-				{
-					cmd.func(cmd.params);
-				}
-			}
-
-			RenderFunc::EndRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS]);
 			EndFrame();
 			RenderFunc::PresentSwapchain(&_swapChain);
 		}
@@ -396,6 +449,7 @@ namespace trace {
 		scene_data.projection = _camera->GetProjectionMatix();
 
 		Ref<GPipeline> sp = sky_pipeline;
+		RenderFunc::BindPipeline_(sp.get());
 
 		RenderFunc::SetPipelineTextureData(
 			sp.get(),
@@ -406,7 +460,6 @@ namespace trace {
 		RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
 		RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 		RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
-		RenderFunc::BindPipeline_(sp.get());
 
 		Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
 		RenderFunc::BindPipeline(&g_device, sp.get());

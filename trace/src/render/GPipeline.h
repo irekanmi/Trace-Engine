@@ -36,9 +36,6 @@ namespace trace {
 		virtual void Shutdown() {};
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
-
-		static GPipeline* Create_(PipelineStateDesc desc);
-
 		HashTable<uint32_t> _hashTable;
 		std::vector<UniformMetaData> Scene_uniforms = {};
 		PipelineStateDesc m_desc;

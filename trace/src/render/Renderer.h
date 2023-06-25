@@ -16,11 +16,13 @@
 #include "GSwapchain.h"
 #include "SkyBox.h"
 #include "GContext.h"
+#include "render_graph/RenderGraph.h"
 //----------------------------------------
 
 
 namespace trace {
 
+	class RenderGraph;
 
 	class TRACE_API Renderer : public Object
 	{
@@ -66,6 +68,7 @@ namespace trace {
 		Rect2D _rect;
 		Camera* _camera;
 		glm::ivec4 render_mode;
+		RenderGraph test_graph;
 		//------------------------------------
 	private:
 		void draw_mesh(CommandParams params);
@@ -78,6 +81,8 @@ namespace trace {
 		GDevice g_device;
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;
+
+		friend RenderGraph;
 
 	protected:
 

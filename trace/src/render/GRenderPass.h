@@ -14,9 +14,6 @@ namespace trace {
 		virtual ~GRenderPass();
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
-
-		static GRenderPass* Create_(RenderPassDescription desc);
-
 	public:
 		RenderPassDescription m_desc;
 

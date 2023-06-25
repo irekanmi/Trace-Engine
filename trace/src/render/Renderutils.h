@@ -13,9 +13,17 @@ namespace trace {
 	class GPipeline;
 	class GFramebuffer;
 	class MaterialInstance;
+	class RenderGraph;
+	class RenderGraphPass;
 	struct Material;
 	struct BufferInfo;
 	struct RenderPassDescription;
+
+	struct GeometryDraw
+	{
+		GeometryDraw& SetDrawData(void* data, uint32_t size);
+		GeometryDraw& SetDrawTexture(GTexture* texture);
+	};
 
 	void AutoFillPipelineDesc(PipelineStateDesc& desc, bool input_layout = true, bool raterizer_state = true, bool depth_sten_state = true, bool color_blend_state = true, bool view_port = true, bool scissor = true, bool render_pass = true, bool primitive_topology = true);
 	bool operator ==(ShaderResourceBinding lhs, ShaderResourceBinding rhs);
@@ -44,6 +52,8 @@ namespace trace {
 	typedef bool (*__EndRenderPass)(GDevice*,GRenderPass*);
 	typedef bool (*__BeginFrame)(GDevice*,GSwapchain*);
 	typedef bool (*__EndFrame)(GDevice*);
+	typedef bool (*__OnDrawStart)(GDevice*, GPipeline*);
+	typedef bool (*__OnDrawEnd)(GDevice*, GPipeline*);
 	// -----------------------
 
 	// Buffers ----------------
@@ -96,6 +106,15 @@ namespace trace {
 	typedef bool (*__DestroyTexture)(GTexture* );
 	//----------------------------
 
+	// RenderGraph ----------------
+	typedef bool (*__BuildRenderGraph)(GDevice*, RenderGraph*);
+	typedef bool (*__DestroyRenderGraph)(GDevice*, RenderGraph*);
+	typedef bool (*__BeginRenderGraphPass)(RenderGraph*, RenderGraphPass* );
+	typedef bool (*__EndRenderGraphPass)(RenderGraph*, RenderGraphPass* );
+	typedef bool (*__BeginRenderGraph)(RenderGraph* );
+	typedef bool (*__EndRenderGraph)(RenderGraph* );
+	//------------------------------
+
 
 	typedef bool (*__ValidateHandle)(GHandle*);
 
@@ -132,6 +151,8 @@ namespace trace {
 		static bool EndRenderPass(GDevice* device, GRenderPass* render_pass);
 		static bool BeginFrame(GDevice* device, GSwapchain* swapchain);
 		static bool EndFrame(GDevice* device);
+		static bool OnDrawStart(GDevice* device, GPipeline* pipeline);
+		static bool OnDrawEnd(GDevice* device, GPipeline* pipeline);
 
 
 		static bool CreateBuffer(GBuffer* buffer, BufferInfo buffer_info);
@@ -169,6 +190,13 @@ namespace trace {
 		static bool CreateTexture(GTexture* texture, TextureDesc desc);
 		static bool DestroyTexture(GTexture* texture);
 
+		static bool BuildRenderGraph(GDevice* device, RenderGraph* render_graph);
+		static bool DestroyRenderGraph(GDevice* device, RenderGraph* render_graph);
+		static bool BeginRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass);
+		static bool EndRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass);
+		static bool BeginRenderGraph(RenderGraph* render_graph);
+		static bool EndRenderGraph(RenderGraph* render_graph);
+
 		static bool ValidateHandle(GHandle* handle);
 
 	private:
@@ -193,6 +221,8 @@ namespace trace {
 		static __EndRenderPass _endRenderPass;
 		static __BeginFrame _beginFrame;
 		static __EndFrame _endFrame;
+		static __OnDrawStart _onDrawStart;
+		static __OnDrawEnd _onDrawEnd;
 
 		static __CreateBuffer _createBuffer;
 		static __DestroyBuffer _destroyBuffer;
@@ -227,6 +257,13 @@ namespace trace {
 
 		static __CreateTexture _createTexture;
 		static __DestroyTexture _destroyTexture;
+
+		static __BuildRenderGraph _buildRenderGraph;
+		static __DestroyRenderGraph _destroyRenderGraph;
+		static __BeginRenderGraphPass _beginRenderGraphPass;
+		static __EndRenderGraphPass _endRenderGraphPass;
+		static __BeginRenderGraph _beginRenderGraph;
+		static __EndRenderGraph _endRenderGraph;
 
 		static __ValidateHandle _validateHandle;
 

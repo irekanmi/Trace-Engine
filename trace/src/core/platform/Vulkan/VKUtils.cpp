@@ -15,33 +15,7 @@ struct PhyScr
 	uint32_t score;
 };
 
-/* 
 
-		createInstance();	|_/
-		setupDebugMessenger();	|_/
-		createSurface();	|_/
-		pickPhysicalDevice();	|_/
-		createLogicalDevice();	|_/
-		createSwapChain();	|_/
-		createImageViews(); |_/
-		createRenderpass(); |_/
-		createDescriptorSetLayout();
-		createGraphicsPipeline(); |_/
-		createDepthResources();	|_/
-		createFramebuffers(); |_/
-		createCommandPool(); |_/
-		createTextureImage();
-		createTextureImageView();
-		createTextureSampler();
-		createVertexBuffers(); |_/
-		createIndexBuffer(); |_/
-		createUniformBuffers();
-		createDescriptorPool();
-		createDescriptorSet();
-		createCommandBuffer(); |_/
-		createSyncObjects(); |_/
-
-*/
 
 static bool FindDepthFormat(trace::VKDeviceHandle* device)
 {
@@ -1348,11 +1322,12 @@ namespace vk {
 	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, eastl::vector<trace::VKCommmandBuffer>& buffers)
 	{
 
+		//TODO: Find a way to provide number of avaliable swapchain images
 		if (device->m_graphicsCommandBuffers.empty())
 		{
-			buffers.resize(device->m_swapChain.image_count);
+			buffers.resize(3);
 
-			for (uint32_t i = 0; i < device->m_swapChain.image_count; i++)
+			for (uint32_t i = 0; i < 3; i++)
 			{
 				_AllocateCommandBuffer(device, command_pool, &buffers[i]);
 			}
@@ -1360,9 +1335,10 @@ namespace vk {
 		else
 		{
 			device->m_graphicsCommandBuffers.clear();
-			buffers.resize(device->m_swapChain.image_count);
+			buffers.resize(3);
 
-			for (uint32_t i = 0; i < device->m_swapChain.image_count; i++)
+
+			for (uint32_t i = 0; i < 3; i++)
 			{
 				_AllocateCommandBuffer(device, command_pool, &buffers[i]);
 			}
@@ -2072,274 +2048,6 @@ namespace vk {
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4096}
 		};
 
-		/*if (desc.vertex_shader != nullptr)
-		{
-			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.vertex_shader);
-			spirv_cross::Compiler compiler(shader->m_handle.m_code);
-
-			auto resources = compiler.get_shader_resources();
-
-
-
-			for (auto& resource : resources.uniform_buffers)
-			{
-				auto type = compiler.get_type(resource.type_id);
-				size_t size = compiler.get_declared_struct_size(type);
-				uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-
-				std::cout << "Name: " << resource.name << std::endl;
-				std::cout << "Size: " << size << std::endl;
-				std::cout << "Set: " << set << std::endl;
-				std::cout << "Binding: " << binding << std::endl;
-
-				VkDescriptorSetLayoutBinding bind = {};
-				bind.binding = binding;
-				bind.descriptorCount = 1;
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				bind.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = 1 * 3;
-				pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-
-				if (!type.array.empty())
-				{
-					std::cout << "Array size: " << type.array[0] << std::endl;
-					bind.descriptorCount = type.array[0];
-					pool_size.descriptorCount = type.array[0] * 3;
-					size = size * type.array[0];
-				}
-
-
-				switch (set)
-				{
-				case 0:
-				{
-
-					SceneGlobalData_bindings.push_back(bind);
-					SceneGlobalData_poolSizes.push_back(pool_size);
-
-					Scene_buffersSizes[bind.binding] = size;
-					pipeline->Scene_bindings[bind.binding] = bind;
-					break;
-				}
-				}
-
-				std::cout << std::endl;
-
-			}
-
-			for (auto& resource : resources.sampled_images)
-			{
-				auto type = compiler.get_type(resource.type_id);
-				uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-
-				std::cout << "Name: " << resource.name << std::endl;
-				std::cout << "Set: " << set << std::endl;
-				std::cout << "Binding: " << binding << std::endl;
-
-				VkDescriptorSetLayoutBinding bind = {};
-				bind.binding = binding;
-				bind.descriptorCount = 1;
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				bind.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = 1 * 3;
-				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-
-				if (!type.array.empty())
-				{
-					std::cout << "Array size: " << type.array[0] << std::endl;
-					bind.descriptorCount = type.array[0];
-					pool_size.descriptorCount = type.array[0] * 3;
-				}
-
-
-				switch (set)
-				{
-				case 0:
-				{
-
-					SceneGlobalData_bindings.push_back(bind);
-					SceneGlobalData_poolSizes.push_back(pool_size);
-
-					pipeline->Scene_bindings[bind.binding] = bind;
-					break;
-				}
-				}
-
-				std::cout << std::endl;
-
-			}
-
-
-
-
-		}
-
-
-		if (desc.pixel_shader != nullptr)
-		{
-			trace::VulkanShader* shader = reinterpret_cast<trace::VulkanShader*>(desc.pixel_shader);
-			spirv_cross::Compiler compiler(shader->m_handle.m_code);
-
-			auto resources = compiler.get_shader_resources();
-
-
-			for (auto& resource : resources.uniform_buffers)
-			{
-				auto type = compiler.get_type(resource.type_id);
-				size_t size = compiler.get_declared_struct_size(type);
-				uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-
-				std::cout << "Name: " << resource.name << std::endl;
-				std::cout << "Size: " << size << std::endl;
-				std::cout << "Set: " << set << std::endl;
-				std::cout << "Binding: " << binding << std::endl;
-
-				VkDescriptorSetLayoutBinding bind = {};
-				bind.binding = binding;
-				bind.descriptorCount = 1;
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				bind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = 1 * 3;
-				pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-
-				if (!type.array.empty())
-				{
-					std::cout << "Array size: " << type.array[0] << std::endl;
-					bind.descriptorCount = type.array[0];
-					pool_size.descriptorCount = type.array[0] * 3;
-					size = size * type.array[0];
-				}
-
-
-				switch (set)
-				{
-				case 0:
-				{
-
-					SceneGlobalData_bindings.push_back(bind);
-					SceneGlobalData_poolSizes.push_back(pool_size);
-
-					Scene_buffersSizes[bind.binding] = size;
-					pipeline->Scene_bindings[bind.binding] = bind;
-					break;
-				}
-				}
-				std::cout << std::endl;
-
-			}
-
-			for (auto& resource : resources.sampled_images)
-			{
-				auto type = compiler.get_type(resource.type_id);
-				uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-
-				std::cout << "Name: " << resource.name << std::endl;
-				std::cout << "Set: " << set << std::endl;
-				std::cout << "Binding: " << binding << std::endl;
-
-				VkDescriptorSetLayoutBinding bind = {};
-				bind.binding = binding;
-				bind.descriptorCount = 1;
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				bind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-				VkDescriptorPoolSize pool_size = {};
-				pool_size.descriptorCount = 1 * 3;
-				pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-
-				if (!type.array.empty())
-				{
-					std::cout << "Array size: " << type.array[0] << std::endl;
-					bind.descriptorCount = type.array[0];
-					pool_size.descriptorCount = type.array[0] * 3;
-				}
-
-
-				switch (set)
-				{
-				case 0:
-				{
-
-					SceneGlobalData_bindings.push_back(bind);
-					SceneGlobalData_poolSizes.push_back(pool_size);
-
-					pipeline->Scene_bindings[bind.binding] = bind;
-					break;
-				}
-				}
-				std::cout << std::endl;
-
-			}
-
-
-
-		}
-
-		if (!SceneGlobalData_bindings.empty())
-		{
-
-			VkDescriptorSetLayoutCreateInfo _info = {};
-			_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			_info.bindingCount = SceneGlobalData_bindings.size();
-			_info.pBindings = SceneGlobalData_bindings.data();
-
-			result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Scene_layout);
-
-			VkDescriptorPoolCreateInfo pool_info = {};
-			pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			pool_info.maxSets = 3;
-			pool_info.poolSizeCount = SceneGlobalData_poolSizes.size();
-			pool_info.pPoolSizes = SceneGlobalData_poolSizes.data();
-
-			result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
-
-			VkDescriptorSetLayout test[3] = {
-				pipeline->Scene_layout,
-				pipeline->Scene_layout,
-				pipeline->Scene_layout
-			};
-
-			VkDescriptorSetAllocateInfo alloc_info = {};
-			alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			alloc_info.descriptorPool = pipeline->Scene_pool;
-			alloc_info.descriptorSetCount = 3;
-			alloc_info.pSetLayouts = test;
-
-
-			result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Scene_sets);
-
-			for (uint32_t i = 0; i < SceneGlobalData_bindings.size(); i++)
-			{
-				VkDescriptorSetLayoutBinding& bind = SceneGlobalData_bindings[i];
-
-				switch (bind.descriptorType)
-				{
-
-				case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-				{
-					createBuffer(instance, device, Scene_buffersSizes[bind.binding], VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pipeline->Scene_buffers[bind.binding].m_handle, pipeline->Scene_buffers[bind.binding].m_memory);
-					break;
-				}
-
-				}
-			}
-
-
-			//===============================================================
-
-			
-
-		}*/
 
 		
 
@@ -2395,17 +2103,6 @@ namespace vk {
 					last_stage = desc.resource_bindings[i].resource_stage;
 				}
 			}
-			//if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-			//{
-			//	if (bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
-			//	{ }
-			//	else
-			//	{
-			//		Local_bindings.push_back(bind);
-			//		bd = bind;
-			//		last_stage = desc.resource_bindings[i].resource_stage;
-			//	}
-			//}
 		}
 
 		ranges = processShaderLocalData(_local_binds);
@@ -2484,42 +2181,6 @@ namespace vk {
 
 				//===============================================================
 			}
-			//if (!Local_bindings.empty())
-			//{
-			//	VkDescriptorSetLayoutCreateInfo _info = {};
-			//	_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			//	_info.bindingCount = static_cast<uint32_t>(Local_bindings.size());
-			//	_info.pBindings = Local_bindings.data();
-			//
-			//	result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Local_layout);
-			//
-			//	VkDescriptorPoolCreateInfo pool_info = {};
-			//	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			//	pool_info.maxSets = 1000 * pool_sizes_count;
-			//	pool_info.poolSizeCount = pool_sizes_count;
-			//	pool_info.pPoolSizes = pool_sizes;
-			//
-			//	result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Local_pool);
-			//
-			//	VkDescriptorSetLayout test[3] = {
-			//		pipeline->Local_layout,
-			//		pipeline->Local_layout,
-			//		pipeline->Local_layout
-			//	};
-			//
-			//	VkDescriptorSetAllocateInfo alloc_info = {};
-			//	alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			//	alloc_info.descriptorPool = pipeline->Local_pool;
-			//	alloc_info.descriptorSetCount = 3;
-			//	alloc_info.pSetLayouts = test;
-			//
-			//
-			//	result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Local_sets);
-			//	_layouts[set_layout_count++] = pipeline->Local_layout;
-			//
-			//	//===============================================================
-			//}
-			//
 
 		}
 
@@ -2654,18 +2315,18 @@ namespace vk {
 		return VK_IMAGE_TYPE_2D;
 	}
 
-	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology)
+	VkPrimitiveTopology convertTopology(trace::PRIMITIVETOPOLOGY topology)
 	{
 		VkPrimitiveTopology result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 		switch (topology)
 		{
-		case trace::PrimitiveTopology::TRIANGLE_LIST:
+		case trace::PRIMITIVETOPOLOGY::TRIANGLE_LIST:
 		{
 			result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			break;
 		}
-		case trace::PrimitiveTopology::TRIANGLE_STRIP:
+		case trace::PRIMITIVETOPOLOGY::TRIANGLE_STRIP:
 		{
 			result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 			break;

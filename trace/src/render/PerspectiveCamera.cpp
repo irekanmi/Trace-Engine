@@ -31,7 +31,6 @@ namespace trace {
 		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
 
 		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
-		recompute();
 	}
 
 	PerspectiveCamera::~PerspectiveCamera()
@@ -122,21 +121,62 @@ namespace trace {
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_UP) == KeyState::KEY_HELD)
 		{
 			pitch += rotate_speed * deltaTime;
+
+			float _rot = 1.0f * rotate_speed * deltaTime;
+			glm::mat4 _rotation = glm::identity<glm::mat4>();
+			_rotation = glm::rotate(_rotation, glm::radians(_rot), m_rightDirection);
+
+			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
+			m_lookDirection = glm::normalize(m_lookDirection);
+			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
+			m_upDirection = glm::normalize(m_upDirection);
+
 			recompute();
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_DOWN) == KeyState::KEY_HELD)
 		{
 			pitch -= rotate_speed * deltaTime;
+
+			float _rot = -1.0f * rotate_speed * deltaTime;
+			glm::mat4 _rotation = glm::identity<glm::mat4>();
+			_rotation = glm::rotate(_rotation, glm::radians(_rot), m_rightDirection);
+
+			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
+			m_lookDirection = glm::normalize(m_lookDirection);
+			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
+			m_upDirection = glm::normalize(m_upDirection);
+
 			recompute();
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_RIGHT) == KeyState::KEY_HELD)
 		{
 			yaw += rotate_speed * deltaTime;
+
+			float _rot = -1.0f * rotate_speed * deltaTime;
+			glm::mat4 _rotation = glm::identity<glm::mat4>();
+			_rotation = glm::rotate(_rotation, glm::radians(_rot), glm::vec3(0.0f, 1.0f, 0.0f));
+
+			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
+			m_lookDirection = glm::normalize(m_lookDirection);
+			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
+			m_upDirection = glm::normalize(m_upDirection);
+			m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
+
 			recompute();
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_LEFT) == KeyState::KEY_HELD)
 		{
 			yaw -= rotate_speed * deltaTime;
+
+			float _rot = 1.0f * rotate_speed * deltaTime;
+			glm::mat4 _rotation = glm::identity<glm::mat4>();
+			_rotation = glm::rotate(_rotation, glm::radians(_rot), glm::vec3(0.0f, 1.0f, 0.0f));
+
+			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
+			m_lookDirection = glm::normalize(m_lookDirection);
+			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
+			m_upDirection = glm::normalize(m_upDirection);
+			m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
 			recompute();
 		}
 
@@ -192,14 +232,17 @@ namespace trace {
 
 	void PerspectiveCamera::recompute()
 	{
-		m_lookDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		/*m_lookDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 		m_lookDirection.y = sin(glm::radians(pitch));
 		m_lookDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		
 		m_lookDirection = glm::normalize(m_lookDirection);
 
 		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
-		m_upDirection = glm::normalize(glm::cross( m_rightDirection, m_lookDirection));
+		m_upDirection = glm::normalize(glm::cross( m_rightDirection, m_lookDirection));*/
+
+
+		
 
 	}
 

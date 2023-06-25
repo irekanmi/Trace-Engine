@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "GPipeline.h"
 #include "core/platform/Vulkan/VulkanRenderFunc.h"
+#include "render_graph/RenderGraph.h"
 
 #define RENDER_FUNC_IS_VALID(function)                           \
 	if(!function)                                                \
@@ -95,7 +96,7 @@ namespace trace {
 		}
 		if (primitive_topology)
 		{
-			desc.topology = PrimitiveTopology::TRIANGLE_LIST;
+			desc.topology = PRIMITIVETOPOLOGY::TRIANGLE_LIST;
 		}
 	}
 
@@ -166,6 +167,13 @@ namespace trace {
 		RenderFunc::_createTexture = vk::__CreateTexture;
 		RenderFunc::_destroyTexture = vk::__DestroyTexture;
 
+		RenderFunc::_buildRenderGraph = vk::__BuildRenderGraph;
+		RenderFunc::_destroyRenderGraph = vk::__DestroyRenderGraph;
+		RenderFunc::_beginRenderGraphPass = vk::__BeginRenderGraphPass;
+		RenderFunc::_endRenderGraphPass = vk::__EndRenderGraphPass;
+		RenderFunc::_beginRenderGraph = vk::__BeginRenderGraph;
+		RenderFunc::_endRenderGraph = vk::__EndRenderGraph;
+
 		return false;
 	}
 
@@ -188,8 +196,10 @@ namespace trace {
 	__BeginRenderPass RenderFunc::_beginRenderPass = nullptr;
 	__NextSubpass RenderFunc::_nextSubpass = nullptr;
 	__EndRenderPass RenderFunc::_endRenderPass = nullptr;
-	__BeginFrame RenderFunc::_beginFrame;
+	__BeginFrame RenderFunc::_beginFrame = nullptr;
 	__EndFrame RenderFunc::_endFrame = nullptr;
+	__OnDrawStart RenderFunc::_onDrawStart = nullptr;
+	__OnDrawEnd RenderFunc::_onDrawEnd = nullptr;
 
 	__CreateBuffer RenderFunc::_createBuffer = nullptr;
 	__DestroyBuffer RenderFunc::_destroyBuffer = nullptr;
@@ -224,6 +234,13 @@ namespace trace {
 
 	__CreateTexture  RenderFunc::_createTexture = nullptr;
 	__DestroyTexture RenderFunc::_destroyTexture = nullptr;
+
+	__BuildRenderGraph RenderFunc::_buildRenderGraph = nullptr;
+	__DestroyRenderGraph RenderFunc::_destroyRenderGraph = nullptr;
+	__BeginRenderGraphPass RenderFunc::_beginRenderGraphPass = nullptr;
+	__EndRenderGraphPass RenderFunc::_endRenderGraphPass = nullptr;
+	__BeginRenderGraph RenderFunc::_beginRenderGraph = nullptr;
+	__EndRenderGraph RenderFunc::_endRenderGraph = nullptr;
 
 	__ValidateHandle RenderFunc::_validateHandle = nullptr;
 
@@ -577,6 +594,66 @@ namespace trace {
 		return result;
 	}
 
+	bool RenderFunc::BuildRenderGraph(GDevice* device, RenderGraph* render_graph)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_buildRenderGraph);
+		result = _buildRenderGraph(device, render_graph);
+
+		return result;
+	}
+
+	bool RenderFunc::DestroyRenderGraph(GDevice* device, RenderGraph* render_graph)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_destroyRenderGraph);
+		result = _destroyRenderGraph(device, render_graph);
+
+		return result;
+	}
+
+	bool RenderFunc::BeginRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_beginRenderGraphPass);
+		result = _beginRenderGraphPass(render_graph, pass);
+
+		return result;
+	}
+
+	bool RenderFunc::EndRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_endRenderGraphPass);
+		result = _endRenderGraphPass(render_graph, pass);
+
+		return result;
+	}
+
+	bool RenderFunc::BeginRenderGraph(RenderGraph* render_graph)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_beginRenderGraph);
+		result = _beginRenderGraph(render_graph);
+
+		return result;
+	}
+
+	bool RenderFunc::EndRenderGraph(RenderGraph* render_graph)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_endRenderGraph);
+		result = _endRenderGraph(render_graph);
+
+		return result;
+	}
+
 	bool RenderFunc::ValidateHandle(GHandle* handle)
 	{
 		bool result = true;
@@ -693,6 +770,26 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_endFrame);
 		result = _endFrame(device);
+
+		return result;
+	}
+
+	bool RenderFunc::OnDrawStart(GDevice* device, GPipeline* pipeline)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_onDrawStart);
+		result = _onDrawStart(device, pipeline);
+
+		return result;
+	}
+
+	bool RenderFunc::OnDrawEnd(GDevice* device, GPipeline* pipeline)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_onDrawEnd);
+		result = _onDrawEnd(device, pipeline);
 
 		return result;
 	}

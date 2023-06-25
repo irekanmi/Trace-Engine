@@ -153,7 +153,7 @@ namespace trace {
 
 	
 
-	enum class PrimitiveTopology
+	enum class PRIMITIVETOPOLOGY
 	{
 		NONE,
 		TRIANGLE_LIST,
@@ -203,6 +203,12 @@ namespace trace {
 		POST_PASS,
 		UI_PASS,
 		RENDER_PASS_COUNT
+	};
+
+	enum GPU_QUEUE
+	{
+		GRAPHICS = BIT(1),
+		COMPUTE = BIT(2)
 	};
 
 	struct UniformMetaData
@@ -299,7 +305,7 @@ namespace trace {
 		RaterizerState rateriser_state = {};
 		DepthStencilState depth_sten_state = {};
 		ColorBlendState blend_state = {};
-		PrimitiveTopology topology = PrimitiveTopology::NONE;
+		PRIMITIVETOPOLOGY topology = PRIMITIVETOPOLOGY::NONE;
 		Viewport view_port = {};
 		uint32_t resource_bindings_count = 0;
 		std::vector<ShaderResourceBinding> resource_bindings = {};
@@ -372,12 +378,6 @@ namespace trace {
 		alignas(16) glm::vec2 _test;
 	};
 
-	//struct MaterialRenderData
-	//{
-	//	alignas(16) glm::vec4 diffuse_color;
-	//	alignas(16) float shininess;
-	//};
-
 	struct TextureDesc
 	{
 		uint32_t m_width = 0;
@@ -394,6 +394,7 @@ namespace trace {
 		AddressMode m_addressModeW = AddressMode::NONE;
 		FilterMode m_minFilterMode = FilterMode::NONE;
 		FilterMode m_magFilterMode = FilterMode::NONE;
+		AttachmentType m_attachmentType = AttachmentType::NONE;
 		std::vector<unsigned char*> m_data;
 	};
 
