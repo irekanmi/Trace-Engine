@@ -241,6 +241,7 @@ namespace trace {
 	__EndRenderGraphPass RenderFunc::_endRenderGraphPass = nullptr;
 	__BeginRenderGraph RenderFunc::_beginRenderGraph = nullptr;
 	__EndRenderGraph RenderFunc::_endRenderGraph = nullptr;
+	__BindRenderGraphResource RenderFunc::_bindRenderGraphResorce = nullptr;
 
 	__ValidateHandle RenderFunc::_validateHandle = nullptr;
 
@@ -650,6 +651,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_endRenderGraph);
 		result = _endRenderGraph(render_graph);
+
+		return result;
+	}
+
+	bool RenderFunc::BindRenderGraphResource(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_bindRenderGraphResorce);
+		result = _bindRenderGraphResorce(render_graph, pipeline, bind_name, resource_stage, resource, index);
 
 		return result;
 	}

@@ -17,6 +17,7 @@
 #include "SkyBox.h"
 #include "GContext.h"
 #include "render_graph/RenderGraph.h"
+#include "render_graph/MainPass.h"
 //----------------------------------------
 
 
@@ -26,7 +27,7 @@ namespace trace {
 
 	class TRACE_API Renderer : public Object
 	{
-
+		friend RenderPass;
 	public:
 		Renderer();
 		~Renderer();
@@ -42,6 +43,9 @@ namespace trace {
 		void ShutDown();
 		void OnEvent(Event* p_event);
 		GRenderPass* GetRenderPass(RENDERPASS render_pass);
+		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
+		GDevice* GetDevice() { return &g_device; }
+		GContext* GetContext() { return &g_context; }
 		void Render(float deltaTime);
 		
 
@@ -69,18 +73,18 @@ namespace trace {
 		Camera* _camera;
 		glm::ivec4 render_mode;
 		RenderGraph test_graph;
+		std::unordered_map<std::string, void*> _avaliable_passes;
+		MainPass main_pass;
 		//------------------------------------
+		std::vector<CommandList> m_cmdList;
+		uint32_t m_listCount;
 	private:
 		void draw_mesh(CommandParams params);
 		void draw_skybox(CommandParams params);
 
 	private:
 		GContext g_context;
-		GContext* m_context;
-		GDevice* m_device;
 		GDevice g_device;
-		std::vector<CommandList> m_cmdList;
-		uint32_t m_listCount;
 
 		friend RenderGraph;
 

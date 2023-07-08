@@ -43,12 +43,13 @@ namespace vk {
 		handle->m_instance = instance;
 		render_graph->GetRenderHandle()->m_internalData = handle;
 
-		std::vector<trace::RenderGraphPass*>& graph_passes = render_graph->GetSubmissionPasses();
+		std::vector<uint32_t>& graph_passes = render_graph->GetSubmissionPasses();
 		std::vector<trace::RenderGraphResource>& graph_resources = render_graph->GetResources();
 
 		compute_resource_handle(render_graph, _device, instance);
-		for (auto& pass : graph_passes)
+		for (auto& pass_index : graph_passes)
 		{
+			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = new trace::VKRenderGraphPass;
 			pass->GetRenderHandle()->m_internalData = pass_handle;
 			
@@ -336,15 +337,16 @@ namespace vk {
 			}
 			if (isSwapchainImage)
 			{
-				res.render_handle.m_internalData = nullptr;
+			
 			}
 
 			
 		}
 
-		std::vector<trace::RenderGraphPass*>& graph_passes = render_graph->GetSubmissionPasses();
-		for (auto& pass : graph_passes)
+		std::vector<uint32_t>& graph_passes = render_graph->GetSubmissionPasses();
+		for (auto& pass_index : graph_passes)
 		{
+			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 
 			_DestroyRenderPass(
@@ -562,7 +564,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		std::vector<trace::RenderGraphResource*>& outputs = pass->GetAttachmentOutputs();
+		std::vector<uint32_t>& outputs = pass->GetAttachmentOutputs();
 
 		VkResult _result = VK_ERROR_UNKNOWN;
 		VkRenderPass pass_handle = VK_NULL_HANDLE;
@@ -575,7 +577,7 @@ namespace vk {
 
 		for (uint32_t i = 0; i < static_cast<uint32_t>(outputs.size()); i++)
 		{
-			trace::RenderGraphResource* tex = outputs[i];
+			trace::RenderGraphResource* tex = &render_graph->GetResource(outputs[i]);
 			VkAttachmentDescription att_desc = {};
 			VkAttachmentReference att_ref = {};
 
@@ -618,9 +620,9 @@ namespace vk {
 
 		subpass.colorAttachmentCount = static_cast<uint32_t>(attach_ref.size());
 		subpass.pColorAttachments = attach_ref.data();
-		if (pass->GetDepthStencilOutput())
+		if (pass->GetDepthStencilOutput() != INVALID_ID)
 		{
-			trace::RenderGraphResource* tex = pass->GetDepthStencilOutput();
+			trace::RenderGraphResource* tex = &render_graph->GetResource(pass->GetDepthStencilOutput());
 			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depth_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -634,9 +636,9 @@ namespace vk {
 			attachments.push_back(depth_desc);
 			subpass.pDepthStencilAttachment = &depth_ref;
 		}
-		else if (pass->GetDepthStencilInput())
+		else if (pass->GetDepthStencilInput() != INVALID_ID)
 		{
-			trace::RenderGraphResource* tex = pass->GetDepthStencilInput();
+			trace::RenderGraphResource* tex = &render_graph->GetResource(pass->GetDepthStencilInput());
 			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depth_desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
@@ -756,7 +758,7 @@ namespace vk {
 						flags,
 						vk::convertImageType(res.resource_data.texture.image_type),
 						res.resource_data.texture.width,
-						res.resource_data.texture.width,
+						res.resource_data.texture.height,
 						1,
 						1
 					);
@@ -784,7 +786,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		std::vector<trace::RenderGraphResource*>& outputs = pass->GetAttachmentOutputs();
+		std::vector<uint32_t>& outputs = pass->GetAttachmentOutputs();
 		trace::VKRenderGraphPass* handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 		std::vector<VkImageView> attachments;
 
@@ -799,8 +801,9 @@ namespace vk {
 
 		for (uint32_t i = 0; i < _device->frames_in_flight; i++)
 		{
-			for (auto& res : outputs)
+			for (auto& res_index : outputs)
 			{
+				trace::RenderGraphResource* res = &render_graph->GetResource(res_index);
 				bool isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
 				bool isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
 				if (isTexture)
@@ -815,14 +818,14 @@ namespace vk {
 				}
 			}
 
-			if (pass->GetDepthStencilOutput())
+			if (pass->GetDepthStencilOutput() != INVALID_ID)
 			{
-				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(pass->GetDepthStencilOutput()->render_handle.m_internalData);
+				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilOutput()).render_handle.m_internalData);
 				attachments.push_back(res_handle->resource[i].texture.m_view);
 			}
-			else if (pass->GetDepthStencilInput())
+			else if (pass->GetDepthStencilInput() != INVALID_ID)
 			{
-				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(pass->GetDepthStencilInput()->render_handle.m_internalData);
+				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilInput()).render_handle.m_internalData);
 				attachments.push_back(res_handle->resource[i].texture.m_view);
 			}
 

@@ -27,8 +27,7 @@ namespace trace {
 
 	struct RenderPassDescription
 	{
-		uint32_t subpass_count = 0;
-		SubPassDescription* subpasses = {};
+		SubPassDescription subpass;
 		glm::vec4 clear_color = {};
 		glm::vec4 render_area = {};
 		float depth_value = 0.0f;

@@ -249,6 +249,8 @@
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
     <ClInclude Include="src\render\render_graph\RenderGraph.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
+    <ClInclude Include="src\render\render_graph\RenderPass.h" />
+    <ClInclude Include="src\render\render_graph\MainPass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -430,5 +432,6 @@
     <ClCompile Include="src\render\Graphics.cpp" />
     <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
+    <ClCompile Include="src\render\render_graph\MainPass.cpp" />
   </ItemGroup>
 </Project>

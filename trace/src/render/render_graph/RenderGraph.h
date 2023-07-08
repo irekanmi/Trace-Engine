@@ -80,12 +80,12 @@ namespace trace {
 		void SetSwapchainOutput(const std::string& name, GSwapchain* swapchain);
 		void SetDepthStencilInput(const std::string& name);
 		void SetDepthStencilOutput(const std::string& name, TextureDesc desc);
-		void SetRunCB(std::function<void(std::vector<RenderGraphResource*>&)> run_cb) { m_run_cb = run_cb; }
-		void SetResizeCB(std::function<void(RenderGraphPass*, uint32_t, uint32_t)> resize_cb) { m_resize_cb = resize_cb; }
-		RenderGraphResource* GetDepthStencilInput() { return m_depthStencilInput; }
-		RenderGraphResource* GetDepthStencilOutput() { return m_depthStencilOutput; }
-		std::vector<RenderGraphResource*>& GetAttachmentInputs() { return m_attachmentInputs; }
-		std::vector<RenderGraphResource*>& GetAttachmentOutputs() { return m_attachmentOutputs; }
+		void SetRunCB(std::function<void(std::vector<uint32_t>&)> run_cb) { m_run_cb = run_cb; }
+		void SetResizeCB(std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> resize_cb) { m_resize_cb = resize_cb; }
+		uint32_t GetDepthStencilInput() { return m_depthStencilInput; }
+		uint32_t GetDepthStencilOutput() { return m_depthStencilOutput; }
+		std::vector<uint32_t>& GetAttachmentInputs() { return m_attachmentInputs; }
+		std::vector<uint32_t>& GetAttachmentOutputs() { return m_attachmentOutputs; }
 		std::vector<uint32_t>& GetPassInputs() { return m_inputs; }
 		std::vector<uint32_t>& GetPassOutputs() { return m_outputs; }
 		std::string& GetPassName() { return m_passName; }
@@ -110,14 +110,14 @@ namespace trace {
 		std::vector<RenderGraphEdge> m_edges;
 		std::vector<uint32_t> m_inputs;
 		std::vector<uint32_t> m_outputs;
-		std::vector<RenderGraphResource*> m_attachmentInputs;
-		std::vector<RenderGraphResource*> m_attachmentOutputs;
-		RenderGraphResource* m_depthStencilInput = nullptr;
-		RenderGraphResource* m_depthStencilOutput = nullptr;
+		std::vector<uint32_t> m_attachmentInputs;
+		std::vector<uint32_t> m_attachmentOutputs;
+		uint32_t m_depthStencilInput = INVALID_ID;
+		uint32_t m_depthStencilOutput = INVALID_ID;
 		GHandle m_renderHandle;
 		GPU_QUEUE m_queue;
-		std::function<void(std::vector<RenderGraphResource*>&)> m_run_cb;
-		std::function<void(RenderGraphPass*, uint32_t, uint32_t)> m_resize_cb;
+		std::function<void(std::vector<uint32_t>&)> m_run_cb;
+		std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> m_resize_cb;
 
 
 	protected:
@@ -134,7 +134,7 @@ namespace trace {
 		RenderGraphPass* AddPass(const std::string& pass_name, GPU_QUEUE queue);
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 		std::vector<RenderGraphPass>& GetPasses() { return m_passes; }
-		std::vector<RenderGraphPass*>& GetSubmissionPasses() { return m_submissionPasses; }
+		std::vector<uint32_t>& GetSubmissionPasses() { return m_submissionPasses; }
 		std::vector<RenderGraphResource>& GetResources() { return m_resources; }
 		uint32_t AddTextureResource(const std::string& resource_name, const TextureDesc& desc);
 		uint32_t AddTextureResource(const std::string& resource_name, GTexture* texture);
@@ -142,8 +142,8 @@ namespace trace {
 		uint32_t AddSwapchainResource(const std::string& name, GSwapchain* swapchain);
 		uint32_t FindPassIndex(const std::string& pass_name);
 		uint32_t FindResourceIndex(const std::string& resource_name);
-		RenderGraphPass* GetPass(uint32_t index);
-		RenderGraphResource* GetResource(uint32_t index);
+		RenderGraphPass& GetPass(uint32_t index);
+		RenderGraphResource& GetResource(uint32_t index);
 		void SetFinalResourceOutput(const std::string& resource_name);
 		void SetRenderer(Renderer* renderer) { m_renderer = renderer; }
 		bool Compile();
@@ -160,9 +160,9 @@ namespace trace {
 		GHandle m_renderHandle;
 		Renderer* m_renderer;
 		std::vector<RenderGraphPass> m_passes;
-		std::vector<RenderGraphPass*> m_submissionPasses;
+		std::vector<uint32_t> m_submissionPasses;
 		std::vector<RenderGraphResource> m_resources;
-		RenderGraphResource* m_finalResource;
+		uint32_t m_finalResource = INVALID_ID;
 
 	protected:
 	};

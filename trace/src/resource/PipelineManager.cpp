@@ -56,7 +56,7 @@ namespace trace {
 	bool PipelineManager::CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill)
 	{
 
-		if (auto_fill || desc.render_pass == nullptr)
+		if (auto_fill && desc.render_pass == nullptr)
 		{
 			desc.render_pass = Renderer::get_instance()->GetRenderPass(desc._renderPass);
 		}
@@ -290,6 +290,7 @@ namespace trace {
 		AutoFillPipelineDesc(
 			_ds
 		);
+		_ds.render_pass = Renderer::get_instance()->GetRenderPass("MAIN_PASS");
 
 		if (!CreatePipeline(_ds, "standard_pipeline"))
 		{
@@ -350,6 +351,7 @@ namespace trace {
 			true,
 			false
 		);
+		_ds1.render_pass = Renderer::get_instance()->GetRenderPass("MAIN_PASS");
 		
 
 		

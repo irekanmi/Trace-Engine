@@ -65,68 +65,8 @@ namespace trace {
 		result = RenderFunc::CreateDevice(&g_device);
 		RenderFunc::CreateDevice(&g_device);
 		{
-			AttachmentInfo color_attach;
-			color_attach.attachmant_index = 0;
-			color_attach.attachment_format = Format::R8G8B8A8_SRBG;
-			color_attach.initial_format = TextureFormat::UNKNOWN;
-			color_attach.final_format = TextureFormat::PRESENT;
-			color_attach.is_depth = false;
-			color_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
-			color_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
-
-
-			AttachmentInfo depth_attach;
-			depth_attach.attachmant_index = 1;
-			depth_attach.attachment_format = Format::D32_SFLOAT_S8_SUINT;
-			depth_attach.initial_format = TextureFormat::UNKNOWN;
-			depth_attach.final_format = TextureFormat::DEPTH_STENCIL;
-			depth_attach.is_depth = true;
-			depth_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
-			depth_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
-
-			AttachmentInfo att_infos[] = {
-				color_attach,
-				depth_attach
-			};
-
-			SubPassDescription subpass_desc;
-			subpass_desc.attachment_count = 2;
-			subpass_desc.attachments = att_infos;
-
-			RenderPassDescription pass_desc;
-			pass_desc.subpass_count = 1;
-			pass_desc.subpasses = &subpass_desc;
-			pass_desc.render_area = { 0, 0, 800, 600 };
-			pass_desc.clear_color = { .0f, .01f, 0.015f, 1.0f };
-			pass_desc.depth_value = 1.0f;
-			pass_desc.stencil_value = 0;
-
-
-			RenderFunc::CreateRenderPass(&_renderPass[RENDERPASS::MAIN_PASS], pass_desc);
+			
 			RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
-
-			GTexture swapchain_color;
-			GTexture swapchain_depth;
-
-			RenderFunc::GetSwapchainColorBuffer(&_swapChain, &swapchain_color);
-			RenderFunc::GetSwapchainDepthBuffer(&_swapChain, &swapchain_depth);
-
-			GTexture* attachments[] = {
-				&swapchain_color,
-				&swapchain_depth
-			};
-
-
-			RenderFunc::CreateFramebuffer(
-				&_framebuffer,
-				2,
-				attachments,
-				&_renderPass[RENDERPASS::MAIN_PASS],
-				800,
-				600,
-				1,
-				&_swapChain
-			);
 
 			_camera = new PerspectiveCamera(
 				glm::vec3(36.186146f, 38.094185f, -19.778137f),
@@ -148,7 +88,7 @@ namespace trace {
 		}
 
 		{
-			auto pass = test_graph.AddPass("single_pass", GPU_QUEUE::GRAPHICS);
+
 			TextureDesc depth = {};
 			depth.m_addressModeU = depth.m_addressModeV = depth.m_addressModeW = AddressMode::REPEAT;
 			depth.m_attachmentType = AttachmentType::DEPTH;
@@ -159,26 +99,17 @@ namespace trace {
 			depth.m_minFilterMode = depth.m_magFilterMode = FilterMode::LINEAR;
 			depth.m_mipLevels = depth.m_numLayers = 1;
 			depth.m_usage = UsageFlag::DEFAULT;
-			pass->SetSwapchainOutput("final_res", &_swapChain);
+			test_graph.AddTextureResource("depth", depth);
+			test_graph.AddSwapchainResource("swapchain", &_swapChain);
 
-			pass->SetDepthStencilOutput("depth", depth);
+			RenderPassPacket main_pass_input = {};
+			main_pass_input.outputs[0] = test_graph.FindResourceIndex("swapchain");
+			main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
 
-			pass->SetRunCB([&](std::vector<RenderGraphResource*>& inputs)
-				{
-					RenderFunc::BindViewport(&g_device, _viewPort);
-					RenderFunc::BindRect(&g_device, _rect);
+			main_pass.Init(this);
+			main_pass.Setup(&test_graph, main_pass_input);
 
-
-					for (uint32_t i = 0; i < m_listCount; i++)
-					{
-						for (Command& cmd : m_cmdList[i]._commands)
-						{
-							cmd.func(cmd.params);
-						}
-					}
-				});
-
-			test_graph.SetFinalResourceOutput("final_res");
+			test_graph.SetFinalResourceOutput("swapchain");
 			test_graph.SetRenderer(this);
 			test_graph.Compile();
 
@@ -240,13 +171,10 @@ namespace trace {
 		test_graph.Destroy();
 		sky_pipeline.~Ref();
 		
-
+		main_pass.ShutDown();
 		delete _camera;
 
-		RenderFunc::DestroySwapchain(&_swapChain);
-		RenderFunc::DestroyFramebuffer(&_framebuffer);
-		RenderFunc::DestroyRenderPass(&_renderPass[RENDERPASS::MAIN_PASS]);
-		
+		RenderFunc::DestroySwapchain(&_swapChain);		
 		//----------------------------------
 
 	}
@@ -325,7 +253,9 @@ namespace trace {
 		{
 			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
 			RenderFunc::ResizeSwapchain(&_swapChain, wnd->m_width, wnd->m_height);
-			
+			float width = static_cast<float>(wnd->m_width);
+			float height = static_cast<float>(wnd->m_height);
+			test_graph.Resize(wnd->m_width, wnd->m_height);
 
 
 			_viewPort.width = wnd->m_width;
@@ -337,29 +267,6 @@ namespace trace {
 			if (wnd->m_width == 0 || wnd->m_height == 0)
 				break;
 
-			RenderFunc::DestroyFramebuffer(&_framebuffer);
-			GTexture swapchain_color;
-			GTexture swapchain_depth;
-
-			RenderFunc::GetSwapchainColorBuffer(&_swapChain, &swapchain_color);
-			RenderFunc::GetSwapchainDepthBuffer(&_swapChain, &swapchain_depth);
-
-			GTexture* attachments[] = {
-				&swapchain_color,
-				&swapchain_depth
-			};
-
-			RenderFunc::CreateFramebuffer(
-				&_framebuffer,
-				2,
-				attachments,
-				&_renderPass[RENDERPASS::MAIN_PASS],
-				wnd->m_width,
-				wnd->m_height,
-				1,
-				&_swapChain
-			);
-			_renderPass[RENDERPASS::MAIN_PASS].m_desc.render_area = { 0.0f, 0.0f, (float)wnd->m_width, (float)wnd->m_height };
 			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));
 
 			break;
@@ -382,20 +289,6 @@ namespace trace {
 			//Temp=====================
 			_camera->Update(deltaTime);
 			//=========================
-			//RenderFunc::BeginRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS], &_framebuffer);
-			//RenderFunc::BindViewport(&g_device, _viewPort);
-			//RenderFunc::BindRect(&g_device, _rect);
-			//
-			//
-			//for (uint32_t i = 0; i < m_listCount; i++)
-			//{
-			//	for (Command& cmd : m_cmdList[i]._commands)
-			//	{
-			//		cmd.func(cmd.params);
-			//	}
-			//}
-			//
-			//RenderFunc::EndRenderPass(&g_device, &_renderPass[RENDERPASS::MAIN_PASS]);
 
 			test_graph.Execute();
 

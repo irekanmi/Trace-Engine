@@ -205,7 +205,9 @@
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\Renderutils.h" />
+    <ClInclude Include="src\render\render_graph\MainPass.h" />
     <ClInclude Include="src\render\render_graph\RenderGraph.h" />
+    <ClInclude Include="src\render\render_graph\RenderPass.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
     <ClInclude Include="src\render\Transform.h" />
@@ -275,6 +277,7 @@
     <ClCompile Include="src\render\PerspectiveCamera.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\Renderutils.cpp" />
+    <ClCompile Include="src\render\render_graph\MainPass.cpp" />
     <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />

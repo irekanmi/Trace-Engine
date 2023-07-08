@@ -47,6 +47,8 @@ namespace vk {
 		_handle->m_recreating = false;
 		_handle->m_width = 800; // TODO Configurable
 		_handle->m_height = 600;//TODO Configurable
+		swapchain->SetWidth(800);
+		swapchain->SetHeight(600);
 
 
 
@@ -127,6 +129,8 @@ namespace vk {
 		_handle->m_recreating = true;
 		_handle->m_width = width;
 		_handle->m_height = height;
+		swapchain->SetWidth(width);
+		swapchain->SetHeight(height);
 
 		_recreate_swapchain(swapchain);
 

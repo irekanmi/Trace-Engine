@@ -2194,7 +2194,7 @@ namespace vk {
 
 	VkFormat convertFmt(trace::Format format)
 	{
-		VkFormat result;
+		VkFormat result = VK_FORMAT_UNDEFINED;
 
 		switch (format)
 		{

@@ -23,8 +23,8 @@ namespace trace {
 		desc.m_attachmentType = AttachmentType::COLOR;
 		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
 		m_inputs.push_back(index);
-		RenderGraphResource* input_tex = m_renderGraph->GetResource(index);
-		m_attachmentInputs.push_back(input_tex);
+		RenderGraphResource* input_tex = &m_renderGraph->GetResource(index);
+		m_attachmentInputs.push_back(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		input_tex->read_passes.push_back(pass_index);
 
@@ -35,8 +35,8 @@ namespace trace {
 		desc.m_attachmentType = AttachmentType::COLOR;
 		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
 		m_outputs.push_back(index);
-		RenderGraphResource* output_tex = m_renderGraph->GetResource(index);
-		m_attachmentOutputs.push_back(output_tex);
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
+		m_attachmentOutputs.push_back(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 	}
@@ -47,7 +47,7 @@ namespace trace {
 		desc.m_attachmentType = AttachmentType::COLOR;
 		uint32_t index = m_renderGraph->AddTextureResource(name, texture);
 		m_inputs.push_back(index);
-		RenderGraphResource* input_tex = m_renderGraph->GetResource(index);
+		RenderGraphResource* input_tex = &m_renderGraph->GetResource(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		input_tex->read_passes.push_back(pass_index);
 
@@ -59,7 +59,7 @@ namespace trace {
 		desc.m_attachmentType = AttachmentType::COLOR;
 		uint32_t index = m_renderGraph->AddTextureResource(name, texture);
 		m_outputs.push_back(index);
-		RenderGraphResource* output_tex = m_renderGraph->GetResource(index);
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 	}
@@ -69,18 +69,18 @@ namespace trace {
 		
 		uint32_t index = m_renderGraph->AddSwapchainResource(name, swapchain);
 		m_outputs.push_back(index);
-		RenderGraphResource* output_tex = m_renderGraph->GetResource(index);
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
-		m_attachmentOutputs.push_back(output_tex);
+		m_attachmentOutputs.push_back(index);
 	}
 
 	void RenderGraphPass::SetDepthStencilInput(const std::string& name)
 	{
 		uint32_t res_index = m_renderGraph->FindResourceIndex(name);
 		m_inputs.push_back(res_index);
-		RenderGraphResource* output_tex = m_renderGraph->GetResource(res_index);
-		m_depthStencilInput = output_tex;
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(res_index);
+		m_depthStencilInput = res_index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->read_passes.push_back(pass_index);
 	}
@@ -90,8 +90,8 @@ namespace trace {
 		desc.m_attachmentType = AttachmentType::DEPTH;
 		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
 		m_outputs.push_back(index);
-		RenderGraphResource* output_tex = m_renderGraph->GetResource(index);
-		m_depthStencilOutput = output_tex;
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
+		m_depthStencilOutput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 	}
@@ -216,11 +216,9 @@ namespace trace {
 		//resource_data.texture.addressModeW = desc.m_addressModeW;
 		//resource_data.texture.min = desc.m_minFilterMode;
 		//resource_data.texture.mag = desc.m_magFilterMode;
-
-		resource_data.texture.width = desc.m_width;
-		resource_data.texture.height = desc.m_height;
-
-		it->resource_data = resource_data;
+		
+		it->resource_data.texture.width = desc.m_width;
+		it->resource_data.texture.height = desc.m_height;
 
 	}
 
@@ -238,8 +236,8 @@ namespace trace {
 		RenderGraphResourceData resource_data = {};
 		resource_data.texture.attachment_type = AttachmentType::SWAPCHAIN;
 		resource_data.texture.format = Format::R8G8B8A8_SNORM;
-		resource_data.texture.width = 800;
-		resource_data.texture.height = 600;
+		resource_data.texture.width = swapchain->GetWidth();
+		resource_data.texture.height = swapchain->GetHeight();
 
 		RenderGraphResource resource = {};
 		resource.external = true;
@@ -262,7 +260,7 @@ namespace trace {
 		if (it == m_passes.end())
 		{
 			TRC_WARN("Pass has not been added or does not exist -> {}", pass_name);
-			return -1;
+			return INVALID_ID;
 		}
 
 		uint32_t i = 0;
@@ -286,7 +284,7 @@ namespace trace {
 		if (it == m_resources.end())
 		{
 			TRC_WARN("Pass has not been added or does not exist -> {}", resource_name);
-			return -1;
+			return INVALID_ID;
 		}
 
 		uint32_t i = 0;
@@ -303,40 +301,40 @@ namespace trace {
 		return i;
 	}
 
-	RenderGraphPass* RenderGraph::GetPass(uint32_t index)
+	RenderGraphPass& RenderGraph::GetPass(uint32_t index)
 	{
-		return &m_passes[index];
+		return m_passes[index];
 	}
 
-	RenderGraphResource* RenderGraph::GetResource(uint32_t index)
+	RenderGraphResource& RenderGraph::GetResource(uint32_t index)
 	{
-		return &m_resources[index];
+		return m_resources[index];
 	}
 
 	void RenderGraph::SetFinalResourceOutput(const std::string& resource_name)
 	{
 
-		if (m_finalResource)
+		if (m_finalResource != INVALID_ID)
 		{
-			TRC_WARN("A resource has already been set as the final resource, {}", m_finalResource->resource_name);
+			TRC_WARN("A resource has already been set as the final resource, {}", resource_name);
 			return;
 		}
 
 		uint32_t index = FindResourceIndex(resource_name);
-		if (index == -1)
+		if (index == INVALID_ID)
 		{
 			TRC_ERROR("Ensure resource has being used by a render pass -> {}", resource_name);
-			m_finalResource = nullptr;
+			m_finalResource = INVALID_ID;
 			return;
 		}
 
-		m_finalResource = &m_resources[index];
+		m_finalResource = index;
 
 	}
 
 	bool RenderGraph::Compile()
 	{
-		if (!m_finalResource)
+		if (m_finalResource == INVALID_ID)
 		{
 			TRC_ERROR("Final Graph Resource has not been assigned");
 			return false;
@@ -356,8 +354,9 @@ namespace trace {
 		RenderFunc::BeginRenderGraph(this);
 
 
-		for (auto& pass : m_submissionPasses)
+		for (auto& pass_index : m_submissionPasses)
 		{
+			RenderGraphPass* pass = &GetPass(pass_index);
 			RenderFunc::BeginRenderGraphPass(this, pass);
 
 			pass->m_run_cb(pass->m_attachmentInputs);
@@ -385,9 +384,37 @@ namespace trace {
 	void RenderGraph::Resize(uint32_t width, uint32_t height)
 	{
 
-		for (auto& pass : m_submissionPasses)
+		for (auto& pass_index : m_submissionPasses)
 		{
-			pass->m_resize_cb(pass, width, height);
+			RenderGraphPass* pass = &GetPass(pass_index);
+			pass->m_resize_cb(this, pass, width, height);
+
+			for (auto& res_index : pass->GetAttachmentOutputs())
+			{
+				RenderGraphResource* res = &GetResource(res_index);
+				if (width == 0)
+				{
+					width = res->resource_data.texture.width;
+				}
+				else
+				{
+					TRC_ASSERT(width == res->resource_data.texture.width, "width of out not equal, {}", res->resource_name);
+				}
+
+				if (height == 0)
+				{
+					height = res->resource_data.texture.height;
+				}
+				else
+				{
+					TRC_ASSERT(height == res->resource_data.texture.height, "height of out not equal, {}", res->resource_name);
+				}
+			}
+
+			pass->renderArea.x = 0;
+			pass->renderArea.y = 0;
+			pass->renderArea.z = static_cast<float>(width);
+			pass->renderArea.w = static_cast<float>(height);
 		}
 
 		Rebuild();
@@ -406,9 +433,10 @@ namespace trace {
 		for (uint32_t i = 0; i < m_passes.size(); i++)
 			visited_pass[i] = 0;
 
-		for (uint32_t& pass_index : m_finalResource->written_passes)
+
+		for (uint32_t& pass_index : GetResource(m_finalResource).written_passes)
 		{
-			RenderGraphPass* pass = GetPass(pass_index);
+			RenderGraphPass* pass = &GetPass(pass_index);
 			pass_stack.push_back(pass);
 
 			while (pass_stack.size() > 0)
@@ -428,9 +456,9 @@ namespace trace {
 				uint32_t width = 0;
 				uint32_t height = 0;
 
-				for (auto& res : pass->GetAttachmentOutputs())
+				for (auto& res_index : pass->GetAttachmentOutputs())
 				{
-
+					RenderGraphResource* res = &GetResource(res_index);
 					if (width == 0)
 					{
 						width = res->resource_data.texture.width;
@@ -452,8 +480,8 @@ namespace trace {
 
 				pass->renderArea.x = 0;
 				pass->renderArea.y = 0;
-				pass->renderArea.z = width;
-				pass->renderArea.w = height;
+				pass->renderArea.z = static_cast<float>(width);
+				pass->renderArea.w = static_cast<float>(height);
 
 				pass->clearColor.r = 0.22f;
 				pass->clearColor.g = 0.217f;
@@ -485,17 +513,10 @@ namespace trace {
 			}
 		}
 
-		uint32_t j = 0;
-		std::vector<RenderGraphPass*> pass_to_submit;
-		pass_to_submit.resize(sorted_passes.size());
-
 		for (int i = sorted_passes.size() - 1; i >= 0; i--)
 		{
-			pass_to_submit[j] = sorted_passes[i];
-			j++;
+			m_submissionPasses.push_back(FindPassIndex(sorted_passes[i]->GetPassName()));
 		}
-
-		m_submissionPasses = std::move(pass_to_submit);
 
 
 
@@ -510,7 +531,7 @@ namespace trace {
 			{
 				for (auto& pass_index : resource.read_passes)
 				{
-					RenderGraphPass* pass = GetPass(pass_index);
+					RenderGraphPass* pass = &GetPass(pass_index);
 					std::vector<RenderGraphEdge>& pass_edges = pass->GetPassEdges();
 					RenderGraphEdge edge = {};
 					edge.from = nullptr;
@@ -522,11 +543,11 @@ namespace trace {
 			}
 			for (auto& pass_index : resource.written_passes)
 			{
-				RenderGraphPass* pass = GetPass(pass_index);
+				RenderGraphPass* pass = &GetPass(pass_index);
 				std::vector<RenderGraphEdge>& pass_edges = pass->GetPassEdges();
 				for (auto& read_pass_index : resource.read_passes)
 				{
-					RenderGraphPass* read_pass = GetPass(read_pass_index);
+					RenderGraphPass* read_pass = &GetPass(read_pass_index);
 					RenderGraphEdge edge = {};
 					edge.from = pass;
 					edge.to = read_pass;

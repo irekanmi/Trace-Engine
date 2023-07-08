@@ -100,29 +100,24 @@ void main()
    else if(rest.x == 1)
    {
         FragColor = vec4(abs(_normal), 1.0);
-        return;
    }
    else if(rest.x == 2)
    {
         FragColor = calculate_directional_light(dir_light, _normal, view_dir);
-        return;
    }
    else if(rest.x == 3)
    {
         FragColor = calculate_point_light(point_light, _normal, view_dir);
-        return;
    }
    else if(rest.x == 4)
    {
         FragColor = calculate_spot_light(spot_light, _normal, view_dir);
-        return;
    }
    else if(rest.x == 5)
    {
         FragColor = calculate_spot_light(spot_light, _normal, view_dir);
         FragColor += calculate_directional_light(dir_light, _normal, view_dir);
         FragColor += calculate_point_light(point_light, _normal, view_dir);
-        return;
    }
 }
 
