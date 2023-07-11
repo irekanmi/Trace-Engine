@@ -138,14 +138,12 @@ vec4 calculate_directional_light(Light light, vec3 normal, vec3 view_direction)
     vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
     vec4 specular_intensity = vec4((texture(testing[SPECULAR_MAP], _data._texCoord)).rgb, diffuse_samp_color.a);
     vec4 ambient = vec4( (ambeint_factor * diffuse_samp_color).rgb, diffuse_samp_color.a );
-    vec4 diffuse = vec4( (light.color * diffuse_strenght ).rgb, diffuse_samp_color.a );
+    vec4 diffuse = vec4( (diffuse_samp_color * diffuse_strenght ).rgb, diffuse_samp_color.a );
     vec4 specular = vec4( (specular_strenght * light.color).rgb, diffuse_samp_color.a );
 
-    ambient *= diffuse_samp_color;
-    diffuse *= diffuse_samp_color;
     specular *= specular_intensity;
 
-    return ( ambient + diffuse + specular);
+    return ( (ambient + diffuse) * light.color + specular);
 
 }
 
@@ -170,18 +168,13 @@ vec4 calculate_point_light(Light light, vec3 normal, vec3 view_direction)
     vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
     vec4 specular_intensity = vec4((texture(testing[SPECULAR_MAP], _data._texCoord)).rgb, diffuse_samp_color.a);
     vec4 ambient = vec4( (ambeint_factor * diffuse_samp_color).rgb, diffuse_samp_color.a );
-    vec4 diffuse = vec4( (light.color * diffuse_strenght ).rgb, diffuse_samp_color.a );
+    vec4 diffuse = vec4( (diffuse_samp_color * diffuse_strenght ).rgb, diffuse_samp_color.a );
     vec4 specular = vec4( (specular_strenght * light.color).rgb, diffuse_samp_color.a );
 
-    ambient *= diffuse_samp_color;
-    diffuse *= diffuse_samp_color;
+
     specular *= specular_intensity;
 
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
-
-    return ( ambient + diffuse + specular);   
+    return ( (ambient + diffuse) * light.color + specular) * attenuation;   
 }
 
 vec4 calculate_spot_light(Light light, vec3 normal, vec3 view_direction)
@@ -211,21 +204,17 @@ vec4 calculate_spot_light(Light light, vec3 normal, vec3 view_direction)
 
         vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
         vec4 specular_intensity = vec4((texture(testing[SPECULAR_MAP], _data._texCoord)).rgb, diffuse_samp_color.a);
-        vec4 diffuse = vec4( (diffuse_strenght * light.color * intensity).rgb, diffuse_samp_color.a );
+        vec4 diffuse = vec4( (diffuse_strenght * diffuse_samp_color * intensity).rgb, diffuse_samp_color.a );
         vec4 specular = vec4( (specular_strenght * light.color * intensity ).rgb, diffuse_samp_color.a );
 
-    
 
-        ambient *= diffuse_samp_color;
-        diffuse *= diffuse_samp_color;
         specular *= specular_intensity;
         
-        return ( ambient + diffuse + specular);
+        return ( (ambient + diffuse) * light.color + specular);
         //return vec4(1.0f);
 
     }
 
-    ambient *= diffuse_samp_color;
     return ( ambient);
 
 }
