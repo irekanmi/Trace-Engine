@@ -45,17 +45,6 @@ namespace trace {
 		SHADER_RESOURCE_BIT = BIT(6)
 	};
 
-	struct BufferInfo
-	{
-		uint32_t m_size = 0;
-		uint32_t m_stide = 0;
-		BindFlag m_flag = BindFlag::NIL;
-		UsageFlag m_usageFlag = UsageFlag::NONE;
-		void* m_data = nullptr;
-	};
-
-
-
 
 	enum RenderAPI
 	{
@@ -211,16 +200,20 @@ namespace trace {
 		COMPUTE = BIT(2)
 	};
 
-	struct UniformMetaData
+	enum ShaderDataDef
 	{
-		uint32_t _id = INVALID_ID;
-		uint32_t _offset = INVALID_ID;
-		uint32_t _size = 0;
-		uint32_t _slot = 0;
-		uint32_t _index = 0;
-		uint32_t _count = 0;
-		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
-		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
+		VARIABLE,
+		STRUCTURE,
+		ARRAY
+	};
+
+	struct BufferInfo
+	{
+		uint32_t m_size = 0;
+		uint32_t m_stide = 0;
+		BindFlag m_flag = BindFlag::NIL;
+		UsageFlag m_usageFlag = UsageFlag::NONE;
+		void* m_data = nullptr;
 	};
 
 	struct Rect2D
@@ -283,6 +276,72 @@ namespace trace {
 		bool alpha_to_blend_coverage = false; // TODO
 	};
 
+	struct UniformMetaData
+	{
+		uint32_t _id = INVALID_ID;
+		uint32_t _offset = INVALID_ID;
+		uint32_t _size = 0;
+		uint32_t _slot = 0;
+		uint32_t _index = 0;
+		uint32_t _count = 0;
+		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
+	};
+
+	struct ShaderStruct
+	{
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t resource_size = 0;
+		uint32_t slot = 0;
+		uint32_t index = 0;
+		uint32_t count = 1;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		struct StructInfo
+		{
+			std::string resource_name = "";
+			uint32_t resource_size = 0;
+			ShaderData resource_data_type = ShaderData::NONE;
+		};
+		std::vector<StructInfo> members;
+		void* data = nullptr;
+	};
+
+	struct ShaderArray
+	{
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		uint32_t resource_size = 0;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t slot = 0;
+		uint32_t count = 1;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		struct ArrayInfo
+		{
+			std::string resource_name = "";
+			uint32_t index = 0;
+			ShaderData resource_data_type = ShaderData::NONE;
+			void* data = nullptr;
+		};
+		std::vector<ArrayInfo> members;
+	};
+
+	struct ShaderVariable
+	{
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		std::string resource_name = "";
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		uint32_t resource_size = 0;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t slot = 0;
+		uint32_t index = 0;
+		uint32_t count = 1;
+		ShaderData resource_data_type = ShaderData::NONE;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		void* data = nullptr;
+	};
+
 	struct ShaderResourceBinding
 	{
 		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
@@ -294,8 +353,23 @@ namespace trace {
 		uint32_t index = 0;
 		uint32_t count = 1;
 		ShaderData resource_data_type = ShaderData::NONE;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
 		void* data = nullptr;
 	};
+
+	struct ShaderResources
+	{
+		struct Resource
+		{
+			ShaderStruct _struct;
+			ShaderArray _array;
+			ShaderVariable _variable;
+			ShaderDataDef def;
+		};
+		std::vector<Resource> resources;
+	};
+
+	
 
 	struct PipelineStateDesc
 	{
@@ -307,11 +381,11 @@ namespace trace {
 		ColorBlendState blend_state = {};
 		PRIMITIVETOPOLOGY topology = PRIMITIVETOPOLOGY::NONE;
 		Viewport view_port = {};
-		uint32_t resource_bindings_count = 0;
-		std::vector<ShaderResourceBinding> resource_bindings = {};
 		GRenderPass* render_pass = nullptr;
 		uint32_t subpass_index = uint32_t(-1);
 		RENDERPASS _renderPass = RENDERPASS::MAIN_PASS;
+
+		ShaderResources resources;
 	};
 
 

@@ -141,151 +141,128 @@ namespace trace {
 		RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
 		RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
 
-		ShaderResourceBinding projection;
-		projection.shader_stage = ShaderStage::VERTEX_SHADER;
-		projection.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		projection.resource_size = sizeof(glm::mat4);
-		projection.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		projection.resource_name = "projection";
-		projection.count = 1;
-		projection.index = 0;
-		projection.slot = 0;
-		projection.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+		ShaderStruct::StructInfo proj = {};
+		proj.resource_name = "projection";
+		proj.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+		proj.resource_size = sizeof(glm::mat4);
 
-		ShaderResourceBinding view;
-		view.shader_stage = ShaderStage::VERTEX_SHADER;
-		view.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		view.resource_size = sizeof(glm::mat4);
-		view.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		view.resource_name = "view";
-		view.count = 1;
-		view.index = 0;
-		view.slot = 0;
-		view.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+		ShaderStruct::StructInfo vw = {};
+		vw.resource_name = "view";
+		vw.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+		vw.resource_size = sizeof(glm::mat4);
 
-		ShaderResourceBinding view_position;
-		view_position.shader_stage = ShaderStage::VERTEX_SHADER;
-		view_position.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		view_position.resource_size = sizeof(glm::vec3);
-		view_position.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		view_position.resource_name = "view_position";
-		view_position.count = 1;
-		view_position.index = 0;
-		view_position.slot = 0;
-		view_position.resource_data_type = ShaderData::CUSTOM_DATA_VEC3;
+		ShaderStruct::StructInfo vw_pos = {};
+		vw_pos.resource_name = "view_position";
+		vw_pos.resource_data_type = ShaderData::CUSTOM_DATA_VEC3;
+		vw_pos.resource_size = sizeof(glm::vec3);
 
-		ShaderResourceBinding _test;
-		_test.shader_stage = ShaderStage::VERTEX_SHADER;
-		_test.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		_test.resource_size = sizeof(glm::vec2);
-		_test.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		_test.resource_name = "_test";
-		_test.count = 1;
-		_test.index = 0;
-		_test.slot = 0;
-		_test.resource_data_type = ShaderData::CUSTOM_DATA_VEC2;
+		ShaderStruct::StructInfo tst = {};
+		tst.resource_name = "_test";
+		tst.resource_data_type = ShaderData::CUSTOM_DATA_VEC2;
+		tst.resource_size = sizeof(glm::vec2);
 
-
-		ShaderResourceBinding diffuse_map;
-		diffuse_map.shader_stage = ShaderStage::PIXEL_SHADER;
-		diffuse_map.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		diffuse_map.resource_size = 0;
-		diffuse_map.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		diffuse_map.resource_name = "diffuse_map";
-		diffuse_map.count = 3;
-		diffuse_map.index = 0;
-		diffuse_map.slot = 1;
-		diffuse_map.resource_data_type = ShaderData::MATERIAL_ALBEDO;
-
-		ShaderResourceBinding specular_map;
-		specular_map.shader_stage = ShaderStage::PIXEL_SHADER;
-		specular_map.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		specular_map.resource_size = 0;
-		specular_map.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		specular_map.resource_name = "specular_map";
-		specular_map.count = 3;
-		specular_map.index = 1;
-		specular_map.slot = 1;
-		specular_map.resource_data_type = ShaderData::MATERIAL_SPECULAR;
-
-		ShaderResourceBinding normal_map;
-		normal_map.shader_stage = ShaderStage::PIXEL_SHADER;
-		normal_map.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		normal_map.resource_size = 0;
-		normal_map.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		normal_map.resource_name = "normal_map";
-		normal_map.count = 3;
-		normal_map.index = 2;
-		normal_map.slot = 1;
-		normal_map.resource_data_type = ShaderData::MATERIAL_NORMAL;
-
-		
-
-		ShaderResourceBinding diffuse_color;
-		diffuse_color.shader_stage = ShaderStage::PIXEL_SHADER;
-		diffuse_color.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		diffuse_color.resource_size = sizeof(glm::vec4);
-		diffuse_color.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		diffuse_color.resource_name = "diffuse_color";
-		diffuse_color.count = 1;
-		diffuse_color.index = 0;
-		diffuse_color.slot = 0;
-		diffuse_color.resource_data_type = ShaderData::MATERIAL_DIFFUSE_COLOR;
-
-		ShaderResourceBinding shininess;
-		shininess.shader_stage = ShaderStage::PIXEL_SHADER;
-		shininess.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
-		shininess.resource_size = sizeof(float);
-		shininess.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		shininess.resource_name = "shininess";
-		shininess.count = 1;
-		shininess.index = 0;
-		shininess.slot = 0;
-		shininess.resource_data_type = ShaderData::MATERIAL_SHININESS;
-
-		ShaderResourceBinding rest;
-		rest.shader_stage = ShaderStage::PIXEL_SHADER;
-		rest.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		rest.resource_size = sizeof(glm::ivec4);
-		rest.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		rest.resource_name = "rest";
-		rest.count = 1;
-		rest.index = 0;
-		rest.slot = 2;
-		rest.resource_data_type = ShaderData::CUSTOM_DATA_VEC4;
-
-		
-
-		ShaderResourceBinding model;
-		model.shader_stage = ShaderStage::VERTEX_SHADER;
-		model.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
-		model.resource_size = sizeof(glm::mat4);
-		model.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-		model.resource_name = "model";
-		model.count = 1;
-		model.index = 0;
-		model.slot = 3;
-		model.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
-
-		std::vector<ShaderResourceBinding> scene = {
-			projection,
-			view,
-			view_position,
-			_test,
-			diffuse_map,
-			specular_map,
-			normal_map,
-			diffuse_color,
-			shininess,
-			model,
-			rest
+		ShaderStruct scene_globals = {};
+		scene_globals.count = 1;
+		scene_globals.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		scene_globals.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		scene_globals.shader_stage = ShaderStage::VERTEX_SHADER;
+		scene_globals.slot = 0;
+		scene_globals.members = {
+			proj,
+			vw,
+			vw_pos,
+			tst
 		};
 
+		ShaderArray::ArrayInfo diff = {};
+		diff.resource_name = "diffuse_map";
+		diff.resource_data_type = ShaderData::MATERIAL_ALBEDO;
+		diff.index = 0;
+
+		ShaderArray::ArrayInfo spec = {};
+		spec.resource_name = "specular_map";
+		spec.resource_data_type = ShaderData::MATERIAL_SPECULAR;
+		spec.index = 1;
+
+		ShaderArray::ArrayInfo norm = {};
+		norm.resource_name = "normal_map";
+		norm.resource_data_type = ShaderData::MATERIAL_NORMAL;
+		norm.index = 2;
+
+		ShaderArray texs = {};
+		texs.count = 3;
+		texs.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
+		texs.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+		texs.shader_stage = ShaderStage::PIXEL_SHADER;
+		texs.slot = 1;
+		texs.members = {
+			diff,
+			spec,
+			norm
+		};
+
+		ShaderStruct::StructInfo diff_col = {};
+		diff_col.resource_name = "diffuse_color";
+		diff_col.resource_data_type = ShaderData::MATERIAL_DIFFUSE_COLOR;
+		diff_col.resource_size = sizeof(glm::vec4);
+
+		ShaderStruct::StructInfo shine = {};
+		shine.resource_name = "shininess";
+		shine.resource_data_type = ShaderData::MATERIAL_SHININESS;
+		shine.resource_size = sizeof(float);
+
+		ShaderStruct inst_data = {};
+		inst_data.count = 1;
+		inst_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
+		inst_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		inst_data.shader_stage = ShaderStage::PIXEL_SHADER;
+		inst_data.slot = 0;
+		inst_data.members = {
+			diff_col,
+			shine
+		};
+
+		ShaderStruct::StructInfo mdl = {};
+		mdl.resource_name = "model";
+		mdl.resource_data_type = ShaderData::CUSTOM_DATA_MAT4;
+		mdl.resource_size = sizeof(glm::mat4);
+
+		ShaderStruct lcl = {};
+		lcl.count = 1;
+		lcl.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
+		lcl.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		lcl.shader_stage = ShaderStage::VERTEX_SHADER;
+		lcl.slot = 0;
+		lcl.members = {
+			mdl
+		};
+
+		ShaderStruct::StructInfo rst = {};
+		rst.resource_name = "rest";
+		rst.resource_data_type = ShaderData::CUSTOM_DATA_VEC4;
+		rst.resource_size = sizeof(glm::ivec4);
+
+		ShaderStruct rt = {};
+		rt.count = 1;
+		rt.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		rt.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		rt.shader_stage = ShaderStage::PIXEL_SHADER;
+		rt.slot = 2;
+		rt.members = {
+			rst
+		};
+
+		ShaderResources scn_res = {};
+		scn_res.resources.push_back({ scene_globals,{},{}, ShaderDataDef::STRUCTURE});
+		scn_res.resources.push_back({ {},texs,{}, ShaderDataDef::ARRAY });
+		scn_res.resources.push_back({ inst_data,{},{}, ShaderDataDef::STRUCTURE });
+		scn_res.resources.push_back({ lcl,{},{}, ShaderDataDef::STRUCTURE });
+		scn_res.resources.push_back({ rt,{},{}, ShaderDataDef::STRUCTURE });
+
 		PipelineStateDesc _ds;
-		_ds.resource_bindings_count = 11;
-		_ds.resource_bindings = scene;
 		_ds.vertex_shader = &VertShader;
 		_ds.pixel_shader = &FragShader;
+		_ds.resources = scn_res;
 
 		AutoFillPipelineDesc(
 			_ds
@@ -317,34 +294,33 @@ namespace trace {
 		RaterizerState raterizer_state;
 		raterizer_state.cull_mode = CullMode::FRONT;
 		raterizer_state.fill_mode = FillMode::SOLID;
-
-
-		ShaderResourceBinding cube_data;
-		cube_data.shader_stage = ShaderStage::PIXEL_SHADER;
-		cube_data.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
-		cube_data.resource_size = 0;
-		cube_data.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-		cube_data.resource_name = "CubeMap";
-		cube_data.count = 1;
-		cube_data.index = 0;
-		cube_data.slot = 1;
-		cube_data.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
 			
 
-		std::vector<ShaderResourceBinding> bindings = {
-			projection,
-			view,
-			view_position,
-			_test,
-			cube_data
+		ShaderArray::ArrayInfo cb_t = {};
+		cb_t.resource_name = "CubeMap";
+		cb_t.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+		cb_t.index = 0;
+
+		ShaderArray cb_d = {};
+		cb_d.count = 1;
+		cb_d.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		cb_d.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+		cb_d.shader_stage = ShaderStage::PIXEL_SHADER;
+		cb_d.slot = 1;
+		cb_d.members = {
+			cb_t
 		};
+
+		ShaderResources sky_res = {};
+		sky_res.resources.push_back({ scene_globals,{},{}, ShaderDataDef::STRUCTURE });
+		sky_res.resources.push_back({ {},cb_d,{}, ShaderDataDef::ARRAY });
+
 
 		PipelineStateDesc _ds1 = {};
 		_ds1.rateriser_state = raterizer_state;
-		_ds1.resource_bindings_count = 5;
-		_ds1.resource_bindings = bindings;
 		_ds1.vertex_shader = &VertShader;
 		_ds1.pixel_shader = &FragShader;
+		_ds1.resources = sky_res;
 
 		AutoFillPipelineDesc(
 			_ds1,

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "VulkanRenderGraph.h"
+#include "render/GPipeline.h"
 
 
 extern trace::VKHandle g_Vkhandle;
@@ -555,6 +556,110 @@ namespace vk {
 			);
 		}
 
+
+		return result;
+	}
+	bool __BindRenderGraphResource(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
+	{
+		bool result = true;
+
+		if (!render_graph || !pipeline)
+		{
+			TRC_ERROR("Unable to bind render graph resource please enter a valid pointer, {} || {}", (const void*)render_graph, (const void*)pipeline );
+			return false;
+		}
+
+		if (!render_graph->GetRenderHandle()->m_internalData || !pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Unable to bind render graph resource  please enter a valid render_graph or pipeline, {}", (const void*)render_graph->GetRenderHandle()->m_internalData, (const void*)pipeline->GetRenderHandle()->m_internalData);
+			return false;
+		}
+
+		trace::VKRenderGraph* handle = reinterpret_cast<trace::VKRenderGraph*>(render_graph->GetRenderHandle()->m_internalData);
+		trace::VKHandle* instance = reinterpret_cast<trace::VKHandle*>(handle->m_instance);
+		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
+		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
+
+		bool isTexture = (resource->resource_type == trace::RenderGraphResourceType::Texture);
+
+		if (!isTexture)
+		{
+			TRC_WARN("Only texture resource can be binded 'for now' ");
+			return false;
+		}
+
+		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
+
+		uint32_t hash_id = pipeline->_hashTable.Get(bind_name);
+
+		if (hash_id == INVALID_ID)
+		{
+			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
+			return false;
+		}
+
+		if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)&res_handle->resource[device->m_imageIndex].texture)
+			return false;
+
+
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+
+
+		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
+		VkDescriptorImageInfo image_info = {};
+		image_info.sampler = res_handle->resource[device->m_imageIndex].texture.m_sampler;
+		image_info.imageView = res_handle->resource[device->m_imageIndex].texture.m_view;
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		write.descriptorCount = 1; //HACK: Fix
+		write.dstBinding = meta_data._slot;
+		write.pImageInfo = &image_info;
+		write.dstArrayElement = index;
+		switch (meta_data._resource_type)
+		{
+		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
+		{
+			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			break;
+		}
+		}
+
+		switch (resource_stage)
+		{
+
+
+		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+		{
+			write.dstSet = pipe_handle->Scene_sets[device->m_imageIndex];
+
+			break;
+		}
+
+		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
+		{
+			write.dstSet = pipe_handle->Instance_sets[device->m_imageIndex];
+			break;
+		}
+
+		case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
+		{
+			write.dstSet = pipe_handle->Local_sets[device->m_imageIndex];
+			break;
+		}
+
+
+		}
+
+		vkUpdateDescriptorSets(
+			device->m_device,
+			1,
+			&write,
+			0,
+			nullptr
+		);
+		pipe_handle->last_tex_update[device->m_imageIndex] = (void*)&res_handle->resource[device->m_imageIndex].texture;
 
 		return result;
 	}

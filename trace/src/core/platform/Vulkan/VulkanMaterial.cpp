@@ -83,7 +83,6 @@ namespace vk {
 
         trace::PipelineStateDesc& desc = mat_instance->m_renderPipeline->GetDesc();
 
-        std::vector<trace::ShaderResourceBinding>& res = desc.resource_bindings;
         std::unordered_map<trace::ShaderData, std::pair<void*, uint32_t>>& _shaderData = mat_instance->m_shaderData;
 
 
@@ -91,90 +90,194 @@ namespace vk {
         {
             std::vector<VkWriteDescriptorSet> _writes;
             std::vector<VkCopyDescriptorSet> _copies;
-            for (uint32_t j = 0; j < desc.resource_bindings_count; j++)
+    
+            for (auto& k : desc.resources.resources)
             {
-                if (res[j].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+                bool is_struct = k.def == trace::ShaderDataDef::STRUCTURE;
+                bool is_array = k.def == trace::ShaderDataDef::ARRAY;
+                bool is_varible = k.def == trace::ShaderDataDef::VARIABLE;
+
+                trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
+                if (is_struct) res_stage = k._struct.resource_stage;
+                else if (is_array) res_stage = k._array.resource_stage;
+                else if (is_varible) res_stage = k._variable.resource_stage;
+
+                if (is_struct)
                 {
-                    VkWriteDescriptorSet write = {};
-                    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    write.descriptorCount = 1;
-                    write.dstArrayElement = res[j].index;
-                    write.dstBinding = res[j].slot;
-                    write.dstSet = _handle->m_sets[i];
-                    switch (res[j].resource_data_type)
+                    for (auto& mem : k._struct.members)
                     {
-                    case trace::ShaderData::MATERIAL_ALBEDO:
-                    {
-                        _shaderData[trace::ShaderData::MATERIAL_ALBEDO] = std::make_pair(mat_instance->m_material.m_albedoMap.get(), pipeline->_hashTable.Get(res[j].resource_name));
-                        trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_albedoMap.get()->GetRenderHandle()->m_internalData;
-                        VkDescriptorImageInfo img_info = {};
-                        img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        img_info.imageView = tex_handle->m_view;
-                        img_info.sampler = tex_handle->m_sampler;
-                        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        write.pImageInfo = &img_info;
-                        _writes.push_back(write);
-                        break;
+                        if (k._struct.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+                        {
+                            VkWriteDescriptorSet write = {};
+                            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                            write.descriptorCount = 1;
+                            write.dstArrayElement = k._struct.index;
+                            write.dstBinding = k._struct.slot;
+                            write.dstSet = _handle->m_sets[i];
+                            switch (mem.resource_data_type)
+                            {
+                            case trace::ShaderData::MATERIAL_ALBEDO:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_ALBEDO] = std::make_pair(mat_instance->m_material.m_albedoMap.get(), pipeline->_hashTable.Get(mem.resource_name));
+                                trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_albedoMap.get()->GetRenderHandle()->m_internalData;
+                                VkDescriptorImageInfo img_info = {};
+                                img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                img_info.imageView = tex_handle->m_view;
+                                img_info.sampler = tex_handle->m_sampler;
+                                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                write.pImageInfo = &img_info;
+                                _writes.push_back(write);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_DIFFUSE_COLOR:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR] = std::make_pair(&mat_instance->m_material.m_diffuseColor, pipeline->_hashTable.Get(mem.resource_name));
+                                VkCopyDescriptorSet copy = {};
+                                copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+                                copy.descriptorCount = 1;
+                                copy.dstArrayElement = k._struct.index;
+                                copy.dstBinding = k._struct.slot;
+                                copy.dstSet = _handle->m_sets[i];
+                                copy.srcArrayElement = k._struct.index;
+                                copy.srcBinding = k._struct.slot;
+                                copy.srcSet = sp->Instance_sets[i];
+                                _copies.push_back(copy);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_NORMAL:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_NORMAL] = std::make_pair(mat_instance->m_material.m_normalMap.get(), pipeline->_hashTable.Get(mem.resource_name));
+                                trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_normalMap.get()->GetRenderHandle()->m_internalData;
+                                VkDescriptorImageInfo img_info = {};
+                                img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                img_info.imageView = tex_handle->m_view;
+                                img_info.sampler = tex_handle->m_sampler;
+                                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                write.pImageInfo = &img_info;
+                                _writes.push_back(write);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_SHININESS:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_SHININESS] = std::make_pair(&mat_instance->m_material.m_shininess, pipeline->_hashTable.Get(mem.resource_name));
+                                VkCopyDescriptorSet copy = {};
+                                copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+                                copy.descriptorCount = 1;
+                                copy.dstArrayElement = k._struct.index;
+                                copy.dstBinding = k._struct.slot;
+                                copy.dstSet = _handle->m_sets[i];
+                                copy.srcArrayElement = k._struct.index;
+                                copy.srcBinding = k._struct.slot;
+                                copy.srcSet = sp->Instance_sets[i];
+                                _copies.push_back(copy);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_SPECULAR:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_SPECULAR] = std::make_pair(mat_instance->m_material.m_specularMap.get(), pipeline->_hashTable.Get(mem.resource_name));
+                                trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_specularMap.get()->GetRenderHandle()->m_internalData;
+                                VkDescriptorImageInfo img_info = {};
+                                img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                img_info.imageView = tex_handle->m_view;
+                                img_info.sampler = tex_handle->m_sampler;
+                                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                write.pImageInfo = &img_info;
+                                _writes.push_back(write);
+                                break;
+                            }
+                            }
+                        }
                     }
-                    case trace::ShaderData::MATERIAL_DIFFUSE_COLOR:
+                }
+                if (is_array)
+                {
+                    for (auto& mem : k._array.members)
                     {
-                        _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR] = std::make_pair(&mat_instance->m_material.m_diffuseColor, pipeline->_hashTable.Get(res[j].resource_name));
-                        VkCopyDescriptorSet copy = {};
-                        copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
-                        copy.descriptorCount = 1;
-                        copy.dstArrayElement = res[j].index;
-                        copy.dstBinding = res[j].slot;
-                        copy.dstSet = _handle->m_sets[i];
-                        copy.srcArrayElement = res[j].index;
-                        copy.srcBinding = res[j].slot;
-                        copy.srcSet = sp->Instance_sets[i];
-                        _copies.push_back(copy);
-                        break;
-                    }
-                    case trace::ShaderData::MATERIAL_NORMAL:
-                    {
-                        _shaderData[trace::ShaderData::MATERIAL_NORMAL] = std::make_pair(mat_instance->m_material.m_normalMap.get(), pipeline->_hashTable.Get(res[j].resource_name));
-                        trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_normalMap.get()->GetRenderHandle()->m_internalData;
-                        VkDescriptorImageInfo img_info = {};
-                        img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        img_info.imageView = tex_handle->m_view;
-                        img_info.sampler = tex_handle->m_sampler;
-                        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        write.pImageInfo = &img_info;
-                        _writes.push_back(write);
-                        break;
-                    }
-                    case trace::ShaderData::MATERIAL_SHININESS:
-                    {
-                        _shaderData[trace::ShaderData::MATERIAL_SHININESS] = std::make_pair(&mat_instance->m_material.m_shininess, pipeline->_hashTable.Get(res[j].resource_name));
-                        VkCopyDescriptorSet copy = {};
-                        copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
-                        copy.descriptorCount = 1;
-                        copy.dstArrayElement = res[j].index;
-                        copy.dstBinding = res[j].slot;
-                        copy.dstSet = _handle->m_sets[i];
-                        copy.srcArrayElement = res[j].index;
-                        copy.srcBinding = res[j].slot;
-                        copy.srcSet = sp->Instance_sets[i];
-                        _copies.push_back(copy);
-                        break;
-                    }
-                    case trace::ShaderData::MATERIAL_SPECULAR:
-                    {
-                        _shaderData[trace::ShaderData::MATERIAL_SPECULAR] = std::make_pair(mat_instance->m_material.m_specularMap.get(), pipeline->_hashTable.Get(res[j].resource_name));
-                        trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_specularMap.get()->GetRenderHandle()->m_internalData;
-                        VkDescriptorImageInfo img_info = {};
-                        img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        img_info.imageView = tex_handle->m_view;
-                        img_info.sampler = tex_handle->m_sampler;
-                        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        write.pImageInfo = &img_info;
-                        _writes.push_back(write);
-                        break;
-                    }
+                        if (k._array.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+                        {
+                            VkWriteDescriptorSet write = {};
+                            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                            write.descriptorCount = 1;
+                            write.dstArrayElement = mem.index;
+                            write.dstBinding = k._array.slot;
+                            write.dstSet = _handle->m_sets[i];
+                            switch (mem.resource_data_type)
+                            {
+                            case trace::ShaderData::MATERIAL_ALBEDO:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_ALBEDO] = std::make_pair(mat_instance->m_material.m_albedoMap.get(), pipeline->_hashTable.Get(mem.resource_name));
+                                trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_albedoMap.get()->GetRenderHandle()->m_internalData;
+                                VkDescriptorImageInfo img_info = {};
+                                img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                img_info.imageView = tex_handle->m_view;
+                                img_info.sampler = tex_handle->m_sampler;
+                                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                write.pImageInfo = &img_info;
+                                _writes.push_back(write);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_DIFFUSE_COLOR:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR] = std::make_pair(&mat_instance->m_material.m_diffuseColor, pipeline->_hashTable.Get(mem.resource_name));
+                                VkCopyDescriptorSet copy = {};
+                                copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+                                copy.descriptorCount = 1;
+                                copy.dstArrayElement = mem.index;
+                                copy.dstBinding = k._array.slot;
+                                copy.dstSet = _handle->m_sets[i];
+                                copy.srcArrayElement = mem.index;
+                                copy.srcBinding = k._array.slot;
+                                copy.srcSet = sp->Instance_sets[i];
+                                _copies.push_back(copy);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_NORMAL:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_NORMAL] = std::make_pair(mat_instance->m_material.m_normalMap.get(), pipeline->_hashTable.Get(mem.resource_name));
+                                trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_normalMap.get()->GetRenderHandle()->m_internalData;
+                                VkDescriptorImageInfo img_info = {};
+                                img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                img_info.imageView = tex_handle->m_view;
+                                img_info.sampler = tex_handle->m_sampler;
+                                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                write.pImageInfo = &img_info;
+                                _writes.push_back(write);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_SHININESS:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_SHININESS] = std::make_pair(&mat_instance->m_material.m_shininess, pipeline->_hashTable.Get(mem.resource_name));
+                                VkCopyDescriptorSet copy = {};
+                                copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+                                copy.descriptorCount = 1;
+                                copy.dstArrayElement = mem.index;
+                                copy.dstBinding = k._array.slot;
+                                copy.dstSet = _handle->m_sets[i];
+                                copy.srcArrayElement = mem.index;
+                                copy.srcBinding = k._array.slot;
+                                copy.srcSet = sp->Instance_sets[i];
+                                _copies.push_back(copy);
+                                break;
+                            }
+                            case trace::ShaderData::MATERIAL_SPECULAR:
+                            {
+                                _shaderData[trace::ShaderData::MATERIAL_SPECULAR] = std::make_pair(mat_instance->m_material.m_specularMap.get(), pipeline->_hashTable.Get(mem.resource_name));
+                                trace::VKImage* tex_handle = (trace::VKImage*)mat_instance->m_material.m_specularMap.get()->GetRenderHandle()->m_internalData;
+                                VkDescriptorImageInfo img_info = {};
+                                img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                img_info.imageView = tex_handle->m_view;
+                                img_info.sampler = tex_handle->m_sampler;
+                                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                write.pImageInfo = &img_info;
+                                _writes.push_back(write);
+                                break;
+                            }
+                            }
+                        }
                     }
                 }
             }
+
             vkUpdateDescriptorSets(
                 _device->m_device,
                 static_cast<uint32_t>(_writes.size()),

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Logging.h"
-#include "../platform/Windows/WinConsole.h"
+#include "core/Core.h"
+#include "core/Enums.h"
 
 namespace trace {
 

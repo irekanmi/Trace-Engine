@@ -2,6 +2,7 @@
 
 #include "core/io/Logging.h"
 #include "Ref.h"
+#include "render/Graphics.h"
 
 
 

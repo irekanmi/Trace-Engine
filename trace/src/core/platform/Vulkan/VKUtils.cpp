@@ -6,6 +6,7 @@
 #include "vulkan/vulkan_win32.h"
 #include "EASTL/map.h"
 #include "VulkanShader.h"
+#include "core/Platform.h"
 #include "spirv_cross/spirv_cross.hpp"
 #include "spirv_cross/spirv_glsl.hpp"
 
@@ -2051,63 +2052,115 @@ namespace vk {
 
 		
 
-		VkDescriptorSetLayoutBinding bd = {};
-		bd.binding = 0;
-		bd.descriptorCount = 0;
-		bd.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-		bd.pImmutableSamplers = nullptr;
-		bd.stageFlags = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-		trace::ShaderResourceStage last_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
-
-		std::vector<trace::ShaderResourceBinding> _local_binds;
-		for (uint32_t i = 0; i < desc.resource_bindings_count; i++)
+		for (auto& i : desc.resources.resources)
 		{
-			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-			{
-				_local_binds.push_back(desc.resource_bindings[i]);
-				continue;
-			}
-			VkDescriptorSetLayoutBinding bind = {};
+			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
+			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
+			bool is_varible = i.def == trace::ShaderDataDef::VARIABLE;
 
-			bind.binding = desc.resource_bindings[i].slot;
-			bind.pImmutableSamplers = nullptr;
-			bind.stageFlags = convertShaderStage(desc.resource_bindings[i].shader_stage);
-			bind.descriptorCount = desc.resource_bindings[i].count;
-			if (desc.resource_bindings[i].resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+			trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
+			if (is_struct) res_stage = i._struct.resource_stage;
+			else if (is_array) res_stage = i._array.resource_stage;
+			else if (is_varible) res_stage = i._variable.resource_stage;
+
+			switch (res_stage)
 			{
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			}
-			if (desc.resource_bindings[i].resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+			case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 			{
-				bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			}
-			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-			{
-				if(bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
-				{ }
-				else
+				VkDescriptorSetLayoutBinding bind = {};
+				if (is_struct)
 				{
-					SceneGlobalData_bindings.push_back(bind);
-					bd = bind;
-					last_stage = desc.resource_bindings[i].resource_stage;
+					bind.binding = i._struct.slot;
+					bind.descriptorCount = i._struct.count;
+					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
 				}
-			}
-			if (desc.resource_bindings[i].resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-			{
-				if (bind == bd && last_stage == desc.resource_bindings[i].resource_stage)
-				{ }
-				else
+				else if (is_array)
 				{
-					Instance_bindings.push_back(bind);
-					bd = bind;
-					last_stage = desc.resource_bindings[i].resource_stage;
+					bind.binding = i._array.slot;
+					bind.descriptorCount = i._array.count;
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._array.shader_stage);
 				}
+
+				SceneGlobalData_bindings.push_back(bind);
+				break;
 			}
+			case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
+			{
+				VkDescriptorSetLayoutBinding bind = {};
+				if (is_struct)
+				{
+					bind.binding = i._struct.slot;
+					bind.descriptorCount = i._struct.count;
+					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
+				}
+				else if (is_array)
+				{
+					bind.binding = i._array.slot;
+					bind.descriptorCount = i._array.count;
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._array.shader_stage);
+				}
+
+				Instance_bindings.push_back(bind);
+				break;
+			}
+			case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
+			{
+				if (is_struct)
+				{
+					uint32_t offset = 0;
+					VkPushConstantRange rag = {};
+					for (auto& mem : i._struct.members)
+					{
+						rag.offset = offset;
+						rag.size = mem.resource_size;
+						rag.stageFlags = convertShaderStage(i._struct.shader_stage);
+						ranges.push_back(rag);
+						offset += mem.resource_size;
+						offset = get_alignment(offset, 16);
+					}
+				}
+				break;
+			}
+
+			}
+
+			
+
 		}
-
-		ranges = processShaderLocalData(_local_binds);
 		uint32_t set_layout_count = 0;
-		if (!desc.resource_bindings.empty())
+		if (!desc.resources.resources.empty())
 		{
 
 			if (SceneGlobalData_bindings.empty() == false)
@@ -2183,6 +2236,7 @@ namespace vk {
 			}
 
 		}
+
 
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		create_info.setLayoutCount = set_layout_count;

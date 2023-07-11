@@ -230,7 +230,7 @@ namespace trace {
 		VKHandle* m_instance = nullptr;
 		VKDeviceHandle* m_device = nullptr;
 		char* cache_data = nullptr;
-		GTexture* last_tex_update[3] = {};
+		void* last_tex_update[3] = {};
 
 	};
 
