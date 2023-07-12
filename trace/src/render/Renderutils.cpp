@@ -132,6 +132,8 @@ namespace trace {
 		RenderFunc::_endRenderPass = vk::__EndRenderPass;
 		RenderFunc::_beginFrame = vk::__BeginFrame;
 		RenderFunc::_endFrame = vk::__EndFrame;
+		RenderFunc::_onDrawStart = vk::__OnDrawStart;
+		RenderFunc::_onDrawEnd = vk::__OnDrawEnd;
 
 		RenderFunc::_createBuffer = vk::__CreateBuffer;
 		RenderFunc::_destroyBuffer = vk::__DestroyBuffer;

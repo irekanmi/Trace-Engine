@@ -457,11 +457,39 @@ namespace vk {
 		VK_ASSERT(vkCreateCommandPool(device->m_device, &graphics_pool_info, instance->m_alloc_callback, &device->m_graphicsCommandPool));
 		TRC_INFO("Graphics command pool created");
 
+
+		vk::createBuffer(
+			instance,
+			device,
+			MB,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			device->m_frameDescriptorBuffer.m_handle,
+			device->m_frameDescriptorBuffer.m_memory
+		);
+
+		vkMapMemory(
+			device->m_device,
+			device->m_frameDescriptorBuffer.m_memory,
+			0,
+			MB,
+			VK_NO_FLAGS,
+			&device->m_bufferPtr
+		);
+
+
 		return device_created;
 	}
 
 	void _DestoryDevice(trace::VKDeviceHandle* device, trace::VKHandle* instance)
 	{
+		vkUnmapMemory(
+			device->m_device,
+			device->m_frameDescriptorBuffer.m_memory
+		);
+
+		_DestoryBuffer(instance, device, &device->m_frameDescriptorBuffer);
+
 		vkDestroyCommandPool(device->m_device, device->m_graphicsCommandPool, instance->m_alloc_callback);
 
 		vkDestroyDevice(device->m_device, instance->m_alloc_callback);
@@ -2045,7 +2073,7 @@ namespace vk {
 		const uint32_t pool_sizes_count = 2;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4096},
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4096},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4096}
 		};
 
@@ -2074,7 +2102,7 @@ namespace vk {
 					bind.descriptorCount = i._struct.count;
 					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					}
 					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{
@@ -2088,7 +2116,7 @@ namespace vk {
 					bind.descriptorCount = i._array.count;
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					}
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{
@@ -2109,7 +2137,7 @@ namespace vk {
 					bind.descriptorCount = i._struct.count;
 					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					}
 					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{
@@ -2123,7 +2151,7 @@ namespace vk {
 					bind.descriptorCount = i._array.count;
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					}
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{

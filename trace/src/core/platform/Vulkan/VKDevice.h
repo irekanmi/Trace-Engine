@@ -33,5 +33,7 @@ namespace vk {
 	bool __EndRenderPass(trace::GDevice* device, trace::GRenderPass* render_pass);
 	bool __BeginFrame(trace::GDevice* device, trace::GSwapchain* swapchain);
 	bool __EndFrame(trace::GDevice* device);
+	bool __OnDrawStart(trace::GDevice* device, trace::GPipeline* pipeline);
+	bool __OnDrawEnd(trace::GDevice* device, trace::GPipeline* pipeline);
 
 }

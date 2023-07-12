@@ -34,7 +34,7 @@ namespace trace {
 		uint32_t total_size_local = 0;
 		_pipeline->Scene_uniforms.resize(128);// TODO: Fix Hard Coded value
 
-
+		uint32_t z = 0;
 		for (auto& i : _pipeline->m_desc.resources.resources)
 		{
 			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
@@ -48,6 +48,7 @@ namespace trace {
 
 			if (is_struct)
 			{
+				uint32_t struct_size = 0;
 				for (auto& mem : i._struct.members)
 				{
 					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
@@ -64,6 +65,9 @@ namespace trace {
 							_pipeline->Scene_uniforms[j]._count = i._struct.count;
 							_pipeline->Scene_uniforms[j]._resource_type = i._struct.resource_type;
 							_pipeline->Scene_uniforms[j]._shader_stage = i._struct.shader_stage;
+							_pipeline->Scene_uniforms[j]._offset = struct_size;
+							struct_size += mem.resource_size;
+							struct_size = get_alignment(struct_size, 16);
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 							{
 								_pipeline->Scene_uniforms[j]._offset = total_size_local;
@@ -71,12 +75,19 @@ namespace trace {
 								total_size_local = get_alignment(total_size_local, 16);
 								break;
 							}
-							_pipeline->Scene_uniforms[j]._offset = total_size_global;
-							total_size_global += mem.resource_size;
-							total_size_global = get_alignment(total_size_global, 16);
+							_pipeline->Scene_uniforms[j]._struct_index = z;
+							//_pipeline->Scene_uniforms[j]._offset = total_size_global;
+							//total_size_global += mem.resource_size;
+							//total_size_global = get_alignment(total_size_global, 16);
+
 							break;
 						}
 					}
+				}
+				if (i._struct.resource_stage != trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+				{
+					_pipeline->Scence_struct.push_back({ struct_size ,  INVALID_ID });
+					z++;
 				}
 			}
 
@@ -113,18 +124,17 @@ namespace trace {
 					}
 				}
 			}
-
 		}
 
-		vk::createBuffer(
-			instance,
-			device,
-			total_size_global,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			_handle->Scene_buffers.m_handle,
-			_handle->Scene_buffers.m_memory
-		);
+		//vk::createBuffer(
+		//	instance,
+		//	device,
+		//	total_size_global,
+		//	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		//	_handle->Scene_buffers.m_handle,
+		//	_handle->Scene_buffers.m_memory
+		//);
 
 		VkDescriptorBufferInfo bufs[128];
 		for (uint32_t i = 0; i < 3; i++)
@@ -177,10 +187,11 @@ namespace trace {
 						continue;
 					}
 					bufs[k] = {};
-					bufs[k].buffer = _handle->Scene_buffers.m_handle;
-					bufs[k].offset = k_off;
+					//bufs[k].buffer = _handle->Scene_buffers.m_handle;
+					bufs[k].buffer = device->m_frameDescriptorBuffer.m_handle;
+					bufs[k].offset = 0;
 					bufs[k].range = struct_size;
-					write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					write.pBufferInfo = &bufs[k];
 					_writes.push_back(write);
 					k_off += struct_size;
@@ -343,10 +354,10 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 
-		vkUnmapMemory(
-			_device->m_device,
-			_handle->Scene_buffers.m_memory
-		);
+		//vkUnmapMemory(
+		//	_device->m_device,
+		//	_handle->Scene_buffers.m_memory
+		//);
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -399,14 +410,14 @@ namespace vk {
 
 		//_mapped_data = (char*)AllocAligned(map_data_size, m_device->m_properties.limits.minMemoryMapAlignment);
 
-		vkMapMemory(
-			_device->m_device,
-			_handle->Scene_buffers.m_memory,
-			0,
-			map_data_size,
-			0,
-			(void**)&_handle->cache_data
-		);
+		//vkMapMemory(
+		//	_device->m_device,
+		//	_handle->Scene_buffers.m_memory,
+		//	0,
+		//	map_data_size,
+		//	0,
+		//	(void**)&_handle->cache_data
+		//);
 
 
 		return result;
@@ -434,10 +445,10 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 
-		vkUnmapMemory(
-			_device->m_device,
-			_handle->Scene_buffers.m_memory
-		);
+		//vkUnmapMemory(
+		//	_device->m_device,
+		//	_handle->Scene_buffers.m_memory
+		//);
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -495,7 +506,11 @@ namespace vk {
 			);
 			return false;
 		}
-		void* map_point = _handle->cache_data + meta_data._offset;
+
+		char* data_point = (char*)_device->m_bufferPtr;
+		uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
+
+		void* map_point = data_point + location;
 		memcpy(map_point, data, meta_data._size);
 
 
@@ -641,6 +656,14 @@ namespace vk {
 			_sets[set_count++] = _handle->Local_sets[_device->m_imageIndex];
 		}
 
+		uint32_t offset_count = 0;
+		uint32_t offsets[12] = {};
+
+		for (auto& stct : pipeline->Scence_struct)
+		{
+			offsets[offset_count++] = stct.second;
+		}
+
 		vkCmdBindDescriptorSets(
 			_device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -648,8 +671,8 @@ namespace vk {
 			0,
 			set_count,
 			_sets,
-			0,
-			nullptr
+			offset_count,
+			offsets
 		);
 
 		return result;

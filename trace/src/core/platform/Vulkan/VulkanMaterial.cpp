@@ -325,18 +325,23 @@ namespace vk {
             void* _src = _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR].first;
             uint32_t hash_ = _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR].second;
             trace::UniformMetaData& _meta_data = pipeline->Scene_uniforms[hash_];
-            void* _map_point = sp->cache_data + _meta_data._offset;
+            char* data_point = (char*)_device->m_bufferPtr;
+            uint32_t location = pipeline->Scence_struct[_meta_data._struct_index].second + _meta_data._offset;
 
-            memcpy(_map_point, _src, sizeof(glm::vec4));
+            void* map_point = data_point + location;
+            memcpy(map_point, &mat_instance->m_material.m_diffuseColor, _meta_data._size);
+
         }
         if (_shaderData[trace::ShaderData::MATERIAL_SHININESS].first)
         {
             void* _src = _shaderData[trace::ShaderData::MATERIAL_SHININESS].first;
             uint32_t hash_ = _shaderData[trace::ShaderData::MATERIAL_SHININESS].second;
             trace::UniformMetaData& _meta_data = pipeline->Scene_uniforms[hash_];
-            void* _map_point = sp->cache_data + _meta_data._offset;
+            char* data_point = (char*)_device->m_bufferPtr;
+            uint32_t location = pipeline->Scence_struct[_meta_data._struct_index].second + _meta_data._offset;
 
-            memcpy(_map_point, _src, sizeof(float));
+            void* map_point = data_point + location;
+            memcpy(map_point, &mat_instance->m_material.m_shininess, _meta_data._size);
         }
 
         uint32_t set_count = 0;
@@ -357,6 +362,14 @@ namespace vk {
             _sets[set_count++] = sp->Local_sets[_device->m_imageIndex];
         }
 
+        uint32_t offset_count = 0;
+        uint32_t offsets[12] = {};
+
+        for (auto& stct : mat_instance->GetRenderPipline()->Scence_struct)
+        {
+            offsets[offset_count++] = stct.second;
+        }
+
         vkCmdBindDescriptorSets(
             _device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -364,8 +377,8 @@ namespace vk {
             0,
             set_count,
             _sets,
-            0,
-            nullptr
+            offset_count,
+            offsets
         );
         
 

@@ -204,7 +204,8 @@ namespace trace {
 	{
 		VARIABLE,
 		STRUCTURE,
-		ARRAY
+		ARRAY,
+		STRUCT_ARRAY
 	};
 
 	struct BufferInfo
@@ -284,6 +285,7 @@ namespace trace {
 		uint32_t _slot = 0;
 		uint32_t _index = 0;
 		uint32_t _count = 0;
+		uint32_t _struct_index = INVALID_ID;
 		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
 	};

@@ -317,6 +317,7 @@ namespace trace {
 			Ref<MaterialInstance> _mi = _model->m_matInstance;
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
+			RenderFunc::OnDrawStart(&g_device, sp.get());
 			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
@@ -328,6 +329,7 @@ namespace trace {
 			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
 
 			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
+			RenderFunc::OnDrawEnd(&g_device, sp.get());
 		}
 
 	}
@@ -342,7 +344,7 @@ namespace trace {
 		scene_data.projection = _camera->GetProjectionMatix();
 
 		Ref<GPipeline> sp = sky_pipeline;
-		RenderFunc::BindPipeline_(sp.get());
+		RenderFunc::OnDrawStart(&g_device, sp.get());
 
 		RenderFunc::SetPipelineTextureData(
 			sp.get(),
@@ -353,6 +355,7 @@ namespace trace {
 		RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
 		RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 		RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
+		RenderFunc::BindPipeline_(sp.get());
 
 		Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
 		RenderFunc::BindPipeline(&g_device, sp.get());
@@ -360,7 +363,7 @@ namespace trace {
 		RenderFunc::BindIndexBuffer(&g_device, mod->GetIndexBuffer());
 		
 		RenderFunc::DrawIndexed(&g_device, 0, mod->GetIndexCount());
-
+		RenderFunc::OnDrawEnd(&g_device, sp.get());
 	}
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)

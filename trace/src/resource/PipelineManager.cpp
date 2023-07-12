@@ -254,10 +254,10 @@ namespace trace {
 
 		ShaderResources scn_res = {};
 		scn_res.resources.push_back({ scene_globals,{},{}, ShaderDataDef::STRUCTURE});
+		scn_res.resources.push_back({ rt,{},{}, ShaderDataDef::STRUCTURE });
 		scn_res.resources.push_back({ {},texs,{}, ShaderDataDef::ARRAY });
 		scn_res.resources.push_back({ inst_data,{},{}, ShaderDataDef::STRUCTURE });
 		scn_res.resources.push_back({ lcl,{},{}, ShaderDataDef::STRUCTURE });
-		scn_res.resources.push_back({ rt,{},{}, ShaderDataDef::STRUCTURE });
 
 		PipelineStateDesc _ds;
 		_ds.vertex_shader = &VertShader;

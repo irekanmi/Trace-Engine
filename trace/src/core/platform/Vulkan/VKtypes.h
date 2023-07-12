@@ -161,6 +161,14 @@ namespace trace {
 
 	};
 
+	struct VKBuffer
+	{
+		VkBuffer m_handle = VK_NULL_HANDLE;
+		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+		void* m_device = nullptr;
+		VKHandle* m_instance = nullptr;
+	};
+
 	struct VKDeviceHandle
 	{
 		VkPhysicalDevice m_physicalDevice;
@@ -198,15 +206,12 @@ namespace trace {
 		VkPhysicalDeviceProperties m_properties;
 		VkPhysicalDeviceFeatures m_features;
 		SwapchainInfo m_swapchainInfo;
+		VKBuffer m_frameDescriptorBuffer;
+		void* m_bufferPtr;
+		uint32_t m_bufCurrentOffset;
 	};
 
-	struct VKBuffer
-	{
-		VkBuffer m_handle = VK_NULL_HANDLE;
-		VkDeviceMemory m_memory = VK_NULL_HANDLE;
-		VKDeviceHandle* m_device = nullptr;
-		VKHandle* m_instance = nullptr;
-	};
+	
 
 	struct VKPipeline
 	{

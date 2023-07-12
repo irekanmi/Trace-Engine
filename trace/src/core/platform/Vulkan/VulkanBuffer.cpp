@@ -95,7 +95,7 @@ namespace vk {
 		}
 
 		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
-		trace::VKDeviceHandle* _device = _handle->m_device;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
 
 		vkDeviceWaitIdle(_device->m_device);
@@ -127,7 +127,7 @@ namespace vk {
 		}
 
 		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
-		trace::VKDeviceHandle* _device = _handle->m_device;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
 
 

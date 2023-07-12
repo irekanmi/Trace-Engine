@@ -82,7 +82,7 @@ namespace vk {
 
 		VkDescriptorPoolSize pool_sizes[2] = {};
 		pool_sizes[0].descriptorCount = KB;
-		pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 
 		pool_sizes[1].descriptorCount = KB;
 		pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -624,6 +624,8 @@ namespace vk {
 			return false;
 		}
 
+		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
+		_handle->m_bufCurrentOffset = frame_offset;
 
 
 		if (!vk::_WaitFence(_instance, _handle, &_handle->m_inFlightFence[_handle->m_currentFrame], UINT64_MAX))
@@ -706,6 +708,72 @@ namespace vk {
 		vk::_CommandBufferSubmitted(command_buffer);
 
 		//vk::_PresentSwapchainImage(m_instance, m_handle, &m_handle->m_swapChain, m_handle->m_graphicsQueue, m_handle->m_presentQueue, m_handle->m_queueCompleteSemaphores[m_handle->m_currentFrame], &m_handle->m_imageIndex);
+
+		return result;
+	}
+
+	bool __OnDrawStart(trace::GDevice* device, trace::GPipeline* pipeline)
+	{
+		bool result = true;
+
+
+
+		if (!device || !pipeline)
+		{
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData || !pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		
+
+		for (auto& stct : pipeline->Scence_struct)
+		{
+			stct.second = _handle->m_bufCurrentOffset;
+			_handle->m_bufCurrentOffset += stct.first;
+		}
+
+		return result;
+	}
+
+	bool __OnDrawEnd(trace::GDevice* device, trace::GPipeline* pipeline)
+	{
+		bool result = true;
+
+		if (!device || !pipeline)
+		{
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData || !pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		for (auto& stct : pipeline->Scence_struct)
+		{
+			stct.second = INVALID_ID;
+		}
 
 		return result;
 	}

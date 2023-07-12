@@ -38,6 +38,7 @@ namespace trace {
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 		HashTable<uint32_t> _hashTable;
 		std::vector<UniformMetaData> Scene_uniforms = {};
+		std::vector<std::pair<uint32_t, uint32_t>> Scence_struct = {};
 		PipelineStateDesc m_desc;
 	private:
 		GHandle m_renderHandle;
