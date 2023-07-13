@@ -2073,6 +2073,7 @@ namespace vk {
 		const uint32_t pool_sizes_count = 2;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4096},
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4096},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4096}
 		};
@@ -2085,15 +2086,66 @@ namespace vk {
 			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
 			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
 			bool is_varible = i.def == trace::ShaderDataDef::VARIABLE;
+			bool is_sArray = i.def == trace::ShaderDataDef::STRUCT_ARRAY;
 
 			trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
 			if (is_struct) res_stage = i._struct.resource_stage;
 			else if (is_array) res_stage = i._array.resource_stage;
 			else if (is_varible) res_stage = i._variable.resource_stage;
+			else if (is_sArray) res_stage = i._array.resource_stage;
 
 			switch (res_stage)
 			{
 			case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+			{
+				VkDescriptorSetLayoutBinding bind = {};
+				if (is_struct)
+				{
+					bind.binding = i._struct.slot;
+					bind.descriptorCount = i._struct.count;
+					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
+				}
+				else if (is_array)
+				{
+					bind.binding = i._array.slot;
+					bind.descriptorCount = i._array.count;
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._array.shader_stage);
+				}
+				else if (is_sArray)
+				{
+					bind.binding = i._array.slot;
+					bind.descriptorCount = i._array.count;
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+					{
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+					bind.stageFlags = convertShaderStage(i._array.shader_stage);
+				}
+
+				SceneGlobalData_bindings.push_back(bind);
+				break;
+			}
+			case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
 			{
 				VkDescriptorSetLayoutBinding bind = {};
 				if (is_struct)
@@ -2124,28 +2176,7 @@ namespace vk {
 					}
 					bind.stageFlags = convertShaderStage(i._array.shader_stage);
 				}
-
-				SceneGlobalData_bindings.push_back(bind);
-				break;
-			}
-			case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
-			{
-				VkDescriptorSetLayoutBinding bind = {};
-				if (is_struct)
-				{
-					bind.binding = i._struct.slot;
-					bind.descriptorCount = i._struct.count;
-					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-					}
-					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
-				}
-				else if (is_array)
+				else if (is_sArray)
 				{
 					bind.binding = i._array.slot;
 					bind.descriptorCount = i._array.count;

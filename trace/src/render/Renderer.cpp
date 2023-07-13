@@ -159,6 +159,26 @@ namespace trace {
 
 		sky_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
 
+		lights[0].position = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
+		lights[0].direction = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
+		lights[0].color = { 0.8f, 0.8f, 0.8f, 1.0f };
+		lights[0].params1 = { 1.0f, 0.467f, 0.896f, 0.0f };
+		lights[0].params2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+		lights[1].position = { 0.0f, 2.5f, 2.0f, 0.0f };
+		lights[1].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
+		lights[1].color = { 0.37f, 0.65f, 0.66f, 1.0f };
+		lights[1].params1 = { 1.0f, 0.022f, 0.0019f, 0.0f };
+		lights[1].params2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+		lights[2].position = { _camera->GetPosition(), 0.0f };
+		lights[2].direction = { _camera->GetLookDir(), 0.0f };
+		lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
+		lights[2].params1 = { 1.0f, 0.07f, 0.017f, 0.939f };
+		lights[2].params2 = { 0.866f, 0.0f, 0.0f, 0.0f };
+
+		light_data = { 1, 1, 1, 0 };
+
 		//---------------------------------------------------------------------------------------------
 
 	}
@@ -232,6 +252,14 @@ namespace trace {
 			{
 				render_mode.x = 5;
 			}
+			else if (release->m_keycode == Keys::KEY_8)
+			{
+				render_mode.w = 8;
+			}
+			else if (release->m_keycode == Keys::KEY_9)
+			{
+				render_mode.w = 9;
+			}
 			else if (release->m_keycode == Keys::KEY_C)
 			{
 				TRC_DEBUG(
@@ -290,6 +318,12 @@ namespace trace {
 			_camera->Update(deltaTime);
 			//=========================
 
+			if (render_mode.w == 8)
+			{
+				lights[2].position = { _camera->GetPosition(), 0.0f };
+				lights[2].direction = { _camera->GetLookDir(), 0.0f };
+			}
+			
 			test_graph.Execute();
 
 			EndFrame();
@@ -321,6 +355,8 @@ namespace trace {
 			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
+			RenderFunc::SetPipelineData(sp.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &light_data, sizeof(glm::ivec4));
+			RenderFunc::SetPipelineData(sp.get(), "u_gLights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, lights, sizeof(Light) * MAX_LIGHT_COUNT);
 			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "rest", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &render_mode, sizeof(glm::ivec4));
 			RenderFunc::ApplyMaterial(_mi.get());

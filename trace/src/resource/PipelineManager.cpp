@@ -157,9 +157,9 @@ namespace trace {
 		vw_pos.resource_size = sizeof(glm::vec3);
 
 		ShaderStruct::StructInfo tst = {};
-		tst.resource_name = "_test";
-		tst.resource_data_type = ShaderData::CUSTOM_DATA_VEC2;
-		tst.resource_size = sizeof(glm::vec2);
+		tst.resource_name = "light_data";
+		tst.resource_data_type = ShaderData::CUSTOM_DATA_VEC4;
+		tst.resource_size = sizeof(glm::ivec4);
 
 		ShaderStruct scene_globals = {};
 		scene_globals.count = 1;
@@ -200,6 +200,16 @@ namespace trace {
 			spec,
 			norm
 		};
+
+		ShaderArray lgt = {};
+		lgt.count = MAX_LIGHT_COUNT;
+		lgt.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		lgt.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		lgt.shader_stage = ShaderStage::PIXEL_SHADER;
+		lgt.slot = 3;
+		lgt.name = "u_gLights";
+		lgt.resource_size = sizeof(Light);
+
 
 		ShaderStruct::StructInfo diff_col = {};
 		diff_col.resource_name = "diffuse_color";
@@ -255,6 +265,7 @@ namespace trace {
 		ShaderResources scn_res = {};
 		scn_res.resources.push_back({ scene_globals,{},{}, ShaderDataDef::STRUCTURE});
 		scn_res.resources.push_back({ rt,{},{}, ShaderDataDef::STRUCTURE });
+		scn_res.resources.push_back({ {},lgt,{}, ShaderDataDef::STRUCT_ARRAY });
 		scn_res.resources.push_back({ {},texs,{}, ShaderDataDef::ARRAY });
 		scn_res.resources.push_back({ inst_data,{},{}, ShaderDataDef::STRUCTURE });
 		scn_res.resources.push_back({ lcl,{},{}, ShaderDataDef::STRUCTURE });

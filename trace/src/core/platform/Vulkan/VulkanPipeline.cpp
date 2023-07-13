@@ -40,11 +40,13 @@ namespace trace {
 			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
 			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
 			bool is_varible = i.def == trace::ShaderDataDef::VARIABLE;
+			bool is_sArray = i.def == trace::ShaderDataDef::STRUCT_ARRAY;
 
 			trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
 			if (is_struct) res_stage = i._struct.resource_stage;
 			else if (is_array) res_stage = i._array.resource_stage;
 			else if (is_varible) res_stage = i._variable.resource_stage;
+			else if (is_sArray) res_stage = i._array.resource_stage;
 
 			if (is_struct)
 			{
@@ -76,15 +78,18 @@ namespace trace {
 								break;
 							}
 							_pipeline->Scene_uniforms[j]._struct_index = z;
-							//_pipeline->Scene_uniforms[j]._offset = total_size_global;
-							//total_size_global += mem.resource_size;
-							//total_size_global = get_alignment(total_size_global, 16);
+							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+							{
+								_pipeline->Scene_uniforms[j]._offset = total_size_global;
+								total_size_global += mem.resource_size;
+								total_size_global = get_alignment(total_size_global, 16);
+							}
 
 							break;
 						}
 					}
 				}
-				if (i._struct.resource_stage != trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+				if (i._struct.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 				{
 					_pipeline->Scence_struct.push_back({ struct_size ,  INVALID_ID });
 					z++;
@@ -116,28 +121,71 @@ namespace trace {
 								total_size_local = get_alignment(total_size_local, 16);
 								break;
 							}
-							_pipeline->Scene_uniforms[j]._offset = total_size_global;
-							total_size_global += i._array.resource_size;
-							total_size_global = get_alignment(total_size_global, 16);
+							//_pipeline->Scene_uniforms[j]._offset = total_size_global;
+							//total_size_global += i._array.resource_size;
+							//total_size_global = get_alignment(total_size_global, 16);
 							break;
 						}
 					}
 				}
 			}
+
+			if (is_sArray)
+			{
+				uint32_t& hash_id = _hashTable.Get_Ref(i._array.name);
+				for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+				{
+					if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+					{
+
+						hash_id = j;
+						_pipeline->Scene_uniforms[j]._id = j;
+						_pipeline->Scene_uniforms[j]._size = i._array.resource_size * i._array.count;
+						_pipeline->Scene_uniforms[j]._slot = i._array.slot;
+						_pipeline->Scene_uniforms[j]._index = 0;
+						_pipeline->Scene_uniforms[j]._count = i._array.count;
+						_pipeline->Scene_uniforms[j]._resource_type = i._array.resource_type;
+						_pipeline->Scene_uniforms[j]._shader_stage = i._array.shader_stage;
+						_pipeline->Scene_uniforms[j]._offset = 0;
+						_pipeline->Scene_uniforms[j]._struct_index = z;
+						if (i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+						{
+							_pipeline->Scene_uniforms[j]._offset = total_size_local;
+							total_size_local += i._array.resource_size;
+							total_size_local = get_alignment(total_size_local, 16);
+							break;
+						}
+						if (i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+						{
+							_pipeline->Scene_uniforms[j]._offset = total_size_global;
+							total_size_global += (i._array.resource_size * i._array.count);
+							total_size_global = get_alignment(total_size_global, 16);
+						}
+						break;
+					}
+				}
+				if (i._array.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+				{
+					_pipeline->Scence_struct.push_back({ i._array.resource_size * i._array.count ,  INVALID_ID });
+					z++;
+				}
+			}
 		}
 
-		//vk::createBuffer(
-		//	instance,
-		//	device,
-		//	total_size_global,
-		//	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		//	_handle->Scene_buffers.m_handle,
-		//	_handle->Scene_buffers.m_memory
-		//);
+		vk::createBuffer(
+			instance,
+			device,
+			total_size_global * device->frames_in_flight,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			_handle->Scene_buffers.m_handle,
+			_handle->Scene_buffers.m_memory
+		);
+
 
 		VkDescriptorBufferInfo bufs[128];
-		for (uint32_t i = 0; i < 3; i++)
+		uint32_t t_size = 0;
+		for (uint32_t i = 0; i < device->frames_in_flight; i++)
 		{
 			std::vector<VkWriteDescriptorSet> _writes;
 			uint32_t block_size = 0;
@@ -150,11 +198,13 @@ namespace trace {
 				bool is_struct = _i.def == trace::ShaderDataDef::STRUCTURE;
 				bool is_array = _i.def == trace::ShaderDataDef::ARRAY;
 				bool is_varible = _i.def == trace::ShaderDataDef::VARIABLE;
+				bool is_sArray = _i.def == trace::ShaderDataDef::STRUCT_ARRAY;
 
 				trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
 				if (is_struct) res_stage = _i._struct.resource_stage;
 				else if (is_array) res_stage = _i._array.resource_stage;
 				else if (is_varible) res_stage = _i._variable.resource_stage;
+				else if (is_sArray) res_stage = _i._array.resource_stage;
 
 				if (is_struct)
 				{
@@ -173,29 +223,31 @@ namespace trace {
 					write.pImageInfo = nullptr;
 					write.pNext = nullptr;
 					write.pTexelBufferView = nullptr;
+					bufs[k] = {};
 					if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 					{
 
 						write.dstSet = _handle->Scene_sets[i];
+						write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						bufs[k].offset = k_off + ( t_size * i);
+						bufs[k].buffer = _handle->Scene_buffers.m_handle;
+						k_off += struct_size;
+						k_off = get_alignment(k_off, 16);
 					}
 					else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 					{
+						bufs[k].offset = 0;
 						write.dstSet = _handle->Instance_sets[i];
+						write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+						bufs[k].buffer = device->m_frameDescriptorBuffer.m_handle;
 					}
 					else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 					{
 						continue;
 					}
-					bufs[k] = {};
-					//bufs[k].buffer = _handle->Scene_buffers.m_handle;
-					bufs[k].buffer = device->m_frameDescriptorBuffer.m_handle;
-					bufs[k].offset = 0;
 					bufs[k].range = struct_size;
-					write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 					write.pBufferInfo = &bufs[k];
 					_writes.push_back(write);
-					k_off += struct_size;
-					//k_off = get_alignment(k_off, 16);
 				}
 				if (is_array)
 				{
@@ -235,8 +287,50 @@ namespace trace {
 						}
 					}
 				}
+				if (is_sArray)
+				{
+					uint32_t struct_size = _i._array.resource_size;
+					VkWriteDescriptorSet write = {};
+					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					write.descriptorCount = 1;
+					write.dstBinding = _i._array.slot;
+					write.pBufferInfo = nullptr;
+					write.pImageInfo = nullptr;
+					write.pNext = nullptr;
+					write.pTexelBufferView = nullptr;
+					for (uint32_t r = 0; r < _i._array.count; r++)
+					{
+						write.dstArrayElement = r;
+						if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+						{
+							write.dstSet = _handle->Scene_sets[i];
+							write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+							bufs[k].offset = k_off + (t_size * i);
+							bufs[k].buffer = _handle->Scene_buffers.m_handle;
+							k_off += struct_size;
+							k_off = get_alignment(k_off, 16);
+						}
+						else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+						{
+							bufs[k].offset = 0;
+							write.dstSet = _handle->Instance_sets[i];
+							write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+							bufs[k].buffer = device->m_frameDescriptorBuffer.m_handle;
+						}
+						else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+						{
+							continue;
+						}
+						bufs[k].range = struct_size;
+						write.pBufferInfo = &bufs[k];
+						_writes.push_back(write);
+						k++;
+					}
+					
+				}
 				k++;
 			}
+			t_size = k_off;
 
 			vkUpdateDescriptorSets(
 				device->m_device,
@@ -246,6 +340,7 @@ namespace trace {
 				nullptr
 			);
 		}
+		_handle->cache_size = t_size;
 		out_size = total_size_global;
 		result = true;
 		return result;
@@ -354,10 +449,10 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 
-		//vkUnmapMemory(
-		//	_device->m_device,
-		//	_handle->Scene_buffers.m_memory
-		//);
+		vkUnmapMemory(
+			_device->m_device,
+			_handle->Scene_buffers.m_memory
+		);
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -410,14 +505,14 @@ namespace vk {
 
 		//_mapped_data = (char*)AllocAligned(map_data_size, m_device->m_properties.limits.minMemoryMapAlignment);
 
-		//vkMapMemory(
-		//	_device->m_device,
-		//	_handle->Scene_buffers.m_memory,
-		//	0,
-		//	map_data_size,
-		//	0,
-		//	(void**)&_handle->cache_data
-		//);
+		vkMapMemory(
+			_device->m_device,
+			_handle->Scene_buffers.m_memory,
+			0,
+			map_data_size,
+			0,
+			(void**)&_handle->cache_data
+		);
 
 
 		return result;
@@ -445,10 +540,10 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 
-		//vkUnmapMemory(
-		//	_device->m_device,
-		//	_handle->Scene_buffers.m_memory
-		//);
+		vkUnmapMemory(
+			_device->m_device,
+			_handle->Scene_buffers.m_memory
+		);
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -504,8 +599,20 @@ namespace vk {
 				meta_data._size,
 				data
 			);
-			return false;
+			return true;
 		}
+
+		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+		{
+			char* data_point = (char*)_handle->cache_data;
+			uint32_t location =  meta_data._offset + (_handle->cache_size * _device->m_imageIndex);
+
+			void* map_point = data_point + location;
+			memcpy(map_point, data, meta_data._size);
+			return true;
+		}
+
+
 
 		char* data_point = (char*)_device->m_bufferPtr;
 		uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;

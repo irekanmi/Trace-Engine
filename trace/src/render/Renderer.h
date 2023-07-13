@@ -75,6 +75,8 @@ namespace trace {
 		RenderGraph test_graph;
 		std::unordered_map<std::string, void*> _avaliable_passes;
 		MainPass main_pass;
+		Light lights[MAX_LIGHT_COUNT];
+		glm::ivec4 light_data;
 		//------------------------------------
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;

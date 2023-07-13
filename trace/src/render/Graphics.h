@@ -4,6 +4,8 @@
 #include "EASTL/string.h"
 #include "glm/glm.hpp"
 
+#define MAX_LIGHT_COUNT 4
+
 namespace trace {
 
 	class GShader;
@@ -319,6 +321,7 @@ namespace trace {
 		uint32_t slot = 0;
 		uint32_t count = 1;
 		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		std::string name;
 		struct ArrayInfo
 		{
 			std::string resource_name = "";
@@ -474,6 +477,14 @@ namespace trace {
 		std::vector<unsigned char*> m_data;
 	};
 
+	struct Light
+	{
+		glm::vec4 position;
+		glm::vec4 direction;
+		glm::vec4 color;
+		glm::vec4 params1; // x: constant, y: linear, z:quadratic, w: innerCutOff
+		glm::vec4 params2; // x: outerCutOff, y: null, z:null, w: null
+	};
 	
 
 }

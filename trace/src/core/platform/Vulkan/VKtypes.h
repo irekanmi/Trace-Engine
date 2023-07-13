@@ -234,6 +234,7 @@ namespace trace {
 
 		VKHandle* m_instance = nullptr;
 		VKDeviceHandle* m_device = nullptr;
+		uint32_t cache_size = 0;
 		char* cache_data = nullptr;
 		void* last_tex_update[3] = {};
 
