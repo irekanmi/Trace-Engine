@@ -449,6 +449,44 @@ namespace trace {
 
 	};
 
+	struct Vertex2D
+	{
+		glm::vec2 pos;
+		glm::vec2 texCoord;
+
+
+		static InputLayout get_input_layout()
+		{
+			InputLayout layout;
+			layout.stride = sizeof(Vertex2D);
+			layout.input_class = InputClassification::PER_VERTEX_DATA;
+
+			InputLayout::Element _pos;
+			_pos.format = Format::R32G32_FLOAT;
+			_pos.index = 0;
+			_pos.offset = offsetof(Vertex2D, pos);
+			_pos.stride = sizeof(glm::vec2);
+
+			layout.elements.push_back(_pos);
+
+			InputLayout::Element _texCoord;
+			_texCoord.format = Format::R32G32_FLOAT;
+			_texCoord.index = 1;
+			_texCoord.offset = offsetof(Vertex2D, texCoord);
+			_texCoord.stride = sizeof(glm::vec2);
+
+			layout.elements.push_back(_texCoord);
+
+			return layout;
+		}
+
+		bool operator==(const Vertex2D& other) const {
+			return pos == other.pos && texCoord == other.texCoord;
+		}
+
+	};
+
+
 	struct SceneGlobals
 	{
 		alignas(16) glm::mat4 projection;

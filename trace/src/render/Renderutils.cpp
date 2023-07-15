@@ -152,6 +152,7 @@ namespace trace {
 		RenderFunc::_setPipelineData = vk::__SetPipelineData;
 		RenderFunc::_setPipelineTextureData = vk::__SetPipelineTextureData;
 		RenderFunc::_bindPipeline_ = vk::__BindPipeline_;
+		RenderFunc::_bindRenderGraphResorce = vk::__BindRenderGraphResource;
 
 		RenderFunc::_createRenderPass = vk::__CreateRenderPass;
 		RenderFunc::_destroyRenderPass = vk::__DestroyRenderPass;

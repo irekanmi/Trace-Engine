@@ -456,7 +456,7 @@ namespace trace {
 				uint32_t width = 0;
 				uint32_t height = 0;
 
-				for (auto& res_index : pass->GetAttachmentOutputs())
+				for (auto& res_index : curr_pass->GetAttachmentOutputs())
 				{
 					RenderGraphResource* res = &GetResource(res_index);
 					if (width == 0)
@@ -478,18 +478,18 @@ namespace trace {
 					}
 				}
 
-				pass->renderArea.x = 0;
-				pass->renderArea.y = 0;
-				pass->renderArea.z = static_cast<float>(width);
-				pass->renderArea.w = static_cast<float>(height);
+				curr_pass->renderArea.x = 0;
+				curr_pass->renderArea.y = 0;
+				curr_pass->renderArea.z = static_cast<float>(width);
+				curr_pass->renderArea.w = static_cast<float>(height);
 
-				pass->clearColor.r = 0.22f;
-				pass->clearColor.g = 0.217f;
-				pass->clearColor.b = 0.20f;
-				pass->clearColor.a = 0.85f;
+				curr_pass->clearColor.r = 0.22f;
+				curr_pass->clearColor.g = 0.217f;
+				curr_pass->clearColor.b = 0.20f;
+				curr_pass->clearColor.a = 0.85f;
 
-				pass->depthValue = 1.0f;
-				pass->stencilValue = 0;
+				curr_pass->depthValue = 1.0f;
+				curr_pass->stencilValue = 0;
 
 				for (RenderGraphEdge& edge : curr_pass->GetPassEdges())
 				{

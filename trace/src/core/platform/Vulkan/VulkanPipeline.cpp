@@ -171,16 +171,19 @@ namespace trace {
 				}
 			}
 		}
-
-		vk::createBuffer(
-			instance,
-			device,
-			total_size_global * device->frames_in_flight,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			_handle->Scene_buffers.m_handle,
-			_handle->Scene_buffers.m_memory
-		);
+		
+		if (total_size_global > 0)
+		{
+			vk::createBuffer(
+				instance,
+				device,
+				total_size_global * device->frames_in_flight,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				_handle->Scene_buffers.m_handle,
+				_handle->Scene_buffers.m_memory
+			);
+		}
 
 
 		VkDescriptorBufferInfo bufs[128];
@@ -449,10 +452,13 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 
-		vkUnmapMemory(
-			_device->m_device,
-			_handle->Scene_buffers.m_memory
-		);
+		if (_handle->Scene_buffers.m_memory)
+		{
+			vkUnmapMemory(
+				_device->m_device,
+				_handle->Scene_buffers.m_memory
+			);
+		}
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -505,14 +511,17 @@ namespace vk {
 
 		//_mapped_data = (char*)AllocAligned(map_data_size, m_device->m_properties.limits.minMemoryMapAlignment);
 
-		vkMapMemory(
-			_device->m_device,
-			_handle->Scene_buffers.m_memory,
-			0,
-			map_data_size,
-			0,
-			(void**)&_handle->cache_data
-		);
+		if (_handle->Scene_buffers.m_memory)
+		{
+			vkMapMemory(
+				_device->m_device,
+				_handle->Scene_buffers.m_memory,
+				0,
+				map_data_size,
+				0,
+				(void**)&_handle->cache_data
+			);
+		}
 
 
 		return result;
@@ -539,11 +548,13 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
-
-		vkUnmapMemory(
-			_device->m_device,
-			_handle->Scene_buffers.m_memory
-		);
+		if (_handle->Scene_buffers.m_memory)
+		{
+			vkUnmapMemory(
+				_device->m_device,
+				_handle->Scene_buffers.m_memory
+			);
+		}
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -614,7 +625,7 @@ namespace vk {
 
 
 
-		char* data_point = (char*)_device->m_bufferPtr;
+		char* data_point = _device->m_bufferData;
 		uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
 
 		void* map_point = data_point + location;

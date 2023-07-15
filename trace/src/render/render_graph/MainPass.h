@@ -17,7 +17,7 @@ namespace trace {
 		virtual void ShutDown() override;
 
 	private:
-		uint32_t color_ouput_index;
+		uint32_t color_output_index;
 		uint32_t depth_index;
 	protected:
 

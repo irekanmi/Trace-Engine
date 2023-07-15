@@ -477,12 +477,17 @@ namespace vk {
 			&device->m_bufferPtr
 		);
 
+		device->m_bufferData = new char[MB];
+
 
 		return device_created;
 	}
 
 	void _DestoryDevice(trace::VKDeviceHandle* device, trace::VKHandle* instance)
 	{
+
+		delete[] device->m_bufferData;
+
 		vkUnmapMemory(
 			device->m_device,
 			device->m_frameDescriptorBuffer.m_memory

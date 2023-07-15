@@ -60,11 +60,11 @@ namespace trace {
 	void MainPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)
 	{
 		auto pass = render_graph->AddPass("MAIN_PASS", GPU_QUEUE::GRAPHICS);
-		color_ouput_index = pass_inputs.outputs[0];
+		color_output_index = pass_inputs.outputs[0];
 		depth_index = pass_inputs.outputs[1];
 
 		pass->AddColorAttachmentOuput(
-			render_graph->GetResource(color_ouput_index).resource_name,
+			render_graph->GetResource(color_output_index).resource_name,
 			{}
 		);
 
@@ -94,7 +94,7 @@ namespace trace {
 				desc.m_width = width;
 				desc.m_height = height;
 
-				graph->ModifyTextureResource(graph->GetResource(color_ouput_index).resource_name, desc);
+				graph->ModifyTextureResource(graph->GetResource(color_output_index).resource_name, desc);
 				graph->ModifyTextureResource(graph->GetResource(depth_index).resource_name, desc);
 			});
 	}

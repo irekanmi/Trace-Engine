@@ -325,7 +325,7 @@ namespace vk {
             void* _src = _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR].first;
             uint32_t hash_ = _shaderData[trace::ShaderData::MATERIAL_DIFFUSE_COLOR].second;
             trace::UniformMetaData& _meta_data = pipeline->Scene_uniforms[hash_];
-            char* data_point = (char*)_device->m_bufferPtr;
+            char* data_point = _device->m_bufferData;
             uint32_t location = pipeline->Scence_struct[_meta_data._struct_index].second + _meta_data._offset;
 
             void* map_point = data_point + location;
@@ -337,7 +337,7 @@ namespace vk {
             void* _src = _shaderData[trace::ShaderData::MATERIAL_SHININESS].first;
             uint32_t hash_ = _shaderData[trace::ShaderData::MATERIAL_SHININESS].second;
             trace::UniformMetaData& _meta_data = pipeline->Scene_uniforms[hash_];
-            char* data_point = (char*)_device->m_bufferPtr;
+            char* data_point = _device->m_bufferData;
             uint32_t location = pipeline->Scence_struct[_meta_data._struct_index].second + _meta_data._offset;
 
             void* map_point = data_point + location;

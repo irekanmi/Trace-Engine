@@ -351,6 +351,60 @@ namespace trace {
 		skybox_pipeline = { GetPipeline("skybox_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this)};
 		RenderFunc::DestroyShader(&VertShader);
 		RenderFunc::DestroyShader(&FragShader);
+
+
+		vert_src.clear();
+		frag_src.clear();
+
+		vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+		frag_src = ShaderParser::load_shader_file("../assets/shaders/custom.frag.glsl");
+
+		std::cout << vert_src;
+		std::cout << frag_src;
+
+		RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+		RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+
+		ShaderArray::ArrayInfo _c = {};
+		_c.index = 0;
+		_c.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+		_c.resource_name = "color";
+
+		ShaderArray col = {};
+		col.count = 1;
+		col.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		col.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+		col.shader_stage = ShaderStage::PIXEL_SHADER;
+		col.slot = 0;
+		col.members = { _c };
+
+		ShaderResources cus_res = {};
+		cus_res.resources.push_back({ {}, col, {}, ShaderDataDef::ARRAY });
+
+		PipelineStateDesc _ds2 = {};
+		_ds2.vertex_shader = &VertShader;
+		_ds2.pixel_shader = &FragShader;
+		_ds2.resources = cus_res;
+		_ds2.input_layout = Vertex2D::get_input_layout();
+		
+		
+		AutoFillPipelineDesc(
+			_ds2,
+			false
+		);
+		_ds2.render_pass = Renderer::get_instance()->GetRenderPass("CUSTOM_PASS");
+		_ds2.depth_sten_state = { false, false };
+
+
+		if (!CreatePipeline(_ds2, "custom_pass_pipeline"))
+		{
+			TRC_ERROR("Failed to initialize or create custom_pass_pipeline");
+			return false;
+		}
+
+		RenderFunc::DestroyShader(&VertShader);
+		RenderFunc::DestroyShader(&FragShader);
+
 		return true;
 	}
 	PipelineManager* PipelineManager::get_instance()

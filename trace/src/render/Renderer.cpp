@@ -87,33 +87,28 @@ namespace trace {
 			_rect = rect;
 		}
 
-		{
+		
 
-			TextureDesc depth = {};
-			depth.m_addressModeU = depth.m_addressModeV = depth.m_addressModeW = AddressMode::REPEAT;
-			depth.m_attachmentType = AttachmentType::DEPTH;
-			depth.m_flag = BindFlag::DEPTH_STENCIL_BIT;
-			depth.m_format = Format::D32_SFLOAT_S8_SUINT;
-			depth.m_width = 800;
-			depth.m_height = 600;
-			depth.m_minFilterMode = depth.m_magFilterMode = FilterMode::LINEAR;
-			depth.m_mipLevels = depth.m_numLayers = 1;
-			depth.m_usage = UsageFlag::DEFAULT;
-			test_graph.AddTextureResource("depth", depth);
-			test_graph.AddSwapchainResource("swapchain", &_swapChain);
+		Vertex2D quadData[6] = {
+			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
+			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+			{glm::vec2(-1.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
+			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
+			{glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 0.0f)},
+			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+		};
 
-			RenderPassPacket main_pass_input = {};
-			main_pass_input.outputs[0] = test_graph.FindResourceIndex("swapchain");
-			main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
+		BufferInfo quadInfo = {};
+		quadInfo.m_data = quadData;
+		quadInfo.m_flag = BindFlag::VERTEX_BIT;
+		quadInfo.m_size = sizeof(Vertex2D) * 6;
+		quadInfo.m_stide = sizeof(Vertex2D);
+		quadInfo.m_usageFlag = UsageFlag::DEFAULT;
 
-			main_pass.Init(this);
-			main_pass.Setup(&test_graph, main_pass_input);
+		RenderFunc::CreateBuffer(&quadBuffer, quadInfo);
 
-			test_graph.SetFinalResourceOutput("swapchain");
-			test_graph.SetRenderer(this);
-			test_graph.Compile();
-
-		}
+		main_pass.Init(this);
+		custom_pass.Init(this);
 
 		return result;
 	}
@@ -177,6 +172,52 @@ namespace trace {
 		lights[2].params1 = { 1.0f, 0.07f, 0.017f, 0.939f };
 		lights[2].params2 = { 0.866f, 0.0f, 0.0f, 0.0f };
 
+		{
+
+			TextureDesc depth = {};
+			depth.m_addressModeU = depth.m_addressModeV = depth.m_addressModeW = AddressMode::REPEAT;
+			depth.m_attachmentType = AttachmentType::DEPTH;
+			depth.m_flag = BindFlag::DEPTH_STENCIL_BIT;
+			depth.m_format = Format::D32_SFLOAT_S8_SUINT;
+			depth.m_width = 800;
+			depth.m_height = 600;
+			depth.m_minFilterMode = depth.m_magFilterMode = FilterMode::LINEAR;
+			depth.m_mipLevels = depth.m_numLayers = 1;
+			depth.m_usage = UsageFlag::DEFAULT;
+
+			TextureDesc color = {};
+			color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
+			color.m_attachmentType = AttachmentType::COLOR;
+			color.m_flag = BindFlag::RENDER_TARGET_BIT;
+			color.m_format = Format::R8G8B8A8_SRBG;
+			color.m_width = 800;
+			color.m_height = 600;
+			color.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
+			color.m_mipLevels = color.m_numLayers = 1;
+			color.m_usage = UsageFlag::DEFAULT;
+
+			test_graph.AddTextureResource("color", color);
+			test_graph.AddTextureResource("depth", depth);
+			test_graph.AddSwapchainResource("swapchain", &_swapChain);
+
+			RenderPassPacket main_pass_input = {};
+			main_pass_input.outputs[0] = test_graph.FindResourceIndex("color");
+			main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
+
+			RenderPassPacket custom_pass_packet = {};
+			custom_pass_packet.inputs[0] = test_graph.FindResourceIndex("color");
+			custom_pass_packet.outputs[0] = test_graph.FindResourceIndex("swapchain");
+
+
+			main_pass.Setup(&test_graph, main_pass_input);
+			custom_pass.Setup(&test_graph, custom_pass_packet);
+
+			test_graph.SetFinalResourceOutput("swapchain");
+			test_graph.SetRenderer(this);
+			test_graph.Compile();
+
+		}
+
 		light_data = { 1, 1, 1, 0 };
 
 		//---------------------------------------------------------------------------------------------
@@ -188,9 +229,12 @@ namespace trace {
 
 		// Temp-----------------------------
 
+		RenderFunc::DestroyBuffer(&quadBuffer);
+
 		test_graph.Destroy();
 		sky_pipeline.~Ref();
 		
+		custom_pass.ShutDown();
 		main_pass.ShutDown();
 		delete _camera;
 
@@ -330,6 +374,12 @@ namespace trace {
 			RenderFunc::PresentSwapchain(&_swapChain);
 		}
 		m_listCount = 0;
+	}
+
+	void Renderer::DrawQuad()
+	{
+		RenderFunc::BindVertexBuffer(&g_device, &quadBuffer);
+		RenderFunc::Draw(&g_device, 0, 6);
 	}
 
 

@@ -18,6 +18,7 @@
 #include "GContext.h"
 #include "render_graph/RenderGraph.h"
 #include "render_graph/MainPass.h"
+#include "render_graph/CustomPass.h"
 //----------------------------------------
 
 
@@ -47,6 +48,7 @@ namespace trace {
 		GDevice* GetDevice() { return &g_device; }
 		GContext* GetContext() { return &g_context; }
 		void Render(float deltaTime);
+		void DrawQuad();
 		
 
 
@@ -75,8 +77,10 @@ namespace trace {
 		RenderGraph test_graph;
 		std::unordered_map<std::string, void*> _avaliable_passes;
 		MainPass main_pass;
+		CustomPass custom_pass;
 		Light lights[MAX_LIGHT_COUNT];
 		glm::ivec4 light_data;
+		GBuffer quadBuffer;
 		//------------------------------------
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;

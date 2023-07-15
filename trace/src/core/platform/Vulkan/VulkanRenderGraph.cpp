@@ -416,20 +416,33 @@ namespace vk {
 		}
 
 
-		if (!pass_handle->invalidate_image_barriers[device->m_imageIndex].empty())
+		//if (!pass_handle->invalidate_image_barriers[device->m_imageIndex].empty())
+		//{
+		//	
+		//	vkCmdPipelineBarrier(
+		//		device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+		//		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		//		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		//		0,
+		//		0,
+		//		nullptr,
+		//		0,
+		//		nullptr,
+		//		static_cast<uint32_t>(pass_handle->invalidate_image_barriers[device->m_imageIndex].size()),
+		//		pass_handle->invalidate_image_barriers[device->m_imageIndex].data()
+		//	);
+		//}
+
+
+		uint32_t image_bar_count = 0;
+		VkImageMemoryBarrier image_bars[10] = {};
+		for (auto& edge : pass->GetPassEdges())
 		{
-			vkCmdPipelineBarrier(
-				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
-				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				0,
-				0,
-				nullptr,
-				0,
-				nullptr,
-				static_cast<uint32_t>(pass_handle->invalidate_image_barriers[device->m_imageIndex].size()),
-				pass_handle->invalidate_image_barriers[device->m_imageIndex].data()
-			);
+			bool from = (pass == edge.from);
+			bool to = (pass == edge.to);
+			bool from_to = (edge.to && edge.from);
+
+
 		}
 
 		_BeginRenderPass(
@@ -470,22 +483,74 @@ namespace vk {
 		);
 
 
-		if (!pass_handle->flush_image_barriers[device->m_imageIndex].empty())
+		//if (!pass_handle->flush_image_barriers[device->m_imageIndex].empty())
+		//{
+		//	vkCmdPipelineBarrier(
+		//		device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+		//		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		//		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		//		0,
+		//		0,
+		//		nullptr,
+		//		0,
+		//		nullptr,
+		//		static_cast<uint32_t>(pass_handle->flush_image_barriers[device->m_imageIndex].size()),
+		//		pass_handle->flush_image_barriers[device->m_imageIndex].data()
+		//	);
+		//}
+
+		uint32_t image_bar_count = 0;
+		VkImageMemoryBarrier image_bars[10] = {};
+		for (auto& edge : pass->GetPassEdges())
 		{
-			vkCmdPipelineBarrier(
-				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
-				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-				0,
-				0,
-				nullptr,
-				0,
-				nullptr,
-				static_cast<uint32_t>(pass_handle->flush_image_barriers[device->m_imageIndex].size()),
-				pass_handle->flush_image_barriers[device->m_imageIndex].data()
-			);
+			bool from = (pass == edge.from);
+			bool to = (pass == edge.to);
+			bool from_to = (edge.to && edge.from);
+
+			trace::RenderGraphResource* res = edge.resource;
+			bool isTexture, isSwapchainImage;
+			isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
+			isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
+
+			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData)->resource[device->m_imageIndex].texture;
+
+
+			if (from)
+			{
+				VkImageMemoryBarrier img_bar = {};
+				img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				img_bar.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				img_bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				img_bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				img_bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				img_bar.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				img_bar.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				img_bar.pNext = nullptr;
+				img_bar.image = img_handle.m_handle;
+				img_bar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				img_bar.subresourceRange.baseArrayLayer = 0;
+				img_bar.subresourceRange.baseMipLevel = 0;
+				img_bar.subresourceRange.layerCount = 1;
+				img_bar.subresourceRange.levelCount = 1;
+				image_bars[image_bar_count++] = img_bar;
+			}
 		}
 
+		if (image_bar_count > 0)
+		{
+				vkCmdPipelineBarrier(
+				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				0,
+				0,
+				nullptr,
+				0,
+				nullptr,
+				image_bar_count,
+				image_bars
+			);
+		}
 
 		bool signal_evnt = !pass_handle->signal_events.empty();
 
@@ -710,7 +775,7 @@ namespace vk {
 				att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 				att_desc.format = convertFmt(tex->resource_data.texture.format);
-				att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 				att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 				att_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
 				att_ref.attachment = i;
@@ -744,7 +809,7 @@ namespace vk {
 		else if (pass->GetDepthStencilInput() != INVALID_ID)
 		{
 			trace::RenderGraphResource* tex = &render_graph->GetResource(pass->GetDepthStencilInput());
-			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depth_desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
 			depth_desc.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;

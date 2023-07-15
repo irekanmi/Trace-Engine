@@ -672,7 +672,11 @@ namespace vk {
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 
-		//vk::_EndRenderPass(m_instance, m_handle, command_buffer);
+		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
+		char* from = _handle->m_bufferData + frame_offset;
+		char* to = (char*)_handle->m_bufferPtr + frame_offset;
+
+		memcpy(to, from, uint32_t(MB / (_handle->frames_in_flight)));
 
 		vk::_EndCommandBuffer(command_buffer);
 

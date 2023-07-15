@@ -208,6 +208,7 @@ namespace trace {
 		SwapchainInfo m_swapchainInfo;
 		VKBuffer m_frameDescriptorBuffer;
 		void* m_bufferPtr;
+		char* m_bufferData;
 		uint32_t m_bufCurrentOffset;
 	};
 
