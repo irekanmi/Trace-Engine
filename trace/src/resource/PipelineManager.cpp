@@ -47,7 +47,8 @@ namespace trace {
 			{
 				if (pipeline.m_id == INVALID_ID)
 					continue;
-				pipeline.~GPipeline();
+				RenderFunc::DestroyPipeline(&pipeline);
+				TRC_TRACE("Pipeline not destroyed id: {}", pipeline.m_id);
 			}
 			m_pipelines.clear();
 		}

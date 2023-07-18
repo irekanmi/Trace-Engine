@@ -90,12 +90,12 @@ namespace trace {
 		
 
 		Vertex2D quadData[6] = {
-			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
-			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
-			{glm::vec2(-1.0f, 1.0f), glm::vec2(0.0f, 1.0f)},
-			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
-			{glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 0.0f)},
-			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 1.0f)},
+			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
+			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
+			{glm::vec2(-1.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
+			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
+			{glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 1.0f)},
+			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
 		};
 
 		BufferInfo quadInfo = {};
@@ -209,8 +209,8 @@ namespace trace {
 			custom_pass_packet.outputs[0] = test_graph.FindResourceIndex("swapchain");
 
 
-			main_pass.Setup(&test_graph, main_pass_input);
 			custom_pass.Setup(&test_graph, custom_pass_packet);
+			main_pass.Setup(&test_graph, main_pass_input);
 
 			test_graph.SetFinalResourceOutput("swapchain");
 			test_graph.SetRenderer(this);

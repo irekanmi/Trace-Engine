@@ -57,6 +57,7 @@ namespace trace {
 		GHandle render_handle;
 		std::vector<uint32_t> read_passes;
 		std::vector<uint32_t> written_passes;
+		uint32_t create_pass = INVALID_ID;
 		bool external = false;
 	};
 
@@ -73,13 +74,15 @@ namespace trace {
 
 	public:
 				
-		void AddColorAttachmentInput(const std::string& name, TextureDesc desc);
-		void AddColorAttachmentOuput(const std::string& name, TextureDesc desc);
+		void CreateAttachmentOutput(const std::string& name, TextureDesc desc);
+		void CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc);
+		void AddColorAttachmentInput(const std::string& name);
+		void AddColorAttachmentOuput(const std::string& name);
 		void AddTextureInput(const std::string& name, GTexture* texture);
 		void AddTextureOutput(const std::string& name, GTexture* texture);
 		void SetSwapchainOutput(const std::string& name, GSwapchain* swapchain);
 		void SetDepthStencilInput(const std::string& name);
-		void SetDepthStencilOutput(const std::string& name, TextureDesc desc);
+		void SetDepthStencilOutput(const std::string& name);
 		void SetRunCB(std::function<void(std::vector<uint32_t>&)> run_cb) { m_run_cb = run_cb; }
 		void SetResizeCB(std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> resize_cb) { m_resize_cb = resize_cb; }
 		uint32_t GetDepthStencilInput() { return m_depthStencilInput; }

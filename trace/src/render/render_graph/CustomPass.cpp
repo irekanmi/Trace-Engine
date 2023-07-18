@@ -56,15 +56,9 @@ namespace trace {
 
 		RenderGraphPass* pass = render_graph->AddPass("CUSTOM_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->AddColorAttachmentInput(
-			render_graph->GetResource(color_input_index).resource_name,
-			{}
-		);
+		pass->AddColorAttachmentInput(render_graph->GetResource(color_input_index).resource_name);
 
-		pass->AddColorAttachmentOuput(
-			render_graph->GetResource(color_output_index).resource_name,
-			{}
-		);
+		pass->AddColorAttachmentOuput(render_graph->GetResource(color_output_index).resource_name);
 
 		m_pipeline = ResourceSystem::get_instance()->GetPipeline("custom_pass_pipeline");
 

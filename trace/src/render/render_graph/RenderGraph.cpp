@@ -17,11 +17,34 @@ namespace trace {
 	{
 	}
 
-	void RenderGraphPass::AddColorAttachmentInput(const std::string& name, TextureDesc desc)
+	void RenderGraphPass::CreateAttachmentOutput(const std::string& name, TextureDesc desc)
 	{
-
 		desc.m_attachmentType = AttachmentType::COLOR;
 		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
+		m_outputs.push_back(index);
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
+		m_attachmentOutputs.push_back(index);
+		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
+		output_tex->written_passes.push_back(pass_index);
+		output_tex->create_pass = pass_index;
+	}
+
+	void RenderGraphPass::CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc)
+	{
+		desc.m_attachmentType = AttachmentType::DEPTH;
+		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
+		m_outputs.push_back(index);
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
+		m_depthStencilOutput = index;
+		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
+		output_tex->written_passes.push_back(pass_index);
+		output_tex->create_pass = index;
+	}
+
+	void RenderGraphPass::AddColorAttachmentInput(const std::string& name)
+	{
+
+		uint32_t index = m_renderGraph->FindResourceIndex(name);
 		m_inputs.push_back(index);
 		RenderGraphResource* input_tex = &m_renderGraph->GetResource(index);
 		m_attachmentInputs.push_back(index);
@@ -30,10 +53,9 @@ namespace trace {
 
 	}
 
-	void RenderGraphPass::AddColorAttachmentOuput(const std::string& name, TextureDesc desc)
+	void RenderGraphPass::AddColorAttachmentOuput(const std::string& name)
 	{
-		desc.m_attachmentType = AttachmentType::COLOR;
-		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
+		uint32_t index = m_renderGraph->FindResourceIndex(name);
 		m_outputs.push_back(index);
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		m_attachmentOutputs.push_back(index);
@@ -85,10 +107,9 @@ namespace trace {
 		output_tex->read_passes.push_back(pass_index);
 	}
 
-	void RenderGraphPass::SetDepthStencilOutput(const std::string& name, TextureDesc desc)
+	void RenderGraphPass::SetDepthStencilOutput(const std::string& name)
 	{
-		desc.m_attachmentType = AttachmentType::DEPTH;
-		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
+		uint32_t index = m_renderGraph->FindResourceIndex(name);
 		m_outputs.push_back(index);
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		m_depthStencilOutput = index;

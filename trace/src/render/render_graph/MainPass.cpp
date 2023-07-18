@@ -63,12 +63,12 @@ namespace trace {
 		color_output_index = pass_inputs.outputs[0];
 		depth_index = pass_inputs.outputs[1];
 
-		pass->AddColorAttachmentOuput(
+		pass->CreateAttachmentOutput(
 			render_graph->GetResource(color_output_index).resource_name,
 			{}
 		);
 
-		pass->SetDepthStencilOutput(
+		pass->CreateDepthAttachmentOutput(
 			render_graph->GetResource(depth_index).resource_name, 
 			{}
 		);
