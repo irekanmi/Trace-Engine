@@ -1,13 +1,13 @@
 # Trace Game Engine
 
-Trace is a game engine equiped with implmentation of industry standard techniques in __(rendering, physics, gameplay systmes e.t.c)__. To be used to create games with immersive worlds and gameplay.
+Trace is a game engine equiped with implementation of industry standard techniques in __(rendering, physics, gameplay systmes e.t.c)__. To be used to create games with immersive worlds and gameplay.
 
 ## Plan
-To provide High Fidelity and advanced graphics to low end __PC__ in the africa community.
+To provide High Fidelity and advanced graphics to low end __PC__ in the Africa community.
 
 
 ## Goal
-The is simple, it is a project that is used as learning tool, it is a software that brings high leveland advanced techniques used in the game industry to a capable low end __PC__ in the africa community
+The goal is simple, it is a project that is used as learning tool, it is a software that brings high level and advanced techniques used in the game industry to a capable low end __PC__ in the Africa community
 
 ## Features
 * Resource management
