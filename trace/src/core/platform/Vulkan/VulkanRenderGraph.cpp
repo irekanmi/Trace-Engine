@@ -327,7 +327,7 @@ namespace vk {
 			isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 
 			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData)->resource[device->m_imageIndex].texture;
-			if (res.create_pass == pass_index)
+			if (res.create_pass == pass_index && isTexture)
 			{
 				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 				{

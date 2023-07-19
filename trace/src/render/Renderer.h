@@ -19,6 +19,7 @@
 #include "render_graph/RenderGraph.h"
 #include "render_graph/MainPass.h"
 #include "render_graph/CustomPass.h"
+#include "render_graph/GBufferPass.h"
 //----------------------------------------
 
 
@@ -78,6 +79,7 @@ namespace trace {
 		std::unordered_map<std::string, void*> _avaliable_passes;
 		MainPass main_pass;
 		CustomPass custom_pass;
+		GBufferPass gbuffer_pass;
 		Light lights[MAX_LIGHT_COUNT];
 		glm::ivec4 light_data;
 		GBuffer quadBuffer;

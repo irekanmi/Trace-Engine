@@ -38,8 +38,8 @@ namespace vk {
 
 		VkResult _result;
 		VkSubpassDescription subpass = {};
-		eastl::vector<VkAttachmentDescription> attachments;
-		eastl::vector<VkAttachmentReference> attachments_ref;
+		std::vector<VkAttachmentDescription> attachments;
+		std::vector<VkAttachmentReference> attachments_ref;
 		VkAttachmentReference depth_attach_ref = {};
 		depth_attach_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		attachments.resize(desc.subpass.attachment_count);
@@ -70,7 +70,7 @@ namespace vk {
 		subpass.colorAttachmentCount = static_cast<uint32_t>(attachments_ref.size() - has_depth);
 		subpass.pColorAttachments = attachments_ref.data();
 		subpass.pDepthStencilAttachment = has_depth ? &depth_attach_ref : nullptr;
-
+		
 
 		VkRenderPassCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -99,7 +99,8 @@ namespace vk {
 			render_pass->GetRenderHandle()->m_internalData = nullptr;
 			result = false;
 		}
-
+		
+		render_pass->color_attach_count = static_cast<uint32_t>(attachments_ref.size() - has_depth);
 
 		return result;
 	}

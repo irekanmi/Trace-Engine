@@ -9,6 +9,7 @@
 #include "core/Platform.h"
 #include "spirv_cross/spirv_cross.hpp"
 #include "spirv_cross/spirv_glsl.hpp"
+#include "render/GRenderPass.h"
 
 struct PhyScr
 {
@@ -1680,7 +1681,17 @@ namespace vk {
 		VkPipelineColorBlendStateCreateInfo color_blend_info = {};
 		color_blend_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		parseColorBlendState(desc.blend_state, color_blend_info, attach_state);
+		VkPipelineColorBlendAttachmentState attach_states[10] = {};
 
+
+		color_blend_info.attachmentCount = desc.render_pass->color_attach_count;
+		for (uint32_t i = 0; i < color_blend_info.attachmentCount; i++)
+		{
+			attach_states[i] = attach_state;
+		}
+		color_blend_info.pAttachments = attach_states;
+
+		
 		// TODO: complete pipeline layout creation info
 		VkPipelineLayoutCreateInfo layout_info = {};
 		layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2035,6 +2046,7 @@ namespace vk {
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment)
 	{
 
+		
 		// ------------------ TODO----------------------------------------
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
 			VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |

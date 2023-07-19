@@ -252,6 +252,8 @@
     <ClInclude Include="src\render\render_graph\RenderPass.h" />
     <ClInclude Include="src\render\render_graph\MainPass.h" />
     <ClInclude Include="src\render\render_graph\CustomPass.h" />
+    <ClInclude Include="src\render\render_graph\GBufferPass.h" />
+    <ClInclude Include="src\core\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -435,5 +437,6 @@
     <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
     <ClCompile Include="src\render\render_graph\MainPass.cpp" />
     <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
+    <ClCompile Include="src\render\render_graph\GBufferPass.cpp" />
   </ItemGroup>
 </Project>

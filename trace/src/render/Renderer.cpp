@@ -12,6 +12,7 @@
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
+#include "core/Utils.h"
 
 
 namespace trace {
@@ -109,6 +110,7 @@ namespace trace {
 
 		main_pass.Init(this);
 		custom_pass.Init(this);
+		gbuffer_pass.Init(this);
 
 		return result;
 	}
@@ -201,7 +203,7 @@ namespace trace {
 			test_graph.AddSwapchainResource("swapchain", &_swapChain);
 
 			RenderPassPacket main_pass_input = {};
-			main_pass_input.outputs[0] = test_graph.FindResourceIndex("color");
+			main_pass_input.outputs[0] = test_graph.FindResourceIndex("swapchain");
 			main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
 
 			RenderPassPacket custom_pass_packet = {};
@@ -209,7 +211,7 @@ namespace trace {
 			custom_pass_packet.outputs[0] = test_graph.FindResourceIndex("swapchain");
 
 
-			custom_pass.Setup(&test_graph, custom_pass_packet);
+			//custom_pass.Setup(&test_graph, custom_pass_packet);
 			main_pass.Setup(&test_graph, main_pass_input);
 
 			test_graph.SetFinalResourceOutput("swapchain");
@@ -235,6 +237,7 @@ namespace trace {
 		sky_pipeline.~Ref();
 		
 		custom_pass.ShutDown();
+		gbuffer_pass.ShutDown();
 		main_pass.ShutDown();
 		delete _camera;
 
@@ -364,8 +367,23 @@ namespace trace {
 
 			if (render_mode.w == 8)
 			{
-				lights[2].position = { _camera->GetPosition(), 0.0f };
-				lights[2].direction = { _camera->GetLookDir(), 0.0f };
+				glm::vec3 light_pos = glm::vec3(lights[2].position);
+				glm::vec3 light_dir = glm::vec3(lights[2].direction);
+				glm::vec3 cam_pos = _camera->GetPosition();
+				glm::vec3 cam_dir = _camera->GetLookDir();
+				if (light_pos != cam_pos)
+				{
+
+					lights[2].position.x = lerp(light_pos.x, cam_pos.x, deltaTime);
+					lights[2].position.y = lerp(light_pos.y, cam_pos.y, deltaTime);
+					lights[2].position.z = lerp(light_pos.z, cam_pos.z, deltaTime);
+				}
+				if (light_dir != cam_dir)
+				{
+					lights[2].direction.x = lerp(light_dir.x, cam_dir.x, deltaTime);
+					lights[2].direction.y = lerp(light_dir.y, cam_dir.y, deltaTime);
+					lights[2].direction.z = lerp(light_dir.z, cam_dir.z, deltaTime);
+				}
 			}
 			
 			test_graph.Execute();

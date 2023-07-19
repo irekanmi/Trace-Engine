@@ -16,6 +16,7 @@ namespace trace {
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 	public:
 		RenderPassDescription m_desc;
+		uint32_t color_attach_count;
 
 	private:
 		GHandle m_renderHandle;
