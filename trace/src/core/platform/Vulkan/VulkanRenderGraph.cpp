@@ -2,6 +2,7 @@
 
 #include "VulkanRenderGraph.h"
 #include "render/GPipeline.h"
+#include "render/render_graph/RenderGraph.h"
 
 
 extern trace::VKHandle g_Vkhandle;
@@ -75,58 +76,7 @@ namespace vk {
 				{
 					if (_from && isTexture)
 					{
-						for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-						{
-							trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData)->resource[i].texture;
-							VkImageMemoryBarrier img_bar_invalidate = {};
-							img_bar_invalidate.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-							img_bar_invalidate.srcAccessMask = VK_ACCESS_NONE;
-							img_bar_invalidate.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-							img_bar_invalidate.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_invalidate.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_invalidate.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-							img_bar_invalidate.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-							img_bar_invalidate.pNext = nullptr;
-							img_bar_invalidate.image = img_handle.m_handle;
-							img_bar_invalidate.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-							img_bar_invalidate.subresourceRange.baseArrayLayer = 0;
-							img_bar_invalidate.subresourceRange.baseMipLevel = 0;
-							img_bar_invalidate.subresourceRange.layerCount = 1;
-							img_bar_invalidate.subresourceRange.levelCount = 1;
-
-							VkImageMemoryBarrier img_bar_flush = {};
-							img_bar_flush.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-							img_bar_flush.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-							img_bar_flush.dstAccessMask = VK_ACCESS_NONE;
-							img_bar_flush.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_flush.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_flush.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-							img_bar_flush.newLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-							img_bar_flush.pNext = nullptr;
-							img_bar_flush.image = img_handle.m_handle;
-							img_bar_flush.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-							img_bar_flush.subresourceRange.baseArrayLayer = 0;
-							img_bar_flush.subresourceRange.baseMipLevel = 0;
-							img_bar_flush.subresourceRange.layerCount = 1;
-							img_bar_flush.subresourceRange.levelCount = 1;
-
-							if (res->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
-							{
-								img_bar_invalidate.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-								img_bar_invalidate.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-								img_bar_invalidate.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-								img_bar_flush.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-								img_bar_flush.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-								img_bar_flush.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-
-							}
-
-							pass_handle->invalidate_image_barriers[i].push_back(img_bar_invalidate);
-							pass_handle->flush_image_barriers[i].push_back(img_bar_flush);
-						}
-
+						
 						VkEventCreateInfo evnt_info = {};
 						evnt_info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
 						evnt_info.pNext = nullptr;
@@ -146,58 +96,6 @@ namespace vk {
 					}
 					else if (_to && isTexture)
 					{
-						for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-						{
-							trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData)->resource[i].texture;
-							VkImageMemoryBarrier img_bar_invalidate = {};
-							img_bar_invalidate.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-							img_bar_invalidate.srcAccessMask = VK_ACCESS_NONE;
-							img_bar_invalidate.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-							img_bar_invalidate.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_invalidate.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_invalidate.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-							img_bar_invalidate.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-							img_bar_invalidate.pNext = nullptr;
-							img_bar_invalidate.image = img_handle.m_handle;
-							img_bar_invalidate.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-							img_bar_invalidate.subresourceRange.baseArrayLayer = 0;
-							img_bar_invalidate.subresourceRange.baseMipLevel = 0;
-							img_bar_invalidate.subresourceRange.layerCount = 1;
-							img_bar_invalidate.subresourceRange.levelCount = 1;
-
-							VkImageMemoryBarrier img_bar_flush = {};
-							img_bar_flush.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-							img_bar_flush.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-							img_bar_flush.dstAccessMask = VK_ACCESS_NONE;
-							img_bar_flush.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_flush.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_flush.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-							img_bar_flush.newLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-							img_bar_flush.pNext = nullptr;
-							img_bar_flush.image = img_handle.m_handle;
-							img_bar_flush.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-							img_bar_flush.subresourceRange.baseArrayLayer = 0;
-							img_bar_flush.subresourceRange.baseMipLevel = 0;
-							img_bar_flush.subresourceRange.layerCount = 1;
-							img_bar_flush.subresourceRange.levelCount = 1;
-
-							if (res->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
-							{
-								img_bar_invalidate.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-								img_bar_invalidate.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-								img_bar_invalidate.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-								img_bar_invalidate.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-
-								img_bar_flush.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-								img_bar_flush.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-								img_bar_flush.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-
-							}
-
-							pass_handle->invalidate_image_barriers[i].push_back(img_bar_invalidate);
-							pass_handle->flush_image_barriers[i].push_back(img_bar_flush);
-						}
 						trace::VKEvntPair evnt_pair = { edge.from, res };
 						auto it = std::find_if(handle->events.begin(), handle->events.end(), [&evnt_pair](trace::VKEvntPair& val)
 							{
@@ -218,59 +116,6 @@ namespace vk {
 				{
 					if (_to && isTexture)
 					{
-						for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-						{
-							trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData)->resource[i].texture;
-							VkImageMemoryBarrier img_bar_invalidate = {};
-							img_bar_invalidate.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-							img_bar_invalidate.srcAccessMask = VK_ACCESS_NONE;
-							img_bar_invalidate.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-							img_bar_invalidate.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_invalidate.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_invalidate.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-							img_bar_invalidate.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-							img_bar_invalidate.pNext = nullptr;
-							img_bar_invalidate.image = img_handle.m_handle;
-							img_bar_invalidate.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-							img_bar_invalidate.subresourceRange.baseArrayLayer = 0;
-							img_bar_invalidate.subresourceRange.baseMipLevel = 0;
-							img_bar_invalidate.subresourceRange.layerCount = 1;
-							img_bar_invalidate.subresourceRange.levelCount = 1;
-
-							VkImageMemoryBarrier img_bar_flush = {};
-							img_bar_flush.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-							img_bar_flush.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-							img_bar_flush.dstAccessMask = VK_ACCESS_NONE;
-							img_bar_flush.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_flush.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-							img_bar_flush.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-							img_bar_flush.newLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-							img_bar_flush.pNext = nullptr;
-							img_bar_flush.image = img_handle.m_handle;
-							img_bar_flush.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-							img_bar_flush.subresourceRange.baseArrayLayer = 0;
-							img_bar_flush.subresourceRange.baseMipLevel = 0;
-							img_bar_flush.subresourceRange.layerCount = 1;
-							img_bar_flush.subresourceRange.levelCount = 1;
-
-
-							if (res->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
-							{
-								img_bar_invalidate.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-								img_bar_invalidate.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-								img_bar_invalidate.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-								img_bar_invalidate.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-
-								img_bar_flush.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-								img_bar_flush.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-								img_bar_flush.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-
-							}
-
-							pass_handle->invalidate_image_barriers[i].push_back(img_bar_invalidate);
-							pass_handle->flush_image_barriers[i].push_back(img_bar_flush);
-						}
 					}
 				}
 				
@@ -416,22 +261,7 @@ namespace vk {
 		}
 
 
-		//if (!pass_handle->invalidate_image_barriers[device->m_imageIndex].empty())
-		//{
-		//	
-		//	vkCmdPipelineBarrier(
-		//		device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
-		//		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-		//		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		//		0,
-		//		0,
-		//		nullptr,
-		//		0,
-		//		nullptr,
-		//		static_cast<uint32_t>(pass_handle->invalidate_image_barriers[device->m_imageIndex].size()),
-		//		pass_handle->invalidate_image_barriers[device->m_imageIndex].data()
-		//	);
-		//}
+	
 
 
 		uint32_t image_bar_count = 0;
@@ -483,40 +313,27 @@ namespace vk {
 		);
 
 
-		//if (!pass_handle->flush_image_barriers[device->m_imageIndex].empty())
-		//{
-		//	vkCmdPipelineBarrier(
-		//		device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
-		//		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		//		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-		//		0,
-		//		0,
-		//		nullptr,
-		//		0,
-		//		nullptr,
-		//		static_cast<uint32_t>(pass_handle->flush_image_barriers[device->m_imageIndex].size()),
-		//		pass_handle->flush_image_barriers[device->m_imageIndex].data()
-		//	);
-		//}
 
 		uint32_t image_bar_count = 0;
 		VkImageMemoryBarrier image_bars[10] = {};
-		for (auto& edge : pass->GetPassEdges())
+
+		for (uint32_t& res_index : pass->GetAttachmentOutputs())
 		{
-			bool from = (pass == edge.from);
-			bool to = (pass == edge.to);
-			bool from_to = (edge.to && edge.from);
+			trace::RenderGraphResource & res = render_graph->GetResource(res_index);
 
-			trace::RenderGraphResource* res = edge.resource;
+			uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
 			bool isTexture, isSwapchainImage;
-			isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
-			isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
+			isTexture = res.resource_type == trace::RenderGraphResourceType::Texture;
+			isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 
-			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData)->resource[device->m_imageIndex].texture;
-
-
-			if (from)
+			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData)->resource[device->m_imageIndex].texture;
+			if (res.create_pass == pass_index)
 			{
+				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
+				{
+
+					continue;
+				}
 				VkImageMemoryBarrier img_bar = {};
 				img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 				img_bar.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;

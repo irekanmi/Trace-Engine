@@ -295,8 +295,6 @@ namespace trace {
 		std::vector<VkEvent> wait_events;
 		std::vector<VkEvent> signal_events;
 		VKRenderPass physical_pass;
-		std::vector<VkImageMemoryBarrier> invalidate_image_barriers[VK_MAX_NUM_FRAMES];
-		std::vector<VkImageMemoryBarrier> flush_image_barriers[VK_MAX_NUM_FRAMES];
 		VkFramebuffer frame_buffers[VK_MAX_NUM_FRAMES];
 	};
 
