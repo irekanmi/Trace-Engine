@@ -12,7 +12,7 @@ namespace trace {
 		{
 			AttachmentInfo position_attach;
 			position_attach.attachmant_index = 0;
-			position_attach.attachment_format = Format::R8G8B8A8_SRBG;
+			position_attach.attachment_format = Format::R16G16B16A16_FLOAT;
 			position_attach.initial_format = TextureFormat::UNKNOWN;
 			position_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			position_attach.is_depth = false;
@@ -21,7 +21,7 @@ namespace trace {
 
 			AttachmentInfo normal_attach;
 			normal_attach.attachmant_index = 1;
-			normal_attach.attachment_format = Format::R8G8B8A8_SRBG;
+			normal_attach.attachment_format = Format::R16G16B16A16_FLOAT;
 			normal_attach.initial_format = TextureFormat::UNKNOWN;
 			normal_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			normal_attach.is_depth = false;
@@ -30,7 +30,7 @@ namespace trace {
 
 			AttachmentInfo color_attach;
 			color_attach.attachmant_index = 2;
-			color_attach.attachment_format = Format::R8G8B8A8_SRBG;
+			color_attach.attachment_format = Format::R16G16B16A16_FLOAT;
 			color_attach.initial_format = TextureFormat::UNKNOWN;
 			color_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			color_attach.is_depth = false;
@@ -76,7 +76,7 @@ namespace trace {
 		position_index = pass_inputs.outputs[0];
 		normal_index = pass_inputs.outputs[1];
 		color_index = pass_inputs.outputs[2];
-		normal_index = pass_inputs.outputs[3];
+		depth_index = pass_inputs.outputs[3];
 
 		pass->CreateAttachmentOutput(
 			render_graph->GetResource(position_index).resource_name,

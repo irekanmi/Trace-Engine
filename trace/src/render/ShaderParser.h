@@ -8,6 +8,8 @@
 
 namespace trace {
 
+	class GShader;
+
 	enum ShaderLang
 	{
 		GLSL,
@@ -25,6 +27,7 @@ namespace trace {
 		static std::string spirv_to_glsl(std::vector<uint32_t> spir_v, ShaderStage shader_stage);
 		static std::vector<uint32_t> glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage);
 		static std::string load_shader_file(const std::string& filename);
+		static void generate_shader_resources(const std::string& shader_src, ShaderResources& out_res, ShaderStage shader_stage);
 
 	private:
 	protected:

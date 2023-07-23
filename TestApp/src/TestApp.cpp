@@ -148,7 +148,7 @@ public:
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _boxStack, M_Test.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
-		renderer->DrawSky(cmd_list, &sky_box);
+		//renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 
 	}

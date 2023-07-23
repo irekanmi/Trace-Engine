@@ -40,7 +40,7 @@ void main()
     vec3 normal = TBN * _normal;
 
 
-    g_Position = vec4(_data._fragPos, 1.0);
+    g_Position = vec4(_data._fragPos, instance_data.shininess);
     g_Normal = vec4(normal, 0.0);
     g_ColorSpecular.rgb = texture(testing[DIFFUSE_MAP], _data._texCoord).rgb;
     g_ColorSpecular.a = texture(testing[SPECULAR_MAP], _data._texCoord).r;

@@ -254,6 +254,7 @@
     <ClInclude Include="src\render\render_graph\CustomPass.h" />
     <ClInclude Include="src\render\render_graph\GBufferPass.h" />
     <ClInclude Include="src\core\Utils.h" />
+    <ClInclude Include="src\render\render_graph\LightingPass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -438,5 +439,7 @@
     <ClCompile Include="src\render\render_graph\MainPass.cpp" />
     <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
     <ClCompile Include="src\render\render_graph\GBufferPass.cpp" />
+    <ClCompile Include="src\render\render_graph\LightingPass.cpp" />
+    <ClCompile Include="_externals\spirv_reflect.cpp" />
   </ItemGroup>
 </Project>

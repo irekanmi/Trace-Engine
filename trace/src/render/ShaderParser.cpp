@@ -4,6 +4,7 @@
 #include "shaderc/shaderc.hpp"
 #include "core/io/Logging.h"
 #include "core/FileSystem.h"
+#include "spirv_cross/spirv_reflect.h"
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
 
@@ -55,6 +56,120 @@ namespace trace {
 		FileSystem::close_file(file_handle);
 
 		return result;
+	}
+	void ShaderParser::generate_shader_resources(const std::string& shader_src, ShaderResources& out_res, ShaderStage shader_stage)
+	{
+		std::vector<uint32_t> code = glsl_to_spirv(shader_src, shader_stage);
+
+		SpvReflectShaderModule shader;
+		SpvReflectResult result = spvReflectCreateShaderModule(code.size() * 4, code.data(), &shader);
+		TRC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS, "failed to compile shader, src : {}", shader_src);
+
+		for (uint32_t i = 0; i < shader.descriptor_set_count; i++)
+		{
+			SpvReflectDescriptorSet& set = shader.descriptor_sets[i];
+			ShaderResourceStage res_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+			if (set.set == 0) res_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+			else if (set.set == 1) res_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
+
+			for (uint32_t j = 0; j < set.binding_count; j++)
+			{
+				SpvReflectDescriptorBinding*& binding = set.bindings[j];
+				ShaderArray shArray;
+				ShaderArray::ArrayInfo arr_info;
+				ShaderStruct shStruct;
+				ShaderStruct::StructInfo stu_info;
+				bool isArray = (binding->count > 1);
+				bool u_buffer = (binding->descriptor_type == SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+				bool u_cSampler = (binding->descriptor_type == SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+				if (u_buffer && isArray)
+				{
+					SpvReflectBlockVariable& block = binding->block;
+					ShaderArray Array;
+					Array.count = binding->count;
+					Array.name = block.name;
+					Array.resource_size = block.padded_size;
+					Array.resource_stage = res_stage;
+					Array.shader_stage = shader_stage;
+					Array.slot = binding->binding;
+					Array.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+					out_res.resources.push_back({ {}, Array, {}, ShaderDataDef::STRUCT_ARRAY });
+				}
+				else if (u_buffer && !isArray)
+				{
+					SpvReflectBlockVariable& block = binding->block;
+					ShaderStruct Struct;
+					Struct.resource_size = block.padded_size;
+					Struct.resource_stage = res_stage;
+					Struct.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+					Struct.shader_stage = shader_stage;
+					Struct.slot = binding->binding;
+
+					for (uint32_t k = 0; k < block.member_count; k++)
+					{
+						SpvReflectBlockVariable& blck_var = block.members[k];
+						ShaderStruct::StructInfo s_info;
+						s_info.resource_name = blck_var.name;
+						s_info.resource_size = blck_var.size;
+						Struct.members.push_back(s_info);
+					}
+					out_res.resources.push_back({ Struct, {}, {}, ShaderDataDef::STRUCTURE });
+				}
+
+				if (u_cSampler)
+				{
+					SpvReflectImageTraits& tex = binding->image;
+					ShaderArray Array;
+					Array.count = binding->count;
+					Array.name = binding->name;
+					Array.resource_stage = res_stage;
+					Array.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+					Array.shader_stage = shader_stage;
+					Array.slot = binding->binding;
+
+					for (uint32_t k = 0; k < binding->count; k++)
+					{
+						ShaderArray::ArrayInfo a_info;
+						a_info.index = k;
+						a_info.resource_name = std::string(binding->name) + std::to_string(k);
+						Array.members.push_back(a_info);
+					}
+					if (!isArray)
+					{
+						Array.count = 1;
+						ShaderArray::ArrayInfo a_info;
+						a_info.index = 0;
+						a_info.resource_name = binding->name;
+						Array.members.push_back(a_info);
+					}
+					out_res.resources.push_back({ {}, Array, {}, ShaderDataDef::ARRAY });
+
+				}
+			}
+		}
+
+		for (uint32_t i = 0; i < shader.push_constant_block_count; i++)
+		{
+			SpvReflectBlockVariable& block = shader.push_constant_blocks[i];
+			ShaderStruct Struct;
+			Struct.resource_size = block.padded_size;
+			Struct.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
+			Struct.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+			Struct.shader_stage = shader_stage;
+
+			for (uint32_t k = 0; k < block.member_count; k++)
+			{
+				SpvReflectBlockVariable& blck_var = block.members[k];
+				ShaderStruct::StructInfo s_info;
+				s_info.resource_name = blck_var.name;
+				s_info.resource_size = blck_var.size;
+				Struct.members.push_back(s_info);
+			}
+			out_res.resources.push_back({ Struct, {}, {}, ShaderDataDef::STRUCTURE });
+		}
+
+		return;
 	}
 }
 

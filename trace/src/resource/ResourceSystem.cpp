@@ -46,7 +46,6 @@ namespace trace {
 
 
 
-		result = LoadDefaults();
 		return result;
 	}
 	void ResourceSystem::ShutDown()

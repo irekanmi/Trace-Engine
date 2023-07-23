@@ -53,12 +53,12 @@ namespace trace {
 		//Materials
 		bool CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline);
 		Ref<MaterialInstance> GetMaterial(const std::string& name);
+		bool LoadDefaults();
 
 		static ResourceSystem* get_instance();
 
 	private:
 		static ResourceSystem* s_instance;
-		bool LoadDefaults();
 
 	private:
 		TextureManager* m_textureManager;

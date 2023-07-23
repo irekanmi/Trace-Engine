@@ -111,6 +111,7 @@ namespace trace {
 		main_pass.Init(this);
 		custom_pass.Init(this);
 		gbuffer_pass.Init(this);
+		lighting_pass.Init(this);
 
 		return result;
 	}
@@ -198,21 +199,74 @@ namespace trace {
 			color.m_mipLevels = color.m_numLayers = 1;
 			color.m_usage = UsageFlag::DEFAULT;
 
+			TextureDesc gPos = {};
+			gPos.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
+			gPos.m_attachmentType = AttachmentType::COLOR;
+			gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
+			gPos.m_format = Format::R16G16B16A16_FLOAT;
+			gPos.m_width = 800;
+			gPos.m_height = 600;
+			gPos.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
+			gPos.m_mipLevels = color.m_numLayers = 1;
+			gPos.m_usage = UsageFlag::DEFAULT;
+
+			TextureDesc gNorm = {};
+			gNorm.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
+			gNorm.m_attachmentType = AttachmentType::COLOR;
+			gNorm.m_flag = BindFlag::RENDER_TARGET_BIT;
+			gNorm.m_format = Format::R16G16B16A16_FLOAT;
+			gNorm.m_width = 800;
+			gNorm.m_height = 600;
+			gNorm.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
+			gNorm.m_mipLevels = color.m_numLayers = 1;
+			gNorm.m_usage = UsageFlag::DEFAULT;
+
+			TextureDesc gColor = {};
+			gColor.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
+			gColor.m_attachmentType = AttachmentType::COLOR;
+			gColor.m_flag = BindFlag::RENDER_TARGET_BIT;
+			gColor.m_format = Format::R16G16B16A16_FLOAT;
+			gColor.m_width = 800;
+			gColor.m_height = 600;
+			gColor.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
+			gColor.m_mipLevels = color.m_numLayers = 1;
+			gColor.m_usage = UsageFlag::DEFAULT;
+
 			test_graph.AddTextureResource("color", color);
 			test_graph.AddTextureResource("depth", depth);
+			test_graph.AddTextureResource("gPosition", gPos);
+			test_graph.AddTextureResource("gNormal", gNorm);
+			test_graph.AddTextureResource("gColor", gColor);
 			test_graph.AddSwapchainResource("swapchain", &_swapChain);
 
-			RenderPassPacket main_pass_input = {};
-			main_pass_input.outputs[0] = test_graph.FindResourceIndex("swapchain");
-			main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
-
-			RenderPassPacket custom_pass_packet = {};
-			custom_pass_packet.inputs[0] = test_graph.FindResourceIndex("color");
-			custom_pass_packet.outputs[0] = test_graph.FindResourceIndex("swapchain");
+			//RenderPassPacket main_pass_input = {};
+			//main_pass_input.outputs[0] = test_graph.FindResourceIndex("swapchain");
+			//main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
+			//
+			//RenderPassPacket custom_pass_packet = {};
+			//custom_pass_packet.inputs[0] = test_graph.FindResourceIndex("color");
+			//custom_pass_packet.outputs[0] = test_graph.FindResourceIndex("swapchain");
 
 
 			//custom_pass.Setup(&test_graph, custom_pass_packet);
-			main_pass.Setup(&test_graph, main_pass_input);
+			//main_pass.Setup(&test_graph, main_pass_input);
+
+			RenderPassPacket gbufferData = {};
+			gbufferData.outputs[0] = test_graph.FindResourceIndex("gPosition");
+			gbufferData.outputs[1] = test_graph.FindResourceIndex("gNormal");
+			gbufferData.outputs[2] = test_graph.FindResourceIndex("gColor");
+			gbufferData.outputs[3] = test_graph.FindResourceIndex("depth");
+
+			RenderPassPacket lightingData = {};
+			lightingData.inputs[0] = test_graph.FindResourceIndex("gPosition");
+			lightingData.inputs[1] = test_graph.FindResourceIndex("gNormal");
+			lightingData.inputs[2] = test_graph.FindResourceIndex("gColor");
+			lightingData.outputs[0] = test_graph.FindResourceIndex("swapchain");
+
+			gbuffer_pass.Setup(&test_graph, gbufferData);
+			lighting_pass.Setup(&test_graph, lightingData);
+
+
 
 			test_graph.SetFinalResourceOutput("swapchain");
 			test_graph.SetRenderer(this);
@@ -236,6 +290,7 @@ namespace trace {
 		test_graph.Destroy();
 		sky_pipeline.~Ref();
 		
+		lighting_pass.ShutDown();
 		custom_pass.ShutDown();
 		gbuffer_pass.ShutDown();
 		main_pass.ShutDown();
@@ -424,9 +479,7 @@ namespace trace {
 			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
 			RenderFunc::SetPipelineData(sp.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &light_data, sizeof(glm::ivec4));
-			RenderFunc::SetPipelineData(sp.get(), "u_gLights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, lights, sizeof(Light) * MAX_LIGHT_COUNT);
 			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "rest", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &render_mode, sizeof(glm::ivec4));
 			RenderFunc::ApplyMaterial(_mi.get());
 			RenderFunc::BindPipeline(&g_device, sp.get());
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());

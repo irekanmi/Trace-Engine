@@ -109,13 +109,10 @@ namespace trace
 
 	void Application::Start()
 	{
-		
 
-
-		trace::ApplicationStart app_start;
-		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
-
-		
+		ApplicationStart app_start;
+		EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
+		ResourceSystem::get_instance()->LoadDefaults();
 
 		//----------CLIENT--------------//
 		m_client_start();

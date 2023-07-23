@@ -271,10 +271,14 @@ namespace trace {
 			scn_res.resources.push_back({ inst_data,{},{}, ShaderDataDef::STRUCTURE });
 			scn_res.resources.push_back({ lcl,{},{}, ShaderDataDef::STRUCTURE });
 
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(vert_src, s_res, ShaderStage::VERTEX_SHADER);
+			ShaderParser::generate_shader_resources(frag_src, s_res, ShaderStage::PIXEL_SHADER);
+
 			PipelineStateDesc _ds;
 			_ds.vertex_shader = &VertShader;
 			_ds.pixel_shader = &FragShader;
-			_ds.resources = scn_res;
+			_ds.resources = s_res;
 
 			AutoFillPipelineDesc(
 				_ds
@@ -328,19 +332,22 @@ namespace trace {
 				sky_res.resources.push_back({ scene_globals,{},{}, ShaderDataDef::STRUCTURE });
 				sky_res.resources.push_back({ {},cb_d,{}, ShaderDataDef::ARRAY });
 
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(vert_src, s_res, ShaderStage::VERTEX_SHADER);
+				ShaderParser::generate_shader_resources(frag_src, s_res, ShaderStage::PIXEL_SHADER);
 
 				PipelineStateDesc _ds1 = {};
 				_ds1.rateriser_state = raterizer_state;
 				_ds1.vertex_shader = &VertShader;
 				_ds1.pixel_shader = &FragShader;
-				_ds1.resources = sky_res;
+				_ds1.resources = s_res;
 
 				AutoFillPipelineDesc(
 					_ds1,
 					true,
 					false
 				);
-				_ds1.render_pass = Renderer::get_instance()->GetRenderPass("MAIN_PASS");
+				_ds1.render_pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
 
 
 
@@ -389,10 +396,14 @@ namespace trace {
 			ShaderResources cus_res = {};
 			cus_res.resources.push_back({ {}, col, {}, ShaderDataDef::ARRAY });
 
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(vert_src, s_res, ShaderStage::VERTEX_SHADER);
+			ShaderParser::generate_shader_resources(frag_src, s_res, ShaderStage::PIXEL_SHADER);
+
 			PipelineStateDesc _ds2 = {};
 			_ds2.vertex_shader = &VertShader;
 			_ds2.pixel_shader = &FragShader;
-			_ds2.resources = cus_res;
+			_ds2.resources = s_res;
 			_ds2.input_layout = Vertex2D::get_input_layout();
 
 
@@ -526,10 +537,14 @@ namespace trace {
 			scn_res.resources.push_back({ inst_data,{},{}, ShaderDataDef::STRUCTURE });
 			scn_res.resources.push_back({ lcl,{},{}, ShaderDataDef::STRUCTURE });
 
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(vert_src, s_res, ShaderStage::VERTEX_SHADER);
+			ShaderParser::generate_shader_resources(frag_src, s_res, ShaderStage::PIXEL_SHADER);
+
 			PipelineStateDesc _ds;
 			_ds.vertex_shader = &VertShader;
 			_ds.pixel_shader = &FragShader;
-			_ds.resources = scn_res;
+			_ds.resources = s_res;
 
 			AutoFillPipelineDesc(
 				_ds
@@ -537,7 +552,7 @@ namespace trace {
 			_ds.render_pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
 			_ds.blend_state.alpha_to_blend_coverage = false;
 
-			if (!CreatePipeline(_ds, "g_buffer_pipeline"))
+			if (!CreatePipeline(_ds, "gbuffer_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create default g_buffer pipeline");
 				return false;
@@ -549,6 +564,93 @@ namespace trace {
 			vert_src.clear();
 			frag_src.clear();
 
+		};
+
+		{
+		vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+		frag_src = ShaderParser::load_shader_file("../assets/shaders/lighting.frag.glsl");
+
+		std::cout << vert_src;
+		std::cout << frag_src;
+
+		RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+		RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+
+		ShaderArray::ArrayInfo gPos = {};
+		gPos.index = 0;
+		gPos.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+		gPos.resource_name = "gPosition";
+
+		ShaderArray::ArrayInfo gNorm = {};
+		gNorm.index = 1;
+		gNorm.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+		gNorm.resource_name = "gNormal";
+
+		ShaderArray::ArrayInfo gColor = {};
+		gColor.index = 2;
+		gColor.resource_data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+		gColor.resource_name = "gColor";
+
+		ShaderArray col = {};
+		col.count = 3;
+		col.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		col.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+		col.shader_stage = ShaderStage::PIXEL_SHADER;
+		col.slot = 0;
+		col.members = {
+			gPos,
+			gNorm,
+			gColor
+		};
+
+		ShaderStruct::StructInfo rst = {};
+		rst.resource_name = "rest";
+		rst.resource_data_type = ShaderData::CUSTOM_DATA_VEC4;
+		rst.resource_size = sizeof(glm::ivec4);
+
+		ShaderStruct scene_globals = {};
+		scene_globals.count = 1;
+		scene_globals.resource_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
+		scene_globals.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+		scene_globals.shader_stage = ShaderStage::PIXEL_SHADER;
+		scene_globals.slot = 1;
+		scene_globals.members = {
+			rst
+		};
+
+		ShaderResources cus_res = {};
+		cus_res.resources.push_back({ {}, col, {}, ShaderDataDef::ARRAY });
+		cus_res.resources.push_back({ scene_globals, {}, {}, ShaderDataDef::STRUCTURE});
+
+		ShaderResources s_res = {};
+		ShaderParser::generate_shader_resources(vert_src, s_res, ShaderStage::VERTEX_SHADER);
+		ShaderParser::generate_shader_resources(frag_src, s_res, ShaderStage::PIXEL_SHADER);
+
+		
+
+		PipelineStateDesc _ds2 = {};
+		_ds2.vertex_shader = &VertShader;
+		_ds2.pixel_shader = &FragShader;
+		_ds2.resources = s_res;
+		_ds2.input_layout = Vertex2D::get_input_layout();
+
+
+		AutoFillPipelineDesc(
+			_ds2,
+			false
+		);
+		_ds2.render_pass = Renderer::get_instance()->GetRenderPass("LIGHTING_PASS");
+		_ds2.depth_sten_state = { false, false };
+
+
+		if (!CreatePipeline(_ds2, "lighting_pass_pipeline"))
+		{
+			TRC_ERROR("Failed to initialize or create lighting_pass_pipeline");
+			return false;
+		}
+
+		RenderFunc::DestroyShader(&VertShader);
+		RenderFunc::DestroyShader(&FragShader);
 		}
 
 		return true;

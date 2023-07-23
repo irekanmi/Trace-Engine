@@ -2389,6 +2389,11 @@ namespace vk {
 			result = VK_FORMAT_D32_SFLOAT_S8_UINT;
 			break;
 		}
+		case trace::Format::R16G16B16A16_FLOAT:
+		{
+			result = VK_FORMAT_R16G16B16A16_SFLOAT;
+			break;
+		}
 		}
 
 		return result;

@@ -286,7 +286,7 @@ namespace trace {
 				))
 				{
 					_model = model_manager->GetModel(mesh.MeshName);
-					Ref<GPipeline> sp = pipeline_manager->GetDefault("standard");
+					Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
 					material_manager->CreateMaterial(
 						mesh.MeshMaterial.name,
 						mat,
@@ -447,7 +447,7 @@ namespace trace {
 			))
 			{
 				_model = model_manager->GetModel(s.name);
-				Ref<GPipeline> sp = pipeline_manager->GetDefault("standard");
+				Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager)};
 				material_manager->CreateMaterial(
 					material.name,
 					mat,

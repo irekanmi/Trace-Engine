@@ -20,6 +20,7 @@
 #include "render_graph/MainPass.h"
 #include "render_graph/CustomPass.h"
 #include "render_graph/GBufferPass.h"
+#include "render_graph/LightingPass.h"
 //----------------------------------------
 
 
@@ -80,6 +81,7 @@ namespace trace {
 		MainPass main_pass;
 		CustomPass custom_pass;
 		GBufferPass gbuffer_pass;
+		LightingPass lighting_pass;
 		Light lights[MAX_LIGHT_COUNT];
 		glm::ivec4 light_data;
 		GBuffer quadBuffer;

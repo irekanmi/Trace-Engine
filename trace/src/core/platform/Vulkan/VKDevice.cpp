@@ -521,13 +521,29 @@ namespace vk {
 		trace::Framebuffer_VK* frameBuffer = reinterpret_cast<trace::Framebuffer_VK*>(frame_buffer->GetRenderHandle()->m_internalData);
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 
-		vk::_BeginRenderPass(
-			_instance,
-			_handle,
-			pass,
-			command_buffer,
-			frameBuffer->m_handle[_handle->m_imageIndex].m_handle
-		);
+		VkRenderPassBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		begin_info.renderPass = pass->m_handle;
+		begin_info.renderArea.offset.x = pass->render_area->x;
+		begin_info.renderArea.offset.y = pass->render_area->y;
+		begin_info.renderArea.extent.width = pass->render_area->z;
+		begin_info.renderArea.extent.height = pass->render_area->w;
+		begin_info.framebuffer = frameBuffer->m_handle[_handle->m_imageIndex].m_handle;
+
+		VkClearValue clear_colors[2] = {};
+		clear_colors[0].color.float32[0] = pass->clear_color->r;
+		clear_colors[0].color.float32[1] = pass->clear_color->g;
+		clear_colors[0].color.float32[2] = pass->clear_color->b;
+		clear_colors[0].color.float32[3] = pass->clear_color->a;
+
+		clear_colors[1].depthStencil.depth = *pass->depth_value;
+		clear_colors[1].depthStencil.stencil = *pass->stencil_value;
+
+		begin_info.clearValueCount = 2;
+		begin_info.pClearValues = clear_colors;
+
+		vkCmdBeginRenderPass(command_buffer->m_handle, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_IN_RENDER_PASS;
 
 		return result;
 	}

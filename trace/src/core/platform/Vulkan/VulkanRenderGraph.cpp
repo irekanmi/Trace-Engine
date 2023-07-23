@@ -275,13 +275,47 @@ namespace vk {
 
 		}
 
-		_BeginRenderPass(
-			instance,
-			device,
-			&pass_handle->physical_pass,
-			&device->m_graphicsCommandBuffers[device->m_imageIndex],
-			pass_handle->frame_buffers[device->m_imageIndex]
-		);
+		VkRenderPassBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		begin_info.renderPass = pass_handle->physical_pass.m_handle;
+		begin_info.renderArea.offset.x = pass_handle->physical_pass.render_area->x;
+		begin_info.renderArea.offset.y = pass_handle->physical_pass.render_area->y;
+		begin_info.renderArea.extent.width = pass_handle->physical_pass.render_area->z;
+		begin_info.renderArea.extent.height = pass_handle->physical_pass.render_area->w;
+		begin_info.framebuffer = pass_handle->frame_buffers[device->m_imageIndex];
+
+		VkClearValue clear_color = {};
+		clear_color.color.float32[0] = pass_handle->physical_pass.clear_color->r;
+		clear_color.color.float32[1] = pass_handle->physical_pass.clear_color->g;
+		clear_color.color.float32[2] = pass_handle->physical_pass.clear_color->b;
+		clear_color.color.float32[3] = pass_handle->physical_pass.clear_color->a;
+
+		clear_color.depthStencil.depth = *pass_handle->physical_pass.depth_value;
+		clear_color.depthStencil.stencil = *pass_handle->physical_pass.stencil_value;
+
+		VkClearValue clear_colors[10] = {};
+
+		uint32_t clear_count = 0;
+		for (auto& tex : pass->GetAttachmentOutputs())
+		{
+			clear_colors[clear_count++] = clear_color;
+		}
+		if (pass->GetDepthStencilOutput() != INVALID_ID)
+		{
+			clear_colors[clear_count++] = clear_color;
+		}
+		if (pass->GetDepthStencilInput() != INVALID_ID)
+		{
+			clear_colors[clear_count++] = clear_color;
+		}
+
+		begin_info.clearValueCount = clear_count;
+		begin_info.pClearValues = clear_colors;
+
+		trace::VKCommmandBuffer* command_buffer = &device->m_graphicsCommandBuffers[device->m_imageIndex];
+
+		vkCmdBeginRenderPass(command_buffer->m_handle, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		command_buffer->m_state = trace::CommandBufferState::COMMAND_IN_RENDER_PASS;
 
 		return result;
 	}
