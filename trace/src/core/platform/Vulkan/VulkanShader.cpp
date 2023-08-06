@@ -41,7 +41,24 @@ namespace vk {
 
 		std::vector<uint32_t> _code = trace::ShaderParser::glsl_to_spirv(src, stage);
 
-		VkResult _result  = vk::_CreateShader(_instance, _device, _handle, stage, _code);
+		shader->SetCode(_code);
+
+		VkShaderModuleCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		create_info.codeSize = _code.size() * sizeof(uint32_t);
+		create_info.pCode = _code.data();
+
+		VkResult _result = vkCreateShaderModule(_device->m_device, &create_info, _instance->m_alloc_callback, &_handle->m_module);
+
+
+		VK_ASSERT(_result);
+
+		_handle->create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		_handle->create_info.module = _handle->m_module;
+		_handle->create_info.pName = "main";
+		_handle->create_info.stage = convertShaderStage(stage);
+		_handle->create_info.pSpecializationInfo = nullptr; // TODO: Check Docs for more info
+
 
 		if (_result != VK_SUCCESS)
 		{
@@ -76,6 +93,7 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 		vk::_DestoryShader(_instance, _device, _handle);
+		shader->GetCode().clear();
 
 		delete shader->GetRenderHandle()->m_internalData;
 		shader->GetRenderHandle()->m_internalData = nullptr;

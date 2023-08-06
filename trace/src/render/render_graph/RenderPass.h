@@ -3,6 +3,7 @@
 #include "core/Core.h"
 #include "core/Enums.h"
 #include "render/GRenderPass.h"
+#include "RGBlackBoard.h"
 
 namespace trace {
 
@@ -25,6 +26,7 @@ namespace trace {
 
 		virtual void Init(Renderer* renderer){}
 		virtual void Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs){}
+		virtual void Setup(RenderGraph* render_graph, RGBlackBoard& black_board){}
 		virtual void ShutDown(){}
 
 	private:
@@ -33,5 +35,6 @@ namespace trace {
 		GRenderPass m_renderPass;
 
 	};
+
 
 }

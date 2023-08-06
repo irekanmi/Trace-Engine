@@ -5,65 +5,16 @@
 #include "core/io/Logging.h"
 #include "core/FileSystem.h"
 #include "spirv_cross/spirv_reflect.h"
+#include "render/GShader.h"
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
 
 namespace trace {
-	ShaderParser::ShaderParser()
+	static void GenShaderRes(const std::vector<uint32_t>& code, ShaderResources& out_res, ShaderStage shader_stage)
 	{
-	}
-	ShaderParser::~ShaderParser()
-	{
-	}
-	std::string ShaderParser::spirv_to_glsl(std::vector<uint32_t> spir_v, ShaderStage shader_stage)
-	{
-		std::string result;
-
-
-
-		return std::string();
-	}
-	std::vector<uint32_t> ShaderParser::glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage)
-	{
-		shaderc::Compiler compiler;
-
-		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glsl, convertToShadercFmt(shader_stage, ShaderLang::GLSL), glsl.c_str());
-
-		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
-		{
-			std::string error = result.GetErrorMessage();
-			std::cout << error;
-			//TRC_ERROR("Error compiling shader\n {}", error.c_str()); --- fix error;
-			return std::vector<uint32_t>();
-		}
-
-		return { result.cbegin(), result.cend()};
-	}
-	std::string ShaderParser::load_shader_file(const std::string& filename)
-	{
-		std::string result;
-
-		FileHandle file_handle;
-
-		if (!FileSystem::open_file(filename, FileMode::READ, file_handle))
-		{
-			TRC_ERROR("File to open file {}", filename.c_str());
-			return result;
-		}
-
-		TRC_ASSERT(file_handle.m_isVaild, "invalid file handle please ensure file is vaild");
-		FileSystem::read_all_lines(file_handle, result);
-		FileSystem::close_file(file_handle);
-
-		return result;
-	}
-	void ShaderParser::generate_shader_resources(const std::string& shader_src, ShaderResources& out_res, ShaderStage shader_stage)
-	{
-		std::vector<uint32_t> code = glsl_to_spirv(shader_src, shader_stage);
-
 		SpvReflectShaderModule shader;
 		SpvReflectResult result = spvReflectCreateShaderModule(code.size() * 4, code.data(), &shader);
-		TRC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS, "failed to compile shader, src : {}", shader_src);
+		TRC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS, "failed to compile shader, {}", __FUNCTION__);
 
 		for (uint32_t i = 0; i < shader.descriptor_set_count; i++)
 		{
@@ -170,6 +121,66 @@ namespace trace {
 		}
 
 		return;
+	}
+
+	ShaderParser::ShaderParser()
+	{
+	}
+	ShaderParser::~ShaderParser()
+	{
+	}
+	std::string ShaderParser::spirv_to_glsl(std::vector<uint32_t> spir_v, ShaderStage shader_stage)
+	{
+		std::string result;
+
+
+
+		return std::string();
+	}
+	std::vector<uint32_t> ShaderParser::glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage)
+	{
+		shaderc::Compiler compiler;
+
+		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glsl, convertToShadercFmt(shader_stage, ShaderLang::GLSL), glsl.c_str());
+
+		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
+		{
+			std::string error = result.GetErrorMessage();
+			std::cout << error;
+			//TRC_ERROR("Error compiling shader\n {}", error.c_str()); --- fix error;
+			return std::vector<uint32_t>();
+		}
+
+		return { result.cbegin(), result.cend()};
+	}
+	std::string ShaderParser::load_shader_file(const std::string& filename)
+	{
+		std::string result;
+
+		FileHandle file_handle;
+
+		if (!FileSystem::open_file(filename, FileMode::READ, file_handle))
+		{
+			TRC_ERROR("File to open file {}", filename.c_str());
+			return result;
+		}
+
+		TRC_ASSERT(file_handle.m_isVaild, "invalid file handle please ensure file is vaild");
+		FileSystem::read_all_lines(file_handle, result);
+		FileSystem::close_file(file_handle);
+
+		return result;
+	}
+	void ShaderParser::generate_shader_resources(const std::string& shader_src, ShaderResources& out_res, ShaderStage shader_stage)
+	{
+		std::vector<uint32_t> code = glsl_to_spirv(shader_src, shader_stage);
+
+		GenShaderRes(code, out_res, shader_stage);
+	}
+	void ShaderParser::generate_shader_resources(GShader* shader, ShaderResources& out_res)
+	{
+		std::vector<uint32_t>& code = shader->GetCode();
+		GenShaderRes(code, out_res, shader->GetShaderStage());
 	}
 }
 

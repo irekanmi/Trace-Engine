@@ -6,6 +6,9 @@
 #include "render/Renderutils.h"
 #include "render/GPipeline.h"
 #include "resource/ResourceSystem.h"
+#include "FrameData.h"
+#include "render/ShaderParser.h"
+#include "render/GShader.h"
 
 
 namespace trace {
@@ -45,7 +48,73 @@ namespace trace {
 
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
 			m_renderer->_avaliable_passes["LIGHTING_PASS"] = &m_renderPass;
+		};
+
+		{
+			TextureDesc color = {};
+			color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
+			color.m_attachmentType = AttachmentType::COLOR;
+			color.m_flag = BindFlag::RENDER_TARGET_BIT;
+			color.m_format = Format::R8G8B8A8_SRBG;
+			color.m_width = 800;
+			color.m_height = 600;
+			color.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
+			color.m_mipLevels = color.m_numLayers = 1;
+			color.m_usage = UsageFlag::DEFAULT;
+
+			output_desc = color;
 		}
+
+		{
+			std::string vert_src;
+			std::string frag_src;
+			GShader VertShader;
+			GShader FragShader;
+
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+			frag_src = ShaderParser::load_shader_file("../assets/shaders/lighting.frag.glsl");
+
+			std::cout << vert_src;
+			std::cout << frag_src;
+
+			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(&VertShader, s_res);
+			ShaderParser::generate_shader_resources(&FragShader, s_res);
+
+
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = &VertShader;
+			_ds2.pixel_shader = &FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = Vertex2D::get_input_layout();
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("LIGHTING_PASS");
+			_ds2.depth_sten_state = { false, false };
+
+
+			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "lighting_pass_pipeline"))
+			{
+				TRC_ERROR("Failed to initialize or create lighting_pass_pipeline");
+				RenderFunc::DestroyShader(&VertShader);
+				RenderFunc::DestroyShader(&FragShader);
+				return ;
+			}
+
+			RenderFunc::DestroyShader(&VertShader);
+			RenderFunc::DestroyShader(&FragShader);
+
+			m_pipeline = ResourceSystem::get_instance()->GetPipeline("lighting_pass_pipeline");
+
+		};
 
 	}
 
@@ -120,10 +189,10 @@ namespace trace {
 
 				RenderFunc::SetPipelineData(m_pipeline.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->_camera->GetPosition(), sizeof(glm::vec3));
 				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
+				frame_count++;
 
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
-
 				m_renderer->DrawQuad();
 
 			});
@@ -137,6 +206,99 @@ namespace trace {
 				graph->ModifyTextureResource(graph->GetResource(color_output_index).resource_name, desc);
 			});
 
+	}
+
+	void LightingPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board)
+	{
+		FrameData& frame_data = black_board.get<FrameData>();
+		GBufferData& gbuffer_data = black_board.get<GBufferData>();
+		output_desc.m_width = frame_data.frame_width;
+		output_desc.m_height = frame_data.frame_height;
+
+		color_output_index = frame_data.ldr_index;
+		gPosition_index = gbuffer_data.position_index;
+		gNormal_index = gbuffer_data.normal_index;
+		gColor_index = gbuffer_data.color_index;
+
+		auto pass = render_graph->AddPass("LIGHTING_PASS", GPU_QUEUE::GRAPHICS);
+
+		pass->CreateAttachmentOutput(
+			render_graph->GetResource(color_output_index).resource_name,
+			{}
+		);
+
+		pass->AddColorAttachmentInput(render_graph->GetResource(gPosition_index).resource_name);
+		pass->AddColorAttachmentInput(render_graph->GetResource(gNormal_index).resource_name);
+		pass->AddColorAttachmentInput(render_graph->GetResource(gColor_index).resource_name);
+
+
+		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
+			{
+				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
+				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+
+
+				RenderFunc::BindRenderGraphResource(
+					render_graph,
+					m_pipeline.get(),
+					"g_bufferData0",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&render_graph->GetResource(gPosition_index),
+					0
+				);
+
+				RenderFunc::BindRenderGraphResource(
+					render_graph,
+					m_pipeline.get(),
+					"g_bufferData1",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&render_graph->GetResource(gNormal_index),
+					1
+				);
+
+				RenderFunc::BindRenderGraphResource(
+					render_graph,
+					m_pipeline.get(),
+					"g_bufferData2",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&render_graph->GetResource(gColor_index),
+					2
+				);
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"rest",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&m_renderer->render_mode,
+					sizeof(glm::ivec4)
+				);
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"u_gLights",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					m_renderer->lights,
+					sizeof(Light) * MAX_LIGHT_COUNT
+				);
+
+				RenderFunc::SetPipelineData(m_pipeline.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->_camera->GetPosition(), sizeof(glm::vec3));
+				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
+				frame_count++;
+
+				RenderFunc::BindPipeline_(m_pipeline.get());
+				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
+				m_renderer->DrawQuad();
+
+			});
+
+		pass->SetResizeCB([&](RenderGraph* graph, RenderGraphPass* pass, uint32_t width, uint32_t height)
+			{
+				TextureDesc desc;
+				desc.m_width = width;
+				desc.m_height = height;
+
+				graph->ModifyTextureResource(graph->GetResource(color_output_index).resource_name, desc);
+			});
 	}
 
 	void LightingPass::ShutDown()

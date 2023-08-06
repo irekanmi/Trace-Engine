@@ -4,6 +4,7 @@
 #define G_NORMAL 1
 #define G_COLOR 2
 #define MAX_LIGHT_COUNT 4
+#define MAX_SPECULAR_VALUE 256.0f
 
 
 layout(location = 0)out vec4 FragColor;
@@ -65,7 +66,7 @@ void main()
     }
    else if(rest.x == 1)
    {
-        FragColor = vec4(abs(normal), 1.0);
+        FragColor = vec4(normal, 1.0);
    }
    else if(rest.x == 2)
    {
@@ -161,6 +162,14 @@ void main()
             FragColor += calculate_spot_light(_lgt, normal, view_dir, specular, albedo, frag_pos, shine);
         }
 
+   }
+   else if(rest.x == 6)
+   {
+        FragColor = vec4(albedo, 1.0);
+   }
+   else if(rest.x == 7)
+   {
+        FragColor = vec4(vec3(specular), 1.0);
    }
 }
 

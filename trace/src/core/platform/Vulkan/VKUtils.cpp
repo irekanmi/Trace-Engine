@@ -1250,7 +1250,7 @@ namespace vk {
 			}
 		}
 
-		return -1;
+		return INVALID_ID;
 	}
 
 	void _AllocateCommandBuffer(trace::VKDeviceHandle* device, VkCommandPool command_pool, trace::VKCommmandBuffer* out_command_buffer, bool is_primary)
@@ -1805,28 +1805,28 @@ namespace vk {
 
 	VkResult _CreateShader(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKShader* out_shader, trace::ShaderStage stage, std::vector<uint32_t>& code)
 	{
-		VkResult result;
+		
 
-		out_shader->m_code = code;
+		//out_shader->m_code = code;
 
-		VkShaderModuleCreateInfo create_info = {};
-		create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		create_info.codeSize = out_shader->m_code.size() * sizeof(uint32_t);
-		create_info.pCode = out_shader->m_code.data();
+		//VkShaderModuleCreateInfo create_info = {};
+		//create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		//create_info.codeSize = out_shader->m_code.size() * sizeof(uint32_t);
+		//create_info.pCode = out_shader->m_code.data();
 
-		result = vkCreateShaderModule(device->m_device, &create_info, instance->m_alloc_callback, &out_shader->m_module);
-
-
-		VK_ASSERT(result);
-
-		out_shader->create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		out_shader->create_info.module = out_shader->m_module;
-		out_shader->create_info.pName = "main";
-		out_shader->create_info.stage = convertShaderStage(stage);
-		out_shader->create_info.pSpecializationInfo = nullptr; // TODO: Check Docs for more info
+		//result = vkCreateShaderModule(device->m_device, &create_info, instance->m_alloc_callback, &out_shader->m_module);
 
 
-		return result;
+		//VK_ASSERT(result);
+
+		//out_shader->create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		//out_shader->create_info.module = out_shader->m_module;
+		//out_shader->create_info.pName = "main";
+		//out_shader->create_info.stage = convertShaderStage(stage);
+		//out_shader->create_info.pSpecializationInfo = nullptr; // TODO: Check Docs for more info
+
+
+		return VkResult();
 	}
 
 	void _DestoryShader(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKShader* shader)
@@ -2392,6 +2392,11 @@ namespace vk {
 		case trace::Format::R16G16B16A16_FLOAT:
 		{
 			result = VK_FORMAT_R16G16B16A16_SFLOAT;
+			break;
+		}
+		case trace::Format::R16_FLOAT:
+		{
+			result = VK_FORMAT_R16_SFLOAT;
 			break;
 		}
 		}

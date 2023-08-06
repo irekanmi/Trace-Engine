@@ -96,7 +96,6 @@ namespace trace {
 		VkShaderModule m_module = VK_NULL_HANDLE;
 		VkPipelineShaderStageCreateInfo create_info = {};
 		// TODO: Determine if "m_code" will be vulkan specific member variakble
-		std::vector<uint32_t> m_code = {};
 
 		void* m_instance = nullptr;
 		void* m_device = nullptr;
@@ -210,6 +209,9 @@ namespace trace {
 		void* m_bufferPtr;
 		char* m_bufferData;
 		uint32_t m_bufCurrentOffset;
+		VkDeviceMemory mem_flush = VK_NULL_HANDLE;
+		VkDeviceMemory frame_memory;
+		uint32_t frame_mem_size = 0;
 	};
 
 	
@@ -238,6 +240,8 @@ namespace trace {
 		uint32_t cache_size = 0;
 		char* cache_data = nullptr;
 		void* last_tex_update[3] = {};
+
+		
 
 	};
 
@@ -288,6 +292,10 @@ namespace trace {
 		void* m_device = nullptr;
 		void* m_instance = nullptr;
 		std::vector<VKEvntPair> events;
+		VkDeviceMemory m_memory;
+		uint32_t memory_size = 0;
+		uint32_t memory_type_bits = 0;
+		uint32_t current_offset = 0;
 	};
 
 	struct VKRenderGraphPass
@@ -295,7 +303,7 @@ namespace trace {
 		std::vector<VkEvent> wait_events;
 		std::vector<VkEvent> signal_events;
 		VKRenderPass physical_pass;
-		VkFramebuffer frame_buffers[VK_MAX_NUM_FRAMES];
+		VkFramebuffer frame_buffer;
 	};
 
 	struct VKRenderGraphResource
@@ -303,7 +311,10 @@ namespace trace {
 		struct {
 			VKImage texture;
 			VKBuffer buffer;
-		} resource[VK_MAX_NUM_FRAMES];
+		} resource;
+		uint32_t memory_offset = 0;
+		VkMemoryRequirements tex_mem_req;
+		VkMemoryRequirements buf_mem_req;
 	};
 
 

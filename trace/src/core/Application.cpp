@@ -112,6 +112,10 @@ namespace trace
 
 		ApplicationStart app_start;
 		EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
+
+		Renderer* renderer = Renderer::get_instance();
+		renderer->Start();
+
 		ResourceSystem::get_instance()->LoadDefaults();
 
 		//----------CLIENT--------------//
@@ -126,10 +130,6 @@ namespace trace
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
 		
-		//Temp------------------------
-		renderer->Start();
-		//----------------------------
-
 		m_clock.Begin();
 
 
@@ -152,10 +152,6 @@ namespace trace
 
 			//___________________//	
 
-
-			
-
-			
 			renderer->Render(deltaTime);
 
 			input->Update(deltaTime);

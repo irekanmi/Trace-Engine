@@ -42,6 +42,7 @@ namespace trace {
 			pass_desc.stencil_value = 0;
 
 
+
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
 			m_renderer->_avaliable_passes["CUSTOM_PASS"] = &m_renderPass;
 		}
@@ -62,6 +63,7 @@ namespace trace {
 
 		m_pipeline = ResourceSystem::get_instance()->GetPipeline("custom_pass_pipeline");
 
+
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
 			{
 				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
@@ -71,7 +73,7 @@ namespace trace {
 				RenderFunc::BindRenderGraphResource(
 					render_graph,
 					m_pipeline.get(),
-					render_graph->GetResource(color_input_index).resource_name,
+					"color",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&render_graph->GetResource(color_input_index)
 				);
@@ -95,6 +97,7 @@ namespace trace {
 
 	void CustomPass::ShutDown()
 	{
+		m_pipeline.release();
 		RenderFunc::DestroyRenderPass(&m_renderPass);
 	}
 

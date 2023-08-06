@@ -81,6 +81,7 @@ namespace trace {
 	enum class Format
 	{
 		NONE,
+		R16_FLOAT,
 		R32G32B32A32_FLOAT,
 		R32G32B32_FLOAT,
 		R32G32B32_UINT,
@@ -209,6 +210,12 @@ namespace trace {
 		STRUCTURE,
 		ARRAY,
 		STRUCT_ARRAY
+	};
+
+	enum FrameSettings
+	{
+		RENDER_NONE = BIT(0),
+		RENDER_DEFAULT = BIT(1)
 	};
 
 	struct BufferInfo

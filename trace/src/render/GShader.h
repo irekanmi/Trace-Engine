@@ -17,10 +17,13 @@ namespace trace {
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 		ShaderStage GetShaderStage() { return m_stage; }
 		void SetShaderStage(ShaderStage stage) { m_stage = stage; }
+		std::vector<uint32_t>& GetCode() { return m_code; }
+		void SetCode(const std::vector<uint32_t>& code) { m_code = code; }
 
 	private:
 		ShaderStage m_stage = ShaderStage::STAGE_NONE;
 		GHandle m_renderHandle;
+		std::vector<uint32_t> m_code;
 	protected:
 	};
 

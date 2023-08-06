@@ -94,15 +94,7 @@ public:
 
 	~Ref()
 	{
-		if (_ptr != nullptr)
-		{
-			_ptr->m_refCount--;
-			if (_ptr->m_refCount <= 0)
-			{
-				Unload(_ptr);
-				_ptr = nullptr;
-			}
-		}
+		release();
 	}
 
 	T* operator->()
@@ -129,6 +121,19 @@ public:
 	bool is_valid()
 	{
 		return _ptr != nullptr;
+	}
+
+	void release()
+	{
+		if (_ptr != nullptr)
+		{
+			_ptr->m_refCount--;
+			if (_ptr->m_refCount <= 0)
+			{
+				Unload(_ptr);
+				_ptr = nullptr;
+			}
+		}
 	}
 
 	_action<T> Unload;

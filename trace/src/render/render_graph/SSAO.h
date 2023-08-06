@@ -7,31 +7,29 @@
 
 namespace trace {
 
-
-
-	class TRACE_API GBufferPass : public RenderPass
+	class TRACE_API SSAO : public RenderPass
 	{
 
 	public:
-		GBufferPass(){}
-		~GBufferPass(){}
+		SSAO(){}
+		~SSAO(){}
 
 		virtual void Init(Renderer* renderer) override;
 		virtual void Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs) override;
-		virtual void Setup(RenderGraph* render_graph, RGBlackBoard& black_board) override;
 		virtual void ShutDown() override;
 
 	private:
-		uint32_t position_index;
+		uint32_t positon_index;
 		uint32_t normal_index;
-		uint32_t color_index;
-		uint32_t depth_index;
+		uint32_t ssao_output;
+		GRenderPass ssao_blur;
+		GTexture noise_tex;
 
-		TextureDesc position_desc;
-		TextureDesc depth_desc;
+	private:
+		TextureDesc ssao_main_desc;
+		TextureDesc ssao_blur_desc;
 
 	protected:
-
 
 	};
 

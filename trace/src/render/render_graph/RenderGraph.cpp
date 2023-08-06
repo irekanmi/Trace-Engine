@@ -151,7 +151,7 @@ namespace trace {
 
 		if (it != m_resources.end())
 		{
-			TRC_INFO("These resource exists -> {}", it->resource_name);
+			//TRC_INFO("These resource exists -> {}", it->resource_name);
 			return FindResourceIndex(it->resource_name);
 		}
 
@@ -185,7 +185,7 @@ namespace trace {
 
 		if (it != m_resources.end())
 		{
-			TRC_INFO("These resource exists -> {}", it->resource_name);
+			//TRC_INFO("These resource exists -> {}", it->resource_name);
 			return FindResourceIndex(it->resource_name);
 		}
 
@@ -249,7 +249,7 @@ namespace trace {
 
 		if (it != m_resources.end())
 		{
-			TRC_INFO("These resource exists -> {}", it->resource_name);
+			//TRC_INFO("These resource exists -> {}", it->resource_name);
 			return FindResourceIndex(it->resource_name);
 		}
 
@@ -335,12 +335,6 @@ namespace trace {
 	void RenderGraph::SetFinalResourceOutput(const std::string& resource_name)
 	{
 
-		if (m_finalResource != INVALID_ID)
-		{
-			TRC_WARN("A resource has already been set as the final resource, {}", resource_name);
-			return;
-		}
-
 		uint32_t index = FindResourceIndex(resource_name);
 		if (index == INVALID_ID)
 		{
@@ -362,44 +356,60 @@ namespace trace {
 		}
 
 		compute_graph();
-
-		RenderFunc::BuildRenderGraph(&m_renderer->g_device, this);
-
 		return true;
 	}
 
 	bool RenderGraph::Execute()
 	{
-		bool result = true;
+		bool result = RenderFunc::BeginRenderGraph(this);
 
-		RenderFunc::BeginRenderGraph(this);
-
-
-		for (auto& pass_index : m_submissionPasses)
+		
+		if (result)
 		{
-			RenderGraphPass* pass = &GetPass(pass_index);
-			RenderFunc::BeginRenderGraphPass(this, pass);
 
-			pass->m_run_cb(pass->m_attachmentInputs);
+			for (auto& pass_index : m_submissionPasses)
+			{
+				RenderGraphPass* pass = &GetPass(pass_index);
+				RenderFunc::BeginRenderGraphPass(this, pass);
 
-			RenderFunc::EndRenderGraphPass(this, pass);
+				pass->m_run_cb(pass->m_attachmentInputs);
+
+				RenderFunc::EndRenderGraphPass(this, pass);
+			}
+
+			RenderFunc::EndRenderGraph(this);
 		}
-
-		RenderFunc::EndRenderGraph(this);
-
 		return result;
 	}
 
 	void RenderGraph::Destroy()
 	{
-		RenderFunc::DestroyRenderGraph(&m_renderer->g_device, this);
+		if (!destroyed)
+		{
+			RenderFunc::DestroyRenderGraph(&m_renderer->g_device, this);
+			m_passes.clear();
+			m_submissionPasses.clear();
+			m_resources.clear();
+			destroyed = true;
+		}
 	}
 
 	void RenderGraph::Rebuild()
 	{
-		Destroy();
-
 		RenderFunc::BuildRenderGraph(&m_renderer->g_device, this);
+		destroyed = false;
+	}
+
+	bool RenderGraph::ReConstruct()
+	{
+		if (!destroyed)
+		{
+			m_passes.clear();
+			m_submissionPasses.clear();
+			m_resources.clear();
+		}
+
+		return false;
 	}
 
 	void RenderGraph::Resize(uint32_t width, uint32_t height)
@@ -419,7 +429,7 @@ namespace trace {
 				}
 				else
 				{
-					TRC_ASSERT(width == res->resource_data.texture.width, "width of out not equal, {}", res->resource_name);
+					TRC_ASSERT(width == res->resource_data.texture.width, "width of output not equal, {}", res->resource_name);
 				}
 
 				if (height == 0)
@@ -428,7 +438,7 @@ namespace trace {
 				}
 				else
 				{
-					TRC_ASSERT(height == res->resource_data.texture.height, "height of out not equal, {}", res->resource_name);
+					TRC_ASSERT(height == res->resource_data.texture.height, "height of output not equal, {}", res->resource_name);
 				}
 			}
 
@@ -438,7 +448,6 @@ namespace trace {
 			pass->renderArea.w = static_cast<float>(height);
 		}
 
-		Rebuild();
 	}
 
 	void RenderGraph::compute_graph()

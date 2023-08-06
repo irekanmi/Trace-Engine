@@ -132,6 +132,24 @@ namespace vk {
 
 		vkDeviceWaitIdle(_handle->m_device);
 
+		//Render Graph Memory
+		if (_handle->mem_flush)
+		{
+			vkFreeMemory(
+				_handle->m_device,
+				_handle->mem_flush,
+				_instance->m_alloc_callback
+			);
+			_handle->mem_flush = VK_NULL_HANDLE;
+		}
+
+		vkFreeMemory(
+			_handle->m_device,
+			_handle->frame_memory,
+			_instance->m_alloc_callback
+		);
+		_handle->frame_memory = VK_NULL_HANDLE;
+
 		// Sync objects
 		for (uint32_t i = 0; i < _handle->frames_in_flight; i++)
 		{
@@ -630,7 +648,6 @@ namespace vk {
 		{
 			vkDeviceWaitIdle(_handle->m_device);
 
-			//if (!swap_chain->Recreate())
 			if(_recreate_swapchain(swapchain))
 			{
 				TRC_ERROR("Unable to recreate swapchain");

@@ -3,6 +3,7 @@
 #include "VulkanRenderGraph.h"
 #include "render/GPipeline.h"
 #include "render/render_graph/RenderGraph.h"
+#include "vulkan/vulkan.h"
 
 
 extern trace::VKHandle g_Vkhandle;
@@ -10,10 +11,10 @@ extern trace::VKHandle g_Vkhandle;
 namespace vk {
 
 
-
 	bool compute_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 	bool compute_resource_handle( trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 	bool compute_frame_buffer_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
+	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 
 	bool __BuildRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph)
 	{
@@ -49,6 +50,8 @@ namespace vk {
 		std::vector<trace::RenderGraphResource>& graph_resources = render_graph->GetResources();
 
 		compute_resource_handle(render_graph, _device, instance);
+		compute_render_graph_memory(render_graph, _device, instance);
+
 		for (auto& pass_index : graph_passes)
 		{
 			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
@@ -123,6 +126,8 @@ namespace vk {
 			compute_frame_buffer_handle(pass, render_graph, _device, instance);
 		}
 
+
+
 		return result;
 	}
 	bool __DestroyRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph)
@@ -147,6 +152,16 @@ namespace vk {
 
 		std::vector<trace::RenderGraphResource>& resources = render_graph->GetResources();
 
+		uint32_t frame_index = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
+
+
+		//if (!vk::_WaitFence(instance, _device, &_device->m_inFlightFence[frame_index], UINT64_MAX))
+		//{
+		//	TRC_WARN("Fence timeout or wait failure");
+		//	return false;
+		//}
+		
+
 		for (auto& evnt : handle->events)
 		{
 			vkDestroyEvent(
@@ -164,19 +179,17 @@ namespace vk {
 			{
 				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
 
-				for (uint32_t i = 0; i < _device->frames_in_flight; i++)
+				if (res_handle->resource.texture.m_view != VK_NULL_HANDLE)
 				{
-					_DestroyImage(
-						instance,
-						_device,
-						&res_handle->resource[i].texture
-					);
-					_DestroySampler(
-						instance,
-						_device,
-						res_handle->resource[i].texture.m_sampler
-					);
+					_DestroyImageView(instance, _device, &res_handle->resource.texture.m_view);
 				}
+				vkDestroyImage(_device->m_device, res_handle->resource.texture.m_handle, instance->m_alloc_callback);
+				res_handle->resource.texture.m_handle = VK_NULL_HANDLE;
+				_DestroySampler(
+					instance,
+					_device,
+					res_handle->resource.texture.m_sampler
+				);
 
 				delete res_handle;
 				res.render_handle.m_internalData = nullptr;
@@ -200,18 +213,24 @@ namespace vk {
 				_device,
 				&pass_handle->physical_pass
 			);
-
-			for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-			{
-				vkDestroyFramebuffer(
-					_device->m_device,
-					pass_handle->frame_buffers[i],
-					instance->m_alloc_callback
-				);
-			}
+			vkDestroyFramebuffer(
+				_device->m_device,
+				pass_handle->frame_buffer,
+				instance->m_alloc_callback
+			);
 			delete pass_handle;
 			pass->GetRenderHandle()->m_internalData = nullptr;
 		}
+
+
+		if (_device->mem_flush)
+		{
+			vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
+			_device->mem_flush = VK_NULL_HANDLE;
+		}
+		handle->memory_size = 0;
+		handle->current_offset = 0;
+		handle->memory_type_bits = 0;
 
 		delete handle;
 		render_graph->GetRenderHandle()->m_internalData = nullptr;
@@ -272,7 +291,6 @@ namespace vk {
 			bool to = (pass == edge.to);
 			bool from_to = (edge.to && edge.from);
 
-
 		}
 
 		VkRenderPassBeginInfo begin_info = {};
@@ -282,7 +300,7 @@ namespace vk {
 		begin_info.renderArea.offset.y = pass_handle->physical_pass.render_area->y;
 		begin_info.renderArea.extent.width = pass_handle->physical_pass.render_area->z;
 		begin_info.renderArea.extent.height = pass_handle->physical_pass.render_area->w;
-		begin_info.framebuffer = pass_handle->frame_buffers[device->m_imageIndex];
+		begin_info.framebuffer = pass_handle->frame_buffer;
 
 		VkClearValue clear_color = {};
 		clear_color.color.float32[0] = pass_handle->physical_pass.clear_color->r;
@@ -360,7 +378,7 @@ namespace vk {
 			isTexture = res.resource_type == trace::RenderGraphResourceType::Texture;
 			isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 
-			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData)->resource[device->m_imageIndex].texture;
+			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData)->resource.texture;
 			if (res.create_pass == pass_index && isTexture)
 			{
 				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
@@ -473,6 +491,7 @@ namespace vk {
 		}
 
 
+
 		return result;
 	}
 	bool __BindRenderGraphResource(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
@@ -514,7 +533,7 @@ namespace vk {
 			return false;
 		}
 
-		if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)&res_handle->resource[device->m_imageIndex].texture)
+		if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle)
 			return false;
 
 
@@ -525,8 +544,8 @@ namespace vk {
 
 		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
 		VkDescriptorImageInfo image_info = {};
-		image_info.sampler = res_handle->resource[device->m_imageIndex].texture.m_sampler;
-		image_info.imageView = res_handle->resource[device->m_imageIndex].texture.m_view;
+		image_info.sampler = res_handle->resource.texture.m_sampler;
+		image_info.imageView = res_handle->resource.texture.m_view;
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		write.descriptorCount = 1; //HACK: Fix
@@ -575,7 +594,7 @@ namespace vk {
 			0,
 			nullptr
 		);
-		pipe_handle->last_tex_update[device->m_imageIndex] = (void*)&res_handle->resource[device->m_imageIndex].texture;
+		pipe_handle->last_tex_update[device->m_imageIndex] = (void*)res_handle->resource.texture.m_handle;
 
 		return result;
 	}
@@ -709,6 +728,7 @@ namespace vk {
 		bool result = true;
 
 		std::vector<trace::RenderGraphResource>& resources = render_graph->GetResources();
+		trace::VKRenderGraph* graph_handle = reinterpret_cast<trace::VKRenderGraph*>(render_graph->GetRenderHandle()->m_internalData);
 
 		for (auto& res : resources)
 		{
@@ -733,15 +753,7 @@ namespace vk {
 				
 				
 
-				VkImageViewCreateInfo create_info = {};
-				create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				create_info.format = vk::convertFmt(res.resource_data.texture.format);
-				create_info.viewType = vk::convertImageViewType(res.resource_data.texture.image_type); // TODO: Configurable view type
-				create_info.subresourceRange.aspectMask = aspect_flags;
-				create_info.subresourceRange.baseArrayLayer = 0; // TODO: Configurable array layer
-				create_info.subresourceRange.baseMipLevel = 0; // TODO: Configurable
-				create_info.subresourceRange.layerCount = 1;
-				create_info.subresourceRange.levelCount = 1; // TODO: Configurable
+				
 
 				VkSamplerCreateInfo samp_create_info = {};
 				samp_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -764,38 +776,42 @@ namespace vk {
 
 				
 
+				VkImageCreateInfo img_create_info = {};
+				img_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+				img_create_info.imageType = vk::convertImageType(res.resource_data.texture.image_type);
+				img_create_info.extent.width = res.resource_data.texture.width;
+				img_create_info.extent.height = res.resource_data.texture.height;
+				img_create_info.extent.depth = 1;
+				img_create_info.format = vk::convertFmt(res.resource_data.texture.format);
+				img_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+				img_create_info.arrayLayers = 1;
+				img_create_info.mipLevels = 1;
+				img_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				img_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+				img_create_info.usage = image_usage;
+				img_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+				img_create_info.flags = flags;
 
-				for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-				{
-					vk::_CreateImage(
-						instance,
-						_device,
-						&res_handle->resource[i].texture,
-						vk::convertFmt(res.resource_data.texture.format),
-						VK_IMAGE_TILING_OPTIMAL,
-						image_usage,
-						memory_property,
-						aspect_flags,
-						flags,
-						vk::convertImageType(res.resource_data.texture.image_type),
-						res.resource_data.texture.width,
-						res.resource_data.texture.height,
-						1,
-						1
-					);
 
-					create_info.image = res_handle->resource[i].texture.m_handle;
-					VkResult _result = (vkCreateImageView(_device->m_device, &create_info, instance->m_alloc_callback, &res_handle->resource[i].texture.m_view));				
-					VK_ASSERT(_result);
+				VK_ASSERT(vkCreateImage(_device->m_device, &img_create_info, instance->m_alloc_callback, &res_handle->resource.texture.m_handle));
 
-					_result = vkCreateSampler(
-						_device->m_device,
-						&samp_create_info,
-						instance->m_alloc_callback,
-						&res_handle->resource[i].texture.m_sampler
-					);
-					VK_ASSERT(_result);
-				}
+				vkGetImageMemoryRequirements(_device->m_device, res_handle->resource.texture.m_handle, &res_handle->tex_mem_req);
+				graph_handle->memory_size += res_handle->tex_mem_req.size;
+				graph_handle->memory_size = get_alignment(graph_handle->memory_size, res_handle->tex_mem_req.alignment);
+				graph_handle->memory_type_bits = res_handle->tex_mem_req.memoryTypeBits;
+
+
+				
+
+				VkResult _result = vkCreateSampler(
+					_device->m_device,
+					&samp_create_info,
+					instance->m_alloc_callback,
+					&res_handle->resource.texture.m_sampler
+				);
+				VK_ASSERT(_result);
+
+
 
 			}
 		}
@@ -820,52 +836,158 @@ namespace vk {
 		
 		VkResult _result = VK_ERROR_UNKNOWN;
 
-		for (uint32_t i = 0; i < _device->frames_in_flight; i++)
+		for (auto& res_index : outputs)
 		{
-			for (auto& res_index : outputs)
+			trace::RenderGraphResource* res = &render_graph->GetResource(res_index);
+			bool isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
+			bool isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
+			if (isTexture)
 			{
-				trace::RenderGraphResource* res = &render_graph->GetResource(res_index);
-				bool isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
-				bool isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
-				if (isTexture)
-				{
-					trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData);
-					attachments.push_back(res_handle->resource[i].texture.m_view);
-				}
-				if (isSwapchainImage)
-				{
-					trace::VKSwapChain* swapchain = reinterpret_cast<trace::VKSwapChain*>(res->render_handle.m_internalData);
-					attachments.push_back(swapchain->m_imageViews[i]);
-				}
+				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData);
+				attachments.push_back(res_handle->resource.texture.m_view);
 			}
-
-			if (pass->GetDepthStencilOutput() != INVALID_ID)
+			if (isSwapchainImage)
 			{
-				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilOutput()).render_handle.m_internalData);
-				attachments.push_back(res_handle->resource[i].texture.m_view);
+				trace::VKSwapChain* swapchain = reinterpret_cast<trace::VKSwapChain*>(res->render_handle.m_internalData);
+				attachments.push_back(swapchain->m_imageViews[_device->m_imageIndex]);
 			}
-			else if (pass->GetDepthStencilInput() != INVALID_ID)
-			{
-				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilInput()).render_handle.m_internalData);
-				attachments.push_back(res_handle->resource[i].texture.m_view);
-			}
-
-			create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
-			create_info.pAttachments = attachments.data();
-
-			_result = vkCreateFramebuffer(
-				_device->m_device,
-				&create_info,
-				instance->m_alloc_callback,
-				&handle->frame_buffers[i]
-			);
-			VK_ASSERT(_result);
-
-			attachments.clear();
 		}
+
+		if (pass->GetDepthStencilOutput() != INVALID_ID)
+		{
+			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilOutput()).render_handle.m_internalData);
+			attachments.push_back(res_handle->resource.texture.m_view);
+		}
+		else if (pass->GetDepthStencilInput() != INVALID_ID)
+		{
+			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilInput()).render_handle.m_internalData);
+			attachments.push_back(res_handle->resource.texture.m_view);
+		}
+
+		create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+		create_info.pAttachments = attachments.data();
+
+		_result = vkCreateFramebuffer(
+			_device->m_device,
+			&create_info,
+			instance->m_alloc_callback,
+			&handle->frame_buffer
+		);
+		VK_ASSERT(_result);
+
+		attachments.clear();
 
 
 		return result;
+	}
+
+	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
+	{
+		std::vector<trace::RenderGraphResource>& resources = render_graph->GetResources();
+
+		trace::VKRenderGraph* graph_handle = reinterpret_cast<trace::VKRenderGraph*>(render_graph->GetRenderHandle()->m_internalData);
+
+		VkMemoryAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		alloc_info.allocationSize = graph_handle->memory_size;
+		alloc_info.memoryTypeIndex = FindMemoryIndex(_device, graph_handle->memory_type_bits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+
+
+		static uint32_t mem_count = 0;
+
+		if (graph_handle->memory_size > _device->frame_mem_size)
+		{
+			if (_device->mem_flush)
+			{
+				vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
+				_device->mem_flush = VK_NULL_HANDLE;
+			}
+
+			_device->mem_flush = _device->frame_memory;
+			_device->frame_memory = VK_NULL_HANDLE;
+
+			VK_ASSERT(vkAllocateMemory(
+				_device->m_device,
+				&alloc_info,
+				instance->m_alloc_callback,
+				&_device->frame_memory
+			));
+			_device->frame_mem_size = graph_handle->memory_size;
+
+		}
+		else if (graph_handle->memory_size < _device->frame_mem_size)
+		{
+			mem_count++;
+			if (mem_count > 30)
+			{
+				uint32_t frame_index = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
+				if (!vk::_WaitFence(instance, _device, &_device->m_inFlightFence[frame_index], UINT64_MAX))
+				{
+					TRC_WARN("Fence timeout or wait failure");
+				}
+
+				if (_device->mem_flush)
+				{
+					vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
+					_device->mem_flush = VK_NULL_HANDLE;
+				}
+
+				_device->mem_flush = _device->frame_memory;
+				_device->frame_memory = VK_NULL_HANDLE;
+				VK_ASSERT(vkAllocateMemory(
+					_device->m_device,
+					&alloc_info,
+					instance->m_alloc_callback,
+					&_device->frame_memory
+				));
+				_device->frame_mem_size = graph_handle->memory_size;
+
+				mem_count = 0;
+			}
+		}
+
+		for (auto& res : resources)
+		{
+			bool isTexture = res.resource_type == trace::RenderGraphResourceType::Texture;
+			bool isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
+			if (isTexture)
+			{
+				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
+				vkBindImageMemory(
+					_device->m_device,
+					res_handle->resource.texture.m_handle,
+					_device->frame_memory,
+					graph_handle->current_offset
+				);
+				res_handle->memory_offset = graph_handle->current_offset;
+				graph_handle->current_offset += res_handle->tex_mem_req.size;
+				graph_handle->current_offset = get_alignment(graph_handle->current_offset, res_handle->tex_mem_req.alignment);
+
+				VkImageAspectFlags aspect_flags = 0;
+
+				aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
+				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
+				{
+					aspect_flags = VK_IMAGE_ASPECT_DEPTH_BIT;
+				}
+
+				VkImageViewCreateInfo create_info = {};
+				create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				create_info.format = vk::convertFmt(res.resource_data.texture.format);
+				create_info.viewType = vk::convertImageViewType(res.resource_data.texture.image_type); // TODO: Configurable view type
+				create_info.subresourceRange.aspectMask = aspect_flags;
+				create_info.subresourceRange.baseArrayLayer = 0; // TODO: Configurable array layer
+				create_info.subresourceRange.baseMipLevel = 0; // TODO: Configurable
+				create_info.subresourceRange.layerCount = 1;
+				create_info.subresourceRange.levelCount = 1; // TODO: Configurable
+
+				create_info.image = res_handle->resource.texture.m_handle;
+				VkResult _result = (vkCreateImageView(_device->m_device, &create_info, instance->m_alloc_callback, &res_handle->resource.texture.m_view));
+				VK_ASSERT(_result);
+
+			}
+		}
 	}
 
 }

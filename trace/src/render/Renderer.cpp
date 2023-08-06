@@ -13,6 +13,7 @@
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
 #include "core/Utils.h"
+#include "render_graph/FrameData.h"
 
 
 namespace trace {
@@ -86,6 +87,8 @@ namespace trace {
 			rect.bottom = 600;
 
 			_rect = rect;
+			m_frameWidth = 800;
+			m_frameHeight = 600;
 		}
 
 		
@@ -108,10 +111,9 @@ namespace trace {
 
 		RenderFunc::CreateBuffer(&quadBuffer, quadInfo);
 
+		// Temp --------------------
 		main_pass.Init(this);
-		custom_pass.Init(this);
-		gbuffer_pass.Init(this);
-		lighting_pass.Init(this);
+		//--------------------------		
 
 		return result;
 	}
@@ -155,7 +157,6 @@ namespace trace {
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
 		render_mode = {};
 
-		sky_pipeline = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
 
 		lights[0].position = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
 		lights[0].direction = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
@@ -174,107 +175,12 @@ namespace trace {
 		lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
 		lights[2].params1 = { 1.0f, 0.07f, 0.017f, 0.939f };
 		lights[2].params2 = { 0.866f, 0.0f, 0.0f, 0.0f };
-
-		{
-
-			TextureDesc depth = {};
-			depth.m_addressModeU = depth.m_addressModeV = depth.m_addressModeW = AddressMode::REPEAT;
-			depth.m_attachmentType = AttachmentType::DEPTH;
-			depth.m_flag = BindFlag::DEPTH_STENCIL_BIT;
-			depth.m_format = Format::D32_SFLOAT_S8_SUINT;
-			depth.m_width = 800;
-			depth.m_height = 600;
-			depth.m_minFilterMode = depth.m_magFilterMode = FilterMode::LINEAR;
-			depth.m_mipLevels = depth.m_numLayers = 1;
-			depth.m_usage = UsageFlag::DEFAULT;
-
-			TextureDesc color = {};
-			color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
-			color.m_attachmentType = AttachmentType::COLOR;
-			color.m_flag = BindFlag::RENDER_TARGET_BIT;
-			color.m_format = Format::R8G8B8A8_SRBG;
-			color.m_width = 800;
-			color.m_height = 600;
-			color.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
-			color.m_mipLevels = color.m_numLayers = 1;
-			color.m_usage = UsageFlag::DEFAULT;
-
-			TextureDesc gPos = {};
-			gPos.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
-			gPos.m_attachmentType = AttachmentType::COLOR;
-			gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
-			gPos.m_format = Format::R16G16B16A16_FLOAT;
-			gPos.m_width = 800;
-			gPos.m_height = 600;
-			gPos.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
-			gPos.m_mipLevels = color.m_numLayers = 1;
-			gPos.m_usage = UsageFlag::DEFAULT;
-
-			TextureDesc gNorm = {};
-			gNorm.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
-			gNorm.m_attachmentType = AttachmentType::COLOR;
-			gNorm.m_flag = BindFlag::RENDER_TARGET_BIT;
-			gNorm.m_format = Format::R16G16B16A16_FLOAT;
-			gNorm.m_width = 800;
-			gNorm.m_height = 600;
-			gNorm.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
-			gNorm.m_mipLevels = color.m_numLayers = 1;
-			gNorm.m_usage = UsageFlag::DEFAULT;
-
-			TextureDesc gColor = {};
-			gColor.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
-			gColor.m_attachmentType = AttachmentType::COLOR;
-			gColor.m_flag = BindFlag::RENDER_TARGET_BIT;
-			gColor.m_format = Format::R16G16B16A16_FLOAT;
-			gColor.m_width = 800;
-			gColor.m_height = 600;
-			gColor.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
-			gColor.m_mipLevels = color.m_numLayers = 1;
-			gColor.m_usage = UsageFlag::DEFAULT;
-
-			test_graph.AddTextureResource("color", color);
-			test_graph.AddTextureResource("depth", depth);
-			test_graph.AddTextureResource("gPosition", gPos);
-			test_graph.AddTextureResource("gNormal", gNorm);
-			test_graph.AddTextureResource("gColor", gColor);
-			test_graph.AddSwapchainResource("swapchain", &_swapChain);
-
-			//RenderPassPacket main_pass_input = {};
-			//main_pass_input.outputs[0] = test_graph.FindResourceIndex("swapchain");
-			//main_pass_input.outputs[1] = test_graph.FindResourceIndex("depth");
-			//
-			//RenderPassPacket custom_pass_packet = {};
-			//custom_pass_packet.inputs[0] = test_graph.FindResourceIndex("color");
-			//custom_pass_packet.outputs[0] = test_graph.FindResourceIndex("swapchain");
-
-
-			//custom_pass.Setup(&test_graph, custom_pass_packet);
-			//main_pass.Setup(&test_graph, main_pass_input);
-
-			RenderPassPacket gbufferData = {};
-			gbufferData.outputs[0] = test_graph.FindResourceIndex("gPosition");
-			gbufferData.outputs[1] = test_graph.FindResourceIndex("gNormal");
-			gbufferData.outputs[2] = test_graph.FindResourceIndex("gColor");
-			gbufferData.outputs[3] = test_graph.FindResourceIndex("depth");
-
-			RenderPassPacket lightingData = {};
-			lightingData.inputs[0] = test_graph.FindResourceIndex("gPosition");
-			lightingData.inputs[1] = test_graph.FindResourceIndex("gNormal");
-			lightingData.inputs[2] = test_graph.FindResourceIndex("gColor");
-			lightingData.outputs[0] = test_graph.FindResourceIndex("swapchain");
-
-			gbuffer_pass.Setup(&test_graph, gbufferData);
-			lighting_pass.Setup(&test_graph, lightingData);
-
-
-
-			test_graph.SetFinalResourceOutput("swapchain");
-			test_graph.SetRenderer(this);
-			test_graph.Compile();
-
-		}
+			
 
 		light_data = { 1, 1, 1, 0 };
+
+		m_composer = new RenderComposer();
+		m_composer->Init(this);
 
 		//---------------------------------------------------------------------------------------------
 
@@ -287,27 +193,30 @@ namespace trace {
 
 		RenderFunc::DestroyBuffer(&quadBuffer);
 
-		test_graph.Destroy();
+		for (uint32_t i = 0; i < 2; i++)
+		{
+			frame_graphs[i].Destroy();
+		}
 		sky_pipeline.~Ref();
 		
-		lighting_pass.ShutDown();
-		custom_pass.ShutDown();
-		gbuffer_pass.ShutDown();
 		main_pass.ShutDown();
+		m_composer->Shutdowm();
+		delete m_composer;
+		m_composer = nullptr;
 		delete _camera;
+		_camera = nullptr;
 
 		RenderFunc::DestroySwapchain(&_swapChain);		
 		//----------------------------------
 
 	}
+
 	void Renderer::ShutDown()
 	{
-
 		RenderFunc::DestroyDevice(&g_device);
 		RenderFunc::DestroyContext(&g_context);
-
 	}
-
+	 
 	void Renderer::OnEvent(Event* p_event)
 	{
 
@@ -330,7 +239,11 @@ namespace trace {
 		{
 			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
 
-			if (release->m_keycode == Keys::KEY_1)
+			if (release->m_keycode == Keys::KEY_0)
+			{
+				render_mode.x = 0;
+			}
+			else if (release->m_keycode == Keys::KEY_1)
 			{
 				render_mode.x = 1;
 			}
@@ -346,13 +259,17 @@ namespace trace {
 			{
 				render_mode.x = 4;
 			}
-			else if (release->m_keycode == Keys::KEY_0)
-			{
-				render_mode.x = 0;
-			}
 			else if (release->m_keycode == Keys::KEY_5)
 			{
 				render_mode.x = 5;
+			}
+			else if (release->m_keycode == Keys::KEY_6)
+			{
+				render_mode.x = 6;
+			}
+			else if (release->m_keycode == Keys::KEY_7)
+			{
+				render_mode.x = 7;
 			}
 			else if (release->m_keycode == Keys::KEY_8)
 			{
@@ -373,6 +290,23 @@ namespace trace {
 					_camera->GetLookDir().y,
 					_camera->GetLookDir().z
 				);
+
+			}
+			else if (release->m_keycode == Keys::KEY_R)
+			{
+				lights[2].color.r += 0.01f;
+				if (lights[2].color.r > 1.0f) lights[2].color.r = 0.0f;
+
+			}
+			else if (release->m_keycode == Keys::KEY_G)
+			{
+				lights[2].color.g += 0.01f;
+				if (lights[2].color.g > 1.0f) lights[2].color.g = 0.0f;
+			}
+			else if (release->m_keycode == Keys::KEY_B)
+			{
+				lights[2].color.b += 0.01f;
+				if (lights[2].color.b > 1.0f) lights[2].color.b = 0.0f;
 			}
 
 
@@ -385,11 +319,13 @@ namespace trace {
 			RenderFunc::ResizeSwapchain(&_swapChain, wnd->m_width, wnd->m_height);
 			float width = static_cast<float>(wnd->m_width);
 			float height = static_cast<float>(wnd->m_height);
-			test_graph.Resize(wnd->m_width, wnd->m_height);
+			
+			m_frameWidth = wnd->m_width;
+			m_frameHeight = wnd->m_height;
 
 
-			_viewPort.width = wnd->m_width;
-			_viewPort.height = wnd->m_height;
+			_viewPort.width = width;
+			_viewPort.height = height;
 
 			_rect.right = wnd->m_width;
 			_rect.bottom = wnd->m_height;
@@ -406,20 +342,16 @@ namespace trace {
 
 	}
 
-	GRenderPass* Renderer::GetRenderPass(RENDERPASS render_pass)
-	{
-		return &_renderPass[render_pass];
-	}
 
 	void Renderer::Render(float deltaTime)
 	{
-
 		if (BeginFrame())
 		{
 			//Temp=====================
 			_camera->Update(deltaTime);
 			//=========================
 
+			static uint32_t frame_index = 0;
 			if (render_mode.w == 8)
 			{
 				glm::vec3 light_pos = glm::vec3(lights[2].position);
@@ -440,13 +372,29 @@ namespace trace {
 					lights[2].direction.z = lerp(light_dir.z, cam_dir.z, deltaTime);
 				}
 			}
+
+
+			RGBlackBoard frame_blck_bd;
+
+			m_composer->PreFrame(
+				frame_graphs[frame_index],
+				frame_blck_bd,
+				FrameSettings::RENDER_DEFAULT
+			);
+			frame_graphs[frame_index].Execute();
+			m_composer->PostFrame(
+				frame_graphs[frame_index],
+				frame_blck_bd
+			);
 			
-			test_graph.Execute();
+
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&_swapChain);
+			frame_index = (frame_index + 1) % 2;
 		}
 		m_listCount = 0;
+
 	}
 
 	void Renderer::DrawQuad()
@@ -500,7 +448,7 @@ namespace trace {
 		scene_data.view_position = _camera->GetPosition();
 		scene_data.projection = _camera->GetProjectionMatix();
 
-		Ref<GPipeline> sp = sky_pipeline;
+		Ref<GPipeline> sp = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
 		RenderFunc::OnDrawStart(&g_device, sp.get());
 
 		RenderFunc::SetPipelineTextureData(

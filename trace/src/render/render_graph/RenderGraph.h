@@ -153,6 +153,7 @@ namespace trace {
 		bool Execute();
 		void Destroy();
 		void Rebuild();
+		bool ReConstruct();
 		void Resize(uint32_t width, uint32_t height);
 
 	private:
@@ -166,6 +167,7 @@ namespace trace {
 		std::vector<uint32_t> m_submissionPasses;
 		std::vector<RenderGraphResource> m_resources;
 		uint32_t m_finalResource = INVALID_ID;
+		bool destroyed = true;
 
 	protected:
 	};

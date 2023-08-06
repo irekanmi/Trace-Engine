@@ -21,6 +21,7 @@
 #include "render_graph/CustomPass.h"
 #include "render_graph/GBufferPass.h"
 #include "render_graph/LightingPass.h"
+#include "RenderComposer.h"
 //----------------------------------------
 
 
@@ -30,7 +31,6 @@ namespace trace {
 
 	class TRACE_API Renderer : public Object
 	{
-		friend RenderPass;
 	public:
 		Renderer();
 		~Renderer();
@@ -45,7 +45,6 @@ namespace trace {
 		void End();
 		void ShutDown();
 		void OnEvent(Event* p_event);
-		GRenderPass* GetRenderPass(RENDERPASS render_pass);
 		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
 		GDevice* GetDevice() { return &g_device; }
 		GContext* GetContext() { return &g_context; }
@@ -69,19 +68,15 @@ namespace trace {
 
 		// Temp-----------------------------
 		Ref<GPipeline> sky_pipeline;
-		GRenderPass _renderPass[RENDERPASS::RENDER_PASS_COUNT];
 		GFramebuffer _framebuffer;
 		GSwapchain _swapChain;
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera;
 		glm::ivec4 render_mode;
-		RenderGraph test_graph;
+		RenderGraph frame_graphs[3];
 		std::unordered_map<std::string, void*> _avaliable_passes;
 		MainPass main_pass;
-		CustomPass custom_pass;
-		GBufferPass gbuffer_pass;
-		LightingPass lighting_pass;
 		Light lights[MAX_LIGHT_COUNT];
 		glm::ivec4 light_data;
 		GBuffer quadBuffer;
@@ -95,8 +90,12 @@ namespace trace {
 	private:
 		GContext g_context;
 		GDevice g_device;
+		RenderComposer* m_composer;
+		uint32_t m_frameWidth;
+		uint32_t m_frameHeight;
 
 		friend RenderGraph;
+		friend RenderComposer;
 
 	protected:
 
