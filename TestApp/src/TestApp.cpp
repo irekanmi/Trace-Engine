@@ -267,7 +267,7 @@ public:
 
 
 		M_sponzaScene.SetScale(glm::vec3(0.15f));
-		//M_falcon.SetScale(glm::vec3(3.0f));
+		M_falcon.SetScale(glm::vec3(3.0f));
 		M_falcon.Translate(glm::vec3(3.0f, 3.0f, 0.0f));
 		M_squareModel.SetScale(glm::vec3(11.0f));
 		M_squareModel.Translate(glm::vec3(0.0f, 0.0f, 0.0f));
