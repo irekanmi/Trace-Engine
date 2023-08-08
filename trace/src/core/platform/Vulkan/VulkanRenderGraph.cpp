@@ -268,8 +268,8 @@ namespace vk {
 				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
 				static_cast<uint32_t>(pass_handle->wait_events.size()),
 				pass_handle->wait_events.data(),
-				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				0,
 				nullptr,
 				0,
@@ -430,7 +430,7 @@ namespace vk {
 				vkCmdSetEvent(
 					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
 					evnt,
-					VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
 				);
 			}
 		}

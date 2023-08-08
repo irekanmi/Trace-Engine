@@ -26,4 +26,10 @@ namespace trace {
 		uint32_t frame_height;
 	};
 
+	struct SSAOData
+	{
+		uint32_t ssao_main;
+		uint32_t ssao_blur;
+	};
+
 }

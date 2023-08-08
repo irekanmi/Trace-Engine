@@ -4,7 +4,7 @@
 #include "EASTL/string.h"
 #include "glm/glm.hpp"
 
-#define MAX_LIGHT_COUNT 4
+#define MAX_LIGHT_COUNT 15
 
 namespace trace {
 

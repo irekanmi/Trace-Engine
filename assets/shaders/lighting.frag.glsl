@@ -3,7 +3,7 @@
 #define G_POSITION 0
 #define G_NORMAL 1
 #define G_COLOR 2
-#define MAX_LIGHT_COUNT 4
+#define MAX_LIGHT_COUNT 15
 #define MAX_SPECULAR_VALUE 256.0f
 
 
@@ -29,23 +29,13 @@ layout(set = 0, binding = 3)uniform Lights {
     vec4 params2;
 } u_gLights[MAX_LIGHT_COUNT];
 
-struct Light
-{
-    vec3 position;
-    vec3 direction;
-    vec4 color;
-    float constant;
-    float linear;
-    float quadratic;
-    float innerCutOff;
-    float outerCutOff;
-};
+
 
 const float ambeint_factor = 0.005;
 
-vec4 calculate_directional_light(Light light, vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine);
-vec4 calculate_point_light(Light light, vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position,float shine);
-vec4 calculate_spot_light(Light light, vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine);
+vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine, int index);
+vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position,float shine, int index);
+vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index);
 
 void main()
 {
@@ -70,96 +60,44 @@ void main()
    }
    else if(rest.x == 2)
    {
-        Light _lgt;
         for(int i = 0; i < scene_globals.light_data.x; i++)
         {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_directional_light(_lgt, normal, view_dir, specular, albedo, shine);
+            FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i);
         }
    }
    else if(rest.x == 3)
    {
-        Light _lgt;
         int num = scene_globals.light_data.x + scene_globals.light_data.y;
         for(int i = scene_globals.light_data.x; i < num; i++)
         {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_point_light(_lgt, normal, view_dir, specular, albedo, frag_pos, shine);
+            FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i);
         }
    }
    else if(rest.x == 4)
    {
-        Light _lgt;
         int num = scene_globals.light_data.x + scene_globals.light_data.y + scene_globals.light_data.z;
         for(int i = scene_globals.light_data.x + scene_globals.light_data.y; i < num; i++)
         {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_spot_light(_lgt, normal, view_dir, specular, albedo, frag_pos, shine);
+            FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i);
         }
    }
    else if(rest.x == 5)
    {
-        Light _lgt;
         for(int i = 0; i < scene_globals.light_data.x; i++)
         {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_directional_light(_lgt, normal, view_dir, specular, albedo, shine);
+            FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i);
         }
 
         int num = scene_globals.light_data.x + scene_globals.light_data.y;
         for(int i = scene_globals.light_data.x; i < num; i++)
         {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_point_light(_lgt, normal, view_dir, specular, albedo, frag_pos, shine);
+            FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i);
         }
 
         num = scene_globals.light_data.x + scene_globals.light_data.y + scene_globals.light_data.z;
         for(int i = scene_globals.light_data.x + scene_globals.light_data.y; i < num; i++)
         {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_spot_light(_lgt, normal, view_dir, specular, albedo, frag_pos, shine);
+            FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i);
         }
 
    }
@@ -174,60 +112,70 @@ void main()
 }
 
 
-vec4 calculate_directional_light(Light light, vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine)
+vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine, int index)
 {
-    vec3 half_direction = normalize(view_direction - (light.direction));   
-    float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
-    float diffuse_strenght = max(dot(-light.direction, normal ), 0.0f);
+    vec3 light_pos = u_gLights[index].position.xyz;
+    vec3 light_direction = u_gLights[index].direction.xyz;
+    vec4 _lgt_color = u_gLights[index].color;
 
-    //vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
-    //vec4 specular_intensity = vec4((spec), diffuse_samp_color.a);
+    vec3 half_direction = normalize(view_direction - (light_direction));   
+    float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
+    float diffuse_strenght = max(dot(-light_direction, normal ), 0.0f);
+
     vec4 ambient = vec4( (ambeint_factor * albedo).rgb, 1.0f );
     vec4 diffuse = vec4( (albedo * diffuse_strenght ).rgb, 1.0f );
-    vec4 specular = vec4( (specular_strenght * light.color).rgb, 1.0f );
+    vec4 specular = vec4( (specular_strenght * _lgt_color).rgb, 1.0f );
 
     specular *= spec;
 
-    return ( (ambient + diffuse) * light.color + specular);
+    return ( (ambient + diffuse) * _lgt_color + specular);
 
 }
 
-vec4 calculate_point_light(Light light, vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine)
+vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index)
 {
-    float distance = length(light.position - position);
-    float attenuation = 1 / ( light.constant + (light.linear * distance) + (light.quadratic * (distance * distance)) );
-    light.direction = normalize(light.position - position);
+    vec3 light_pos = u_gLights[index].position.xyz;
+    vec3 light_dir;
+    vec4 _lgt_color = u_gLights[index].color;
+    float _lgt_constant = u_gLights[index].params1.x;
+    float _lgt_linear = u_gLights[index].params1.y;
+    float _lgt_quadratic = u_gLights[index].params1.z;
+
+    float distance = length(light_pos - position);
+    float attenuation = 1 / ( _lgt_constant + (_lgt_linear * distance) + (_lgt_quadratic * (distance * distance)) );
+    light_dir = normalize(light_pos - position);
    
-    vec3 half_direction = normalize(view_direction - (-light.direction));   
+    vec3 half_direction = normalize(view_direction - (-light_dir));   
     float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
 
-    float diffuse_strenght = max(dot(light.direction, normal ), 0.0f);
+    float diffuse_strenght = max(dot(light_dir, normal ), 0.0f);
 
-
-    //vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
-    //vec4 specular_intensity = vec4((texture(testing[SPECULAR_MAP], _data._texCoord)).rgb, diffuse_samp_color.a);
     vec4 ambient = vec4( (ambeint_factor * albedo).rgb, 1.0f );
     vec4 diffuse = vec4( (albedo * diffuse_strenght ).rgb, 1.0f );
-    vec4 specular = vec4( (specular_strenght * light.color).rgb, 1.0f );
+    vec4 specular = vec4( (specular_strenght * _lgt_color).rgb, 1.0f );
 
 
     specular *= spec;
 
-    return ( (ambient + diffuse) * light.color + specular) * attenuation;   
+    return ( (ambient + diffuse) * _lgt_color + specular) * attenuation;   
 }
 
-vec4 calculate_spot_light(Light light, vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine)
+vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index)
 {
-    vec3 light_dir = light.position - position;
+    vec3 light_pos = u_gLights[index].position.xyz;
+    vec3 light_direction = u_gLights[index].direction.xyz;
+    vec3 light_dir = light_pos - position;
+    vec4 _lgt_color = u_gLights[index].color;
+    float _lgt_innerCutOff = u_gLights[index].params1.w;
+    float _lgt_outerCutOff = u_gLights[index].params2.x;
     light_dir = normalize(light_dir);
-    float theta = dot(light_dir, normalize(-light.direction));
+    float theta = dot(light_dir, normalize(-light_direction));
     
-    //vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
     vec4 ambient = vec4( (ambeint_factor * albedo).rgb, 1.0f );
-    if(theta > light.outerCutOff)
+    if(theta > _lgt_outerCutOff)
     {
-        float epslion = light.innerCutOff - light.outerCutOff;
-        float intensity = clamp(( theta - light.outerCutOff ) / epslion, 0.0, 1.0);
+        float epslion = _lgt_innerCutOff - _lgt_outerCutOff;
+        float intensity = clamp(( theta - _lgt_outerCutOff ) / epslion, 0.0, 1.0);
     
         vec3 half_direction = normalize(view_direction - (-light_dir));   
         float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
@@ -235,15 +183,13 @@ vec4 calculate_spot_light(Light light, vec3 normal, vec3 view_direction, float s
     
         float diffuse_strenght = max(dot(light_dir, normal ), 0.0f);
 
-        //vec4 diffuse_samp_color = texture(testing[DIFFUSE_MAP], _data._texCoord);
-        //vec4 specular_intensity = vec4((texture(testing[SPECULAR_MAP], _data._texCoord)).rgb, diffuse_samp_color.a);
         vec4 diffuse = vec4( (diffuse_strenght * albedo * intensity).rgb, 1.0f );
-        vec4 specular = vec4( (specular_strenght * light.color * intensity ).rgb, 1.0f );
+        vec4 specular = vec4( (specular_strenght * _lgt_color * intensity ).rgb, 1.0f );
 
 
         specular *= spec;
         
-        return ( (ambient + diffuse) * light.color + specular);
+        return ( (ambient + diffuse) * _lgt_color + specular);
 
     }
 

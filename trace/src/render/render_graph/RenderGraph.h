@@ -74,8 +74,8 @@ namespace trace {
 
 	public:
 				
-		void CreateAttachmentOutput(const std::string& name, TextureDesc desc);
-		void CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc);
+		uint32_t CreateAttachmentOutput(const std::string& name, TextureDesc desc);
+		uint32_t CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc);
 		void AddColorAttachmentInput(const std::string& name);
 		void AddColorAttachmentOuput(const std::string& name);
 		void AddTextureInput(const std::string& name, GTexture* texture);

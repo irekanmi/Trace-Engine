@@ -17,7 +17,7 @@ namespace trace {
 	{
 	}
 
-	void RenderGraphPass::CreateAttachmentOutput(const std::string& name, TextureDesc desc)
+	uint32_t RenderGraphPass::CreateAttachmentOutput(const std::string& name, TextureDesc desc)
 	{
 		desc.m_attachmentType = AttachmentType::COLOR;
 		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
@@ -27,9 +27,11 @@ namespace trace {
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 		output_tex->create_pass = pass_index;
+
+		return index;
 	}
 
-	void RenderGraphPass::CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc)
+	uint32_t RenderGraphPass::CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc)
 	{
 		desc.m_attachmentType = AttachmentType::DEPTH;
 		uint32_t index = m_renderGraph->AddTextureResource(name, desc);
@@ -39,6 +41,8 @@ namespace trace {
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 		output_tex->create_pass = index;
+
+		return index;
 	}
 
 	void RenderGraphPass::AddColorAttachmentInput(const std::string& name)
