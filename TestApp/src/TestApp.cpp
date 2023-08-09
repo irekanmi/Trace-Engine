@@ -94,8 +94,8 @@ public:
 		_mat.m_normalMap = ResourceSystem::get_instance()->LoadTexture("cobblestone_NRM.png", texture_desc);
 
 		_squareModel = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
-		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
-		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
 
 
 		std::vector<std::string> cube_maps = {
@@ -313,10 +313,10 @@ public:
 			TRC_INFO(" ------____----TRACE------______----");
 		}
 		CommandList cmd_list = Renderer::get_instance()->BeginCommandList();
-		Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix() );
-		Renderer::get_instance()->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
-		Renderer::get_instance()->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
-		Renderer::get_instance()->DrawSky(cmd_list, &sky_box);
+		//Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix() );
+		//Renderer::get_instance()->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
+		//Renderer::get_instance()->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
+		//Renderer::get_instance()->DrawSky(cmd_list, &sky_box);
 		Renderer::get_instance()->SubmitCommandList(cmd_list);
 
 		
