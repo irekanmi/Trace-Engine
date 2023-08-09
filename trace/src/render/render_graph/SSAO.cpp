@@ -5,6 +5,8 @@
 #include "render/Renderutils.h"
 #include "render/Renderer.h"
 #include "FrameData.h"
+#include "core/Utils.h"
+#include <random>
 
 
 
@@ -72,12 +74,51 @@ namespace trace {
 		};
 
 		{
+			std::uniform_real_distribution<float> rand_float(0.0f, 1.0f);
+			std::default_random_engine gen;
 			for (uint32_t i = 0; i < MAX_NUM_KERNEL; i++)
 			{
-				glm::vec3 rand_vec = glm::vec3(
-					
+				glm::vec3 samp = glm::vec3(
+					rand_float(gen) * 2.0f - 1.0f,
+					rand_float(gen) * 2.0f - 1.0f,
+					rand_float(gen)
 				);
+				samp = glm::normalize(samp);
+				samp *= rand_float(gen);
+				
+				float scale = (float)i / MAX_NUM_KERNEL;
+				scale = lerp(0.0f, 1.0f, scale * scale);
+				samp *= scale;
+				m_kernel[i] = samp;
 			}
+
+			std::vector<glm::vec3> noise;
+			noise.resize(16);
+			for (uint32_t i = 0; i < 16; i++)
+			{
+				glm::vec3 samp = glm::vec3(
+					rand_float(gen),
+					rand_float(gen),
+					0.0f
+				);
+				noise[i] = glm::normalize(samp);
+			}
+
+			TextureDesc gPos = {};
+			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::REPEAT;
+			gPos.m_attachmentType = AttachmentType::COLOR;
+			gPos.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+			gPos.m_format = Format::R16G16B16_FLOAT;
+			gPos.m_width = 4;
+			gPos.m_height = 4;
+			gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
+			gPos.m_mipLevels = gPos.m_numLayers = 1;
+			gPos.m_usage = UsageFlag::DEFAULT;
+			gPos.m_data[0] = reinterpret_cast<unsigned char*>(noise.data());
+
+			RenderFunc::CreateTexture(&noise_tex, gPos);
+
+
 		};
 
 	}

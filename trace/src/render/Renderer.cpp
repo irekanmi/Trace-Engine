@@ -182,6 +182,8 @@ namespace trace {
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
 
+
+
 		//---------------------------------------------------------------------------------------------
 
 	}

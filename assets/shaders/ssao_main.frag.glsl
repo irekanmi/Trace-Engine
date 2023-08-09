@@ -12,10 +12,15 @@ layout(set = 0, binding = 2)uniform Kernel{
 } u_kernel[MAX_NUM_KERNEL];
 layout(set = 0, binding = 3)uniform sampler2D g_bufferData[2];
 layout(set = 0, binding = 4)uniform FrameData{
+    mat4 projection;
     vec2 frame_size;
 };
 
 void main()
 {
+    vec2 noise_scale = frame_size.xy / 4.0;
+
+    
+
 
 }
