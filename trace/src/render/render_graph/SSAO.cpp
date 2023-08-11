@@ -1,11 +1,12 @@
 #include "pch.h"
 
-#include "render/GTexture.h"
 #include "SSAO.h"
 #include "render/Renderutils.h"
 #include "render/Renderer.h"
 #include "FrameData.h"
 #include "core/Utils.h"
+#include "render/GShader.h"
+#include "render/ShaderParser.h"
 #include <random>
 
 
@@ -55,7 +56,7 @@ namespace trace {
 
 		{
 			TextureDesc gPos = {};
-			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::REPEAT;
+			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
 			gPos.m_attachmentType = AttachmentType::COLOR;
 			gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
 			gPos.m_format = Format::R16_FLOAT;
@@ -70,13 +71,101 @@ namespace trace {
 		};
 
 		{
+			std::string vert_src;
+			std::string frag_src;
+			GShader VertShader;
+			GShader FragShader;
+
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+			frag_src = ShaderParser::load_shader_file("../assets/shaders/ssao_main.frag.glsl");
+
+			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+
+			ShaderResources sres = {};
+			ShaderParser::generate_shader_resources(&VertShader, sres);
+			ShaderParser::generate_shader_resources(&FragShader, sres);
+
+
+
+			PipelineStateDesc ds2 = {};
+			ds2.vertex_shader = &VertShader;
+			ds2.pixel_shader = &FragShader;
+			ds2.resources = sres;
+			ds2.input_layout = Vertex2D::get_input_layout();
+
+
+			AutoFillPipelineDesc(
+				ds2,
+				false
+			);
+			ds2.render_pass = Renderer::get_instance()->GetRenderPass("SSAO_MAIN_PASS");
+			ds2.depth_sten_state = { false, false };
+
+
+			if (!ResourceSystem::get_instance()->CreatePipeline(ds2, "ssao_main_pass_pipeline"))
+			{
+				TRC_ERROR("Failed to initialize or create ssao_main_pass_pipeline");
+				RenderFunc::DestroyShader(&VertShader);
+				RenderFunc::DestroyShader(&FragShader);
+				return;
+			}
+
+			RenderFunc::DestroyShader(&VertShader);
+			RenderFunc::DestroyShader(&FragShader);
+
+			m_pipeline = ResourceSystem::get_instance()->GetPipeline("ssao_main_pass_pipeline");
+
+			vert_src.clear();
+			frag_src.clear();
+
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+			frag_src = ShaderParser::load_shader_file("../assets/shaders/ssao_blur.frag.glsl");
+
+			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(&VertShader, s_res);
+			ShaderParser::generate_shader_resources(&FragShader, s_res);
+
+
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = &VertShader;
+			_ds2.pixel_shader = &FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = Vertex2D::get_input_layout();
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("SSAO_BLUR_PASS");
+			_ds2.depth_sten_state = { false, false };
+
+
+			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "ssao_blur_pass_pipeline"))
+			{
+				TRC_ERROR("Failed to initialize or create ssao_blur_pass_pipeline");
+				RenderFunc::DestroyShader(&VertShader);
+				RenderFunc::DestroyShader(&FragShader);
+				return;
+			}
+
+			RenderFunc::DestroyShader(&VertShader);
+			RenderFunc::DestroyShader(&FragShader);
+
+			m_blurPipe = ResourceSystem::get_instance()->GetPipeline("ssao_blur_pass_pipeline");
 
 		};
 
 		{
 			std::uniform_real_distribution<float> rand_float(0.0f, 1.0f);
 			std::default_random_engine gen;
-			for (uint32_t i = 0; i < MAX_NUM_KERNEL; i++)
+			m_kernel[0] = glm::vec4(-0.04, 0.1495, 0.013, 0.0f);
+			for (uint32_t i = 1; i < MAX_NUM_KERNEL; i++)
 			{
 				glm::vec3 samp = glm::vec3(
 					rand_float(gen) * 2.0f - 1.0f,
@@ -87,12 +176,12 @@ namespace trace {
 				samp *= rand_float(gen);
 				
 				float scale = (float)i / MAX_NUM_KERNEL;
-				scale = lerp(0.0f, 1.0f, scale * scale);
+				scale = lerp(0.1f, 1.0f, scale * scale);
 				samp *= scale;
-				m_kernel[i] = samp;
+				m_kernel[i] = glm::vec4(samp, 0.0f);
 			}
 
-			std::vector<glm::vec3> noise;
+			std::vector<glm::vec4> noise;
 			noise.resize(16);
 			for (uint32_t i = 0; i < 16; i++)
 			{
@@ -101,20 +190,21 @@ namespace trace {
 					rand_float(gen),
 					0.0f
 				);
-				noise[i] = glm::normalize(samp);
+				noise[i] = glm::vec4(glm::normalize(samp), 0.0f);
 			}
 
 			TextureDesc gPos = {};
 			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::REPEAT;
 			gPos.m_attachmentType = AttachmentType::COLOR;
 			gPos.m_flag = BindFlag::SHADER_RESOURCE_BIT;
-			gPos.m_format = Format::R16G16B16_FLOAT;
+			gPos.m_format = Format::R32G32B32A32_FLOAT;
 			gPos.m_width = 4;
 			gPos.m_height = 4;
 			gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
 			gPos.m_mipLevels = gPos.m_numLayers = 1;
 			gPos.m_usage = UsageFlag::DEFAULT;
-			gPos.m_data[0] = reinterpret_cast<unsigned char*>(noise.data());
+			gPos.m_data.push_back(reinterpret_cast<unsigned char*>(noise.data()));
+			gPos.m_channels = 4;
 
 			RenderFunc::CreateTexture(&noise_tex, gPos);
 
@@ -126,7 +216,6 @@ namespace trace {
 	{
 
 		RenderGraphPass* main_pass = render_graph->AddPass("SSAO_MAIN_PASS", GPU_QUEUE::GRAPHICS);
-		RenderGraphPass* blur_pass = render_graph->AddPass("SSAO_BLUR_PASS", GPU_QUEUE::GRAPHICS);
 
 		FrameData& fd = black_board.get<FrameData>();
 		GBufferData& gbuffer_data = black_board.get<GBufferData>();
@@ -134,6 +223,7 @@ namespace trace {
 
 		ssao_main_desc.m_width = fd.frame_width;
 		ssao_main_desc.m_height = fd.frame_height;
+		ssao_main_desc.m_format = Format::R16_FLOAT;
 		
 
 		main_pass->AddColorAttachmentInput(
@@ -149,16 +239,9 @@ namespace trace {
 			ssao_main_desc
 		);
 
-		blur_pass->AddColorAttachmentInput(
-			"ssao_main"
-		);
+		
 
-		ssao_data.ssao_blur = blur_pass->CreateAttachmentOutput(
-			"ssao_blur",
-			ssao_main_desc
-		);
-
-		main_pass->SetRunCB([&](std::vector<uint32_t>& inputs) {
+		main_pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 				
 			RenderGraphResource& pos_res = render_graph->GetResource(gbuffer_data.position_index);
 			RenderGraphResource& norm_res = render_graph->GetResource(gbuffer_data.normal_index);
@@ -168,10 +251,10 @@ namespace trace {
 				"u_kernel",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				m_kernel.data(),
-				static_cast<uint32_t>(m_kernel.size() * sizeof(glm::vec3))
+				static_cast<uint32_t>(m_kernel.size() * sizeof(glm::vec4))
 			);
 
-			glm::vec2 frame_size(static_cast<float>(fd.frame_width), static_cast<float>(fd.frame_width));
+			glm::vec2 frame_size(static_cast<float>(fd.frame_width), static_cast<float>(fd.frame_height));
 
 			RenderFunc::SetPipelineData(
 				m_pipeline.get(),
@@ -179,6 +262,16 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&frame_size,
 				sizeof(glm::vec2)
+			);
+
+			glm::mat4 proj = m_renderer->_camera->GetProjectionMatix();
+
+			RenderFunc::SetPipelineData(
+				m_pipeline.get(),
+				"projection",
+				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+				&proj,
+				sizeof(glm::mat4)
 			);
 
 			RenderFunc::SetPipelineTextureData(
@@ -201,17 +294,30 @@ namespace trace {
 				m_pipeline.get(),
 				"g_bufferData1",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&norm_res
+				&norm_res,
+				1
 			);
 
 			RenderFunc::BindPipeline_(m_pipeline.get());
+			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 
 			m_renderer->DrawQuad();
 
 
 			});
 
-		blur_pass->SetRunCB([&](std::vector<uint32_t>& inputs) {
+		RenderGraphPass* blur_pass = render_graph->AddPass("SSAO_BLUR_PASS", GPU_QUEUE::GRAPHICS);
+
+		blur_pass->AddColorAttachmentInput(
+			"ssao_main"
+		);
+
+		ssao_data.ssao_blur = blur_pass->CreateAttachmentOutput(
+			"ssao_blur",
+			ssao_main_desc
+		);
+
+		blur_pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 
 			RenderGraphResource& res = render_graph->GetResource(ssao_data.ssao_main);
 
@@ -224,6 +330,7 @@ namespace trace {
 			);
 
 			RenderFunc::BindPipeline_(m_blurPipe.get());
+			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_blurPipe.get());
 
 			m_renderer->DrawQuad();
 
@@ -232,6 +339,7 @@ namespace trace {
 	}
 	void SSAO::ShutDown()
 	{
+		RenderFunc::DestroyTexture(&noise_tex);
 		RenderFunc::DestroyRenderPass(&ssao_blur);
 		RenderFunc::DestroyRenderPass(&m_renderPass);
 	}

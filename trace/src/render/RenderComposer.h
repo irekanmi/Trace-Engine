@@ -5,6 +5,8 @@
 #include "Graphics.h"
 #include "render_graph/GBufferPass.h"
 #include "render_graph/LightingPass.h"
+#include "render_graph/SSAO.h"
+
 
 namespace trace {
 
@@ -30,6 +32,7 @@ namespace trace {
 		Renderer* m_renderer;
 		GBufferPass gbuffer_pass;
 		LightingPass lighting_pass;
+		SSAO ssao_pass;
 
 	protected:
 

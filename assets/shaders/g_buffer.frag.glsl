@@ -37,7 +37,7 @@ void main()
     vec3 _tangent = normalize( _data._tangent.xyz - (dot(_data._tangent.xyz, obj_norm) * obj_norm) );
     vec3 _bitangent = cross(obj_norm, _tangent) * _data._tangent.w;
     mat3 TBN = mat3(_tangent, _bitangent, obj_norm);
-    vec3 normal = TBN * _normal;
+    vec3 normal = normalize(TBN * _normal);
 
 
     g_Position = vec4(_data._fragPos, instance_data.shininess);

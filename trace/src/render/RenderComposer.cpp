@@ -20,12 +20,14 @@ namespace trace {
 
 		gbuffer_pass.Init(m_renderer);
 		lighting_pass.Init(m_renderer);
+		ssao_pass.Init(m_renderer);
 
 		return result;
 	}
 
 	void RenderComposer::Shutdowm()
 	{
+		ssao_pass.ShutDown();
 		lighting_pass.ShutDown();
 		gbuffer_pass.ShutDown();
 	}
@@ -43,6 +45,7 @@ namespace trace {
 
 		frame_graph.SetRenderer(m_renderer);
 		gbuffer_pass.Setup(&frame_graph, black_board);
+		ssao_pass.Setup(&frame_graph, black_board);
 		lighting_pass.Setup(&frame_graph, black_board);
 		frame_graph.SetFinalResourceOutput("swapchain");
 

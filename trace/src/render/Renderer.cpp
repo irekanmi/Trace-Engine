@@ -71,7 +71,7 @@ namespace trace {
 			RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
 
 			_camera = new PerspectiveCamera(
-				glm::vec3(36.186146f, 38.094185f, -19.778137f),
+				glm::vec3(51.093063f, 164.06653f, 0.7652595f),
 				glm::vec3(-0.92247f, -0.23771466f, 0.30420545f),
 				glm::vec3(0.0f, 1.0f, 0.0f),
 				((float)800.0f) / ((float)600.0f),

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "VulkanTexture.h"
 #include "VkUtils.h"
+#include "render/Graphics.h"
 
 extern trace::VKHandle g_Vkhandle;
 extern trace::VKDeviceHandle g_VkDevice;
@@ -81,7 +82,7 @@ namespace vk {
 			trace::VKBuffer staging_buffer;
 
 			trace::BufferInfo buffer_info;
-			buffer_info.m_size = desc.m_width * desc.m_height * desc.m_channels;
+			buffer_info.m_size = desc.m_width * desc.m_height * trace::getFmtSize(desc.m_format);
 			buffer_info.m_stide = 0;
 			buffer_info.m_usageFlag = trace::UsageFlag::UPLOAD;
 			buffer_info.m_flag = trace::BindFlag::NIL;

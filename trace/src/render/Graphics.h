@@ -533,5 +533,5 @@ namespace trace {
 		glm::vec4 params2; // x: outerCutOff, y: null, z:null, w: null
 	};
 	
-
+	uint32_t getFmtSize(Format format);
 }

@@ -19,6 +19,7 @@ namespace trace {
 
 		template<typename T, typename... Args> T& add(Args&& ...args)
 		{
+			if (has<T>()) return get<T>();
 			return m_bucket[typeid(T)].emplace<T>(T{ std::forward<Args>(args)... });
 		}
 
@@ -31,7 +32,7 @@ namespace trace {
 		template<typename T> T* try_get()
 		{
 			auto it = m_bucket.find(typeid(T));
-			return m_bucket.find(typeid(T)) != m_bucket.end() ? std::any_cast<T*>(&it->second) : nullptr;
+			return it != m_bucket.end() ? std::any_cast<T>(&it->second) : nullptr;
 		}
 
 		template<typename T> bool has()

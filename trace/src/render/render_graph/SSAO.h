@@ -5,12 +5,15 @@
 
 #include "RenderPass.h"
 #include "resource/Ref.h"
+#include "render/GTexture.h"
+
 
 #define MAX_NUM_KERNEL 64
 
 namespace trace {
 
 	class GPipeline;
+	class GTexture;
 
 	class TRACE_API SSAO : public RenderPass
 	{
@@ -29,7 +32,7 @@ namespace trace {
 		uint32_t ssao_output;
 		GRenderPass ssao_blur;
 		GTexture noise_tex;
-		std::array<glm::vec3, MAX_NUM_KERNEL> m_kernel;
+		std::array<glm::vec4, MAX_NUM_KERNEL> m_kernel;
 		Ref<GPipeline> m_pipeline;
 		Ref<GPipeline> m_blurPipe;
 

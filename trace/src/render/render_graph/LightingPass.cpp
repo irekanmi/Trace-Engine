@@ -74,9 +74,6 @@ namespace trace {
 			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
 			frag_src = ShaderParser::load_shader_file("../assets/shaders/lighting.frag.glsl");
 
-			std::cout << vert_src;
-			std::cout << frag_src;
-
 			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
 			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
 
@@ -220,6 +217,9 @@ namespace trace {
 		gNormal_index = gbuffer_data.normal_index;
 		gColor_index = gbuffer_data.color_index;
 
+		SSAOData* ssao = black_board.try_get<SSAOData>();
+		bool ssao_avaliable = false;
+
 		auto pass = render_graph->AddPass("LIGHTING_PASS", GPU_QUEUE::GRAPHICS);
 
 		pass->CreateAttachmentOutput(
@@ -231,6 +231,11 @@ namespace trace {
 		pass->AddColorAttachmentInput(render_graph->GetResource(gNormal_index).resource_name);
 		pass->AddColorAttachmentInput(render_graph->GetResource(gColor_index).resource_name);
 
+		if (ssao)
+		{
+			pass->AddColorAttachmentInput(render_graph->GetResource(ssao->ssao_blur).resource_name);
+			ssao_avaliable = true;
+		}
 
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
 			{
@@ -264,6 +269,25 @@ namespace trace {
 					&render_graph->GetResource(gColor_index),
 					2
 				);
+				if (ssao_avaliable)
+				{
+					uint32_t res = 1;
+					RenderFunc::BindRenderGraphResource(
+						render_graph,
+						m_pipeline.get(),
+						"ssao_blur",
+						ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+						&render_graph->GetResource(ssao->ssao_blur)
+					);
+
+					RenderFunc::SetPipelineData(
+						m_pipeline.get(),
+						"ssao_dat",
+						ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+						&res,
+						sizeof(uint32_t)
+					);
+				}
 
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),

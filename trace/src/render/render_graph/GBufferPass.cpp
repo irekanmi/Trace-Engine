@@ -86,7 +86,7 @@ namespace trace {
 		depth.m_usage = UsageFlag::DEFAULT;
 
 		TextureDesc gPos = {};
-		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::REPEAT;
+		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
 		gPos.m_attachmentType = AttachmentType::COLOR;
 		gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
 		gPos.m_format = Format::R16G16B16A16_FLOAT;

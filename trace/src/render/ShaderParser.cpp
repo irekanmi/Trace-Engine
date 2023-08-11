@@ -79,13 +79,6 @@ namespace trace {
 					Array.shader_stage = shader_stage;
 					Array.slot = binding->binding;
 
-					for (uint32_t k = 0; k < binding->count; k++)
-					{
-						ShaderArray::ArrayInfo a_info;
-						a_info.index = k;
-						a_info.resource_name = std::string(binding->name) + std::to_string(k);
-						Array.members.push_back(a_info);
-					}
 					if (!isArray)
 					{
 						Array.count = 1;
@@ -94,6 +87,18 @@ namespace trace {
 						a_info.resource_name = binding->name;
 						Array.members.push_back(a_info);
 					}
+					else
+					{
+						for (uint32_t k = 0; k < binding->count; k++)
+						{
+							ShaderArray::ArrayInfo a_info;
+							a_info.index = k;
+							a_info.resource_name = std::string(binding->name) + std::to_string(k);
+							Array.members.push_back(a_info);
+						}
+					}
+					
+					
 					out_res.resources.push_back({ {}, Array, {}, ShaderDataDef::ARRAY });
 
 				}
