@@ -75,9 +75,9 @@ namespace trace {
 				glm::vec3(-0.92247f, -0.23771466f, 0.30420545f),
 				glm::vec3(0.0f, 1.0f, 0.0f),
 				((float)800.0f) / ((float)600.0f),
-				45.0f,
+				60.0f,
 				0.1f,
-				1500.0f
+				1000.0f
 			);
 			_viewPort.width = 800.0f;
 			_viewPort.height = 600.0f;
@@ -414,21 +414,27 @@ namespace trace {
 		scene_data.view = _camera->GetViewMatrix();
 		scene_data.view_position = _camera->GetPosition();
 		glm::mat4* M_model = (glm::mat4*)(&params.data);
-		scene_data.projection = _camera->GetProjectionMatix();
+		//scene_data.projection = _camera->GetProjectionMatix();
 
-
+		glm::mat4 proj = _camera->GetProjectionMatix();
+		glm::mat4 trans_proj = glm::transpose(proj);
 		
 
 		for (Ref<Model> _model : mesh->GetModels())
 		{
 			Ref<MaterialInstance> _mi = _model->m_matInstance;
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
+			float nearPlane = _camera->GetNear();
+			float farPlane = _camera->GetFar();
+
+			glm::vec2 cam_data(nearPlane, farPlane);
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.projection, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &trans_proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &scene_data.view_position, sizeof(glm::vec3));
 			RenderFunc::SetPipelineData(sp.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &light_data, sizeof(glm::ivec4));
+			RenderFunc::SetPipelineData(sp.get(), "cam_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &cam_data, sizeof(glm::vec2));
 			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
 			RenderFunc::ApplyMaterial(_mi.get());
 			RenderFunc::BindPipeline(&g_device, sp.get());

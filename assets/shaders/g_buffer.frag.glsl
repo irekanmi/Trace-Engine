@@ -21,17 +21,25 @@ layout(location = 0)in data_object
 } _data;
 
 
-layout(set = 1, binding = 1)uniform sampler2D testing[3];
 layout(set = 1, binding = 0)uniform InstanceBufferObject{
     vec4 diffuse_color;
     float shininess;
-} instance_data;
+};
+layout(set = 1, binding = 1)uniform sampler2D testing[3];
+layout(set = 0, binding = 2)uniform CameraData {
+    vec2 cam_data;
+};
 
+float linearDepth(float depth)
+{
+	float z = depth * 2.0f - 1.0f; 
+	return (2.0f * cam_data.x * cam_data.y) / (cam_data.y + cam_data.x - z * (cam_data.y - cam_data.x));	
+}
 
 void main()
 {
     vec3 _normal = texture(testing[NORMAL_MAP], _data._texCoord).rgb;
-    _normal = 2.0 * _normal - 1.0f;
+    _normal = _normal * 2.0f - 1.0f;
     
     vec3 obj_norm = normalize(_data._normal);
     vec3 _tangent = normalize( _data._tangent.xyz - (dot(_data._tangent.xyz, obj_norm) * obj_norm) );
@@ -40,9 +48,8 @@ void main()
     vec3 normal = normalize(TBN * _normal);
 
 
-    g_Position = vec4(_data._fragPos, instance_data.shininess);
-    g_Normal = vec4(normal, 0.0);
-    g_ColorSpecular.rgb = texture(testing[DIFFUSE_MAP], _data._texCoord).rgb;
-    g_ColorSpecular.a = texture(testing[SPECULAR_MAP], _data._texCoord).r;
+    g_Position = vec4(_data._fragPos, shininess);
+    g_Normal = vec4(normal, linearDepth(gl_FragCoord.z));
+    g_ColorSpecular = vec4(texture(testing[DIFFUSE_MAP], _data._texCoord).rgb, texture(testing[SPECULAR_MAP], _data._texCoord).r);
 
 }

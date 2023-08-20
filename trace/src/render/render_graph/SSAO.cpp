@@ -76,7 +76,7 @@ namespace trace {
 			GShader VertShader;
 			GShader FragShader;
 
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
 			frag_src = ShaderParser::load_shader_file("../assets/shaders/ssao_main.frag.glsl");
 
 			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
@@ -164,12 +164,11 @@ namespace trace {
 		{
 			std::uniform_real_distribution<float> rand_float(0.0f, 1.0f);
 			std::default_random_engine gen;
-			m_kernel[0] = glm::vec4(-0.04, 0.1495, 0.013, 0.0f);
-			for (uint32_t i = 1; i < MAX_NUM_KERNEL; i++)
+			for (uint32_t i = 0; i < MAX_NUM_KERNEL; i++)
 			{
 				glm::vec3 samp = glm::vec3(
 					rand_float(gen) * 2.0f - 1.0f,
-					rand_float(gen) * 2.0f - 1.0f,
+					0.0f,
 					rand_float(gen)
 				);
 				samp = glm::normalize(samp);
@@ -190,7 +189,7 @@ namespace trace {
 					rand_float(gen),
 					0.0f
 				);
-				noise[i] = glm::vec4(glm::normalize(samp), 0.0f);
+				noise[i] = glm::vec4(samp, 0.0f);
 			}
 
 			TextureDesc gPos = {};
@@ -265,12 +264,22 @@ namespace trace {
 			);
 
 			glm::mat4 proj = m_renderer->_camera->GetProjectionMatix();
+			glm::mat4 inv_proj = glm::inverse(proj);
+			glm::mat4 trans_proj = glm::transpose(proj);
 
 			RenderFunc::SetPipelineData(
 				m_pipeline.get(),
 				"projection",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&proj,
+				&trans_proj,
+				sizeof(glm::mat4)
+			);
+
+			RenderFunc::SetPipelineData(
+				m_pipeline.get(),
+				"inv_projection",
+				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+				&inv_proj,
 				sizeof(glm::mat4)
 			);
 
@@ -301,7 +310,7 @@ namespace trace {
 			RenderFunc::BindPipeline_(m_pipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 
-			m_renderer->DrawQuad();
+			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 
 
 			});

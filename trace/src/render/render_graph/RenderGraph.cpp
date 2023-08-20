@@ -40,7 +40,7 @@ namespace trace {
 		m_depthStencilOutput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
-		output_tex->create_pass = index;
+		output_tex->create_pass = pass_index;
 
 		return index;
 	}

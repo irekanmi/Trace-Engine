@@ -71,7 +71,7 @@ namespace trace {
 			GShader VertShader;
 			GShader FragShader;
 
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
 			frag_src = ShaderParser::load_shader_file("../assets/shaders/lighting.frag.glsl");
 
 			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
@@ -305,13 +305,24 @@ namespace trace {
 					sizeof(Light) * MAX_LIGHT_COUNT
 				);
 
-				RenderFunc::SetPipelineData(m_pipeline.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->_camera->GetPosition(), sizeof(glm::vec3));
+				glm::mat4 view = m_renderer->_camera->GetViewMatrix();
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"view",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&view,
+					sizeof(glm::mat4)
+				);
+
+				//RenderFunc::SetPipelineData(m_pipeline.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->_camera->GetPosition(), sizeof(glm::vec3));
 				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
 				frame_count++;
 
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
-				m_renderer->DrawQuad();
+				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
+
 
 			});
 

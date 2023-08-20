@@ -30,7 +30,7 @@ namespace trace {
 		//m_upDirection = glm::normalize(glm::cross(m_lookDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
 		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
 
-		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
+		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
 	}
 
 	PerspectiveCamera::~PerspectiveCamera()

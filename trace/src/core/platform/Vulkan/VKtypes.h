@@ -315,6 +315,7 @@ namespace trace {
 		uint32_t memory_offset = 0;
 		VkMemoryRequirements tex_mem_req;
 		VkMemoryRequirements buf_mem_req;
+		VkImageLayout image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	};
 
 

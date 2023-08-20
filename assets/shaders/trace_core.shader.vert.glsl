@@ -34,12 +34,12 @@ void main()
 {
     _data._texCoord = in_texCoord;
     _data.light_data = scene_globals.light_data;
-    //_data._normal =  (transpose(inverse(local_data.model)) * vec4(in_normal, 0.0f)).xyz;
 
-    mat3 model_mat3 = mat3(local_data.model);
-    _data._normal = normalize(model_mat3  * in_normal);
+    mat3 model_mat3 = mat3(scene_globals.view * local_data.model);
+    mat3 norm_mat3 = transpose(inverse(model_mat3));
+    _data._normal = normalize(norm_mat3  * in_normal);
     _data._tangent = vec4( normalize(model_mat3 * in_tangent.xyz), in_tangent.w );
-    _data._fragPos = (local_data.model * vec4(in_pos, 1.0f)).xyz;
+    _data._fragPos = (scene_globals.view * local_data.model * vec4(in_pos, 1.0f)).xyz;
     _data._view_position = scene_globals.view_position;
 
     

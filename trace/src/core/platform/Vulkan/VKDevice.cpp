@@ -310,9 +310,9 @@ namespace vk {
 
 		VkViewport viewport = {};
 		viewport.x = view_port.x;
-		viewport.y = view_port.height;
+		viewport.y = view_port.y;
 		viewport.width = view_port.width;
-		viewport.height = -view_port.height;
+		viewport.height = view_port.height;
 		viewport.minDepth = view_port.minDepth;
 		viewport.maxDepth = view_port.maxDepth;
 

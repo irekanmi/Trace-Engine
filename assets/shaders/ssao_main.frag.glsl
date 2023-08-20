@@ -13,15 +13,20 @@ layout(set = 0, binding = 2)uniform Kernel{
 layout(set = 0, binding = 3)uniform sampler2D g_bufferData[2];
 layout(set = 0, binding = 4)uniform FrameData{
     mat4 projection;
+    mat4 inv_projection;
     vec2 frame_size;
 };
+
+vec3 get_position_from_depth(vec2 tex_coord, mat4 inv_mat, float depth);
 
 void main()
 {
     vec2 noise_scale = frame_size / 4.0;
 
+
     vec3 frag_pos = texture(g_bufferData[0], in_texCoord).xyz;
-    vec3 normal = texture(g_bufferData[1], in_texCoord).xyz;
+    //vec3 frag_pos = get_position_from_depth(in_texCoord, inv_projection, texture(g_bufferData[0], in_texCoord).r);
+    vec3 normal = (texture(g_bufferData[1], in_texCoord).xyz);
     vec3 rand_vec = texture(u_noiseTexture, in_texCoord * noise_scale).xyz;
     vec3 tangent = normalize( rand_vec - normal * dot(rand_vec, normal) );
     vec3 bi_tangent = cross(normal, tangent);
@@ -36,24 +41,34 @@ void main()
         vec3 samp_pos = TBN * u_kernel[i].rand_vec.xyz;
         samp_pos = frag_pos + (samp_pos * radius);
         
-        vec4 offset = projection * vec4(samp_pos, 1.0f);
+        vec4 offset = vec4(samp_pos, 1.0f);
+        offset = projection * offset;
         offset.xyz /= offset.w;
         offset.xyz = offset.xyz * 0.5f + 0.5f;
 
-        if(offset.x > 1.0f || offset.y > 1.0f)
-        {
-            FragColor = offset.x;
-            return;
-        }
-
         float samp_depth = texture(g_bufferData[0], offset.xy).z;
+        //float samp_depth = get_position_from_depth(offset.xy, inv_projection, texture(g_bufferData[0], offset.xy).r).z;
 
         float range = smoothstep(0.0f, 1.0f, radius / abs(frag_pos.z - samp_depth));
         occulsion += ( samp_depth >= samp_pos.z + bias ? 1.0f : 0.0f ) * range;
+        //occulsion += ( samp_depth >= samp_pos.z + bias ? 1.0f : 0.0f ) * range;
     }
 
     occulsion = 1.0f - (occulsion / MAX_NUM_KERNEL);
     FragColor = occulsion;
 
+
+}
+
+
+vec3 get_position_from_depth(vec2 tex_coord, mat4 inv_mat, float depth)
+{
+
+    float x = tex_coord.x * 2.0f - 1.0f;
+    float y = ( 1 - tex_coord.y) * 2.0f - 1.0f;
+    vec4 clip_pos = vec4(x, y, depth, 1.0f);
+    clip_pos = inv_mat * clip_pos;
+
+    return clip_pos.xyz / clip_pos.w;
 
 }

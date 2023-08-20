@@ -4,6 +4,7 @@
 #include "render/GPipeline.h"
 #include "render/render_graph/RenderGraph.h"
 #include "vulkan/vulkan.h"
+#include "VkUtils.h"
 
 
 extern trace::VKHandle g_Vkhandle;
@@ -259,6 +260,54 @@ namespace vk {
 		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
 
 
+
+		if (pass->GetDepthStencilOutput() != INVALID_ID)
+		{
+			uint32_t res_index = pass->GetDepthStencilOutput();
+			trace::RenderGraphResource& res = render_graph->GetResource(res_index);
+
+			uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
+			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
+			trace::VKImage& img_handle = res_internal->resource.texture;
+
+			if (res.create_pass == pass_index)
+			{
+				VkImageMemoryBarrier img_bar = {};
+				img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				img_bar.srcAccessMask = 0;
+				img_bar.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				img_bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				img_bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				img_bar.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				img_bar.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				img_bar.pNext = nullptr;
+				img_bar.image = img_handle.m_handle;
+				img_bar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+				img_bar.subresourceRange.baseArrayLayer = 0;
+				img_bar.subresourceRange.baseMipLevel = 0;
+				img_bar.subresourceRange.layerCount = 1;
+				img_bar.subresourceRange.levelCount = 1;
+				res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+
+				vkCmdPipelineBarrier(
+					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+					VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					0,
+					0,
+					nullptr,
+					0,
+					nullptr,
+					1,
+					&img_bar
+				);
+			}
+
+		}
+
+
+
 		bool wait_evnt = !pass_handle->wait_events.empty();
 
 
@@ -378,12 +427,13 @@ namespace vk {
 			isTexture = res.resource_type == trace::RenderGraphResourceType::Texture;
 			isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 
-			trace::VKImage& img_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData)->resource.texture;
+			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
+			trace::VKImage& img_handle = res_internal->resource.texture;
 			if (res.create_pass == pass_index && isTexture)
 			{
 				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 				{
-
+					
 					continue;
 				}
 				VkImageMemoryBarrier img_bar = {};
@@ -401,8 +451,54 @@ namespace vk {
 				img_bar.subresourceRange.baseMipLevel = 0;
 				img_bar.subresourceRange.layerCount = 1;
 				img_bar.subresourceRange.levelCount = 1;
+				res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				image_bars[image_bar_count++] = img_bar;
 			}
+		}
+
+		if (pass->GetDepthStencilOutput() != INVALID_ID)
+		{
+			uint32_t res_index = pass->GetDepthStencilOutput();
+			trace::RenderGraphResource& res = render_graph->GetResource(res_index);
+
+			uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
+			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
+			trace::VKImage& img_handle = res_internal->resource.texture;
+
+			if (res.create_pass == pass_index)
+			{
+				VkImageMemoryBarrier img_bar = {};
+				img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				img_bar.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+				img_bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				img_bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				img_bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				img_bar.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				img_bar.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+				img_bar.pNext = nullptr;
+				img_bar.image = img_handle.m_handle;
+				img_bar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+				img_bar.subresourceRange.baseArrayLayer = 0;
+				img_bar.subresourceRange.baseMipLevel = 0;
+				img_bar.subresourceRange.layerCount = 1;
+				img_bar.subresourceRange.levelCount = 1;
+				res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			
+			
+				vkCmdPipelineBarrier(
+					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+					VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+					0,
+					0,
+					nullptr,
+					0,
+					nullptr,
+					1,
+					&img_bar
+				);
+			}
+
 		}
 
 		if (image_bar_count > 0)
@@ -419,6 +515,7 @@ namespace vk {
 				image_bar_count,
 				image_bars
 			);
+
 		}
 
 		bool signal_evnt = !pass_handle->signal_events.empty();
@@ -547,6 +644,11 @@ namespace vk {
 		image_info.sampler = res_handle->resource.texture.m_sampler;
 		image_info.imageView = res_handle->resource.texture.m_view;
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		if (resource->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
+		{
+			image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		}
 
 		write.descriptorCount = 1; //HACK: Fix
 		write.dstBinding = meta_data._slot;
@@ -746,7 +848,7 @@ namespace vk {
 				aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
 				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 				{
-					image_usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+					image_usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 					aspect_flags = VK_IMAGE_ASPECT_DEPTH_BIT;
 				}
 				memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
