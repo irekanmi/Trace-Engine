@@ -222,10 +222,7 @@ namespace trace {
 
 		auto pass = render_graph->AddPass("LIGHTING_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->CreateAttachmentOutput(
-			render_graph->GetResource(color_output_index).resource_name,
-			{}
-		);
+		pass->AddColorAttachmentOuput(render_graph->GetResource(color_output_index).resource_name);
 
 		pass->AddColorAttachmentInput(render_graph->GetResource(gPosition_index).resource_name);
 		pass->AddColorAttachmentInput(render_graph->GetResource(gNormal_index).resource_name);
@@ -315,7 +312,6 @@ namespace trace {
 					sizeof(glm::mat4)
 				);
 
-				//RenderFunc::SetPipelineData(m_pipeline.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->_camera->GetPosition(), sizeof(glm::vec3));
 				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
 				frame_count++;
 

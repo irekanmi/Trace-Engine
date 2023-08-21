@@ -45,7 +45,10 @@ namespace trace {
 
 		frame_graph.SetRenderer(m_renderer);
 		gbuffer_pass.Setup(&frame_graph, black_board);
-		ssao_pass.Setup(&frame_graph, black_board);
+		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
+		{
+			ssao_pass.Setup(&frame_graph, black_board);
+		}
 		lighting_pass.Setup(&frame_graph, black_board);
 		frame_graph.SetFinalResourceOutput("swapchain");
 

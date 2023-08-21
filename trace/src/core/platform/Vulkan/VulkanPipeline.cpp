@@ -276,17 +276,24 @@ namespace trace {
 						write.dstArrayElement = mem.index;
 						if (_i._array.resource_type == ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 						{
-							if (mem.resource_data_type == ShaderData::CUSTOM_DATA_TEXTURE && mem.data)
-							{
-								VKImage* tex = (VKImage*)mem.data;
-								VkDescriptorImageInfo img_info = {};
-								img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-								img_info.imageView = tex->m_view;
-								img_info.sampler = tex->m_sampler;
-								write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-								write.pImageInfo = &img_info;
-								_writes.push_back(write);
-							}
+							VkDescriptorImageInfo img_info = {};
+							img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+							img_info.imageView = device->nullImage.m_view;
+							img_info.sampler = device->nullImage.m_sampler;
+							write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							write.pImageInfo = &img_info;
+							_writes.push_back(write);
+							//if (mem.resource_data_type == ShaderData::CUSTOM_DATA_TEXTURE && mem.data)
+							//{
+							//	VKImage* tex = (VKImage*)mem.data;
+							//	VkDescriptorImageInfo img_info = {};
+							//	img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+							//	img_info.imageView = tex->m_view;
+							//	img_info.sampler = tex->m_sampler;
+							//	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							//	write.pImageInfo = &img_info;
+							//	_writes.push_back(write);
+							//}
 						}
 					}
 				}
@@ -388,9 +395,9 @@ namespace vk {
 
 		VkViewport viewport = {};
 		viewport.x = 0;
-		viewport.y = desc.view_port.y;
+		viewport.y = -desc.view_port.height;
 		viewport.width = desc.view_port.width;
-		viewport.height = -desc.view_port.height;
+		viewport.height = desc.view_port.height;
 		viewport.minDepth = desc.view_port.minDepth;
 		viewport.maxDepth = desc.view_port.maxDepth;
 

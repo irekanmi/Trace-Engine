@@ -13,7 +13,6 @@ layout(set = 0, binding = 2)uniform Kernel{
 layout(set = 0, binding = 3)uniform sampler2D g_bufferData[2];
 layout(set = 0, binding = 4)uniform FrameData{
     mat4 projection;
-    mat4 inv_projection;
     vec2 frame_size;
 };
 
@@ -25,7 +24,6 @@ void main()
 
 
     vec3 frag_pos = texture(g_bufferData[0], in_texCoord).xyz;
-    //vec3 frag_pos = get_position_from_depth(in_texCoord, inv_projection, texture(g_bufferData[0], in_texCoord).r);
     vec3 normal = (texture(g_bufferData[1], in_texCoord).xyz);
     vec3 rand_vec = texture(u_noiseTexture, in_texCoord * noise_scale).xyz;
     vec3 tangent = normalize( rand_vec - normal * dot(rand_vec, normal) );
@@ -47,11 +45,9 @@ void main()
         offset.xyz = offset.xyz * 0.5f + 0.5f;
 
         float samp_depth = texture(g_bufferData[0], offset.xy).z;
-        //float samp_depth = get_position_from_depth(offset.xy, inv_projection, texture(g_bufferData[0], offset.xy).r).z;
 
         float range = smoothstep(0.0f, 1.0f, radius / abs(frag_pos.z - samp_depth));
         occulsion += ( samp_depth >= samp_pos.z + bias ? 1.0f : 0.0f ) * range;
-        //occulsion += ( samp_depth >= samp_pos.z + bias ? 1.0f : 0.0f ) * range;
     }
 
     occulsion = 1.0f - (occulsion / MAX_NUM_KERNEL);

@@ -216,7 +216,9 @@ namespace trace {
 	enum FrameSettings
 	{
 		RENDER_NONE = BIT(0),
-		RENDER_DEFAULT = BIT(1)
+		RENDER_DEFAULT = BIT(1),
+		RENDER_SSAO = BIT(2),
+		RENDER_SETTING_MAX
 	};
 
 	struct BufferInfo

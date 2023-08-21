@@ -1002,6 +1002,15 @@ namespace vk {
 			src_stage_flag = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dst_stage_flag = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
+		else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		{
+			image_barrier.srcAccessMask = 0;
+			image_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			//TODO Check docs for more info
+			src_stage_flag = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dst_stage_flag = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
 		else
 		{
 			TRC_ERROR("Image tranfer layout not yet supported");

@@ -119,7 +119,7 @@ namespace trace {
 			vert_src.clear();
 			frag_src.clear();
 
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/quad.vert.glsl");
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
 			frag_src = ShaderParser::load_shader_file("../assets/shaders/ssao_blur.frag.glsl");
 
 			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
@@ -264,22 +264,12 @@ namespace trace {
 			);
 
 			glm::mat4 proj = m_renderer->_camera->GetProjectionMatix();
-			glm::mat4 inv_proj = glm::inverse(proj);
-			glm::mat4 trans_proj = glm::transpose(proj);
 
 			RenderFunc::SetPipelineData(
 				m_pipeline.get(),
 				"projection",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&trans_proj,
-				sizeof(glm::mat4)
-			);
-
-			RenderFunc::SetPipelineData(
-				m_pipeline.get(),
-				"inv_projection",
-				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&inv_proj,
+				&proj,
 				sizeof(glm::mat4)
 			);
 
@@ -306,7 +296,8 @@ namespace trace {
 				&norm_res,
 				1
 			);
-
+			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
+			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 			RenderFunc::BindPipeline_(m_pipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 
@@ -337,11 +328,12 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&res
 			);
-
+			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
+			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 			RenderFunc::BindPipeline_(m_blurPipe.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_blurPipe.get());
 
-			m_renderer->DrawQuad();
+			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 
 			});
 

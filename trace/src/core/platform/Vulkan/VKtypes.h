@@ -212,6 +212,8 @@ namespace trace {
 		VkDeviceMemory mem_flush = VK_NULL_HANDLE;
 		VkDeviceMemory frame_memory;
 		uint32_t frame_mem_size = 0;
+		VKImage nullImage;
+		VKBuffer nullBuffer;
 	};
 
 	

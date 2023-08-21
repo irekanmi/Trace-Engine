@@ -26,15 +26,7 @@ layout(set = 1, binding = 0)uniform InstanceBufferObject{
     float shininess;
 };
 layout(set = 1, binding = 1)uniform sampler2D testing[3];
-layout(set = 0, binding = 2)uniform CameraData {
-    vec2 cam_data;
-};
 
-float linearDepth(float depth)
-{
-	float z = depth * 2.0f - 1.0f; 
-	return (2.0f * cam_data.x * cam_data.y) / (cam_data.y + cam_data.x - z * (cam_data.y - cam_data.x));	
-}
 
 void main()
 {
@@ -49,7 +41,7 @@ void main()
 
 
     g_Position = vec4(_data._fragPos, shininess);
-    g_Normal = vec4(normal, linearDepth(gl_FragCoord.z));
+    g_Normal = vec4(normal, 1.0f);
     g_ColorSpecular = vec4(texture(testing[DIFFUSE_MAP], _data._texCoord).rgb, texture(testing[SPECULAR_MAP], _data._texCoord).r);
 
 }

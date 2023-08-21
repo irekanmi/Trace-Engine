@@ -104,6 +104,99 @@ namespace vk {
 			);
 		}
 
+		vk::_CreateImage(
+			_instance,
+			_handle,
+			&_handle->nullImage,
+			VK_FORMAT_R8_UNORM,
+			VK_IMAGE_TILING_LINEAR,
+			VK_IMAGE_USAGE_SAMPLED_BIT,
+			VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			0,
+			VK_IMAGE_TYPE_2D,
+			10,
+			10,
+			1,
+			1
+		);
+
+		vk::_CreateImageView(
+			_instance,
+			_handle,
+			&_handle->nullImage.m_view,
+			VK_FORMAT_R8_UNORM,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			&_handle->nullImage.m_handle
+		);
+
+		VkSamplerCreateInfo samp_create_info = {};
+		samp_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samp_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samp_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samp_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samp_create_info.anisotropyEnable = VK_TRUE;
+		samp_create_info.maxAnisotropy = 16;
+		samp_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samp_create_info.unnormalizedCoordinates = VK_FALSE;
+		samp_create_info.minFilter = VK_FILTER_LINEAR;
+		samp_create_info.magFilter = VK_FILTER_LINEAR;
+		/// TODO Check Docs for more info
+		samp_create_info.compareEnable = VK_FALSE;
+		samp_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+		samp_create_info.maxLod = 1.0f;
+		samp_create_info.minLod = 0.0f;
+		samp_create_info.mipLodBias = 0.0f;
+		samp_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+		vkCreateSampler(
+			_handle->m_device,
+			&samp_create_info,
+			_instance->m_alloc_callback,
+			&_handle->nullImage.m_sampler
+		);
+
+		trace::BufferInfo null_info;
+		null_info.m_data = nullptr;
+		null_info.m_flag = trace::BindFlag::SHADER_RESOURCE_BIT;
+		null_info.m_size = 10;
+		null_info.m_stide = 0;
+		null_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+
+		vk::_CreateBuffer(
+			_instance,
+			_handle,
+			&_handle->nullBuffer,
+			null_info
+		);
+
+		trace::VKCommmandBuffer cmd_buf;
+		vk::_BeginCommandBufferSingleUse(_handle, _handle->m_graphicsCommandPool, &cmd_buf);
+		VkImageSubresourceRange range = {};
+		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.baseArrayLayer = 0;
+		range.baseMipLevel = 0;
+		range.layerCount = 1;
+		range.levelCount = 1;
+
+		vk::_TransitionImageLayout(
+			_instance,
+			_handle,
+			&cmd_buf,
+			&_handle->nullImage,
+			VK_FORMAT_R8_UNORM,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			range
+		);
+
+		vk::_EndCommandBufferSingleUse(
+			_handle,
+			_handle->m_graphicsCommandPool,
+			_handle->m_graphicsQueue,
+			&cmd_buf
+		);
+
 		return result;
 	}
 
@@ -131,6 +224,12 @@ namespace vk {
 
 
 		vkDeviceWaitIdle(_handle->m_device);
+
+
+		// Null placeholders
+		vk::_DestoryBuffer(_instance, _handle, &_handle->nullBuffer);
+		vkDestroySampler(_handle->m_device, _handle->nullImage.m_sampler, _instance->m_alloc_callback);
+		vk::_DestroyImage(_instance, _handle, &_handle->nullImage);
 
 		//Render Graph Memory
 		if (_handle->mem_flush)
@@ -310,9 +409,9 @@ namespace vk {
 
 		VkViewport viewport = {};
 		viewport.x = view_port.x;
-		viewport.y = view_port.y;
+		viewport.y = view_port.height;
 		viewport.width = view_port.width;
-		viewport.height = view_port.height;
+		viewport.height = -view_port.height;
 		viewport.minDepth = view_port.minDepth;
 		viewport.maxDepth = view_port.maxDepth;
 

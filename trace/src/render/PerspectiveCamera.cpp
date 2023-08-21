@@ -206,28 +206,28 @@ namespace trace {
 	{
 		m_fov = fov;
 
-		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
+		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
 	}
 
 	void PerspectiveCamera::SetNear(float z_near)
 	{
 		m_zNear = z_near;
 
-		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
+		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
 	}
 
 	void PerspectiveCamera::SetFar(float z_far)
 	{
 		m_zFar = z_far;
 
-		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
+		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
 	}
 
 	void PerspectiveCamera::SetAspectRatio(float aspect_ratio)
 	{
 		m_aspectRatio = aspect_ratio;
 
-		m_projection = glm::perspective(m_fov, m_aspectRatio, m_zNear, m_zFar);
+		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
 	}
 
 	void PerspectiveCamera::recompute()
