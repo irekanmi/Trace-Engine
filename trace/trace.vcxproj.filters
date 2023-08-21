@@ -260,6 +260,7 @@
     <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
     <ClInclude Include="src\render\render_graph\FrameData.h" />
     <ClInclude Include="src\render\RenderComposer.h" />
+    <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -449,5 +450,6 @@
     <ClCompile Include="src\render\render_graph\SSAO.cpp" />
     <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
     <ClCompile Include="src\render\RenderComposer.cpp" />
+    <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
   </ItemGroup>
 </Project>

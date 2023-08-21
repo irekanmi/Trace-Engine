@@ -71,8 +71,8 @@ namespace trace {
 			RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
 
 			_camera = new PerspectiveCamera(
-				glm::vec3(213.41278f, 125.63149f, 21.751532f),
-				glm::vec3(-0.9785002f, -0.2039649f, -0.030589983f),
+				glm::vec3(109.72446f, 95.70557f, -10.92075f),
+				glm::vec3(-0.910028f, -0.4126378f, 0.039738327f),
 				glm::vec3(0.0f, 1.0f, 0.0f),
 				((float)800.0f) / ((float)600.0f),
 				60.0f,
@@ -162,19 +162,19 @@ namespace trace {
 		lights[0].direction = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
 		lights[0].color = { 0.8f, 0.8f, 0.8f, 1.0f };
 		lights[0].params1 = { 1.0f, 0.467f, 0.896f, 0.0f };
-		lights[0].params2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+		lights[0].params2 = { 0.0f, 2.0f, 0.0f, 0.0f };
 
 		lights[1].position = { 0.0f, 2.5f, 2.0f, 0.0f };
 		lights[1].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
 		lights[1].color = { 0.37f, 0.65f, 0.66f, 1.0f };
 		lights[1].params1 = { 1.0f, 0.022f, 0.0019f, 0.0f };
-		lights[1].params2 = { 0.0f, 0.0f, 0.0f, 0.0f };
+		lights[1].params2 = { 0.0f, 27.5f, 0.0f, 0.0f };
 
 		lights[2].position = { _camera->GetPosition(), 0.0f };
 		lights[2].direction = { _camera->GetLookDir(), 0.0f };
 		lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
 		lights[2].params1 = { 1.0f, 0.07f, 0.017f, 0.939f };
-		lights[2].params2 = { 0.866f, 0.0f, 0.0f, 0.0f };
+		lights[2].params2 = { 0.866f, 21.1f, 0.0f, 0.0f };
 			
 
 		light_data = { 1, 1, 1, 0 };

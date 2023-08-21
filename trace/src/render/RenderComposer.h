@@ -6,6 +6,7 @@
 #include "render_graph/GBufferPass.h"
 #include "render_graph/LightingPass.h"
 #include "render_graph/SSAO.h"
+#include "render_graph/ToneMapPass.h"
 
 
 namespace trace {
@@ -33,6 +34,7 @@ namespace trace {
 		GBufferPass gbuffer_pass;
 		LightingPass lighting_pass;
 		SSAO ssao_pass;
+		ToneMapPass toneMap_pass;
 
 	protected:
 

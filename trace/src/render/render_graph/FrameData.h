@@ -21,7 +21,8 @@ namespace trace {
 
 	struct FrameData
 	{
-		uint32_t ldr_index;
+		uint32_t hdr_index = INVALID_ID;
+		uint32_t ldr_index = INVALID_ID;
 		uint32_t frame_width;
 		uint32_t frame_height;
 	};

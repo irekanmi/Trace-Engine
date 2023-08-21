@@ -217,6 +217,7 @@
     <ClInclude Include="src\render\render_graph\RenderPass.h" />
     <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
     <ClInclude Include="src\render\render_graph\SSAO.h" />
+    <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
     <ClInclude Include="src\render\Transform.h" />
@@ -294,6 +295,7 @@
     <ClCompile Include="src\render\render_graph\MainPass.cpp" />
     <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\render\render_graph\SSAO.cpp" />
+    <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />
     <ClCompile Include="src\render\Transform.cpp" />

@@ -125,7 +125,9 @@ vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, v
     vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
     mat3 view_mat = mat3(view);
     vec3 light_direction = view_mat * u_gLights[index].direction.xyz;
-    vec4 _lgt_color = u_gLights[index].color;
+    float _lgt_intensity = u_gLights[index].params2.y;
+    vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
+    
 
     vec3 half_direction = normalize(view_direction - (light_direction));   
     float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
@@ -145,7 +147,8 @@ vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 al
 {
     vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
     vec3 light_dir;
-    vec4 _lgt_color = u_gLights[index].color;
+    float _lgt_intensity = u_gLights[index].params2.y;
+    vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
     float _lgt_constant = u_gLights[index].params1.x;
     float _lgt_linear = u_gLights[index].params1.y;
     float _lgt_quadratic = u_gLights[index].params1.z;
@@ -175,7 +178,8 @@ vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 alb
     mat3 view_mat = mat3(view);
     vec3 light_direction = view_mat * u_gLights[index].direction.xyz;
     vec3 light_dir = light_pos - position;
-    vec4 _lgt_color = u_gLights[index].color;
+    float _lgt_intensity = u_gLights[index].params2.y;
+    vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
     float _lgt_innerCutOff = u_gLights[index].params1.w;
     float _lgt_outerCutOff = u_gLights[index].params2.x;
     light_dir = normalize(light_dir);

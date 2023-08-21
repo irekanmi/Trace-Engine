@@ -213,6 +213,11 @@ namespace trace {
 		output_desc.m_height = frame_data.frame_height;
 
 		color_output_index = frame_data.ldr_index;
+		if (frame_data.hdr_index != INVALID_ID)
+		{
+			color_output_index = frame_data.hdr_index;
+		}
+
 		gPosition_index = gbuffer_data.position_index;
 		gNormal_index = gbuffer_data.normal_index;
 		gColor_index = gbuffer_data.color_index;

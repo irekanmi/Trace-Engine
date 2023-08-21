@@ -532,7 +532,7 @@ namespace trace {
 		glm::vec4 direction;
 		glm::vec4 color;
 		glm::vec4 params1; // x: constant, y: linear, z:quadratic, w: innerCutOff
-		glm::vec4 params2; // x: outerCutOff, y: null, z:null, w: null
+		glm::vec4 params2; // x: outerCutOff, y: intensity, z:null, w: null
 	};
 	
 	uint32_t getFmtSize(Format format);
