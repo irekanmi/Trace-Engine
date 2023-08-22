@@ -24,10 +24,6 @@ layout(set = 1, binding = 0)uniform InstanceBufferObject{
 } instance_data;
 
 
-layout(set = 0, binding = 2)uniform Testing{
-    ivec4 rest;
-};
-
 
 struct Light
 {
@@ -75,109 +71,49 @@ void main()
 
     vec3 view_dir = _data._view_position - _data._fragPos;
 
-    if(rest.x == 0)
+
+    Light _lgt;
+    for(int i = 0; i < _data.light_data.x; i++)
     {
-        FragColor = vec4(_data._fragPos, 1.0);
+        _lgt.position = u_gLights[i].position.xyz;
+        _lgt.direction = u_gLights[i].direction.xyz;
+        _lgt.color = u_gLights[i].color;
+        _lgt.constant = u_gLights[i].params1.x;
+        _lgt.linear = u_gLights[i].params1.y;
+        _lgt.quadratic = u_gLights[i].params1.z;
+        _lgt.innerCutOff = u_gLights[i].params1.w;
+        _lgt.outerCutOff = u_gLights[i].params2.x;
+        FragColor += calculate_directional_light(_lgt, _normal, view_dir);
     }
-   else if(rest.x == 1)
-   {
-        FragColor = vec4(abs(_normal), 1.0);
-   }
-   else if(rest.x == 2)
-   {
-        Light _lgt;
-        for(int i = 0; i < _data.light_data.x; i++)
-        {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_directional_light(_lgt, _normal, view_dir);
-        }
-   }
-   else if(rest.x == 3)
-   {
-        Light _lgt;
-        int num = _data.light_data.x + _data.light_data.y;
-        for(int i = _data.light_data.x; i < num; i++)
-        {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_point_light(_lgt, _normal, view_dir);
-        }
-   }
-   else if(rest.x == 4)
-   {
-        Light _lgt;
-        int num = _data.light_data.x + _data.light_data.y + _data.light_data.z;
-        for(int i = _data.light_data.x + _data.light_data.y; i < num; i++)
-        {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_spot_light(_lgt, _normal, view_dir);
-        }
-   }
-   else if(rest.x == 5)
-   {
-        Light _lgt;
-        for(int i = 0; i < _data.light_data.x; i++)
-        {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_directional_light(_lgt, _normal, view_dir);
-        }
 
-        int num = _data.light_data.x + _data.light_data.y;
-        for(int i = _data.light_data.x; i < num; i++)
-        {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_point_light(_lgt, _normal, view_dir);
-        }
+    int num = _data.light_data.x + _data.light_data.y;
+    for(int i = _data.light_data.x; i < num; i++)
+    {
+        _lgt.position = u_gLights[i].position.xyz;
+        _lgt.direction = u_gLights[i].direction.xyz;
+        _lgt.color = u_gLights[i].color;
+        _lgt.constant = u_gLights[i].params1.x;
+        _lgt.linear = u_gLights[i].params1.y;
+        _lgt.quadratic = u_gLights[i].params1.z;
+        _lgt.innerCutOff = u_gLights[i].params1.w;
+        _lgt.outerCutOff = u_gLights[i].params2.x;
+        FragColor += calculate_point_light(_lgt, _normal, view_dir);
+    }
 
-        num = _data.light_data.x + _data.light_data.y + _data.light_data.z;
-        for(int i = _data.light_data.x + _data.light_data.y; i < num; i++)
-        {
-            _lgt.position = u_gLights[i].position.xyz;
-            _lgt.direction = u_gLights[i].direction.xyz;
-            _lgt.color = u_gLights[i].color;
-            _lgt.constant = u_gLights[i].params1.x;
-            _lgt.linear = u_gLights[i].params1.y;
-            _lgt.quadratic = u_gLights[i].params1.z;
-            _lgt.innerCutOff = u_gLights[i].params1.w;
-            _lgt.outerCutOff = u_gLights[i].params2.x;
-            FragColor += calculate_spot_light(_lgt, _normal, view_dir);
-        }
+    num = _data.light_data.x + _data.light_data.y + _data.light_data.z;
+    for(int i = _data.light_data.x + _data.light_data.y; i < num; i++)
+    {
+        _lgt.position = u_gLights[i].position.xyz;
+        _lgt.direction = u_gLights[i].direction.xyz;
+        _lgt.color = u_gLights[i].color;
+        _lgt.constant = u_gLights[i].params1.x;
+        _lgt.linear = u_gLights[i].params1.y;
+        _lgt.quadratic = u_gLights[i].params1.z;
+        _lgt.innerCutOff = u_gLights[i].params1.w;
+        _lgt.outerCutOff = u_gLights[i].params2.x;
+        FragColor += calculate_spot_light(_lgt, _normal, view_dir);
+    }
 
-   }
 }
 
 vec4 calculate_directional_light(Light light, vec3 normal, vec3 view_direction)

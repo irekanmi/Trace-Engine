@@ -6,6 +6,7 @@
 #include "FrameData.h"
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
+#include "resource/ResourceSystem.h"
 
 namespace trace {
 	void GBufferPass::Init(Renderer* renderer)
@@ -244,13 +245,7 @@ namespace trace {
 				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 
 
-				for (uint32_t i = 0; i < m_renderer->m_listCount; i++)
-				{
-					for (Command& cmd : m_renderer->m_cmdList[i]._commands)
-					{
-						cmd.func(cmd.params);
-					}
-				}
+				m_renderer->RenderOpaqueObjects();
 			});
 
 		pass->SetResizeCB([&](RenderGraph* graph, RenderGraphPass* pass, uint32_t width, uint32_t height)

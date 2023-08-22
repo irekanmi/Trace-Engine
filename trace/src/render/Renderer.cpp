@@ -6,9 +6,11 @@
 #include "core/Enums.h"
 #include "core/io/Logging.h"
 #include "resource/ResourceSystem.h"
-#include "render/PerspectiveCamera.h"
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
+#include "Model.h"
+#include "Mesh.h"
+#include "SkyBox.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -74,15 +76,15 @@ namespace trace {
 			
 			RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
 
-			_camera = new PerspectiveCamera(
-				glm::vec3(109.72446f, 95.70557f, -10.92075f),
-				glm::vec3(-0.910028f, -0.4126378f, 0.039738327f),
-				glm::vec3(0.0f, 1.0f, 0.0f),
-				((float)800.0f) / ((float)600.0f),
-				60.0f,
-				0.1f,
-				1000.0f
-			);
+			_camera = new Camera(CameraType::PERSPECTIVE);
+			_camera->SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
+			_camera->SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
+			_camera->SetUpDir(glm::vec3(0.0f, 1.0f, 0.0f));
+			_camera->SetAspectRatio(((float)800.0f) / ((float)600.0f));
+			_camera->SetFov(60.0f);
+			_camera->SetNear(0.1f);
+			_camera->SetFar(1000.0f);
+
 			_viewPort.width = 800.0f;
 			_viewPort.height = 600.0f;
 			Rect2D rect;
@@ -114,6 +116,8 @@ namespace trace {
 		quadInfo.m_usageFlag = UsageFlag::DEFAULT;
 
 		RenderFunc::CreateBuffer(&quadBuffer, quadInfo);
+		m_opaqueObjects.resize(1024);
+		m_opaqueObjectsSize = 0;
 
 		// Temp --------------------
 		main_pass.Init(this);
@@ -172,17 +176,17 @@ namespace trace {
 		lights[1].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
 		lights[1].color = { 0.37f, 0.65f, 0.66f, 1.0f };
 		lights[1].params1 = { 1.0f, 0.022f, 0.0019f, 0.0f };
-		lights[1].params2 = { 0.0f, 27.5f, 0.0f, 0.0f };
+		lights[1].params2 = { 0.0f, 7.5f, 0.0f, 0.0f };
 
 		lights[2].position = { _camera->GetPosition(), 0.0f };
 		lights[2].direction = { _camera->GetLookDir(), 0.0f };
 		lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
 		lights[2].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
-		lights[2].params2 = { 0.866f, 21.1f, 0.0f, 0.0f };
+		lights[2].params2 = { 0.866f, 6.1f, 0.0f, 0.0f };
 			
 
 		light_data = { 1, 1, 1, 0 };
-		exposure = 5.0f;
+		exposure = 0.9f;
 
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
@@ -204,7 +208,6 @@ namespace trace {
 		{
 			frame_graphs[i].Destroy();
 		}
-		sky_pipeline.~Ref();
 		
 		main_pass.ShutDown();
 		m_composer->Shutdowm();
@@ -240,18 +243,6 @@ namespace trace {
 			else if (press->m_keycode == KEY_P)
 			{
 				exposure -= 0.4;
-			}
-			else if (press->m_keycode == KEY_L)
-			{
-				TRC_DEBUG("exposure level => {}", exposure);
-			}
-			else if (press->m_keycode == KEY_H)
-			{
-				frame_settings = RENDER_DEFAULT | RENDER_HDR;
-			}
-			else if (press->m_keycode == KEY_J)
-			{
-				frame_settings = RENDER_DEFAULT;
 			}
 
 			break;
@@ -402,6 +393,14 @@ namespace trace {
 				}
 			}
 
+			for (uint32_t i = 0; i < m_listCount; i++)
+			{
+				for (Command& cmd : m_cmdList[i]._commands)
+				{
+					cmd.func(cmd.params);
+				}
+			}
+
 
 			RGBlackBoard frame_blck_bd;
 			
@@ -422,6 +421,7 @@ namespace trace {
 			frame_index = (frame_index + 1) % 2;
 		}
 		m_listCount = 0;
+		m_opaqueObjectsSize = 0;
 
 	}
 
@@ -431,18 +431,18 @@ namespace trace {
 		RenderFunc::Draw(&g_device, 0, 6);
 	}
 
-
-	void Renderer::draw_mesh(CommandParams params)
+	void Renderer::RenderOpaqueObjects()
 	{
-		Mesh* mesh = (Mesh*)params.ptrs[0];
 
-		glm::mat4* M_model = (glm::mat4*)(&params.data);
 		glm::mat4 proj = _camera->GetProjectionMatix();
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
 
-		for (Ref<Model> _model : mesh->GetModels())
+		for (uint32_t i = 0; i < m_opaqueObjectsSize; i++)
 		{
+			auto& data = m_opaqueObjects[i];
+			glm::mat4* M_model = &data.first;
+			Model* _model = data.second;
 			Ref<MaterialInstance> _mi = _model->m_matInstance;
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
@@ -459,6 +459,23 @@ namespace trace {
 
 			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
 			RenderFunc::OnDrawEnd(&g_device, sp.get());
+		}
+
+	}
+
+
+	void Renderer::draw_mesh(CommandParams params)
+	{
+		Mesh* mesh = (Mesh*)params.ptrs[0];
+
+		glm::mat4* M_model = (glm::mat4*)(&params.data);
+		glm::mat4 proj = _camera->GetProjectionMatix();
+		glm::mat4 view = _camera->GetViewMatrix();
+		glm::vec3 view_position = _camera->GetPosition();
+
+		for (Ref<Model> _model : mesh->GetModels())
+		{
+			m_opaqueObjects[m_opaqueObjectsSize++] = std::make_pair(*M_model, _model.get());
 		}
 
 	}

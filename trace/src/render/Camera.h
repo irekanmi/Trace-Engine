@@ -19,39 +19,54 @@ namespace trace {
 
 	public:
 		Camera() {};
-		virtual ~Camera() {};
+		Camera(CameraType cam_type);
+		~Camera();
 
 		CameraType GetCameraType() { return m_type; }
-		virtual glm::vec3 GetPosition() = 0;
-		virtual glm::vec3 GetLookDir() = 0;
-		virtual glm::vec3 GetUpDir() = 0;
-		virtual glm::mat4 GetViewMatrix() = 0;
-		virtual glm::mat4 GetProjectionMatix() = 0;
+		glm::vec3 GetPosition();
+		glm::vec3 GetLookDir();
+		glm::vec3 GetUpDir();
+		glm::mat4 GetViewMatrix();
+		glm::mat4 GetProjectionMatix();
 
 		
 
-		// TODO: Speculating maybe it should not be in the base class
-		virtual float GetFov() = 0;
-		virtual float GetNear() = 0;
-		virtual float GetFar() = 0;
-		virtual float GetAspectRatio() = 0;
-		virtual void Update(float deltaTime) = 0;
+		float GetFov();
+		float GetNear();
+		float GetFar();
+		float GetAspectRatio();
+		void Update(float deltaTime);
 
 
-		virtual void SetPosition(glm::vec3 position) = 0;
-		virtual void SetLookDir(glm::vec3 look_dir) = 0;
-		virtual void SetUpDir(glm::vec3 up_dir) = 0;
+		void SetPosition(glm::vec3 position);
+		void SetLookDir(glm::vec3 look_dir);
+		void SetUpDir(glm::vec3 up_dir);
 
-		// TODO: Speculating maybe it should not be in the base class
-		virtual void SetFov(float fov) = 0;
-		virtual void SetNear(float z_near) = 0;
-		virtual void SetFar(float z_far) = 0;
-		virtual void SetAspectRatio(float aspect_ratio) = 0;
+		void SetFov(float fov);
+		void SetNear(float z_near);
+		void SetFar(float z_far);
+		void SetAspectRatio(float aspect_ratio);
 
 	private:
+		glm::mat4 m_projection;
+		glm::mat4 m_view;
+
+		float m_fov;
+		float m_zNear;
+		float m_zFar;
+		float m_aspectRatio;
+
+		glm::vec3 m_position;
+		glm::vec3 m_lookDirection;
+		glm::vec3 m_upDirection;
+		glm::vec3 m_rightDirection;
+
+		bool is_dirty[2] = {0};
+
+		CameraType m_type = CameraType::NONE;
+
 
 	protected:
-		CameraType m_type = CameraType::NONE;
 
 
 	};

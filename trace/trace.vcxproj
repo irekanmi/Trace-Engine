@@ -202,7 +202,6 @@
     <ClInclude Include="src\render\Material.h" />
     <ClInclude Include="src\render\Mesh.h" />
     <ClInclude Include="src\render\Model.h" />
-    <ClInclude Include="src\render\PerspectiveCamera.h" />
     <ClInclude Include="src\render\RenderComposer.h" />
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
@@ -270,6 +269,7 @@
     <ClCompile Include="src\core\platform\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp" />
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp" />
+    <ClCompile Include="src\render\Camera.cpp" />
     <ClCompile Include="src\render\GBuffer.cpp" />
     <ClCompile Include="src\render\GContext.cpp" />
     <ClCompile Include="src\render\GDevice.cpp" />
@@ -284,7 +284,6 @@
     <ClCompile Include="src\render\Material.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
-    <ClCompile Include="src\render\PerspectiveCamera.cpp" />
     <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\Renderutils.cpp" />

@@ -140,15 +140,6 @@ namespace trace {
 					sizeof(float)
 				);
 
-				uint32_t fd_set = frame_data.frame_settings;
-				RenderFunc::SetPipelineData(
-					m_pipeline.get(),
-					"frame_settings",
-					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					&fd_set,
-					sizeof(int)
-				);
-
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);

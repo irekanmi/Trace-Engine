@@ -14,14 +14,11 @@ layout(location = 0)in vec2 in_texCoord;
 layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
     mat4 view;
     ivec4 light_data;
+    int ssao_dat;
 };
 
 layout(set = 0, binding = 1)uniform sampler2D g_bufferData[3];
 
-layout(set = 0, binding = 2)uniform DebugData{
-    ivec4 rest;
-    bool ssao_dat;
-};
 layout(set = 0, binding = 3)uniform Lights {
     vec4 position;
     vec4 direction;
@@ -52,71 +49,28 @@ void main()
     vec3 view_dir = -frag_pos;
 
     float ssao_res = 1.0f;
-    if(ssao_dat)
+    if(ssao_dat == 1)
     {
         ssao_res = texture(ssao_blur, in_texCoord).r;
     }
     
-
-    if(rest.x == 0)
+    for(int i = 0; i < light_data.x; i++)
     {
-        FragColor = vec4(ssao_res);
+        FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);
     }
-   else if(rest.x == 1)
-   {
-        FragColor = vec4(normal, 1.0);
-   }
-   else if(rest.x == 2)
-   {
-        for(int i = 0; i < light_data.x; i++)
-        {
-            FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);
-        }
-   }
-   else if(rest.x == 3)
-   {
-        int num = light_data.x + light_data.y;
-        for(int i = light_data.x; i < num; i++)
-        {
-            FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
-        }
-   }
-   else if(rest.x == 4)
-   {
-        int num = light_data.x + light_data.y + light_data.z;
-        for(int i = light_data.x + light_data.y; i < num; i++)
-        {
-            FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
-        }
-   }
-   else if(rest.x == 5)
-   {
-        for(int i = 0; i < light_data.x; i++)
-        {
-            FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);
-        }
 
-        int num = light_data.x + light_data.y;
-        for(int i = light_data.x; i < num; i++)
-        {
-            FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
-        }
+    int num = light_data.x + light_data.y;
+    for(int i = light_data.x; i < num; i++)
+    {
+        FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
+    }
 
-        num = light_data.x + light_data.y + light_data.z;
-        for(int i = light_data.x + light_data.y; i < num; i++)
-        {
-            FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
-        }
+    num = light_data.x + light_data.y + light_data.z;
+    for(int i = light_data.x + light_data.y; i < num; i++)
+    {
+        FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
+    }
 
-   }
-   else if(rest.x == 6)
-   {
-        FragColor = vec4(albedo, 1.0);
-   }
-   else if(rest.x == 7)
-   {
-        FragColor = vec4(vec3(specular), 1.0);
-   }
 }
 
 

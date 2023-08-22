@@ -291,13 +291,6 @@ namespace trace {
 					);
 				}
 
-				RenderFunc::SetPipelineData(
-					m_pipeline.get(),
-					"rest",
-					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					&m_renderer->render_mode,
-					sizeof(glm::ivec4)
-				);
 
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),

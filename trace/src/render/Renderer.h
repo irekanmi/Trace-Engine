@@ -4,23 +4,17 @@
 #include "core/Object.h"
 #include "Graphics.h"
 #include "Commands.h"
+#include "resource/Ref.h"
+
 
 // Temp--------------------------------
 #include "GBuffer.h"
 #include "GDevice.h"
-#include "core/events/Events.h"
 #include "Camera.h"
-#include "resource/ResourceSystem.h"
-#include "GFramebuffer.h"
-#include "GRenderPass.h"
 #include "GSwapchain.h"
-#include "SkyBox.h"
 #include "GContext.h"
 #include "render_graph/RenderGraph.h"
 #include "render_graph/MainPass.h"
-#include "render_graph/CustomPass.h"
-#include "render_graph/GBufferPass.h"
-#include "render_graph/LightingPass.h"
 #include "RenderComposer.h"
 //----------------------------------------
 
@@ -28,6 +22,11 @@
 namespace trace {
 
 	class RenderGraph;
+	class SkyBox;
+	class GRenderPass;
+	class Mesh;
+	class Model;
+	class Event;
 
 	class TRACE_API Renderer : public Object
 	{
@@ -50,6 +49,7 @@ namespace trace {
 		GContext* GetContext() { return &g_context; }
 		void Render(float deltaTime);
 		void DrawQuad();
+		void RenderOpaqueObjects();
 		
 
 
@@ -67,8 +67,6 @@ namespace trace {
 
 
 		// Temp-----------------------------
-		Ref<GPipeline> sky_pipeline;
-		GFramebuffer _framebuffer;
 		GSwapchain _swapChain;
 		Viewport _viewPort;
 		Rect2D _rect;
@@ -94,6 +92,8 @@ namespace trace {
 		RenderComposer* m_composer;
 		uint32_t m_frameWidth;
 		uint32_t m_frameHeight;
+		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
+		uint32_t m_opaqueObjectsSize;
 
 		friend RenderGraph;
 		friend RenderComposer;

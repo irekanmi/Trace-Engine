@@ -17,9 +17,12 @@
 #include <core/Layer.h>
 #include <core/FileSystem.h>
 
+#include <resource/ResourceSystem.h>
+
 #include <render/Graphics.h>
 #include <render/Renderutils.h>
 #include <render/ShaderParser.h>
 #include <render/Renderer.h>
 #include <render/GShader.h>
 #include <render/Transform.h>
+#include <render/SkyBox.h>

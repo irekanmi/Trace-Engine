@@ -198,9 +198,6 @@
     <ClInclude Include="src\render\Model.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\PerspectiveCamera.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\RenderPassInfo.h">
       <Filter>render</Filter>
     </ClInclude>
@@ -401,9 +398,6 @@
     <ClCompile Include="src\render\Model.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\PerspectiveCamera.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>render</Filter>
     </ClCompile>
@@ -451,5 +445,6 @@
     <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
     <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
+    <ClCompile Include="src\render\Camera.cpp" />
   </ItemGroup>
 </Project>

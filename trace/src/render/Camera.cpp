@@ -1,90 +1,78 @@
 #include "pch.h"
 
-#include "PerspectiveCamera.h"
+#include "Camera.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "core/input/Input.h"
 
 namespace trace {
 
-
-
-	PerspectiveCamera::PerspectiveCamera()
+	Camera::Camera(CameraType cam_type)
 	{
-		m_type = CameraType::PERSPECTIVE;
+		m_type = cam_type;
 	}
 
-	PerspectiveCamera::PerspectiveCamera(glm::vec3 position, glm::vec3 look_dir, glm::vec3 up_dir, float aspect_ratio, float fov, float z_near, float z_far)
-	{
-		m_type = CameraType::PERSPECTIVE;
 
-		m_position = position;
-		m_lookDirection = look_dir;
-		m_upDirection = up_dir;
-		m_aspectRatio = aspect_ratio;
-		m_fov = fov;
-		m_zNear = z_near;
-		m_zFar = z_far;
-		yaw = -90.0f;
-		pitch = 0.0f;
-
-		//m_upDirection = glm::normalize(glm::cross(m_lookDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
-		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
-
-		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
-	}
-
-	PerspectiveCamera::~PerspectiveCamera()
+	Camera::~Camera()
 	{
 	}
 
-	glm::vec3 PerspectiveCamera::GetPosition()
+	glm::vec3 Camera::GetPosition()
 	{
 		return m_position;
 	}
 
-	glm::vec3 PerspectiveCamera::GetLookDir()
+	glm::vec3 Camera::GetLookDir()
 	{
 		return m_lookDirection;
 	}
 
-	glm::vec3 PerspectiveCamera::GetUpDir()
+	glm::vec3 Camera::GetUpDir()
 	{
 		return m_upDirection;
 	}
 
-	glm::mat4 PerspectiveCamera::GetViewMatrix()
+	glm::mat4 Camera::GetViewMatrix()
 	{
-		glm::mat4 result = glm::lookAt(m_position, m_lookDirection + m_position, m_upDirection);
+		if (is_dirty[1])
+		{
+			m_view = glm::lookAt(m_position, m_lookDirection + m_position, m_upDirection);
+			is_dirty[1] = false;
+		}
 
-		return result;
+		return m_view;
 	}
 
-	glm::mat4 PerspectiveCamera::GetProjectionMatix()
+	glm::mat4 Camera::GetProjectionMatix()
 	{
+		if (is_dirty[0])
+		{
+			if (m_type == CameraType::PERSPECTIVE) m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
+			is_dirty[0] = false;
+		}
 		return m_projection;
 	}
 
-	float PerspectiveCamera::GetFov()
+	float Camera::GetFov()
 	{
 		return m_fov;
 	}
 
-	float PerspectiveCamera::GetNear()
+	float Camera::GetNear()
 	{
 		return m_zNear;
 	}
 
-	float PerspectiveCamera::GetFar()
+	float Camera::GetFar()
 	{
 		return m_zFar;
 	}
 
-	float PerspectiveCamera::GetAspectRatio()
+	float Camera::GetAspectRatio()
 	{
 		return m_aspectRatio;
 	}
 
-	void PerspectiveCamera::Update(float deltaTime)
+	void Camera::Update(float deltaTime)
 	{
 		float move_speed = 75.0f;
 		float rotate_speed = 50.0f;
@@ -92,35 +80,46 @@ namespace trace {
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_W) == KeyState::KEY_HELD)
 		{
 			m_position += m_lookDirection * move_speed * deltaTime;
+			is_dirty[1] = true;
+
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_S) == KeyState::KEY_HELD)
 		{
 			m_position -= m_lookDirection * move_speed * deltaTime;
+			is_dirty[1] = true;
+
 		}
-		
+
 
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_D) == KeyState::KEY_HELD)
 		{
 			m_position += m_rightDirection * move_speed * deltaTime;
+			is_dirty[1] = true;
+
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_A) == KeyState::KEY_HELD)
 		{
 			m_position -= m_rightDirection * move_speed * deltaTime;
+			is_dirty[1] = true;
+
 		}
-		
+
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_Q) == KeyState::KEY_HELD)
 		{
 			m_position += m_upDirection * move_speed * deltaTime;
+			is_dirty[1] = true;
+
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_E) == KeyState::KEY_HELD)
 		{
 			m_position -= m_upDirection * move_speed * deltaTime;
+			is_dirty[1] = true;
+
 		}
 
 
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_UP) == KeyState::KEY_HELD)
 		{
-			pitch += rotate_speed * deltaTime;
 
 			float _rot = 1.0f * rotate_speed * deltaTime;
 			glm::mat4 _rotation = glm::identity<glm::mat4>();
@@ -130,12 +129,11 @@ namespace trace {
 			m_lookDirection = glm::normalize(m_lookDirection);
 			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
 			m_upDirection = glm::normalize(m_upDirection);
+			is_dirty[1] = true;
 
-			recompute();
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_DOWN) == KeyState::KEY_HELD)
 		{
-			pitch -= rotate_speed * deltaTime;
 
 			float _rot = -1.0f * rotate_speed * deltaTime;
 			glm::mat4 _rotation = glm::identity<glm::mat4>();
@@ -145,12 +143,11 @@ namespace trace {
 			m_lookDirection = glm::normalize(m_lookDirection);
 			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
 			m_upDirection = glm::normalize(m_upDirection);
+			is_dirty[1] = true;
 
-			recompute();
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_RIGHT) == KeyState::KEY_HELD)
 		{
-			yaw += rotate_speed * deltaTime;
 
 			float _rot = -1.0f * rotate_speed * deltaTime;
 			glm::mat4 _rotation = glm::identity<glm::mat4>();
@@ -161,12 +158,11 @@ namespace trace {
 			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
 			m_upDirection = glm::normalize(m_upDirection);
 			m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
+			is_dirty[1] = true;
 
-			recompute();
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_LEFT) == KeyState::KEY_HELD)
 		{
-			yaw -= rotate_speed * deltaTime;
 
 			float _rot = 1.0f * rotate_speed * deltaTime;
 			glm::mat4 _rotation = glm::identity<glm::mat4>();
@@ -177,72 +173,65 @@ namespace trace {
 			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
 			m_upDirection = glm::normalize(m_upDirection);
 			m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
-			recompute();
+			is_dirty[1] = true;
+
 		}
 
-		if (pitch > 89.0f)
-			pitch = 89.0f;
-		else if (pitch < -89.0f)
-			pitch = -89.0f;
 
 	}
 
-	void PerspectiveCamera::SetPosition(glm::vec3 position)
+	void Camera::SetPosition(glm::vec3 position)
 	{
 		m_position = position;
+		is_dirty[1] = true;
 	}
 
-	void PerspectiveCamera::SetLookDir(glm::vec3 look_dir)
+	void Camera::SetLookDir(glm::vec3 look_dir)
 	{
 		m_lookDirection = look_dir;
+
+		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
+		is_dirty[1] = true;
+
 	}
 
-	void PerspectiveCamera::SetUpDir(glm::vec3 up_dir)
+	void Camera::SetUpDir(glm::vec3 up_dir)
 	{
 		m_upDirection = up_dir;
+
+		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
+		is_dirty[1] = true;
+
 	}
 
-	void PerspectiveCamera::SetFov(float fov)
+	void Camera::SetFov(float fov)
 	{
 		m_fov = fov;
+		is_dirty[0] = true;
 
-		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
 	}
 
-	void PerspectiveCamera::SetNear(float z_near)
+	void Camera::SetNear(float z_near)
 	{
 		m_zNear = z_near;
 
-		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
+		is_dirty[0] = true;
+
 	}
 
-	void PerspectiveCamera::SetFar(float z_far)
+	void Camera::SetFar(float z_far)
 	{
 		m_zFar = z_far;
 
-		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
+		is_dirty[0] = true;
+
 	}
 
-	void PerspectiveCamera::SetAspectRatio(float aspect_ratio)
+	void Camera::SetAspectRatio(float aspect_ratio)
 	{
 		m_aspectRatio = aspect_ratio;
 
-		m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
-	}
-
-	void PerspectiveCamera::recompute()
-	{
-		/*m_lookDirection.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		m_lookDirection.y = sin(glm::radians(pitch));
-		m_lookDirection.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		
-		m_lookDirection = glm::normalize(m_lookDirection);
-
-		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
-		m_upDirection = glm::normalize(glm::cross( m_rightDirection, m_lookDirection));*/
-
-
-		
+		is_dirty[0] = true;
 
 	}
 

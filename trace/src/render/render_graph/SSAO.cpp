@@ -7,6 +7,7 @@
 #include "core/Utils.h"
 #include "render/GShader.h"
 #include "render/ShaderParser.h"
+#include "resource/ResourceSystem.h"
 #include <random>
 
 
