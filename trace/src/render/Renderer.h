@@ -80,6 +80,7 @@ namespace trace {
 		Light lights[MAX_LIGHT_COUNT];
 		glm::ivec4 light_data;
 		GBuffer quadBuffer;
+		float exposure;
 		//------------------------------------
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;

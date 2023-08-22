@@ -213,13 +213,16 @@ namespace trace {
 		STRUCT_ARRAY
 	};
 
-	enum FrameSettings
+	enum FrameSettingsBit
 	{
 		RENDER_NONE = BIT(0),
 		RENDER_DEFAULT = BIT(1),
 		RENDER_SSAO = BIT(2),
+		RENDER_HDR = BIT(3),
 		RENDER_SETTING_MAX
 	};
+
+	typedef uint32_t FrameSettings;
 
 	struct BufferInfo
 	{

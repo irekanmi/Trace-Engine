@@ -41,6 +41,7 @@ namespace trace {
 		frame_graph.Destroy();
 
 		FrameData& fd = black_board.add<FrameData>();
+		fd.frame_settings = frame_settings;
 		TextureDesc hdr_tex;
 		hdr_tex.m_addressModeU = hdr_tex.m_addressModeV = hdr_tex.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
 		hdr_tex.m_attachmentType = AttachmentType::COLOR;

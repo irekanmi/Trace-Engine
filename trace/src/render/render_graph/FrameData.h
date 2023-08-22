@@ -25,6 +25,7 @@ namespace trace {
 		uint32_t ldr_index = INVALID_ID;
 		uint32_t frame_width;
 		uint32_t frame_height;
+		FrameSettings frame_settings;
 	};
 
 	struct SSAOData

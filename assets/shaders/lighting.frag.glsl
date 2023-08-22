@@ -130,7 +130,7 @@ vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, v
     
 
     vec3 half_direction = normalize(view_direction - (light_direction));   
-    float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
+    float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine + 1.0f);
     float diffuse_strenght = max(dot(-light_direction, normal ), 0.0f);
 
     vec4 ambient = vec4( (ambeint_factor * albedo).rgb, 1.0f ) * ssao;
@@ -158,7 +158,7 @@ vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 al
     light_dir = normalize(light_pos - position);
    
     vec3 half_direction = normalize(view_direction - (-light_dir));   
-    float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
+    float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine + 1.0f);
 
     float diffuse_strenght = max(dot(light_dir, normal ), 0.0f);
 
@@ -192,18 +192,23 @@ vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 alb
         float intensity = clamp(( theta - _lgt_outerCutOff ) / epslion, 0.0, 1.0);
     
         vec3 half_direction = normalize(view_direction - (-light_dir));   
-        float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine);
+        float specular_strenght = pow(max(dot(half_direction, normal), 0.0f), shine + 1.0f);
 
     
         float diffuse_strenght = max(dot(light_dir, normal ), 0.0f);
 
         vec4 diffuse = vec4( (diffuse_strenght * albedo * intensity).rgb, 1.0f );
         vec4 specular = vec4( (specular_strenght * _lgt_color * intensity ).rgb, 1.0f );
+        float _lgt_constant = u_gLights[index].params1.x;
+        float _lgt_linear = u_gLights[index].params1.y;
+        float _lgt_quadratic = u_gLights[index].params1.z;
 
+        float distance = length(light_pos - position);
+        float attenuation = 1 / ( _lgt_constant + (_lgt_linear * distance) + (_lgt_quadratic * (distance * distance)) );
 
         specular *= spec;
         
-        return ( (ambient + diffuse) * _lgt_color + specular);
+        return ( (ambient + diffuse) * _lgt_color + specular) ;
 
     }
 

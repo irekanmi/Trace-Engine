@@ -20,6 +20,10 @@ namespace trace {
 
 	Renderer* Renderer::s_instance = nullptr;
 
+	//Temp------------
+	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR;
+	//----------------
+
 	Renderer::Renderer()
 		: Object(_STR(Renderer))
 	{
@@ -173,11 +177,12 @@ namespace trace {
 		lights[2].position = { _camera->GetPosition(), 0.0f };
 		lights[2].direction = { _camera->GetLookDir(), 0.0f };
 		lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
-		lights[2].params1 = { 1.0f, 0.07f, 0.017f, 0.939f };
+		lights[2].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
 		lights[2].params2 = { 0.866f, 21.1f, 0.0f, 0.0f };
 			
 
 		light_data = { 1, 1, 1, 0 };
+		exposure = 5.0f;
 
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
@@ -227,6 +232,28 @@ namespace trace {
 		case trace::EventType::TRC_KEY_PRESSED:
 		{
 			KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
+
+			if (press->m_keycode == KEY_O)
+			{
+				exposure += 0.4;
+			}
+			else if (press->m_keycode == KEY_P)
+			{
+				exposure -= 0.4;
+			}
+			else if (press->m_keycode == KEY_L)
+			{
+				TRC_DEBUG("exposure level => {}", exposure);
+			}
+			else if (press->m_keycode == KEY_H)
+			{
+				frame_settings = RENDER_DEFAULT | RENDER_HDR;
+			}
+			else if (press->m_keycode == KEY_J)
+			{
+				frame_settings = RENDER_DEFAULT;
+			}
+
 			break;
 		}
 		case trace::EventType::TRC_WND_CLOSE:
@@ -377,11 +404,12 @@ namespace trace {
 
 
 			RGBlackBoard frame_blck_bd;
+			
 
 			m_composer->PreFrame(
 				frame_graphs[frame_index],
 				frame_blck_bd,
-				FrameSettings::RENDER_DEFAULT
+				frame_settings
 			);
 			frame_graphs[frame_index].Execute();
 			m_composer->PostFrame(

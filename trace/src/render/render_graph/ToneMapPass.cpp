@@ -22,7 +22,7 @@ namespace trace {
 		{
 			AttachmentInfo color_attach;
 			color_attach.attachmant_index = 0;
-			color_attach.attachment_format = Format::R16G16B16A16_FLOAT;
+			color_attach.attachment_format = Format::R8G8B8A8_SRBG;
 			color_attach.initial_format = TextureFormat::UNKNOWN;
 			color_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			color_attach.is_depth = false;
@@ -129,6 +129,24 @@ namespace trace {
 					"u_HdrTarget",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&render_graph->GetResource(frame_data.hdr_index)
+				);
+
+				float exposure = m_renderer->exposure;
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"exposure",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&exposure,
+					sizeof(float)
+				);
+
+				uint32_t fd_set = frame_data.frame_settings;
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"frame_settings",
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+					&fd_set,
+					sizeof(int)
 				);
 
 				RenderFunc::BindPipeline_(m_pipeline.get());
