@@ -93,7 +93,7 @@ namespace trace {
 			ds2.vertex_shader = &VertShader;
 			ds2.pixel_shader = &FragShader;
 			ds2.resources = sres;
-			ds2.input_layout = Vertex2D::get_input_layout();
+			ds2.input_layout = {};
 
 
 			AutoFillPipelineDesc(
@@ -299,6 +299,7 @@ namespace trace {
 			);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+			RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 			RenderFunc::BindPipeline_(m_pipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 

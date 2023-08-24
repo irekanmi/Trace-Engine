@@ -34,7 +34,9 @@ namespace trace {
 		std::vector<Mesh> m_meshes;
 		uint32_t m_numEntries;
 		Mesh DefaultCube;
+		Mesh DefaultSphere;
 		Model cube;
+		Model sphere;
 
 		void unloadDefaultModels(Model* model);
 		bool LoadMesh_OBJ(const std::string& name);

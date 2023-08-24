@@ -55,7 +55,7 @@ namespace trace {
 			color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
 			color.m_attachmentType = AttachmentType::COLOR;
 			color.m_flag = BindFlag::RENDER_TARGET_BIT;
-			color.m_format = Format::R8G8B8A8_SRBG;
+			color.m_format = Format::R16G16B16A16_FLOAT;
 			color.m_width = 800;
 			color.m_height = 600;
 			color.m_minFilterMode = color.m_magFilterMode = FilterMode::LINEAR;
@@ -87,7 +87,7 @@ namespace trace {
 			_ds2.vertex_shader = &VertShader;
 			_ds2.pixel_shader = &FragShader;
 			_ds2.resources = s_res;
-			_ds2.input_layout = Vertex2D::get_input_layout();
+			_ds2.input_layout = {};
 
 
 			AutoFillPipelineDesc(
@@ -313,6 +313,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
 				frame_count++;
 
+				RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);

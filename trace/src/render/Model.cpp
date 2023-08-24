@@ -169,6 +169,99 @@ namespace trace {
 		indices = _ind;
 
 	}
+	void generateSphere(std::vector<Vertex>& data, std::vector<uint32_t>& indices, float radius, uint32_t num_vertical, uint32_t num_horizontal)
+	{
+		std::vector<glm::vec3> positions;
+		positions.reserve(num_vertical * num_horizontal);
+		std::vector<glm::vec2> tex_coords;
+		tex_coords.reserve(num_vertical * num_horizontal);
+		for (uint32_t lon = 1; lon < num_horizontal + 2; lon++)
+		{
+			float theta = glm::pi<float>() * (float)(lon) / (float)(num_horizontal + 2);
+			float u = (float)(lon) / (float)(num_horizontal + 2);
+			for (uint32_t lat = 1; lat < num_vertical + 2; lat++)
+			{
+				float phi = glm::two_pi<float>() * (float)(lat) / (float)(num_vertical + 2);
+				float v = (float)(lat) / (float)(num_vertical + 2);
+				float x = radius * glm::sin(theta) * glm::cos(phi);
+				float y = radius * glm::sin(theta) * glm::sin(phi);
+				float z = radius * glm::cos(theta);
+
+				positions.push_back({ x, y, z });
+				tex_coords.push_back({ u, v });
+
+
+			}
+		}
+
+		for (uint32_t lon = 1; lon < num_horizontal; lon++)
+		{
+			for (uint32_t lat = 0; lat < num_vertical; lat++)
+			{
+				uint32_t _lat = ((lon - 1) * num_horizontal) + lat;
+				Vertex vert0 = {};
+				vert0.pos = positions[_lat];
+				vert0.texCoord = tex_coords[_lat];
+
+				Vertex vert1 = {};
+				vert1.pos = positions[(lon * num_horizontal) + _lat];
+				vert1.texCoord = tex_coords[(lon * num_horizontal) + _lat];
+
+				Vertex vert2 = {};
+				vert2.pos = positions[_lat + 1];
+				vert2.texCoord = tex_coords[_lat + 1];
+
+				glm::vec3 edge1 = vert1.pos - vert0.pos;
+				glm::vec3 edge2 = vert2.pos - vert0.pos;
+
+				glm::vec3 normal = glm::cross(edge1, edge2);
+				normal = glm::normalize(normal);
+				vert0.normal = normal;
+				vert1.normal = normal;
+				vert2.normal = normal;
+
+				data.push_back(vert0);
+				data.push_back(vert1);
+				data.push_back(vert2);
+			}
+		}
+
+		for (uint32_t lon = 1; lon < num_horizontal; lon++)
+		{
+			for (uint32_t lat = 1; lat < num_vertical; lat++)
+			{
+				uint32_t _lat = ((lon - 1) * num_horizontal) + lat;
+				Vertex vert0 = {};
+				vert0.pos = positions[_lat];
+				vert0.texCoord = tex_coords[_lat];
+
+				Vertex vert2 = {};
+				vert2.pos = positions[((lon * num_horizontal) + _lat) - 1];
+				vert2.texCoord = tex_coords[((lon * num_horizontal) + _lat) - 1];
+
+				Vertex vert1 = {};
+				vert1.pos = positions[((lon * num_horizontal) + _lat) + 1];
+				vert1.texCoord = tex_coords[((lon * num_horizontal) + _lat) + 1];
+
+				glm::vec3 edge1 = vert1.pos - vert0.pos;
+				glm::vec3 edge2 = vert2.pos - vert0.pos;
+
+				glm::vec3 normal = glm::cross(edge1, edge2);
+				normal = glm::normalize(normal);
+				vert0.normal = normal;
+				vert1.normal = normal;
+				vert2.normal = normal;
+
+				data.push_back(vert0);
+				data.push_back(vert1);
+				data.push_back(vert2);
+			}
+		}
+
+		indices.reserve(data.size());
+		for (uint32_t i = 0; i < static_cast<uint32_t>(data.size()); i++) indices.push_back(i);
+
+	}
 	void generateVertexTangent(std::vector<Vertex>& data, std::vector<uint32_t>& indices)
 	{
 

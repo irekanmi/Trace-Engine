@@ -22,6 +22,7 @@ namespace trace {
 		bool CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline);
 		MaterialInstance* GetMaterial(const std::string& name);
 		void Unload(MaterialInstance* material);
+		bool LoadDefaults();
 
 		static MaterialManager* get_instance();
 	private:
@@ -29,6 +30,7 @@ namespace trace {
 
 	private:
 		std::vector<MaterialInstance> m_materials;
+		Ref<MaterialInstance> default_material;
 		uint32_t m_numEntries;
 		HashTable<uint32_t> m_hashtable;
 

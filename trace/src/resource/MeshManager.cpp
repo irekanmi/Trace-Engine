@@ -122,6 +122,10 @@ namespace trace {
 		{
 			return &DefaultCube;
 		}
+		else if (m_hashtable.Hash(name) == m_hashtable.Hash("Sphere"))
+		{
+			return &DefaultSphere;
+		}
 
 		return nullptr;
 	}
@@ -139,6 +143,17 @@ namespace trace {
 		Ref<Model> cube_ref(&cube, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
 
 		DefaultCube.GetModels().push_back(cube_ref);
+
+		verts.clear();
+		_ind.clear();
+
+		generateSphere(verts, _ind, 20.0f, 20, 20);
+		generateVertexTangent(verts, _ind);
+		sphere.Init(verts, _ind);
+
+		Ref<Model> sphere_ref(&sphere, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
+
+		DefaultSphere.GetModels().push_back(sphere_ref);
 
 		return true;
 	}
@@ -430,7 +445,7 @@ namespace trace {
 						TRC_ERROR("Failed to load texture {}", material.bump_texname);
 				}
 
-				mat.m_shininess = material.shininess;
+				mat.m_shininess = material.shininess < 0.0f ? mat.m_shininess : material.shininess;
 				mat.m_diffuseColor = glm::vec4(
 					material.diffuse[0],
 					material.diffuse[1],

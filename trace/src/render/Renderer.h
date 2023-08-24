@@ -14,7 +14,6 @@
 #include "GSwapchain.h"
 #include "GContext.h"
 #include "render_graph/RenderGraph.h"
-#include "render_graph/MainPass.h"
 #include "RenderComposer.h"
 //----------------------------------------
 
@@ -50,6 +49,7 @@ namespace trace {
 		void Render(float deltaTime);
 		void DrawQuad();
 		void RenderOpaqueObjects();
+		void RenderLights();
 		
 
 
@@ -72,9 +72,7 @@ namespace trace {
 		Rect2D _rect;
 		Camera* _camera;
 		glm::ivec4 render_mode;
-		RenderGraph frame_graphs[3];
 		std::unordered_map<std::string, void*> _avaliable_passes;
-		MainPass main_pass;
 		Light lights[MAX_LIGHT_COUNT];
 		glm::ivec4 light_data;
 		GBuffer quadBuffer;
@@ -94,6 +92,7 @@ namespace trace {
 		uint32_t m_frameHeight;
 		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
 		uint32_t m_opaqueObjectsSize;
+		RenderGraph frame_graphs[3];
 
 		friend RenderGraph;
 		friend RenderComposer;

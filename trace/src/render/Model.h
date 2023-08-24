@@ -36,6 +36,7 @@ namespace trace {
 	};
 
 	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices);
+	void generateSphere(std::vector<Vertex>& data, std::vector<uint32_t>& indices, float radius, uint32_t num_vertical, uint32_t num_horizontal);
 	void generateVertexTangent(std::vector<Vertex>& data, std::vector<uint32_t>& indices);
 
 }

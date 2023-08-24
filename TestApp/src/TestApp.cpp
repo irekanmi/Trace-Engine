@@ -77,7 +77,8 @@ public:
 
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
-		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 
 		TextureDesc sky = {};
 		sky.m_addressModeU = sky.m_addressModeV = sky.m_addressModeW = AddressMode::REPEAT;
@@ -96,10 +97,10 @@ public:
 			"sky_back.jpg"
 		};
 
-		Ref<GTexture> sky_texture;
-		sky_texture = ResourceSystem::get_instance()->LoadTexture(sky_images, sky, "bright_sky");
+		//Ref<GTexture> sky_texture;
+		//sky_texture = ResourceSystem::get_instance()->LoadTexture(sky_images, sky, "bright_sky");
 
-		sky_box = SkyBox(sky_texture);
+		//sky_box = SkyBox(sky_texture);
 
 		M_sponzaScene.SetScale(glm::vec3(0.15f));
 		M_falcon.Translate(glm::vec3(3.0f, 7.5f, 0.0f));
@@ -146,8 +147,8 @@ public:
 		CommandList cmd_list = renderer->BeginCommandList();
 		renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
-		renderer->DrawMesh(cmd_list, _boxStack, M_Test.GetLocalMatrix());
-		renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
+		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
+		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
 		//renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 
@@ -155,6 +156,7 @@ public:
 private:
 	//Temp ==================
 	Ref<Mesh> _squareModel;
+	Ref<Mesh> _sphereModel;
 	Ref<Mesh> _sponzaScene;
 	Ref<Mesh> _falcon;
 	Ref<Mesh> _boxStack;

@@ -172,6 +172,9 @@ namespace trace {
 		result = m_pipelineManager->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default pipelines");
 
+		result = m_materialManager->LoadDefaults();
+		TRC_ASSERT(result, "Failed to load default materials");
+
 		return result;
 	}
 }

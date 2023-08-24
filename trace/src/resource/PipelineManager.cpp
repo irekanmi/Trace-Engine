@@ -38,7 +38,6 @@ namespace trace {
 	}
 	void PipelineManager::ShutDown()
 	{
-		standard_pipeline.~Ref();
 		skybox_pipeline.~Ref();
 		if (!m_pipelines.empty())
 		{
@@ -95,10 +94,6 @@ namespace trace {
 	}
 	Ref<GPipeline> PipelineManager::GetDefault(const std::string& name)
 	{
-		if (name == "standard")
-		{
-			return standard_pipeline;
-		}
 		if (name == "skybox")
 		{
 			return skybox_pipeline;
@@ -129,43 +124,6 @@ namespace trace {
 		GShader FragShader;
 
 		{
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/trace_core.shader.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/trace_core.shader.frag.glsl");
-
-			std::cout << vert_src;
-			std::cout << frag_src;
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
-
-			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
-
-			PipelineStateDesc _ds;
-			_ds.vertex_shader = &VertShader;
-			_ds.pixel_shader = &FragShader;
-			_ds.resources = s_res;
-
-			AutoFillPipelineDesc(
-				_ds
-			);
-			_ds.render_pass = Renderer::get_instance()->GetRenderPass("MAIN_PASS");
-
-			if (!CreatePipeline(_ds, "standard_pipeline"))
-			{
-				TRC_ERROR("Failed to initialize or create default standard pipeline");
-				return false;
-			}
-
-			standard_pipeline = { GetPipeline("standard_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
-
-			vert_src.clear();
-			frag_src.clear();
-
-			{
 				vert_src = ShaderParser::load_shader_file("../assets/shaders/cubemap.vert.glsl");
 				frag_src = ShaderParser::load_shader_file("../assets/shaders/cubemap.frag.glsl");
 
@@ -212,7 +170,6 @@ namespace trace {
 				vert_src.clear();
 				frag_src.clear();
 			}
-		};
 
 
 		return true;

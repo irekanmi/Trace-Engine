@@ -117,11 +117,7 @@ namespace trace {
 
 		RenderFunc::CreateBuffer(&quadBuffer, quadInfo);
 		m_opaqueObjects.resize(1024);
-		m_opaqueObjectsSize = 0;
-
-		// Temp --------------------
-		main_pass.Init(this);
-		//--------------------------		
+		m_opaqueObjectsSize = 0;		
 
 		return result;
 	}
@@ -166,26 +162,26 @@ namespace trace {
 		render_mode = {};
 
 
-		lights[0].position = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
-		lights[0].direction = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
-		lights[0].color = { 0.8f, 0.8f, 0.8f, 1.0f };
-		lights[0].params1 = { 1.0f, 0.467f, 0.896f, 0.0f };
-		lights[0].params2 = { 0.0f, 2.0f, 0.0f, 0.0f };
+		//lights[0].position = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
+		//lights[0].direction = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
+		//lights[0].color = { 0.8f, 0.8f, 0.8f, 1.0f };
+		//lights[0].params1 = { 1.0f, 0.467f, 0.896f, 0.0f };
+		//lights[0].params2 = { 0.0f, 2.0f, 0.0f, 0.0f };
 
-		lights[1].position = { 0.0f, 2.5f, 2.0f, 0.0f };
-		lights[1].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
-		lights[1].color = { 0.37f, 0.65f, 0.66f, 1.0f };
-		lights[1].params1 = { 1.0f, 0.022f, 0.0019f, 0.0f };
-		lights[1].params2 = { 0.0f, 7.5f, 0.0f, 0.0f };
+		lights[0].position = { 0.0f, 2.5f, 2.0f, 0.0f };
+		lights[0].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
+		lights[0].color = { 0.37f, 0.65f, 0.66f, 1.0f };
+		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, 0.0f };
+		lights[0].params2 = { 0.0f, 7.5f, 0.0f, 0.0f };
 
-		lights[2].position = { _camera->GetPosition(), 0.0f };
-		lights[2].direction = { _camera->GetLookDir(), 0.0f };
-		lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
-		lights[2].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
-		lights[2].params2 = { 0.866f, 6.1f, 0.0f, 0.0f };
+		//lights[2].position = { _camera->GetPosition(), 0.0f };
+		//lights[2].direction = { _camera->GetLookDir(), 0.0f };
+		//lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
+		//lights[2].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
+		//lights[2].params2 = { 0.866f, 6.1f, 0.0f, 0.0f };
 			
 
-		light_data = { 1, 1, 1, 0 };
+		light_data = { 0, 1, 0, 0 };
 		exposure = 0.9f;
 
 		m_composer = new RenderComposer();
@@ -208,16 +204,14 @@ namespace trace {
 		{
 			frame_graphs[i].Destroy();
 		}
-		
-		main_pass.ShutDown();
 		m_composer->Shutdowm();
 		delete m_composer;
 		m_composer = nullptr;
 		delete _camera;
 		_camera = nullptr;
 
-		RenderFunc::DestroySwapchain(&_swapChain);		
 		//----------------------------------
+		RenderFunc::DestroySwapchain(&_swapChain);		
 
 	}
 
@@ -374,22 +368,22 @@ namespace trace {
 			static uint32_t frame_index = 0;
 			if (render_mode.w == 8)
 			{
-				glm::vec3 light_pos = glm::vec3(lights[2].position);
-				glm::vec3 light_dir = glm::vec3(lights[2].direction);
+				glm::vec3 light_pos = glm::vec3(lights[0].position);
+				glm::vec3 light_dir = glm::vec3(lights[0].direction);
 				glm::vec3 cam_pos = _camera->GetPosition();
 				glm::vec3 cam_dir = _camera->GetLookDir();
 				if (light_pos != cam_pos)
 				{
 
-					lights[2].position.x = lerp(light_pos.x, cam_pos.x, deltaTime);
-					lights[2].position.y = lerp(light_pos.y, cam_pos.y, deltaTime);
-					lights[2].position.z = lerp(light_pos.z, cam_pos.z, deltaTime);
+					lights[0].position.x = lerp(light_pos.x, cam_pos.x, deltaTime);
+					lights[0].position.y = lerp(light_pos.y, cam_pos.y, deltaTime);
+					lights[0].position.z = lerp(light_pos.z, cam_pos.z, deltaTime);
 				}
 				if (light_dir != cam_dir)
 				{
-					lights[2].direction.x = lerp(light_dir.x, cam_dir.x, deltaTime);
-					lights[2].direction.y = lerp(light_dir.y, cam_dir.y, deltaTime);
-					lights[2].direction.z = lerp(light_dir.z, cam_dir.z, deltaTime);
+					lights[0].direction.x = lerp(light_dir.x, cam_dir.x, deltaTime);
+					lights[0].direction.y = lerp(light_dir.y, cam_dir.y, deltaTime);
+					lights[0].direction.z = lerp(light_dir.z, cam_dir.z, deltaTime);
 				}
 			}
 
@@ -443,7 +437,7 @@ namespace trace {
 			auto& data = m_opaqueObjects[i];
 			glm::mat4* M_model = &data.first;
 			Model* _model = data.second;
-			Ref<MaterialInstance> _mi = _model->m_matInstance;
+			Ref<MaterialInstance> _mi = _model->m_matInstance.is_valid() ? _model->m_matInstance : ResourceSystem::get_instance()->GetMaterial("default");
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
@@ -459,6 +453,16 @@ namespace trace {
 
 			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
 			RenderFunc::OnDrawEnd(&g_device, sp.get());
+		}
+
+	}
+
+	void Renderer::RenderLights()
+	{
+
+		for (int i = 0; i < light_data.y; i++)
+		{
+
 		}
 
 	}

@@ -2,6 +2,8 @@
 
 #include "render/Material.h"
 #include "MaterialManager.h"
+#include "TextureManager.h"
+#include "PipelineManager.h"
 #include "render/Renderutils.h"
 namespace trace {
 
@@ -109,6 +111,30 @@ namespace trace {
 
 		material->m_id = INVALID_ID;
 		material->~MaterialInstance();
+	}
+
+	bool MaterialManager::LoadDefaults()
+	{
+		TextureManager* texture_manager = TextureManager::get_instance();
+		PipelineManager* pipeline_manager = PipelineManager::get_instance();
+
+		Material mat;
+		mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
+		mat.m_normalMap = texture_manager->GetDefault("normal_map");
+		mat.m_specularMap = texture_manager->GetDefault("specular_map");
+		mat.m_diffuseColor = glm::vec4(1.0f);
+		mat.m_shininess = 32.0f;
+
+		Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
+		this->CreateMaterial(
+			"default",
+			mat,
+			sp
+		);
+
+		default_material = { this->GetMaterial("default"), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, this) };
+
+		return true;
 	}
 
 	MaterialManager* MaterialManager::get_instance()
