@@ -77,7 +77,7 @@ public:
 
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
-		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 
 		TextureDesc sky = {};
@@ -105,10 +105,10 @@ public:
 		M_sponzaScene.SetScale(glm::vec3(0.15f));
 		M_falcon.Translate(glm::vec3(3.0f, 7.5f, 0.0f));
 		M_boxStack.Translate(glm::vec3(3.0f, 17.5f, 0.0f));
-		M_Test.Translate(glm::vec3(13.0f, 17.5f, 0.0f));
+		M_Test.Translate(glm::vec3(13.0f, 57.5f, 0.0f));
 		M_falcon.SetScale(glm::vec3(3.0f));
 		M_boxStack.SetScale(glm::vec3(5.5f));
-		M_Test.SetScale(glm::vec3(7.5f));
+		M_Test.SetScale(glm::vec3(1.0f));
 	}
 
 	virtual void OnEvent(trace::Event* p_event) override
@@ -148,7 +148,7 @@ public:
 		renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
-		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
+		renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
 		//renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 

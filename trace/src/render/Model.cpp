@@ -171,45 +171,46 @@ namespace trace {
 	}
 	void generateSphere(std::vector<Vertex>& data, std::vector<uint32_t>& indices, float radius, uint32_t num_vertical, uint32_t num_horizontal)
 	{
-		std::vector<glm::vec3> positions;
-		positions.reserve(num_vertical * num_horizontal);
-		std::vector<glm::vec2> tex_coords;
-		tex_coords.reserve(num_vertical * num_horizontal);
-		for (uint32_t lon = 1; lon < num_horizontal + 2; lon++)
+		std::vector<std::vector<glm::vec3>> positions;
+		positions.resize(num_horizontal + 1);
+		std::vector<std::vector<glm::vec2>> tex_coords;
+		tex_coords.resize(num_horizontal + 1);
+		for (uint32_t lon = 0; lon <= num_horizontal; lon++)
 		{
-			float theta = glm::pi<float>() * (float)(lon) / (float)(num_horizontal + 2);
-			float u = (float)(lon) / (float)(num_horizontal + 2);
-			for (uint32_t lat = 1; lat < num_vertical + 2; lat++)
+			float theta = glm::pi<float>() * (float)(lon) / (float)(num_horizontal);
+			float v = (float)(lon) / (float)(num_horizontal);
+			positions[lon].resize(num_vertical + 1);
+			tex_coords[lon].resize(num_vertical + 1);
+			for (uint32_t lat = 0; lat <= num_vertical; lat++)
 			{
-				float phi = glm::two_pi<float>() * (float)(lat) / (float)(num_vertical + 2);
-				float v = (float)(lat) / (float)(num_vertical + 2);
+				float phi = glm::two_pi<float>() * (float)(lat) / (float)(num_vertical);
+				float u = (float)(lat) / (float)(num_vertical);
 				float x = radius * glm::sin(theta) * glm::cos(phi);
 				float y = radius * glm::sin(theta) * glm::sin(phi);
 				float z = radius * glm::cos(theta);
 
-				positions.push_back({ x, y, z });
-				tex_coords.push_back({ u, v });
-
+				
+				positions[lon][lat] = glm::vec3(x, y, z);
+				tex_coords[lon][lat] = glm::vec2(u, v);
 
 			}
 		}
 
-		for (uint32_t lon = 1; lon < num_horizontal; lon++)
+		for (uint32_t lon = 0; lon < num_horizontal; lon++)
 		{
 			for (uint32_t lat = 0; lat < num_vertical; lat++)
 			{
-				uint32_t _lat = ((lon - 1) * num_horizontal) + lat;
 				Vertex vert0 = {};
-				vert0.pos = positions[_lat];
-				vert0.texCoord = tex_coords[_lat];
+				vert0.pos = positions[lon][lat];
+				vert0.texCoord = tex_coords[lon][lat];
 
 				Vertex vert1 = {};
-				vert1.pos = positions[(lon * num_horizontal) + _lat];
-				vert1.texCoord = tex_coords[(lon * num_horizontal) + _lat];
+				vert1.pos = positions[lon + 1][lat];
+				vert1.texCoord = tex_coords[lon + 1][lat];
 
 				Vertex vert2 = {};
-				vert2.pos = positions[_lat + 1];
-				vert2.texCoord = tex_coords[_lat + 1];
+				vert2.pos = positions[lon][lat + 1];
+				vert2.texCoord = tex_coords[lon][lat + 1];
 
 				glm::vec3 edge1 = vert1.pos - vert0.pos;
 				glm::vec3 edge2 = vert2.pos - vert0.pos;
@@ -226,22 +227,21 @@ namespace trace {
 			}
 		}
 
-		for (uint32_t lon = 1; lon < num_horizontal; lon++)
+		for (uint32_t lon = 0; lon < num_horizontal; lon++)
 		{
-			for (uint32_t lat = 1; lat < num_vertical; lat++)
+			for (uint32_t lat = 1; lat < num_vertical + 1; lat++)
 			{
-				uint32_t _lat = ((lon - 1) * num_horizontal) + lat;
 				Vertex vert0 = {};
-				vert0.pos = positions[_lat];
-				vert0.texCoord = tex_coords[_lat];
-
-				Vertex vert2 = {};
-				vert2.pos = positions[((lon * num_horizontal) + _lat) - 1];
-				vert2.texCoord = tex_coords[((lon * num_horizontal) + _lat) - 1];
+				vert0.pos = positions[lon][lat];
+				vert0.texCoord = tex_coords[lon][lat];
 
 				Vertex vert1 = {};
-				vert1.pos = positions[((lon * num_horizontal) + _lat) + 1];
-				vert1.texCoord = tex_coords[((lon * num_horizontal) + _lat) + 1];
+				vert1.pos = positions[lon + 1][lat - 1];
+				vert1.texCoord = tex_coords[lon + 1][lat - 1];
+
+				Vertex vert2 = {};
+				vert2.pos = positions[lon + 1][lat];
+				vert2.texCoord = tex_coords[lon + 1][lat];
 
 				glm::vec3 edge1 = vert1.pos - vert0.pos;
 				glm::vec3 edge2 = vert2.pos - vert0.pos;

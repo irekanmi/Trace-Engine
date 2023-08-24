@@ -52,7 +52,7 @@ namespace trace {
 
 		{
 			TextureDesc color = {};
-			color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::REPEAT;
+			color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
 			color.m_attachmentType = AttachmentType::COLOR;
 			color.m_flag = BindFlag::RENDER_TARGET_BIT;
 			color.m_format = Format::R16G16B16A16_FLOAT;
@@ -212,11 +212,6 @@ namespace trace {
 		output_desc.m_width = frame_data.frame_width;
 		output_desc.m_height = frame_data.frame_height;
 
-		color_output_index = frame_data.ldr_index;
-		if (frame_data.hdr_index != INVALID_ID)
-		{
-			color_output_index = frame_data.hdr_index;
-		}
 
 		gPosition_index = gbuffer_data.position_index;
 		gNormal_index = gbuffer_data.normal_index;
@@ -227,7 +222,8 @@ namespace trace {
 
 		auto pass = render_graph->AddPass("LIGHTING_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->AddColorAttachmentOuput(render_graph->GetResource(color_output_index).resource_name);
+		color_output_index = pass->CreateAttachmentOutput("Hdr_Target", output_desc);
+		frame_data.hdr_index = color_output_index;
 
 		pass->AddColorAttachmentInput(render_graph->GetResource(gPosition_index).resource_name);
 		pass->AddColorAttachmentInput(render_graph->GetResource(gNormal_index).resource_name);

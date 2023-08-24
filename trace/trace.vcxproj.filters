@@ -258,6 +258,7 @@
     <ClInclude Include="src\render\render_graph\FrameData.h" />
     <ClInclude Include="src\render\RenderComposer.h" />
     <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
+    <ClInclude Include="src\render\render_graph\ForwardPass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -446,5 +447,6 @@
     <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
     <ClCompile Include="src\render\Camera.cpp" />
+    <ClCompile Include="src\render\render_graph\ForwardPass.cpp" />
   </ItemGroup>
 </Project>

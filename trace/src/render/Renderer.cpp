@@ -74,7 +74,7 @@ namespace trace {
 		RenderFunc::CreateDevice(&g_device);
 		{
 			
-			RenderFunc::CreateSwapchain(&_swapChain, &g_device, &g_context);
+			RenderFunc::CreateSwapchain(&m_swapChain, &g_device, &g_context);
 
 			_camera = new Camera(CameraType::PERSPECTIVE);
 			_camera->SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
@@ -129,7 +129,7 @@ namespace trace {
 
 	bool Renderer::BeginFrame()
 	{
-		bool result = RenderFunc::BeginFrame(&g_device, &_swapChain);
+		bool result = RenderFunc::BeginFrame(&g_device, &m_swapChain);
 
 
 		return result;
@@ -211,7 +211,7 @@ namespace trace {
 		_camera = nullptr;
 
 		//----------------------------------
-		RenderFunc::DestroySwapchain(&_swapChain);		
+		RenderFunc::DestroySwapchain(&m_swapChain);		
 
 	}
 
@@ -330,7 +330,7 @@ namespace trace {
 		case EventType::TRC_WND_RESIZE:
 		{
 			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-			RenderFunc::ResizeSwapchain(&_swapChain, wnd->m_width, wnd->m_height);
+			RenderFunc::ResizeSwapchain(&m_swapChain, wnd->m_width, wnd->m_height);
 			float width = static_cast<float>(wnd->m_width);
 			float height = static_cast<float>(wnd->m_height);
 			
@@ -411,7 +411,7 @@ namespace trace {
 			);
 
 			EndFrame();
-			RenderFunc::PresentSwapchain(&_swapChain);
+			RenderFunc::PresentSwapchain(&m_swapChain);
 			frame_index = (frame_index + 1) % 2;
 		}
 		m_listCount = 0;
@@ -459,9 +459,31 @@ namespace trace {
 
 	void Renderer::RenderLights()
 	{
+		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
+		Ref<GPipeline> sp = ResourceSystem::get_instance()->GetPipeline("light_pipeline");
+		Model* _model = sphere->GetModels()[0].get();
+		glm::mat4 view_proj= _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
 		for (int i = 0; i < light_data.y; i++)
 		{
+			int index = i + light_data.x;
+			Light light = lights[index];
+			glm::mat4 model = glm::identity<glm::mat4>();
+			model = glm::translate(model, glm::vec3(light.position));
+			glm::vec4 light_color = glm::vec4(glm::vec3(light.color), light.params2.y);
+
+
+			RenderFunc::OnDrawStart(&g_device, sp.get());
+			RenderFunc::SetPipelineData(sp.get(), "view_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "color", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &light_color, sizeof(glm::vec4));
+			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
+			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::BindPipeline_(sp.get());
+			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
+			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
+
+			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
+			RenderFunc::OnDrawEnd(&g_device, sp.get());
 
 		}
 

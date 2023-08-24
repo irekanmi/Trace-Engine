@@ -290,18 +290,18 @@ namespace vk {
 				res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 
-				vkCmdPipelineBarrier(
-					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
-					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-					VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-					0,
-					0,
-					nullptr,
-					0,
-					nullptr,
-					1,
-					&img_bar
-				);
+				//vkCmdPipelineBarrier(
+				//	device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+				//	VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				//	VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				//	0,
+				//	0,
+				//	nullptr,
+				//	0,
+				//	nullptr,
+				//	1,
+				//	&img_bar
+				//);
 			}
 
 		}
@@ -350,8 +350,39 @@ namespace vk {
 
 			if (isTexture)
 			{
-				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
+				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH && res_internal->image_layout == VK_IMAGE_LAYOUT_UNDEFINED)
 				{
+					VkImageMemoryBarrier img_bar = {};
+					img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					img_bar.srcAccessMask = 0;
+					img_bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+					img_bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					img_bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					img_bar.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					img_bar.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					img_bar.pNext = nullptr;
+					img_bar.image = img_handle.m_handle;
+					img_bar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+					img_bar.subresourceRange.baseArrayLayer = 0;
+					img_bar.subresourceRange.baseMipLevel = 0;
+					img_bar.subresourceRange.layerCount = 1;
+					img_bar.subresourceRange.levelCount = 1;
+					res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+
+					vkCmdPipelineBarrier(
+						device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+						VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+						VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						0,
+						0,
+						nullptr,
+						0,
+						nullptr,
+						1,
+						&img_bar
+					);
+				
 					continue;
 				}
 				if (res_internal->image_layout == VK_IMAGE_LAYOUT_UNDEFINED)
@@ -512,7 +543,7 @@ namespace vk {
 			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
 			trace::VKImage& img_handle = res_internal->resource.texture;
 
-			if (res.create_pass == pass_index)
+			/*if (res.create_pass == pass_index)
 			{
 				VkImageMemoryBarrier img_bar = {};
 				img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -544,7 +575,7 @@ namespace vk {
 					1,
 					&img_bar
 				);
-			}
+			}*/
 
 		}
 
@@ -754,6 +785,7 @@ namespace vk {
 		bool result = true;
 
 		std::vector<uint32_t>& outputs = pass->GetAttachmentOutputs();
+		uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
 
 		VkResult _result = VK_ERROR_UNKNOWN;
 		VkRenderPass pass_handle = VK_NULL_HANDLE;
@@ -767,6 +799,7 @@ namespace vk {
 		for (uint32_t i = 0; i < static_cast<uint32_t>(outputs.size()); i++)
 		{
 			trace::RenderGraphResource* tex = &render_graph->GetResource(outputs[i]);
+			trace::VKRenderGraphResource* tex_internal = reinterpret_cast<trace::VKRenderGraphResource*>(tex->render_handle.m_internalData);
 			VkAttachmentDescription att_desc = {};
 			VkAttachmentReference att_ref = {};
 
@@ -791,14 +824,31 @@ namespace vk {
 
 			if (tex->resource_type == trace::RenderGraphResourceType::Texture)
 			{
-				att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				att_desc.format = convertFmt(tex->resource_data.texture.format);
-				att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-				att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				att_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
-				att_ref.attachment = i;
-				att_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				if (tex->create_pass == pass_index)
+				{
+					att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					att_desc.format = convertFmt(tex->resource_data.texture.format);
+					att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+					att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+					att_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
+					att_ref.attachment = i;
+					att_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					tex_internal->image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				}
+				else
+				{
+					att_desc.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					att_desc.format = convertFmt(tex->resource_data.texture.format);
+					att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+					att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+					att_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
+					att_ref.attachment = i;
+					att_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					tex_internal->image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				}
+				
 
 				attachments.push_back(att_desc);
 				attach_ref.push_back(att_ref);
@@ -830,14 +880,14 @@ namespace vk {
 			trace::RenderGraphResource* tex = &render_graph->GetResource(pass->GetDepthStencilInput());
 			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depth_desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
-			depth_desc.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+			depth_desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			depth_desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			depth_desc.format = convertFmt(tex->resource_data.texture.format);
 			depth_desc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-			depth_desc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depth_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			depth_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
 			depth_ref.attachment = static_cast<uint32_t>(attachments.size());
-			depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+			depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			attachments.push_back(depth_desc);
 			subpass.pDepthStencilAttachment = &depth_ref;
 		}

@@ -46,7 +46,7 @@ void main()
     vec4 g_color_data = texture(g_bufferData[G_COLOR], in_texCoord);
     vec3 albedo = g_color_data.rgb;
     float specular = g_color_data.a;
-    vec3 view_dir = -frag_pos;
+    vec3 view_dir = normalize(-frag_pos);
 
     float ssao_res = 1.0f;
     if(ssao_dat == 1)

@@ -7,6 +7,7 @@
 #include "render_graph/LightingPass.h"
 #include "render_graph/SSAO.h"
 #include "render_graph/ToneMapPass.h"
+#include "render_graph/ForwardPass.h"
 
 
 namespace trace {
@@ -35,6 +36,7 @@ namespace trace {
 		LightingPass lighting_pass;
 		SSAO ssao_pass;
 		ToneMapPass toneMap_pass;
+		ForwardPass forward_pass;
 
 	protected:
 

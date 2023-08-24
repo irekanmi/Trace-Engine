@@ -22,12 +22,14 @@ namespace trace {
 		lighting_pass.Init(m_renderer);
 		ssao_pass.Init(m_renderer);
 		toneMap_pass.Init(m_renderer);
+		forward_pass.Init(m_renderer);
 
 		return result;
 	}
 
 	void RenderComposer::Shutdowm()
 	{
+		forward_pass.ShutDown();
 		toneMap_pass.ShutDown();
 		ssao_pass.ShutDown();
 		lighting_pass.ShutDown();
@@ -42,19 +44,9 @@ namespace trace {
 
 		FrameData& fd = black_board.add<FrameData>();
 		fd.frame_settings = frame_settings;
-		TextureDesc hdr_tex;
-		hdr_tex.m_addressModeU = hdr_tex.m_addressModeV = hdr_tex.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
-		hdr_tex.m_attachmentType = AttachmentType::COLOR;
-		hdr_tex.m_flag = BindFlag::RENDER_TARGET_BIT;
-		hdr_tex.m_format = Format::R16G16B16A16_FLOAT;
-		hdr_tex.m_width = m_renderer->m_frameWidth;
-		hdr_tex.m_height = m_renderer->m_frameHeight;
-		hdr_tex.m_minFilterMode = hdr_tex.m_magFilterMode = FilterMode::LINEAR;
-		hdr_tex.m_mipLevels = hdr_tex.m_numLayers = 1;
-		hdr_tex.m_usage = UsageFlag::DEFAULT;
 
-		fd.hdr_index = frame_graph.AddTextureResource("Hdr_Target", hdr_tex);
-		fd.ldr_index = frame_graph.AddSwapchainResource("swapchain", &m_renderer->_swapChain);
+		fd.hdr_index = INVALID_ID;
+		fd.ldr_index = frame_graph.AddSwapchainResource("swapchain", &m_renderer->m_swapChain);
 		fd.frame_width = m_renderer->m_frameWidth;
 		fd.frame_height = m_renderer->m_frameHeight;
 
@@ -65,6 +57,7 @@ namespace trace {
 			ssao_pass.Setup(&frame_graph, black_board);
 		}
 		lighting_pass.Setup(&frame_graph, black_board);
+		forward_pass.Setup(&frame_graph, black_board);
 		toneMap_pass.Setup(&frame_graph, black_board);
 		frame_graph.SetFinalResourceOutput("swapchain");
 

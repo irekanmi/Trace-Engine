@@ -171,6 +171,49 @@ namespace trace {
 				frag_src.clear();
 			}
 
+		{
+
+			vert_src = ShaderParser::load_shader_file("../assets/shaders/lights.vert.glsl");
+			frag_src = ShaderParser::load_shader_file("../assets/shaders/lights.frag.glsl");
+
+			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
+			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(&VertShader, s_res);
+			ShaderParser::generate_shader_resources(&FragShader, s_res);
+
+
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = &VertShader;
+			_ds2.pixel_shader = &FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = Vertex::get_input_layout();
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+
+
+			if (!CreatePipeline(_ds2, "light_pipeline"))
+			{
+				TRC_ERROR("Failed to initialize or create light_pipeline");
+				RenderFunc::DestroyShader(&VertShader);
+				RenderFunc::DestroyShader(&FragShader);
+				return false;
+			}
+
+			RenderFunc::DestroyShader(&VertShader);
+			RenderFunc::DestroyShader(&FragShader);
+
+			light_pipeline = { GetPipeline("light_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };;
+
+		};
+
 
 		return true;
 	}

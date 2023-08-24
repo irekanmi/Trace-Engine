@@ -67,7 +67,6 @@ namespace trace {
 
 
 		// Temp-----------------------------
-		GSwapchain _swapChain;
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera;
@@ -85,6 +84,7 @@ namespace trace {
 		void draw_skybox(CommandParams params);
 
 	private:
+		GSwapchain m_swapChain;
 		GContext g_context;
 		GDevice g_device;
 		RenderComposer* m_composer;

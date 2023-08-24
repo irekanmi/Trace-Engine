@@ -147,7 +147,7 @@ namespace trace {
 		verts.clear();
 		_ind.clear();
 
-		generateSphere(verts, _ind, 20.0f, 20, 20);
+		generateSphere(verts, _ind, 5.0f, 50, 50);
 		generateVertexTangent(verts, _ind);
 		sphere.Init(verts, _ind);
 

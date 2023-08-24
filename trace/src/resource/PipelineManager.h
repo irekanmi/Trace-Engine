@@ -40,6 +40,7 @@ namespace trace {
 		uint32_t m_pipelineTypeSize;
 		HashTable<uint32_t> m_hashtable;
 		Ref<GPipeline> skybox_pipeline;
+		Ref<GPipeline> light_pipeline;
 
 	protected:
 
