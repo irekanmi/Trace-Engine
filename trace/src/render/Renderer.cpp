@@ -83,7 +83,7 @@ namespace trace {
 			_camera->SetAspectRatio(((float)800.0f) / ((float)600.0f));
 			_camera->SetFov(60.0f);
 			_camera->SetNear(0.1f);
-			_camera->SetFar(1000.0f);
+			_camera->SetFar(1500.0f);
 
 			_viewPort.width = 800.0f;
 			_viewPort.height = 600.0f;
@@ -171,21 +171,22 @@ namespace trace {
 		lights[0].position = { 0.0f, 2.5f, 2.0f, 0.0f };
 		lights[0].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
 		lights[0].color = { 0.37f, 0.65f, 0.66f, 1.0f };
-		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, 0.0f };
-		lights[0].params2 = { 0.0f, 7.5f, 0.0f, 0.0f };
+		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(30.0f))};
+		lights[0].params2 = { glm::cos(glm::radians(60.0f)), 7.5f, 0.0f, 0.0f };
 
-		//lights[2].position = { _camera->GetPosition(), 0.0f };
-		//lights[2].direction = { _camera->GetLookDir(), 0.0f };
-		//lights[2].color = { 0.6f, 0.8f, 0.0f, 1.0f };
-		//lights[2].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
-		//lights[2].params2 = { 0.866f, 6.1f, 0.0f, 0.0f };
+		//lights[0].position = { _camera->GetPosition(), 0.0f };
+		//lights[0].direction = { _camera->GetLookDir(), 0.0f };
+		//lights[0].color = { 0.6f, 0.8f, 0.0f, 1.0f };
+		//lights[0].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
+		//lights[0].params2 = { 0.866f, 3.1f, 0.0f, 0.0f };
 			
 
-		light_data = { 0, 1, 0, 0 };
+		light_data = { 0, 0, 1, 0 };
 		exposure = 0.9f;
 
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
+		frame_settings |= RENDER_SSAO;
 
 
 
@@ -237,6 +238,14 @@ namespace trace {
 			else if (press->m_keycode == KEY_P)
 			{
 				exposure -= 0.4;
+			}
+			else if (press->m_keycode == KEY_1)
+			{
+				frame_settings |= RENDER_SSAO;
+			}
+			else if (press->m_keycode == KEY_2)
+			{
+				frame_settings &= ~RENDER_SSAO;
 			}
 
 			break;
@@ -397,22 +406,25 @@ namespace trace {
 
 
 			RGBlackBoard frame_blck_bd;
+			RenderGraph f_g;
 			
-
 			m_composer->PreFrame(
-				frame_graphs[frame_index],
+				f_g,
 				frame_blck_bd,
 				frame_settings
 			);
-			frame_graphs[frame_index].Execute();
+			f_g.Execute();
 			m_composer->PostFrame(
-				frame_graphs[frame_index],
+				f_g,
 				frame_blck_bd
 			);
 
+			
+
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
-			frame_index = (frame_index + 1) % 2;
+			f_g.Destroy();
+			frame_index = (frame_index + 1) % 3;
 		}
 		m_listCount = 0;
 		m_opaqueObjectsSize = 0;

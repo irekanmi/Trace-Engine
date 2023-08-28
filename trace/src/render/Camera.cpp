@@ -47,6 +47,7 @@ namespace trace {
 		if (is_dirty[0])
 		{
 			if (m_type == CameraType::PERSPECTIVE) m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
+			m_projection[1][1] *= -1.0f;
 			is_dirty[0] = false;
 		}
 		return m_projection;

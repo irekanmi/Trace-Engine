@@ -286,7 +286,25 @@ namespace trace {
 						sizeof(uint32_t)
 					);
 				}
+				else
+				{
+					uint32_t res = 0;
+					RenderFunc::BindRenderGraphResource(
+						render_graph,
+						m_pipeline.get(),
+						"ssao_blur",
+						ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+						&render_graph->GetResource(gPosition_index)
+					);
 
+					RenderFunc::SetPipelineData(
+						m_pipeline.get(),
+						"ssao_dat",
+						ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+						&res,
+						sizeof(uint32_t)
+					);
+				}
 
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),

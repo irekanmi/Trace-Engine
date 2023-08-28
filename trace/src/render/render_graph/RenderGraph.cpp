@@ -47,19 +47,27 @@ namespace trace {
 
 	void RenderGraphPass::AddColorAttachmentInput(const std::string& name)
 	{
-
 		uint32_t index = m_renderGraph->FindResourceIndex(name);
+		AddColorAttachmentInput(index);
+	}
+
+	void RenderGraphPass::AddColorAttachmentInput(uint32_t index)
+	{
 		m_inputs.push_back(index);
 		RenderGraphResource* input_tex = &m_renderGraph->GetResource(index);
 		m_attachmentInputs.push_back(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		input_tex->read_passes.push_back(pass_index);
-
 	}
 
 	void RenderGraphPass::AddColorAttachmentOuput(const std::string& name)
 	{
 		uint32_t index = m_renderGraph->FindResourceIndex(name);
+		AddColorAttachmentOuput(index);
+	}
+
+	void RenderGraphPass::AddColorAttachmentOuput(uint32_t index)
+	{
 		m_outputs.push_back(index);
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		m_attachmentOutputs.push_back(index);
@@ -103,10 +111,15 @@ namespace trace {
 
 	void RenderGraphPass::SetDepthStencilInput(const std::string& name)
 	{
-		uint32_t res_index = m_renderGraph->FindResourceIndex(name);
-		m_inputs.push_back(res_index);
-		RenderGraphResource* output_tex = &m_renderGraph->GetResource(res_index);
-		m_depthStencilInput = res_index;
+		uint32_t index = m_renderGraph->FindResourceIndex(name);
+		SetDepthStencilInput(index);
+	}
+
+	void RenderGraphPass::SetDepthStencilInput(uint32_t index)
+	{
+		m_inputs.push_back(index);
+		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
+		m_depthStencilInput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->read_passes.push_back(pass_index);
 	}
@@ -114,6 +127,11 @@ namespace trace {
 	void RenderGraphPass::SetDepthStencilOutput(const std::string& name)
 	{
 		uint32_t index = m_renderGraph->FindResourceIndex(name);
+		SetDepthStencilOutput(index);
+	}
+
+	void RenderGraphPass::SetDepthStencilOutput(uint32_t index)
+	{
 		m_outputs.push_back(index);
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		m_depthStencilOutput = index;
@@ -135,6 +153,7 @@ namespace trace {
 
 	RenderGraphPass* RenderGraph::AddPass(const std::string& pass_name, GPU_QUEUE queue)
 	{
+		
 		auto it = std::find_if(m_passes.begin(), m_passes.end(), [pass_name](RenderGraphPass pass) { return pass_name == pass.GetPassName(); });
 
 		if (it != m_passes.end())
@@ -527,7 +546,8 @@ namespace trace {
 
 				for (RenderGraphEdge& edge : curr_pass->GetPassEdges())
 				{
-					if (!edge.from) continue;
+					if (!edge.from ) continue;
+
 					RenderGraphPass* from = edge.from;
 					uint32_t f_index = FindPassIndex(from->GetPassName());
 					if (visited_pass[f_index] > 0)
@@ -537,11 +557,35 @@ namespace trace {
 						if (curr_it < it) continue;
 						sorted_passes.erase(curr_it);
 						sorted_passes.emplace(it, curr_pass);
+						//pass_stack.push_back(from);
 					}
 					else
 					{
 						pass_stack.push_back(from);
 					}
+
+					if (edge.to != curr_pass)
+					{
+						RenderGraphPass* to = edge.to;
+						uint32_t t_index = FindPassIndex(to->GetPassName());
+						if (visited_pass[t_index] > 0)
+						{
+							auto curr_it = std::find(sorted_passes.begin(), sorted_passes.end(), curr_pass);
+							auto it = std::find(sorted_passes.begin(), sorted_passes.end(), to);
+							if (curr_it < it)
+							{
+								sorted_passes.erase(it);
+								sorted_passes.emplace(curr_it, to);
+							}
+							
+						}
+						else
+						{
+							pass_stack.push_back(to);
+						}
+					}
+					
+					
 				}
 
 			}

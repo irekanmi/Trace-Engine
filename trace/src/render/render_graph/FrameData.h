@@ -34,4 +34,10 @@ namespace trace {
 		uint32_t ssao_blur;
 	};
 
+	struct BloomData
+	{
+		uint32_t bloom_samples[10];
+		uint8_t samples_count;
+	};
+
 }

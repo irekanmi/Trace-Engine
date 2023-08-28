@@ -165,11 +165,13 @@ namespace vk {
 
 		for (auto& evnt : handle->events)
 		{
-			vkDestroyEvent(
-				_device->m_device,
-				evnt.evnt,
-				instance->m_alloc_callback
-			);
+			//vkDestroyEvent(
+			//	_device->m_device,
+			//	evnt.evnt,
+			//	instance->m_alloc_callback
+			//);
+			_device->frames_resources[_device->m_imageIndex]._events.push_back(evnt.evnt);
+
 		}
 
 		for (auto& res : resources)
@@ -182,15 +184,20 @@ namespace vk {
 
 				if (res_handle->resource.texture.m_view != VK_NULL_HANDLE)
 				{
-					_DestroyImageView(instance, _device, &res_handle->resource.texture.m_view);
+					//_DestroyImageView(instance, _device, &res_handle->resource.texture.m_view);
+					_device->frames_resources[_device->m_imageIndex]._image_views.push_back(res_handle->resource.texture.m_view);
+					res_handle->resource.texture.m_view = VK_NULL_HANDLE;
 				}
-				vkDestroyImage(_device->m_device, res_handle->resource.texture.m_handle, instance->m_alloc_callback);
+				//vkDestroyImage(_device->m_device, res_handle->resource.texture.m_handle, instance->m_alloc_callback);
+				_device->frames_resources[_device->m_imageIndex]._images.push_back(res_handle->resource.texture.m_handle);
 				res_handle->resource.texture.m_handle = VK_NULL_HANDLE;
-				_DestroySampler(
-					instance,
-					_device,
-					res_handle->resource.texture.m_sampler
-				);
+				//_DestroySampler(
+				//	instance,
+				//	_device,
+				//	res_handle->resource.texture.m_sampler
+				//);
+				_device->frames_resources[_device->m_imageIndex]._samplers.push_back(res_handle->resource.texture.m_sampler);
+				res_handle->resource.texture.m_sampler = VK_NULL_HANDLE;
 
 				delete res_handle;
 				res.render_handle.m_internalData = nullptr;
@@ -209,26 +216,28 @@ namespace vk {
 			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 
-			_DestroyRenderPass(
-				instance,
-				_device,
-				&pass_handle->physical_pass
-			);
-			vkDestroyFramebuffer(
-				_device->m_device,
-				pass_handle->frame_buffer,
-				instance->m_alloc_callback
-			);
+			//_DestroyRenderPass(
+			//	instance,
+			//	_device,
+			//	&pass_handle->physical_pass
+			//);
+			_device->frames_resources[_device->m_imageIndex]._renderPasses.push_back(pass_handle->physical_pass.m_handle);
+			//vkDestroyFramebuffer(
+			//	_device->m_device,
+			//	pass_handle->frame_buffer,
+			//	instance->m_alloc_callback
+			//);
+			_device->frames_resources[_device->m_imageIndex]._framebuffers.push_back(pass_handle->frame_buffer);
 			delete pass_handle;
 			pass->GetRenderHandle()->m_internalData = nullptr;
 		}
 
 
-		if (_device->mem_flush)
-		{
-			vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
-			_device->mem_flush = VK_NULL_HANDLE;
-		}
+		//if (_device->mem_flush)
+		//{
+		//	vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
+		//	_device->mem_flush = VK_NULL_HANDLE;
+		//}
 		handle->memory_size = 0;
 		handle->current_offset = 0;
 		handle->memory_type_bits = 0;
@@ -675,7 +684,7 @@ namespace vk {
 
 		if (!render_graph || !pipeline)
 		{
-			TRC_ERROR("Unable to bind render graph resource please enter a valid pointer, {} || {}", (const void*)render_graph, (const void*)pipeline );
+			TRC_ERROR("Unable to bind render graph please enter a valid pointer, {} || {}", (const void*)render_graph, (const void*)pipeline );
 			return false;
 		}
 
@@ -690,6 +699,15 @@ namespace vk {
 		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
 		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
 
+		uint32_t hash_id = pipeline->_hashTable.Get(bind_name);
+
+		if (hash_id == INVALID_ID)
+		{
+			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
+			return false;
+		}
+
+
 		bool isTexture = (resource->resource_type == trace::RenderGraphResourceType::Texture);
 
 		if (!isTexture)
@@ -700,13 +718,7 @@ namespace vk {
 
 		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
 
-		uint32_t hash_id = pipeline->_hashTable.Get(bind_name);
-
-		if (hash_id == INVALID_ID)
-		{
-			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
-			return false;
-		}
+		
 
 		if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle)
 			return false;
@@ -1094,16 +1106,18 @@ namespace vk {
 
 
 		static uint32_t mem_count = 0;
+		uint32_t previous_frame = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
 
 		if (graph_handle->memory_size > _device->frame_mem_size)
 		{
-			if (_device->mem_flush)
-			{
-				vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
-				_device->mem_flush = VK_NULL_HANDLE;
-			}
+			//if (_device->mem_flush)
+			//{
+			//	vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
+			//	_device->mem_flush = VK_NULL_HANDLE;
+			//}
 
-			_device->mem_flush = _device->frame_memory;
+			//_device->mem_flush = _device->frame_memory;
+			if(_device->frame_memory) _device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
 			_device->frame_memory = VK_NULL_HANDLE;
 
 			VK_ASSERT(vkAllocateMemory(
@@ -1121,18 +1135,19 @@ namespace vk {
 			if (mem_count > 30)
 			{
 				uint32_t frame_index = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
-				if (!vk::_WaitFence(instance, _device, &_device->m_inFlightFence[frame_index], UINT64_MAX))
-				{
-					TRC_WARN("Fence timeout or wait failure");
-				}
+				//if (!vk::_WaitFence(instance, _device, &_device->m_inFlightFence[frame_index], UINT64_MAX))
+				//{
+				//	TRC_WARN("Fence timeout or wait failure");
+				//}
 
-				if (_device->mem_flush)
-				{
-					vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
-					_device->mem_flush = VK_NULL_HANDLE;
-				}
+				//if (_device->mem_flush)
+				//{
+				//	vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
+				//	_device->mem_flush = VK_NULL_HANDLE;
+				//}
 
-				_device->mem_flush = _device->frame_memory;
+				//_device->mem_flush = _device->frame_memory;
+				_device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
 				_device->frame_memory = VK_NULL_HANDLE;
 				VK_ASSERT(vkAllocateMemory(
 					_device->m_device,

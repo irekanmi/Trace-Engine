@@ -23,7 +23,8 @@ namespace trace {
 	enum class FilterMode
 	{
 		NONE,
-		LINEAR
+		LINEAR,
+		NEAREST
 	};
 
 
@@ -95,6 +96,7 @@ namespace trace {
 		R8G8B8_SRBG,
 		R8G8B8_SNORM,
 		R8G8B8A8_UNORM,
+		R8_UNORM,
 		D32_SFLOAT_S8_SUINT
 	};
 
@@ -213,6 +215,33 @@ namespace trace {
 		STRUCT_ARRAY
 	};
 
+	enum BlendFactor
+	{
+		BLEND_NONE,
+		BLEND_ONE,
+		BLEND_ZERO,
+		BLEND_ONE_MINUS_SRC_ALPHA,
+		BLEND_ONE_MINUS_DST_ALPHA,
+		BLEND_ONE_MINUS_SRC_COLOR,
+		BLEND_ONE_MINUS_DST_COLOR,
+		BLEND_SRC_COLOR,
+		BLEND_DST_COLOR,
+		BLEND_SRC_ALPHA,
+		BLEND_DST_ALPHA,
+		BLEND_FACTOR_COUNT
+	};
+
+	enum BlendOp
+	{
+		BLEND_OP_NONE,
+		BLEND_OP_ADD,
+		BLEND_OP_SUBTRACT,
+		BLEND_OP_REVERSE_SUBTRACT,
+		BLEND_OP_MIN,
+		BLEND_OP_MAX,
+		BLEND_OP_COUNT
+	};
+
 	enum FrameSettingsBit
 	{
 		RENDER_NONE = BIT(0),
@@ -291,6 +320,14 @@ namespace trace {
 	struct ColorBlendState
 	{
 		bool alpha_to_blend_coverage = false; // TODO
+		BlendFactor src_color = BlendFactor::BLEND_NONE;
+		BlendFactor dst_color = BlendFactor::BLEND_NONE;
+		BlendOp color_op = BlendOp::BLEND_OP_NONE;
+
+		BlendFactor src_alpha = BlendFactor::BLEND_NONE;
+		BlendFactor dst_alpha = BlendFactor::BLEND_NONE;
+		BlendOp alpha_op = BlendOp::BLEND_OP_NONE;
+
 	};
 
 	struct UniformMetaData

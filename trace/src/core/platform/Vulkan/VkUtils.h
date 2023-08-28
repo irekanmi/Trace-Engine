@@ -126,6 +126,8 @@ namespace vk {
 	VkAttachmentLoadOp convertAttachmentLoadOp(trace::AttachmentLoadOp op);
 	VkAttachmentStoreOp convertAttachmentStoreOp(trace::AttachmentStoreOp op);
 	VkCullModeFlagBits convertCullMode(trace::CullMode mode);
+	VkBlendFactor convertBlendFactor(trace::BlendFactor factor);
+	VkBlendOp convertBlendOp(trace::BlendOp op);
 	std::vector<VkPushConstantRange> processShaderLocalData(std::vector<trace::ShaderResourceBinding>& bindings);
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
 

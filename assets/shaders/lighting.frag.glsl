@@ -31,7 +31,7 @@ layout(set = 0, binding = 4)uniform sampler2D ssao_blur;
 
 
 
-const float ambeint_factor = 0.005;
+const float ambeint_factor = 0.005f;
 
 vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine, int index, float ssao);
 vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position,float shine, int index, float ssao);
@@ -41,19 +41,21 @@ void main()
 {
     vec4 pData = texture(g_bufferData[G_POSITION], in_texCoord);
     vec3 frag_pos = pData.xyz;
-    float shine = pData.w;
-    vec3 normal = texture(g_bufferData[G_NORMAL], in_texCoord).xyz;
+    vec4 nData = texture(g_bufferData[G_NORMAL], in_texCoord);
+    vec3 normal = nData.xyz;
+    float shine = nData.w;
     vec4 g_color_data = texture(g_bufferData[G_COLOR], in_texCoord);
     vec3 albedo = g_color_data.rgb;
     float specular = g_color_data.a;
     vec3 view_dir = normalize(-frag_pos);
+
 
     float ssao_res = 1.0f;
     if(ssao_dat == 1)
     {
         ssao_res = texture(ssao_blur, in_texCoord).r;
     }
-    
+
     for(int i = 0; i < light_data.x; i++)
     {
         FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);

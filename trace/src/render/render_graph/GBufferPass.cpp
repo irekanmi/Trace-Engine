@@ -93,7 +93,7 @@ namespace trace {
 		gPos.m_format = Format::R16G16B16A16_FLOAT;
 		gPos.m_width = 800;
 		gPos.m_height = 600;
-		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
+		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::NEAREST;
 		gPos.m_mipLevels = gPos.m_numLayers = 1;
 		gPos.m_usage = UsageFlag::DEFAULT;
 

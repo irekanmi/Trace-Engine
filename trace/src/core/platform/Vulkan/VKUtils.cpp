@@ -1701,7 +1701,6 @@ namespace vk {
 		color_blend_info.pAttachments = attach_states;
 
 		
-		// TODO: complete pipeline layout creation info
 		VkPipelineLayoutCreateInfo layout_info = {};
 		layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		VkDescriptorSetLayout _layouts[3];
@@ -2008,7 +2007,7 @@ namespace vk {
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		create_info.lineWidth = 1.0f; // TODO
 		create_info.polygonMode = convertPolygonMode(raterizer.fill_mode);
-		create_info.cullMode = convertCullMode(raterizer.cull_mode);
+		create_info.cullMode = VK_CULL_MODE_NONE;//convertCullMode(raterizer.cull_mode);
 		create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // TODO
 		create_info.rasterizerDiscardEnable = VK_FALSE; // TODO
 		create_info.depthClampEnable = VK_FALSE; // TODO
@@ -2054,8 +2053,6 @@ namespace vk {
 
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment)
 	{
-
-		
 		// ------------------ TODO----------------------------------------
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
 			VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
@@ -2068,6 +2065,24 @@ namespace vk {
 		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //
 		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
 		//------------------------------------------------------------------
+
+		if (state.alpha_to_blend_coverage)
+		{
+			// ------------------ TODO----------------------------------------
+			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+				VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+				VK_COLOR_COMPONENT_A_BIT;
+			colorBlendAttachment.blendEnable = VK_TRUE;
+			colorBlendAttachment.srcColorBlendFactor = convertBlendFactor(state.src_color); //
+			colorBlendAttachment.dstColorBlendFactor = convertBlendFactor(state.dst_color); //
+			colorBlendAttachment.colorBlendOp = convertBlendOp(state.color_op); // Optional
+			colorBlendAttachment.srcAlphaBlendFactor = convertBlendFactor(state.src_alpha); //
+			colorBlendAttachment.dstAlphaBlendFactor = convertBlendFactor(state.dst_alpha); //
+			colorBlendAttachment.alphaBlendOp = convertBlendOp(state.alpha_op); // Optional
+			//------------------------------------------------------------------
+		}
+		
+		
 
 
 		// Read Through docs and check tutorials
@@ -2413,6 +2428,11 @@ namespace vk {
 			result = VK_FORMAT_R16_SFLOAT;
 			break;
 		}
+		case trace::Format::R8_UNORM:
+		{
+			result = VK_FORMAT_R8_UNORM;
+			break;
+		}
 		}
 
 		return result;
@@ -2565,6 +2585,11 @@ namespace vk {
 				result = VK_FILTER_LINEAR;
 				break;
 			}
+		case trace::FilterMode::NEAREST:
+			{
+				result = VK_FILTER_NEAREST;
+				break;
+			}
 		}
 
 		return result;
@@ -2675,6 +2700,84 @@ namespace vk {
 		}
 		}
 
+	}
+
+	VkBlendFactor convertBlendFactor(trace::BlendFactor factor)
+	{
+		switch (factor)
+		{
+		case trace::BlendFactor::BLEND_ONE:
+			{
+				return VK_BLEND_FACTOR_ONE;
+			}
+		case trace::BlendFactor::BLEND_ZERO:
+			{
+				return VK_BLEND_FACTOR_ZERO;
+			}
+		case trace::BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA:
+			{
+				return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+			}
+		case trace::BlendFactor::BLEND_ONE_MINUS_DST_ALPHA:
+			{
+				return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+			}
+		case trace::BlendFactor::BLEND_ONE_MINUS_SRC_COLOR:
+			{
+				return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+			}
+		case trace::BlendFactor::BLEND_ONE_MINUS_DST_COLOR:
+			{
+				return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+			}
+		case trace::BlendFactor::BLEND_SRC_COLOR:
+			{
+				return VK_BLEND_FACTOR_SRC_COLOR;
+			}
+		case trace::BlendFactor::BLEND_DST_COLOR:
+			{
+				return VK_BLEND_FACTOR_DST_COLOR;
+			}
+		case trace::BlendFactor::BLEND_SRC_ALPHA:
+			{
+				return VK_BLEND_FACTOR_SRC_ALPHA;
+			}
+		case trace::BlendFactor::BLEND_DST_ALPHA:
+			{
+			return VK_BLEND_FACTOR_DST_ALPHA;
+			}
+		}
+
+		return VK_BLEND_FACTOR_MAX_ENUM;
+	}
+
+	VkBlendOp convertBlendOp(trace::BlendOp op)
+	{
+		switch (op)
+		{
+		case trace::BlendOp::BLEND_OP_ADD:
+		{
+		return VK_BLEND_OP_ADD;
+		}
+		case trace::BlendOp::BLEND_OP_SUBTRACT:
+		{
+		return VK_BLEND_OP_SUBTRACT;
+		}
+		case trace::BlendOp::BLEND_OP_REVERSE_SUBTRACT:
+		{
+		return VK_BLEND_OP_REVERSE_SUBTRACT;
+		}
+		case trace::BlendOp::BLEND_OP_MIN:
+		{
+		return VK_BLEND_OP_MIN;
+		}
+		case trace::BlendOp::BLEND_OP_MAX:
+		{
+		return VK_BLEND_OP_MAX;
+		}
+		}
+
+		return VK_BLEND_OP_MAX_ENUM;
 	}
 
 	std::vector<VkPushConstantRange> processShaderLocalData(std::vector<trace::ShaderResourceBinding>& bindings)

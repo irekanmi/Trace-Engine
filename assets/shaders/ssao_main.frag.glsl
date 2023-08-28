@@ -27,9 +27,9 @@ void main()
     vec3 normal = (texture(g_bufferData[1], in_texCoord).xyz);
     vec3 rand_vec = texture(u_noiseTexture, in_texCoord * noise_scale).xyz;
     vec3 tangent = normalize( rand_vec - normal * dot(rand_vec, normal) );
-    vec3 bi_tangent = cross(normal, tangent);
+    vec3 bi_tangent = cross(tangent, normal);
     mat3 TBN = mat3( tangent, bi_tangent, normal );
-    float radius = 0.5f;
+    float radius = 10.0f;
     float bias = 0.025f;
 
     float occulsion = 0.0f;

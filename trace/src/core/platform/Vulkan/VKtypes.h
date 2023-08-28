@@ -168,6 +168,18 @@ namespace trace {
 		VKHandle* m_instance = nullptr;
 	};
 
+	struct VKFrameResoures
+	{
+		std::vector<VkImage> _images;
+		std::vector<VkImageView> _image_views;
+		std::vector<VkBuffer> _buffers;
+		std::vector<VkSampler> _samplers;
+		std::vector<VkEvent> _events;
+		std::vector<VkRenderPass> _renderPasses;
+		std::vector<VkFramebuffer> _framebuffers;
+		std::vector<VkDeviceMemory> _memorys;
+	};
+
 	struct VKDeviceHandle
 	{
 		VkPhysicalDevice m_physicalDevice;
@@ -211,6 +223,7 @@ namespace trace {
 		uint32_t m_bufCurrentOffset;
 		VkDeviceMemory mem_flush = VK_NULL_HANDLE;
 		VkDeviceMemory frame_memory;
+		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
 		uint32_t frame_mem_size = 0;
 		VKImage nullImage;
 		VKBuffer nullBuffer;

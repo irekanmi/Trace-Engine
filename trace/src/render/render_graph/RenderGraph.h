@@ -77,12 +77,16 @@ namespace trace {
 		uint32_t CreateAttachmentOutput(const std::string& name, TextureDesc desc);
 		uint32_t CreateDepthAttachmentOutput(const std::string& name, TextureDesc desc);
 		void AddColorAttachmentInput(const std::string& name);
+		void AddColorAttachmentInput(uint32_t index);
 		void AddColorAttachmentOuput(const std::string& name);
+		void AddColorAttachmentOuput(uint32_t index);
 		void AddTextureInput(const std::string& name, GTexture* texture);
 		void AddTextureOutput(const std::string& name, GTexture* texture);
 		void SetSwapchainOutput(const std::string& name, GSwapchain* swapchain);
 		void SetDepthStencilInput(const std::string& name);
+		void SetDepthStencilInput(uint32_t index);
 		void SetDepthStencilOutput(const std::string& name);
+		void SetDepthStencilOutput(uint32_t index);
 		void SetRunCB(std::function<void(std::vector<uint32_t>&)> run_cb) { m_run_cb = run_cb; }
 		void SetResizeCB(std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> resize_cb) { m_resize_cb = resize_cb; }
 		uint32_t GetDepthStencilInput() { return m_depthStencilInput; }
@@ -168,6 +172,7 @@ namespace trace {
 		std::vector<RenderGraphResource> m_resources;
 		uint32_t m_finalResource = INVALID_ID;
 		bool destroyed = true;
+		bool initialized = false;
 
 	protected:
 	};

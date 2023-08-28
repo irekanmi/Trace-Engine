@@ -40,7 +40,7 @@ namespace trace {
 	{
 		bool result = true;
 
-		frame_graph.Destroy();
+		//frame_graph.Destroy();
 
 		FrameData& fd = black_board.add<FrameData>();
 		fd.frame_settings = frame_settings;

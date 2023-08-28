@@ -27,6 +27,8 @@ layout(set = 1, binding = 0)uniform InstanceBufferObject{
 };
 layout(set = 1, binding = 1)uniform sampler2D testing[3];
 
+float get_linear_depth(float depth);
+
 
 void main()
 {
@@ -40,8 +42,18 @@ void main()
     vec3 normal = normalize(TBN * _normal);
 
 
-    g_Position = vec4(_data._fragPos, shininess);
-    g_Normal = vec4(normal, 1.0f);
+    g_Position = vec4(_data._fragPos, get_linear_depth(gl_FragCoord.z));
+    g_Normal = vec4(normal, shininess);
     g_ColorSpecular = vec4(texture(testing[DIFFUSE_MAP], _data._texCoord).rgb, texture(testing[SPECULAR_MAP], _data._texCoord).r);
 
+}
+
+float get_linear_depth(float depth)
+{
+    float z = depth * 2.0f - 1.0f;
+    float near = 0.1f;
+    float far = 1500.0f;
+    float numerator = 2.0f * (near * far);
+    float denominator = far + near - z * (far - near);
+    return numerator / denominator;
 }

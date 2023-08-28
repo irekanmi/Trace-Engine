@@ -22,6 +22,9 @@ trace::VKDeviceHandle g_VkDevice;
 
 namespace vk {
 
+
+	void destroy_frame_resources(trace::GDevice* device, uint32_t currentIndex);
+
 	bool __CreateDevice(trace::GDevice* device)
 	{
 		bool result = true;
@@ -225,6 +228,9 @@ namespace vk {
 
 		vkDeviceWaitIdle(_handle->m_device);
 
+		// Destroy frame resources "RenderGraph"
+		for(uint32_t i = 0; i < _handle->frames_in_flight; i++) destroy_frame_resources(device, i);
+		
 
 		// Null placeholders
 		vk::_DestoryBuffer(_instance, _handle, &_handle->nullBuffer);
@@ -409,9 +415,9 @@ namespace vk {
 
 		VkViewport viewport = {};
 		viewport.x = view_port.x;
-		viewport.y = view_port.height;
+		viewport.y = view_port.y;
 		viewport.width = view_port.width;
-		viewport.height = -view_port.height;
+		viewport.height = view_port.height;
 		viewport.minDepth = view_port.minDepth;
 		viewport.maxDepth = view_port.maxDepth;
 
@@ -759,17 +765,22 @@ namespace vk {
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
 		_handle->m_bufCurrentOffset = frame_offset;
 
-
+		// Wait for work to finish "if any"
 		if (!vk::_WaitFence(_instance, _handle, &_handle->m_inFlightFence[_handle->m_currentFrame], UINT64_MAX))
 		{
 			TRC_WARN("Fence timeout or wait failure");
 			return false;
 		}
 
+		
+
 		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT64_MAX))
 		{
 			return false;
 		}
+
+		// Destroy frame resources "RenderGraph"
+		destroy_frame_resources(device, _handle->m_imageIndex);
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		vk::_CommandBuffer_Reset(command_buffer);
@@ -912,6 +923,67 @@ namespace vk {
 		}
 
 		return result;
+	}
+
+	void destroy_frame_resources(trace::GDevice* device, uint32_t currentIndex)
+	{
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		// HACK: Find another way to get the vulkan instance
+		trace::VKHandle* _instance = &g_Vkhandle;
+
+		for (auto& i : _handle->frames_resources[currentIndex]._events)
+		{
+			vkDestroyEvent(
+				_handle->m_device,
+				i,
+				_instance->m_alloc_callback
+			);
+		}
+		_handle->frames_resources[currentIndex]._events.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._image_views)
+		{
+			_DestroyImageView(_instance, _handle, &i);
+		}
+		_handle->frames_resources[currentIndex]._image_views.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._images)
+		{
+			vkDestroyImage(_handle->m_device, i, _instance->m_alloc_callback);
+		}
+		_handle->frames_resources[currentIndex]._images.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._samplers)
+		{
+			_DestroySampler(
+				_instance,
+				_handle,
+				i
+			);
+		}
+		_handle->frames_resources[currentIndex]._samplers.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._renderPasses)
+		{
+			vkDestroyRenderPass(_handle->m_device, i, _instance->m_alloc_callback);
+		}
+		_handle->frames_resources[currentIndex]._renderPasses.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._framebuffers)
+		{
+			vkDestroyFramebuffer(
+				_handle->m_device,
+				i,
+				_instance->m_alloc_callback
+			);
+		}
+		_handle->frames_resources[currentIndex]._framebuffers.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._memorys)
+		{
+			vkFreeMemory(_handle->m_device, i, _instance->m_alloc_callback);
+		}
+		_handle->frames_resources[currentIndex]._memorys.clear();
 	}
 
 }

@@ -22,7 +22,7 @@ namespace trace {
 		{
 			AttachmentInfo ssao_attach;
 			ssao_attach.attachmant_index = 0;
-			ssao_attach.attachment_format = Format::R16_FLOAT;
+			ssao_attach.attachment_format = Format::R8_UNORM;
 			ssao_attach.initial_format = TextureFormat::UNKNOWN;
 			ssao_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			ssao_attach.is_depth = false;
@@ -60,7 +60,7 @@ namespace trace {
 			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
 			gPos.m_attachmentType = AttachmentType::COLOR;
 			gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
-			gPos.m_format = Format::R16_FLOAT;
+			gPos.m_format = Format::R8_UNORM;
 			gPos.m_width = 800;
 			gPos.m_height = 600;
 			gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
@@ -169,8 +169,8 @@ namespace trace {
 			{
 				glm::vec3 samp = glm::vec3(
 					rand_float(gen) * 2.0f - 1.0f,
-					0.0f,
-					rand_float(gen)
+					rand_float(gen) * 2.0f - 1.0f,					
+					rand_float(gen)					
 				);
 				samp = glm::normalize(samp);
 				samp *= rand_float(gen);
@@ -186,10 +186,11 @@ namespace trace {
 			for (uint32_t i = 0; i < 16; i++)
 			{
 				glm::vec3 samp = glm::vec3(
-					rand_float(gen),
-					rand_float(gen),
+					rand_float(gen) * 2.0f - 1.0f,
+					rand_float(gen) * 2.0f - 1.0f,
 					0.0f
 				);
+				samp = glm::normalize(samp);
 				noise[i] = glm::vec4(samp, 0.0f);
 			}
 
@@ -223,7 +224,6 @@ namespace trace {
 
 		ssao_main_desc.m_width = fd.frame_width;
 		ssao_main_desc.m_height = fd.frame_height;
-		ssao_main_desc.m_format = Format::R16_FLOAT;
 		
 
 		main_pass->AddColorAttachmentInput(

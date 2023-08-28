@@ -63,7 +63,7 @@ namespace trace {
 		if (color_blend_state)
 		{
 			ColorBlendState blds = {};
-			blds.alpha_to_blend_coverage = true;
+			blds.alpha_to_blend_coverage = false;
 
 			desc.blend_state = blds;
 		}

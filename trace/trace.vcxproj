@@ -206,6 +206,7 @@
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\Renderutils.h" />
+    <ClInclude Include="src\render\render_graph\BloomPass.h" />
     <ClInclude Include="src\render\render_graph\CustomPass.h" />
     <ClInclude Include="src\render\render_graph\FinalPass.h" />
     <ClInclude Include="src\render\render_graph\ForwardPass.h" />
@@ -288,6 +289,7 @@
     <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\Renderutils.cpp" />
+    <ClCompile Include="src\render\render_graph\BloomPass.cpp" />
     <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
     <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
     <ClCompile Include="src\render\render_graph\ForwardPass.cpp" />
