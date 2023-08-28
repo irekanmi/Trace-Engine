@@ -92,7 +92,6 @@ namespace trace {
 		uint32_t m_frameHeight;
 		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
 		uint32_t m_opaqueObjectsSize;
-		RenderGraph frame_graphs[3];
 
 		friend RenderGraph;
 		friend RenderComposer;

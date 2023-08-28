@@ -62,8 +62,8 @@ namespace trace {
 
 		RenderGraphPass* pass = render_graph->AddPass("FORWARD_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->AddColorAttachmentOuput(render_graph->GetResource(fd.hdr_index).resource_name);
-		pass->SetDepthStencilInput(render_graph->GetResource(gbuffer_data.depth_index).resource_name);
+		pass->AddColorAttachmentOuput(fd.hdr_index);
+		pass->SetDepthStencilInput(gbuffer_data.depth_index);
 
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 

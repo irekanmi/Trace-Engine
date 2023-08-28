@@ -53,9 +53,7 @@ namespace trace {
 		{
 		case RenderAPI::OpenGL:
 		{
-			
 			break;
-
 		}
 
 		case RenderAPI::Vulkan:
@@ -171,8 +169,8 @@ namespace trace {
 		lights[0].position = { 0.0f, 2.5f, 2.0f, 0.0f };
 		lights[0].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
 		lights[0].color = { 0.37f, 0.65f, 0.66f, 1.0f };
-		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(30.0f))};
-		lights[0].params2 = { glm::cos(glm::radians(60.0f)), 7.5f, 0.0f, 0.0f };
+		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f))};
+		lights[0].params2 = { glm::cos(glm::radians(30.0f)), 6.5f, 0.0f, 0.0f };
 
 		//lights[0].position = { _camera->GetPosition(), 0.0f };
 		//lights[0].direction = { _camera->GetLookDir(), 0.0f };
@@ -181,7 +179,7 @@ namespace trace {
 		//lights[0].params2 = { 0.866f, 3.1f, 0.0f, 0.0f };
 			
 
-		light_data = { 0, 0, 1, 0 };
+		light_data = { 0, 1, 0, 0 };
 		exposure = 0.9f;
 
 		m_composer = new RenderComposer();
@@ -200,11 +198,6 @@ namespace trace {
 		// Temp-----------------------------
 
 		RenderFunc::DestroyBuffer(&quadBuffer);
-
-		for (uint32_t i = 0; i < 2; i++)
-		{
-			frame_graphs[i].Destroy();
-		}
 		m_composer->Shutdowm();
 		delete m_composer;
 		m_composer = nullptr;
@@ -252,9 +245,6 @@ namespace trace {
 		}
 		case trace::EventType::TRC_WND_CLOSE:
 		{
-			//trace::WindowClose* wnd_close = reinterpret_cast<trace::WindowClose*>(p_event);
-
-			
 
 			break;
 		}
@@ -374,7 +364,6 @@ namespace trace {
 			_camera->Update(deltaTime);
 			//=========================
 
-			static uint32_t frame_index = 0;
 			if (render_mode.w == 8)
 			{
 				glm::vec3 light_pos = glm::vec3(lights[0].position);
@@ -418,13 +407,10 @@ namespace trace {
 				f_g,
 				frame_blck_bd
 			);
-
-			
+			f_g.Destroy();
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
-			f_g.Destroy();
-			frame_index = (frame_index + 1) % 3;
 		}
 		m_listCount = 0;
 		m_opaqueObjectsSize = 0;

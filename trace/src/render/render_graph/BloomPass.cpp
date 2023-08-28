@@ -98,12 +98,12 @@ namespace trace {
 
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 
-			RenderFunc::BindRenderGraphResource(
+			RenderFunc::BindRenderGraphTexture(
 				render_graph,
 				m_prefilterPipeline.get(),
 				"prefilter_Texture",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&render_graph->GetResource(fd.hdr_index)
+				render_graph->GetResource_ptr(fd.hdr_index)
 			);
 
 			float threshold = 1.01f;

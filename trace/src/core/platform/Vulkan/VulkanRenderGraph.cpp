@@ -153,23 +153,8 @@ namespace vk {
 
 		std::vector<trace::RenderGraphResource>& resources = render_graph->GetResources();
 
-		uint32_t frame_index = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
-
-
-		//if (!vk::_WaitFence(instance, _device, &_device->m_inFlightFence[frame_index], UINT64_MAX))
-		//{
-		//	TRC_WARN("Fence timeout or wait failure");
-		//	return false;
-		//}
-		
-
 		for (auto& evnt : handle->events)
 		{
-			//vkDestroyEvent(
-			//	_device->m_device,
-			//	evnt.evnt,
-			//	instance->m_alloc_callback
-			//);
 			_device->frames_resources[_device->m_imageIndex]._events.push_back(evnt.evnt);
 
 		}
@@ -184,18 +169,11 @@ namespace vk {
 
 				if (res_handle->resource.texture.m_view != VK_NULL_HANDLE)
 				{
-					//_DestroyImageView(instance, _device, &res_handle->resource.texture.m_view);
 					_device->frames_resources[_device->m_imageIndex]._image_views.push_back(res_handle->resource.texture.m_view);
 					res_handle->resource.texture.m_view = VK_NULL_HANDLE;
 				}
-				//vkDestroyImage(_device->m_device, res_handle->resource.texture.m_handle, instance->m_alloc_callback);
 				_device->frames_resources[_device->m_imageIndex]._images.push_back(res_handle->resource.texture.m_handle);
 				res_handle->resource.texture.m_handle = VK_NULL_HANDLE;
-				//_DestroySampler(
-				//	instance,
-				//	_device,
-				//	res_handle->resource.texture.m_sampler
-				//);
 				_device->frames_resources[_device->m_imageIndex]._samplers.push_back(res_handle->resource.texture.m_sampler);
 				res_handle->resource.texture.m_sampler = VK_NULL_HANDLE;
 
@@ -216,28 +194,13 @@ namespace vk {
 			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 
-			//_DestroyRenderPass(
-			//	instance,
-			//	_device,
-			//	&pass_handle->physical_pass
-			//);
 			_device->frames_resources[_device->m_imageIndex]._renderPasses.push_back(pass_handle->physical_pass.m_handle);
-			//vkDestroyFramebuffer(
-			//	_device->m_device,
-			//	pass_handle->frame_buffer,
-			//	instance->m_alloc_callback
-			//);
+	
 			_device->frames_resources[_device->m_imageIndex]._framebuffers.push_back(pass_handle->frame_buffer);
 			delete pass_handle;
 			pass->GetRenderHandle()->m_internalData = nullptr;
 		}
 
-
-		//if (_device->mem_flush)
-		//{
-		//	vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
-		//	_device->mem_flush = VK_NULL_HANDLE;
-		//}
 		handle->memory_size = 0;
 		handle->current_offset = 0;
 		handle->memory_type_bits = 0;
@@ -678,13 +641,14 @@ namespace vk {
 
 		return result;
 	}
-	bool __BindRenderGraphResource(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
+	
+	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
 	{
 		bool result = true;
 
 		if (!render_graph || !pipeline)
 		{
-			TRC_ERROR("Unable to bind render graph please enter a valid pointer, {} || {}", (const void*)render_graph, (const void*)pipeline );
+			TRC_ERROR("Unable to bind render graph please enter a valid pointer, {} || {}", (const void*)render_graph, (const void*)pipeline);
 			return false;
 		}
 
@@ -706,39 +670,34 @@ namespace vk {
 			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
 			return false;
 		}
-
-
-		bool isTexture = (resource->resource_type == trace::RenderGraphResourceType::Texture);
-
-		if (!isTexture)
-		{
-			TRC_WARN("Only texture resource can be binded 'for now' ");
-			return false;
-		}
-
-		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
-
-		
-
-		if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle)
-			return false;
-
-
-
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-
-
-		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
 		VkDescriptorImageInfo image_info = {};
-		image_info.sampler = res_handle->resource.texture.m_sampler;
-		image_info.imageView = res_handle->resource.texture.m_view;
-		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		if (resource->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
+		image_info.sampler = device->nullImage.m_sampler;
+		image_info.imageView = device->nullImage.m_view;
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
+		pipe_handle->last_tex_update[device->m_imageIndex] = nullptr;
+
+		if (resource)
 		{
-			image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
+			image_info.sampler = res_handle->resource.texture.m_sampler;
+			image_info.imageView = res_handle->resource.texture.m_view;
+			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle)
+				return false;
+
+			if (resource->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
+			{
+				image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+			}
+			pipe_handle->last_tex_update[device->m_imageIndex] = (void*)res_handle->resource.texture.m_handle;
 		}
+
+		
 
 		write.descriptorCount = 1; //HACK: Fix
 		write.dstBinding = meta_data._slot;
@@ -786,9 +745,15 @@ namespace vk {
 			0,
 			nullptr
 		);
-		pipe_handle->last_tex_update[device->m_imageIndex] = (void*)res_handle->resource.texture.m_handle;
+		
 
 		return result;
+	}
+
+	bool __BindRenderGraphBuffer(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
+	{
+		// Binding for render graph buffer has not being implemented
+		return false;
 	}
 
 
@@ -1110,13 +1075,7 @@ namespace vk {
 
 		if (graph_handle->memory_size > _device->frame_mem_size)
 		{
-			//if (_device->mem_flush)
-			//{
-			//	vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
-			//	_device->mem_flush = VK_NULL_HANDLE;
-			//}
 
-			//_device->mem_flush = _device->frame_memory;
 			if(_device->frame_memory) _device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
 			_device->frame_memory = VK_NULL_HANDLE;
 
@@ -1134,19 +1093,6 @@ namespace vk {
 			mem_count++;
 			if (mem_count > 30)
 			{
-				uint32_t frame_index = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
-				//if (!vk::_WaitFence(instance, _device, &_device->m_inFlightFence[frame_index], UINT64_MAX))
-				//{
-				//	TRC_WARN("Fence timeout or wait failure");
-				//}
-
-				//if (_device->mem_flush)
-				//{
-				//	vkFreeMemory(_device->m_device, _device->mem_flush, instance->m_alloc_callback);
-				//	_device->mem_flush = VK_NULL_HANDLE;
-				//}
-
-				//_device->mem_flush = _device->frame_memory;
 				_device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
 				_device->frame_memory = VK_NULL_HANDLE;
 				VK_ASSERT(vkAllocateMemory(

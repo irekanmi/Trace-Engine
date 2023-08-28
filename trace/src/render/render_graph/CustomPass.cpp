@@ -57,9 +57,9 @@ namespace trace {
 
 		RenderGraphPass* pass = render_graph->AddPass("CUSTOM_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->AddColorAttachmentInput(render_graph->GetResource(color_input_index).resource_name);
+		pass->AddColorAttachmentInput(color_input_index);
 
-		pass->AddColorAttachmentOuput(render_graph->GetResource(color_output_index).resource_name);
+		pass->AddColorAttachmentOuput(color_output_index);
 
 		m_pipeline = ResourceSystem::get_instance()->GetPipeline("custom_pass_pipeline");
 
@@ -70,12 +70,12 @@ namespace trace {
 				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 
 
-				RenderFunc::BindRenderGraphResource(
+				RenderFunc::BindRenderGraphTexture(
 					render_graph,
 					m_pipeline.get(),
 					"color",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					&render_graph->GetResource(color_input_index)
+					render_graph->GetResource_ptr(color_input_index)
 				);
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());

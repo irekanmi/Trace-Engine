@@ -211,33 +211,16 @@ namespace trace {
 		position_desc.m_height = fd.frame_height;
 		depth_desc.m_width = fd.frame_width;
 		depth_desc.m_height = fd.frame_height;
-		position_index = render_graph->AddTextureResource("gPosition", position_desc);
-		normal_index = render_graph->AddTextureResource("gNormal", position_desc);
-		color_index = render_graph->AddTextureResource("gColor", position_desc);
-		depth_index = render_graph->AddTextureResource("depth", depth_desc);
+		position_index = pass->CreateAttachmentOutput("gPosition", position_desc);
+		normal_index = pass->CreateAttachmentOutput("gNormal", position_desc);
+		color_index = pass->CreateAttachmentOutput("gColor", position_desc);
+		depth_index = pass->CreateDepthAttachmentOutput("depth", depth_desc);
 		
 		gbuffer_data.position_index = position_index;
 		gbuffer_data.normal_index = normal_index;
 		gbuffer_data.color_index = color_index;
 		gbuffer_data.depth_index = depth_index;
 
-		pass->CreateAttachmentOutput(
-			render_graph->GetResource(position_index).resource_name,
-			{}
-		);
-		pass->CreateAttachmentOutput(
-			render_graph->GetResource(normal_index).resource_name,
-			{}
-		);
-		pass->CreateAttachmentOutput(
-			render_graph->GetResource(color_index).resource_name,
-			{}
-		);
-
-		pass->CreateDepthAttachmentOutput(
-			render_graph->GetResource(depth_index).resource_name,
-			{}
-		);
 
 		pass->SetRunCB([&](std::vector<uint32_t>& inputs)
 			{
@@ -246,18 +229,6 @@ namespace trace {
 
 
 				m_renderer->RenderOpaqueObjects();
-			});
-
-		pass->SetResizeCB([&](RenderGraph* graph, RenderGraphPass* pass, uint32_t width, uint32_t height)
-			{
-				TextureDesc desc;
-				desc.m_width = width;
-				desc.m_height = height;
-
-				graph->ModifyTextureResource(graph->GetResource(position_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(normal_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(color_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(depth_index).resource_name, desc);
 			});
 
 	}

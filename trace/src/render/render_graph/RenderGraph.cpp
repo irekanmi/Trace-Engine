@@ -350,9 +350,23 @@ namespace trace {
 		return m_passes[index];
 	}
 
+	RenderGraphPass* RenderGraph::GetPass_ptr(uint32_t index)
+	{
+		if (index > m_passes.size()) return nullptr;
+
+		return &GetPass(index);
+	}
+
 	RenderGraphResource& RenderGraph::GetResource(uint32_t index)
 	{
 		return m_resources[index];
+	}
+
+	RenderGraphResource* RenderGraph::GetResource_ptr(uint32_t index)
+	{
+		if (index > m_resources.size()) return nullptr;
+
+		return &GetResource(index);
 	}
 
 	void RenderGraph::SetFinalResourceOutput(const std::string& resource_name)

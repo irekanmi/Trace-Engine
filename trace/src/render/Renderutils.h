@@ -114,7 +114,8 @@ namespace trace {
 	typedef bool (*__EndRenderGraphPass)(RenderGraph*, RenderGraphPass* );
 	typedef bool (*__BeginRenderGraph)(RenderGraph* );
 	typedef bool (*__EndRenderGraph)(RenderGraph* );
-	typedef bool (*__BindRenderGraphResource)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
+	typedef bool (*__BindRenderGraphTexture)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
+	typedef bool (*__BindRenderGraphBuffer)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
 	//------------------------------
 
 
@@ -198,7 +199,8 @@ namespace trace {
 		static bool EndRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass);
 		static bool BeginRenderGraph(RenderGraph* render_graph);
 		static bool EndRenderGraph(RenderGraph* render_graph);
-		static bool BindRenderGraphResource(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
+		static bool BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
+		static bool BindRenderGraphBuffer(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
 
 
 		static bool ValidateHandle(GHandle* handle);
@@ -268,7 +270,8 @@ namespace trace {
 		static __EndRenderGraphPass _endRenderGraphPass;
 		static __BeginRenderGraph _beginRenderGraph;
 		static __EndRenderGraph _endRenderGraph;
-		static __BindRenderGraphResource _bindRenderGraphResorce;
+		static __BindRenderGraphTexture _bindRenderGraphTexture;
+		static __BindRenderGraphBuffer _bindRenderGraphBuffer;
 
 
 		static __ValidateHandle _validateHandle;

@@ -242,9 +242,6 @@ namespace trace {
 		
 
 		main_pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
-				
-			RenderGraphResource& pos_res = render_graph->GetResource(gbuffer_data.position_index);
-			RenderGraphResource& norm_res = render_graph->GetResource(gbuffer_data.normal_index);
 
 			RenderFunc::SetPipelineData(
 				m_pipeline.get(),
@@ -281,20 +278,20 @@ namespace trace {
 				&noise_tex
 			);
 
-			RenderFunc::BindRenderGraphResource(
+			RenderFunc::BindRenderGraphTexture(
 				render_graph,
 				m_pipeline.get(),
 				"g_bufferData0",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&pos_res
+				render_graph->GetResource_ptr(gbuffer_data.position_index)
 			);
 
-			RenderFunc::BindRenderGraphResource(
+			RenderFunc::BindRenderGraphTexture(
 				render_graph,
 				m_pipeline.get(),
 				"g_bufferData1",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&norm_res,
+				render_graph->GetResource_ptr(gbuffer_data.normal_index),
 				1
 			);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
@@ -321,14 +318,13 @@ namespace trace {
 
 		blur_pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 
-			RenderGraphResource& res = render_graph->GetResource(ssao_data.ssao_main);
 
-			RenderFunc::BindRenderGraphResource(
+			RenderFunc::BindRenderGraphTexture(
 				render_graph,
 				m_blurPipe.get(),
-				res.resource_name,
+				"ssao_main",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&res
+				render_graph->GetResource_ptr(ssao_data.ssao_main)
 			);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);

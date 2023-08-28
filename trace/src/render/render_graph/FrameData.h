@@ -8,15 +8,15 @@ namespace trace {
 
 	struct GBufferData
 	{
-		uint32_t position_index;
-		uint32_t normal_index;
-		uint32_t color_index;
-		uint32_t depth_index;
+		uint32_t position_index = INVALID_ID;
+		uint32_t normal_index = INVALID_ID;
+		uint32_t color_index = INVALID_ID;
+		uint32_t depth_index = INVALID_ID;
 	};
 
 	struct LightningData
 	{
-		uint32_t light_output;
+		uint32_t light_output = INVALID_ID;
 	};
 
 	struct FrameData
@@ -30,8 +30,8 @@ namespace trace {
 
 	struct SSAOData
 	{
-		uint32_t ssao_main;
-		uint32_t ssao_blur;
+		uint32_t ssao_main = INVALID_ID;
+		uint32_t ssao_blur = INVALID_ID;
 	};
 
 	struct BloomData

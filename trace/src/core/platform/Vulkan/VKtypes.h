@@ -221,7 +221,6 @@ namespace trace {
 		void* m_bufferPtr;
 		char* m_bufferData;
 		uint32_t m_bufCurrentOffset;
-		VkDeviceMemory mem_flush = VK_NULL_HANDLE;
 		VkDeviceMemory frame_memory;
 		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
 		uint32_t frame_mem_size = 0;

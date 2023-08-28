@@ -125,21 +125,21 @@ vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 al
 
     specular *= spec;
 
-    return ( (ambient + diffuse) * _lgt_color + specular) * attenuation;   
+    return ( (ambient + diffuse) + specular) * attenuation;   
 }
 
 vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index, float ssao)
 {
     vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
     mat3 view_mat = mat3(view);
-    vec3 light_direction = view_mat * u_gLights[index].direction.xyz;
+    vec3 light_direction = normalize(view_mat * u_gLights[index].direction.xyz);
     vec3 light_dir = light_pos - position;
     float _lgt_intensity = u_gLights[index].params2.y;
     vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
     float _lgt_innerCutOff = u_gLights[index].params1.w;
     float _lgt_outerCutOff = u_gLights[index].params2.x;
     light_dir = normalize(light_dir);
-    float theta = dot(light_dir, normalize(-light_direction));
+    float theta = dot(light_dir, -light_direction);
     
     vec4 ambient = vec4( (ambeint_factor * albedo).rgb, 1.0f ) * ssao;
     if(theta > _lgt_outerCutOff)
@@ -164,7 +164,7 @@ vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 alb
 
         specular *= spec;
         
-        return ( (ambient + diffuse) * _lgt_color + specular) ;
+        return ( (ambient + diffuse) + specular) ;
 
     }
 

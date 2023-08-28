@@ -152,7 +152,6 @@ namespace trace {
 		RenderFunc::_setPipelineData = vk::__SetPipelineData;
 		RenderFunc::_setPipelineTextureData = vk::__SetPipelineTextureData;
 		RenderFunc::_bindPipeline_ = vk::__BindPipeline_;
-		RenderFunc::_bindRenderGraphResorce = vk::__BindRenderGraphResource;
 
 		RenderFunc::_createRenderPass = vk::__CreateRenderPass;
 		RenderFunc::_destroyRenderPass = vk::__DestroyRenderPass;
@@ -176,8 +175,11 @@ namespace trace {
 		RenderFunc::_endRenderGraphPass = vk::__EndRenderGraphPass;
 		RenderFunc::_beginRenderGraph = vk::__BeginRenderGraph;
 		RenderFunc::_endRenderGraph = vk::__EndRenderGraph;
+		RenderFunc::_bindRenderGraphTexture = vk::__BindRenderGraphTexture;
+		RenderFunc::_bindRenderGraphBuffer = vk::__BindRenderGraphBuffer;
 
-		return false;
+
+		return true;
 	}
 
 	__CreateContext RenderFunc::_createContext = nullptr;
@@ -244,7 +246,8 @@ namespace trace {
 	__EndRenderGraphPass RenderFunc::_endRenderGraphPass = nullptr;
 	__BeginRenderGraph RenderFunc::_beginRenderGraph = nullptr;
 	__EndRenderGraph RenderFunc::_endRenderGraph = nullptr;
-	__BindRenderGraphResource RenderFunc::_bindRenderGraphResorce = nullptr;
+	__BindRenderGraphTexture RenderFunc::_bindRenderGraphTexture = nullptr;
+	__BindRenderGraphBuffer RenderFunc::_bindRenderGraphBuffer = nullptr;
 
 	__ValidateHandle RenderFunc::_validateHandle = nullptr;
 
@@ -658,15 +661,26 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::BindRenderGraphResource(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index)
+	bool RenderFunc::BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index)
 	{
 		bool result = true;
 
-		RENDER_FUNC_IS_VALID(_bindRenderGraphResorce);
-		result = _bindRenderGraphResorce(render_graph, pipeline, bind_name, resource_stage, resource, index);
+		RENDER_FUNC_IS_VALID(_bindRenderGraphTexture);
+		result = _bindRenderGraphTexture(render_graph, pipeline, bind_name, resource_stage, resource, index);
 
 		return result;
 	}
+
+	bool RenderFunc::BindRenderGraphBuffer(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_bindRenderGraphBuffer);
+		result = _bindRenderGraphBuffer(render_graph, pipeline, bind_name, resource_stage, resource, index);
+
+		return result;
+	}
+
 
 	bool RenderFunc::ValidateHandle(GHandle* handle)
 	{

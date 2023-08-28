@@ -123,12 +123,12 @@ namespace trace {
 				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 
 
-				RenderFunc::BindRenderGraphResource(
+				RenderFunc::BindRenderGraphTexture(
 					render_graph,
 					m_pipeline.get(),
 					"u_HdrTarget",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					&render_graph->GetResource(frame_data.hdr_index)
+					render_graph->GetResource_ptr(frame_data.hdr_index)
 				);
 
 				float exposure = m_renderer->exposure;

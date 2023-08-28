@@ -237,16 +237,6 @@ namespace vk {
 		vkDestroySampler(_handle->m_device, _handle->nullImage.m_sampler, _instance->m_alloc_callback);
 		vk::_DestroyImage(_instance, _handle, &_handle->nullImage);
 
-		//Render Graph Memory
-		if (_handle->mem_flush)
-		{
-			vkFreeMemory(
-				_handle->m_device,
-				_handle->mem_flush,
-				_instance->m_alloc_callback
-			);
-			_handle->mem_flush = VK_NULL_HANDLE;
-		}
 
 		vkFreeMemory(
 			_handle->m_device,

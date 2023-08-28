@@ -29,7 +29,7 @@ void main()
     vec3 tangent = normalize( rand_vec - normal * dot(rand_vec, normal) );
     vec3 bi_tangent = cross(tangent, normal);
     mat3 TBN = mat3( tangent, bi_tangent, normal );
-    float radius = 10.0f;
+    float radius = 8.0f;
     float bias = 0.025f;
 
     float occulsion = 0.0f;

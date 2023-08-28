@@ -150,7 +150,9 @@ namespace trace {
 		uint32_t FindPassIndex(const std::string& pass_name);
 		uint32_t FindResourceIndex(const std::string& resource_name);
 		RenderGraphPass& GetPass(uint32_t index);
+		RenderGraphPass* GetPass_ptr(uint32_t index);
 		RenderGraphResource& GetResource(uint32_t index);
+		RenderGraphResource* GetResource_ptr(uint32_t index);
 		void SetFinalResourceOutput(const std::string& resource_name);
 		void SetRenderer(Renderer* renderer) { m_renderer = renderer; }
 		bool Compile();
