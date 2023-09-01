@@ -76,7 +76,7 @@ public:
 		TRC_INFO("Sample Layer Attached");
 
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
-		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
+		_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
 		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 
@@ -145,7 +145,7 @@ public:
 
 		Renderer* renderer = Renderer::get_instance();
 		CommandList cmd_list = renderer->BeginCommandList();
-		//renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
+		renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());

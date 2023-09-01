@@ -23,7 +23,7 @@ namespace trace {
 	Renderer* Renderer::s_instance = nullptr;
 
 	//Temp------------
-	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR;
+	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR | RENDER_BLOOM;
 	//----------------
 
 	Renderer::Renderer()
@@ -170,7 +170,7 @@ namespace trace {
 		lights[0].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
 		lights[0].color = { 0.37f, 0.65f, 0.66f, 1.0f };
 		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f))};
-		lights[0].params2 = { glm::cos(glm::radians(30.0f)), 6.5f, 0.0f, 0.0f };
+		lights[0].params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };
 
 		//lights[0].position = { _camera->GetPosition(), 0.0f };
 		//lights[0].direction = { _camera->GetLookDir(), 0.0f };
@@ -184,7 +184,6 @@ namespace trace {
 
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
-		frame_settings |= RENDER_SSAO;
 
 
 
@@ -239,6 +238,14 @@ namespace trace {
 			else if (press->m_keycode == KEY_2)
 			{
 				frame_settings &= ~RENDER_SSAO;
+			}
+			else if (press->m_keycode == KEY_N)
+			{
+				frame_settings |= RENDER_BLOOM;
+			}
+			else if (press->m_keycode == KEY_M)
+			{
+				frame_settings &= ~RENDER_BLOOM;
 			}
 
 			break;
@@ -407,10 +414,10 @@ namespace trace {
 				f_g,
 				frame_blck_bd
 			);
-			f_g.Destroy();
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
+			f_g.Destroy();
 		}
 		m_listCount = 0;
 		m_opaqueObjectsSize = 0;

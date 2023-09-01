@@ -188,6 +188,7 @@ namespace trace {
 
 		VkDescriptorBufferInfo bufs[128];
 		uint32_t t_size = 0;
+		
 		for (uint32_t i = 0; i < device->frames_in_flight; i++)
 		{
 			std::vector<VkWriteDescriptorSet> _writes;
@@ -250,7 +251,19 @@ namespace trace {
 					}
 					bufs[k].range = struct_size;
 					write.pBufferInfo = &bufs[k];
-					_writes.push_back(write);
+					//_writes.push_back(write);
+					for (uint32_t j = 0; j < VK_MAX_DESCRIPTOR_SET_PER_FRAME; j++)
+					{
+						if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+						{
+							write.dstSet = _handle->Scene_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
+						}
+						else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+						{
+							write.dstSet = _handle->Instance_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
+						}
+						_writes.push_back(write);
+					}
 				}
 				if (is_array)
 				{
@@ -282,7 +295,19 @@ namespace trace {
 							img_info.sampler = device->nullImage.m_sampler;
 							write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 							write.pImageInfo = &img_info;
-							_writes.push_back(write);
+							//_writes.push_back(write);
+							for (uint32_t j = 0; j < VK_MAX_DESCRIPTOR_SET_PER_FRAME; j++)
+							{
+								if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+								{
+									write.dstSet = _handle->Scene_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
+								}
+								else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+								{
+									write.dstSet = _handle->Instance_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
+								}
+								_writes.push_back(write);
+							}
 							//if (mem.resource_data_type == ShaderData::CUSTOM_DATA_TEXTURE && mem.data)
 							//{
 							//	VKImage* tex = (VKImage*)mem.data;
@@ -333,12 +358,26 @@ namespace trace {
 						}
 						bufs[k].range = struct_size;
 						write.pBufferInfo = &bufs[k];
-						_writes.push_back(write);
+						//_writes.push_back(write);
+						for (uint32_t j = 0; j < VK_MAX_DESCRIPTOR_SET_PER_FRAME; j++)
+						{
+							if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+							{
+								write.dstSet = _handle->Scene_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
+							}
+							else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+							{
+								write.dstSet = _handle->Instance_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
+							}
+							_writes.push_back(write);
+						}
 						k++;
 					}
 					
 				}
 				k++;
+
+
 			}
 			t_size = k_off;
 
@@ -627,6 +666,7 @@ namespace vk {
 
 			void* map_point = data_point + location;
 			memcpy(map_point, data, meta_data._size);
+
 			return true;
 		}
 
@@ -709,7 +749,6 @@ namespace vk {
 		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
 			write.dstSet = _handle->Scene_sets[_device->m_imageIndex];
-
 			break;
 		}
 
@@ -768,12 +807,12 @@ namespace vk {
 
 		if (_handle->Scene_sets[0])
 		{
-			_sets[set_count++] = _handle->Scene_sets[_device->m_imageIndex];
+			_sets[set_count++] = _handle->Scene_set ? _handle->Scene_set : _handle->Scene_sets[_device->m_imageIndex];
 		}
 
 		if (_handle->Instance_sets[0])
 		{
-			_sets[set_count++] = _handle->Instance_sets[_device->m_imageIndex];
+			_sets[set_count++] = _handle->Instance_set ? _handle->Instance_set : _handle->Instance_sets[_device->m_imageIndex];
 		}
 
 		if (_handle->Local_sets[0])

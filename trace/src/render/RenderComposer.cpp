@@ -23,12 +23,14 @@ namespace trace {
 		ssao_pass.Init(m_renderer);
 		toneMap_pass.Init(m_renderer);
 		forward_pass.Init(m_renderer);
+		bloom_pass.Init(m_renderer);
 
 		return result;
 	}
 
 	void RenderComposer::Shutdowm()
 	{
+		bloom_pass.ShutDown();
 		forward_pass.ShutDown();
 		toneMap_pass.ShutDown();
 		ssao_pass.ShutDown();
@@ -39,8 +41,6 @@ namespace trace {
 	bool RenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings)
 	{
 		bool result = true;
-
-		//frame_graph.Destroy();
 
 		FrameData& fd = black_board.add<FrameData>();
 		fd.frame_settings = frame_settings;
@@ -58,6 +58,10 @@ namespace trace {
 		}
 		lighting_pass.Setup(&frame_graph, black_board);
 		forward_pass.Setup(&frame_graph, black_board);
+		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+		{
+			bloom_pass.Setup(&frame_graph, black_board);
+		}
 		toneMap_pass.Setup(&frame_graph, black_board);
 		frame_graph.SetFinalResourceOutput("swapchain");
 

@@ -769,8 +769,7 @@ namespace vk {
 			return false;
 		}
 
-		// Destroy frame resources "RenderGraph"
-		destroy_frame_resources(device, _handle->m_imageIndex);
+		
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		vk::_CommandBuffer_Reset(command_buffer);
@@ -843,6 +842,8 @@ namespace vk {
 		}
 
 		vk::_CommandBufferSubmitted(command_buffer);
+		// Destroy frame resources "RenderGraph"
+		destroy_frame_resources(device, _handle->m_imageIndex);
 
 		//vk::_PresentSwapchainImage(m_instance, m_handle, &m_handle->m_swapChain, m_handle->m_graphicsQueue, m_handle->m_presentQueue, m_handle->m_queueCompleteSemaphores[m_handle->m_currentFrame], &m_handle->m_imageIndex);
 

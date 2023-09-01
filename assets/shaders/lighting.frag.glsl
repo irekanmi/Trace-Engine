@@ -125,7 +125,7 @@ vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 al
 
     specular *= spec;
 
-    return ( (ambient + diffuse) + specular) * attenuation;   
+    return ( (ambient + diffuse) * _lgt_color + specular) * attenuation;   
 }
 
 vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index, float ssao)
@@ -164,7 +164,7 @@ vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 alb
 
         specular *= spec;
         
-        return ( (ambient + diffuse) + specular) ;
+        return ( (ambient + diffuse) * _lgt_color + specular) ;
 
     }
 

@@ -8,6 +8,7 @@
 #include "render_graph/SSAO.h"
 #include "render_graph/ToneMapPass.h"
 #include "render_graph/ForwardPass.h"
+#include "render_graph/BloomPass.h"
 
 
 namespace trace {
@@ -37,6 +38,7 @@ namespace trace {
 		SSAO ssao_pass;
 		ToneMapPass toneMap_pass;
 		ForwardPass forward_pass;
+		BloomPass bloom_pass;
 
 	protected:
 

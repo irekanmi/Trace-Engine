@@ -58,6 +58,12 @@ namespace trace {
 		m_attachmentInputs.push_back(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		input_tex->read_passes.push_back(pass_index);
+		RenderGraphEdge edge = {};
+		edge.from = input_tex->written_passes.back();
+		edge.to = pass_index;
+		edge.resource = index;
+		m_edges.push_back(edge);
+		m_renderGraph->GetPass(edge.from).GetPassEdges().push_back(edge);
 	}
 
 	void RenderGraphPass::AddColorAttachmentOuput(const std::string& name)
@@ -72,6 +78,16 @@ namespace trace {
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		m_attachmentOutputs.push_back(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
+		if (!output_tex->written_passes.empty())
+		{
+			RenderGraphEdge edge = {};
+			edge.from = output_tex->written_passes.back();
+			edge.to = pass_index;
+			edge.resource = index;
+			m_edges.push_back(edge);
+			m_renderGraph->GetPass(edge.from).GetPassEdges().push_back(edge);
+		}
+
 		output_tex->written_passes.push_back(pass_index);
 	}
 
@@ -122,6 +138,12 @@ namespace trace {
 		m_depthStencilInput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->read_passes.push_back(pass_index);
+		RenderGraphEdge edge = {};
+		edge.from = output_tex->written_passes.back();
+		edge.to = pass_index;
+		edge.resource = index;
+		m_edges.push_back(edge);
+		m_renderGraph->GetPass(edge.from).GetPassEdges().push_back(edge);
 	}
 
 	void RenderGraphPass::SetDepthStencilOutput(const std::string& name)
@@ -490,7 +512,7 @@ namespace trace {
 	void RenderGraph::compute_graph()
 	{
 
-		compute_edges();
+		//compute_edges();
 
 		std::vector<RenderGraphPass*> pass_stack;
 		std::vector<RenderGraphPass*> sorted_passes;
@@ -550,37 +572,39 @@ namespace trace {
 				curr_pass->renderArea.z = static_cast<float>(width);
 				curr_pass->renderArea.w = static_cast<float>(height);
 
-				curr_pass->clearColor.r = 0.22f;
-				curr_pass->clearColor.g = 0.217f;
-				curr_pass->clearColor.b = 0.20f;
-				curr_pass->clearColor.a = 0.85f;
+				curr_pass->clearColor.r = 0.0001f;
+				curr_pass->clearColor.g = 0.0001f;
+				curr_pass->clearColor.b = 0.0001f;
+				curr_pass->clearColor.a = 0.0001f;
 
 				curr_pass->depthValue = 1.0f;
 				curr_pass->stencilValue = 0;
 
 				for (RenderGraphEdge& edge : curr_pass->GetPassEdges())
 				{
-					if (!edge.from ) continue;
+					if (edge.from == INVALID_ID ) continue;
 
-					RenderGraphPass* from = edge.from;
-					uint32_t f_index = FindPassIndex(from->GetPassName());
-					if (visited_pass[f_index] > 0)
+					RenderGraphPass* from = GetPass_ptr(edge.from);
+					if (from != curr_pass)
 					{
-						auto curr_it = std::find(sorted_passes.begin(), sorted_passes.end(), curr_pass);
-						auto it = std::find(sorted_passes.begin(), sorted_passes.end(), from);
-						if (curr_it < it) continue;
-						sorted_passes.erase(curr_it);
-						sorted_passes.emplace(it, curr_pass);
-						//pass_stack.push_back(from);
-					}
-					else
-					{
-						pass_stack.push_back(from);
+						uint32_t f_index = FindPassIndex(from->GetPassName());
+						if (visited_pass[f_index] > 0)
+						{
+							auto curr_it = std::find(sorted_passes.begin(), sorted_passes.end(), curr_pass);
+							auto it = std::find(sorted_passes.begin(), sorted_passes.end(), from);
+							if (curr_it < it) continue;
+							sorted_passes.erase(curr_it);
+							sorted_passes.emplace(it, curr_pass);
+						}
+						else
+						{
+							pass_stack.push_back(from);
+						}
 					}
 
-					if (edge.to != curr_pass)
+					RenderGraphPass* to = GetPass_ptr(edge.to);
+					if (to != curr_pass)
 					{
-						RenderGraphPass* to = edge.to;
 						uint32_t t_index = FindPassIndex(to->GetPassName());
 						if (visited_pass[t_index] > 0)
 						{
@@ -593,10 +617,7 @@ namespace trace {
 							}
 							
 						}
-						else
-						{
-							pass_stack.push_back(to);
-						}
+
 					}
 					
 					
@@ -616,7 +637,7 @@ namespace trace {
 
 	void RenderGraph::compute_edges()
 	{
-
+		uint32_t i = 0;
 		for (auto& resource : m_resources)
 		{
 			if (resource.written_passes.empty())
@@ -626,9 +647,9 @@ namespace trace {
 					RenderGraphPass* pass = &GetPass(pass_index);
 					std::vector<RenderGraphEdge>& pass_edges = pass->GetPassEdges();
 					RenderGraphEdge edge = {};
-					edge.from = nullptr;
-					edge.to = pass;
-					edge.resource = &resource;
+					edge.from = INVALID_ID;
+					edge.to = pass_index;
+					edge.resource = i;
 					pass_edges.push_back(edge);
 				}
 				continue;
@@ -641,13 +662,15 @@ namespace trace {
 				{
 					RenderGraphPass* read_pass = &GetPass(read_pass_index);
 					RenderGraphEdge edge = {};
-					edge.from = pass;
-					edge.to = read_pass;
-					edge.resource = &resource;
+					edge.from = pass_index;
+					edge.to = read_pass_index;
+					edge.resource = i;
 					pass_edges.push_back(edge);
 					read_pass->GetPassEdges().push_back(edge);
 				}
 			}
+
+			i++;
 		}
 
 

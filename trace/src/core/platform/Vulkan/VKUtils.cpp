@@ -2280,16 +2280,16 @@ namespace vk {
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
 
-				VkDescriptorSetLayout test[3] = {
-					pipeline->Scene_layout,
-					pipeline->Scene_layout,
-					pipeline->Scene_layout
-				};
+				VkDescriptorSetLayout test[VK_MAX_DESCRIPTOR_SET];
+				for (uint32_t i = 0; i < VK_MAX_DESCRIPTOR_SET; i++)
+				{
+					test[i] = pipeline->Scene_layout;
+				}
 
 				VkDescriptorSetAllocateInfo alloc_info = {};
 				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 				alloc_info.descriptorPool = pipeline->Scene_pool;
-				alloc_info.descriptorSetCount = 3;
+				alloc_info.descriptorSetCount = VK_MAX_DESCRIPTOR_SET;
 				alloc_info.pSetLayouts = test;
 
 
@@ -2315,16 +2315,16 @@ namespace vk {
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Instance_pool);
 
-				VkDescriptorSetLayout test[3] = {
-					pipeline->Instance_layout,
-					pipeline->Instance_layout,
-					pipeline->Instance_layout
-				};
+				VkDescriptorSetLayout test[VK_MAX_DESCRIPTOR_SET];
+				for (uint32_t i = 0; i < VK_MAX_DESCRIPTOR_SET; i++)
+				{
+					test[i] = pipeline->Instance_layout;
+				}
 
 				VkDescriptorSetAllocateInfo alloc_info = {};
 				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 				alloc_info.descriptorPool = pipeline->Instance_pool;
-				alloc_info.descriptorSetCount = 3;
+				alloc_info.descriptorSetCount = VK_MAX_DESCRIPTOR_SET;
 				alloc_info.pSetLayouts = test;
 
 

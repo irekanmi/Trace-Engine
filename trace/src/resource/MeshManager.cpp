@@ -110,6 +110,8 @@ namespace trace {
 			return;
 		}
 
+
+
 		mesh->m_id = INVALID_ID;
 		mesh->~Mesh();
 
@@ -174,6 +176,7 @@ namespace trace {
 			TRC_WARN("Model is still in use can't unload");
 			return;
 		}
+
 
 		model->m_id = INVALID_ID;
 		model->~Model();

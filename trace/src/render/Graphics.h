@@ -248,6 +248,7 @@ namespace trace {
 		RENDER_DEFAULT = BIT(1),
 		RENDER_SSAO = BIT(2),
 		RENDER_HDR = BIT(3),
+		RENDER_BLOOM = BIT(4),
 		RENDER_SETTING_MAX
 	};
 
@@ -339,6 +340,8 @@ namespace trace {
 		uint32_t _index = 0;
 		uint32_t _count = 0;
 		uint32_t _struct_index = INVALID_ID;
+		uint16_t _frame_index = uint16_t(-1); // TODO: Create enum for maximum 16bit integer
+		uint16_t _num_frame_update = 0;
 		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
 	};

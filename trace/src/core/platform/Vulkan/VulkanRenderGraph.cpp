@@ -66,12 +66,12 @@ namespace vk {
 				bool from, to, _from, _to;
 				from = to = _from = _to =  false;
 
-				from = (edge.from != nullptr);
-				to = (edge.to != nullptr);
-				_from = (edge.from == pass) ;
-				_to = (edge.to == pass);
+				from = (edge.from != INVALID_ID);
+				to = (edge.to != INVALID_ID);
+				_from = (edge.from == pass_index);
+				_to = (edge.to == pass_index);
 
-				trace::RenderGraphResource* res = edge.resource;
+				trace::RenderGraphResource* res = render_graph->GetResource_ptr(edge.resource);
 				bool isTexture, isSwapchainImage;
 				isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
 				isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
@@ -100,7 +100,7 @@ namespace vk {
 					}
 					else if (_to && isTexture)
 					{
-						trace::VKEvntPair evnt_pair = { edge.from, res };
+						trace::VKEvntPair evnt_pair = { render_graph->GetPass_ptr(edge.from), res };
 						auto it = std::find_if(handle->events.begin(), handle->events.end(), [&evnt_pair](trace::VKEvntPair& val)
 							{
 								return val.pass == evnt_pair.pass && val.resource == evnt_pair.resource;
@@ -670,6 +670,8 @@ namespace vk {
 			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
 			return false;
 		}
+		uint32_t copy_count = 0;
+		VkCopyDescriptorSet copies[10] = {};
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		VkDescriptorImageInfo image_info = {};
@@ -680,6 +682,13 @@ namespace vk {
 		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
 		pipe_handle->last_tex_update[device->m_imageIndex] = nullptr;
 
+		bool _updated = true;
+		if (meta_data._frame_index != device->m_imageIndex)
+		{
+			meta_data._frame_index = device->m_imageIndex;
+			meta_data._num_frame_update = 0;
+			_updated = false;
+		}
 		if (resource)
 		{
 			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
@@ -687,22 +696,26 @@ namespace vk {
 			image_info.imageView = res_handle->resource.texture.m_view;
 			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle)
-				return false;
+			//if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle) return false;
 
 			if (resource->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 			{
 				image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 			}
 			pipe_handle->last_tex_update[device->m_imageIndex] = (void*)res_handle->resource.texture.m_handle;
+
+			
+			
 		}
 
+		uint32_t set_index = (device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
 		
 
 		write.descriptorCount = 1; //HACK: Fix
 		write.dstBinding = meta_data._slot;
 		write.pImageInfo = &image_info;
 		write.dstArrayElement = index;
+		meta_data._num_frame_update++;
 		switch (meta_data._resource_type)
 		{
 		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
@@ -718,20 +731,22 @@ namespace vk {
 
 		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
-			write.dstSet = pipe_handle->Scene_sets[device->m_imageIndex];
+			write.dstSet = pipe_handle->Scene_sets[set_index];
+			pipe_handle->Scene_set = pipe_handle->Scene_sets[set_index];
 
 			break;
 		}
 
 		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
 		{
-			write.dstSet = pipe_handle->Instance_sets[device->m_imageIndex];
+			write.dstSet = pipe_handle->Instance_sets[set_index];
+			pipe_handle->Instance_set = pipe_handle->Instance_sets[set_index];
 			break;
 		}
 
 		case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
 		{
-			write.dstSet = pipe_handle->Local_sets[device->m_imageIndex];
+			write.dstSet = pipe_handle->Local_sets[set_index];
 			break;
 		}
 
@@ -742,8 +757,8 @@ namespace vk {
 			device->m_device,
 			1,
 			&write,
-			0,
-			nullptr
+			copy_count,
+			copies
 		);
 		
 

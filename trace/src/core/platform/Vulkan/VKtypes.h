@@ -19,6 +19,8 @@ namespace trace {
 
 #define VK_NO_FLAGS 0
 #define VK_MAX_NUM_FRAMES 3
+#define VK_MAX_DESCRIPTOR_SET_PER_FRAME 12
+#define VK_MAX_DESCRIPTOR_SET (VK_MAX_DESCRIPTOR_SET_PER_FRAME * VK_MAX_NUM_FRAMES)
 
 	class RenderGraphPass;
 	class RenderGraph;
@@ -236,24 +238,28 @@ namespace trace {
 		VkPipelineLayout m_layout = VK_NULL_HANDLE;
 
 		VKBuffer Scene_buffers = {};
-		VkDescriptorSet Scene_sets[3] = {};
+		VkDescriptorSet Scene_sets[VK_MAX_DESCRIPTOR_SET] = {};
 		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
 
-		VkDescriptorSet Instance_sets[3] = {};
+		VkDescriptorSet Instance_sets[VK_MAX_DESCRIPTOR_SET] = {};
 		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
-		VkDescriptorSet Local_sets[3] = {};
+		VkDescriptorSet Local_sets[VK_MAX_DESCRIPTOR_SET] = {};
 		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Local_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
 		VKHandle* m_instance = nullptr;
 		VKDeviceHandle* m_device = nullptr;
 		uint32_t cache_size = 0;
 		char* cache_data = nullptr;
 		void* last_tex_update[3] = {};
+
 
 		
 

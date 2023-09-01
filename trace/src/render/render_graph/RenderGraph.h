@@ -63,10 +63,10 @@ namespace trace {
 
 	struct RenderGraphEdge
 	{
-		RenderGraphPass* from = nullptr;
-		RenderGraphPass* to = nullptr;
+		uint32_t from = INVALID_ID;
+		uint32_t to = INVALID_ID;
 
-		RenderGraphResource* resource = nullptr;
+		uint32_t resource = INVALID_ID;
 	};
 
 	class TRACE_API RenderGraphPass
