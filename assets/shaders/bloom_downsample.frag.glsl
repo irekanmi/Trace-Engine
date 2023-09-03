@@ -6,25 +6,25 @@ layout(location = 0)in vec2 in_texCoord;
 
 layout(set = 0, binding = 0)uniform sampler2D u_srcTexture;
 
-vec4 sampleTexture13Tap(sampler2D tex, vec2 inUV, ivec2 tex_size);
-vec4 sampleBox_4x4(sampler2D tex, vec2 inUV, ivec2 tex_size, float radius);
+vec4 sampleTexture13Tap(sampler2D tex, vec2 inUV);
+vec4 sampleBox_4x4(sampler2D tex, vec2 inUV, float radius);
 
 
 void main()
 {
-    ivec2 src_resolution = textureSize(u_srcTexture, 0);
-    FragColor = sampleTexture13Tap(u_srcTexture, in_texCoord, src_resolution);
+    FragColor = sampleTexture13Tap(u_srcTexture, in_texCoord);
 }
 
-vec4 sampleTexture13Tap(sampler2D tex, vec2 inUV, ivec2 tex_size)
+vec4 sampleTexture13Tap(sampler2D tex, vec2 inUV)
 {
-    //a-b-c
-    //-d-e-
-    //f-g-h
-    //-i-j-
-    //k-l-m
+    //a - b - c
+    //- d - e -
+    //f - g - h
+    //- i - j -
+    //k - l - m
     // g => being the current texel
     vec4 result;
+    ivec2 tex_size = textureSize(tex, 0);
     float texel_size_X = tex_size.x;
     float texel_size_Y = tex_size.y;
     texel_size_X = 1.0f / texel_size_X;
@@ -55,12 +55,13 @@ vec4 sampleTexture13Tap(sampler2D tex, vec2 inUV, ivec2 tex_size)
     return result;
 }
 
-vec4 sampleBox_4x4(sampler2D tex, vec2 inUV, ivec2 tex_size, float radius)
+vec4 sampleBox_4x4(sampler2D tex, vec2 inUV, float radius)
 {
     //a - b
     //c - d
 
     vec4 result;
+    ivec2 tex_size = textureSize(tex, 0);
     float texel_size_X = tex_size.x;
     float texel_size_Y = tex_size.y;
     texel_size_X = 1.0f / texel_size_X;
