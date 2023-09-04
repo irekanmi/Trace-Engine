@@ -5,10 +5,11 @@
 #include "Graphics.h"
 #include "core/FileSystem.h"
 #include "GHandle.h"
+#include "resource/Resource.h"
 
 namespace trace {
 
- 	class TRACE_API GShader
+ 	class TRACE_API GShader : public Resource
 	{
 	public:
 		GShader();

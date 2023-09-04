@@ -6,8 +6,52 @@
 #include "core/FileSystem.h"
 #include "spirv_cross/spirv_reflect.h"
 #include "render/GShader.h"
+#include "resource/ResourceSystem.h"
+#include <filesystem>
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
+
+// Interface that determines how include files in shader will be processed
+class IncludeInterface : public shaderc::CompileOptions::IncluderInterface
+{
+public:
+	// Handles shaderc_include_resolver_fn callbacks.
+	virtual shaderc_include_result* GetInclude(const char* requested_source,
+		shaderc_include_type type,
+		const char* requesting_source,
+		size_t include_depth) override
+	{
+		std::string shader_res_path = trace::ResourceSystem::get_instance()->GetShaderResourcePath();
+		std::filesystem::path path(shader_res_path);
+		path /= requested_source;
+
+		IncludeInterface::include_src_name = path.string();
+		IncludeInterface::include_src_data = trace::ShaderParser::load_shader_file(IncludeInterface::include_src_name);
+
+		shaderc_include_result* result = new shaderc_include_result();
+		result->content = IncludeInterface::include_src_data.c_str();
+		result->content_length = IncludeInterface::include_src_data.length();
+		result->source_name = IncludeInterface::include_src_name.c_str();
+		result->source_name_length = IncludeInterface::include_src_name.length();
+		result->user_data = nullptr;
+
+		return result;
+	}
+
+	// Handles shaderc_include_result_release_fn callbacks.
+	virtual void ReleaseInclude(shaderc_include_result* data) override
+	{
+		IncludeInterface::include_src_data.clear();
+		IncludeInterface::include_src_name.clear();
+		delete data;
+	}
+
+	static std::string include_src_data;
+	static std::string include_src_name;
+};
+
+std::string IncludeInterface::include_src_data = std::string();
+std::string IncludeInterface::include_src_name = std::string();
 
 namespace trace {
 	static void GenShaderRes(const std::vector<uint32_t>& code, ShaderResources& out_res, ShaderStage shader_stage)
@@ -145,14 +189,17 @@ namespace trace {
 	std::vector<uint32_t> ShaderParser::glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage)
 	{
 		shaderc::Compiler compiler;
+		shaderc::CompileOptions opt;
+		opt.SetIncluder(std::make_unique<IncludeInterface>());
+		opt.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_0);
 
-		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glsl, convertToShadercFmt(shader_stage, ShaderLang::GLSL), glsl.c_str());
+		// TODO: Fix and check why CompileGlslToSpv() requires "const char* input file name"                                        "PlaceHolder"
+		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glsl, convertToShadercFmt(shader_stage, ShaderLang::GLSL), "Trace_shader", opt);
 
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
 			std::string error = result.GetErrorMessage();
-			std::cout << error;
-			//TRC_ERROR("Error compiling shader\n {}", error.c_str()); --- fix error;
+			TRC_ERROR("Error compiling shader\n {}", error); ;
 			return std::vector<uint32_t>();
 		}
 

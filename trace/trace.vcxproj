@@ -230,6 +230,7 @@
     <ClInclude Include="src\resource\Ref.h" />
     <ClInclude Include="src\resource\Resource.h" />
     <ClInclude Include="src\resource\ResourceSystem.h" />
+    <ClInclude Include="src\resource\ShaderManager.h" />
     <ClInclude Include="src\resource\TextureManager.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
@@ -308,6 +309,7 @@
     <ClCompile Include="src\resource\PipelineManager.cpp" />
     <ClCompile Include="src\resource\Resource.cpp" />
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
+    <ClCompile Include="src\resource\ShaderManager.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
     <ClCompile Include="_externals\spirv_reflect.cpp" />
   </ItemGroup>

@@ -7,6 +7,7 @@
 #include "MeshManager.h"
 #include "PipelineManager.h"
 #include "MaterialManager.h"
+#include "ShaderManager.h"
 
 namespace trace {
 
@@ -27,10 +28,14 @@ namespace trace {
 		m_meshManager = MeshManager::get_instance();
 		m_pipelineManager = PipelineManager::get_instance();
 		m_materialManager = MaterialManager::get_instance();
+		m_shaderManager = ShaderManager::get_instance();
 
 		//TODO: Configurable
 		result = m_textureManager->Init(4096);
 		TRC_ASSERT(result, "Failed to initialize texture manager");
+
+		result = m_shaderManager->Init(4096);
+		TRC_ASSERT(result, "Failed to initialized shader manager");
 
 		result = m_modelManager->Init(4096);
 		TRC_ASSERT(result, "Failed to initialize model manager");
@@ -54,12 +59,14 @@ namespace trace {
 		m_modelManager->ShutDown();
 		m_materialManager->ShutDown();
 		m_pipelineManager->ShutDown();
+		m_shaderManager->ShutDown();
 		m_textureManager->ShutDown();
 
 		SAFE_DELETE(m_materialManager, MaterialManager);
 		SAFE_DELETE(m_pipelineManager, PipelineManager);
 		SAFE_DELETE(m_meshManager, MeshManager);
 		SAFE_DELETE(m_modelManager, ModelManager);
+		SAFE_DELETE(m_shaderManager, ShaderManager);
 		SAFE_DELETE(m_textureManager, TextureManager);
 
 		
@@ -176,5 +183,18 @@ namespace trace {
 		TRC_ASSERT(result, "Failed to load default materials");
 
 		return result;
+	}
+	Ref<GShader> ResourceSystem::CreateShader(const std::string& name, ShaderStage shader_stage)
+	{
+		m_shaderManager->CreateShader(name, shader_stage);
+		return { m_shaderManager->GetShader(name), BIND_RESOURCE_UNLOAD_FN(ShaderManager::UnloadShader, m_shaderManager)};
+	}
+	Ref<GShader> ResourceSystem::GetShader(const std::string& name)
+	{
+		return { m_shaderManager->GetShader(name), BIND_RESOURCE_UNLOAD_FN(ShaderManager::UnloadShader, m_shaderManager) };
+	}
+	std::string ResourceSystem::GetShaderResourcePath()
+	{
+		return m_shaderManager->GetShaderResourcePath();
 	}
 }

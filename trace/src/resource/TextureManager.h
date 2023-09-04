@@ -5,6 +5,7 @@
 #include "render/GTexture.h"
 #include <string>
 #include "Ref.h"
+#include <filesystem>
 
 using Texture_Ref = Ref<trace::GTexture>;
 
@@ -54,6 +55,7 @@ namespace trace {
 		GTexture default_diffuse_texture;
 		GTexture default_specular_texture;
 		GTexture default_normal_texture;
+		std::filesystem::path texture_resource_path;
 
 	protected:
 

@@ -14,9 +14,11 @@ namespace trace {
 	class MeshManager;
 	class PipelineManager;
 	class MaterialManager;
+	class ShaderManager;
 	class Mesh;
 	class GTexture;
 	class GPipeline;
+	class GShader;
 	class MaterialInstance;
 	struct Material;
 	using Texture_Ref = Ref<GTexture>;
@@ -44,6 +46,7 @@ namespace trace {
 		Ref<Mesh> LoadMesh(const std::string& name);
 		Ref<Mesh> GetDefaultMesh(const std::string& name);
 		Ref<Mesh> GetMesh(const std::string& name);
+		
 
 		//Pipelines
 		bool CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill = true);
@@ -54,6 +57,11 @@ namespace trace {
 		bool CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline);
 		Ref<MaterialInstance> GetMaterial(const std::string& name);
 		bool LoadDefaults();
+
+		// Shaders
+		Ref<GShader> CreateShader(const std::string& name, ShaderStage shader_stage);
+		Ref<GShader> GetShader(const std::string& name);
+		std::string GetShaderResourcePath();
 
 		static ResourceSystem* get_instance();
 
@@ -66,6 +74,7 @@ namespace trace {
 		MeshManager* m_meshManager;
 		PipelineManager* m_pipelineManager;
 		MaterialManager* m_materialManager;
+		ShaderManager* m_shaderManager;
 
 	protected:
 

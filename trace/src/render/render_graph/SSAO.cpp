@@ -72,26 +72,16 @@ namespace trace {
 		};
 
 		{
-			std::string vert_src;
-			std::string frag_src;
-			GShader VertShader;
-			GShader FragShader;
-
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/ssao_main.frag.glsl");
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("ssao_main.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources sres = {};
-			ShaderParser::generate_shader_resources(&VertShader, sres);
-			ShaderParser::generate_shader_resources(&FragShader, sres);
-
-
+			ShaderParser::generate_shader_resources(VertShader.get(), sres);
+			ShaderParser::generate_shader_resources(FragShader.get(), sres);
 
 			PipelineStateDesc ds2 = {};
-			ds2.vertex_shader = &VertShader;
-			ds2.pixel_shader = &FragShader;
+			ds2.vertex_shader = VertShader.get();
+			ds2.pixel_shader = FragShader.get();
 			ds2.resources = sres;
 			ds2.input_layout = {};
 
@@ -107,34 +97,21 @@ namespace trace {
 			if (!ResourceSystem::get_instance()->CreatePipeline(ds2, "ssao_main_pass_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create ssao_main_pass_pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return;
 			}
 
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
-
 			m_pipeline = ResourceSystem::get_instance()->GetPipeline("ssao_main_pass_pipeline");
 
-			vert_src.clear();
-			frag_src.clear();
-
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/ssao_blur.frag.glsl");
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+			VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			FragShader = ResourceSystem::get_instance()->CreateShader("ssao_blur.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
-
-
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
 
 			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = &VertShader;
-			_ds2.pixel_shader = &FragShader;
+			_ds2.vertex_shader = VertShader.get();
+			_ds2.pixel_shader = FragShader.get();
 			_ds2.resources = s_res;
 			_ds2.input_layout = Vertex2D::get_input_layout();
 
@@ -150,14 +127,8 @@ namespace trace {
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "ssao_blur_pass_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create ssao_blur_pass_pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return;
 			}
-
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
-
 			m_blurPipe = ResourceSystem::get_instance()->GetPipeline("ssao_blur_pass_pipeline");
 
 		};

@@ -102,27 +102,17 @@ namespace trace {
 		};
 
 		{
-			std::string vert_src;
-			std::string frag_src;
-			GShader VertShader;
-			GShader FragShader;
+
+			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("trace_core.shader.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("g_buffer.frag.glsl", ShaderStage::PIXEL_SHADER);
 			
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/trace_core.shader.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/g_buffer.frag.glsl");
-
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
-
-
-
 			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
 
 			PipelineStateDesc _ds;
-			_ds.vertex_shader = &VertShader;
-			_ds.pixel_shader = &FragShader;
+			_ds.vertex_shader = VertShader.get();
+			_ds.pixel_shader = FragShader.get();
 			_ds.resources = s_res;
 
 			AutoFillPipelineDesc(
@@ -135,16 +125,8 @@ namespace trace {
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds, "gbuffer_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create default g_buffer pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return;
 			}
-
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
-
-			vert_src.clear();
-			frag_src.clear();
 
 		};
 

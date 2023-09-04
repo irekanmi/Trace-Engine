@@ -28,6 +28,9 @@ namespace trace {
 		FileSystem();
 		~FileSystem();
 
+		static bool Init();
+		static void Shutdown();
+
 		static bool open_file(const std::string& filename, FileMode mode, FileHandle& out_handle);
 		static bool open_file(const char* file_name, FileMode mode, FileHandle& out_handle);
 
@@ -43,6 +46,7 @@ namespace trace {
 		static void read_all_lines(FileHandle& file, std::string& out);
 
 	private:
+
 	protected:
 
 	};

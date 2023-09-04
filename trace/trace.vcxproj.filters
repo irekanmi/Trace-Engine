@@ -260,6 +260,7 @@
     <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
     <ClInclude Include="src\render\render_graph\ForwardPass.h" />
     <ClInclude Include="src\render\render_graph\BloomPass.h" />
+    <ClInclude Include="src\resource\ShaderManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -450,5 +451,6 @@
     <ClCompile Include="src\render\Camera.cpp" />
     <ClCompile Include="src\render\render_graph\ForwardPass.cpp" />
     <ClCompile Include="src\render\render_graph\BloomPass.cpp" />
+    <ClCompile Include="src\resource\ShaderManager.cpp" />
   </ItemGroup>
 </Project>

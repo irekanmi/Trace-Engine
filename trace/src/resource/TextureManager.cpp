@@ -37,6 +37,59 @@ namespace trace {
 		TextureHash _hash;
 		_hash._id = INVALID_ID;
 		m_hashTable.Fill(_hash);
+
+		// Trying to determine directory where textures are located..............
+		std::filesystem::path current_search_path("./assets");
+
+		if (std::filesystem::exists(current_search_path))
+		{
+			current_search_path /= "textures";
+			if (std::filesystem::exists(current_search_path))
+			{
+				texture_resource_path = current_search_path;
+			}
+		}
+		else if (std::filesystem::exists(std::filesystem::path("../../assets")))
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "textures";
+				if (std::filesystem::exists(current_search_path))
+				{
+					texture_resource_path = current_search_path;
+				}
+			}
+		}
+		else if (std::filesystem::exists(std::filesystem::path("../../../assets")))
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../../../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "textures";
+				if (std::filesystem::exists(current_search_path))
+				{
+					texture_resource_path = current_search_path;
+				}
+			}
+		}
+		else
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "textures";
+				if (std::filesystem::exists(current_search_path))
+				{
+					texture_resource_path = current_search_path;
+				}
+			}
+		}
+		// .............................
+
 		return true;
 	}
 
@@ -113,7 +166,7 @@ namespace trace {
 		unsigned char* pixel_data = nullptr;
 
 		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+		pixel_data = stbi_load((texture_resource_path / name).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
 			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
@@ -172,7 +225,7 @@ namespace trace {
 		unsigned char* pixel_data = nullptr;
 
 		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+		pixel_data = stbi_load((texture_resource_path / name).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
 			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
@@ -222,7 +275,7 @@ namespace trace {
 			unsigned char* pixel_data = nullptr;
 
 			stbi_set_flip_vertically_on_load(false);
-			pixel_data = stbi_load(("../assets/textures/" + filenames[i]).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+			pixel_data = stbi_load((texture_resource_path / filenames[i]).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 			if (!pixel_data)
 			{
 				TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
@@ -337,6 +390,7 @@ namespace trace {
 		texture_desc.m_numLayers = 1;
 		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
 
+		// Default Diffuse texture
 		RenderFunc::CreateTexture(&default_diffuse_texture, texture_desc);
 		default_diffuse_map = { &default_diffuse_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
@@ -368,6 +422,7 @@ namespace trace {
 			}
 		}
 		
+		// Default specular
 		RenderFunc::CreateTexture(&default_specular_texture, texture_desc);
 		default_specular_map = { &default_specular_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
@@ -399,6 +454,7 @@ namespace trace {
 			}
 		}
 
+		// Default normal
 		RenderFunc::CreateTexture(&default_normal_texture, texture_desc);
 		default_normal_map = { &default_normal_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 

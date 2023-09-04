@@ -55,26 +55,17 @@ namespace trace {
 		};
 
 		{
-			std::string vert_src;
-			std::string frag_src;
-			GShader VertShader;
-			GShader FragShader;
 
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/bloom_prefilter.frag.glsl");
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
-
-
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
 
 			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = &VertShader;
-			_ds2.pixel_shader = &FragShader;
+			_ds2.vertex_shader = VertShader.get();
+			_ds2.pixel_shader = FragShader.get();
 			_ds2.resources = s_res;
 			_ds2.input_layout = {};
 
@@ -90,39 +81,24 @@ namespace trace {
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create bloom_prefilter_pass_pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return;
 			}
-
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
 
 			m_prefilterPipeline = ResourceSystem::get_instance()->GetPipeline("bloom_prefilter_pass_pipeline");
 
 		};
 
 		{
-			std::string vert_src;
-			std::string frag_src;
-			GShader VertShader;
-			GShader FragShader;
-
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/bloom_downsample.frag.glsl");
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
-
-
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
 
 			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = &VertShader;
-			_ds2.pixel_shader = &FragShader;
+			_ds2.vertex_shader = VertShader.get();
+			_ds2.pixel_shader = FragShader.get();
 			_ds2.resources = s_res;
 			_ds2.input_layout = {};
 
@@ -138,42 +114,26 @@ namespace trace {
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create bloom_downsample_pass_pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return;
 			}
-
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
 
 			m_downSamplePipeline = ResourceSystem::get_instance()->GetPipeline("bloom_downsample_pass_pipeline");
 
 		};
 
 		{
-			std::string vert_src;
-			std::string frag_src;
-			GShader VertShader;
-			GShader FragShader;
-
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/fullscreen.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/bloom_upsample.frag.glsl");
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
-
-
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
 
 			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = &VertShader;
-			_ds2.pixel_shader = &FragShader;
+			_ds2.vertex_shader = VertShader.get();
+			_ds2.pixel_shader = FragShader.get();
 			_ds2.resources = s_res;
 			_ds2.input_layout = {};
-
 
 			AutoFillPipelineDesc(
 				_ds2,
@@ -195,14 +155,8 @@ namespace trace {
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_upsample_pass_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create bloom_upsample_pass_pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return;
 			}
-
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
-
 			m_upSamplePipeline = ResourceSystem::get_instance()->GetPipeline("bloom_upsample_pass_pipeline");
 
 		};
