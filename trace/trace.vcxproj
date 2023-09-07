@@ -155,7 +155,10 @@
     <ClInclude Include="src\core\Layer.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
     <ClInclude Include="src\core\StartUp.h" />
+    <ClInclude Include="src\core\Utils.h" />
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\core\events\Events.h" />
     <ClInclude Include="src\core\events\EventsSystem.h" />
@@ -189,6 +192,7 @@
     <ClInclude Include="src\render\GContext.h" />
     <ClInclude Include="src\render\GDevice.h" />
     <ClInclude Include="src\render\GFramebuffer.h" />
+    <ClInclude Include="src\render\GHandle.h" />
     <ClInclude Include="src\render\GPipeline.h" />
     <ClInclude Include="src\render\GRenderPass.h" />
     <ClInclude Include="src\render\GShader.h" />
@@ -198,10 +202,23 @@
     <ClInclude Include="src\render\Material.h" />
     <ClInclude Include="src\render\Mesh.h" />
     <ClInclude Include="src\render\Model.h" />
-    <ClInclude Include="src\render\PerspectiveCamera.h" />
+    <ClInclude Include="src\render\RenderComposer.h" />
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\Renderutils.h" />
+    <ClInclude Include="src\render\render_graph\BloomPass.h" />
+    <ClInclude Include="src\render\render_graph\CustomPass.h" />
+    <ClInclude Include="src\render\render_graph\FinalPass.h" />
+    <ClInclude Include="src\render\render_graph\ForwardPass.h" />
+    <ClInclude Include="src\render\render_graph\FrameData.h" />
+    <ClInclude Include="src\render\render_graph\GBufferPass.h" />
+    <ClInclude Include="src\render\render_graph\LightingPass.h" />
+    <ClInclude Include="src\render\render_graph\MainPass.h" />
+    <ClInclude Include="src\render\render_graph\RenderGraph.h" />
+    <ClInclude Include="src\render\render_graph\RenderPass.h" />
+    <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
+    <ClInclude Include="src\render\render_graph\SSAO.h" />
+    <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
     <ClInclude Include="src\render\Transform.h" />
@@ -213,6 +230,7 @@
     <ClInclude Include="src\resource\Ref.h" />
     <ClInclude Include="src\resource\Resource.h" />
     <ClInclude Include="src\resource\ResourceSystem.h" />
+    <ClInclude Include="src\resource\ShaderManager.h" />
     <ClInclude Include="src\resource\TextureManager.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
@@ -224,6 +242,7 @@
     <ClCompile Include="src\core\Layer.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
     <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
@@ -253,11 +272,14 @@
     <ClCompile Include="src\core\platform\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp" />
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp" />
+    <ClCompile Include="src\render\Camera.cpp" />
     <ClCompile Include="src\render\GBuffer.cpp" />
     <ClCompile Include="src\render\GContext.cpp" />
     <ClCompile Include="src\render\GDevice.cpp" />
     <ClCompile Include="src\render\GFramebuffer.cpp" />
+    <ClCompile Include="src\render\GHandle.cpp" />
     <ClCompile Include="src\render\GPipeline.cpp" />
+    <ClCompile Include="src\render\Graphics.cpp" />
     <ClCompile Include="src\render\GRenderpass.cpp" />
     <ClCompile Include="src\render\GShader.cpp" />
     <ClCompile Include="src\render\GSwapchain.cpp" />
@@ -265,9 +287,19 @@
     <ClCompile Include="src\render\Material.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
-    <ClCompile Include="src\render\PerspectiveCamera.cpp" />
+    <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\Renderutils.cpp" />
+    <ClCompile Include="src\render\render_graph\BloomPass.cpp" />
+    <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
+    <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
+    <ClCompile Include="src\render\render_graph\ForwardPass.cpp" />
+    <ClCompile Include="src\render\render_graph\GBufferPass.cpp" />
+    <ClCompile Include="src\render\render_graph\LightingPass.cpp" />
+    <ClCompile Include="src\render\render_graph\MainPass.cpp" />
+    <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
+    <ClCompile Include="src\render\render_graph\SSAO.cpp" />
+    <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />
     <ClCompile Include="src\render\Transform.cpp" />
@@ -277,7 +309,9 @@
     <ClCompile Include="src\resource\PipelineManager.cpp" />
     <ClCompile Include="src\resource\Resource.cpp" />
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
+    <ClCompile Include="src\resource\ShaderManager.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
+    <ClCompile Include="_externals\spirv_reflect.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

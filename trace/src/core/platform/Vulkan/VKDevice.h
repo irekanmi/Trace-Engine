@@ -11,56 +11,29 @@
 
 
 
-namespace trace {
 
 
-	class VKDevice : public GDevice
-	{
+namespace vk {
 
-	public:
-		VKDevice();
-		~VKDevice();
-
-		virtual bool Init() override;
-		virtual void DrawElements(GBuffer* vertex_buffer) override;
-		virtual void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) override;
-		virtual void DrawIndexed(GBuffer* index_buffer) override;
-		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
-		virtual void ShutDown() override;
-
-		virtual void BindViewport(Viewport view_port) override;
-		virtual void BindRect(Rect2D rect) override;
-		virtual void BindPipeline(GPipeline* pipeline) override;
-		virtual void BindVertexBuffer(GBuffer* buffer) override;
-		virtual void BindIndexBuffer(GBuffer* buffer) override;
-		virtual void Draw(uint32_t start_vertex, uint32_t count) override;
-		virtual void DrawIndexed(uint32_t first_index, uint32_t count) override;
-		virtual void BeginRenderPass(GRenderPass* render_pass, GFramebuffer* frame_buffer) override;
-		virtual void NextSubpass(GRenderPass* render_pass) override;
-		virtual void EndRenderPass(GRenderPass* render_pass) override;
-
-		virtual bool BeginFrame(GSwapchain* swapchain) override;
-		virtual void EndFrame() override;
-
-		void OnEvent(Event* p_Event);
-
-	private:
-
-
-	public:
-		VKDeviceHandle* m_handle;
-		VKRenderPass* m_activeRanderPass = nullptr;
-
-
-	private:
-		VKHandle* m_instance;
-
-
-
-
-
-	protected:
-
-	};
+	bool __CreateDevice(trace::GDevice* device);
+	bool __DestroyDevice(trace::GDevice* device);
+	bool __DrawElements(trace::GDevice* device, trace::GBuffer* vertex_buffer);
+	bool __DrawInstanceElements(trace::GDevice* device, trace::GBuffer* vertex_buffer, uint32_t instances);
+	bool __DrawIndexed_(trace::GDevice* device, trace::GBuffer* index_buffer);
+	bool __DrawInstanceIndexed(trace::GDevice* device, trace::GBuffer* index_buffer, uint32_t instances);
+	bool __BindViewport(trace::GDevice* device, trace::Viewport view_port);
+	bool __BindRect(trace::GDevice* device, trace::Rect2D rect);
+	bool __BindPipeline(trace::GDevice* device, trace::GPipeline* pipeline);
+	bool __BindVertexBuffer(trace::GDevice* device, trace::GBuffer* buffer);
+	bool __BindIndexBuffer(trace::GDevice* device, trace::GBuffer* buffer);
+	bool __Draw(trace::GDevice* device, uint32_t start_vertex, uint32_t count);
+	bool __DrawIndexed(trace::GDevice* device, uint32_t first_index, uint32_t count);
+	bool __BeginRenderPass(trace::GDevice* device, trace::GRenderPass* render_pass, trace::GFramebuffer* frame_buffer);
+	bool __NextSubpass(trace::GDevice* device, trace::GRenderPass* render_pass);
+	bool __EndRenderPass(trace::GDevice* device, trace::GRenderPass* render_pass);
+	bool __BeginFrame(trace::GDevice* device, trace::GSwapchain* swapchain);
+	bool __EndFrame(trace::GDevice* device);
+	bool __OnDrawStart(trace::GDevice* device, trace::GPipeline* pipeline);
+	bool __OnDrawEnd(trace::GDevice* device, trace::GPipeline* pipeline);
 
 }

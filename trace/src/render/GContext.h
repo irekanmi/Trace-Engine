@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core.h>
+#include "core/Core.h"
 #include "Graphics.h"
-#include "GBuffer.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -11,15 +11,17 @@ namespace trace {
 
 	public:
 		GContext();
-		virtual ~GContext();
+		~GContext();
 
-		virtual void Update(float deltaTime) = 0;
+		void Update(float deltaTime);
 
-		virtual void Init() = 0;
-		virtual void ShutDown() = 0;
+		void Init();
+		void ShutDown();
 
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 	private:
+		GHandle m_renderHandle;
 	protected:
 
 

@@ -6,97 +6,153 @@
 
 extern trace::VKHandle g_Vkhandle;
 extern trace::VKDeviceHandle g_VkDevice;
-namespace trace {
 
 
+namespace vk {
 
-	VulkanBuffer::VulkanBuffer()
+	bool __CreateBuffer(trace::GBuffer* buffer, trace::BufferInfo _info)
 	{
-	}
+		bool result = true;
 
-	VulkanBuffer::VulkanBuffer(BufferInfo info)
-	{
-		m_info = info;
-		m_instance = &g_Vkhandle;
-		m_device = &g_VkDevice;
+		
+
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_WARN("These handle is valid can't recreate the buffer ::Try to destroy and then create, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKBuffer* internal_handle = new trace::VKBuffer(); //TODO: Use custom allocator;
+		internal_handle->m_device = &g_VkDevice;
+		internal_handle->m_instance = &g_Vkhandle;
+		trace::VKHandle* _instance = &g_Vkhandle;
+		trace::VKDeviceHandle* _device = &g_VkDevice;
+		buffer->GetRenderHandle()->m_internalData = internal_handle;
 
 
 		VkResult buffer_create_result;
 
-		buffer_create_result = vk::_CreateBuffer(m_instance, m_device, &m_handle, info);
+		buffer_create_result = vk::_CreateBuffer(_instance, _device, internal_handle, _info);
 
 		if (buffer_create_result == VK_SUCCESS)
 		{
 			TRC_INFO(" Buffer creation successful ");
 		}
 
-		if (info.m_data != nullptr)
+		if (_info.m_data != nullptr)
 		{
 
-			VKBuffer stage_buffer;
+			trace::VKBuffer stage_buffer;
 
-			BufferInfo stage_info;
-			stage_info.m_size = info.m_size;
-			stage_info.m_stide = info.m_stide;
-			stage_info.m_usageFlag = UsageFlag::UPLOAD;
-			stage_info.m_flag = BindFlag::NIL;
+			trace::BufferInfo stage_info;
+			stage_info.m_size = _info.m_size;
+			stage_info.m_stide = _info.m_stide;
+			stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+			stage_info.m_flag = trace::BindFlag::NIL;
 			stage_info.m_data = nullptr;
 
-			vk::_CreateBuffer(m_instance, m_device, &stage_buffer, stage_info);
+			vk::_CreateBuffer(_instance, _device, &stage_buffer, stage_info);
 
 			void* data0;
-			vkMapMemory(m_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
-			memcpy(data0, info.m_data, info.m_size);
-			vkUnmapMemory(m_device->m_device, stage_buffer.m_memory);
+			vkMapMemory(_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
+			memcpy(data0, _info.m_data, _info.m_size);
+			vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
 
 
-			vk::_CopyBuffer(m_instance, m_device, &stage_buffer, &m_handle, stage_info.m_size, 0);
+			vk::_CopyBuffer(_instance, _device, &stage_buffer, internal_handle, stage_info.m_size, 0);
 
-			vk::_DestoryBuffer(m_instance, m_device, &stage_buffer);
+			vk::_DestoryBuffer(_instance, _device, &stage_buffer);
 		}
 
+		buffer->m_info = _info;
 
+		if (buffer_create_result != VK_SUCCESS) result = false;
+		return result;
 	}
-
-	VulkanBuffer::~VulkanBuffer()
-	{
-		vkDeviceWaitIdle(m_device->m_device);
-		vk::_DestoryBuffer(m_instance, m_device, &m_handle);
-	}
-
-	void* VulkanBuffer::GetNativeHandle()
-	{
-		return &m_handle;
-	}
-
-	void VulkanBuffer::SetData(void* data, size_t size)
+	bool __DestroyBuffer(trace::GBuffer* buffer)
 	{
 
-		VKBuffer stage_buffer;
+		bool result = true;
 
-		BufferInfo stage_info;
+		
+
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
+		trace::VKHandle* _instance = _handle->m_instance;
+
+		vkDeviceWaitIdle(_device->m_device);
+		vk::_DestoryBuffer(_instance, _device, _handle);
+
+		delete buffer->GetRenderHandle()->m_internalData;
+
+		buffer->GetRenderHandle()->m_internalData = nullptr;
+
+		return result;
+	}
+	bool __SetBufferData(trace::GBuffer* buffer, void* data, uint32_t size)
+	{
+
+		bool result = true;
+
+		
+
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
+		trace::VKHandle* _instance = _handle->m_instance;
+
+
+		trace::VKBuffer stage_buffer;
+
+		trace::BufferInfo stage_info;
 		stage_info.m_size = static_cast<uint32_t>(size);
 		stage_info.m_stide = 0;
-		stage_info.m_usageFlag = UsageFlag::UPLOAD;
-		stage_info.m_flag = BindFlag::NIL;
+		stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+		stage_info.m_flag = trace::BindFlag::NIL;
 		stage_info.m_data = nullptr;
 
-		vk::_CreateBuffer(m_instance, m_device, &stage_buffer, stage_info);
+		vk::_CreateBuffer(_instance, _device, &stage_buffer, stage_info);
 
 		void* data0;
-		vkMapMemory(m_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
+		vkMapMemory(_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
 		memcpy(data0, data, size);
-		vkUnmapMemory(m_device->m_device, stage_buffer.m_memory);
+		vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
 
 
-		vk::_CopyBuffer(m_instance, m_device, &stage_buffer, &m_handle, stage_info.m_size, 0);
+		vk::_CopyBuffer(_instance, _device, &stage_buffer, _handle, stage_info.m_size, 0);
 
-		vk::_DestoryBuffer(m_instance, m_device, &stage_buffer);
+		vk::_DestoryBuffer(_instance, _device, &stage_buffer);
 
-	}
-
-	void VulkanBuffer::Bind()
-	{
+		return result;
 	}
 
 }

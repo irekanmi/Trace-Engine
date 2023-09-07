@@ -21,17 +21,15 @@ namespace trace {
 
 		m_models.resize(m_numModelUnits);
 
-		
-
-		//Platform::ZeroMem(m_models, m_numModelUnits * sizeof(Model));
-
 		return true;
 	}
 	void ModelManager::ShutDown()
 	{
-		if (!m_models.empty())
+		for (Model& model : m_models)
 		{
-			m_models.clear();
+			if (model.m_id == INVALID_ID)
+				continue;
+			UnLoadModel(&model);
 		}
 
 	}

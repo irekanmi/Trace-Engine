@@ -4,6 +4,7 @@
 #include "core/Enums.h"
 #include "render/Mesh.h"
 #include "HashTable.h"
+#include <filesystem>
 
 
 namespace trace {
@@ -34,7 +35,10 @@ namespace trace {
 		std::vector<Mesh> m_meshes;
 		uint32_t m_numEntries;
 		Mesh DefaultCube;
+		Mesh DefaultSphere;
 		Model cube;
+		Model sphere;
+		std::filesystem::path mesh_resource_path;
 
 		void unloadDefaultModels(Model* model);
 		bool LoadMesh_OBJ(const std::string& name);

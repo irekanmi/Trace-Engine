@@ -11,15 +11,15 @@ namespace trace {
 		OpenGLDevice();
 		~OpenGLDevice();
 
-		virtual bool Init() override;
-		virtual void DrawElements(GBuffer* vertex_buffer) override;
-		virtual void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances) override;
-		virtual void DrawIndexed(GBuffer* index_buffer) override;
-		virtual void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances) override;
-		virtual void ShutDown() override;
+		bool Init();
+		void DrawElements(GBuffer* vertex_buffer);
+		void DrawInstanceElements(GBuffer* vertex_buffer, uint32_t instances);
+		void DrawIndexed(GBuffer* index_buffer);
+		void DrawInstanceIndexed(GBuffer* index_buffer, uint32_t instances);
+		void ShutDown();
 
-		virtual bool BeginFrame(GSwapchain* swapchain) override;
-		virtual void EndFrame() override;
+		bool BeginFrame(GSwapchain* swapchain);
+		void EndFrame();
 
 	private:
 	protected:

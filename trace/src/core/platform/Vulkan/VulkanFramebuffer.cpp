@@ -8,60 +8,80 @@
 extern trace::VKHandle g_Vkhandle;
 extern trace::VKDeviceHandle g_VkDevice;
 
-namespace trace {
-	VulkanFramebuffer::VulkanFramebuffer()
-	{
-	}
 
-	VulkanFramebuffer::VulkanFramebuffer(uint32_t num_attachment, GTexture** attachments, GRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t swapchain_image_index, GSwapchain* swapchain)
+
+namespace vk {
+
+	bool __CreateFrameBuffer(trace::GFramebuffer* framebuffer, uint32_t num_attachment, trace::GTexture** attachments, trace::GRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t swapchain_image_index, trace::GSwapchain* swapchain)
 	{
-		m_instance = &g_Vkhandle;
-		m_device = &g_VkDevice;
+		bool result = true;
+
+		
+
+		if (!framebuffer)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)framebuffer, __FUNCTION__);
+			return false;
+		}
+
+		if (framebuffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_WARN("These handle is valid can't recreate the frame buffer ::Try to destroy and then create, {}, Function -> {}", (const void*)framebuffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::Framebuffer_VK* _handle = new trace::Framebuffer_VK();
+		_handle->m_device = &g_VkDevice;
+		_handle->m_instance = &g_Vkhandle;
+		trace::VKHandle* _instance = _handle->m_instance;
+		trace::VKDeviceHandle* _device = _handle->m_device;
+		framebuffer->GetRenderHandle()->m_internalData = _handle;
+
 
 		eastl::vector<VkImageView> views;
 		views.resize(num_attachment);
 
-		VulkanRenderPass* pass = reinterpret_cast<VulkanRenderPass*>(render_pass);
+		trace::VKRenderPass* pass = reinterpret_cast<trace::VKRenderPass*>(render_pass->GetRenderHandle()->m_internalData);
 
-		VkResult result;
+		VkResult _result;
 
 		for (uint32_t i = 0; i < num_attachment; i++)
 		{
-			VulkanTexture* tex = reinterpret_cast<VulkanTexture*>(attachments[i]);
-			views[i] = (tex->m_handle.m_view);
+			trace::VKImage* tex = reinterpret_cast<trace::VKImage*>(attachments[i]->GetRenderHandle()->m_internalData);
+			views[i] = (tex->m_view);
 		}
 
-		VulkanSwapchain* swap = reinterpret_cast<VulkanSwapchain*>(swapchain);
+		trace::VKSwapChain* swap = reinterpret_cast<trace::VKSwapChain*>(swapchain->GetRenderHandle()->m_internalData);
 
 		if (swap)
 		{
-			m_handle.resize(swap->m_handle.image_count);
+			_handle->m_handle.resize(swap->image_count);
 
-			for (uint32_t i = 0; i < swap->m_handle.image_count; i++)
+			for (uint32_t i = 0; i < swap->image_count; i++)
 			{
-				views[swapchain_image_index - 1] = swap->m_handle.m_imageViews[i];
+				views[swapchain_image_index - 1] = swap->m_imageViews[i];
 
-				result = vk::_CreateFrameBuffer(
-					m_instance,
-					m_device,
-					&m_handle[i],
+				_result = vk::_CreateFrameBuffer(
+					_instance,
+					_device,
+					&_handle->m_handle[i],
 					views,
-					&pass->m_handle,
+					pass,
 					width,
 					height,
 					num_attachment
 				);
-				VK_ASSERT(result);
+				VK_ASSERT(_result);
 			}
 		}
 		else
 		{
-			result = vk::_CreateFrameBuffer(
-				m_instance,
-				m_device,
-				&m_handle.emplace_back(),
+			_result = vk::_CreateFrameBuffer(
+				_instance,
+				_device,
+				&_handle->m_handle.emplace_back(),
 				views,
-				&pass->m_handle,
+				pass,
 				800, // TODO: Configurable
 				600, // TODO: Configurable
 				num_attachment
@@ -70,23 +90,56 @@ namespace trace {
 		}
 
 
-		VK_ASSERT(result);
+		VK_ASSERT(_result);
+		if (_result != VK_SUCCESS)
+		{
+			delete _handle;
+			framebuffer->GetRenderHandle()->m_internalData = nullptr;
+			result = false;
+		}
+
+
+		return result;
 	}
-
-	VulkanFramebuffer::~VulkanFramebuffer()
+	bool __DestroyFrameBuffer(trace::GFramebuffer* framebuffer)
 	{
+		bool result = true;
 
-		vkDeviceWaitIdle(m_device->m_device);
-		for (auto& i : m_handle)
+		
+
+		if (!framebuffer)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)framebuffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!framebuffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)framebuffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::Framebuffer_VK* _handle = (trace::Framebuffer_VK*)framebuffer->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = _handle->m_instance;
+		trace::VKDeviceHandle* _device = _handle->m_device;
+
+
+		vkDeviceWaitIdle(_device->m_device);
+		for (auto& i : _handle->m_handle)
 		{
 
 			vk::_DestoryFrameBuffer(
-				m_instance,
-				m_device,
+				_instance,
+				_device,
 				&i
 			);
 		}
 
+
+		delete _handle;
+		framebuffer->GetRenderHandle()->m_internalData = nullptr;
+
+		return result;
 	}
 
 }

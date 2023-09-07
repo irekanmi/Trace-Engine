@@ -3,6 +3,7 @@
 #include "core/Enums.h"
 #include "core/Core.h"
 #include "RenderPassInfo.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -12,13 +13,13 @@ namespace trace {
 		GRenderPass();
 		virtual ~GRenderPass();
 
-
-		static GRenderPass* Create_(RenderPassDescription desc);
-
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
 	public:
 		RenderPassDescription m_desc;
+		uint32_t color_attach_count;
 
 	private:
+		GHandle m_renderHandle;
 	protected:
 
 	};

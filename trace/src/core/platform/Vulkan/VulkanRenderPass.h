@@ -3,28 +3,11 @@
 #include "render/GRenderPass.h"
 #include "VKtypes.h"
 
-namespace trace {
 
 
-	class TRACE_API VulkanRenderPass : public GRenderPass
-	{
+namespace vk {
 
-	public:
-		VulkanRenderPass();
-		VulkanRenderPass(RenderPassDescription desc);
-		~VulkanRenderPass();
-
-	public:
-		VKRenderPass m_handle;
-
-
-	private:
-		VKHandle* m_instance;
-		VKDeviceHandle* m_device;
-
-	protected:
-
-
-	};
+	bool __CreateRenderPass(trace::GRenderPass* render_pass, trace::RenderPassDescription desc);
+	bool __DestroyRenderPass(trace::GRenderPass* render_pass);
 
 }

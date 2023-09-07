@@ -89,9 +89,10 @@ namespace trace {
 		m_dirty = true;
 	}
 
+	// value - is expressed in degrees
 	void Transform::Rotate(float value, glm::vec3 direction)
 	{
-		m_rotation = glm::rotate(m_rotation, value, direction);
+		m_rotation = glm::rotate(m_rotation, glm::radians(value), direction);
 		m_dirty = true;
 	}
 

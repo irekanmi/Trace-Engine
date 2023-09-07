@@ -198,9 +198,6 @@
     <ClInclude Include="src\render\Model.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\PerspectiveCamera.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\RenderPassInfo.h">
       <Filter>render</Filter>
     </ClInclude>
@@ -245,6 +242,25 @@
     </ClInclude>
     <ClInclude Include="src\trace.h" />
     <ClInclude Include="src\render\Transform.h" />
+    <ClInclude Include="src\render\GHandle.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
+    <ClInclude Include="src\render\render_graph\RenderGraph.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
+    <ClInclude Include="src\render\render_graph\RenderPass.h" />
+    <ClInclude Include="src\render\render_graph\MainPass.h" />
+    <ClInclude Include="src\render\render_graph\CustomPass.h" />
+    <ClInclude Include="src\render\render_graph\GBufferPass.h" />
+    <ClInclude Include="src\core\Utils.h" />
+    <ClInclude Include="src\render\render_graph\LightingPass.h" />
+    <ClInclude Include="src\render\render_graph\SSAO.h" />
+    <ClInclude Include="src\render\render_graph\FinalPass.h" />
+    <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
+    <ClInclude Include="src\render\render_graph\FrameData.h" />
+    <ClInclude Include="src\render\RenderComposer.h" />
+    <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
+    <ClInclude Include="src\render\render_graph\ForwardPass.h" />
+    <ClInclude Include="src\render\render_graph\BloomPass.h" />
+    <ClInclude Include="src\resource\ShaderManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Application.cpp">
@@ -385,9 +401,6 @@
     <ClCompile Include="src\render\Model.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\PerspectiveCamera.cpp">
-      <Filter>render</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>render</Filter>
     </ClCompile>
@@ -422,5 +435,22 @@
       <Filter>resource</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Transform.cpp" />
+    <ClCompile Include="src\render\GHandle.cpp" />
+    <ClCompile Include="src\render\Graphics.cpp" />
+    <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
+    <ClCompile Include="src\render\render_graph\MainPass.cpp" />
+    <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
+    <ClCompile Include="src\render\render_graph\GBufferPass.cpp" />
+    <ClCompile Include="src\render\render_graph\LightingPass.cpp" />
+    <ClCompile Include="_externals\spirv_reflect.cpp" />
+    <ClCompile Include="src\render\render_graph\SSAO.cpp" />
+    <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
+    <ClCompile Include="src\render\RenderComposer.cpp" />
+    <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
+    <ClCompile Include="src\render\Camera.cpp" />
+    <ClCompile Include="src\render\render_graph\ForwardPass.cpp" />
+    <ClCompile Include="src\render\render_graph\BloomPass.cpp" />
+    <ClCompile Include="src\resource\ShaderManager.cpp" />
   </ItemGroup>
 </Project>

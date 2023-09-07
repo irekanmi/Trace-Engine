@@ -4,12 +4,24 @@
 
 
 namespace trace {
+
 	FileSystem::FileSystem()
 	{
 	}
 	FileSystem::~FileSystem()
 	{
 	}
+
+	bool FileSystem::Init()
+	{
+		return false;
+	}
+
+	void FileSystem::Shutdown()
+	{
+
+	}
+
 	bool FileSystem::open_file(const std::string& filename, FileMode mode, FileHandle& out_handle)
 	{
 		
@@ -180,4 +192,5 @@ namespace trace {
 		}
 		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 	}
+
 }

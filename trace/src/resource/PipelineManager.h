@@ -35,12 +35,12 @@ namespace trace {
 		void unloadDefault(GPipeline* pipeline);
 
 	private:
-		unsigned char* m_pipelines;
+		std::vector<GPipeline> m_pipelines;
 		uint32_t m_numEntries;
 		uint32_t m_pipelineTypeSize;
 		HashTable<uint32_t> m_hashtable;
-		Ref<GPipeline> standard_pipeline;
 		Ref<GPipeline> skybox_pipeline;
+		Ref<GPipeline> light_pipeline;
 
 	protected:
 

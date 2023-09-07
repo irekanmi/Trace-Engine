@@ -31,7 +31,6 @@ namespace trace {
 
 	MeshManager::MeshManager(uint32_t max_entries)
 	{
-		Init(max_entries);
 	}
 
 	MeshManager::~MeshManager()
@@ -52,6 +51,58 @@ namespace trace {
 		{
 			m_meshes[i].m_id = INVALID_ID;
 		}
+
+		// Trying to determine directory where meshes are located..............
+		std::filesystem::path current_search_path("./assets");
+
+		if (std::filesystem::exists(current_search_path))
+		{
+			current_search_path /= "meshes";
+			if (std::filesystem::exists(current_search_path))
+			{
+				mesh_resource_path = current_search_path;
+			}
+		}
+		else if (std::filesystem::exists(std::filesystem::path("../../assets")))
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "meshes";
+				if (std::filesystem::exists(current_search_path))
+				{
+					mesh_resource_path = current_search_path;
+				}
+			}
+		}
+		else if (std::filesystem::exists(std::filesystem::path("../../../assets")))
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../../../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "meshes";
+				if (std::filesystem::exists(current_search_path))
+				{
+					mesh_resource_path = current_search_path;
+				}
+			}
+		}
+		else
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "meshes";
+				if (std::filesystem::exists(current_search_path))
+				{
+					mesh_resource_path = current_search_path;
+				}
+			}
+		}
+		// .............................
 
 		return true;
 	}
@@ -96,8 +147,14 @@ namespace trace {
 			TRC_WARN("mesh has already loaded {}", name);
 			return result;
 		}
+		std::filesystem::path p("/");
+		p /= name;
+		if (p.extension() == ".obj")
+		{
+			result = LoadMesh__OBJ(name);
 
-		result = LoadMesh__OBJ(name);
+		}
+
 
 		return result;
 	}
@@ -111,6 +168,8 @@ namespace trace {
 			return;
 		}
 
+
+
 		mesh->m_id = INVALID_ID;
 		mesh->~Mesh();
 
@@ -122,6 +181,10 @@ namespace trace {
 		if (m_hashtable.Hash(name) == m_hashtable.Hash("Cube"))
 		{
 			return &DefaultCube;
+		}
+		else if (m_hashtable.Hash(name) == m_hashtable.Hash("Sphere"))
+		{
+			return &DefaultSphere;
 		}
 
 		return nullptr;
@@ -140,6 +203,17 @@ namespace trace {
 		Ref<Model> cube_ref(&cube, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
 
 		DefaultCube.GetModels().push_back(cube_ref);
+
+		verts.clear();
+		_ind.clear();
+
+		generateSphere(verts, _ind, 5.0f, 50, 50);
+		generateVertexTangent(verts, _ind);
+		sphere.Init(verts, _ind);
+
+		Ref<Model> sphere_ref(&sphere, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
+
+		DefaultSphere.GetModels().push_back(sphere_ref);
 
 		return true;
 	}
@@ -161,6 +235,7 @@ namespace trace {
 			return;
 		}
 
+
 		model->m_id = INVALID_ID;
 		model->~Model();
 
@@ -172,7 +247,7 @@ namespace trace {
 
 		objl::Loader loader;
 
-		result = loader.LoadFile(("../assets/meshes/" + name));
+		result = loader.LoadFile((mesh_resource_path / name).string());
 		if (result)
 		{
 			ModelManager* model_manager = ModelManager::get_instance();
@@ -239,7 +314,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Kd.c_str());
+						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Kd);
 					}
 				}
 				if (!mesh.MeshMaterial.map_Ks.empty())
@@ -250,7 +325,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Ks.c_str());
+						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Ks);
 					}
 				}
 				if (!mesh.MeshMaterial.map_bump.empty())
@@ -287,7 +362,7 @@ namespace trace {
 				))
 				{
 					_model = model_manager->GetModel(mesh.MeshName);
-					Ref<GPipeline> sp = pipeline_manager->GetDefault("standard");
+					Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
 					material_manager->CreateMaterial(
 						mesh.MeshMaterial.name,
 						mat,
@@ -321,8 +396,8 @@ namespace trace {
 			&shapes,
 			&materials,
 			&err,
-			("../assets/meshes/" + name).c_str(),
-			"../assets/meshes/"
+			(mesh_resource_path / name).string().c_str(),
+			(mesh_resource_path / "").string().c_str()
 		);
 
 		if (!result)
@@ -395,10 +470,11 @@ namespace trace {
 			mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
 			mat.m_normalMap = texture_manager->GetDefault("normal_map");
 			mat.m_specularMap = texture_manager->GetDefault("specular_map");
-			mat.m_diffuseColor = glm::vec4(1.0f);
-			mat.m_shininess = 32.0f;
 			int mat_id = s.mesh.material_ids[0];
+			Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
 			tinyobj::material_t& material = materials[mat_id];
+			Ref<MaterialInstance> _mi = { material_manager->GetMaterial("default"), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager) };
+
 			if (mat_id >= 0)
 			{
 
@@ -431,13 +507,22 @@ namespace trace {
 						TRC_ERROR("Failed to load texture {}", material.bump_texname);
 				}
 
-				mat.m_shininess = material.shininess;
+				mat.m_shininess = material.shininess < 0.0f ? mat.m_shininess : material.shininess;
 				mat.m_diffuseColor = glm::vec4(
 					material.diffuse[0],
 					material.diffuse[1],
 					material.diffuse[2],
 					1.0f
 				);
+
+				material_manager->CreateMaterial(
+					material.name,
+					mat,
+					sp
+				);
+
+				_mi = { material_manager->GetMaterial(material.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager) };
+
 			}
 
 			Model* _model = nullptr;
@@ -448,14 +533,6 @@ namespace trace {
 			))
 			{
 				_model = model_manager->GetModel(s.name);
-				Ref<GPipeline> sp = pipeline_manager->GetDefault("standard");
-				material_manager->CreateMaterial(
-					material.name,
-					mat,
-					sp
-				);
-
-				Ref<MaterialInstance> _mi = { material_manager->GetMaterial(material.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager) };
 				_model->m_matInstance = _mi;
 			}
 

@@ -2,8 +2,9 @@
 
 #include "render/Material.h"
 #include "MaterialManager.h"
-#include "core/platform/Vulkan/VulkanMaterial.h"
-
+#include "TextureManager.h"
+#include "PipelineManager.h"
+#include "render/Renderutils.h"
 namespace trace {
 
 	MaterialManager* MaterialManager::s_instance = nullptr;
@@ -27,36 +28,11 @@ namespace trace {
 		m_hashtable.Init(m_numEntries);
 		m_hashtable.Fill(INVALID_ID);
 
-		switch (AppSettings::graphics_api)
+		m_materials.resize(m_numEntries);
+
+		for (uint32_t i = 0; i < m_numEntries; i++)
 		{
-		case RenderAPI::Vulkan:
-		{
-			m_matTypeSize = sizeof(VulkanMaterial);
-
-			//TODO: Use a custom allocator for allocation
-			m_materials = new unsigned char[m_matTypeSize * m_numEntries];
-
-			if (!m_materials)
-			{
-				TRC_ERROR("Failed to allocate materials storage memory");
-				return false;
-			}
-
-			VulkanMaterial* materials = (VulkanMaterial*)m_materials;
-
-			for (uint32_t i = 0; i < m_numEntries; i++)
-			{
-				materials[i].m_id = INVALID_ID;
-			}
-
-			break;
-		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
+			m_materials[i].m_id = INVALID_ID;
 		}
 
 		return true;
@@ -64,34 +40,16 @@ namespace trace {
 
 	void MaterialManager::ShutDown()
 	{
-		if (m_materials)
+		if (!m_materials.empty())
 		{
-			switch (AppSettings::graphics_api)
-			{
-			case RenderAPI::Vulkan:
-			{
 
-				VulkanMaterial* materials = (VulkanMaterial*)m_materials;
-
-				for (uint32_t i = 0; i < m_numEntries; i++)
-				{
-					if (materials[i].m_id != INVALID_ID)
-					{
-						materials[i].~VulkanMaterial();
-						materials[i].m_id = INVALID_ID;
-					}
-				}
-
-				break;
-			}
-			default:
+			for (MaterialInstance& mat_instance : m_materials)
 			{
-				TRC_ASSERT(false, "Render API Texture not suppoted");
-				break;
+				if (mat_instance.m_id == INVALID_ID)
+					continue;
+				mat_instance.~MaterialInstance();
 			}
-			}
-			delete[] m_materials;
-			m_materials = nullptr;
+			m_materials.clear();
 		}
 	}
 
@@ -105,35 +63,25 @@ namespace trace {
 			return true;
 		}
 
-		switch (AppSettings::graphics_api)
+		uint32_t i = 0;
+		for (MaterialInstance& mat_instance : m_materials)
 		{
-		case RenderAPI::Vulkan:
-		{
-
-			VulkanMaterial* materials = (VulkanMaterial*)m_materials;
-
-			for (uint32_t i = 0; i < m_numEntries; i++)
+			if (mat_instance.m_id == INVALID_ID)
 			{
-				if (materials[i].m_id == INVALID_ID)
+				if (!RenderFunc::InitializeMaterial(
+					&mat_instance,
+					pipeline,
+					material
+				))
 				{
-					VulkanMaterial* mat = &materials[i];
-					new(mat) VulkanMaterial();
-					if (!mat->Init(pipeline, material))
-						return false;
-					mat->m_id = i;
-					m_hashtable.Set(name, i);
-					break;
+					TRC_WARN("Failed to initialize material {}", name);
+					return false;
 				}
+				mat_instance.m_id = i;
+				m_hashtable.Set(name, i);
+				break;
 			}
-
-			break;
-		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
+			i++;
 		}
 
 		return true;
@@ -145,7 +93,7 @@ namespace trace {
 		uint32_t hash = m_hashtable.Get(name);
 		if (hash != INVALID_ID)
 		{
-			return (MaterialInstance*)(m_materials + (hash * m_matTypeSize));
+			return &m_materials[hash];
 		}
 
 		TRC_WARN("Failed to create material {} please ensure material has been created", name);
@@ -163,6 +111,30 @@ namespace trace {
 
 		material->m_id = INVALID_ID;
 		material->~MaterialInstance();
+	}
+
+	bool MaterialManager::LoadDefaults()
+	{
+		TextureManager* texture_manager = TextureManager::get_instance();
+		PipelineManager* pipeline_manager = PipelineManager::get_instance();
+
+		Material mat;
+		mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
+		mat.m_normalMap = texture_manager->GetDefault("normal_map");
+		mat.m_specularMap = texture_manager->GetDefault("specular_map");
+		mat.m_diffuseColor = glm::vec4(1.0f);
+		mat.m_shininess = 32.0f;
+
+		Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
+		this->CreateMaterial(
+			"default",
+			mat,
+			sp
+		);
+
+		default_material = { this->GetMaterial("default"), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, this) };
+
+		return true;
 	}
 
 	MaterialManager* MaterialManager::get_instance()

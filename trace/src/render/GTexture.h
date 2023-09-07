@@ -4,6 +4,7 @@
 #include "core/Enums.h"
 #include "Graphics.h"
 #include "resource/Resource.h"
+#include "GHandle.h"
 
 namespace trace {
 
@@ -15,13 +16,16 @@ namespace trace {
 		GTexture(){};
 		virtual ~GTexture(){};
 
-		TextureDesc GetTextureDescription() { return m_desc; }
+		TextureDesc& GetTextureDescription();
+		void SetTextureDescription(TextureDesc& description) { m_desc = description; }
 
-		static GTexture* Create_(TextureDesc description);
+		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 	private:
-	protected:
+		GHandle m_renderHandle;
 		TextureDesc m_desc;
+
+	protected:
 
 	};
 

@@ -5,6 +5,8 @@
 #include "vulkan/vulkan.h"
 #include "EASTL/vector.h"
 #include "glm/glm.hpp"
+#include <unordered_map>
+
 
 
 namespace trace {
@@ -16,8 +18,13 @@ namespace trace {
 #endif
 
 #define VK_NO_FLAGS 0
+#define VK_MAX_NUM_FRAMES 3
+#define VK_MAX_DESCRIPTOR_SET_PER_FRAME 12
+#define VK_MAX_DESCRIPTOR_SET (VK_MAX_DESCRIPTOR_SET_PER_FRAME * VK_MAX_NUM_FRAMES)
 
-
+	class RenderGraphPass;
+	class RenderGraph;
+	struct RenderGraphResource;
 	struct SwapchainInfo
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
@@ -81,43 +88,19 @@ namespace trace {
 		uint32_t* stencil_value;
 
 		RenderPassState m_state;
-	};
 
-	struct VKBuffer
-	{
-		VkBuffer m_handle = VK_NULL_HANDLE;
-		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
 	};
-
 	
-
-	struct VKPipeline
-	{
-		VkPipeline m_handle = VK_NULL_HANDLE;
-		VkPipelineLayout m_layout = VK_NULL_HANDLE;
-
-		VKBuffer Scene_buffers = {};
-		VkDescriptorSet Scene_sets[3] = {};
-		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
-
-
-		VkDescriptorSet Instance_sets[3] = {};
-		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
-
-		VkDescriptorSet Local_sets[3] = {};
-		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
-
-	};
-
 	struct VKShader
 	{
 		VkShaderModule m_module = VK_NULL_HANDLE;
 		VkPipelineShaderStageCreateInfo create_info = {};
-		// TODO 
-		std::vector<uint32_t> m_code = {};
+		// TODO: Determine if "m_code" will be vulkan specific member variakble
+
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
 	};
 
 	struct VKImage
@@ -127,22 +110,31 @@ namespace trace {
 		VkDeviceMemory m_mem = VK_NULL_HANDLE;
 		uint32_t m_width = 0;
 		uint32_t m_height = 0;
+
+		VkSampler m_sampler;
+
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
 	};
 
-	struct VKFrameBuffer
-	{
-		uint32_t m_width = 0;
-		uint32_t m_height = 0;
-		uint32_t m_attachmentCount = 0;
-		VkFramebuffer m_handle = VK_NULL_HANDLE;
-		VKRenderPass m_renderPass = {};
-		eastl::vector<VkImageView> m_attachments = {};
-	};
+	
 
 	struct VKFence
 	{
 		VkFence m_handle = VK_NULL_HANDLE;
 		bool m_isSignaled = false;
+	};
+
+	
+
+	struct VKHandle
+	{
+		VkInstance m_instance;
+		VkAllocationCallbacks* m_alloc_callback = nullptr;
+		VkSurfaceKHR m_surface;
+#ifdef TRC_DEBUG_BUILD
+		VkDebugUtilsMessengerEXT m_debugutils;
+#endif
 	};
 
 	struct VKSwapChain
@@ -156,16 +148,38 @@ namespace trace {
 		std::vector<VkImageView> m_imageViews;
 
 		uint32_t image_count;
+		uint32_t m_currentImageIndex;
+		uint32_t m_width;
+		uint32_t m_height;
+		bool m_recreating;
+
+		//HACK: Find another way to solve problem of get a swapchain image
+		VKImage tempColor;
+
+
+		void* m_instance = nullptr;
+		void* m_device = nullptr;
+
 	};
 
-	struct VKHandle
+	struct VKBuffer
 	{
-		VkInstance m_instance;
-		VkAllocationCallbacks* m_alloc_callback = nullptr;
-		VkSurfaceKHR m_surface;
-#ifdef TRC_DEBUG_BUILD
-		VkDebugUtilsMessengerEXT m_debugutils;
-#endif
+		VkBuffer m_handle = VK_NULL_HANDLE;
+		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+		void* m_device = nullptr;
+		VKHandle* m_instance = nullptr;
+	};
+
+	struct VKFrameResoures
+	{
+		std::vector<VkImage> _images;
+		std::vector<VkImageView> _image_views;
+		std::vector<VkBuffer> _buffers;
+		std::vector<VkSampler> _samplers;
+		std::vector<VkEvent> _events;
+		std::vector<VkRenderPass> _renderPasses;
+		std::vector<VkFramebuffer> _framebuffers;
+		std::vector<VkDeviceMemory> _memorys;
 	};
 
 	struct VKDeviceHandle
@@ -184,17 +198,15 @@ namespace trace {
 
 		bool m_recreatingSwapcahin = false;
 
-		VKSwapChain m_swapChain;
-		VKRenderPass m_renderPass;
-
-
 		std::vector<VkSemaphore> m_imageAvailableSemaphores;
 		std::vector<VkSemaphore> m_queueCompleteSemaphores;
 
 		uint32_t m_numInFlightFence;
-		std::vector<VKFence> m_inFlightFence;
+		std::array<VKFence, VK_MAX_NUM_FRAMES> m_inFlightFence;
 
-		std::vector<VKFence*> m_imagesFence;
+		std::array<VKFence*, VK_MAX_NUM_FRAMES> m_imagesFence;
+
+		std::array<VkDescriptorPool, VK_MAX_NUM_FRAMES> m_frameDescriptorPool;
 
 		uint32_t m_frameBufferWidth;
 		uint32_t m_frameBufferHeight;
@@ -207,7 +219,126 @@ namespace trace {
 		VkPhysicalDeviceProperties m_properties;
 		VkPhysicalDeviceFeatures m_features;
 		SwapchainInfo m_swapchainInfo;
+		VKBuffer m_frameDescriptorBuffer;
+		void* m_bufferPtr;
+		char* m_bufferData;
+		uint32_t m_bufCurrentOffset;
+		VkDeviceMemory frame_memory;
+		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
+		uint32_t frame_mem_size = 0;
+		VKImage nullImage;
+		VKBuffer nullBuffer;
 	};
+
+	
+
+	struct VKPipeline
+	{
+		VkPipeline m_handle = VK_NULL_HANDLE;
+		VkPipelineLayout m_layout = VK_NULL_HANDLE;
+
+		VKBuffer Scene_buffers = {};
+		VkDescriptorSet Scene_sets[VK_MAX_DESCRIPTOR_SET] = {};
+		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
+
+
+		VkDescriptorSet Instance_sets[VK_MAX_DESCRIPTOR_SET] = {};
+		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
+
+		VkDescriptorSet Local_sets[VK_MAX_DESCRIPTOR_SET] = {};
+		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Local_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
+
+		VKHandle* m_instance = nullptr;
+		VKDeviceHandle* m_device = nullptr;
+		uint32_t cache_size = 0;
+		char* cache_data = nullptr;
+		void* last_tex_update[3] = {};
+
+
+		
+
+	};
+
+	struct VKFrameBuffer
+	{
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint32_t m_attachmentCount = 0;
+		VkFramebuffer m_handle = VK_NULL_HANDLE;
+		VKRenderPass m_renderPass = {};
+		eastl::vector<VkImageView> m_attachments = {};
+		VKHandle* m_instance = nullptr;
+		VKDeviceHandle* m_device = nullptr;
+
+	};
+
+	//Temp : fix the frame buffer structure, to prevent creating multiple strucuters the to hold the same type
+	struct Framebuffer_VK
+	{
+		std::vector<VKFrameBuffer> m_handle;
+		VKHandle* m_instance = nullptr;
+		VKDeviceHandle* m_device = nullptr;
+	};
+
+	struct VKMaterialData
+	{
+		VkDescriptorSet m_sets[3] = {};
+
+		void* m_instance;
+		void* m_device;
+	};
+
+	struct VKDrawData
+	{
+		VkDescriptorSet sets[3];
+		VkWriteDescriptorSet writes;
+	};
+
+	struct VKEvntPair
+	{
+		RenderGraphPass* pass = nullptr;
+		RenderGraphResource* resource = nullptr;
+		VkEvent evnt = VK_NULL_HANDLE;
+	};
+
+	struct VKRenderGraph
+	{
+		void* m_device = nullptr;
+		void* m_instance = nullptr;
+		std::vector<VKEvntPair> events;
+		VkDeviceMemory m_memory;
+		uint32_t memory_size = 0;
+		uint32_t memory_type_bits = 0;
+		uint32_t current_offset = 0;
+	};
+
+	struct VKRenderGraphPass
+	{
+		std::vector<VkEvent> wait_events;
+		std::vector<VkEvent> signal_events;
+		VKRenderPass physical_pass;
+		VkFramebuffer frame_buffer;
+	};
+
+	struct VKRenderGraphResource
+	{
+		struct {
+			VKImage texture;
+			VKBuffer buffer;
+		} resource;
+		uint32_t memory_offset = 0;
+		VkMemoryRequirements tex_mem_req;
+		VkMemoryRequirements buf_mem_req;
+		VkImageLayout image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	};
+
+
 
 
 

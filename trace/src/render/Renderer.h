@@ -4,27 +4,31 @@
 #include "core/Object.h"
 #include "Graphics.h"
 #include "Commands.h"
+#include "resource/Ref.h"
+
 
 // Temp--------------------------------
 #include "GBuffer.h"
 #include "GDevice.h"
-#include "core/events/Events.h"
 #include "Camera.h"
-#include "resource/ResourceSystem.h"
-#include "GFramebuffer.h"
-#include "GRenderPass.h"
 #include "GSwapchain.h"
-#include "SkyBox.h"
+#include "GContext.h"
+#include "render_graph/RenderGraph.h"
+#include "RenderComposer.h"
 //----------------------------------------
 
 
 namespace trace {
 
-	class GContext;
+	class RenderGraph;
+	class SkyBox;
+	class GRenderPass;
+	class Mesh;
+	class Model;
+	class Event;
 
 	class TRACE_API Renderer : public Object
 	{
-
 	public:
 		Renderer();
 		~Renderer();
@@ -39,8 +43,13 @@ namespace trace {
 		void End();
 		void ShutDown();
 		void OnEvent(Event* p_event);
-		GRenderPass* GetRenderPass(RENDERPASS render_pass);
+		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
+		GDevice* GetDevice() { return &g_device; }
+		GContext* GetContext() { return &g_context; }
 		void Render(float deltaTime);
+		void DrawQuad();
+		void RenderOpaqueObjects();
+		void RenderLights();
 		
 
 
@@ -58,24 +67,35 @@ namespace trace {
 
 
 		// Temp-----------------------------
-		Ref<GPipeline> sky_pipeline;
-		GRenderPass* _renderPass[RENDERPASS::RENDER_PASS_COUNT];
-		GFramebuffer* _framebuffer;
-		GSwapchain* _swapChain;
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera;
 		glm::ivec4 render_mode;
+		std::unordered_map<std::string, void*> _avaliable_passes;
+		Light lights[MAX_LIGHT_COUNT];
+		glm::ivec4 light_data;
+		GBuffer quadBuffer;
+		float exposure;
 		//------------------------------------
+		std::vector<CommandList> m_cmdList;
+		uint32_t m_listCount;
 	private:
 		void draw_mesh(CommandParams params);
 		void draw_skybox(CommandParams params);
 
 	private:
-		GContext* m_context;
-		GDevice* m_device;
-		std::vector<CommandList> m_cmdList;
-		uint32_t m_listCount;
+		GSwapchain m_swapChain;
+		GContext g_context;
+		GDevice g_device;
+		RenderComposer* m_composer;
+		uint32_t m_frameWidth;
+		uint32_t m_frameHeight;
+		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
+		uint32_t m_opaqueObjectsSize;
+		SkyBox* current_sky_box;
+
+		friend RenderGraph;
+		friend RenderComposer;
 
 	protected:
 

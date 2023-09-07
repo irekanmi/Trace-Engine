@@ -24,10 +24,10 @@ namespace trace {
 		OpenGLContext();
 		~OpenGLContext();
 
-		virtual void Update(float deltaTime) override;
+		void Update(float deltaTime) ;
 
-		virtual void Init() override;
-		virtual void ShutDown() override;
+		void Init() ;
+		void ShutDown() ;
 
 	private:
 		Win32Data* m_win32data = nullptr;

@@ -1,44 +1,69 @@
 #include "pch.h"
 #include "VulkanTexture.h"
 #include "VkUtils.h"
+#include "render/Graphics.h"
 
 extern trace::VKHandle g_Vkhandle;
 extern trace::VKDeviceHandle g_VkDevice;
 
-namespace trace {
-	VulkanTexture::VulkanTexture(TextureDesc desc)
+
+namespace vk {
+
+	bool __CreateTexture(trace::GTexture* texture, trace::TextureDesc desc)
 	{
-		m_desc = desc;
-		m_instance = &g_Vkhandle;
-		m_device = &g_VkDevice;
+		bool result = true;
+
+		
+
+		if (!texture)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)texture, __FUNCTION__);
+			return false;
+		}
+
+		if (texture->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These handle is valid can't recreate the texture ::Try to destroy and then create {}, Function -> {}", (const void*)texture->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKImage* _handle = new trace::VKImage(); //TODO: Use a custom allocator
+		_handle->m_device = &g_VkDevice;
+		_handle->m_instance = &g_Vkhandle;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		texture->GetRenderHandle()->m_internalData = _handle;
+
+		texture->SetTextureDescription(desc);
+
 
 		VkImageUsageFlags image_usage = 0;
 		VkImageAspectFlags aspect_flags = 0;
 		VkMemoryPropertyFlags memory_property = 0;
 		VkImageCreateFlags flags = 0;
-		if (TRC_HAS_FLAG(desc.m_flag, BindFlag::SHADER_RESOURCE_BIT))
+		if (TRC_HAS_FLAG(desc.m_flag, trace::BindFlag::SHADER_RESOURCE_BIT))
 		{
 			image_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 			aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
 		}
-		if (TRC_HAS_FLAG(desc.m_flag, BindFlag::DEPTH_STENCIL_BIT))
+		if (TRC_HAS_FLAG(desc.m_flag, trace::BindFlag::DEPTH_STENCIL_BIT))
 		{
 			image_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 			aspect_flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
 		}
-		if (desc.m_usage == UsageFlag::DEFAULT)
+		if (desc.m_usage == trace::UsageFlag::DEFAULT)
 		{
 			memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		}
-		if (desc.m_image_type == ImageType::CUBE_MAP)
+		if (desc.m_image_type == trace::ImageType::CUBE_MAP)
 		{
 			flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		}
 
 		vk::_CreateImage(
-			m_instance,
-			m_device,
-			&m_handle,
+			_instance,
+			_device,
+			_handle,
 			vk::convertFmt(desc.m_format),
 			VK_IMAGE_TILING_OPTIMAL,
 			image_usage,
@@ -49,23 +74,23 @@ namespace trace {
 			desc.m_width,
 			desc.m_height,
 			desc.m_numLayers,
-			m_desc.m_mipLevels
+			desc.m_mipLevels
 		);
 
 		if (!desc.m_data.empty())
 		{
-			VKBuffer staging_buffer;
+			trace::VKBuffer staging_buffer;
 
-			BufferInfo buffer_info;
-			buffer_info.m_size = desc.m_width * desc.m_height * desc.m_channels;
+			trace::BufferInfo buffer_info;
+			buffer_info.m_size = desc.m_width * desc.m_height * trace::getFmtSize(desc.m_format);
 			buffer_info.m_stide = 0;
-			buffer_info.m_usageFlag = UsageFlag::UPLOAD;
-			buffer_info.m_flag = BindFlag::NIL;
+			buffer_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+			buffer_info.m_flag = trace::BindFlag::NIL;
 			buffer_info.m_data = desc.m_data[0];
 
 			vk::_CreateBuffer(
-				m_instance,
-				m_device,
+				_instance,
+				_device,
 				&staging_buffer,
 				buffer_info
 			);
@@ -73,8 +98,8 @@ namespace trace {
 
 			for (uint32_t i = 0; i < desc.m_numLayers; i++)
 			{
-			VKCommmandBuffer cmd_buf;
-			vk::_BeginCommandBufferSingleUse(m_device, m_device->m_graphicsCommandPool, &cmd_buf);
+				trace::VKCommmandBuffer cmd_buf;
+				vk::_BeginCommandBufferSingleUse(_device, _device->m_graphicsCommandPool, &cmd_buf);
 				VkImageSubresourceRange range = {};
 				range.aspectMask = aspect_flags;
 				range.baseArrayLayer = i;
@@ -82,21 +107,21 @@ namespace trace {
 				range.layerCount = 1;
 				range.levelCount = 1;
 
-			vk::_TransitionImageLayout(
-				m_instance,
-				m_device,
-				&cmd_buf,
-				&m_handle,
-				vk::convertFmt(desc.m_format),
-				VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				range
-			);
+				vk::_TransitionImageLayout(
+					_instance,
+					_device,
+					&cmd_buf,
+					_handle,
+					vk::convertFmt(desc.m_format),
+					VK_IMAGE_LAYOUT_UNDEFINED,
+					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					range
+				);
 
 				void* data0;
-				vkMapMemory(m_device->m_device, staging_buffer.m_memory, 0, buffer_info.m_size, 0, &data0);
+				vkMapMemory(_device->m_device, staging_buffer.m_memory, 0, buffer_info.m_size, 0, &data0);
 				memcpy(data0, desc.m_data[i], buffer_info.m_size);
-				vkUnmapMemory(m_device->m_device, staging_buffer.m_memory);
+				vkUnmapMemory(_device->m_device, staging_buffer.m_memory);
 
 				VkBufferImageCopy copy = {};
 				copy.bufferOffset = 0;
@@ -106,8 +131,8 @@ namespace trace {
 				copy.imageOffset = { 0 };
 				copy.imageExtent.depth = 1;
 
-				copy.imageExtent.width = m_handle.m_width;
-				copy.imageExtent.height = m_handle.m_height;
+				copy.imageExtent.width = _handle->m_width;
+				copy.imageExtent.height = _handle->m_height;
 
 				copy.imageSubresource.aspectMask = aspect_flags;
 				copy.imageSubresource.baseArrayLayer = i;
@@ -119,40 +144,40 @@ namespace trace {
 				vkCmdCopyBufferToImage(
 					cmd_buf.m_handle,
 					staging_buffer.m_handle,
-					m_handle.m_handle,
+					_handle->m_handle,
 					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					1,
 					&copy
 				);
 
-			
 
-				if (m_desc.m_mipLevels > 1)
+
+				if (desc.m_mipLevels > 1)
 				{
 					vk::_EndCommandBufferSingleUse(
-						m_device,
-						m_device->m_graphicsCommandPool,
-						m_device->m_graphicsQueue,
+						_device,
+						_device->m_graphicsCommandPool,
+						_device->m_graphicsQueue,
 						&cmd_buf
 					);
 					vk::_GenerateMipLevels(
-						m_instance,
-						m_device,
-						&m_handle,
-						vk::convertFmt(m_desc.m_format),
-						m_desc.m_width,
-						m_desc.m_height,
-						m_desc.m_mipLevels,
+						_instance,
+						_device,
+						_handle,
+						vk::convertFmt(desc.m_format),
+						desc.m_width,
+						desc.m_height,
+						desc.m_mipLevels,
 						i
 					);
 				}
 				else
 				{
 					vk::_TransitionImageLayout(
-						m_instance,
-						m_device,
+						_instance,
+						_device,
 						&cmd_buf,
-						&m_handle,
+						_handle,
 						vk::convertFmt(desc.m_format),
 						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 						VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -160,62 +185,97 @@ namespace trace {
 					);
 
 					vk::_EndCommandBufferSingleUse(
-						m_device,
-						m_device->m_graphicsCommandPool,
-						m_device->m_graphicsQueue,
+						_device,
+						_device->m_graphicsCommandPool,
+						_device->m_graphicsQueue,
 						&cmd_buf
 					);
 				}
 
-			
-				
+
+
 			}
 
 
-			vk::_DestoryBuffer(m_instance, m_device, &staging_buffer);
+			vk::_DestoryBuffer(_instance, _device, &staging_buffer);
 
 		}
-		
 
-		
+
+
 
 
 		VkImageViewCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		create_info.format = vk::convertFmt(desc.m_format);
 		create_info.viewType = vk::convertImageViewType(desc.m_image_type); // TODO: Configurable view type
-		create_info.image = m_handle.m_handle;
+		create_info.image = _handle->m_handle;
 		create_info.subresourceRange.aspectMask = aspect_flags;
 		create_info.subresourceRange.baseArrayLayer = 0; // TODO: Configurable array layer
 		create_info.subresourceRange.baseMipLevel = 0; // TODO: Configurable
 		create_info.subresourceRange.layerCount = desc.m_numLayers;
-		create_info.subresourceRange.levelCount = m_desc.m_mipLevels; // TODO: Configurable
+		create_info.subresourceRange.levelCount = desc.m_mipLevels; // TODO: Configurable
 
-		VkResult result = (vkCreateImageView(m_device->m_device, &create_info, m_instance->m_alloc_callback, &m_handle.m_view));
+		VkResult _result = (vkCreateImageView(_device->m_device, &create_info, _instance->m_alloc_callback, &_handle->m_view));
 
-		VK_ASSERT(result);
+		VK_ASSERT(_result);
 
 		vk::_CreateSampler(
-			m_instance,
-			m_device,
+			_instance,
+			_device,
 			desc,
-			m_sampler,
-			static_cast<float>(m_desc.m_mipLevels)
+			_handle->m_sampler,
+			static_cast<float>(desc.m_mipLevels)
 		);
 
+		if (_result != VK_SUCCESS)
+		{
+			delete _handle;
+			texture->GetRenderHandle()->m_internalData = nullptr;
+			result = false;
+		}
+
+		return result;
 	}
-	VulkanTexture::~VulkanTexture()
+	bool __DestroyTexture(trace::GTexture* texture)
 	{
+		bool result = true;
+
+		
+
+		if (!texture)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)texture, __FUNCTION__);
+			return false;
+		}
+
+		if (!texture->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)texture->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKImage* _handle = (trace::VKImage*)texture->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
 		vk::_DestroyImage(
-			m_instance,
-			m_device,
-			&m_handle
+			_instance,
+			_device,
+			_handle
 		);
 
 		vk::_DestroySampler(
-			m_instance,
-			m_device,
-			m_sampler
+			_instance,
+			_device,
+			_handle->m_sampler
 		);
+
+
+		delete texture->GetRenderHandle()->m_internalData;
+		texture->GetRenderHandle()->m_internalData = nullptr;
+		
+		return result;
 	}
+
 }

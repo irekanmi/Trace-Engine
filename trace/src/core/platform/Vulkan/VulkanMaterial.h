@@ -5,25 +5,10 @@
 #include "render/Material.h"
 #include "VKtypes.h"
 
-namespace trace {
 
+namespace vk {
 
-	class TRACE_API VulkanMaterial : public MaterialInstance
-	{
-
-	public:
-		VulkanMaterial();
-		~VulkanMaterial();
-
-		virtual bool Init(Ref<GPipeline> pipeline, Material material) override;
-		virtual void Apply() override;
-
-	private:
-		VkDescriptorSet m_sets[3] = {};
-		VKHandle* m_instance;
-		VKDeviceHandle* m_device;
-	protected:
-
-	};
+	bool __InitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline, trace::Material material);
+	bool __ApplyMaterial(trace::MaterialInstance* mat_instance);
 
 }

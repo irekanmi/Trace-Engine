@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "TextureManager.h"
-#include "core/platform/Vulkan/VulkanTexture.h"
+#include "render/Renderutils.h"
 #include <new>
 #include "core/Platform.h"
 
@@ -26,80 +26,89 @@ namespace trace {
 	{
 		m_textureUnits = maxTextureUnits;
 		m_hashTable.Init(maxTextureUnits);
+		
+		m_textures.resize(m_textureUnits);
 
-		switch (AppSettings::graphics_api)
+		for (uint32_t i = 0; i < m_textureUnits; i++)
 		{
-		case RenderAPI::Vulkan:
-		{
-			m_textureTypeSize = sizeof(VulkanTexture);
-
-			//TODO: Use a custom allocator for allocation
-			m_textures = new char[m_textureTypeSize * maxTextureUnits];
-
-			VulkanTexture* textures = (VulkanTexture*)m_textures;
-
-			for (uint32_t i = 0; i < m_textureUnits; i++)
-			{
-				textures[i].m_id = INVALID_ID;
-			}
-
-			break;
+			m_textures[i].m_id = INVALID_ID;
 		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
-		}
-
-			
 
 		TextureHash _hash;
 		_hash._id = INVALID_ID;
 		m_hashTable.Fill(_hash);
+
+		// Trying to determine directory where textures are located..............
+		std::filesystem::path current_search_path("./assets");
+
+		if (std::filesystem::exists(current_search_path))
+		{
+			current_search_path /= "textures";
+			if (std::filesystem::exists(current_search_path))
+			{
+				texture_resource_path = current_search_path;
+			}
+		}
+		else if (std::filesystem::exists(std::filesystem::path("../../assets")))
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "textures";
+				if (std::filesystem::exists(current_search_path))
+				{
+					texture_resource_path = current_search_path;
+				}
+			}
+		}
+		else if (std::filesystem::exists(std::filesystem::path("../../../assets")))
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../../../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "textures";
+				if (std::filesystem::exists(current_search_path))
+				{
+					texture_resource_path = current_search_path;
+				}
+			}
+		}
+		else
+		{
+			current_search_path.clear();
+			current_search_path = std::filesystem::path("../assets");
+			if (std::filesystem::exists(current_search_path))
+			{
+				current_search_path /= "textures";
+				if (std::filesystem::exists(current_search_path))
+				{
+					texture_resource_path = current_search_path;
+				}
+			}
+		}
+		// .............................
+
 		return true;
 	}
 
 	void TextureManager::ShutDown()
 	{
-		if (m_textures)
+		default_diffuse_map.~Ref();
+		default_specular_map.~Ref();
+		default_normal_map.~Ref();
+		if (!m_textures.empty())
 		{
-			default_diffuse_map.~Ref();
-			default_specular_map.~Ref();
-			default_normal_map.~Ref();
-			switch (AppSettings::graphics_api)
+			for (GTexture& tex : m_textures)
 			{
-			case RenderAPI::Vulkan:
-			{
-
-
-
-				
-				VulkanTexture* textures = (VulkanTexture*)m_textures;
-
-				for (uint32_t i = 0; i < m_textureUnits; i++)
-				{
-					if (textures[i].m_id != INVALID_ID)
-					{
-						TRC_DEBUG(textures[i].m_id);
-						break;
-					}
-				}
-
-				
-
-				break;
+				if (tex.m_id == INVALID_ID)
+					continue;
+				TRC_DEBUG("Unloaded texture  id:{}", tex.m_id);
+				RenderFunc::DestroyTexture(&tex);
+				tex.~GTexture();
 			}
-			default:
-			{
-				TRC_ASSERT(false, "Render API Texture not suppoted");
-				break;
-			}
-			}
-			//TODO: Use a custom allocator for allocation
-			delete[] m_textures;
-
+			m_textures.clear();
 		}
 
 	}
@@ -111,16 +120,14 @@ namespace trace {
 
 		if (_hash._id != INVALID_ID)
 		{
-			GTexture* value = (GTexture*)(m_textures + (m_textureTypeSize * _hash._id));
-			return value;
+			return &m_textures[_hash._id];
 		}
 		else
 		{
 
 			if (LoadTexture(name))
 			{
-				GTexture* value = (GTexture*)(m_textures + (m_textureTypeSize * _hash._id));
-				return value;
+				return &m_textures[_hash._id];
 			}
 
 		}
@@ -159,7 +166,7 @@ namespace trace {
 		unsigned char* pixel_data = nullptr;
 
 		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+		pixel_data = stbi_load((texture_resource_path / name).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
 			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
@@ -179,49 +186,27 @@ namespace trace {
 		texture_desc.m_usage = UsageFlag::DEFAULT;
 		texture_desc.m_image_type = ImageType::IMAGE_2D;
 		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height))) / 2) + 1;
+		texture_desc.m_width = (uint32_t)_width;
+		texture_desc.m_height = (uint32_t)_height;
+		texture_desc.m_data.push_back(pixel_data);
+		texture_desc.m_numLayers = 1;
 
-		switch (AppSettings::graphics_api)
+
+		uint32_t i = 0;
+		for (GTexture& tex : m_textures)
 		{
-		case RenderAPI::Vulkan:
-		{
-
-			
-
-			texture_desc.m_width = (uint32_t)_width;
-			texture_desc.m_height = (uint32_t)_height;
-			texture_desc.m_data.push_back(pixel_data);
-			texture_desc.m_numLayers = 1;
-			VulkanTexture* textures = (VulkanTexture*)m_textures;
-
-			for (uint32_t i = 0; i < m_textureUnits; i++)
+			if (tex.m_id == INVALID_ID)
 			{
-				if (textures[i].m_id == INVALID_ID)
-				{
-					VulkanTexture* texture = textures + i;
-					new(texture) VulkanTexture(texture_desc);
-					texture->m_id = i;
-					TextureHash _hash;
-					_hash._id = i;
-					m_hashTable.Set(name, _hash);
-					return true;
-					break;
-				}
+				RenderFunc::CreateTexture(&tex, texture_desc);
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
 			}
-
-			TRC_WARN("Failed to find a vaild slot for the texture {}", name.c_str());
-			return false;
-
-			break;
+	
+			i++;
 		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
-		}
-
-
 
 
 		return true;
@@ -240,7 +225,7 @@ namespace trace {
 		unsigned char* pixel_data = nullptr;
 
 		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load(("../assets/textures/" + name).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+		pixel_data = stbi_load((texture_resource_path / name).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
 			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
@@ -256,42 +241,20 @@ namespace trace {
 		desc.m_image_type = ImageType::IMAGE_2D;
 		desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height))) / 2) + 1;
 
-		switch (AppSettings::graphics_api)
+		uint32_t i = 0;
+		for (GTexture& tex : m_textures)
 		{
-		case RenderAPI::Vulkan:
-		{
-
-			VulkanTexture* textures = (VulkanTexture*)m_textures;
-
-			for (uint32_t i = 0; i < m_textureUnits; i++)
+			if (tex.m_id == INVALID_ID)
 			{
-				if (textures[i].m_id == INVALID_ID)
-				{
-					VulkanTexture* texture = textures + i;
-					new(texture) VulkanTexture(desc);
-					texture->m_id = i;
-					TextureHash _hash;
-					_hash._id = i;
-					m_hashTable.Set(name, _hash);
-					return true;
-					break;
-				}
+				RenderFunc::CreateTexture(&tex, desc);
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
 			}
-
-			TRC_WARN("Failed to find a vaild slot for the texture {}", name.c_str());
-			return false;
-
-			break;
+			i++;
 		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
-		}
-
-
 
 
 		return true;
@@ -304,6 +267,7 @@ namespace trace {
 			TRC_WARN("Texture has already being loaded {}", name);
 			return true;
 		}
+		desc.m_numLayers = static_cast<uint32_t>(filenames.size());
 
 		for (uint32_t i = 0; i < desc.m_numLayers; i++)
 		{
@@ -311,7 +275,7 @@ namespace trace {
 			unsigned char* pixel_data = nullptr;
 
 			stbi_set_flip_vertically_on_load(false);
-			pixel_data = stbi_load(("../assets/textures/" + filenames[i]).c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+			pixel_data = stbi_load((texture_resource_path / filenames[i]).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 			if (!pixel_data)
 			{
 				TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
@@ -328,40 +292,19 @@ namespace trace {
 		}
 		stbi_set_flip_vertically_on_load(true);
 
-
-		switch (AppSettings::graphics_api)
+		uint32_t i = 0;
+		for (GTexture& tex : m_textures)
 		{
-		case RenderAPI::Vulkan:
-		{
-
-			VulkanTexture* textures = (VulkanTexture*)m_textures;
-
-			for (uint32_t i = 0; i < m_textureUnits; i++)
+			if (tex.m_id == INVALID_ID)
 			{
-				if (textures[i].m_id == INVALID_ID)
-				{
-					VulkanTexture* texture = textures + i;
-					new(texture) VulkanTexture(desc);
-					texture->m_id = i;
-					TextureHash _hash;
-					_hash._id = i;
-					m_hashTable.Set(name, _hash);
-					return true;
-					break;
-				}
+				RenderFunc::CreateTexture(&tex, desc);
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
 			}
-
-			TRC_WARN("Failed to find a vaild slot for the texture {}", name.c_str());
-			return false;
-
-			break;
-		}
-		default:
-		{
-			TRC_ASSERT(false, "Render API Texture not suppoted");
-			return false;
-			break;
-		}
+			i++;
 		}
 
 		return true;
@@ -379,6 +322,7 @@ namespace trace {
 		for(uint32_t i = 0; i < texture->GetTextureDescription().m_numLayers; i++)
 			stbi_image_free(texture->GetTextureDescription().m_data[i]);
 
+		RenderFunc::DestroyTexture(texture);
 		texture->~GTexture();
 		texture->m_id = INVALID_ID;
 	}
@@ -389,7 +333,7 @@ namespace trace {
 
 		if (_hash._id != INVALID_ID)
 		{
-			GTexture* value = (GTexture*)(m_textures + (m_textureTypeSize * _hash._id));
+			GTexture* value = &m_textures[_hash._id];
 			UnloadTexture(value);
 			return;
 		}
@@ -446,8 +390,9 @@ namespace trace {
 		texture_desc.m_numLayers = 1;
 		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
 
-
-		default_diffuse_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
+		// Default Diffuse texture
+		RenderFunc::CreateTexture(&default_diffuse_texture, texture_desc);
+		default_diffuse_map = { &default_diffuse_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
 
 		dimension = 16;
@@ -477,7 +422,9 @@ namespace trace {
 			}
 		}
 		
-		default_specular_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
+		// Default specular
+		RenderFunc::CreateTexture(&default_specular_texture, texture_desc);
+		default_specular_map = { &default_specular_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
 		dimension = 16;
 		channels = 4;
@@ -507,8 +454,9 @@ namespace trace {
 			}
 		}
 
-
-		default_normal_map = { GTexture::Create_(texture_desc), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
+		// Default normal
+		RenderFunc::CreateTexture(&default_normal_texture, texture_desc);
+		default_normal_map = { &default_normal_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 
 		
 		return true;
@@ -536,6 +484,7 @@ namespace trace {
 
 		//TODO: maybe the texture should be freed immediatly it is loaded to the GPU
 		delete[] texture->GetTextureDescription().m_data[0];
+		RenderFunc::DestroyTexture(texture);
 		texture->~GTexture();
 	}
 

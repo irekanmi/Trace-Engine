@@ -5,6 +5,7 @@
 #include "core/Application.h"
 #include "core/io/Logging.h"
 #include "GLFW/glfw3.h"
+#include "core/Platform.h"
 
 namespace trace {
 

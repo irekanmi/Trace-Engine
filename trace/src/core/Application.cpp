@@ -1,15 +1,17 @@
 #include "pch.h"
-#include "Application.h"
-#include "io/Logging.h"
+
 #include "Enums.h"
+#include "Application.h"
+#include "Platform.h"
+#include "io/Logging.h"
 #include "events/Events.h"
 #include "events/EventsSystem.h"
-#include "platform\GLFW\GLFWwindow.h"
-#include "input\Input.h"
-#include "render/Renderer.h"
+#include "platform/GLFW/GLFWwindow.h"
 #include "core/platform/Windows/Win32Window.h"
-#include "glm/gtc/matrix_transform.hpp"
+#include "input/Input.h"
+#include "render/Renderer.h"
 #include "memory/memory.h"
+#include "resource/ResourceSystem.h"
 
 //Temp==================
 #include "render/Graphics.h"
@@ -108,13 +110,14 @@ namespace trace
 
 	void Application::Start()
 	{
-		
 
+		ApplicationStart app_start;
+		EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
 
-		trace::ApplicationStart app_start;
-		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
+		Renderer* renderer = Renderer::get_instance();
+		renderer->Start();
 
-		
+		ResourceSystem::get_instance()->LoadDefaults();
 
 		//----------CLIENT--------------//
 		m_client_start();
@@ -128,11 +131,8 @@ namespace trace
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
 		
-		//Temp------------------------
-		renderer->Start();
-		//----------------------------
-
 		m_clock.Begin();
+
 
 		while (m_isRunning)
 		{
@@ -152,10 +152,6 @@ namespace trace
 			m_client_update(deltaTime);
 
 			//___________________//	
-
-
-			
-
 
 			renderer->Render(deltaTime);
 

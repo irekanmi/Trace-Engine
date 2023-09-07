@@ -5,26 +5,11 @@
 #include "VKtypes.h"
 
 
-namespace trace {
+namespace vk {
 
-
-	class VKContext : public GContext
-	{
-	public:
-		VKContext();
-		~VKContext();
-
-		virtual void Update(float deltaTime) override;
-
-		virtual void Init() override;
-		virtual void ShutDown() override;
-
-	private:
-		VKHandle* m_handle;
-
-	protected:
-
-	};
+	bool __CreateContext(trace::GContext* context);
+	bool __DestroyContext(trace::GContext* context);
+	
 
 }
 

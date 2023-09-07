@@ -4,6 +4,8 @@
 #include "EASTL/string.h"
 #include "glm/glm.hpp"
 
+#define MAX_LIGHT_COUNT 15
+
 namespace trace {
 
 	class GShader;
@@ -21,7 +23,8 @@ namespace trace {
 	enum class FilterMode
 	{
 		NONE,
-		LINEAR
+		LINEAR,
+		NEAREST
 	};
 
 
@@ -44,17 +47,6 @@ namespace trace {
 		DEPTH_STENCIL_BIT = BIT(5),
 		SHADER_RESOURCE_BIT = BIT(6)
 	};
-
-	struct BufferInfo
-	{
-		uint32_t m_size = 0;
-		uint32_t m_stide = 0;
-		BindFlag m_flag = BindFlag::NIL;
-		UsageFlag m_usageFlag = UsageFlag::NONE;
-		void* m_data = nullptr;
-	};
-
-
 
 
 	enum RenderAPI
@@ -90,17 +82,21 @@ namespace trace {
 	enum class Format
 	{
 		NONE,
+		R16_FLOAT,
 		R32G32B32A32_FLOAT,
 		R32G32B32_FLOAT,
 		R32G32B32_UINT,
 		R32G32_FLOAT,
 		R32G32_UINT,
+		R16G16B16_FLOAT,
+		R16G16B16A16_FLOAT,
 		R8G8B8A8_SNORM,
 		R8G8B8A8_SRBG,
 		R8G8B8A8_RBG,
 		R8G8B8_SRBG,
 		R8G8B8_SNORM,
 		R8G8B8A8_UNORM,
+		R8_UNORM,
 		D32_SFLOAT_S8_SUINT
 	};
 
@@ -153,7 +149,7 @@ namespace trace {
 
 	
 
-	enum class PrimitiveTopology
+	enum class PRIMITIVETOPOLOGY
 	{
 		NONE,
 		TRIANGLE_LIST,
@@ -205,16 +201,66 @@ namespace trace {
 		RENDER_PASS_COUNT
 	};
 
-	struct UniformMetaData
+	enum GPU_QUEUE
 	{
-		uint32_t _id = INVALID_ID;
-		uint32_t _offset = INVALID_ID;
-		uint32_t _size = 0;
-		uint32_t _slot = 0;
-		uint32_t _index = 0;
-		uint32_t _count = 0;
-		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
-		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
+		GRAPHICS = BIT(1),
+		COMPUTE = BIT(2)
+	};
+
+	enum ShaderDataDef
+	{
+		VARIABLE,
+		STRUCTURE,
+		ARRAY,
+		STRUCT_ARRAY
+	};
+
+	enum BlendFactor
+	{
+		BLEND_NONE,
+		BLEND_ONE,
+		BLEND_ZERO,
+		BLEND_ONE_MINUS_SRC_ALPHA,
+		BLEND_ONE_MINUS_DST_ALPHA,
+		BLEND_ONE_MINUS_SRC_COLOR,
+		BLEND_ONE_MINUS_DST_COLOR,
+		BLEND_SRC_COLOR,
+		BLEND_DST_COLOR,
+		BLEND_SRC_ALPHA,
+		BLEND_DST_ALPHA,
+		BLEND_FACTOR_COUNT
+	};
+
+	enum BlendOp
+	{
+		BLEND_OP_NONE,
+		BLEND_OP_ADD,
+		BLEND_OP_SUBTRACT,
+		BLEND_OP_REVERSE_SUBTRACT,
+		BLEND_OP_MIN,
+		BLEND_OP_MAX,
+		BLEND_OP_COUNT
+	};
+
+	enum FrameSettingsBit
+	{
+		RENDER_NONE = BIT(0),
+		RENDER_DEFAULT = BIT(1),
+		RENDER_SSAO = BIT(2),
+		RENDER_HDR = BIT(3),
+		RENDER_BLOOM = BIT(4),
+		RENDER_SETTING_MAX
+	};
+
+	typedef uint32_t FrameSettings;
+
+	struct BufferInfo
+	{
+		uint32_t m_size = 0;
+		uint32_t m_stide = 0;
+		BindFlag m_flag = BindFlag::NIL;
+		UsageFlag m_usageFlag = UsageFlag::NONE;
+		void* m_data = nullptr;
 	};
 
 	struct Rect2D
@@ -275,6 +321,84 @@ namespace trace {
 	struct ColorBlendState
 	{
 		bool alpha_to_blend_coverage = false; // TODO
+		BlendFactor src_color = BlendFactor::BLEND_NONE;
+		BlendFactor dst_color = BlendFactor::BLEND_NONE;
+		BlendOp color_op = BlendOp::BLEND_OP_NONE;
+
+		BlendFactor src_alpha = BlendFactor::BLEND_NONE;
+		BlendFactor dst_alpha = BlendFactor::BLEND_NONE;
+		BlendOp alpha_op = BlendOp::BLEND_OP_NONE;
+
+	};
+
+	struct UniformMetaData
+	{
+		uint32_t _id = INVALID_ID;
+		uint32_t _offset = INVALID_ID;
+		uint32_t _size = 0;
+		uint32_t _slot = 0;
+		uint32_t _index = 0;
+		uint32_t _count = 0;
+		uint32_t _struct_index = INVALID_ID;
+		uint16_t _frame_index = uint16_t(-1); // TODO: Create enum for maximum 16bit integer
+		uint16_t _num_frame_update = 0;
+		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
+	};
+
+	struct ShaderStruct
+	{
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t resource_size = 0;
+		uint32_t slot = 0;
+		uint32_t index = 0;
+		uint32_t count = 1;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		struct StructInfo
+		{
+			std::string resource_name = "";
+			uint32_t resource_size = 0;
+			ShaderData resource_data_type = ShaderData::NONE;
+		};
+		std::vector<StructInfo> members;
+		void* data = nullptr;
+	};
+
+	struct ShaderArray
+	{
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		uint32_t resource_size = 0;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t slot = 0;
+		uint32_t count = 1;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		std::string name;
+		struct ArrayInfo
+		{
+			std::string resource_name = "";
+			uint32_t index = 0;
+			ShaderData resource_data_type = ShaderData::NONE;
+			void* data = nullptr;
+		};
+		std::vector<ArrayInfo> members;
+	};
+
+	struct ShaderVariable
+	{
+		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		std::string resource_name = "";
+		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
+		uint32_t resource_size = 0;
+		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
+		uint32_t slot = 0;
+		uint32_t index = 0;
+		uint32_t count = 1;
+		ShaderData resource_data_type = ShaderData::NONE;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
+		void* data = nullptr;
 	};
 
 	struct ShaderResourceBinding
@@ -288,8 +412,23 @@ namespace trace {
 		uint32_t index = 0;
 		uint32_t count = 1;
 		ShaderData resource_data_type = ShaderData::NONE;
+		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
 		void* data = nullptr;
 	};
+
+	struct ShaderResources
+	{
+		struct Resource
+		{
+			ShaderStruct _struct;
+			ShaderArray _array;
+			ShaderVariable _variable;
+			ShaderDataDef def;
+		};
+		std::vector<Resource> resources;
+	};
+
+	
 
 	struct PipelineStateDesc
 	{
@@ -299,13 +438,13 @@ namespace trace {
 		RaterizerState rateriser_state = {};
 		DepthStencilState depth_sten_state = {};
 		ColorBlendState blend_state = {};
-		PrimitiveTopology topology = PrimitiveTopology::NONE;
+		PRIMITIVETOPOLOGY topology = PRIMITIVETOPOLOGY::NONE;
 		Viewport view_port = {};
-		uint32_t resource_bindings_count = 0;
-		std::vector<ShaderResourceBinding> resource_bindings = {};
 		GRenderPass* render_pass = nullptr;
 		uint32_t subpass_index = uint32_t(-1);
 		RENDERPASS _renderPass = RENDERPASS::MAIN_PASS;
+
+		ShaderResources resources;
 	};
 
 
@@ -364,6 +503,44 @@ namespace trace {
 
 	};
 
+	struct Vertex2D
+	{
+		glm::vec2 pos;
+		glm::vec2 texCoord;
+
+
+		static InputLayout get_input_layout()
+		{
+			InputLayout layout;
+			layout.stride = sizeof(Vertex2D);
+			layout.input_class = InputClassification::PER_VERTEX_DATA;
+
+			InputLayout::Element _pos;
+			_pos.format = Format::R32G32_FLOAT;
+			_pos.index = 0;
+			_pos.offset = offsetof(Vertex2D, pos);
+			_pos.stride = sizeof(glm::vec2);
+
+			layout.elements.push_back(_pos);
+
+			InputLayout::Element _texCoord;
+			_texCoord.format = Format::R32G32_FLOAT;
+			_texCoord.index = 1;
+			_texCoord.offset = offsetof(Vertex2D, texCoord);
+			_texCoord.stride = sizeof(glm::vec2);
+
+			layout.elements.push_back(_texCoord);
+
+			return layout;
+		}
+
+		bool operator==(const Vertex2D& other) const {
+			return pos == other.pos && texCoord == other.texCoord;
+		}
+
+	};
+
+
 	struct SceneGlobals
 	{
 		alignas(16) glm::mat4 projection;
@@ -371,12 +548,6 @@ namespace trace {
 		alignas(16) glm::vec3 view_position;
 		alignas(16) glm::vec2 _test;
 	};
-
-	//struct MaterialRenderData
-	//{
-	//	alignas(16) glm::vec4 diffuse_color;
-	//	alignas(16) float shininess;
-	//};
 
 	struct TextureDesc
 	{
@@ -394,9 +565,18 @@ namespace trace {
 		AddressMode m_addressModeW = AddressMode::NONE;
 		FilterMode m_minFilterMode = FilterMode::NONE;
 		FilterMode m_magFilterMode = FilterMode::NONE;
+		AttachmentType m_attachmentType = AttachmentType::NONE;
 		std::vector<unsigned char*> m_data;
 	};
 
+	struct Light
+	{
+		glm::vec4 position;
+		glm::vec4 direction;
+		glm::vec4 color;
+		glm::vec4 params1; // x: constant, y: linear, z:quadratic, w: innerCutOff
+		glm::vec4 params2; // x: outerCutOff, y: intensity, z:null, w: null
+	};
 	
-
+	uint32_t getFmtSize(Format format);
 }

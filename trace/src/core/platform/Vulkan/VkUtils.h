@@ -117,7 +117,7 @@ namespace vk {
 	VkFormat convertFmt(trace::Format format);
 	VkImageViewType convertImageViewType(trace::ImageType image_type);
 	VkImageType convertImageType(trace::ImageType image_type);
-	VkPrimitiveTopology convertTopology(trace::PrimitiveTopology topology);
+	VkPrimitiveTopology convertTopology(trace::PRIMITIVETOPOLOGY topology);
 	VkPolygonMode convertPolygonMode(trace::FillMode fillmode);
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage);
 	VkSamplerAddressMode convertAddressMode(trace::AddressMode address_mode);
@@ -126,6 +126,8 @@ namespace vk {
 	VkAttachmentLoadOp convertAttachmentLoadOp(trace::AttachmentLoadOp op);
 	VkAttachmentStoreOp convertAttachmentStoreOp(trace::AttachmentStoreOp op);
 	VkCullModeFlagBits convertCullMode(trace::CullMode mode);
+	VkBlendFactor convertBlendFactor(trace::BlendFactor factor);
+	VkBlendOp convertBlendOp(trace::BlendOp op);
 	std::vector<VkPushConstantRange> processShaderLocalData(std::vector<trace::ShaderResourceBinding>& bindings);
 	void createBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkDeviceSize size, VkBufferUsageFlags usage_flags, VkMemoryPropertyFlags prop_flags, VkBuffer& buffer, VkDeviceMemory& buffer_mem);
 

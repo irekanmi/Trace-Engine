@@ -5,7 +5,6 @@
 #include "Window.h"
 #include "Layer.h"
 #include "Coretypes.h"
-#include "EASTL/vector.h"
 #include "Clock.h"
 
 

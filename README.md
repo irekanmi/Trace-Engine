@@ -10,10 +10,12 @@ To provide High Fidelity Gameplay Systems and advanced graphics to low end __PC_
 ## Goal
 The goal is simple, it is a project that is used as learning tool, it is a software that brings high level and advanced techniques used in the game industry to a capable low end __PC__ in the Africa community
 
-## Features
+## Current Features
 * Resource management
 * Frame Graph
 * Deferred Shading
+* Physically based Bloom
+* SSAO (Screen Space Ambient Occlusion)
 
 ## Contact Information
 For any inquiries or questions, please contact at <cokerayanfe@gmail.com>. Would love to hear your opinions and any help/contribution would be really appreciated
