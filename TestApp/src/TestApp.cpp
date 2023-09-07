@@ -97,10 +97,10 @@ public:
 			"sky_back.jpg"
 		};
 
-		//Ref<GTexture> sky_texture;
-		//sky_texture = ResourceSystem::get_instance()->LoadTexture(sky_images, sky, "bright_sky");
+		Ref<GTexture> sky_texture;
+		sky_texture = ResourceSystem::get_instance()->LoadTexture(sky_images, sky, "bright_sky");
 
-		//sky_box = SkyBox(sky_texture);
+		sky_box = SkyBox(sky_texture);
 
 		M_sponzaScene.SetScale(glm::vec3(0.15f));
 		M_falcon.Translate(glm::vec3(3.0f, 7.5f, 0.0f));
@@ -149,7 +149,7 @@ public:
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
 		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
-		//renderer->DrawSky(cmd_list, &sky_box);
+		renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 
 	}

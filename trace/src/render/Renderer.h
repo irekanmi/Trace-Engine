@@ -92,6 +92,7 @@ namespace trace {
 		uint32_t m_frameHeight;
 		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
 		uint32_t m_opaqueObjectsSize;
+		SkyBox* current_sky_box;
 
 		friend RenderGraph;
 		friend RenderComposer;

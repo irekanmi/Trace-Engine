@@ -7,6 +7,7 @@
 #include "render/GShader.h"
 #include "render/ShaderParser.h"
 #include "render/Renderutils.h"
+#include "ShaderManager.h"
 
 namespace trace {
 
@@ -117,34 +118,28 @@ namespace trace {
 	bool PipelineManager::LoadDefaults()
 	{
 
-
-		std::string vert_src;
-		std::string frag_src;
-		GShader VertShader;
-		GShader FragShader;
+		GShader* VertShader;
+		GShader* FragShader;
 
 		{
-				vert_src = ShaderParser::load_shader_file("../assets/shaders/cubemap.vert.glsl");
-				frag_src = ShaderParser::load_shader_file("../assets/shaders/cubemap.frag.glsl");
-
-				std::cout << vert_src;
-				std::cout << frag_src;
-
-				RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-				RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
-
 				RaterizerState raterizer_state;
 				raterizer_state.cull_mode = CullMode::FRONT;
 				raterizer_state.fill_mode = FillMode::SOLID;
 
+
+				ShaderManager::get_instance()->CreateShader("cubemap.vert.glsl", ShaderStage::VERTEX_SHADER);
+				ShaderManager::get_instance()->CreateShader("cubemap.frag.glsl", ShaderStage::PIXEL_SHADER);
+				VertShader = ShaderManager::get_instance()->GetShader("cubemap.vert.glsl");
+				FragShader = ShaderManager::get_instance()->GetShader("cubemap.frag.glsl");
+
 				ShaderResources s_res = {};
-				ShaderParser::generate_shader_resources(&VertShader, s_res);
-				ShaderParser::generate_shader_resources(&FragShader, s_res);
+				ShaderParser::generate_shader_resources(VertShader, s_res);
+				ShaderParser::generate_shader_resources(FragShader, s_res);
 
 				PipelineStateDesc _ds1 = {};
 				_ds1.rateriser_state = raterizer_state;
-				_ds1.vertex_shader = &VertShader;
-				_ds1.pixel_shader = &FragShader;
+				_ds1.vertex_shader = VertShader;
+				_ds1.pixel_shader = FragShader;
 				_ds1.resources = s_res;
 
 				AutoFillPipelineDesc(
@@ -152,7 +147,7 @@ namespace trace {
 					true,
 					false
 				);
-				_ds1.render_pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
+				_ds1.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
 
 
 
@@ -163,31 +158,23 @@ namespace trace {
 				}
 
 				skybox_pipeline = { GetPipeline("skybox_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
-
-
-				vert_src.clear();
-				frag_src.clear();
 			}
 
 		{
 
-			vert_src = ShaderParser::load_shader_file("../assets/shaders/lights.vert.glsl");
-			frag_src = ShaderParser::load_shader_file("../assets/shaders/lights.frag.glsl");
-
-			RenderFunc::CreateShader(&VertShader, vert_src, ShaderStage::VERTEX_SHADER);
-			RenderFunc::CreateShader(&FragShader, frag_src, ShaderStage::PIXEL_SHADER);
+			ShaderManager::get_instance()->CreateShader("lights.vert.glsl", ShaderStage::VERTEX_SHADER);
+			ShaderManager::get_instance()->CreateShader("lights.frag.glsl", ShaderStage::PIXEL_SHADER);
+			VertShader = ShaderManager::get_instance()->GetShader("lights.vert.glsl");
+			FragShader = ShaderManager::get_instance()->GetShader("lights.frag.glsl");
 
 			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(&VertShader, s_res);
-			ShaderParser::generate_shader_resources(&FragShader, s_res);
-
+			ShaderParser::generate_shader_resources(VertShader, s_res);
+			ShaderParser::generate_shader_resources(FragShader, s_res);
 
 
 			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = &VertShader;
-			_ds2.pixel_shader = &FragShader;
+			_ds2.vertex_shader = VertShader;
+			_ds2.pixel_shader = FragShader;
 			_ds2.resources = s_res;
 			_ds2.input_layout = Vertex::get_input_layout();
 
@@ -202,14 +189,8 @@ namespace trace {
 			if (!CreatePipeline(_ds2, "light_pipeline"))
 			{
 				TRC_ERROR("Failed to initialize or create light_pipeline");
-				RenderFunc::DestroyShader(&VertShader);
-				RenderFunc::DestroyShader(&FragShader);
 				return false;
 			}
-
-			RenderFunc::DestroyShader(&VertShader);
-			RenderFunc::DestroyShader(&FragShader);
-
 			light_pipeline = { GetPipeline("light_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };;
 
 		};

@@ -144,6 +144,7 @@ namespace trace {
 	void Renderer::EndFrame()
 	{
 		RenderFunc::EndFrame(&g_device);
+		current_sky_box = nullptr;
 	}
 
 
@@ -184,6 +185,7 @@ namespace trace {
 
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
+		current_sky_box = nullptr;
 
 
 
@@ -492,6 +494,39 @@ namespace trace {
 
 		}
 
+
+		//TEMP: Find vaild function to render sky box
+		if (current_sky_box)
+		{
+			SkyBox* sky_box = current_sky_box;
+
+			glm::mat4 proj = _camera->GetProjectionMatix();
+			glm::mat4 view = _camera->GetViewMatrix();
+			glm::vec3 view_position = _camera->GetPosition();
+
+			Ref<GPipeline> sp = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
+			RenderFunc::OnDrawStart(&g_device, sp.get());
+
+			RenderFunc::SetPipelineTextureData(
+				sp.get(),
+				"CubeMap",
+				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
+				sky_box->GetCubeMap()
+			);
+			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
+			RenderFunc::BindPipeline_(sp.get());
+
+			Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
+			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::BindVertexBuffer(&g_device, mod->GetVertexBuffer());
+			RenderFunc::BindIndexBuffer(&g_device, mod->GetIndexBuffer());
+
+			RenderFunc::DrawIndexed(&g_device, 0, mod->GetIndexCount());
+			RenderFunc::OnDrawEnd(&g_device, sp.get());
+		}
+
 	}
 
 
@@ -513,33 +548,13 @@ namespace trace {
 
 	void Renderer::draw_skybox(CommandParams params)
 	{
-		SkyBox* sky_box = (SkyBox*)params.ptrs[0];
+		if (current_sky_box)
+		{
+			TRC_WARN("Only sky can be drawn per frame {}", __FUNCTION__);
+			return;
+		}
+		current_sky_box = (SkyBox*)params.ptrs[0];
 
-		glm::mat4 proj = _camera->GetProjectionMatix();
-		glm::mat4 view = _camera->GetViewMatrix();
-		glm::vec3 view_position = _camera->GetPosition();
-
-		Ref<GPipeline> sp = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
-		RenderFunc::OnDrawStart(&g_device, sp.get());
-
-		RenderFunc::SetPipelineTextureData(
-			sp.get(),
-			"CubeMap",
-			ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-			sky_box->GetCubeMap()
-		);
-		RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-		RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-		RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
-		RenderFunc::BindPipeline_(sp.get());
-
-		Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
-		RenderFunc::BindPipeline(&g_device, sp.get());
-		RenderFunc::BindVertexBuffer(&g_device, mod->GetVertexBuffer());
-		RenderFunc::BindIndexBuffer(&g_device, mod->GetIndexBuffer());
-		
-		RenderFunc::DrawIndexed(&g_device, 0, mod->GetIndexCount());
-		RenderFunc::OnDrawEnd(&g_device, sp.get());
 	}
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)
