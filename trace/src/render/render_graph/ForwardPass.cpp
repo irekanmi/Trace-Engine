@@ -70,6 +70,7 @@ namespace trace {
 			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 
+			m_renderer->RenderQuads();
 			m_renderer->RenderLights();
 
 

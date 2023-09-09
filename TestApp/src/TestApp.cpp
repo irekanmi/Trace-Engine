@@ -107,9 +107,11 @@ public:
 		//M_falcon.SetScale(glm::vec3(3.0f));
 		M_falcon.Translate(glm::vec3(3.0f, 3.0f, 0.0f));
 		M_squareModel.SetScale(glm::vec3(11.0f));
-		M_squareModel.Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+		M_squareModel.Translate(glm::vec3(0.0f, 5.0f, 0.0f));
 		M_boxStack.Translate(glm::vec3(6.0f, 11.5f, 12.0f));
 		M_boxStack.SetScale(glm::vec3(7.0f));
+		M_Test.Translate(glm::vec3(6.0f, 0.0f, 12.0f));
+
 
 
 
@@ -154,6 +156,8 @@ public:
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
 		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
+		renderer->DrawQuad(M_squareModel.GetLocalMatrix());
+		renderer->DrawQuad(M_sponzaScene.GetLocalMatrix());
 		renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 

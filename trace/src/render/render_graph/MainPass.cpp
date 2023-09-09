@@ -78,14 +78,6 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
 
-
-				for (uint32_t i = 0; i < m_renderer->m_listCount; i++)
-				{
-					for (Command& cmd : m_renderer->m_cmdList[i]._commands)
-					{
-						cmd.func(cmd.params);
-					}
-				}
 			});
 
 		pass->SetResizeCB([&](RenderGraph* graph, RenderGraphPass* pass, uint32_t width, uint32_t height)

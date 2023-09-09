@@ -27,6 +27,17 @@ namespace trace {
 	class Model;
 	class Event;
 
+	struct BatchInfo
+	{
+		uint32_t max_units;
+		uint32_t max_texture_units;
+		uint32_t current_unit;
+		uint32_t current_texture_units;
+		uint32_t current_index;
+		GBuffer vertex_buffer;
+		GBuffer index_buffer;
+	};
+
 	class TRACE_API Renderer : public Object
 	{
 	public:
@@ -48,8 +59,12 @@ namespace trace {
 		GContext* GetContext() { return &g_context; }
 		void Render(float deltaTime);
 		void DrawQuad();
+		void DrawQuad(glm::mat4 tramsform);
+
+
 		void RenderOpaqueObjects();
 		void RenderLights();
+		void RenderQuads();
 		
 
 
@@ -77,11 +92,15 @@ namespace trace {
 		GBuffer quadBuffer;
 		float exposure;
 		//------------------------------------
-		std::vector<CommandList> m_cmdList;
-		uint32_t m_listCount;
+		
 	private:
 		void draw_mesh(CommandParams params);
 		void draw_skybox(CommandParams params);
+		// Batch rendering quads ..............................
+		void create_quad_batch();
+		void flush_current_quad_batch();
+		void destroy_quad_batchs();
+		// ....................................................
 
 	private:
 		GSwapchain m_swapChain;
@@ -93,6 +112,19 @@ namespace trace {
 		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
 		uint32_t m_opaqueObjectsSize;
 		SkyBox* current_sky_box;
+		std::vector<CommandList> m_cmdList;
+		uint32_t m_listCount;
+
+		// Batch rendering quads ..............................
+		std::vector<BatchInfo> quadBatches;
+		std::vector<QuadBatch> quadBatchVertex;
+		std::vector<uint32_t> quadBatchIndex;
+		Ref<GPipeline> quadBatchPipeline;
+		std::unordered_set<uint32_t> boundTextures;
+		uint32_t current_quad_batch = 0;
+		uint32_t num_avalible_quad_batch = 1;
+		// ....................................................
+
 
 		friend RenderGraph;
 		friend RenderComposer;

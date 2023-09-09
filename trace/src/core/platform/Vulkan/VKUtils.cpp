@@ -2377,6 +2377,16 @@ namespace vk {
 			result = VK_FORMAT_R32G32_UINT;
 			break;
 		}
+		case trace::Format::R32_UINT:
+		{
+			result = VK_FORMAT_R32_UINT;
+			break;
+		}
+		case trace::Format::R32_SINT:
+		{
+			result = VK_FORMAT_R32_SINT;
+			break;
+		}
 		
 		case trace::Format::R8G8B8A8_SNORM:
 		{

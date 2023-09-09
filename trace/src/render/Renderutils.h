@@ -56,6 +56,7 @@ namespace trace {
 	typedef bool (*__CreateBuffer)(GBuffer*, BufferInfo);
 	typedef bool (*__DestroyBuffer)(GBuffer*);
 	typedef bool (*__SetBufferData)(GBuffer*, void*, uint32_t);
+	typedef bool (*__SetBufferDataOffset)(GBuffer*, void*, uint32_t, uint32_t);
 	// -----------------
 
 	// Framebuffers ----------------
@@ -156,6 +157,7 @@ namespace trace {
 		static bool CreateBuffer(GBuffer* buffer, BufferInfo buffer_info);
 		static bool DestroyBuffer(GBuffer* buffer);
 		static bool SetBufferData(GBuffer* buffer, void* data, uint32_t size);
+		static bool SetBufferDataOffset(GBuffer* buffer, void* data, uint32_t offset, uint32_t size);
 
 
 		static bool CreateFramebuffer(GFramebuffer* framebuffer, uint32_t num_attachment, GTexture** attachments, GRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t swapchain_image_index, GSwapchain* swapchain);
@@ -228,6 +230,7 @@ namespace trace {
 		static __CreateBuffer _createBuffer;
 		static __DestroyBuffer _destroyBuffer;
 		static __SetBufferData _setBufferData;
+		static __SetBufferDataOffset _setBufferDataOffset;
 
 		static __CreateFramebuffer _createFramebuffer;
 		static __DestroyFramebuffer _destroyFramebuffer;

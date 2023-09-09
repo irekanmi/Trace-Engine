@@ -16,6 +16,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "core/Utils.h"
 #include "render_graph/FrameData.h"
+#include "ShaderParser.h"
+#include "GShader.h"
 
 
 namespace trace {
@@ -143,6 +145,13 @@ namespace trace {
 
 	void Renderer::EndFrame()
 	{
+		current_quad_batch = 0;
+		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
+		{
+			quadBatches[i].current_index = 0;
+			quadBatches[i].current_texture_units = 0;
+			quadBatches[i].current_unit = 0;
+		}
 		RenderFunc::EndFrame(&g_device);
 		current_sky_box = nullptr;
 	}
@@ -182,12 +191,44 @@ namespace trace {
 
 		light_data = { 0, 1, 0, 0 };
 		exposure = 0.9f;
-
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
 		current_sky_box = nullptr;
 
+		// Quad batch .........................................
+		Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("quad.vert.glsl", ShaderStage::VERTEX_SHADER);
+		Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("quad.frag.glsl", ShaderStage::PIXEL_SHADER);
 
+		ShaderResources s_res = {};
+		ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+		ShaderParser::generate_shader_resources(FragShader.get(), s_res);
+
+		PipelineStateDesc _ds2 = {};
+		_ds2.vertex_shader = VertShader.get();
+		_ds2.pixel_shader = FragShader.get();
+		_ds2.resources = s_res;
+		_ds2.input_layout = QuadBatch::get_input_layout();
+
+
+		AutoFillPipelineDesc(
+			_ds2,
+			false
+		);
+		_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+
+
+		if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "quad_batch_pipeline"))
+		{
+			TRC_ERROR("Failed to initialize or create quad_batch_pipeline");
+			return;
+		}
+
+		quadBatchPipeline = ResourceSystem::get_instance()->GetPipeline("quad_batch_pipeline");
+		
+		create_quad_batch();
+
+ 		// ..................................................
+		
 
 		//---------------------------------------------------------------------------------------------
 
@@ -432,6 +473,57 @@ namespace trace {
 		RenderFunc::Draw(&g_device, 0, 6);
 	}
 
+	void Renderer::DrawQuad(glm::mat4 transform)
+	{
+		if (quadBatches[current_quad_batch].current_unit >= quadBatches[current_quad_batch].max_units - 1)
+		{
+			flush_current_quad_batch();
+			current_quad_batch++;
+			num_avalible_quad_batch++;
+			create_quad_batch();
+		}
+
+		uint32_t current_vertex = quadBatches[current_quad_batch].current_unit * 4;
+		quadBatchVertex[current_vertex].pos = glm::vec3( transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f));
+		quadBatchVertex[current_vertex].texCoord = glm::vec2(0.0f);
+		quadBatchVertex[current_vertex].tex_index = 0;
+		current_vertex++;
+
+		quadBatchVertex[current_vertex].pos = glm::vec3(transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+		quadBatchVertex[current_vertex].texCoord = glm::vec2(1.0f);
+		quadBatchVertex[current_vertex].tex_index = 0;
+		current_vertex++;
+
+		quadBatchVertex[current_vertex].pos = glm::vec3(transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f));
+		quadBatchVertex[current_vertex].texCoord = glm::vec2(0.0f, 1.0f);
+		quadBatchVertex[current_vertex].tex_index = 0;
+		current_vertex++;
+
+		quadBatchVertex[current_vertex].pos = glm::vec3(transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f));
+		quadBatchVertex[current_vertex].texCoord = glm::vec2(1.0f, 0.0f);
+		quadBatchVertex[current_vertex].tex_index = 0;
+		current_vertex++;
+
+
+		uint32_t current_index = quadBatches[current_quad_batch].current_index * 6;
+		quadBatchIndex[current_index] = (quadBatches[current_quad_batch].current_unit * 4) + 0;
+		current_index++;
+		quadBatchIndex[current_index] = (quadBatches[current_quad_batch].current_unit * 4) + 1;
+		current_index++;
+		quadBatchIndex[current_index] = (quadBatches[current_quad_batch].current_unit * 4) + 2;
+		current_index++;
+		quadBatchIndex[current_index] = (quadBatches[current_quad_batch].current_unit * 4) + 0;
+		current_index++;
+		quadBatchIndex[current_index] = (quadBatches[current_quad_batch].current_unit * 4) + 1;
+		current_index++;
+		quadBatchIndex[current_index] = (quadBatches[current_quad_batch].current_unit * 4) + 3;
+		current_index++;
+
+		quadBatches[current_quad_batch].current_unit++;
+		quadBatches[current_quad_batch].current_index++;
+
+	}
+
 	void Renderer::RenderOpaqueObjects()
 	{
 
@@ -529,6 +621,24 @@ namespace trace {
 
 	}
 
+	void Renderer::RenderQuads()
+	{
+		flush_current_quad_batch();
+		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
+		{
+			RenderFunc::OnDrawStart(&g_device, quadBatchPipeline.get());
+			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::BindPipeline_(quadBatchPipeline.get());
+			RenderFunc::BindPipeline(&g_device, quadBatchPipeline.get());
+			RenderFunc::BindVertexBuffer(&g_device, &quadBatches[i].vertex_buffer);
+			RenderFunc::BindIndexBuffer(&g_device, &quadBatches[i].index_buffer);
+			RenderFunc::DrawIndexed(&g_device, 0, quadBatches[i].current_index * 6);
+			RenderFunc::OnDrawEnd(&g_device, quadBatchPipeline.get());
+
+		}
+	}
+
 
 	void Renderer::draw_mesh(CommandParams params)
 	{
@@ -555,6 +665,47 @@ namespace trace {
 		}
 		current_sky_box = (SkyBox*)params.ptrs[0];
 
+	}
+
+	void Renderer::create_quad_batch()
+	{
+		quadBatches.resize(num_avalible_quad_batch);
+		quadBatches[current_quad_batch].current_index = 0;
+		quadBatches[current_quad_batch].current_texture_units = 0;
+		quadBatches[current_quad_batch].current_unit = 0;
+		quadBatches[current_quad_batch].max_texture_units = 16;
+		quadBatches[current_quad_batch].max_units = 256;
+		BufferInfo vertex_info;
+		vertex_info.m_data = nullptr;
+		vertex_info.m_flag = BindFlag::VERTEX_BIT;
+		vertex_info.m_size = quadBatches[current_quad_batch].max_units * sizeof(QuadBatch) * 4;
+		vertex_info.m_usageFlag = UsageFlag::UPLOAD;
+		RenderFunc::CreateBuffer(&quadBatches[current_quad_batch].vertex_buffer, vertex_info);
+
+		BufferInfo index_info;
+		index_info.m_data = nullptr;
+		index_info.m_flag = BindFlag::INDEX_BIT;
+		index_info.m_size = quadBatches[current_quad_batch].max_units * sizeof(uint32_t) * 6;
+		index_info.m_usageFlag = UsageFlag::UPLOAD;
+		RenderFunc::CreateBuffer(&quadBatches[current_quad_batch].index_buffer, index_info);
+		quadBatchVertex.resize(quadBatches[current_quad_batch].max_units * sizeof(QuadBatch) * 4);
+		quadBatchIndex.resize(quadBatches[current_quad_batch].max_units * sizeof(uint32_t) * 6);
+
+	}
+
+	void Renderer::flush_current_quad_batch()
+	{
+		RenderFunc::SetBufferData(&quadBatches[current_quad_batch].vertex_buffer, quadBatchVertex.data(), quadBatchVertex.size() * sizeof(QuadBatch));
+		RenderFunc::SetBufferData(&quadBatches[current_quad_batch].index_buffer, quadBatchIndex.data(), quadBatchIndex.size() * sizeof(uint32_t));
+	}
+
+	void Renderer::destroy_quad_batchs()
+	{
+		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
+		{
+			RenderFunc::DestroyBuffer(&quadBatches[i].vertex_buffer);
+			RenderFunc::DestroyBuffer(&quadBatches[i].index_buffer);
+		}
 	}
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)

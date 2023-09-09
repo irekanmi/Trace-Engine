@@ -138,6 +138,7 @@ namespace trace {
 		RenderFunc::_createBuffer = vk::__CreateBuffer;
 		RenderFunc::_destroyBuffer = vk::__DestroyBuffer;
 		RenderFunc::_setBufferData = vk::__SetBufferData;
+		RenderFunc::_setBufferDataOffset = vk::__SetBufferDataOffset;
 
 		RenderFunc::_createFramebuffer = vk::__CreateFrameBuffer;
 		RenderFunc::_destroyFramebuffer = vk::__DestroyFrameBuffer;
@@ -209,6 +210,7 @@ namespace trace {
 	__CreateBuffer RenderFunc::_createBuffer = nullptr;
 	__DestroyBuffer RenderFunc::_destroyBuffer = nullptr;
 	__SetBufferData RenderFunc::_setBufferData = nullptr;
+	__SetBufferDataOffset RenderFunc::_setBufferDataOffset = nullptr;
 
 	__CreateFramebuffer RenderFunc::_createFramebuffer = nullptr;
 	__DestroyFramebuffer RenderFunc::_destroyFramebuffer = nullptr;
@@ -367,6 +369,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_setBufferData);
 		result = _setBufferData(buffer, data, size);
+
+		return result;
+	}
+
+	bool RenderFunc::SetBufferDataOffset(GBuffer* buffer, void* data, uint32_t offset, uint32_t size)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_setBufferDataOffset);
+		result = _setBufferDataOffset(buffer, data, offset, size);
 
 		return result;
 	}

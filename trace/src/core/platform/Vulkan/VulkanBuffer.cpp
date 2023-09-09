@@ -45,7 +45,7 @@ namespace vk {
 			TRC_INFO(" Buffer creation successful ");
 		}
 
-		if (_info.m_data != nullptr)
+		if (_info.m_data != nullptr && _info.m_usageFlag != trace::UsageFlag::UPLOAD)
 		{
 
 			trace::VKBuffer stage_buffer;
@@ -68,6 +68,11 @@ namespace vk {
 			vk::_CopyBuffer(_instance, _device, &stage_buffer, internal_handle, stage_info.m_size, 0);
 
 			vk::_DestoryBuffer(_instance, _device, &stage_buffer);
+		}
+
+		if (_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		{
+			vkMapMemory(_device->m_device, internal_handle->m_memory, 0, _info.m_size, VK_NO_FLAGS, &internal_handle->data_point);
 		}
 
 		buffer->m_info = _info;
@@ -97,6 +102,11 @@ namespace vk {
 		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
 		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
+
+		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		{
+			vkUnmapMemory(_device->m_device, _handle->m_memory);
+		}
 
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestoryBuffer(_instance, _device, _handle);
@@ -130,27 +140,88 @@ namespace vk {
 		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
 
+		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		{
+			memcpy(_handle->data_point, data, size);
 
-		trace::VKBuffer stage_buffer;
+		}
+		else
+		{
 
-		trace::BufferInfo stage_info;
-		stage_info.m_size = static_cast<uint32_t>(size);
-		stage_info.m_stide = 0;
-		stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
-		stage_info.m_flag = trace::BindFlag::NIL;
-		stage_info.m_data = nullptr;
+			trace::VKBuffer stage_buffer;
 
-		vk::_CreateBuffer(_instance, _device, &stage_buffer, stage_info);
+			trace::BufferInfo stage_info;
+			stage_info.m_size = static_cast<uint32_t>(size);
+			stage_info.m_stide = 0;
+			stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+			stage_info.m_flag = trace::BindFlag::NIL;
+			stage_info.m_data = nullptr;
 
-		void* data0;
-		vkMapMemory(_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
-		memcpy(data0, data, size);
-		vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
+			vk::_CreateBuffer(_instance, _device, &stage_buffer, stage_info);
+
+			void* data0;
+			vkMapMemory(_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
+			memcpy(data0, data, size);
+			vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
 
 
-		vk::_CopyBuffer(_instance, _device, &stage_buffer, _handle, stage_info.m_size, 0);
+			vk::_CopyBuffer(_instance, _device, &stage_buffer, _handle, stage_info.m_size, 0);
 
-		vk::_DestoryBuffer(_instance, _device, &stage_buffer);
+			vk::_DestoryBuffer(_instance, _device, &stage_buffer);
+		}
+		return result;
+	}
+
+	bool __SetBufferDataOffset(trace::GBuffer* buffer, void* data, uint32_t offset, uint32_t size)
+	{
+		bool result = true;
+
+
+
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
+		trace::VKHandle* _instance = _handle->m_instance;
+
+		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		{
+			memcpy(_handle->data_point, ((unsigned char*)data) + offset, size);
+		}
+		else
+		{
+			trace::VKBuffer stage_buffer;
+
+			trace::BufferInfo stage_info;
+			stage_info.m_size = static_cast<uint32_t>(size);
+			stage_info.m_stide = 0;
+			stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+			stage_info.m_flag = trace::BindFlag::NIL;
+			stage_info.m_data = nullptr;
+
+			vk::_CreateBuffer(_instance, _device, &stage_buffer, stage_info);
+
+			void* data0;
+			vkMapMemory(_device->m_device, stage_buffer.m_memory, offset, stage_info.m_size, 0, &data0);
+			memcpy(data0, data, size);
+			vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
+
+
+			vk::_CopyBuffer(_instance, _device, &stage_buffer, _handle, stage_info.m_size, 0);
+
+			vk::_DestoryBuffer(_instance, _device, &stage_buffer);
+
+		}
 
 		return result;
 	}

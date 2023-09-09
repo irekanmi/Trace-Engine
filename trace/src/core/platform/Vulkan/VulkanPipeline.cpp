@@ -733,6 +733,7 @@ namespace vk {
 		write.dstBinding = meta_data._slot;
 		write.pImageInfo = &image_info;
 		write.dstArrayElement = index;
+		uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
 		switch (meta_data._resource_type)
 		{
 		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
@@ -748,19 +749,19 @@ namespace vk {
 
 		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
-			write.dstSet = _handle->Scene_sets[_device->m_imageIndex];
+			write.dstSet = _handle->Scene_sets[set_index];
 			break;
 		}
 
 		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
 		{
-			write.dstSet = _handle->Instance_sets[_device->m_imageIndex];
+			write.dstSet = _handle->Instance_sets[set_index];
 			break;
 		}
 
 		case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
 		{
-			write.dstSet = _handle->Instance_sets[_device->m_imageIndex];
+			write.dstSet = _handle->Instance_sets[set_index];
 			break;
 		}
 
@@ -804,15 +805,15 @@ namespace vk {
 
 		uint32_t set_count = 0;
 		VkDescriptorSet _sets[3];
-
+		uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
 		if (_handle->Scene_sets[0])
 		{
-			_sets[set_count++] = _handle->Scene_set ? _handle->Scene_set : _handle->Scene_sets[_device->m_imageIndex];
+			_sets[set_count++] = _handle->Scene_set ? _handle->Scene_set : _handle->Scene_sets[set_index];
 		}
 
 		if (_handle->Instance_sets[0])
 		{
-			_sets[set_count++] = _handle->Instance_set ? _handle->Instance_set : _handle->Instance_sets[_device->m_imageIndex];
+			_sets[set_count++] = _handle->Instance_set ? _handle->Instance_set : _handle->Instance_sets[set_index];
 		}
 
 		if (_handle->Local_sets[0])
