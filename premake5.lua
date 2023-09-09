@@ -21,6 +21,8 @@ IncludeDir["stb_image"] = "externals/stb_image"
 IncludeDir["spdlog"] = "externals/spdlog"
 IncludeDir["obj_loader"] = "externals/obj_loader"
 IncludeDir["tiny_obj_loader"] = "externals/tiny_obj_loader"
+IncludeDir["msdfgen"] = "externals/msdfgen"
+IncludeDir["msdf_atlas_gen"] = "externals/msdf_atlas_gen"
 
 
 project "trace"
@@ -39,7 +41,8 @@ project "trace"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/_externals/**.cpp"
 	}
 
 	includedirs
@@ -55,6 +58,8 @@ project "trace"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.obj_loader}",
 		"%{IncludeDir.tiny_obj_loader}",
+		"%{IncludeDir.msdfgen}",
+		"%{IncludeDir.msdf_atlas_gen}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -75,7 +80,9 @@ project "trace"
 		"shaderc_combined.lib",
 		"spirv-cross-core.lib",
 		"spirv-cross-cpp.lib",
-		"spirv-cross-glsl.lib"
+		"spirv-cross-glsl.lib",
+		"msdfgen.lib",
+		"msdf_atlas_gen.lib"
 	}	
 
 	filter "configurations:Debug"

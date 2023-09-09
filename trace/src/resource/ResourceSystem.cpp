@@ -8,6 +8,7 @@
 #include "PipelineManager.h"
 #include "MaterialManager.h"
 #include "ShaderManager.h"
+#include "FontManager.h"
 
 namespace trace {
 
@@ -29,10 +30,14 @@ namespace trace {
 		m_pipelineManager = PipelineManager::get_instance();
 		m_materialManager = MaterialManager::get_instance();
 		m_shaderManager = ShaderManager::get_instance();
+		m_fontManager = FontManager::get_instance();
 
 		//TODO: Configurable
 		result = m_textureManager->Init(4096);
 		TRC_ASSERT(result, "Failed to initialize texture manager");
+
+		result = m_fontManager->Init(256);
+		TRC_ASSERT(result, "Failed to initialized shader manager");
 
 		result = m_shaderManager->Init(4096);
 		TRC_ASSERT(result, "Failed to initialized shader manager");
@@ -60,6 +65,7 @@ namespace trace {
 		m_materialManager->ShutDown();
 		m_pipelineManager->ShutDown();
 		m_shaderManager->ShutDown();
+		m_fontManager->Shutdown();
 		m_textureManager->ShutDown();
 
 		SAFE_DELETE(m_materialManager, MaterialManager);
@@ -67,6 +73,7 @@ namespace trace {
 		SAFE_DELETE(m_meshManager, MeshManager);
 		SAFE_DELETE(m_modelManager, ModelManager);
 		SAFE_DELETE(m_shaderManager, ShaderManager);
+		SAFE_DELETE(m_fontManager, FontManager);
 		SAFE_DELETE(m_textureManager, TextureManager);
 
 		
@@ -75,8 +82,14 @@ namespace trace {
 	{
 		return m_textureManager->GetDefault(name);
 	}
-	void ResourceSystem::CreateTexture(const std::string& name, TextureDesc desc)
+	Texture_Ref ResourceSystem::CreateTexture(const std::string& name, TextureDesc desc)
 	{
+		if (m_textureManager->CreateTexture(name, desc))
+		{
+			return { m_textureManager->GetTexture(name), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
+		}
+		TRC_ERROR("Failed to create Texture {}", name);
+		return { nullptr, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, m_textureManager) };
 	}
 	Texture_Ref ResourceSystem::LoadTexture(const std::string& name, TextureDesc desc)
 	{
@@ -173,6 +186,9 @@ namespace trace {
 		bool result = m_textureManager->LoadDefaultTextures();
 		TRC_ASSERT(result, "Failed to load default textures");
 
+		result = m_fontManager->LoadDefaults();
+		TRC_ASSERT(result, "Failed to load default fonts");
+
 		result = m_meshManager->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default meshes");
 
@@ -196,5 +212,18 @@ namespace trace {
 	std::string ResourceSystem::GetShaderResourcePath()
 	{
 		return m_shaderManager->GetShaderResourcePath();
+	}
+	Ref<Font> ResourceSystem::LoadFont(const std::string& name)
+	{
+		if (m_fontManager->LoadFont(name))
+		{
+			return { m_fontManager->GetFont(name), BIND_RESOURCE_UNLOAD_FN(FontManager::UnloadFont, m_fontManager) };
+		}
+		TRC_ERROR("Failed to load font, {}", name);
+		return { nullptr , BIND_RESOURCE_UNLOAD_FN(FontManager::UnloadFont, m_fontManager) };
+	}
+	Ref<Font> ResourceSystem::GetFont(const std::string& name)
+	{
+		return { m_fontManager->GetFont(name), BIND_RESOURCE_UNLOAD_FN(FontManager::UnloadFont, m_fontManager) };
 	}
 }

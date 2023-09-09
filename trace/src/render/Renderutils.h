@@ -20,11 +20,6 @@ namespace trace {
 	struct BufferInfo;
 	struct RenderPassDescription;
 
-	struct GeometryDraw
-	{
-		GeometryDraw& SetDrawData(void* data, uint32_t size);
-		GeometryDraw& SetDrawTexture(GTexture* texture);
-	};
 
 	void AutoFillPipelineDesc(PipelineStateDesc& desc, bool input_layout = true, bool raterizer_state = true, bool depth_sten_state = true, bool color_blend_state = true, bool view_port = true, bool scissor = true, bool render_pass = true, bool primitive_topology = true);
 	bool operator ==(ShaderResourceBinding lhs, ShaderResourceBinding rhs);
@@ -121,7 +116,7 @@ namespace trace {
 
 	typedef bool (*__ValidateHandle)(GHandle*);
 
-	class TRACE_API RenderFuncLoader
+	class RenderFuncLoader
 	{
 	public:
 		static bool LoadVulkanRenderFunctions();

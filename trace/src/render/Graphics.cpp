@@ -51,6 +51,7 @@ namespace trace {
 			return 4;
 		}
 		case Format::R8G8B8_SNORM:
+		case Format::R8G8B8_UNORM:
 		case Format::R8G8B8_SRBG:
 		{
 			return 3;

@@ -155,6 +155,35 @@ namespace trace {
 		return Texture_Ref();
 	}
 
+	bool TextureManager::CreateTexture(const std::string& name, TextureDesc desc)
+	{
+		if (m_hashTable.Get(name)._id != INVALID_ID)
+		{
+			TRC_WARN("Texture has already being loaded {}", name);
+			return true;
+		}
+
+		TRC_ASSERT(desc.m_width != 0 || desc.m_height != 0, "width or height of a texture can not zero(0)");
+
+		uint32_t i = 0;
+		for (GTexture& tex : m_textures)
+		{
+			if (tex.m_id == INVALID_ID)
+			{
+				RenderFunc::CreateTexture(&tex, desc);
+				delete[] desc.m_data[0];// TODO: Use custom allocator
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				m_hashTable.Set(name, _hash);
+				return true;
+			}
+			i++;
+		}
+
+		return true;
+	}
+
 	bool TextureManager::LoadTexture(const std::string& name)
 	{
 		if (m_hashTable.Get(name)._id != INVALID_ID)
@@ -198,6 +227,7 @@ namespace trace {
 			if (tex.m_id == INVALID_ID)
 			{
 				RenderFunc::CreateTexture(&tex, texture_desc);
+				stbi_image_free(pixel_data);
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
@@ -247,6 +277,7 @@ namespace trace {
 			if (tex.m_id == INVALID_ID)
 			{
 				RenderFunc::CreateTexture(&tex, desc);
+				stbi_image_free(pixel_data);
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
@@ -298,6 +329,11 @@ namespace trace {
 			if (tex.m_id == INVALID_ID)
 			{
 				RenderFunc::CreateTexture(&tex, desc);
+				for (unsigned char*& i : desc.m_data)
+				{
+					stbi_image_free(i);
+					i = nullptr;
+				}
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
@@ -317,10 +353,6 @@ namespace trace {
 			TRC_WARN("Can't release a texture that is in use");
 			return;
 		}
-
-		//TODO: maybe the texture should be freed immediatly it is loaded to the GPU
-		for(uint32_t i = 0; i < texture->GetTextureDescription().m_numLayers; i++)
-			stbi_image_free(texture->GetTextureDescription().m_data[i]);
 
 		RenderFunc::DestroyTexture(texture);
 		texture->~GTexture();
@@ -393,7 +425,7 @@ namespace trace {
 		// Default Diffuse texture
 		RenderFunc::CreateTexture(&default_diffuse_texture, texture_desc);
 		default_diffuse_map = { &default_diffuse_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
-
+		delete[] pixel;
 
 		dimension = 16;
 		channels = 4;
@@ -425,6 +457,7 @@ namespace trace {
 		// Default specular
 		RenderFunc::CreateTexture(&default_specular_texture, texture_desc);
 		default_specular_map = { &default_specular_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
+		delete[] pixel;
 
 		dimension = 16;
 		channels = 4;
@@ -457,6 +490,7 @@ namespace trace {
 		// Default normal
 		RenderFunc::CreateTexture(&default_normal_texture, texture_desc);
 		default_normal_map = { &default_normal_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
+		delete[] pixel;
 
 		
 		return true;
@@ -480,10 +514,6 @@ namespace trace {
 			return;
 		}
 
-
-
-		//TODO: maybe the texture should be freed immediatly it is loaded to the GPU
-		delete[] texture->GetTextureDescription().m_data[0];
 		RenderFunc::DestroyTexture(texture);
 		texture->~GTexture();
 	}

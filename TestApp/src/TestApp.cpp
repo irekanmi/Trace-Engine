@@ -75,10 +75,11 @@ public:
 	{
 		TRC_INFO("Sample Layer Attached");
 
-		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
 		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
+		Ref<Font> monos = ResourceSystem::get_instance()->LoadFont("monos.ttf");
+		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 
 		TextureDesc sky = {};
 		sky.m_addressModeU = sky.m_addressModeV = sky.m_addressModeW = AddressMode::REPEAT;
@@ -107,6 +108,9 @@ public:
 		M_falcon.Translate(glm::vec3(3.0f, 3.0f, 0.0f));
 		M_squareModel.SetScale(glm::vec3(11.0f));
 		M_squareModel.Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+		M_boxStack.Translate(glm::vec3(6.0f, 11.5f, 12.0f));
+		M_boxStack.SetScale(glm::vec3(7.0f));
+
 
 
 		//=============================
@@ -141,12 +145,6 @@ public:
 		{
 			TRC_INFO(" ------____----TRACE------______----");
 		}
-		CommandList cmd_list = Renderer::get_instance()->BeginCommandList();
-		Renderer::get_instance()->DrawMesh(cmd_list, _squareModel, M_squareModel.GetLocalMatrix() * M_falcon.GetLocalMatrix());
-		Renderer::get_instance()->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
-		Renderer::get_instance()->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
-		Renderer::get_instance()->DrawSky(cmd_list, &sky_box);
-		Renderer::get_instance()->SubmitCommandList(cmd_list);
 
 		M_boxStack.Rotate(12.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 

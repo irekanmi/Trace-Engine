@@ -2408,6 +2408,11 @@ namespace vk {
 			result = VK_FORMAT_R8G8B8A8_UNORM;
 			break;
 		}
+		case trace::Format::R8G8B8_UNORM:
+		{
+			result = VK_FORMAT_R8G8B8_UNORM;
+			break;
+		}
 		case trace::Format::D32_SFLOAT_S8_SUINT:
 		{
 			result = VK_FORMAT_D32_SFLOAT_S8_UINT;

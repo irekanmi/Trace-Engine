@@ -76,7 +76,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -89,7 +89,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;EASTL_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;msdfgen.lib;msdf_atlas_gen.lib;EASTL_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -99,7 +99,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_RELEASE_BUILD;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -115,7 +115,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;msdfgen.lib;msdf_atlas_gen.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -124,7 +124,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -140,11 +140,12 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;msdfgen.lib;msdf_atlas_gen.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\backends\Fontutils.h" />
     <ClInclude Include="src\core\Application.h" />
     <ClInclude Include="src\core\Clock.h" />
     <ClInclude Include="src\core\Core.h" />
@@ -155,8 +156,6 @@
     <ClInclude Include="src\core\Layer.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Utils.h" />
     <ClInclude Include="src\core\Window.h" />
@@ -180,6 +179,8 @@
     <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanPipeline.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanShader.h" />
     <ClInclude Include="src\core\platform\Vulkan\VulkanSwapchain.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
     <ClInclude Include="src\render\Camera.h" />
     <ClInclude Include="src\render\Commands.h" />
+    <ClInclude Include="src\render\Font.h" />
     <ClInclude Include="src\render\GBuffer.h" />
     <ClInclude Include="src\render\GContext.h" />
     <ClInclude Include="src\render\GDevice.h" />
@@ -206,6 +208,9 @@
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
     <ClInclude Include="src\render\Renderutils.h" />
+    <ClInclude Include="src\render\ShaderParser.h" />
+    <ClInclude Include="src\render\SkyBox.h" />
+    <ClInclude Include="src\render\Transform.h" />
     <ClInclude Include="src\render\render_graph\BloomPass.h" />
     <ClInclude Include="src\render\render_graph\CustomPass.h" />
     <ClInclude Include="src\render\render_graph\FinalPass.h" />
@@ -214,14 +219,12 @@
     <ClInclude Include="src\render\render_graph\GBufferPass.h" />
     <ClInclude Include="src\render\render_graph\LightingPass.h" />
     <ClInclude Include="src\render\render_graph\MainPass.h" />
+    <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
     <ClInclude Include="src\render\render_graph\RenderGraph.h" />
     <ClInclude Include="src\render\render_graph\RenderPass.h" />
-    <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
     <ClInclude Include="src\render\render_graph\SSAO.h" />
     <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
-    <ClInclude Include="src\render\ShaderParser.h" />
-    <ClInclude Include="src\render\SkyBox.h" />
-    <ClInclude Include="src\render\Transform.h" />
+    <ClInclude Include="src\resource\FontManager.h" />
     <ClInclude Include="src\resource\HashTable.h" />
     <ClInclude Include="src\resource\MaterialManager.h" />
     <ClInclude Include="src\resource\MeshManager.h" />
@@ -235,6 +238,10 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\render\Font.cpp" />
+    <ClCompile Include="src\resource\FontManager.cpp" />
+    <ClCompile Include="_externals\spirv_reflect.cpp" />
+    <ClCompile Include="src\backends\Fontutils.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Clock.cpp" />
     <ClCompile Include="src\core\Coretypes.cpp" />
@@ -242,7 +249,6 @@
     <ClCompile Include="src\core\Layer.cpp" />
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
     <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
@@ -266,6 +272,7 @@
     <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanPipeline.cpp" />
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VulkanSwapchain.cpp" />
@@ -279,17 +286,20 @@
     <ClCompile Include="src\render\GFramebuffer.cpp" />
     <ClCompile Include="src\render\GHandle.cpp" />
     <ClCompile Include="src\render\GPipeline.cpp" />
-    <ClCompile Include="src\render\Graphics.cpp" />
     <ClCompile Include="src\render\GRenderpass.cpp" />
     <ClCompile Include="src\render\GShader.cpp" />
     <ClCompile Include="src\render\GSwapchain.cpp" />
     <ClCompile Include="src\render\GTexture.cpp" />
+    <ClCompile Include="src\render\Graphics.cpp" />
     <ClCompile Include="src\render\Material.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
     <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
     <ClCompile Include="src\render\Renderutils.cpp" />
+    <ClCompile Include="src\render\ShaderParser.cpp" />
+    <ClCompile Include="src\render\SkyBox.cpp" />
+    <ClCompile Include="src\render\Transform.cpp" />
     <ClCompile Include="src\render\render_graph\BloomPass.cpp" />
     <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
     <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
@@ -300,9 +310,6 @@
     <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\render\render_graph\SSAO.cpp" />
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
-    <ClCompile Include="src\render\ShaderParser.cpp" />
-    <ClCompile Include="src\render\SkyBox.cpp" />
-    <ClCompile Include="src\render\Transform.cpp" />
     <ClCompile Include="src\resource\MaterialManager.cpp" />
     <ClCompile Include="src\resource\MeshManager.cpp" />
     <ClCompile Include="src\resource\ModelManager.cpp" />
@@ -311,7 +318,6 @@
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
     <ClCompile Include="src\resource\ShaderManager.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
-    <ClCompile Include="_externals\spirv_reflect.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

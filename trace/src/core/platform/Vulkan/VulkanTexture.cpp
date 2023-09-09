@@ -60,12 +60,24 @@ namespace vk {
 			flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		}
 
+		bool has_data = false, optimal_tiling = true, linear_tiling = false;
+		has_data = !desc.m_data.empty();
+
+		VkFormatProperties fmt_prop;
+		vkGetPhysicalDeviceFormatProperties(_device->m_physicalDevice, vk::convertFmt(desc.m_format), &fmt_prop);
+
+		if (has_data)
+		{
+			optimal_tiling = TRC_HAS_FLAG(fmt_prop.optimalTilingFeatures, VK_FORMAT_FEATURE_TRANSFER_DST_BIT);
+			linear_tiling = TRC_HAS_FLAG(fmt_prop.linearTilingFeatures, VK_FORMAT_FEATURE_TRANSFER_DST_BIT);
+		}
+
 		vk::_CreateImage(
 			_instance,
 			_device,
 			_handle,
 			vk::convertFmt(desc.m_format),
-			VK_IMAGE_TILING_OPTIMAL,
+			optimal_tiling ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR,
 			image_usage,
 			memory_property,
 			aspect_flags,
@@ -77,7 +89,7 @@ namespace vk {
 			desc.m_mipLevels
 		);
 
-		if (!desc.m_data.empty())
+		if (has_data)
 		{
 			trace::VKBuffer staging_buffer;
 

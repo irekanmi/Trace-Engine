@@ -29,6 +29,7 @@ namespace trace {
 
 		GTexture* GetTexture(const std::string& name);
 		Texture_Ref GetDefault(const std::string& name);
+		bool CreateTexture(const std::string& name, TextureDesc desc);
 		bool LoadTexture(const std::string& name);
 		bool LoadTexture(const std::string& name, TextureDesc desc);
 		bool LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc, const std::string& name);

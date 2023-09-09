@@ -1,456 +1,556 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="core">
-      <UniqueIdentifier>{4E40957C-3A77-960D-E363-7C10CF79120F}</UniqueIdentifier>
+    <Filter Include="_externals">
+      <UniqueIdentifier>{7A8ED73E-6646-198C-CF4D-F2E7BB24B47C}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\events">
-      <UniqueIdentifier>{92DC566A-FE91-CF5F-8786-C936F33AC663}</UniqueIdentifier>
+    <Filter Include="src">
+      <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\input">
-      <UniqueIdentifier>{ED821051-D93A-529E-4242-2BFA2E19ED8E}</UniqueIdentifier>
+    <Filter Include="src\backends">
+      <UniqueIdentifier>{F707EA36-E36A-79DB-8CF0-B1917832455E}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\io">
-      <UniqueIdentifier>{75DBB8D3-E1BA-376F-EAD2-C24556319ED0}</UniqueIdentifier>
+    <Filter Include="src\core">
+      <UniqueIdentifier>{C55F2ECF-B12C-89DA-DA45-7782C671BE68}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\memory">
-      <UniqueIdentifier>{16E8D07B-829D-4971-0B92-434877464075}</UniqueIdentifier>
+    <Filter Include="src\core\events">
+      <UniqueIdentifier>{29103182-959B-9E46-9EAC-213B0AB7FA46}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\platform">
-      <UniqueIdentifier>{82509E77-EE10-1AAE-B74B-632B23CB5E8A}</UniqueIdentifier>
+    <Filter Include="src\core\input">
+      <UniqueIdentifier>{A41F1788-90ED-0A8E-7981-7BB465EEE6F2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\platform\GLFW">
-      <UniqueIdentifier>{01ADC9B9-ED90-8A0F-56F1-846242F47491}</UniqueIdentifier>
+    <Filter Include="src\core\io">
+      <UniqueIdentifier>{8CDBF2DC-F890-6BD2-8185-65A9ED3962D6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\platform\OpenGL">
-      <UniqueIdentifier>{76132F68-62A2-B831-0BC1-CC2CF72EC9D7}</UniqueIdentifier>
+    <Filter Include="src\core\memory">
+      <UniqueIdentifier>{AD1BAB93-19A7-1858-22B8-9B4C8EC27458}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\platform\Vulkan">
-      <UniqueIdentifier>{C277E178-AE06-6B42-5725-7F3D43937BE8}</UniqueIdentifier>
+    <Filter Include="src\core\platform">
+      <UniqueIdentifier>{D9C5D3EE-45DC-D184-8E53-5DA6FAA8A20C}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\platform\Windows">
-      <UniqueIdentifier>{BC5C2DC6-28C9-E8C0-F1BC-801E5DE80A29}</UniqueIdentifier>
+    <Filter Include="src\core\platform\GLFW">
+      <UniqueIdentifier>{B810A1B0-A40A-CA02-8D77-60137910306F}</UniqueIdentifier>
     </Filter>
-    <Filter Include="render">
-      <UniqueIdentifier>{E5CF2C19-D171-57EF-BA2C-6B43A66DDE3F}</UniqueIdentifier>
+    <Filter Include="src\core\platform\OpenGL">
+      <UniqueIdentifier>{ED406E72-D965-BDF2-02B1-A282EE34BC10}</UniqueIdentifier>
     </Filter>
-    <Filter Include="resource">
-      <UniqueIdentifier>{0D091A24-F9D5-742F-22EF-62D70E1BAABD}</UniqueIdentifier>
+    <Filter Include="src\core\platform\Vulkan">
+      <UniqueIdentifier>{39A52083-25CA-6F03-4E15-55933A996E21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\core\platform\Windows">
+      <UniqueIdentifier>{13395218-7FFB-85A2-C8AB-142F34AD5E80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\render">
+      <UniqueIdentifier>{1CA98B76-0861-CDC3-7168-A61F5D3F68B4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\render\render_graph">
+      <UniqueIdentifier>{BC1693FD-284E-DB94-3158-3FB89D0E028E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\resource">
+      <UniqueIdentifier>{040C9454-F06E-23F9-99F4-5BAF8536EF7B}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\backends\Fontutils.h">
+      <Filter>src\backends</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\Application.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Clock.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Core.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Coretypes.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\EntryPoint.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Enums.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\FileSystem.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Layer.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Object.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Platform.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\StartUp.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Utils.h">
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Window.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\events\Events.h">
-      <Filter>core\events</Filter>
+      <Filter>src\core\events</Filter>
     </ClInclude>
     <ClInclude Include="src\core\events\EventsSystem.h">
-      <Filter>core\events</Filter>
+      <Filter>src\core\events</Filter>
     </ClInclude>
     <ClInclude Include="src\core\input\Input.h">
-      <Filter>core\input</Filter>
+      <Filter>src\core\input</Filter>
     </ClInclude>
     <ClInclude Include="src\core\input\Keys.h">
-      <Filter>core\input</Filter>
+      <Filter>src\core\input</Filter>
     </ClInclude>
     <ClInclude Include="src\core\io\Logging.h">
-      <Filter>core\io</Filter>
+      <Filter>src\core\io</Filter>
     </ClInclude>
     <ClInclude Include="src\core\io\TrcConsole.h">
-      <Filter>core\io</Filter>
+      <Filter>src\core\io</Filter>
     </ClInclude>
     <ClInclude Include="src\core\memory\memory.h">
-      <Filter>core\memory</Filter>
+      <Filter>src\core\memory</Filter>
     </ClInclude>
     <ClInclude Include="src\core\pch.h">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\GLFW\GLFWwindow.h">
-      <Filter>core\platform\GLFW</Filter>
+      <Filter>src\core\platform\GLFW</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\OpenGL\OpenGLBuffer.h">
-      <Filter>core\platform\OpenGL</Filter>
+      <Filter>src\core\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\OpenGL\OpenGLContext.h">
-      <Filter>core\platform\OpenGL</Filter>
+      <Filter>src\core\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\OpenGL\OpenGLDevice.h">
-      <Filter>core\platform\OpenGL</Filter>
+      <Filter>src\core\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VKContext.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VKDevice.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VKtypes.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VkUtils.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanBuffer.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanFramebuffer.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanMaterial.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanPipeline.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h">
+      <Filter>src\core\platform\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h">
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanRenderPass.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanShader.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanSwapchain.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VulkanTexture.h">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Windows\Win32Window.h">
-      <Filter>core\platform\Windows</Filter>
+      <Filter>src\core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Windows\WinConsole.h">
-      <Filter>core\platform\Windows</Filter>
+      <Filter>src\core\platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Camera.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Commands.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GBuffer.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GContext.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GDevice.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GFramebuffer.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GHandle.h">
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GPipeline.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GRenderPass.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GShader.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GSwapchain.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GTexture.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Graphics.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Material.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Mesh.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Model.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\RenderComposer.h">
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\RenderPassInfo.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Renderer.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Renderutils.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\ShaderParser.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\SkyBox.h">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\Transform.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\BloomPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\CustomPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\FinalPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\ForwardPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\FrameData.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\GBufferPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\LightingPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\MainPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\RGBlackBoard.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\RenderGraph.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\RenderPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\SSAO.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\render_graph\ToneMapPass.h">
+      <Filter>src\render\render_graph</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\HashTable.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\MaterialManager.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\MeshManager.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\ModelManager.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\PipelineManager.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\Ref.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\Resource.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\ResourceSystem.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource\ShaderManager.h">
+      <Filter>src\resource</Filter>
     </ClInclude>
     <ClInclude Include="src\resource\TextureManager.h">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClInclude>
-    <ClInclude Include="src\trace.h" />
-    <ClInclude Include="src\render\Transform.h" />
-    <ClInclude Include="src\render\GHandle.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderFunc.h" />
-    <ClInclude Include="src\render\render_graph\RenderGraph.h" />
-    <ClInclude Include="src\core\platform\Vulkan\VulkanRenderGraph.h" />
-    <ClInclude Include="src\render\render_graph\RenderPass.h" />
-    <ClInclude Include="src\render\render_graph\MainPass.h" />
-    <ClInclude Include="src\render\render_graph\CustomPass.h" />
-    <ClInclude Include="src\render\render_graph\GBufferPass.h" />
-    <ClInclude Include="src\core\Utils.h" />
-    <ClInclude Include="src\render\render_graph\LightingPass.h" />
-    <ClInclude Include="src\render\render_graph\SSAO.h" />
-    <ClInclude Include="src\render\render_graph\FinalPass.h" />
-    <ClInclude Include="src\render\render_graph\RGBlackBoard.h" />
-    <ClInclude Include="src\render\render_graph\FrameData.h" />
-    <ClInclude Include="src\render\RenderComposer.h" />
-    <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
-    <ClInclude Include="src\render\render_graph\ForwardPass.h" />
-    <ClInclude Include="src\render\render_graph\BloomPass.h" />
-    <ClInclude Include="src\resource\ShaderManager.h" />
+    <ClInclude Include="src\trace.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\Font.h" />
+    <ClInclude Include="src\resource\FontManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="_externals\spirv_reflect.cpp">
+      <Filter>_externals</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\Fontutils.cpp">
+      <Filter>src\backends</Filter>
+    </ClCompile>
     <ClCompile Include="src\core\Application.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Clock.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Coretypes.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\FileSystem.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Layer.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Object.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Platform.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\StartUp.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\events\ApplicationEvents.cpp">
-      <Filter>core\events</Filter>
+      <Filter>src\core\events</Filter>
     </ClCompile>
     <ClCompile Include="src\core\events\ConsoleEvents.cpp">
-      <Filter>core\events</Filter>
+      <Filter>src\core\events</Filter>
     </ClCompile>
     <ClCompile Include="src\core\events\EventsSystem.cpp">
-      <Filter>core\events</Filter>
+      <Filter>src\core\events</Filter>
     </ClCompile>
     <ClCompile Include="src\core\events\KeyEvents.cpp">
-      <Filter>core\events</Filter>
+      <Filter>src\core\events</Filter>
     </ClCompile>
     <ClCompile Include="src\core\input\Input.cpp">
-      <Filter>core\input</Filter>
+      <Filter>src\core\input</Filter>
     </ClCompile>
     <ClCompile Include="src\core\io\Logging.cpp">
-      <Filter>core\io</Filter>
+      <Filter>src\core\io</Filter>
     </ClCompile>
     <ClCompile Include="src\core\io\TrcConsole.cpp">
-      <Filter>core\io</Filter>
+      <Filter>src\core\io</Filter>
     </ClCompile>
     <ClCompile Include="src\core\memory\memory.cpp">
-      <Filter>core\memory</Filter>
+      <Filter>src\core\memory</Filter>
     </ClCompile>
     <ClCompile Include="src\core\pch.cpp">
-      <Filter>core</Filter>
+      <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\GLFW\GLFWwindow.cpp">
-      <Filter>core\platform\GLFW</Filter>
+      <Filter>src\core\platform\GLFW</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\OpenGL\OpenGLBuffer.cpp">
-      <Filter>core\platform\OpenGL</Filter>
+      <Filter>src\core\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\OpenGL\OpenGLContext.cpp">
-      <Filter>core\platform\OpenGL</Filter>
+      <Filter>src\core\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\OpenGL\OpenGLDevice.cpp">
-      <Filter>core\platform\OpenGL</Filter>
+      <Filter>src\core\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VKDevice.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanBuffer.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanFramebuffer.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanMaterial.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanPipeline.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp">
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanRenderPass.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanShader.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanSwapchain.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VulkanTexture.cpp">
-      <Filter>core\platform\Vulkan</Filter>
+      <Filter>src\core\platform\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp">
-      <Filter>core\platform\Windows</Filter>
+      <Filter>src\core\platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp">
-      <Filter>core\platform\Windows</Filter>
+      <Filter>src\core\platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\Camera.cpp">
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GBuffer.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GContext.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GDevice.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GFramebuffer.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GHandle.cpp">
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GPipeline.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GRenderpass.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GShader.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GSwapchain.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GTexture.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\Graphics.cpp">
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Material.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Mesh.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Model.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\RenderComposer.cpp">
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Renderer.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\Renderutils.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\ShaderParser.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\SkyBox.cpp">
-      <Filter>render</Filter>
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\Transform.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\BloomPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\CustomPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\FinalPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\ForwardPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\GBufferPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\LightingPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\MainPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\RenderGraph.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\SSAO.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\ToneMapPass.cpp">
+      <Filter>src\render\render_graph</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\MaterialManager.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\MeshManager.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\ModelManager.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\PipelineManager.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\Resource.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\ResourceSystem.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource\ShaderManager.cpp">
+      <Filter>src\resource</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\TextureManager.cpp">
-      <Filter>resource</Filter>
+      <Filter>src\resource</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\Transform.cpp" />
-    <ClCompile Include="src\render\GHandle.cpp" />
-    <ClCompile Include="src\render\Graphics.cpp" />
-    <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
-    <ClCompile Include="src\core\platform\Vulkan\VulkanRenderGraph.cpp" />
-    <ClCompile Include="src\render\render_graph\MainPass.cpp" />
-    <ClCompile Include="src\render\render_graph\CustomPass.cpp" />
-    <ClCompile Include="src\render\render_graph\GBufferPass.cpp" />
-    <ClCompile Include="src\render\render_graph\LightingPass.cpp" />
-    <ClCompile Include="_externals\spirv_reflect.cpp" />
-    <ClCompile Include="src\render\render_graph\SSAO.cpp" />
-    <ClCompile Include="src\render\render_graph\FinalPass.cpp" />
-    <ClCompile Include="src\render\RenderComposer.cpp" />
-    <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
-    <ClCompile Include="src\render\Camera.cpp" />
-    <ClCompile Include="src\render\render_graph\ForwardPass.cpp" />
-    <ClCompile Include="src\render\render_graph\BloomPass.cpp" />
-    <ClCompile Include="src\resource\ShaderManager.cpp" />
+    <ClCompile Include="src\render\Font.cpp" />
+    <ClCompile Include="src\resource\FontManager.cpp" />
   </ItemGroup>
 </Project>

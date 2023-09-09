@@ -25,4 +25,5 @@
 #include <render/Renderer.h>
 #include <render/GShader.h>
 #include <render/Transform.h>
+#include <render/Font.h>
 #include <render/SkyBox.h>

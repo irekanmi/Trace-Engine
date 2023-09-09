@@ -226,8 +226,8 @@ namespace trace
 			case trace::EventType::TRC_WND_CLOSE:
 			{
 				trace::WindowClose* wnd_close = reinterpret_cast<trace::WindowClose*>(p_event);
-				//m_isRunning = false;
-				//wnd_close->m_handled = true;
+				m_isRunning = false;
+				wnd_close->m_handled = true;
 				break;
 			}
 			case trace::EventType::TRC_KEY_PRESSED:

@@ -15,10 +15,12 @@ namespace trace {
 	class PipelineManager;
 	class MaterialManager;
 	class ShaderManager;
+	class FontManager;
 	class Mesh;
 	class GTexture;
 	class GPipeline;
 	class GShader;
+	class Font;
 	class MaterialInstance;
 	struct Material;
 	using Texture_Ref = Ref<GTexture>;
@@ -35,7 +37,7 @@ namespace trace {
 
 		// Textures
 		Texture_Ref GetDefaultTexture(const std::string& name);
-		void CreateTexture(const std::string& name, TextureDesc desc);
+		Texture_Ref CreateTexture(const std::string& name, TextureDesc desc);
 		Texture_Ref LoadTexture(const std::string& name, TextureDesc desc);
 		Texture_Ref LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc, const std::string& name);
 		Texture_Ref LoadTexture(const std::string& name);
@@ -48,12 +50,12 @@ namespace trace {
 		Ref<Mesh> GetMesh(const std::string& name);
 		
 
-		//Pipelines
+		// Pipelines
 		bool CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill = true);
 		Ref<GPipeline> GetPipeline(const std::string& name);
 		Ref<GPipeline> GetDefaultPipeline(const std::string& name);
 
-		//Materials
+		// Materials
 		bool CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline);
 		Ref<MaterialInstance> GetMaterial(const std::string& name);
 		bool LoadDefaults();
@@ -62,6 +64,10 @@ namespace trace {
 		Ref<GShader> CreateShader(const std::string& name, ShaderStage shader_stage);
 		Ref<GShader> GetShader(const std::string& name);
 		std::string GetShaderResourcePath();
+
+		// Fonts
+		Ref<Font> LoadFont(const std::string& name);
+		Ref<Font> GetFont(const std::string& name);
 
 		static ResourceSystem* get_instance();
 
@@ -75,6 +81,7 @@ namespace trace {
 		PipelineManager* m_pipelineManager;
 		MaterialManager* m_materialManager;
 		ShaderManager* m_shaderManager;
+		FontManager* m_fontManager;
 
 	protected:
 
