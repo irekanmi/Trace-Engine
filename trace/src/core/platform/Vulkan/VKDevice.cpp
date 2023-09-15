@@ -510,6 +510,29 @@ namespace vk {
 
 		return result;
 	}
+	bool __BindVertexBufferBatch(trace::GDevice* device, trace::GBuffer* buffer)
+	{
+
+		bool result = true;
+
+		
+
+		if (!device || !buffer)
+		{
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData || !buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)!buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+
+		return result;
+	}
 	bool __BindIndexBuffer(trace::GDevice* device, trace::GBuffer* buffer)
 	{
 
@@ -536,6 +559,30 @@ namespace vk {
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 
 		vkCmdBindIndexBuffer(command_buffer->m_handle, buf->m_handle, 0, VK_INDEX_TYPE_UINT32);
+
+		return result;
+	}
+	bool __BindIndexBufferBatch(trace::GDevice* device, trace::GBuffer* buffer)
+	{
+
+		bool result = true;
+
+		
+
+		if (!device || !buffer)
+		{
+			TRC_ERROR("please pass in valid pointer -> {} || {}, Function -> {}", (const void*)device, (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData || !buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)!buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+
 
 		return result;
 	}
@@ -845,7 +892,6 @@ namespace vk {
 		// Destroy frame resources "RenderGraph"
 		destroy_frame_resources(device, _handle->m_imageIndex);
 
-		//vk::_PresentSwapchainImage(m_instance, m_handle, &m_handle->m_swapChain, m_handle->m_graphicsQueue, m_handle->m_presentQueue, m_handle->m_queueCompleteSemaphores[m_handle->m_currentFrame], &m_handle->m_imageIndex);
 
 		return result;
 	}

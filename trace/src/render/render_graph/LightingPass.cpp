@@ -86,6 +86,7 @@ namespace trace {
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("LIGHTING_PASS");
 			_ds2.depth_sten_state = { false, false };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "lighting_pass_pipeline"))

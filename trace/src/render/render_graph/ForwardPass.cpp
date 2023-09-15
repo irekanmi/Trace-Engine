@@ -72,6 +72,7 @@ namespace trace {
 
 			m_renderer->RenderQuads();
 			m_renderer->RenderLights();
+			m_renderer->RenderTexts();
 
 
 			});

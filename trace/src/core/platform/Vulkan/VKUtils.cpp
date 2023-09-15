@@ -1631,7 +1631,7 @@ namespace vk {
 	
 		VkPipelineVertexInputStateCreateInfo vert_info = {};
 		vert_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vert_info.vertexBindingDescriptionCount = 1; // TODO
+		vert_info.vertexBindingDescriptionCount = !attrs.empty() ?  1 : 0; // TODO
 		vert_info.pVertexBindingDescriptions = &binding;
 		vert_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attrs.size());
 		vert_info.pVertexAttributeDescriptions = attrs.data();
@@ -1653,7 +1653,7 @@ namespace vk {
 
 		VkPipelineRasterizationStateCreateInfo raster_info = {};
 		raster_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		parseRasterizerState( desc.rateriser_state,raster_info);
+		parseRasterizerState( desc.rasteriser_state,raster_info);
 
 		VkPipelineMultisampleStateCreateInfo multi_info = {};
 		multi_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -2001,13 +2001,13 @@ namespace vk {
 
 	}
 
-	void parseRasterizerState(trace::RaterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info)
+	void parseRasterizerState(trace::RasterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info)
 	{
 
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		create_info.lineWidth = 1.0f; // TODO
 		create_info.polygonMode = convertPolygonMode(raterizer.fill_mode);
-		create_info.cullMode = VK_CULL_MODE_NONE;//convertCullMode(raterizer.cull_mode);
+		create_info.cullMode = convertCullMode(raterizer.cull_mode);
 		create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // TODO
 		create_info.rasterizerDiscardEnable = VK_FALSE; // TODO
 		create_info.depthClampEnable = VK_FALSE; // TODO
@@ -2111,10 +2111,10 @@ namespace vk {
 
 		//std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
 
-		const uint32_t pool_sizes_count = 2;
+		const uint32_t pool_sizes_count = 3;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4096},
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8192},
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4096},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4096}
 		};
@@ -2294,6 +2294,7 @@ namespace vk {
 
 
 				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Scene_sets);
+				VK_ASSERT(result);
 				_layouts[set_layout_count++] = pipeline->Scene_layout;
 
 				//===============================================================
@@ -2370,6 +2371,11 @@ namespace vk {
 		case trace::Format::R32G32_FLOAT:
 		{
 			result = VK_FORMAT_R32G32_SFLOAT;
+			break;
+		}
+		case trace::Format::R32_FLOAT:
+		{
+			result = VK_FORMAT_R32_SFLOAT;
 			break;
 		}
 		case trace::Format::R32G32_UINT:

@@ -186,7 +186,7 @@ namespace trace {
 		}
 
 
-		VkDescriptorBufferInfo bufs[128];
+		VkDescriptorBufferInfo* bufs = new VkDescriptorBufferInfo[2048];// TODO: Use custom allocator and find a better way to update buffers
 		uint32_t t_size = 0;
 		
 		for (uint32_t i = 0; i < device->frames_in_flight; i++)
@@ -389,11 +389,13 @@ namespace trace {
 				nullptr
 			);
 		}
+		delete[] bufs;// TODO: Use custom allocator and find a better way to update buffers
 		_handle->cache_size = t_size;
 		out_size = total_size_global;
 		result = true;
 		return result;
 	}
+
 
 }
 
@@ -644,7 +646,7 @@ namespace vk {
 
 
 		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
-		if (size > meta_data._size || size < meta_data._size)
+		if (size > meta_data._size)
 			TRC_ERROR("Please ensure data size is not greater than resource data");
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 		{
@@ -676,16 +678,14 @@ namespace vk {
 		uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
 
 		void* map_point = data_point + location;
-		memcpy(map_point, data, meta_data._size);
+		memcpy(map_point, data, size);
 
 
 		return result;
 	}
 	bool __SetPipelineTextureData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, trace::GTexture* texture, uint32_t index)
 	{
-		bool result = true;
-
-		
+		bool result = true;		
 
 		if (!pipeline)
 		{

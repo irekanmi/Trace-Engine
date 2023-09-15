@@ -91,7 +91,7 @@ namespace vk {
             std::vector<VkWriteDescriptorSet> _writes;
             std::vector<VkCopyDescriptorSet> _copies;
     
-            /*for (auto& k : desc.resources.resources)
+           /*for (auto& k : desc.resources.resources)
             {
                 bool is_struct = k.def == trace::ShaderDataDef::STRUCTURE;
                 bool is_array = k.def == trace::ShaderDataDef::ARRAY;
@@ -277,6 +277,7 @@ namespace vk {
                     }
                 }
             };*/
+            uint32_t set_index = (i * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
 
             VkDescriptorImageInfo img_infos[3];
             {
@@ -293,7 +294,7 @@ namespace vk {
                     copy.dstBinding = meta_data._slot;
                     copy.srcArrayElement = meta_data._index;
                     copy.srcBinding = meta_data._slot;
-                    copy.srcSet = sp->Instance_sets[i];
+                    copy.srcSet = sp->Instance_sets[set_index];
                     copy.dstSet = _handle->m_sets[i];
                     _copies.push_back(copy);
                     
@@ -314,7 +315,7 @@ namespace vk {
                     copy.dstBinding = meta_data._slot;
                     copy.srcArrayElement = meta_data._index;
                     copy.srcBinding = meta_data._slot;
-                    copy.srcSet = sp->Instance_sets[i];
+                    copy.srcSet = sp->Instance_sets[set_index];
                     copy.dstSet = _handle->m_sets[i];
                     _copies.push_back(copy);
 
@@ -454,9 +455,10 @@ namespace vk {
         uint32_t set_count = 0;
         VkDescriptorSet _sets[3];
 
+        uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
         if (sp->Scene_sets[0])
         {
-            _sets[set_count++] = sp->Scene_sets[_device->m_imageIndex];
+            _sets[set_count++] = sp->Scene_sets[set_index];
         }
 
         if (sp->Instance_sets[0])
@@ -466,7 +468,7 @@ namespace vk {
 
         if (sp->Local_sets[0])
         {
-            _sets[set_count++] = sp->Local_sets[_device->m_imageIndex];
+            _sets[set_count++] = sp->Local_sets[set_index];
         }
 
         uint32_t offset_count = 0;

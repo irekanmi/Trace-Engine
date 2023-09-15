@@ -122,7 +122,7 @@ namespace trace {
 		GShader* FragShader;
 
 		{
-				RaterizerState raterizer_state;
+				RasterizerState raterizer_state;
 				raterizer_state.cull_mode = CullMode::FRONT;
 				raterizer_state.fill_mode = FillMode::SOLID;
 
@@ -137,7 +137,7 @@ namespace trace {
 				ShaderParser::generate_shader_resources(FragShader, s_res);
 
 				PipelineStateDesc _ds1 = {};
-				_ds1.rateriser_state = raterizer_state;
+				_ds1.rasteriser_state = raterizer_state;
 				_ds1.vertex_shader = VertShader;
 				_ds1.pixel_shader = FragShader;
 				_ds1.resources = s_res;
@@ -194,7 +194,78 @@ namespace trace {
 			light_pipeline = { GetPipeline("light_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };;
 
 		};
+		{
+			ShaderManager::get_instance()->CreateShader("quad.vert.glsl", ShaderStage::VERTEX_SHADER);
+			ShaderManager::get_instance()->CreateShader("quad.frag.glsl", ShaderStage::PIXEL_SHADER);
+			GShader* VertShader = ShaderManager::get_instance()->GetShader("quad.vert.glsl");
+			GShader* FragShader = ShaderManager::get_instance()->GetShader("quad.frag.glsl");
 
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(VertShader, s_res);
+			ShaderParser::generate_shader_resources(FragShader, s_res);
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = VertShader;
+			_ds2.pixel_shader = FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = {};
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+
+
+			if (!CreatePipeline(_ds2, "quad_batch_pipeline"))
+			{
+				TRC_ERROR("Failed to initialize or create quad_batch_pipeline");
+				return false;
+			}
+		};
+
+		{
+			ShaderManager::get_instance()->CreateShader("text.vert.glsl", ShaderStage::VERTEX_SHADER);
+			ShaderManager::get_instance()->CreateShader("text_MSDF.frag.glsl", ShaderStage::PIXEL_SHADER);
+			GShader* VertShader = ShaderManager::get_instance()->GetShader("text.vert.glsl");
+			GShader* FragShader = ShaderManager::get_instance()->GetShader("text_MSDF.frag.glsl");
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(VertShader, s_res);
+			ShaderParser::generate_shader_resources(FragShader, s_res);
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = VertShader;
+			_ds2.pixel_shader = FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = {};
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+			ColorBlendState clr_bld;
+			clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
+			clr_bld.alpha_to_blend_coverage = true;
+			clr_bld.color_op = BlendOp::BLEND_OP_ADD;
+			clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
+			clr_bld.src_alpha = BlendFactor::BLEND_ONE;
+			clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
+			clr_bld.src_color = BlendFactor::BLEND_ONE;
+			_ds2.blend_state = clr_bld;
+
+
+			if (!CreatePipeline(_ds2, "text_batch_pipeline"))
+			{
+				TRC_ERROR("Failed to initialize or create quad_batch_pipeline");
+				return false;
+			}
+		};
 
 		return true;
 	}

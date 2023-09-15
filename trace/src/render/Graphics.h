@@ -87,6 +87,7 @@ namespace trace {
 		R32G32B32_FLOAT,
 		R32G32B32_UINT,
 		R32G32_FLOAT,
+		R32_FLOAT,
 		R32G32_UINT,
 		R32_UINT,
 		R32_SINT,
@@ -307,7 +308,7 @@ namespace trace {
 		std::vector<Element> elements;
 	};
 
-	struct RaterizerState
+	struct RasterizerState
 	{
 		CullMode cull_mode = CullMode::NONE;
 		FillMode fill_mode = FillMode::NONE;
@@ -438,7 +439,7 @@ namespace trace {
 		GShader* vertex_shader = nullptr;
 		GShader* pixel_shader = nullptr;
 		InputLayout input_layout = {};
-		RaterizerState rateriser_state = {};
+		RasterizerState rasteriser_state = {};
 		DepthStencilState depth_sten_state = {};
 		ColorBlendState blend_state = {};
 		PRIMITIVETOPOLOGY topology = PRIMITIVETOPOLOGY::NONE;
@@ -545,48 +546,8 @@ namespace trace {
 
 	struct QuadBatch
 	{
-		glm::vec3 pos;
-		glm::vec2 texCoord;
-		int tex_index;
-
-
-		static InputLayout get_input_layout()
-		{
-			InputLayout layout;
-			layout.stride = sizeof(QuadBatch);
-			layout.input_class = InputClassification::PER_VERTEX_DATA;
-
-			InputLayout::Element _pos;
-			_pos.format = Format::R32G32B32_FLOAT;
-			_pos.index = 0;
-			_pos.offset = offsetof(QuadBatch, pos);
-			_pos.stride = sizeof(glm::vec2);
-
-			layout.elements.push_back(_pos);
-
-			InputLayout::Element _texCoord;
-			_texCoord.format = Format::R32G32_FLOAT;
-			_texCoord.index = 1;
-			_texCoord.offset = offsetof(QuadBatch, texCoord);
-			_texCoord.stride = sizeof(glm::vec2);
-
-			layout.elements.push_back(_texCoord);
-
-			InputLayout::Element _tex_index;
-			_tex_index.format = Format::R32_SINT;
-			_tex_index.index = 2;
-			_tex_index.offset = offsetof(QuadBatch, tex_index);
-			_tex_index.stride = sizeof(int);
-
-			layout.elements.push_back(_tex_index);
-
-			return layout;
-		}
-
-		bool operator==(const QuadBatch& other) const {
-			return pos == other.pos && texCoord == other.texCoord && tex_index == other.tex_index;
-		}
-
+		glm::vec4 pos;
+		glm::vec4 texCoord;
 	};
 
 

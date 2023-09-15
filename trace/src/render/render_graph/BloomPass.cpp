@@ -76,6 +76,7 @@ namespace trace {
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_PREFILTER_PASS");
 			_ds2.depth_sten_state = { false, false };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline"))
@@ -107,8 +108,10 @@ namespace trace {
 				_ds2,
 				false
 			);
+			
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_DOWNSAMPLE_PASS");
 			_ds2.depth_sten_state = { false, false };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline"))
@@ -141,6 +144,7 @@ namespace trace {
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_UPSAMPLE_PASS");
 			_ds2.depth_sten_state = { false, false };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 			ColorBlendState clr_bld;
 			clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
 			clr_bld.alpha_to_blend_coverage = true;

@@ -11,5 +11,8 @@ namespace vk {
 	bool __DestroyBuffer(trace::GBuffer* buffer);
 	bool __SetBufferData(trace::GBuffer* buffer, void* data, uint32_t size);
 	bool __SetBufferDataOffset(trace::GBuffer* buffer, void* data, uint32_t offset, uint32_t size);
+	bool __CreateBatchBuffer(trace::GBuffer* buffer, trace::BufferInfo create_info);
+	bool __DestroyBatchBuffer(trace::GBuffer* buffer);
+	bool __FlushBatchBuffer(trace::GBuffer* buffer, void* data, uint32_t size);
 
 }

@@ -92,6 +92,7 @@ namespace trace {
 			);
 			ds2.render_pass = Renderer::get_instance()->GetRenderPass("SSAO_MAIN_PASS");
 			ds2.depth_sten_state = { false, false };
+			ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
 			if (!ResourceSystem::get_instance()->CreatePipeline(ds2, "ssao_main_pass_pipeline"))
@@ -113,7 +114,7 @@ namespace trace {
 			_ds2.vertex_shader = VertShader.get();
 			_ds2.pixel_shader = FragShader.get();
 			_ds2.resources = s_res;
-			_ds2.input_layout = Vertex2D::get_input_layout();
+			_ds2.input_layout = {};
 
 
 			AutoFillPipelineDesc(
@@ -122,6 +123,8 @@ namespace trace {
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("SSAO_BLUR_PASS");
 			_ds2.depth_sten_state = { false, false };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
+
 
 
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "ssao_blur_pass_pipeline"))
@@ -267,7 +270,6 @@ namespace trace {
 			);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
-			RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 			RenderFunc::BindPipeline_(m_pipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 

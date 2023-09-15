@@ -42,11 +42,11 @@ namespace trace {
 
 		if (raterizer_state)
 		{
-			RaterizerState rs = {};
+			RasterizerState rs = {};
 			rs.cull_mode = CullMode::BACK;
 			rs.fill_mode = FillMode::SOLID;
 
-			desc.rateriser_state = rs;
+			desc.rasteriser_state = rs;
 		}
 
 		if (depth_sten_state)
@@ -124,7 +124,9 @@ namespace trace {
 		RenderFunc::_bindRect = vk::__BindRect;
 		RenderFunc::_bindPipeline = vk::__BindPipeline;
 		RenderFunc::_bindVertexBuffer = vk::__BindVertexBuffer;
+		RenderFunc::_bindVertexBufferBatch = vk::__BindVertexBufferBatch;
 		RenderFunc::_bindIndexBuffer = vk::__BindIndexBuffer;
+		RenderFunc::_bindIndexBufferBatch = vk::__BindIndexBufferBatch;
 		RenderFunc::_draw = vk::__Draw;
 		RenderFunc::_drawIndexed = vk::__DrawIndexed;
 		RenderFunc::_beginRenderPass = vk::__BeginRenderPass;
@@ -179,6 +181,10 @@ namespace trace {
 		RenderFunc::_bindRenderGraphTexture = vk::__BindRenderGraphTexture;
 		RenderFunc::_bindRenderGraphBuffer = vk::__BindRenderGraphBuffer;
 
+		RenderFunc::_createBatchBuffer = vk::__CreateBatchBuffer;
+		RenderFunc::_destroyBatchBuffer = vk::__DestroyBatchBuffer;
+		RenderFunc::_flushBatchBuffer = vk::__FlushBatchBuffer;
+
 
 		return true;
 	}
@@ -196,7 +202,9 @@ namespace trace {
 	__BindRect RenderFunc::_bindRect = nullptr;
 	__BindPipeline RenderFunc::_bindPipeline = nullptr;
 	__BindVertexBuffer RenderFunc::_bindVertexBuffer = nullptr;
+	__BindVertexBufferBatch RenderFunc::_bindVertexBufferBatch = nullptr;
 	__BindIndexBuffer RenderFunc::_bindIndexBuffer = nullptr;
+	__BindIndexBufferBatch RenderFunc::_bindIndexBufferBatch = nullptr;
 	__Draw RenderFunc::_draw = nullptr;
 	__DrawIndexed RenderFunc::_drawIndexed = nullptr;
 	__BeginRenderPass RenderFunc::_beginRenderPass = nullptr;
@@ -250,6 +258,10 @@ namespace trace {
 	__EndRenderGraph RenderFunc::_endRenderGraph = nullptr;
 	__BindRenderGraphTexture RenderFunc::_bindRenderGraphTexture = nullptr;
 	__BindRenderGraphBuffer RenderFunc::_bindRenderGraphBuffer = nullptr;
+
+	__CreateBatchBuffer RenderFunc::_createBatchBuffer = nullptr;
+	__DestroyBatchBuffer RenderFunc::_destroyBatchBuffer = nullptr;
+	__FlushBatchBuffer RenderFunc::_flushBatchBuffer = nullptr;
 
 	__ValidateHandle RenderFunc::_validateHandle = nullptr;
 
@@ -693,6 +705,36 @@ namespace trace {
 		return result;
 	}
 
+	bool RenderFunc::CreateBatchBuffer(GBuffer* buffer, BufferInfo create_info)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_createBatchBuffer);
+		result = _createBatchBuffer(buffer, create_info);
+
+		return result;
+	}
+
+	bool RenderFunc::DestroyBatchBuffer(GBuffer* buffer)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_destroyBatchBuffer);
+		result = _destroyBatchBuffer(buffer);
+
+		return result;
+	}
+
+	bool RenderFunc::FlushBatchBuffer(GBuffer* buffer, void* data, uint32_t size)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_flushBatchBuffer);
+		result = _flushBatchBuffer(buffer, data, size);
+
+		return result;
+	}
+
 
 	bool RenderFunc::ValidateHandle(GHandle* handle)
 	{
@@ -733,6 +775,16 @@ namespace trace {
 
 		return result;
 	}
+	
+	bool RenderFunc::BindVertexBufferBatch(GDevice* device, GBuffer* buffer)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_bindVertexBufferBatch);
+		result = _bindVertexBufferBatch(device, buffer);
+
+		return result;
+	}
 
 	bool RenderFunc::BindIndexBuffer(GDevice* device, GBuffer* buffer)
 	{
@@ -740,6 +792,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_bindIndexBuffer);
 		result = _bindIndexBuffer(device, buffer);
+
+		return result;
+	}
+	
+	bool RenderFunc::BindIndexBufferBatch(GDevice* device, GBuffer* buffer)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_bindIndexBufferBatch);
+		result = _bindIndexBufferBatch(device, buffer);
 
 		return result;
 	}

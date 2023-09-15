@@ -196,7 +196,14 @@ namespace vk {
 
 		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
-			memcpy(_handle->data_point, ((unsigned char*)data) + offset, size);
+			if (offset + size <= buffer->m_info.m_size)
+			{
+				memcpy(((unsigned char*)_handle->data_point) + offset, data, size);
+			}
+			else
+			{
+				TRC_ASSERT(false, __FUNCTION__);
+			}
 		}
 		else
 		{
@@ -224,6 +231,60 @@ namespace vk {
 		}
 
 		return result;
+	}
+
+	bool __CreateBatchBuffer(trace::GBuffer* buffer, trace::BufferInfo create_info)
+	{
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_WARN("These handle is valid can't recreate the buffer ::Try to destroy and then create, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool __DestroyBatchBuffer(trace::GBuffer* buffer)
+	{
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+
+		return true;
+	}
+
+	bool __FlushBatchBuffer(trace::GBuffer* buffer, void* data, uint32_t size)
+	{
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		
+
+		return true;
 	}
 
 }

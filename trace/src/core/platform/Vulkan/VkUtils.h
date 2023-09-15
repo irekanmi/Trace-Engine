@@ -108,7 +108,7 @@ namespace vk {
 	bool _ResultIsSuccess(VkResult result);
 	const char* _GetResultString(VkResult result);
 	void parseInputLayout(trace::InputLayout& layout, VkVertexInputBindingDescription& binding, eastl::vector<VkVertexInputAttributeDescription>& attrs);
-	void parseRasterizerState(trace::RaterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info);
+	void parseRasterizerState(trace::RasterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info);
 	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info);
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment);

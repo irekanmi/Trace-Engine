@@ -26,16 +26,18 @@ namespace trace {
 	class Mesh;
 	class Model;
 	class Event;
+	class Font;
 
 	struct BatchInfo
 	{
 		uint32_t max_units;
 		uint32_t max_texture_units;
 		uint32_t current_unit;
-		uint32_t current_texture_units;
+		uint32_t current_texture_unit;
 		uint32_t current_index;
-		GBuffer vertex_buffer;
-		GBuffer index_buffer;
+		std::vector<GTexture*> textures;
+		std::vector<glm::vec4> positions;
+		std::vector<glm::vec4> tex_coords;
 	};
 
 	class TRACE_API Renderer : public Object
@@ -59,12 +61,14 @@ namespace trace {
 		GContext* GetContext() { return &g_context; }
 		void Render(float deltaTime);
 		void DrawQuad();
-		void DrawQuad(glm::mat4 tramsform);
+		void DrawQuad(glm::mat4 transform, Ref<GTexture> texture);
+		void DrawString(Ref<Font> font, const std::string& text, glm::mat4 transform);
 
 
 		void RenderOpaqueObjects();
 		void RenderLights();
 		void RenderQuads();
+		void RenderTexts();
 		
 
 
@@ -102,6 +106,12 @@ namespace trace {
 		void destroy_quad_batchs();
 		// ....................................................
 
+		// Batch rendering text ..............................
+		void create_text_batch();
+		void flush_current_text_batch();
+		void destroy_text_batchs();
+		// ....................................................
+
 	private:
 		GSwapchain m_swapChain;
 		GContext g_context;
@@ -117,12 +127,18 @@ namespace trace {
 
 		// Batch rendering quads ..............................
 		std::vector<BatchInfo> quadBatches;
-		std::vector<QuadBatch> quadBatchVertex;
-		std::vector<uint32_t> quadBatchIndex;
 		Ref<GPipeline> quadBatchPipeline;
-		std::unordered_set<uint32_t> boundTextures;
+		std::unordered_set<uint32_t> boundQuadTextures;
 		uint32_t current_quad_batch = 0;
-		uint32_t num_avalible_quad_batch = 1;
+		uint32_t num_avalible_quad_batch = 0;
+		// ....................................................
+
+		// Batch rendering text ..............................
+		std::vector<BatchInfo> textBatches;
+		Ref<GPipeline> textBatchPipeline;
+		std::unordered_set<uint32_t> boundTextTextures;
+		uint32_t current_text_batch = 0;
+		uint32_t num_avalible_text_batch = 0;
 		// ....................................................
 
 

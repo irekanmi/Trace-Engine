@@ -6,6 +6,7 @@
 #include "render/Graphics.h"
 #include "render/GTexture.h"
 
+
 #define FONT_FUNC_IS_VALID(function)							 \
 	if(!function)                                                \
 	{                                                            \
@@ -18,6 +19,7 @@
 // MSDF -----------------------------------
 bool __MSDF_LoadAndInitializeFont(const std::string & name, trace::Font * font);
 bool __MSDF_DestroyFont(trace::Font * font);
+bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, uint32_t pos_index, std::vector<glm::vec4>&tex_coords, glm::mat4 & transform, float tex_index, uint32_t& count);
 // ----------------------------------------
 
 
@@ -28,11 +30,13 @@ namespace trace {
 	{
 		FontFunc::_loadAndInitializeFont = __MSDF_LoadAndInitializeFont;
 		FontFunc::_destroyFont = __MSDF_DestroyFont;
+		FontFunc::_computeTextString = __MSDF_ComputeTextString;
 		return true;
 	}
 
 	__LoadAndInitializeFont FontFunc::_loadAndInitializeFont = nullptr;
-	__DestroyFont FontFunc::_destroyFont = nullptr;	
+	__DestroyFont FontFunc::_destroyFont = nullptr;
+	__ComputeTextString FontFunc::_computeTextString = nullptr;
 
 	bool FontFunc::LoadAndInitializeFont(const std::string& name, Font* font)
 	{
@@ -44,6 +48,12 @@ namespace trace {
 	{
 		FONT_FUNC_IS_VALID(_destroyFont);
 		return _destroyFont(font);
+	}
+
+	bool FontFunc::ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& transform, float tex_index, uint32_t& count)
+	{
+		FONT_FUNC_IS_VALID(_computeTextString);
+		return _computeTextString(font, text, positions, pos_index, tex_coords, transform, tex_index, count);
 	}
 
 }
@@ -104,7 +114,7 @@ bool submitAtlasBitmapAndLayout(msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3>
 	font->SetAtlas(trace::ResourceSystem::get_instance()->CreateTexture(name, tex_desc));
 	TRC_ASSERT(font->GetAtlas().is_valid(), "Texture Creation Failed");
 
-	bool result = msdfgen::saveBmp(bit_map_storage, "output2.bmp");
+	bool result = true;
 	return result;
 }
 
@@ -203,6 +213,114 @@ bool __MSDF_DestroyFont(trace::Font* font)
 
 	return true;
 }
+
+bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& transform, float tex_index, uint32_t& count)
+{
+
+	if (!font->GetInternal())
+	{
+		TRC_ERROR("Handle passed in is invalid : {}", __FUNCTION__);
+		return false;
+	}
+
+	MSDF_Handle* _internal = (MSDF_Handle*)font->GetInternal();
+	msdf_atlas::FontGeometry& fontGeometry = _internal->fontGeometry;
+	const msdfgen::FontMetrics& fontMetrics = fontGeometry.getMetrics();
+	Ref<trace::GTexture> fontAtlas = font->GetAtlas();
+	float texWidth = 1.0f / (float)fontAtlas->GetTextureDescription().m_width;
+	float texHeight = 1.0f / (float)fontAtlas->GetTextureDescription().m_height;
+
+	double x = 0.0f;
+	double y = 0.0f;
+	float fsScale = 1.0f / fontMetrics.ascenderY - fontMetrics.descenderY;
+
+	double spaceAdvance = fontGeometry.getGlyph(' ')->getAdvance();
+	
+	uint32_t current_vert = pos_index * 6;
+
+	for (uint32_t i = 0; i < text.length(); i++)
+	{
+		char character = text[i];
+		
+		if (character == '\n')
+		{
+			x = 0;
+			y -= fsScale * fontMetrics.lineHeight;
+			continue;
+		}
+
+		if (character == '\t')
+		{
+			x += fsScale * (4 * spaceAdvance);
+			continue;
+		}
+
+		auto glyph = fontGeometry.getGlyph(character);
+		if (!glyph)
+		{
+			TRC_WARN("Can't find glyph for these character {}", character);
+			glyph = fontGeometry.getGlyph('?');
+		}
+		if (!glyph)
+		{
+			TRC_ERROR("Can't find glyph for these character {}", '?');
+			return false;
+		}
+		double pl, pb, pr, pt;
+		glyph->getQuadPlaneBounds(pl, pb, pr, pt);
+		double al, ab, ar, at;
+		glyph->getQuadAtlasBounds(al, ab, ar, at);
+		glm::vec2 quadMin((float)pl, (float)pb);
+		glm::vec2 quadMax((float)pr, (float)pt);
+		quadMin *= fsScale;
+		quadMax *= fsScale;
+		quadMin += glm::vec2(x, y);
+		quadMax += glm::vec2(x, y);
+
+		glm::vec2 texMin((float)al, (float)ab);
+		glm::vec2 texMax((float)ar, (float)at);
+
+		
+		texMin *= glm::vec2(texWidth, texHeight);
+		texMax *= glm::vec2(texWidth, texHeight);
+
+		double advance = glyph->getAdvance();
+		if (i < text.length() - 1)
+		{
+			char nextChracter = text[i + 1];
+			fontGeometry.getAdvance(advance, character, nextChracter);
+		}
+		x += fsScale * advance;
+
+		positions[current_vert] = transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		tex_coords[current_vert] = glm::vec4(texMin, tex_index, 0.0f);
+		current_vert++;
+
+		positions[current_vert] = transform * glm::vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+		tex_coords[current_vert] = glm::vec4(texMax.x, texMin.y, tex_index, 0.0f);
+		current_vert++;
+
+		positions[current_vert] = transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		tex_coords[current_vert] = glm::vec4(texMax, tex_index, 0.0f);
+		current_vert++;
+
+		positions[current_vert] = transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		tex_coords[current_vert] = glm::vec4(texMax, tex_index, 0.0f);
+		current_vert++;
+
+		positions[current_vert] = transform * glm::vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
+		tex_coords[current_vert] = glm::vec4(texMin.x, texMax.y, tex_index, 0.0f);
+		current_vert++;
+
+		positions[current_vert] = transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		tex_coords[current_vert] = glm::vec4(texMin, tex_index, 0.0f);
+		current_vert++;
+		count++;
+	}
+	
+
+}
+
 
 // -------------------------------------------------------------------------------- 
 

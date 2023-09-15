@@ -78,7 +78,7 @@ public:
 		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
 		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
-		Ref<Font> monos = ResourceSystem::get_instance()->LoadFont("monos.ttf");
+		monos = ResourceSystem::get_instance()->LoadFont("monos.ttf");
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 
 		TextureDesc sky = {};
@@ -103,7 +103,7 @@ public:
 
 		sky_box = SkyBox(sky_texture);
 
-		M_sponzaScene.SetScale(glm::vec3(0.15f));
+		//M_sponzaScene.SetScale(glm::vec3(0.15f));
 		//M_falcon.SetScale(glm::vec3(3.0f));
 		M_falcon.Translate(glm::vec3(3.0f, 3.0f, 0.0f));
 		M_squareModel.SetScale(glm::vec3(11.0f));
@@ -156,8 +156,10 @@ public:
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
 		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
-		renderer->DrawQuad(M_squareModel.GetLocalMatrix());
-		renderer->DrawQuad(M_sponzaScene.GetLocalMatrix());
+		renderer->DrawQuad(M_sponzaScene.GetLocalMatrix(), ResourceSystem::get_instance()->GetDefaultTexture("albedo_map"));
+		//renderer->DrawQuad(M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix(), ResourceSystem::get_instance()->GetTexture("monos.ttf"));
+		//renderer->DrawQuad(M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix() * glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 5.0f, 6.0f)), ResourceSystem::get_instance()->GetTexture("monos.ttf"));
+		renderer->DrawString(monos, "Coker\nAniyikaye", M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix());
 		renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 
@@ -169,6 +171,8 @@ private:
 	Ref<Mesh> _sponzaScene;
 	Ref<Mesh> _falcon;
 	Ref<Mesh> _boxStack;
+
+	Ref<Font> monos;
 
 	Transform M_squareModel;
 	Transform M_sponzaScene;

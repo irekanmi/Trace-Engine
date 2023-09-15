@@ -72,6 +72,7 @@ namespace trace {
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("TONEMAP_PASS");
 			_ds2.depth_sten_state = { false, false };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
 			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "tone_map_pass_pipeline"))

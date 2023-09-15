@@ -169,6 +169,7 @@ namespace trace {
 		void* m_device = nullptr;
 		VKHandle* m_instance = nullptr;
 		void* data_point;// if the usage is of UsageFlag::UPLOAD then it will be mapped to these data point
+		void* m_next;
 	};
 
 	struct VKFrameResoures

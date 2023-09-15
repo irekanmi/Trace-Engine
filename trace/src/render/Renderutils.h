@@ -40,7 +40,9 @@ namespace trace {
 	typedef bool (*__BindRect)(GDevice*,Rect2D);
 	typedef bool (*__BindPipeline)(GDevice*,GPipeline*);
 	typedef bool (*__BindVertexBuffer)(GDevice*,GBuffer*);
+	typedef bool (*__BindVertexBufferBatch)(GDevice*,GBuffer*);
 	typedef bool (*__BindIndexBuffer)(GDevice*,GBuffer*);
+	typedef bool (*__BindIndexBufferBatch)(GDevice*,GBuffer*);
 	typedef bool (*__Draw)(GDevice*,uint32_t, uint32_t);
 	typedef bool (*__DrawIndexed)(GDevice*,uint32_t, uint32_t);
 	typedef bool (*__BeginRenderPass)(GDevice*,GRenderPass*, GFramebuffer*);
@@ -114,6 +116,11 @@ namespace trace {
 	typedef bool (*__BindRenderGraphBuffer)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
 	//------------------------------
 
+	// Batching -----------------------
+	typedef bool (*__CreateBatchBuffer)(GBuffer*, BufferInfo);
+	typedef bool (*__DestroyBatchBuffer)(GBuffer*);
+	typedef bool(*__FlushBatchBuffer)(GBuffer*, void*, uint32_t);
+	//---------------------------------------
 
 	typedef bool (*__ValidateHandle)(GHandle*);
 
@@ -142,7 +149,9 @@ namespace trace {
 		static bool BindRect(GDevice* device, Rect2D rect);
 		static bool BindPipeline(GDevice* device, GPipeline* pipeline);
 		static bool BindVertexBuffer(GDevice* device, GBuffer* buffer);
+		static bool BindVertexBufferBatch(GDevice* device, GBuffer* buffer);
 		static bool BindIndexBuffer(GDevice* device, GBuffer* buffer);
+		static bool BindIndexBufferBatch(GDevice* device, GBuffer* buffer);
 		static bool Draw(GDevice* device, uint32_t start_vertex, uint32_t count);
 		static bool DrawIndexed(GDevice* device, uint32_t first_index, uint32_t count);
 		static bool BeginRenderPass(GDevice* device, GRenderPass* render_pass, GFramebuffer* frame_buffer);
@@ -199,6 +208,10 @@ namespace trace {
 		static bool BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
 		static bool BindRenderGraphBuffer(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
 
+		static bool CreateBatchBuffer(GBuffer* buffer, BufferInfo create_info);
+		static bool DestroyBatchBuffer(GBuffer* buffer);
+		static bool FlushBatchBuffer(GBuffer* buffer, void* data, uint32_t size);
+
 
 		static bool ValidateHandle(GHandle* handle);
 
@@ -216,7 +229,9 @@ namespace trace {
 		static __BindRect _bindRect;
 		static __BindPipeline _bindPipeline;
 		static __BindVertexBuffer _bindVertexBuffer;
+		static __BindVertexBufferBatch _bindVertexBufferBatch;
 		static __BindIndexBuffer _bindIndexBuffer;
+		static __BindIndexBufferBatch _bindIndexBufferBatch;
 		static __Draw _draw;
 		static __DrawIndexed _drawIndexed;
 		static __BeginRenderPass _beginRenderPass;
@@ -270,6 +285,10 @@ namespace trace {
 		static __EndRenderGraph _endRenderGraph;
 		static __BindRenderGraphTexture _bindRenderGraphTexture;
 		static __BindRenderGraphBuffer _bindRenderGraphBuffer;
+
+		static __CreateBatchBuffer _createBatchBuffer;
+		static __DestroyBatchBuffer _destroyBatchBuffer;
+		static __FlushBatchBuffer _flushBatchBuffer;
 
 
 		static __ValidateHandle _validateHandle;
