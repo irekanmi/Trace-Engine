@@ -2,6 +2,7 @@
 #include <trace.h>
 #include <stdio.h>
 #include <unordered_map>
+#include <string>
 using namespace trace;
 
 //Temp =================================
@@ -78,7 +79,7 @@ public:
 		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
 		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
-		monos = ResourceSystem::get_instance()->LoadFont("monos.ttf");
+		monos = ResourceSystem::get_instance()->LoadFont("ALGER.TTF");
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 
 		TextureDesc sky = {};
@@ -130,6 +131,40 @@ public:
 		case trace::EventType::TRC_KEY_RELEASED:
 		{
 			trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
+			if (release->m_keycode == Keys::KEY_1)
+			{
+				write_stream = true;
+				break;
+			}
+			if (release->m_keycode == Keys::KEY_2)
+			{
+				write_stream = false;
+				break;
+			}
+			if (write_stream)
+			{
+				if (release->m_keycode == Keys::KEY_ENTER)
+				{
+					s_stream.push_back('\n');
+					break;
+				}
+				if (release->m_keycode == Keys::KEY_SHIFT)
+				{
+					break;
+				}
+				if (release->m_keycode == Keys::KEY_BACKSPACE)
+				{
+					s_stream.pop_back();
+					break;
+				}
+				if (release->m_keycode == Keys::KEY_TAB)
+				{
+					s_stream.push_back('\t');
+					break;
+				}
+
+				s_stream.push_back((char)(release->m_keycode));
+			}
 			break;
 		}
 		}
@@ -158,8 +193,8 @@ public:
 		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
 		renderer->DrawQuad(M_sponzaScene.GetLocalMatrix(), ResourceSystem::get_instance()->GetDefaultTexture("albedo_map"));
 		//renderer->DrawQuad(M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix(), ResourceSystem::get_instance()->GetTexture("monos.ttf"));
-		//renderer->DrawQuad(M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix() * glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 5.0f, 6.0f)), ResourceSystem::get_instance()->GetTexture("monos.ttf"));
-		renderer->DrawString(monos, "Coker\nAniyikaye", M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix());
+		renderer->DrawString(monos, "TRACE\nEngine", M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix());
+		renderer->DrawString(monos, s_stream, M_sponzaScene.GetLocalMatrix());
 		renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 
@@ -171,6 +206,8 @@ private:
 	Ref<Mesh> _sponzaScene;
 	Ref<Mesh> _falcon;
 	Ref<Mesh> _boxStack;
+	std::string s_stream;
+	bool write_stream = false;
 
 	Ref<Font> monos;
 

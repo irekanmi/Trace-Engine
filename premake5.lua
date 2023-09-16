@@ -23,6 +23,7 @@ IncludeDir["obj_loader"] = "externals/obj_loader"
 IncludeDir["tiny_obj_loader"] = "externals/tiny_obj_loader"
 IncludeDir["msdfgen"] = "externals/msdfgen"
 IncludeDir["msdf_atlas_gen"] = "externals/msdf_atlas_gen"
+IncludeDir["imgui"] = "externals/imgui"
 
 
 project "trace"
@@ -60,6 +61,7 @@ project "trace"
 		"%{IncludeDir.tiny_obj_loader}",
 		"%{IncludeDir.msdfgen}",
 		"%{IncludeDir.msdf_atlas_gen}",
+		"%{IncludeDir.imgui}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

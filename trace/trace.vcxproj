@@ -76,7 +76,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -99,7 +99,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;TRC_CORE;TRC_RELEASE_BUILD;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -124,7 +124,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\backends\Fontutils.h" />
+    <ClInclude Include="src\backends\UIutils.h" />
     <ClInclude Include="src\core\Application.h" />
     <ClInclude Include="src\core\Clock.h" />
     <ClInclude Include="src\core\Core.h" />
@@ -238,8 +239,14 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\render\Font.cpp" />
-    <ClCompile Include="src\resource\FontManager.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_demo.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_draw.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_impl_glfw.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_impl_win32.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_tables.cpp" />
+    <ClCompile Include="_externals\ImGUI\imgui_widgets.cpp" />
     <ClCompile Include="_externals\spirv_reflect.cpp" />
     <ClCompile Include="src\backends\Fontutils.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
@@ -280,6 +287,7 @@
     <ClCompile Include="src\core\platform\Windows\Win32Window.cpp" />
     <ClCompile Include="src\core\platform\Windows\WinConsole.cpp" />
     <ClCompile Include="src\render\Camera.cpp" />
+    <ClCompile Include="src\render\Font.cpp" />
     <ClCompile Include="src\render\GBuffer.cpp" />
     <ClCompile Include="src\render\GContext.cpp" />
     <ClCompile Include="src\render\GDevice.cpp" />
@@ -310,6 +318,7 @@
     <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\render\render_graph\SSAO.cpp" />
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
+    <ClCompile Include="src\resource\FontManager.cpp" />
     <ClCompile Include="src\resource\MaterialManager.cpp" />
     <ClCompile Include="src\resource\MeshManager.cpp" />
     <ClCompile Include="src\resource\ModelManager.cpp" />

@@ -4,6 +4,9 @@
     <Filter Include="_externals">
       <UniqueIdentifier>{7A8ED73E-6646-198C-CF4D-F2E7BB24B47C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="_externals\ImGUI">
+      <UniqueIdentifier>{E47213B4-D06B-3206-F99D-178BE5F51112}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
@@ -183,6 +186,9 @@
     <ClInclude Include="src\render\Commands.h">
       <Filter>src\render</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\Font.h">
+      <Filter>src\render</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GBuffer.h">
       <Filter>src\render</Filter>
     </ClInclude>
@@ -285,6 +291,9 @@
     <ClInclude Include="src\render\render_graph\ToneMapPass.h">
       <Filter>src\render\render_graph</Filter>
     </ClInclude>
+    <ClInclude Include="src\resource\FontManager.h">
+      <Filter>src\resource</Filter>
+    </ClInclude>
     <ClInclude Include="src\resource\HashTable.h">
       <Filter>src\resource</Filter>
     </ClInclude>
@@ -318,10 +327,33 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\Font.h" />
-    <ClInclude Include="src\resource\FontManager.h" />
+    <ClInclude Include="src\backends\UIutils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="_externals\ImGUI\imgui.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_demo.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_draw.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_impl_glfw.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_impl_vulkan.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_impl_win32.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_tables.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_widgets.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
     <ClCompile Include="_externals\spirv_reflect.cpp">
       <Filter>_externals</Filter>
     </ClCompile>
@@ -436,6 +468,9 @@
     <ClCompile Include="src\render\Camera.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\Font.cpp">
+      <Filter>src\render</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\GBuffer.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
@@ -526,6 +561,9 @@
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp">
       <Filter>src\render\render_graph</Filter>
     </ClCompile>
+    <ClCompile Include="src\resource\FontManager.cpp">
+      <Filter>src\resource</Filter>
+    </ClCompile>
     <ClCompile Include="src\resource\MaterialManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
@@ -550,7 +588,5 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\Font.cpp" />
-    <ClCompile Include="src\resource\FontManager.cpp" />
   </ItemGroup>
 </Project>
