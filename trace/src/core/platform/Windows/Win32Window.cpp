@@ -202,6 +202,19 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 
 		break;
 	}
+	
+	case WM_CHAR:
+	case WM_SYSCHAR:
+	{
+		uint16_t key = (uint16_t)wparam;
+		trace::Keys _key = (trace::Keys)key;
+
+		trace::KeyTyped typed(_key);
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_KEY_TYPED, &typed);
+
+
+		break;
+	}
 	// TODO : Fix, check why event is still being sent when it is already held
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:

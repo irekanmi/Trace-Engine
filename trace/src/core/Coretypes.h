@@ -8,6 +8,7 @@
 namespace trace {
 
 	typedef void(*ClientUpdateCallback)(float deltaTime);
+	typedef void(*ClientRenderCallback)(float deltaTime);
 	typedef void(*ClientStartCallback)();
 	typedef void(*ClientEndCallback)();
 
@@ -59,6 +60,7 @@ namespace trace {
 		ClientEndCallback client_end = nullptr;
 		ClientStartCallback client_start = nullptr;
 		ClientUpdateCallback client_update = nullptr;
+		ClientRenderCallback client_render = nullptr;
 	};
 
 	class AppSettings

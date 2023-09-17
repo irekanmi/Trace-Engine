@@ -25,6 +25,17 @@ namespace trace {
 	{
 
 	}
+	
+	KeyTyped::KeyTyped(Keys keycode)
+	{
+		m_type = EventType::TRC_KEY_TYPED;
+		m_keycode = keycode;
+	}
+
+	KeyTyped::~KeyTyped()
+	{
+
+	}
 
 	MousePressed::MousePressed(Buttons button)
 	{

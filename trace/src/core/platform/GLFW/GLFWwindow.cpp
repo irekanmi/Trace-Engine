@@ -14,7 +14,7 @@
 
 namespace trace {
 
-	Keys translateKeyGLFW(int keycode)
+	Keys translateGLFW_Trace(int keycode)
 	{
 		// TODO: Set keys that are not valued yet
 		switch (keycode)
@@ -335,20 +335,27 @@ namespace trace {
 			{
 			case GLFW_PRESS:
 			{
-				Keys _key = translateKeyGLFW(key);
+				Keys _key = translateGLFW_Trace(key);
 				KeyPressed keypress(_key);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_KEY_PRESSED, &keypress);
 				break;
 			}
 			case GLFW_RELEASE:
 			{
-				Keys _key = translateKeyGLFW(key);
+				Keys _key = translateGLFW_Trace(key);
 				KeyReleased keyrelease(_key);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_KEY_RELEASED, &keyrelease);
 				break;
 			}
 			}
 		});
+
+		glfwSetCharCallback(m_pWindow, [](GLFWwindow* window,unsigned int key)
+			{
+				trace::KeyTyped typed((trace::Keys)key);
+				trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_KEY_TYPED, &typed);
+
+			});
 
 		glfwSetWindowSizeCallback(m_pWindow, [](GLFWwindow* window, int width, int height)
 		{
@@ -407,7 +414,7 @@ namespace trace {
 		InputSystem* input = InputSystem::get_instance();
 		for (int i = 0; i < GLFW_KEY_LAST + 1; i++)
 		{
-			Keys _key = translateKeyGLFW(i);
+			Keys _key = translateGLFW_Trace(i);
 			switch (glfwGetKey(m_pWindow, i))
 			{
 			case GLFW_PRESS:

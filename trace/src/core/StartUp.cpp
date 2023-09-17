@@ -61,7 +61,7 @@ namespace trace {
 	bool TRACE_API _INIT(trc_app_data app_data)
 	{
 		
-		if (!Renderer::get_instance()->Init(app_data.graphics_api))
+		if (!Renderer::get_instance()->Init(app_data))
 		{
 			TRC_ERROR("Failed to initialize renderer");
 			return false;

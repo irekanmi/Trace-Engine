@@ -231,11 +231,17 @@ void Start()
 	trace::Application::get_instance()->PushLayer(new SampleLayer);
 	trace::Application::get_instance()->PushOverLay(new SampleOverLay());
 
+
 	
 	
 }
 
 void Update(float deltaTime)
+{
+	
+}
+
+void Render(float deltaTime)
 {
 	
 }
@@ -256,6 +262,7 @@ trace::trc_app_data trace::CreateApp()
 	app_data.enable_vsync = false;
 	app_data.client_start = Start;
 	app_data.client_update = Update;
+	app_data.client_render = Render;
 	app_data.client_end = End;
 
 

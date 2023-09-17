@@ -588,5 +588,6 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
+    <ClCompile Include="src\backends\UIutils.cpp" />
   </ItemGroup>
 </Project>

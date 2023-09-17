@@ -279,7 +279,7 @@ namespace trace {
 		KEYS_MAX_KEYS
 	} Keys;
 
-	Keys translateKeyGLFW(int keycode);
+	Keys translateGLFW_Trace(int keycode);
 	Buttons translateButtonGLFW(int button);
 
 }

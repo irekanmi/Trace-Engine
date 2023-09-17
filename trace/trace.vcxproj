@@ -239,6 +239,7 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\backends\UIutils.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui_demo.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui_draw.cpp" />

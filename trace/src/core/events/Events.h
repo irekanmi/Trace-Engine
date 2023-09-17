@@ -22,6 +22,7 @@ namespace trace {
 		TRC_WND_RESIZE,
 		TRC_KEY_PRESSED,
 		TRC_KEY_RELEASED,
+		TRC_KEY_TYPED,
 		TRC_BUTTON_PRESSED,
 		TRC_BUTTON_RELEASED,
 		TRC_MOUSE_MOVE,
@@ -134,6 +135,20 @@ namespace trace {
 		~KeyReleased();
 
 		virtual const char* GetName() override { return _STR(KeyReleased); }
+		Keys m_keycode;
+	private:
+	protected:
+
+	};
+	
+	class TRACE_API KeyTyped : public Event
+	{
+
+	public:
+		KeyTyped(Keys keycode);
+		~KeyTyped();
+
+		virtual const char* GetName() override { return _STR(KeyTyped); }
 		Keys m_keycode;
 	private:
 	protected:

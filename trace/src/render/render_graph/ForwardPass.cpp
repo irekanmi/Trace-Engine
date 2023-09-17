@@ -6,6 +6,10 @@
 #include "render/Renderer.h"
 #include "FrameData.h"
 
+// Temp =================
+#include "backends/UIutils.h"
+// ======================
+
 namespace trace {
 	void ForwardPass::Init(Renderer* renderer)
 	{
@@ -73,6 +77,7 @@ namespace trace {
 			m_renderer->RenderQuads();
 			m_renderer->RenderLights();
 			m_renderer->RenderTexts();
+			UIFunc::UIRenderFrame(m_renderer);
 
 
 			});

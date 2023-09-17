@@ -5,6 +5,7 @@
 #include "Graphics.h"
 #include "Commands.h"
 #include "resource/Ref.h"
+#include "core/Coretypes.h"
 
 
 // Temp--------------------------------
@@ -46,7 +47,7 @@ namespace trace {
 		Renderer();
 		~Renderer();
 
-		bool Init(RenderAPI api);
+		bool Init(trc_app_data app_data);
 		void Update(float deltaTime);
 		bool BeginFrame();
 		void BeginScene();
@@ -119,6 +120,7 @@ namespace trace {
 		RenderComposer* m_composer;
 		uint32_t m_frameWidth;
 		uint32_t m_frameHeight;
+		ClientRenderCallback m_client_render;
 		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
 		uint32_t m_opaqueObjectsSize;
 		SkyBox* current_sky_box;

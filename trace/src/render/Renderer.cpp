@@ -11,6 +11,8 @@
 #include "Model.h"
 #include "Mesh.h"
 #include "SkyBox.h"
+#include "core/Coretypes.h"
+#include "backends/UIutils.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -21,6 +23,7 @@
 #include "Font.h"
 #include "backends/Fontutils.h"
 #include "imgui.h"
+#include "Application.h"
 
 
 namespace trace {
@@ -42,7 +45,7 @@ namespace trace {
 
 	}
 
-	bool Renderer::Init(RenderAPI api)
+	bool Renderer::Init(trc_app_data app_data)
 	{
 		bool result = true;
 
@@ -54,7 +57,7 @@ namespace trace {
 		}
 		m_listCount = 0;
 	
-		switch (api)
+		switch (app_data.graphics_api)
 		{
 		case RenderAPI::OpenGL:
 		{
@@ -100,7 +103,12 @@ namespace trace {
 			m_frameHeight = 600;
 		}
 
-		
+		if (!app_data.client_render)
+		{
+			TRC_ERROR("Failed to provide callback for render");
+			return false;
+		}
+		m_client_render = app_data.client_render;
 
 		Vertex2D quadData[6] = {
 			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
@@ -134,7 +142,7 @@ namespace trace {
 	{
 		bool result = RenderFunc::BeginFrame(&g_device, &m_swapChain);
 
-
+		UIFunc::UINewFrame();
 		return result;
 	}
 
@@ -166,6 +174,7 @@ namespace trace {
 		}
 		boundTextTextures.clear();
 
+		UIFunc::UIEndFrame();
 		RenderFunc::EndFrame(&g_device);
 		current_sky_box = nullptr;
 	}
@@ -183,31 +192,20 @@ namespace trace {
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
 		render_mode = {};
 
-
-		//lights[0].position = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
-		//lights[0].direction = { 0.3597f, -0.4932f, 0.7943f, 0.0f };
-		//lights[0].color = { 0.8f, 0.8f, 0.8f, 1.0f };
-		//lights[0].params1 = { 1.0f, 0.467f, 0.896f, 0.0f };
-		//lights[0].params2 = { 0.0f, 2.0f, 0.0f, 0.0f };
-
 		lights[0].position = { 0.0f, 2.5f, 2.0f, 0.0f };
 		lights[0].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
 		lights[0].color = { 0.37f, 0.65f, 0.66f, 1.0f };
 		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f))};
-		lights[0].params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };
-
-		//lights[0].position = { _camera->GetPosition(), 0.0f };
-		//lights[0].direction = { _camera->GetLookDir(), 0.0f };
-		//lights[0].color = { 0.6f, 0.8f, 0.0f, 1.0f };
-		//lights[0].params1 = { 1.0f, 0.022f, 0.0019f, 0.939f };
-		//lights[0].params2 = { 0.866f, 3.1f, 0.0f, 0.0f };
-			
+		lights[0].params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };			
 
 		light_data = { 0, 1, 0, 0 };
 		exposure = 0.9f;
 		m_composer = new RenderComposer();
 		m_composer->Init(this);
 		current_sky_box = nullptr;
+		UIFuncLoader::LoadImGuiFunc();
+		UIFunc::InitUIRenderBackend(Application::get_instance(), this);
+		//---------------------------------------------------------------------------------------------
 
 		// Quad batch .........................................	
 		create_quad_batch();
@@ -217,7 +215,6 @@ namespace trace {
 		create_text_batch();
  		// ..................................................	
 
-		//---------------------------------------------------------------------------------------------
 
 	}
 
@@ -225,16 +222,16 @@ namespace trace {
 	{
 
 		// Temp-----------------------------
-
 		RenderFunc::DestroyBuffer(&quadBuffer);
 		m_composer->Shutdowm();
+		UIFunc::ShutdownUIRenderBackend();
 		delete m_composer;
 		m_composer = nullptr;
 		delete _camera;
 		_camera = nullptr;
 
 		//----------------------------------
-		RenderFunc::DestroySwapchain(&m_swapChain);		
+		RenderFunc::DestroySwapchain(&m_swapChain);
 
 	}
 
@@ -397,9 +394,14 @@ namespace trace {
 	{
 		if (BeginFrame())
 		{
+
 			//Temp=====================
 			_camera->Update(deltaTime);
 			//=========================
+
+			m_client_render(deltaTime);
+			bool show_demo = true;
+			ImGui::ShowDemoWindow(&show_demo);
 
 			if (render_mode.w == 8)
 			{
@@ -432,22 +434,22 @@ namespace trace {
 
 
 			RGBlackBoard frame_blck_bd;
-			RenderGraph f_g;
+			RenderGraph frame_graph;
 			
 			m_composer->PreFrame(
-				f_g,
+				frame_graph,
 				frame_blck_bd,
 				frame_settings
 			);
-			f_g.Execute();
+			frame_graph.Execute();
 			m_composer->PostFrame(
-				f_g,
+				frame_graph,
 				frame_blck_bd
 			);
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
-			f_g.Destroy();
+			frame_graph.Destroy();
 		}
 		m_listCount = 0;
 		m_opaqueObjectsSize = 0;
