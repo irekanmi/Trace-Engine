@@ -130,8 +130,6 @@ project "trace"
 	filter "system:windows"
 		staticruntime "off"
 
-	
-
 project "TestApp"
 	kind "ConsoleApp"
 	language "C++"
@@ -165,14 +163,16 @@ project "TestApp"
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.10150.0\\ucrt\\x64"
 	}
 
+	defines
+	{
+		"TRC_APP",
+	}
+
 	filter "system:windows"
 	
 	defines
 	{
 		"TRC_WINDOWS",
-		"TRC_APP",
-		"TRC_ASSERT_ENABLED",
-		"TRC_DEBUG_BUILD"
 	}
 
 	links
@@ -184,5 +184,87 @@ project "TestApp"
 		symbols "On"
 		buildoptions "/MD"
 
+	defines
+	{
+		"TRC_ASSERT_ENABLED",
+		"TRC_DEBUG_BUILD"
+	}
+
 	filter "configurations:Release"
 		optimize "On"
+
+	defines
+	{
+		"TRC_RELEASE_BUILD"
+	}
+
+project "Trace_Ed"
+	kind "ConsoleApp"
+	language "C++"
+	location "Trace_Ed"
+	cppdialect "C++17"
+	
+	
+	targetdir ( "bin/" .. OutputDir .. "/%{prj.name}" )
+	objdir ( "bin-int/" .. OutputDir .. "/%{prj.name}" )
+
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp"
+	}
+
+	includedirs
+	{
+		"trace/src",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.imgui}",
+		-- please remove these includes before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
+	}
+
+	libdirs
+	{
+		"externals/libs",
+		-- please remove these lib directory before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.10150.0\\ucrt\\x64"
+	}
+
+	links
+	{
+		"trace",
+	}
+
+	defines
+	{
+		"TRC_APP",
+		"TRC_EDITOR"
+	}
+
+	filter "system:windows"
+	
+	defines
+	{
+		"TRC_WINDOWS",
+	}
+
+	
+
+	filter "configurations:Debug"
+		symbols "On"
+		buildoptions "/MD"
+		defines
+		{
+			"TRC_ASSERT_ENABLED",
+			"TRC_DEBUG_BUILD"
+		}
+
+	filter "configurations:Release"
+		optimize "On"
+		defines
+		{
+			"TRC_RELEASE_BUILD"
+		}
+
+

@@ -57,6 +57,9 @@
     <ClInclude Include="src\backends\Fontutils.h">
       <Filter>src\backends</Filter>
     </ClInclude>
+    <ClInclude Include="src\backends\UIutils.h">
+      <Filter>src\backends</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\Application.h">
       <Filter>src\core</Filter>
     </ClInclude>
@@ -327,7 +330,6 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\backends\UIutils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -358,6 +360,9 @@
       <Filter>_externals</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\Fontutils.cpp">
+      <Filter>src\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\UIutils.cpp">
       <Filter>src\backends</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Application.cpp">
@@ -588,6 +593,5 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
-    <ClCompile Include="src\backends\UIutils.cpp" />
   </ItemGroup>
 </Project>

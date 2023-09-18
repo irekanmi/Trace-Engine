@@ -252,6 +252,18 @@ int translateKeyTrace_ImGui(trace::Keys key)
 	return 0;
 }
 
+int translateButtonTrace_ImGui(trace::Buttons button)
+{
+	switch (button)
+	{
+			case trace::BUTTON_LEFT: { return ImGuiMouseButton_Left;}
+			case trace::BUTTON_RIGHT: { return ImGuiMouseButton_Right;}
+			case trace::BUTTON_MIDDLE: { return ImGuiMouseButton_Middle;}
+	}
+
+	return 0;
+}
+
 static void OnEvent(trace::Event* p_event)
 {
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -261,12 +273,7 @@ static void OnEvent(trace::Event* p_event)
 	case trace::EventType::TRC_KEY_PRESSED:
 	{
 		trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
-		io.KeysDown[translateKeyTrace_ImGui(press->m_keycode)] = true;
-
-		io.KeyCtrl = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LCONTROL)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RCONTROL)];
-		io.KeyAlt = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LALT)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RALT)];
-		io.KeyShift = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LSHIFT)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RSHIFT)];
-		io.KeySuper = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LWIN)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RWIN)];
+		io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(press->m_keycode), true);
 
 		break;
 	}
@@ -278,29 +285,7 @@ static void OnEvent(trace::Event* p_event)
 	case trace::EventType::TRC_KEY_RELEASED:
 	{
 		trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
-
-		switch (trace::AppSettings::wintype)
-		{
-		case trace::WindowType::WIN32_WINDOW:
-		{
-			ImGui_ImplWin32_NewFrame();
-			break;
-		}
-		case trace::WindowType::GLFW_WINDOW:
-		{
-			ImGui_ImplGlfw_NewFrame(); // TODO: Implement for other Render API
-			break;
-		}
-		}
-
-		io.KeysDown[translateKeyTrace_ImGui(release->m_keycode)] = true;
-
-		io.KeyCtrl = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LCONTROL)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RCONTROL)];
-		io.KeyAlt = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LALT)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RALT)];
-		io.KeyShift = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LSHIFT)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RSHIFT)];
-		io.KeySuper = io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_LWIN)] || io.KeysDown[translateKeyTrace_ImGui(trace::Keys::KEY_RWIN)];
-
-
+		io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(release->m_keycode), false);
 		break;
 	}
 
@@ -315,32 +300,26 @@ static void OnEvent(trace::Event* p_event)
 	case trace::EventType::TRC_BUTTON_PRESSED:
 	{
 		trace::MousePressed* press = reinterpret_cast<trace::MousePressed*>(p_event);
-
-		io.MouseDown[press->m_button] = true;		
+		io.AddMouseButtonEvent(translateButtonTrace_ImGui(press->m_button), true);
 		break;
 	}
 	case trace::EventType::TRC_BUTTON_RELEASED:
 	{
 		trace::MouseReleased* release = reinterpret_cast<trace::MouseReleased*>(p_event);
-
-		io.MouseDown[release->m_button] = false;		
+		io.AddMouseButtonEvent(translateButtonTrace_ImGui(release->m_button), false);
 		break;
 	}
 	case trace::EventType::TRC_MOUSE_MOVE:
 	{
 		trace::MouseMove* move = reinterpret_cast<trace::MouseMove*>(p_event);
-
-		io.MousePos = ImVec2(move->m_x, move->m_y);		
+		io.AddMousePosEvent(move->m_x, move->m_y);
 		break;
 	}
 	
 	case trace::EventType::TRC_KEY_TYPED:
 	{
-		trace::KeyTyped* move = reinterpret_cast<trace::KeyTyped*>(p_event);
-
-		
-
-		unsigned int c = move->m_keycode;
+		trace::KeyTyped* typed = reinterpret_cast<trace::KeyTyped*>(p_event);
+		unsigned int c = typed->m_keycode;
 		if (c > 0 && c < 0x10000)
 			io.AddInputCharacter((unsigned short)c);
 

@@ -22,7 +22,6 @@
 #include "GShader.h"
 #include "Font.h"
 #include "backends/Fontutils.h"
-#include "imgui.h"
 #include "Application.h"
 
 
@@ -400,8 +399,6 @@ namespace trace {
 			//=========================
 
 			m_client_render(deltaTime);
-			bool show_demo = true;
-			ImGui::ShowDemoWindow(&show_demo);
 
 			if (render_mode.w == 8)
 			{

@@ -109,7 +109,8 @@ namespace trace {
 
 	void MeshManager::ShutDown()
 	{
-		DefaultCube.~Mesh();
+		DefaultCube.~Ref();
+		DefaultSphere.~Ref();
 
 		if (m_meshes.empty())
 			return;
@@ -120,7 +121,6 @@ namespace trace {
 				Unload(&mesh);
 		}
 		m_meshes.clear();
-		DefaultCube.~Mesh();
 	}
 
 	Mesh* MeshManager::GetMesh(const std::string& name)
@@ -175,19 +175,19 @@ namespace trace {
 
 	}
 
-	Mesh* MeshManager::GetDefault(const std::string& name)
+	Ref<Mesh> MeshManager::GetDefault(const std::string& name)
 	{
 
 		if (m_hashtable.Hash(name) == m_hashtable.Hash("Cube"))
 		{
-			return &DefaultCube;
+			return DefaultCube;
 		}
 		else if (m_hashtable.Hash(name) == m_hashtable.Hash("Sphere"))
 		{
-			return &DefaultSphere;
+			return DefaultSphere;
 		}
 
-		return nullptr;
+		return { nullptr, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this)};
 	}
 
 	bool MeshManager::LoadDefaults()
@@ -200,9 +200,26 @@ namespace trace {
 		generateVertexTangent(verts, _ind);
 		cube.Init(verts, _ind);
 
+		Mesh* _mesh = nullptr;
+		uint32_t _id = INVALID_ID;
+		for (uint32_t k = 0; k < m_numEntries; k++)
+		{
+			if (m_meshes[k].m_id == INVALID_ID)
+			{
+				m_meshes[k].m_id = k;
+				_id = k;
+				m_hashtable.Set("Cube", k);
+				_mesh = &m_meshes[k];
+				break;
+			}
+		}
+
+
+		DefaultCube = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+		_mesh = nullptr;
 		Ref<Model> cube_ref(&cube, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
 
-		DefaultCube.GetModels().push_back(cube_ref);
+		DefaultCube->GetModels().push_back(cube_ref);
 
 		verts.clear();
 		_ind.clear();
@@ -211,9 +228,22 @@ namespace trace {
 		generateVertexTangent(verts, _ind);
 		sphere.Init(verts, _ind);
 
+
+		for (uint32_t k = 0; k < m_numEntries; k++)
+		{
+			if (m_meshes[k].m_id == INVALID_ID)
+			{
+				m_meshes[k].m_id = k;
+				_id = k;
+				m_hashtable.Set("Cube", k);
+				_mesh = &m_meshes[k];
+				break;
+			}
+		}
 		Ref<Model> sphere_ref(&sphere, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
 
-		DefaultSphere.GetModels().push_back(sphere_ref);
+		DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+		DefaultSphere->GetModels().push_back(sphere_ref);
 
 		return true;
 	}
@@ -235,7 +265,7 @@ namespace trace {
 			return;
 		}
 
-
+		//TODO: 
 		model->m_id = INVALID_ID;
 		model->~Model();
 

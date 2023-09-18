@@ -1,7 +1,6 @@
 #pragma once
 #include "core/Enums.h"
 #include "core/Core.h"
-#include "EASTL/string.h"
 #include "glm/glm.hpp"
 
 #define MAX_LIGHT_COUNT 15

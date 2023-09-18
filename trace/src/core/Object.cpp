@@ -1,10 +1,9 @@
 #include "pch.h"
 #include "Object.h"
-#include "EASTL/vector.h"
 
 namespace trace {
 	uint32_t g_ObjID = -1;
-	eastl::vector<Object*> g_SystemPtrs;
+	std::vector<Object*> g_SystemPtrs;
 
 
 	Object::Object()

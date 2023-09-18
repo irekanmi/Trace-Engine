@@ -2,7 +2,6 @@
 
 #include <core/Enums.h>
 #include <core/Core.h>
-#include <EASTL/string.h>
 
 namespace trace {
 

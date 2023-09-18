@@ -29,7 +29,7 @@ namespace trace {
 		{
 			unsigned int Width;
 			unsigned int Height;
-			eastl::string Name;
+			std::string Name;
 		};
 
 		GLFWwindow* m_pWindow;

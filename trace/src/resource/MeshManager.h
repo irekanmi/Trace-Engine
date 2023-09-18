@@ -23,7 +23,7 @@ namespace trace {
 		Mesh* GetMesh(const std::string& name);
 		bool LoadMesh(const std::string& name);
 		void Unload(Mesh* mesh);
-		Mesh* GetDefault(const std::string& name);
+		Ref<Mesh> GetDefault(const std::string& name);
 		bool LoadDefaults();
 
 		static MeshManager* get_instance();
@@ -34,8 +34,8 @@ namespace trace {
 		HashTable<uint32_t> m_hashtable;
 		std::vector<Mesh> m_meshes;
 		uint32_t m_numEntries;
-		Mesh DefaultCube;
-		Mesh DefaultSphere;
+		Ref<Mesh> DefaultCube;
+		Ref<Mesh> DefaultSphere;
 		Model cube;
 		Model sphere;
 		std::filesystem::path mesh_resource_path;

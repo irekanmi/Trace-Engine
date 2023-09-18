@@ -36,7 +36,7 @@ void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, cons
 
 namespace trace
 {
-	extern eastl::vector<trace::Object*> g_SystemPtrs;
+	extern std::vector<trace::Object*> g_SystemPtrs;
 	
 	
 	Application* Application::s_instance = nullptr;
@@ -64,7 +64,7 @@ namespace trace
 		m_LayerStack->PopOverLay(layer);
 	}
 
-	eastl::vector<Object*> Application::GetEngineSystemsID()
+	std::vector<Object*> Application::GetEngineSystemsID()
 	{
 		return g_SystemPtrs;
 	}
@@ -78,12 +78,12 @@ namespace trace
 		{
 		case WindowType::GLFW_WINDOW:
 		{
-			this->m_Window = new GLFW_Window(appData.winprop);
+			this->m_Window = new GLFW_Window(appData.winprop); // TODO: Use Custom Allocator or Add Window creation tp backend
 			break;
 		}
 		case WindowType::WIN32_WINDOW:
 		{
-			this->m_Window = new Win32Window(appData.winprop);
+			this->m_Window = new Win32Window(appData.winprop); // TODO: Use Custom Allocator or Add Window creation tp backend
 			break;
 		}
 		}
@@ -251,28 +251,6 @@ namespace trace
 				if (wnd->m_width == 0 || wnd->m_height == 0)
 					break;
 
-				break;
-			}
-
-			case EventType::TRC_BUTTON_PRESSED:
-			{
-				MousePressed* mouse = reinterpret_cast<MousePressed*>(p_event);
-				TRC_CRITICAL("Button: {}", (unsigned char)mouse->m_button);
-				break;
-			}
-
-			case EventType::TRC_BUTTON_RELEASED:
-			{
-				MouseReleased* mouse = reinterpret_cast<MouseReleased*>(p_event);
-				TRC_TRACE("Button: {}", (unsigned char)mouse->m_button);
-				break;
-			}
-
-			case EventType::TRC_MOUSE_MOVE:
-			{
-				MouseMove* mouse = reinterpret_cast<MouseMove*>(p_event);
-				//TRC_WARN("X: {}", mouse->m_x);
-				//TRC_WARN("Y: {}", mouse->m_y);
 				break;
 			}
 			}

@@ -146,7 +146,7 @@ namespace trace {
 	}
 	Ref<Mesh> ResourceSystem::GetDefaultMesh(const std::string& name)
 	{
-		return { m_meshManager->GetDefault(name), BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, m_meshManager) };
+		return m_meshManager->GetDefault(name);
 	}
 	Ref<Mesh> ResourceSystem::GetMesh(const std::string& name)
 	{

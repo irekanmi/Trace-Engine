@@ -3,7 +3,6 @@
 #include "Core.h"
 #include "Enums.h"
 #include "render/Graphics.h"
-#include "EASTL/string.h"
 
 namespace trace {
 
@@ -34,7 +33,7 @@ namespace trace {
 	struct WindowDecl
 	{
 
-		WindowDecl(eastl::string name = "Trace",
+		WindowDecl(std::string name = "Trace",
 			unsigned int width = 800,
 			unsigned int height = 600)
 		{
@@ -43,7 +42,7 @@ namespace trace {
 			m_height = height;
 		}
 
-		eastl::string m_window_name;
+		std::string m_window_name;
 		unsigned int m_width;
 		unsigned int m_height;
 	};

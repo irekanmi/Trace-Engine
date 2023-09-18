@@ -3,7 +3,6 @@
 #include "Core.h"
 
 #include "events\Events.h"
-#include <EASTL/vector.h>
 
 namespace trace {
 

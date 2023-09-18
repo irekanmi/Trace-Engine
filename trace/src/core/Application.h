@@ -31,7 +31,7 @@ namespace trace
 		virtual void PushOverLay(Layer* layer);
 		virtual void PopLayer(Layer* layer);
 		virtual void PopOverLay(Layer* layer);
-		virtual eastl::vector<Object*> GetEngineSystemsID();
+		virtual std::vector<Object*> GetEngineSystemsID();
 		virtual Window* GetWindow() { return m_Window; }
 
 		static Application* get_instance();

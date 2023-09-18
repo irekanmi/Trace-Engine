@@ -12,7 +12,7 @@
 
 static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM lparam);
 
-static eastl::wstring to_ws(const eastl::string& str);
+static std::wstring to_ws(const std::string& str);
 
 
 namespace trace {
@@ -29,12 +29,13 @@ namespace trace {
 
 	void trace::Win32Window::Init(const WindowDecl& win_prop)
 	{
+		std::wstring class_name = to_ws(_NAME_);
 		WNDCLASSEX wnd;
 		HINSTANCE hinstance = (HINSTANCE)Platform::GetAppHandle();
 		Platform::ZeroMem(&wnd, sizeof(WNDCLASSEX));
 		wnd.cbSize = sizeof(WNDCLASSEX);
 		wnd.hInstance = hinstance;
-		wnd.lpszClassName = to_ws(_NAME_).c_str();
+		wnd.lpszClassName = class_name.c_str();
 		wnd.cbClsExtra = 0;
 		wnd.cbWndExtra = 0;
 		wnd.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
@@ -311,15 +312,15 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 	return DefWindowProc(wnd, msg, wparam, lparam);
 }
 
-static eastl::wstring to_ws(const eastl::string& str)
+static std::wstring to_ws(const std::string& str)
 {
-	size_t len = mbstowcs(nullptr, &str[0], 0);
+	size_t len = mbstowcs(nullptr, str.data(), 0);
 	if (len == -1)
 	{
 		TRC_ASSERT(false, "invalid string");
-		return eastl::wstring();
+		return std::wstring();
 	}
-	eastl::wstring ret;
+	std::wstring ret;
 	mbstowcs(&ret[0], &str[0], len + 1);
 	return ret;
 }

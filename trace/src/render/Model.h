@@ -2,7 +2,6 @@
 
 #include "core/Enums.h"
 #include "core/Core.h"
-#include "EASTL/vector.h"
 #include "Graphics.h"
 #include "GBuffer.h"
 #include "Material.h"

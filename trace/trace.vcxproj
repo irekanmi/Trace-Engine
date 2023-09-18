@@ -239,7 +239,6 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\backends\UIutils.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui_demo.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui_draw.cpp" />
@@ -250,6 +249,7 @@
     <ClCompile Include="_externals\ImGUI\imgui_widgets.cpp" />
     <ClCompile Include="_externals\spirv_reflect.cpp" />
     <ClCompile Include="src\backends\Fontutils.cpp" />
+    <ClCompile Include="src\backends\UIutils.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Clock.cpp" />
     <ClCompile Include="src\core\Coretypes.cpp" />
