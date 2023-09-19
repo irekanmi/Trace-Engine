@@ -48,6 +48,7 @@ namespace vk {
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
+		_handle->instance = _instance;
 
 		VK_ASSERT(vk::_CreateDevice(_handle, _instance));
 
@@ -83,12 +84,15 @@ namespace vk {
 			images_fence[i] = nullptr;
 		}
 
-		VkDescriptorPoolSize pool_sizes[2] = {};
+		VkDescriptorPoolSize pool_sizes[3] = {};
 		pool_sizes[0].descriptorCount = KB;
 		pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 
 		pool_sizes[1].descriptorCount = KB;
 		pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		
+		pool_sizes[2].descriptorCount = KB;
+		pool_sizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
 		VkDescriptorPoolCreateInfo frame_pool = {};
 		frame_pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

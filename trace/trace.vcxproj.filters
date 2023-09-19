@@ -294,6 +294,9 @@
     <ClInclude Include="src\render\render_graph\ToneMapPass.h">
       <Filter>src\render\render_graph</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\render_graph\UIPass.h">
+      <Filter>src\render\render_graph</Filter>
+    </ClInclude>
     <ClInclude Include="src\resource\FontManager.h">
       <Filter>src\resource</Filter>
     </ClInclude>
@@ -564,6 +567,9 @@
       <Filter>src\render\render_graph</Filter>
     </ClCompile>
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp">
+      <Filter>src\render\render_graph</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\render_graph\UIPass.cpp">
       <Filter>src\render\render_graph</Filter>
     </ClCompile>
     <ClCompile Include="src\resource\FontManager.cpp">

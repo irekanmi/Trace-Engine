@@ -225,6 +225,7 @@
     <ClInclude Include="src\render\render_graph\RenderPass.h" />
     <ClInclude Include="src\render\render_graph\SSAO.h" />
     <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
+    <ClInclude Include="src\render\render_graph\UIPass.h" />
     <ClInclude Include="src\resource\FontManager.h" />
     <ClInclude Include="src\resource\HashTable.h" />
     <ClInclude Include="src\resource\MaterialManager.h" />
@@ -319,6 +320,7 @@
     <ClCompile Include="src\render\render_graph\RenderGraph.cpp" />
     <ClCompile Include="src\render\render_graph\SSAO.cpp" />
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
+    <ClCompile Include="src\render\render_graph\UIPass.cpp" />
     <ClCompile Include="src\resource\FontManager.cpp" />
     <ClCompile Include="src\resource\MaterialManager.cpp" />
     <ClCompile Include="src\resource\MeshManager.cpp" />

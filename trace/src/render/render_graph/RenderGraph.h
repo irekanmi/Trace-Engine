@@ -58,6 +58,7 @@ namespace trace {
 		std::vector<uint32_t> read_passes;
 		std::vector<uint32_t> written_passes;
 		uint32_t create_pass = INVALID_ID;
+		uint32_t first_write_pass = INVALID_ID;
 		bool external = false;
 	};
 

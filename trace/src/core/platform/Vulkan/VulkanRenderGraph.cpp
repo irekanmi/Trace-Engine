@@ -777,6 +777,7 @@ namespace vk {
 		bool result = true;
 
 		std::vector<uint32_t>& outputs = pass->GetAttachmentOutputs();
+		std::vector<uint32_t>& inputs = pass->GetAttachmentInputs();
 		uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
 
 		VkResult _result = VK_ERROR_UNKNOWN;
@@ -790,6 +791,7 @@ namespace vk {
 
 		for (uint32_t i = 0; i < static_cast<uint32_t>(outputs.size()); i++)
 		{
+			uint32_t tex_index = outputs[i];
 			trace::RenderGraphResource* tex = &render_graph->GetResource(outputs[i]);
 			trace::VKRenderGraphResource* tex_internal = reinterpret_cast<trace::VKRenderGraphResource*>(tex->render_handle.m_internalData);
 			VkAttachmentDescription att_desc = {};
@@ -816,12 +818,25 @@ namespace vk {
 
 			if (tex->resource_type == trace::RenderGraphResourceType::Texture)
 			{
+
 				if (tex->create_pass == pass_index)
 				{
 					att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 					att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 					att_desc.format = convertFmt(tex->resource_data.texture.format);
 					att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+					att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+					att_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
+					att_ref.attachment = i;
+					att_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					tex_internal->image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				}
+				else if(tex->first_write_pass == pass_index)
+				{
+					att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					att_desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+					att_desc.format = convertFmt(tex->resource_data.texture.format);
+					att_desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 					att_desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 					att_desc.samples = VK_SAMPLE_COUNT_1_BIT; //TODO: Configurable
 					att_ref.attachment = i;
@@ -942,9 +957,6 @@ namespace vk {
 				}
 				memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 				
-				
-
-				
 
 				VkSamplerCreateInfo samp_create_info = {};
 				samp_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -987,6 +999,7 @@ namespace vk {
 				VK_ASSERT(vkCreateImage(_device->m_device, &img_create_info, instance->m_alloc_callback, &res_handle->resource.texture.m_handle));
 
 				vkGetImageMemoryRequirements(_device->m_device, res_handle->resource.texture.m_handle, &res_handle->tex_mem_req);
+				graph_handle->memory_size = get_alignment(graph_handle->memory_size, res_handle->tex_mem_req.alignment);
 				graph_handle->memory_size += res_handle->tex_mem_req.size;
 				graph_handle->memory_size = get_alignment(graph_handle->memory_size, res_handle->tex_mem_req.alignment);
 				graph_handle->memory_type_bits = res_handle->tex_mem_req.memoryTypeBits;
@@ -1129,6 +1142,7 @@ namespace vk {
 			if (isTexture)
 			{
 				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
+				graph_handle->current_offset = get_alignment(graph_handle->current_offset, res_handle->tex_mem_req.alignment);
 				vkBindImageMemory(
 					_device->m_device,
 					res_handle->resource.texture.m_handle,

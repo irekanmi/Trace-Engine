@@ -7,7 +7,7 @@
 #include <core/Enums.h>
 
 #include <core/Coretypes.h>
-#include <core/EntryPoint.h>
+
 #include <core/io/Logging.h>
 #include <core/io/TrcConsole.h>
 #include <core/events/Events.h>

@@ -27,6 +27,7 @@ namespace trace {
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 		output_tex->create_pass = pass_index;
+		output_tex->first_write_pass = pass_index;
 
 		return index;
 	}
@@ -41,6 +42,8 @@ namespace trace {
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 		output_tex->create_pass = pass_index;
+		output_tex->first_write_pass = pass_index;
+
 
 		return index;
 	}
@@ -89,6 +92,10 @@ namespace trace {
 		}
 
 		output_tex->written_passes.push_back(pass_index);
+		if (output_tex->first_write_pass == INVALID_ID)
+		{
+			output_tex->first_write_pass = pass_index;
+		}
 	}
 
 	void RenderGraphPass::AddTextureInput(const std::string& name, GTexture* texture)
@@ -112,6 +119,10 @@ namespace trace {
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
+		if (output_tex->first_write_pass == INVALID_ID)
+		{
+			output_tex->first_write_pass = pass_index;
+		}
 	}
 
 	void RenderGraphPass::SetSwapchainOutput(const std::string& name, GSwapchain* swapchain)
@@ -123,6 +134,10 @@ namespace trace {
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
 		m_attachmentOutputs.push_back(index);
+		if (output_tex->first_write_pass == INVALID_ID)
+		{
+			output_tex->first_write_pass = pass_index;
+		}
 	}
 
 	void RenderGraphPass::SetDepthStencilInput(const std::string& name)
@@ -159,6 +174,10 @@ namespace trace {
 		m_depthStencilOutput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->written_passes.push_back(pass_index);
+		if (output_tex->first_write_pass == INVALID_ID)
+		{
+			output_tex->first_write_pass = pass_index;
+		}
 	}
 
 

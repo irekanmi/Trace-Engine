@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef TRC_ENTRY
+#define TRC_ENTRY
+
 #include "Core.h"
 #include "Application.h"
 #include "StartUp.h"
@@ -43,4 +46,5 @@ int main(int argc, char** argv)
 
 #error Trace currently supports only Windows
 
+#endif
 #endif

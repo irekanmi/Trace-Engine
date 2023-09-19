@@ -25,14 +25,13 @@ namespace trace {
 		RenderComposer(){}
 		~RenderComposer(){}
 
-		bool Init(Renderer* renderer);
-		void Shutdowm();
+		virtual bool Init(Renderer* renderer);
+		virtual void Shutdowm();
 
-		bool PreFrame(RenderGraph& frame_graph,RGBlackBoard& black_board, FrameSettings frame_settings);
-		bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board);
+		virtual bool PreFrame(RenderGraph& frame_graph,RGBlackBoard& black_board, FrameSettings frame_settings);
+		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board);
 
 	private:
-		Renderer* m_renderer;
 		GBufferPass gbuffer_pass;
 		LightingPass lighting_pass;
 		SSAO ssao_pass;
@@ -41,7 +40,7 @@ namespace trace {
 		BloomPass bloom_pass;
 
 	protected:
-
+		Renderer* m_renderer;
 
 	};
 

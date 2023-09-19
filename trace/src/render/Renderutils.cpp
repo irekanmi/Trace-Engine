@@ -171,6 +171,7 @@ namespace trace {
 
 		RenderFunc::_createTexture = vk::__CreateTexture;
 		RenderFunc::_destroyTexture = vk::__DestroyTexture;
+		RenderFunc::_getTextureNativeHandle = vk::__GetTextureNativeHandle;
 
 		RenderFunc::_buildRenderGraph = vk::__BuildRenderGraph;
 		RenderFunc::_destroyRenderGraph = vk::__DestroyRenderGraph;
@@ -249,6 +250,7 @@ namespace trace {
 
 	__CreateTexture  RenderFunc::_createTexture = nullptr;
 	__DestroyTexture RenderFunc::_destroyTexture = nullptr;
+	__GetTextureNativeHandle RenderFunc::_getTextureNativeHandle = nullptr;
 
 	__BuildRenderGraph RenderFunc::_buildRenderGraph = nullptr;
 	__DestroyRenderGraph RenderFunc::_destroyRenderGraph = nullptr;
@@ -621,6 +623,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_destroyTexture);
 		result = _destroyTexture(texture);
+
+		return result;
+	}
+
+	bool RenderFunc::GetTextureNativeHandle(GTexture* texture, void*& out_handle)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_getTextureNativeHandle);
+		result = _getTextureNativeHandle(texture, out_handle);
 
 		return result;
 	}

@@ -8,5 +8,6 @@ namespace vk {
 
 	bool __CreateTexture(trace::GTexture* texture, trace::TextureDesc desc);
 	bool __DestroyTexture(trace::GTexture* texture);
+	bool __GetTextureNativeHandle(trace::GTexture* texture, void*& out_handle);
 
 }

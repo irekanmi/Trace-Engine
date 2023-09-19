@@ -177,6 +177,9 @@ namespace trace {
 	}
 	void BloomPass::ShutDown()
 	{
+		m_downSamplePipeline.release();
+		m_prefilterPipeline.release();
+		m_upSamplePipeline.release();
 		RenderFunc::DestroyRenderPass(&m_upSamplePass);
 		RenderFunc::DestroyRenderPass(&m_downSamplePass);
 		RenderFunc::DestroyRenderPass(&m_renderPass);
@@ -253,11 +256,12 @@ namespace trace {
 		std::string sample_name("Bloom_sample_0");
 		size_t sample_name_length = sample_name.length();
 
-		uint32_t width = fd.frame_width / 2;
-		uint32_t height = fd.frame_height / 2;
+		int width = fd.frame_width / 2;
+		int height = fd.frame_height / 2;
 
 		width /= 2;
 		height /= 2;
+		uint32_t sample_count = 1;
 
 		TextureDesc color = {};
 		color.m_addressModeU = color.m_addressModeV = color.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
@@ -272,6 +276,7 @@ namespace trace {
 
 		for (uint32_t i = 1; i < bd.samples_count; i++)
 		{
+			sample_count++;
 			pass_name.replace(name_length - 1, 1, std::to_string(i));
 			sample_name.replace(sample_name_length - 1, 1, std::to_string(i));
 			RenderGraphPass* pass = render_graph->AddPass(pass_name, GPU_QUEUE::GRAPHICS);
@@ -309,11 +314,14 @@ namespace trace {
 				});
 
 			if (width > 1) width /= 2;
+			else break;
 			if (height > 1) height /= 2;
+			else break;
 
 			color.m_width = width;
 			color.m_height = height;
 		}
+		bd.samples_count = sample_count;
 
 	}
 	void BloomPass::upsample(RenderGraph* render_graph, RGBlackBoard& black_board)

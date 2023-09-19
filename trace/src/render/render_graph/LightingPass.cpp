@@ -136,11 +136,20 @@ namespace trace {
 			ssao_avaliable = true;
 		}
 		
+		uint32_t width = render_graph->GetResource(frame_data.hdr_index).resource_data.texture.width;
+		uint32_t height = render_graph->GetResource(frame_data.hdr_index).resource_data.texture.height;
 
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
 			{
-				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
-				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+				Viewport view_port = m_renderer->_viewPort;
+				Rect2D rect = m_renderer->_rect;
+				view_port.width = width;
+				view_port.height = height;
+
+				rect.right = width;
+				rect.bottom = height;
+				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
+				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
 
 				RenderFunc::BindRenderGraphTexture(

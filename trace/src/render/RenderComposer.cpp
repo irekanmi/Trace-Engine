@@ -46,9 +46,9 @@ namespace trace {
 		fd.frame_settings = frame_settings;
 
 		fd.hdr_index = INVALID_ID;
-		fd.ldr_index = frame_graph.AddSwapchainResource("swapchain", &m_renderer->m_swapChain);
-		fd.frame_width = m_renderer->m_frameWidth;
-		fd.frame_height = m_renderer->m_frameHeight;
+		fd.ldr_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
+		fd.frame_width = m_renderer->GetFrameWidth();
+		fd.frame_height = m_renderer->GetFrameHeight();
 
 		frame_graph.SetRenderer(m_renderer);
 		gbuffer_pass.Setup(&frame_graph, black_board);

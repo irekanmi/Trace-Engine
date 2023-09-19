@@ -213,7 +213,8 @@ namespace trace {
 			ssao_main_desc
 		);
 
-		
+		uint32_t width = render_graph->GetResource(ssao_data.ssao_main).resource_data.texture.width;
+		uint32_t height = render_graph->GetResource(ssao_data.ssao_main).resource_data.texture.height;
 
 		main_pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 
@@ -268,8 +269,16 @@ namespace trace {
 				render_graph->GetResource_ptr(gbuffer_data.normal_index),
 				1
 			);
-			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
-			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+
+			Viewport view_port = m_renderer->_viewPort;
+			Rect2D rect = m_renderer->_rect;
+			view_port.width = width;
+			view_port.height = height;
+
+			rect.right = width;
+			rect.bottom = height;
+			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
+			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 			RenderFunc::BindPipeline_(m_pipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 
@@ -299,8 +308,15 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				render_graph->GetResource_ptr(ssao_data.ssao_main)
 			);
-			RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
-			RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+			Viewport view_port = m_renderer->_viewPort;
+			Rect2D rect = m_renderer->_rect;
+			view_port.width = width;
+			view_port.height = height;
+
+			rect.right = width;
+			rect.bottom = height;
+			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
+			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 			RenderFunc::BindPipeline_(m_blurPipe.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_blurPipe.get());
 

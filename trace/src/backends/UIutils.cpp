@@ -21,6 +21,8 @@ bool __ImGui_UINewFrame();
 bool __ImGui_UIEndFrame();
 bool __ImGui_UIRenderFrame(trace::Renderer* renderer);
 bool __ImGui_ShutdownUIRenderBackend();
+bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle);
+bool __ImGui_GetDrawRenderGraphTextureHandle(trace::RenderGraphResource* texture, void*& out_handle);
 // ----------------------------------------------------
 
 namespace trace {
@@ -30,6 +32,8 @@ namespace trace {
 	__UINewFrame UIFunc::_uiNewFrame = nullptr;
 	__UIEndFrame UIFunc::_uiEndFrame = nullptr;
 	__UIRenderFrame UIFunc::_uiRenderFrame = nullptr;
+	__GetDrawTextureHandle UIFunc::_getDrawTextureHandle = nullptr;
+	__GetDrawRenderGraphTextureHandle UIFunc::_getDrawRenderGraphTextureHandle = nullptr;
 
 	bool UIFuncLoader::LoadImGuiFunc()
 	{
@@ -38,6 +42,8 @@ namespace trace {
 		UIFunc::_uiNewFrame = __ImGui_UINewFrame;
 		UIFunc::_uiEndFrame = __ImGui_UIEndFrame;
 		UIFunc::_uiRenderFrame = __ImGui_UIRenderFrame;
+		UIFunc::_getDrawTextureHandle = __ImGui_GetDrawTextureHandle;
+		UIFunc::_getDrawRenderGraphTextureHandle = __ImGui_GetDrawRenderGraphTextureHandle;
 		return true;
 	}
 
@@ -72,6 +78,18 @@ namespace trace {
 		return _shutdownUIRenderBackend();
 	}
 
+	bool UIFunc::GetDrawTextureHandle(GTexture* texture, void*& out_handle)
+	{
+		UI_FUNC_IS_VALID(_getDrawTextureHandle);
+		return _getDrawTextureHandle(texture, out_handle);
+	}
+
+	bool UIFunc::GetDrawRenderGraphTextureHandle(RenderGraphResource* texture, void*& out_handle)
+	{
+		UI_FUNC_IS_VALID(_getDrawTextureHandle);
+		return _getDrawRenderGraphTextureHandle(texture, out_handle);
+	}
+
 }
 
 
@@ -88,10 +106,17 @@ namespace trace {
 #include "core/platform/Vulkan/VKtypes.h"
 #include "core/platform/Vulkan/VkUtils.h"
 #include "core/events/EventsSystem.h"
+#include "render/GRenderPass.h"
+#include "render/render_graph/RenderGraph.h"
+#include "render/GTexture.h"
+
+// NOTE: To hold set to be destoryed after textures are rendered
+static std::vector<VkDescriptorSet> frame_rendered_textures[VK_MAX_NUM_FRAMES];
+static VkDescriptorPool g_pool;
 
 static void check_result_vk_fn(VkResult result)
 {
-	VK_ASSERT(result, "IMGUI_VULKAN {}", __FUNCTION__);
+	VK_ASSERT(result);
 }
 
 static void init_win32(trace::Application* app)
@@ -105,7 +130,35 @@ static void init_vulkan(trace::Renderer* renderer)
 {
 	trace::VKDeviceHandle* vk = reinterpret_cast<trace::VKDeviceHandle*>(renderer->GetDevice()->GetRenderHandle()->m_internalData);
 	trace::VKHandle* vk_handle = reinterpret_cast<trace::VKHandle*>(renderer->GetContext()->GetRenderHandle()->m_internalData);
-	trace::VKRenderPass* vk_pass = reinterpret_cast<trace::VKRenderPass*>(renderer->GetRenderPass("FORWARD_PASS")->GetRenderHandle()->m_internalData);
+	trace::VKRenderPass* vk_pass = reinterpret_cast<trace::VKRenderPass*>(renderer->GetRenderPass("UI_PASS")->GetRenderHandle()->m_internalData);
+
+	VkDescriptorPoolSize pool_sizes[3] = {};
+	pool_sizes[0].descriptorCount = KB;
+	pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+
+	pool_sizes[1].descriptorCount = KB;
+	pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+	pool_sizes[2].descriptorCount = KB;
+	pool_sizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+	VkDescriptorPoolCreateInfo frame_pool = {};
+	frame_pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	frame_pool.maxSets = KB * 2;
+	frame_pool.pNext = nullptr;
+	frame_pool.poolSizeCount = 2;
+	frame_pool.pPoolSizes = pool_sizes;
+	frame_pool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+
+
+	VkResult pool_result = vkCreateDescriptorPool(
+		vk->m_device,
+		&frame_pool,
+		vk_handle->m_alloc_callback,
+		&g_pool
+	);
+
+	VK_ASSERT(pool_result);
 
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = vk_handle->m_instance;
@@ -114,7 +167,7 @@ static void init_vulkan(trace::Renderer* renderer)
 	init_info.QueueFamily = vk->m_queues.graphics_queue;
 	init_info.Queue = vk->m_graphicsQueue;
 	init_info.PipelineCache = nullptr;
-	init_info.DescriptorPool = vk->m_frameDescriptorPool[0];
+	init_info.DescriptorPool = g_pool;
 	init_info.Subpass = 0;
 	init_info.MinImageCount = vk->frames_in_flight;
 	init_info.ImageCount = vk->frames_in_flight;
@@ -124,11 +177,17 @@ static void init_vulkan(trace::Renderer* renderer)
 	ImGui_ImplVulkan_Init(&init_info, vk_pass->m_handle);
 
 	
+
+
+	
 	trace::VKCommmandBuffer cmd_buf = {};
 	vk::_BeginCommandBufferSingleUse(vk, vk->m_graphicsCommandPool, &cmd_buf);
 	ImGui_ImplVulkan_CreateFontsTexture(cmd_buf.m_handle);
 	vk::_EndCommandBufferSingleUse(vk, vk->m_graphicsCommandPool, vk->m_graphicsQueue, &cmd_buf);
 	ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.UserData = vk;
 }
 
 
@@ -264,83 +323,10 @@ int translateButtonTrace_ImGui(trace::Buttons button)
 	return 0;
 }
 
-static void OnEvent(trace::Event* p_event)
-{
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-	switch (p_event->m_type)
-	{
-	case trace::EventType::TRC_KEY_PRESSED:
-	{
-		trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
-		io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(press->m_keycode), true);
-
-		break;
-	}
-	case trace::EventType::TRC_WND_CLOSE:
-	{
-
-		break;
-	}
-	case trace::EventType::TRC_KEY_RELEASED:
-	{
-		trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
-		io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(release->m_keycode), false);
-		break;
-	}
-
-	case trace::EventType::TRC_WND_RESIZE:
-	{
-		trace::WindowResize* wnd = reinterpret_cast<trace::WindowResize*>(p_event);
-		io.DisplaySize = ImVec2(wnd->m_width, wnd->m_height);
-		io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-
-		break;
-	}
-	case trace::EventType::TRC_BUTTON_PRESSED:
-	{
-		trace::MousePressed* press = reinterpret_cast<trace::MousePressed*>(p_event);
-		io.AddMouseButtonEvent(translateButtonTrace_ImGui(press->m_button), true);
-		break;
-	}
-	case trace::EventType::TRC_BUTTON_RELEASED:
-	{
-		trace::MouseReleased* release = reinterpret_cast<trace::MouseReleased*>(p_event);
-		io.AddMouseButtonEvent(translateButtonTrace_ImGui(release->m_button), false);
-		break;
-	}
-	case trace::EventType::TRC_MOUSE_MOVE:
-	{
-		trace::MouseMove* move = reinterpret_cast<trace::MouseMove*>(p_event);
-		io.AddMousePosEvent(move->m_x, move->m_y);
-		break;
-	}
-	
-	case trace::EventType::TRC_KEY_TYPED:
-	{
-		trace::KeyTyped* typed = reinterpret_cast<trace::KeyTyped*>(p_event);
-		unsigned int c = typed->m_keycode;
-		if (c > 0 && c < 0x10000)
-			io.AddInputCharacter((unsigned short)c);
-
-		break;
-	}
-
-	}
-}
 
 bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Renderer* renderer)
 {
-
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_CLOSE, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_PRESSED, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_MOVE, OnEvent);
-	trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_TYPED, OnEvent);
-
+	
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -351,6 +337,7 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 	//io.ConfigViewportsNoAutoMerge = true;
 	//io.ConfigViewportsNoTaskBarIcon = true;
+
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -391,6 +378,14 @@ bool __ImGui_UINewFrame()
 	{
 	case trace::RenderAPI::Vulkan:
 	{
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
+		uint32_t current_frame = _device->m_imageIndex;
+		for (auto& i : frame_rendered_textures[current_frame])
+		{
+			ImGui_ImplVulkan_RemoveTexture(i);
+		}
+		frame_rendered_textures[current_frame].clear();
 		ImGui_ImplVulkan_NewFrame();
 		break;
 	}
@@ -421,6 +416,7 @@ bool __ImGui_UIEndFrame()
 	{
 	case trace::RenderAPI::Vulkan:
 	{
+
 		break;
 	}
 	}
@@ -469,6 +465,14 @@ bool __ImGui_ShutdownUIRenderBackend()
 	{
 	case trace::RenderAPI::Vulkan:
 	{
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
+		trace::VKHandle* _instance = _device->instance;
+		vkDestroyDescriptorPool(
+			_device->m_device,
+			g_pool,
+			_instance->m_alloc_callback
+		);
 		ImGui_ImplVulkan_Shutdown();
 		break;
 	}
@@ -489,6 +493,43 @@ bool __ImGui_ShutdownUIRenderBackend()
 	}
 
 	ImGui::DestroyContext();
+
+	return true;
+}
+
+bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle)
+{
+	switch (trace::AppSettings::graphics_api)
+	{
+	case trace::RenderAPI::Vulkan:
+	{
+		trace::VKImage* _handle = (trace::VKImage*)texture->GetRenderHandle()->m_internalData;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		VkDescriptorSet tex_set = ImGui_ImplVulkan_AddTexture(_handle->m_sampler, _handle->m_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		frame_rendered_textures[_device->m_imageIndex].push_back(tex_set);
+		out_handle = tex_set;
+
+		break;
+	}
+	}
+	return true;
+}
+
+bool __ImGui_GetDrawRenderGraphTextureHandle(trace::RenderGraphResource* texture, void*& out_handle)
+{
+	switch (trace::AppSettings::graphics_api)
+	{
+	case trace::RenderAPI::Vulkan:
+	{
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
+		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(texture->render_handle.m_internalData);
+		VkDescriptorSet tex_set = ImGui_ImplVulkan_AddTexture(res_handle->resource.texture.m_sampler, res_handle->resource.texture.m_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		frame_rendered_textures[_device->m_imageIndex].push_back(tex_set);
+		out_handle = tex_set;
+		break;
+	}
+	}
 
 	return true;
 }

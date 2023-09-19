@@ -97,15 +97,23 @@ namespace trace {
 		
 		auto pass = render_graph->AddPass("TONEMAP_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->AddColorAttachmentOuput(render_graph->GetResource(frame_data.ldr_index).resource_name);
+		pass->AddColorAttachmentOuput(frame_data.ldr_index);
 
-		pass->AddColorAttachmentInput(render_graph->GetResource(frame_data.hdr_index).resource_name);
-
+		pass->AddColorAttachmentInput(frame_data.hdr_index);
+		uint32_t width = render_graph->GetResource(frame_data.ldr_index).resource_data.texture.width;
+		uint32_t height = render_graph->GetResource(frame_data.ldr_index).resource_data.texture.height;
 
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
 			{
-				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
-				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+				Viewport view_port = m_renderer->_viewPort;
+				Rect2D rect = m_renderer->_rect;
+				view_port.width = width;
+				view_port.height = height;
+
+				rect.right = width;
+				rect.bottom = height;
+				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
+				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
 
 				RenderFunc::BindRenderGraphTexture(

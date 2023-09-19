@@ -230,6 +230,7 @@ namespace trace {
 		uint32_t frame_mem_size = 0;
 		VKImage nullImage;
 		VKBuffer nullBuffer;
+		VKHandle* instance;
 	};
 
 	

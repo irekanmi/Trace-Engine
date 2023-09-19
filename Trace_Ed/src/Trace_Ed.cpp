@@ -1,42 +1,31 @@
 
 #include <trace.h>
-#include "imgui.h"
+#include <core/EntryPoint.h> // TODO: Find the reason why we can't add it in the trace header
+#include "TraceEditor.h"
 
 using namespace trace;
 
 
-
-
 void Start()
 {
-
+	TraceEditor::get_instance()->Init();
 }
 
 void Update(float deltaTime)
 {
-
+	TraceEditor::get_instance()->Update(deltaTime);
 }
 
 
-static bool show_demo = true;
 void Render(float deltaTime)
 {
+	TraceEditor::get_instance()->Render(deltaTime);
 	
-	if(show_demo) ImGui::ShowDemoWindow(&show_demo);
-	if (ImGui::Begin("Sample Tab"))
-	{
-		ImGui::Text("Trace Engine");
-		if (ImGui::Button("Show Demo Window"))
-		{
-			show_demo = true;
-		}
-		ImGui::End();
-	}
 }
 
 void End()
 {
-
+	TraceEditor::get_instance()->Shutdown();
 }
 
 trace::trc_app_data trace::CreateApp()
@@ -52,6 +41,7 @@ trace::trc_app_data trace::CreateApp()
 	app_data.client_update = Update;
 	app_data.client_render = Render;
 	app_data.client_end = End;
+	app_data.render_composer = TraceEditor::get_instance()->GetRenderComposer(); // TODO
 
 
 	return app_data;

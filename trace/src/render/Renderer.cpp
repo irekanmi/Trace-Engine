@@ -12,6 +12,7 @@
 #include "Mesh.h"
 #include "SkyBox.h"
 #include "core/Coretypes.h"
+#include "RenderComposer.h"
 #include "backends/UIutils.h"
 
 //Temp============
@@ -127,7 +128,13 @@ namespace trace {
 
 		RenderFunc::CreateBuffer(&quadBuffer, quadInfo);
 		m_opaqueObjects.resize(1024);
-		m_opaqueObjectsSize = 0;		
+		m_opaqueObjectsSize = 0;	
+
+		m_composer = nullptr;
+		if (app_data.render_composer)
+		{
+			m_composer = (RenderComposer*)app_data.render_composer;
+		}
 
 		return result;
 	}
@@ -199,9 +206,17 @@ namespace trace {
 
 		light_data = { 0, 1, 0, 0 };
 		exposure = 0.9f;
-		m_composer = new RenderComposer();
-		m_composer->Init(this);
 		current_sky_box = nullptr;
+		if (m_composer)
+		{
+			m_composer->Init(this);
+		}
+		else
+		{
+			m_composer = new RenderComposer();
+			m_composer->Init(this);
+		}
+
 		UIFuncLoader::LoadImGuiFunc();
 		UIFunc::InitUIRenderBackend(Application::get_instance(), this);
 		//---------------------------------------------------------------------------------------------
@@ -660,6 +675,7 @@ namespace trace {
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
 		{
+			if (quadBatches[i].current_unit == 0) continue;
 			for (uint32_t j = 0; j < quadBatches[i].current_texture_unit; j++)
 			{
 				RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, quadBatches[i].textures[j], j);
@@ -681,6 +697,7 @@ namespace trace {
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (uint32_t i = 0; i < num_avalible_text_batch; i++)
 		{
+			if (textBatches[i].current_unit == 0) continue;
 			for (uint32_t j = 0; j < textBatches[i].current_texture_unit; j++)
 			{
 				RenderFunc::SetPipelineTextureData(textBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, textBatches[i].textures[j], j);

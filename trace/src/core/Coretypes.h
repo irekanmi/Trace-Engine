@@ -60,6 +60,7 @@ namespace trace {
 		ClientStartCallback client_start = nullptr;
 		ClientUpdateCallback client_update = nullptr;
 		ClientRenderCallback client_render = nullptr;
+		void* render_composer = nullptr;
 	};
 
 	class AppSettings

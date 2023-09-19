@@ -28,7 +28,7 @@ constexpr auto _ENGINE_NAME_ = "TRACE ENGINE";
 #define TRC_HAS_FLAG(lhs, rhs) (lhs & rhs) == rhs ? true : false
 
 //Temp ------
-inline uint32_t get_alignment(uint32_t value, uint32_t alignment)
+inline unsigned int get_alignment(unsigned int value, unsigned int alignment)
 {
 	return (value + (alignment - 1)) & ~(alignment - 1);
 }

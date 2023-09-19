@@ -290,4 +290,36 @@ namespace vk {
 		return result;
 	}
 
+	bool __GetTextureNativeHandle(trace::GTexture* texture, void*& out_handle)
+	{
+		bool result = true;
+
+		if (!texture)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)texture, __FUNCTION__);
+			return false;
+		}
+
+		if (out_handle)
+		{
+			TRC_ERROR("Please input pointer has a value for output handle -> {}, Function -> {}", (const void*)out_handle, __FUNCTION__);
+			return false;
+		}
+
+		if (!texture->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)texture->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKImage* _handle = (trace::VKImage*)texture->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+		// TODO: Check To determine maybe VkImage is to be returned
+		out_handle = _handle->m_view;
+
+		return result;
+	}
+
 }

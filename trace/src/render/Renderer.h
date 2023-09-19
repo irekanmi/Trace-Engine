@@ -6,22 +6,22 @@
 #include "Commands.h"
 #include "resource/Ref.h"
 #include "core/Coretypes.h"
+#include "GBuffer.h"
+#include "GDevice.h"
+#include "GSwapchain.h"
+#include "GContext.h"
 
 
 // Temp--------------------------------
-#include "GBuffer.h"
-#include "GDevice.h"
 #include "Camera.h"
-#include "GSwapchain.h"
-#include "GContext.h"
 #include "render_graph/RenderGraph.h"
-#include "RenderComposer.h"
 //----------------------------------------
 
 
 namespace trace {
 
 	class RenderGraph;
+	class RenderComposer;
 	class SkyBox;
 	class GRenderPass;
 	class Mesh;
@@ -57,9 +57,16 @@ namespace trace {
 		void End();
 		void ShutDown();
 		void OnEvent(Event* p_event);
+
+		// Getters
 		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
 		GDevice* GetDevice() { return &g_device; }
 		GContext* GetContext() { return &g_context; }
+		GSwapchain* GetSwapchain() { return &m_swapChain; }
+		uint32_t GetFrameWidth() { return m_frameWidth; }
+		uint32_t GetFrameHeight() { return m_frameHeight; }
+
+
 		void Render(float deltaTime);
 		void DrawQuad();
 		void DrawQuad(glm::mat4 transform, Ref<GTexture> texture);
@@ -145,7 +152,6 @@ namespace trace {
 
 
 		friend RenderGraph;
-		friend RenderComposer;
 
 	protected:
 
