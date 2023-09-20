@@ -22,6 +22,9 @@ namespace trace {
 	{
 		m_viewportSize = { 800.0f, 600.0f };
 
+		UIFuncLoader::LoadImGuiFunc();
+		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
+
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, BIND_EVENT_FN(TraceEditor::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
@@ -36,6 +39,7 @@ namespace trace {
 
 	void TraceEditor::Shutdown()
 	{
+		UIFunc::ShutdownUIRenderBackend();
 	}
 
 	void TraceEditor::Update(float deltaTime)

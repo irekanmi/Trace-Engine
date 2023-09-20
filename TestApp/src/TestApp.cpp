@@ -1,5 +1,6 @@
 
 #include <trace.h>
+#include "core/EntryPoint.h"
 #include <stdio.h>
 #include <unordered_map>
 #include <string>
@@ -77,14 +78,14 @@ public:
 		TRC_INFO("Sample Layer Attached");
 
 		//_falcon = ResourceSystem::get_instance()->LoadMesh("falcon.obj");
-		//_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
+		_sponzaScene = ResourceSystem::get_instance()->LoadMesh("sponza.obj");
 		_sphereModel = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 		monos = ResourceSystem::get_instance()->LoadFont("ALGER.TTF");
 		_boxStack = ResourceSystem::get_instance()->LoadMesh("box_stack.obj");
 
 		TextureDesc sky = {};
 		sky.m_addressModeU = sky.m_addressModeV = sky.m_addressModeW = AddressMode::REPEAT;
-		sky.m_format = Format::R8G8B8A8_SRBG;
+		sky.m_format = Format::R8G8B8A8_UNORM;
 		sky.m_image_type = ImageType::CUBE_MAP;
 		sky.m_usage = UsageFlag::DEFAULT;
 		sky.m_minFilterMode = sky.m_magFilterMode = FilterMode::LINEAR;
@@ -104,7 +105,7 @@ public:
 
 		sky_box = SkyBox(sky_texture);
 
-		//M_sponzaScene.SetScale(glm::vec3(0.15f));
+		M_sponzaScene.SetScale(glm::vec3(0.15f));
 		//M_falcon.SetScale(glm::vec3(3.0f));
 		M_falcon.Translate(glm::vec3(3.0f, 3.0f, 0.0f));
 		M_squareModel.SetScale(glm::vec3(11.0f));
@@ -190,11 +191,11 @@ public:
 		//renderer->DrawMesh(cmd_list, _falcon, M_falcon.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _boxStack, M_boxStack.GetLocalMatrix());
 		renderer->DrawMesh(cmd_list, _sphereModel, M_Test.GetLocalMatrix());
-		//renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
-		renderer->DrawQuad(M_sponzaScene.GetLocalMatrix(), ResourceSystem::get_instance()->GetDefaultTexture("albedo_map"));
+		renderer->DrawMesh(cmd_list, _sponzaScene, M_sponzaScene.GetLocalMatrix());
+		//renderer->DrawQuad(M_sponzaScene.GetLocalMatrix(), ResourceSystem::get_instance()->GetDefaultTexture("albedo_map"));
 		//renderer->DrawQuad(M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix(), ResourceSystem::get_instance()->GetTexture("monos.ttf"));
-		renderer->DrawString(monos, "TRACE\nEngine", M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix());
-		renderer->DrawString(monos, s_stream, M_sponzaScene.GetLocalMatrix());
+		//renderer->DrawString(monos, "TRACE\nEngine", M_boxStack.GetLocalMatrix() * M_squareModel.GetLocalMatrix());
+		//renderer->DrawString(monos, s_stream, M_sponzaScene.GetLocalMatrix());
 		renderer->DrawSky(cmd_list, &sky_box);
 		renderer->SubmitCommandList(cmd_list);
 

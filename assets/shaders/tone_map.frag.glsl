@@ -15,9 +15,9 @@ void main()
     float gamma = 2.2f;
     vec3 result;
     vec3 hdr_result = texture(u_HdrTarget, in_texCoord).rgb;
-    //hdr_result = pow(hdr_result, vec3(1.0f / gamma)); // gamma correction
 
     result = vec3(1.0f) - exp(-hdr_result * exposure);
+    hdr_result = pow(hdr_result, vec3(1.0f / gamma)); // gamma correction
 
     FragColor = vec4(result, 1.0f);
 }

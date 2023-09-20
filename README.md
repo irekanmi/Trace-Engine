@@ -16,7 +16,7 @@ The goal is simple, it is a project that is used as learning tool, it is a softw
 * Deferred Shading
 * Physically based Bloom
 * SSAO (Screen Space Ambient Occlusion)
-* MSDF Text Renderer
+* MSDF Text Renderering
 
 ## Contact Information
 For any inquiries or questions, please contact at <cokerayanfe@gmail.com>. Would love to hear your opinions and any help/contribution would be really appreciated

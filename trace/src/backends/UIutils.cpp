@@ -7,9 +7,6 @@
 #define UI_FUNC_IS_VALID(function)							 \
 	if(!function)                                                \
 	{                                                            \
-		TRC_ERROR(                                               \
-	"{} is not available, please check for any errors"           \
-		, #function);                                            \
 		return false;                                            \
 	}
 
@@ -468,6 +465,7 @@ bool __ImGui_ShutdownUIRenderBackend()
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
 		trace::VKHandle* _instance = _device->instance;
+		vkDeviceWaitIdle(_device->m_device);
 		vkDestroyDescriptorPool(
 			_device->m_device,
 			g_pool,

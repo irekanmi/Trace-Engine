@@ -209,7 +209,7 @@ namespace trace {
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
 		texture_desc.m_channels = 4;
-		texture_desc.m_format = Format::R8G8B8A8_SRBG;
+		texture_desc.m_format = Format::R8G8B8A8_UNORM;
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;

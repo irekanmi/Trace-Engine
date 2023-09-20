@@ -23,7 +23,7 @@ namespace trace {
 		{
 			AttachmentInfo color_attach;
 			color_attach.attachmant_index = 0;
-			color_attach.attachment_format = Format::R8G8B8A8_SRBG;
+			color_attach.attachment_format = Format::R8G8B8A8_UNORM;
 			color_attach.initial_format = TextureFormat::SHADER_READ;
 			color_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			color_attach.is_depth = false;

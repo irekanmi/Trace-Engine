@@ -180,6 +180,7 @@ namespace trace {
 		}
 		boundTextTextures.clear();
 
+
 		UIFunc::UIEndFrame();
 		RenderFunc::EndFrame(&g_device);
 		current_sky_box = nullptr;
@@ -217,8 +218,7 @@ namespace trace {
 			m_composer->Init(this);
 		}
 
-		UIFuncLoader::LoadImGuiFunc();
-		UIFunc::InitUIRenderBackend(Application::get_instance(), this);
+		
 		//---------------------------------------------------------------------------------------------
 
 		// Quad batch .........................................	
@@ -238,7 +238,6 @@ namespace trace {
 		// Temp-----------------------------
 		RenderFunc::DestroyBuffer(&quadBuffer);
 		m_composer->Shutdowm();
-		UIFunc::ShutdownUIRenderBackend();
 		delete m_composer;
 		m_composer = nullptr;
 		delete _camera;

@@ -24,12 +24,14 @@ namespace trace {
 		toneMap_pass.Init(m_renderer);
 		forward_pass.Init(m_renderer);
 		bloom_pass.Init(m_renderer);
+		ui_pass.Init(m_renderer);
 
 		return result;
 	}
 
 	void RenderComposer::Shutdowm()
 	{
+		ui_pass.ShutDown();
 		bloom_pass.ShutDown();
 		forward_pass.ShutDown();
 		toneMap_pass.ShutDown();

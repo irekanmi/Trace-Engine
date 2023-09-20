@@ -53,7 +53,7 @@ namespace trace {
 		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
 		gPos.m_attachmentType = AttachmentType::COLOR;
 		gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
-		gPos.m_format = Format::R8G8B8A8_SRBG;
+		gPos.m_format = Format::R8G8B8A8_UNORM;
 		gPos.m_width = fd.frame_width;
 		gPos.m_height = fd.frame_height;
 		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
