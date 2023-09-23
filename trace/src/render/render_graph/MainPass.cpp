@@ -6,6 +6,7 @@
 #include "render/RenderPassInfo.h"
 #include "render/Renderer.h"
 #include "render/GRenderPass.h"
+#include "RenderGraph.h"
 
 namespace trace {
 

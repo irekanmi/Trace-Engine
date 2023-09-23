@@ -5,6 +5,7 @@
 #include "render/Renderer.h"
 #include "resource/ResourceSystem.h"
 #include "render/GPipeline.h"
+#include "RenderGraph.h"
 
 namespace trace {
 

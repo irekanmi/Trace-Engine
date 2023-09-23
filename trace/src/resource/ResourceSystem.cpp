@@ -226,4 +226,8 @@ namespace trace {
 	{
 		return { m_fontManager->GetFont(name), BIND_RESOURCE_UNLOAD_FN(FontManager::UnloadFont, m_fontManager) };
 	}
+	std::string ResourceSystem::GetFontResourcePath()
+	{
+		return m_fontManager->GetFontResourcePath();
+	}
 }

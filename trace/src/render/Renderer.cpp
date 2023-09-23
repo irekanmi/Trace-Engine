@@ -1,4 +1,4 @@
-#include <pch.h>
+#include "pch.h"
 
 #include "Renderer.h"
 #include "Renderutils.h"
@@ -13,6 +13,7 @@
 #include "SkyBox.h"
 #include "core/Coretypes.h"
 #include "RenderComposer.h"
+#include "render_graph/RenderGraph.h"
 #include "backends/UIutils.h"
 
 //Temp============
@@ -78,19 +79,8 @@ namespace trace {
 		RenderFunc::CreateContext(&g_context);
 		result = RenderFunc::CreateDevice(&g_device);
 		RenderFunc::CreateDevice(&g_device);
+		RenderFunc::CreateSwapchain(&m_swapChain, &g_device, &g_context);
 		{
-			
-			RenderFunc::CreateSwapchain(&m_swapChain, &g_device, &g_context);
-
-			_camera = new Camera(CameraType::PERSPECTIVE);
-			_camera->SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
-			_camera->SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
-			_camera->SetUpDir(glm::vec3(0.0f, 1.0f, 0.0f));
-			_camera->SetAspectRatio(((float)800.0f) / ((float)600.0f));
-			_camera->SetFov(60.0f);
-			_camera->SetNear(0.1f);
-			_camera->SetFar(1500.0f);
-
 			_viewPort.width = 800.0f;
 			_viewPort.height = 600.0f;
 			Rect2D rect;
@@ -110,25 +100,7 @@ namespace trace {
 		}
 		m_client_render = app_data.client_render;
 
-		Vertex2D quadData[6] = {
-			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
-			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
-			{glm::vec2(-1.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
-			{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 1.0f)},
-			{glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 1.0f)},
-			{glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
-		};
-
-		BufferInfo quadInfo = {};
-		quadInfo.m_data = quadData;
-		quadInfo.m_flag = BindFlag::VERTEX_BIT;
-		quadInfo.m_size = sizeof(Vertex2D) * 6;
-		quadInfo.m_stide = sizeof(Vertex2D);
-		quadInfo.m_usageFlag = UsageFlag::DEFAULT;
-
-		RenderFunc::CreateBuffer(&quadBuffer, quadInfo);
-		m_opaqueObjects.resize(1024);
-		m_opaqueObjectsSize = 0;	
+		
 
 		m_composer = nullptr;
 		if (app_data.render_composer)
@@ -150,14 +122,6 @@ namespace trace {
 
 		UIFunc::UINewFrame();
 		return result;
-	}
-
-	void Renderer::BeginScene()
-	{
-	}
-
-	void Renderer::EndScene()
-	{
 	}
 
 	void Renderer::EndFrame()
@@ -193,19 +157,18 @@ namespace trace {
 		// Temp------------------------------------------------------------------------------------------------
 
 
-		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
-		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(Renderer::OnEvent));
-		render_mode = {};
 
-		lights[0].position = { 0.0f, 2.5f, 2.0f, 0.0f };
-		lights[0].direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
-		lights[0].color = { 0.37f, 0.65f, 0.66f, 1.0f };
-		lights[0].params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f))};
-		lights[0].params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };			
+		m_opaqueObjects.resize(1024);
+		m_opaqueObjectsSize = 0;
 
-		light_data = { 0, 1, 0, 0 };
+		m_meshedLights.resize(64);
+		m_meshLightSize = 0;
+		lights.resize(MAX_LIGHT_COUNT);
+		light_data = glm::ivec4(0);
+					
+
 		exposure = 0.9f;
 		current_sky_box = nullptr;
 		if (m_composer)
@@ -235,15 +198,10 @@ namespace trace {
 	void Renderer::End()
 	{
 
-		// Temp-----------------------------
-		RenderFunc::DestroyBuffer(&quadBuffer);
 		m_composer->Shutdowm();
 		delete m_composer;
 		m_composer = nullptr;
-		delete _camera;
 		_camera = nullptr;
-
-		//----------------------------------
 		RenderFunc::DestroySwapchain(&m_swapChain);
 
 	}
@@ -290,89 +248,6 @@ namespace trace {
 
 			break;
 		}
-		case trace::EventType::TRC_WND_CLOSE:
-		{
-
-			break;
-		}
-		case trace::EventType::TRC_KEY_RELEASED:
-		{
-			KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
-
-			if (release->m_keycode == Keys::KEY_0)
-			{
-				render_mode.x = 0;
-			}
-			else if (release->m_keycode == Keys::KEY_1)
-			{
-				render_mode.x = 1;
-			}
-			else if (release->m_keycode == Keys::KEY_2)
-			{
-				render_mode.x = 2;
-			}
-			else if (release->m_keycode == Keys::KEY_3)
-			{
-				render_mode.x = 3;
-			}
-			else if (release->m_keycode == Keys::KEY_4)
-			{
-				render_mode.x = 4;
-			}
-			else if (release->m_keycode == Keys::KEY_5)
-			{
-				render_mode.x = 5;
-			}
-			else if (release->m_keycode == Keys::KEY_6)
-			{
-				render_mode.x = 6;
-			}
-			else if (release->m_keycode == Keys::KEY_7)
-			{
-				render_mode.x = 7;
-			}
-			else if (release->m_keycode == Keys::KEY_8)
-			{
-				render_mode.w = 8;
-			}
-			else if (release->m_keycode == Keys::KEY_9)
-			{
-				render_mode.w = 9;
-			}
-			else if (release->m_keycode == Keys::KEY_C)
-			{
-				TRC_DEBUG(
-					"Position: x:{}, y:{}, z:{}\n \tLook Direction: x:{}, y:{}, z:{}", 
-					_camera->GetPosition().x, 
-					_camera->GetPosition().y, 
-					_camera->GetPosition().z, 
-					_camera->GetLookDir().x,
-					_camera->GetLookDir().y,
-					_camera->GetLookDir().z
-				);
-
-			}
-			else if (release->m_keycode == Keys::KEY_R)
-			{
-				lights[2].color.r += 0.01f;
-				if (lights[2].color.r > 1.0f) lights[2].color.r = 0.0f;
-
-			}
-			else if (release->m_keycode == Keys::KEY_G)
-			{
-				lights[2].color.g += 0.01f;
-				if (lights[2].color.g > 1.0f) lights[2].color.g = 0.0f;
-			}
-			else if (release->m_keycode == Keys::KEY_B)
-			{
-				lights[2].color.b += 0.01f;
-				if (lights[2].color.b > 1.0f) lights[2].color.b = 0.0f;
-			}
-
-
-			break;
-		}
-
 		case EventType::TRC_WND_RESIZE:
 		{
 			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
@@ -383,18 +258,11 @@ namespace trace {
 			m_frameWidth = wnd->m_width;
 			m_frameHeight = wnd->m_height;
 
-
 			_viewPort.width = width;
 			_viewPort.height = height;
 
 			_rect.right = wnd->m_width;
 			_rect.bottom = wnd->m_height;
-
-			if (wnd->m_width == 0 || wnd->m_height == 0)
-				break;
-
-			_camera->SetAspectRatio(((float)wnd->m_width / (float)wnd->m_height));
-
 			break;
 		}
 
@@ -408,32 +276,7 @@ namespace trace {
 		if (BeginFrame())
 		{
 
-			//Temp=====================
-			_camera->Update(deltaTime);
-			//=========================
-
 			m_client_render(deltaTime);
-
-			if (render_mode.w == 8)
-			{
-				glm::vec3 light_pos = glm::vec3(lights[0].position);
-				glm::vec3 light_dir = glm::vec3(lights[0].direction);
-				glm::vec3 cam_pos = _camera->GetPosition();
-				glm::vec3 cam_dir = _camera->GetLookDir();
-				if (light_pos != cam_pos)
-				{
-
-					lights[0].position.x = lerp(light_pos.x, cam_pos.x, deltaTime);
-					lights[0].position.y = lerp(light_pos.y, cam_pos.y, deltaTime);
-					lights[0].position.z = lerp(light_pos.z, cam_pos.z, deltaTime);
-				}
-				if (light_dir != cam_dir)
-				{
-					lights[0].direction.x = lerp(light_dir.x, cam_dir.x, deltaTime);
-					lights[0].direction.y = lerp(light_dir.y, cam_dir.y, deltaTime);
-					lights[0].direction.z = lerp(light_dir.z, cam_dir.z, deltaTime);
-				}
-			}
 
 			for (uint32_t i = 0; i < m_listCount; i++)
 			{
@@ -445,18 +288,10 @@ namespace trace {
 
 
 			RGBlackBoard frame_blck_bd;
-			RenderGraph frame_graph;
-			
-			m_composer->PreFrame(
-				frame_graph,
-				frame_blck_bd,
-				frame_settings
-			);
+			RenderGraph frame_graph;			
+			m_composer->PreFrame(frame_graph, frame_blck_bd, frame_settings);
 			frame_graph.Execute();
-			m_composer->PostFrame(
-				frame_graph,
-				frame_blck_bd
-			);
+			m_composer->PostFrame(frame_graph, frame_blck_bd);
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
@@ -464,13 +299,14 @@ namespace trace {
 		}
 		m_listCount = 0;
 		m_opaqueObjectsSize = 0;
+		m_meshLightSize = 0;
+		light_data = glm::ivec4(0);
 
 	}
 
 	void Renderer::DrawQuad()
 	{
-		RenderFunc::BindVertexBuffer(&g_device, &quadBuffer);
-		RenderFunc::Draw(&g_device, 0, 6);
+		TRC_ASSERT(false, "Implement funtion {}", __FUNCTION__);
 	}
 
 	void Renderer::DrawQuad(glm::mat4 transform, Ref<GTexture> texture)
@@ -605,15 +441,15 @@ namespace trace {
 
 	void Renderer::RenderLights()
 	{
-		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 		Ref<GPipeline> sp = ResourceSystem::get_instance()->GetPipeline("light_pipeline");
-		Model* _model = sphere->GetModels()[0].get();
 		glm::mat4 view_proj= _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
-		for (int i = 0; i < light_data.y; i++)
+		for (int i = 0; i < m_meshLightSize; i++)
 		{
-			int index = i + light_data.x;
-			Light light = lights[index];
+			auto& data = m_meshedLights[i];
+			int index = data.first;
+			Light& light = lights[index];
+			Model* _model = data.second;
 			glm::mat4 model = glm::identity<glm::mat4>();
 			model = glm::translate(model, glm::vec3(light.position));
 			glm::vec4 light_color = glm::vec4(glm::vec3(light.color), light.params2.y);
@@ -713,11 +549,11 @@ namespace trace {
 	}
 
 
-	void Renderer::draw_mesh(CommandParams params)
+	void Renderer::draw_mesh(CommandParams& params)
 	{
 		Mesh* mesh = (Mesh*)params.ptrs[0];
 
-		glm::mat4* M_model = (glm::mat4*)(&params.data);
+		glm::mat4* M_model = (glm::mat4*)(params.data);
 		glm::mat4 proj = _camera->GetProjectionMatix();
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
@@ -729,7 +565,7 @@ namespace trace {
 
 	}
 
-	void Renderer::draw_skybox(CommandParams params)
+	void Renderer::draw_skybox(CommandParams& params)
 	{
 		if (current_sky_box)
 		{
@@ -798,13 +634,28 @@ namespace trace {
 		// TODO: implement batch destruction
 	}
 
+	void Renderer::BeginScene(CommandList& cmd_list, Camera* camera)
+	{
+		Command cmd;
+		cmd.params.ptrs[0] = camera;
+		cmd.func = [&](CommandParams& params) { _camera = (Camera*)params.ptrs[0]; };
+		cmd_list._commands.emplace_back(cmd);
+	}
+
+	void Renderer::EndScene(CommandList& cmd_list)
+	{
+		Command cmd;
+		cmd.func = [&](CommandParams& params) { return; }; //TODO: Add Logic to End Scene
+		cmd_list._commands.emplace_back(cmd);
+	}
+
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)
 	{
 		Command cmd;
 		cmd.params.ptrs[0] = mesh.get();
 		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_mesh);
 		memcpy(cmd.params.data, &model, sizeof(glm::mat4));
-		cmd_list._commands.push_back(cmd);
+		cmd_list._commands.emplace_back(cmd);
 	}
 
 	void Renderer::DrawSky(CommandList& cmd_list, SkyBox* sky)
@@ -813,6 +664,52 @@ namespace trace {
 		Command cmd;
 		cmd.params.ptrs[0] = sky;
 		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_skybox);
+		cmd_list._commands.emplace_back(cmd);
+	}
+
+	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> mesh, Light& light, LightType light_type)
+	{
+		Command cmd;
+		cmd.params.ptrs[0] = mesh.get();
+		cmd.params.val[0] = light_type;
+		memcpy(cmd.params.data, &light, sizeof(Light));
+
+		cmd.func = [&](CommandParams& params) {
+			Mesh* mesh = (Mesh*)params.ptrs[0];
+			uint32_t light_type_ = params.val[0];
+			Light* light = (Light*)params.data;
+			uint32_t light_index = 0;
+			if (light_type_ == LightType::DIRECTIONAL)
+			{
+				auto it = lights.begin();
+				uint32_t dir_light_count = light_data.x;
+				light_index = dir_light_count;
+				lights.insert(it + dir_light_count, *light);
+				light_data.x++;
+			}
+			else if (light_type_ == LightType::POINT)
+			{
+				auto it = lights.begin();
+				uint32_t point_light_count = light_data.x + light_data.y;
+				light_index = point_light_count;
+				lights.insert(it + point_light_count, *light);
+				light_data.y++;
+			}
+			else if (light_type_ == LightType::SPOT)
+			{
+				auto it = lights.begin();
+				uint32_t spot_light_count = light_data.x + light_data.y + light_data.z;
+				light_index = spot_light_count;
+				lights.insert(it + spot_light_count, *light);
+				light_data.y++;
+			}
+
+			for (Ref<Model> _model : mesh->GetModels())
+			{
+				m_meshedLights[m_meshLightSize++] = std::make_pair(light_index, _model.get());
+			}
+		};
+
 		cmd_list._commands.push_back(cmd);
 	}
 

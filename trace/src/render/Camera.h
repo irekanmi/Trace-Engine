@@ -46,6 +46,7 @@ namespace trace {
 		void SetNear(float z_near);
 		void SetFar(float z_far);
 		void SetAspectRatio(float aspect_ratio);
+		void SetCameraType(CameraType type) { m_type = type; }
 
 	private:
 		glm::mat4 m_projection;

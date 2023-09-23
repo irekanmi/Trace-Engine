@@ -7,6 +7,7 @@
 #include "FrameData.h"
 #include "resource/ResourceSystem.h"
 #include "render/GShader.h"
+#include "RenderGraph.h"
 
 namespace trace {
 	void BloomPass::Init(Renderer* renderer)
@@ -238,7 +239,6 @@ namespace trace {
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-			RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 			RenderFunc::BindPipeline_(m_prefilterPipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_prefilterPipeline.get());
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
@@ -277,6 +277,7 @@ namespace trace {
 		for (uint32_t i = 1; i < bd.samples_count; i++)
 		{
 			sample_count++;
+			//TODO: Find A better way to generate name for each pass
 			pass_name.replace(name_length - 1, 1, std::to_string(i));
 			sample_name.replace(sample_name_length - 1, 1, std::to_string(i));
 			RenderGraphPass* pass = render_graph->AddPass(pass_name, GPU_QUEUE::GRAPHICS);
@@ -306,7 +307,6 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-				RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 				RenderFunc::BindPipeline_(m_downSamplePipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_downSamplePipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
@@ -373,7 +373,6 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-				RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 				RenderFunc::BindPipeline_(m_upSamplePipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_upSamplePipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
@@ -420,7 +419,6 @@ namespace trace {
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-			RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 			RenderFunc::BindPipeline_(m_upSamplePipeline.get());
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_upSamplePipeline.get());
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);

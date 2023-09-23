@@ -68,6 +68,7 @@ namespace trace {
 		// Fonts
 		Ref<Font> LoadFont(const std::string& name);
 		Ref<Font> GetFont(const std::string& name);
+		std::string GetFontResourcePath();
 
 		static ResourceSystem* get_instance();
 

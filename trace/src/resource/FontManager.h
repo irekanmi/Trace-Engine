@@ -20,6 +20,7 @@ namespace trace {
 		bool LoadDefaults();
 		bool LoadFont(const std::string& name);
 		Font* GetFont(const std::string& name);
+		std::string GetFontResourcePath() { return font_resource_path.string(); }
 		void UnloadFont(Font* font);
 
 		static FontManager* get_instance();

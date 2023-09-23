@@ -1,6 +1,7 @@
 #include "TraceEditor.h"
 #include "imgui.h"
 #include <backends/UIutils.h>
+#include "glm/gtc/type_ptr.hpp"
 
 int translateKeyTrace_ImGui(trace::Keys key);
 int translateButtonTrace_ImGui(trace::Buttons button);
@@ -34,6 +35,21 @@ namespace trace {
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_MOVE, BIND_EVENT_FN(TraceEditor::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_TYPED, BIND_EVENT_FN(TraceEditor::OnEvent));
 
+		editor_cam.SetCameraType(CameraType::PERSPECTIVE);
+		editor_cam.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
+		editor_cam.SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
+		editor_cam.SetUpDir(glm::vec3(0.0f, 1.0f, 0.0f));
+		editor_cam.SetAspectRatio(((float)800.0f) / ((float)600.0f));
+		editor_cam.SetFov(60.0f);
+		editor_cam.SetNear(0.1f);
+		editor_cam.SetFar(1500.0f);
+
+		point_light.position = { 0.0f, 2.5f, 2.0f, 0.0f };
+		point_light.direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
+		point_light.color = { 0.37f, 0.65f, 0.66f, 1.0f };
+		point_light.params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f)) };
+		point_light.params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };
+
 		return true;
 	}
 
@@ -44,6 +60,17 @@ namespace trace {
 
 	void TraceEditor::Update(float deltaTime)
 	{
+		editor_cam.Update(deltaTime);
+		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
+
+		Renderer* renderer = Renderer::get_instance();
+
+		CommandList cmd_list = renderer->BeginCommandList();
+		renderer->BeginScene(cmd_list, &editor_cam);
+		renderer->DrawLight(cmd_list, sphere, point_light, LightType::POINT);
+		renderer->EndScene(cmd_list);
+		renderer->SubmitCommandList(cmd_list);
+
 	}
 
 	void TraceEditor::Render(float deltaTime)
@@ -129,6 +156,8 @@ namespace trace {
 			}
 			ImGui::TextColored({ .0f, .59f, .40f, 1.0f }, "Coker Ayanfe");
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
+			ImGui::ColorEdit4("Light Color", glm::value_ptr(point_light.color));
+			ImGui::DragFloat("Light Intensity", &point_light.params2.y, 0.05f, 0.0f, 0.0f);
 			
 			ImGui::End();
 		}
@@ -140,7 +169,12 @@ namespace trace {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Scene Viewport",0,ImGuiWindowFlags_NoCollapse);
 		ImVec2 view_size = ImGui::GetContentRegionAvail();
-		m_viewportSize = { view_size.x, view_size.y };
+		glm::vec2 v_size = { view_size.x, view_size.y };
+		if (m_viewportSize != v_size)
+		{
+			m_viewportSize = v_size;
+			editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+		}
 		ImGui::Image(texture, view_size);
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -183,7 +217,7 @@ namespace trace {
 		case trace::EventType::TRC_WND_RESIZE:
 		{
 			trace::WindowResize* wnd = reinterpret_cast<trace::WindowResize*>(p_event);
-			io.DisplaySize = ImVec2(wnd->m_width, wnd->m_height);
+			io.DisplaySize = ImVec2(static_cast<float>(wnd->m_width), static_cast<float>(wnd->m_height));
 			io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
 			break;
@@ -557,12 +591,12 @@ void dark_purple()
 	colors[ImGuiCol_TextDisabled] = ImVec4{ 0.5f, 0.5f, 0.5f, 1.0f };
 
 	// Headers
-	colors[ImGuiCol_Header] = ImVec4{ 0.13f, 0.13f, 0.17, 1.0f };
+	colors[ImGuiCol_Header] = ImVec4{ 0.13f, 0.13f, 0.17f, 1.0f };
 	colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
 	colors[ImGuiCol_HeaderActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
 
 	// Buttons
-	colors[ImGuiCol_Button] = ImVec4{ 0.13f, 0.13f, 0.17, 1.0f };
+	colors[ImGuiCol_Button] = ImVec4{ 0.13f, 0.13f, 0.17f, 1.0f };
 	colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
 	colors[ImGuiCol_ButtonActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
 	colors[ImGuiCol_CheckMark] = ImVec4{ 0.74f, 0.58f, 0.98f, 1.0f };
@@ -575,13 +609,13 @@ void dark_purple()
 	colors[ImGuiCol_SliderGrabActive] = ImVec4{ 0.74f, 0.58f, 0.98f, 0.54f };
 
 	// Frame BG
-	colors[ImGuiCol_FrameBg] = ImVec4{ 0.13f, 0.13, 0.17, 1.0f };
+	colors[ImGuiCol_FrameBg] = ImVec4{ 0.13f, 0.13f, 0.17f, 1.0f };
 	colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.19f, 0.2f, 0.25f, 1.0f };
 	colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
 
 	// Tabs
 	colors[ImGuiCol_Tab] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
-	colors[ImGuiCol_TabHovered] = ImVec4{ 0.24, 0.24f, 0.32f, 1.0f };
+	colors[ImGuiCol_TabHovered] = ImVec4{ 0.24f, 0.24f, 0.32f, 1.0f };
 	colors[ImGuiCol_TabActive] = ImVec4{ 0.2f, 0.22f, 0.27f, 1.0f };
 	colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };
 	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.16f, 0.16f, 0.21f, 1.0f };

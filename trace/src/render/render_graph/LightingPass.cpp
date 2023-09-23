@@ -206,7 +206,7 @@ namespace trace {
 					m_pipeline.get(),
 					"u_gLights",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					m_renderer->lights,
+					m_renderer->lights.data(),
 					sizeof(Light) * MAX_LIGHT_COUNT
 				);
 
@@ -223,7 +223,6 @@ namespace trace {
 				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
 				frame_count++;
 
-				RenderFunc::BindVertexBuffer(m_renderer->GetDevice(), &m_renderer->quadBuffer);
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);

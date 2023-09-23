@@ -1,6 +1,7 @@
 
 #include "EditorRenderComposer.h"
 #include <render/render_graph/FrameData.h>
+#include <render/render_graph/RenderGraph.h>
 #include "TraceEditor.h"
 
 

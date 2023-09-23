@@ -10,13 +10,13 @@ namespace trace {
 
 	struct CommandParams
 	{
-		uint32_t val[4];
 		void* ptrs[4];
+		uint32_t val[4];
 		//TODO: Find another way to store data for each command
 		unsigned char data[256];
 	};
 
-	using CommandFunc = std::function<void(CommandParams)>;
+	using CommandFunc = std::function<void(CommandParams&)>;
 
 	struct Command
 	{

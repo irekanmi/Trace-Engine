@@ -255,6 +255,13 @@ namespace trace {
 		RENDER_SETTING_MAX
 	};
 
+	enum LightType
+	{
+		DIRECTIONAL,
+		POINT,
+		SPOT
+	};
+
 	typedef uint32_t FrameSettings;
 
 	struct BufferInfo

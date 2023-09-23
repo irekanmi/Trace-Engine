@@ -14,7 +14,6 @@
 
 // Temp--------------------------------
 #include "Camera.h"
-#include "render_graph/RenderGraph.h"
 //----------------------------------------
 
 
@@ -50,13 +49,22 @@ namespace trace {
 		bool Init(trc_app_data app_data);
 		void Update(float deltaTime);
 		bool BeginFrame();
-		void BeginScene();
-		void EndScene();
 		void EndFrame();
 		void Start();
 		void End();
 		void ShutDown();
 		void OnEvent(Event* p_event);
+
+
+		// Command List
+		CommandList BeginCommandList();
+		void SubmitCommandList(CommandList& list);
+		void BeginScene(CommandList& cmd_list, Camera* camera);
+		void EndScene(CommandList& cmd_list);
+		void DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model);
+		void DrawSky(CommandList& cmd_list, SkyBox* sky);
+		void DrawLight(CommandList& cmd_list, Ref<Mesh> mesh, Light& light_data, LightType light_type);
+
 
 		// Getters
 		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
@@ -77,37 +85,25 @@ namespace trace {
 		void RenderLights();
 		void RenderQuads();
 		void RenderTexts();
-		
-
-
-		void DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model);
-		void DrawSky(CommandList& cmd_list, SkyBox* sky);
-
-		// Command List
-		CommandList BeginCommandList();
-		void SubmitCommandList(CommandList& list);
-	
 
 		static Renderer* s_instance;
 		static Renderer* get_instance();
 
 
 
-		// Temp-----------------------------
+		// Per Frame Objects----------------------------- Temp ---
 		Viewport _viewPort;
 		Rect2D _rect;
-		Camera* _camera;
-		glm::ivec4 render_mode;
-		std::unordered_map<std::string, void*> _avaliable_passes;
-		Light lights[MAX_LIGHT_COUNT];
+		Camera* _camera = nullptr;
+		std::vector<Light> lights;
 		glm::ivec4 light_data;
-		GBuffer quadBuffer;
 		float exposure;
 		//------------------------------------
+		std::unordered_map<std::string, void*> _avaliable_passes;
 		
 	private:
-		void draw_mesh(CommandParams params);
-		void draw_skybox(CommandParams params);
+		void draw_mesh(CommandParams& params);
+		void draw_skybox(CommandParams& params);
 		// Batch rendering quads ..............................
 		void create_quad_batch();
 		void flush_current_quad_batch();
@@ -129,7 +125,9 @@ namespace trace {
 		uint32_t m_frameHeight;
 		ClientRenderCallback m_client_render;
 		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
+		std::vector<std::pair<uint32_t, Model*>> m_meshedLights;
 		uint32_t m_opaqueObjectsSize;
+		uint32_t m_meshLightSize;
 		SkyBox* current_sky_box;
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;
@@ -151,7 +149,7 @@ namespace trace {
 		// ....................................................
 
 
-		friend RenderGraph;
+		friend class RenderGraph;
 
 	protected:
 

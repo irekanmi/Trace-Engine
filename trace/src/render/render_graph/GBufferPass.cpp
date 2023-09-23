@@ -7,6 +7,7 @@
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
 #include "resource/ResourceSystem.h"
+#include "RenderGraph.h"
 
 namespace trace {
 	void GBufferPass::Init(Renderer* renderer)

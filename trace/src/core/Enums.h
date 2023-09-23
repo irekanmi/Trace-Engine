@@ -11,8 +11,8 @@
 #define GB MB * KB
 
 #define BLOCK_SIZE KB
-#define BIND_EVENT_FN(func) std::bind(&func, this, std::placeholders::_1)
-#define BIND_RENDER_COMMAND_FN(func) std::bind(&func, this, std::placeholders::_1)
+#define BIND_EVENT_FN(func)  [this](auto&&... args) -> decltype(auto){ return this->func(std::forward<decltype(args)>(args)...);} //std::bind(&func, this, std::placeholders::_1)
+#define BIND_RENDER_COMMAND_FN(func) [this](auto&&... args) -> decltype(auto){ return this->func(std::forward<decltype(args)>(args)...);}
 #define BIND_RESOURCE_UNLOAD_FN(func, ptr) std::bind(&func, ptr, std::placeholders::_1)
 
 #define INVALID_ID 4294967295

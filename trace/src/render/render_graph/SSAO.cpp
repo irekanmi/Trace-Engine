@@ -8,6 +8,7 @@
 #include "render/GShader.h"
 #include "render/ShaderParser.h"
 #include "resource/ResourceSystem.h"
+#include "RenderGraph.h"
 #include <random>
 
 
