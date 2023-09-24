@@ -4,6 +4,7 @@
 
 #include <core/io/TrcConsole.h>
 #include <core/Enums.h>
+#include <Windows.h>
 
 namespace trace {
 

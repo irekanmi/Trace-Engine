@@ -10,6 +10,8 @@
 #include "ShaderManager.h"
 #include "FontManager.h"
 
+#include "scene/SceneManager.h"
+
 namespace trace {
 
 	ResourceSystem* ResourceSystem::s_instance = nullptr;
@@ -31,6 +33,9 @@ namespace trace {
 		m_materialManager = MaterialManager::get_instance();
 		m_shaderManager = ShaderManager::get_instance();
 		m_fontManager = FontManager::get_instance();
+
+		//NOTE: The resource initializes the scene manager because scenes are also resources
+		SceneManager::get_instance()->Init(24);
 
 		//TODO: Configurable
 		result = m_textureManager->Init(4096);
@@ -60,6 +65,11 @@ namespace trace {
 	}
 	void ResourceSystem::ShutDown()
 	{
+		//NOTE: The resource destroys the scene manager because scenes are also resources
+		SceneManager* sceneManager = SceneManager::get_instance();
+		sceneManager->Shutdown();
+		SAFE_DELETE(sceneManager, SceneManager);
+
 		m_meshManager->ShutDown();
 		m_modelManager->ShutDown();
 		m_materialManager->ShutDown();

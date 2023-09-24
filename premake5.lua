@@ -1,6 +1,7 @@
 
 workspace "Trace"
 	architecture "x64"
+	startproject "Trace_Ed"
 
 	configurations
 	{
@@ -24,6 +25,7 @@ IncludeDir["tiny_obj_loader"] = "externals/tiny_obj_loader"
 IncludeDir["msdfgen"] = "externals/msdfgen"
 IncludeDir["msdf_atlas_gen"] = "externals/msdf_atlas_gen"
 IncludeDir["imgui"] = "externals/imgui"
+IncludeDir["entt"] = "externals/entt"
 
 
 project "trace"
@@ -62,6 +64,7 @@ project "trace"
 		"%{IncludeDir.msdfgen}",
 		"%{IncludeDir.msdf_atlas_gen}",
 		"%{IncludeDir.imgui}",
+		"%{IncludeDir.entt}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -85,7 +88,10 @@ project "trace"
 		"spirv-cross-glsl.lib",
 		"msdfgen.lib",
 		"msdf_atlas_gen.lib"
-	}	
+	}
+	
+	filter "files:trace/_externals/**.cpp"
+	flags { "NoPCH" }
 
 	filter "configurations:Debug"
 		symbols "On"
@@ -152,6 +158,7 @@ project "TestApp"
 		"%{IncludeDir.EASTL}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.entt}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -220,6 +227,7 @@ project "Trace_Ed"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.imgui}",
+		"%{IncludeDir.entt}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

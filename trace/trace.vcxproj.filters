@@ -333,6 +333,10 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\scene\Scene.h" />
+    <ClInclude Include="src\scene\Entity.h" />
+    <ClInclude Include="src\scene\Componets.h" />
+    <ClInclude Include="src\scene\SceneManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -599,5 +603,7 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\Scene.cpp" />
+    <ClCompile Include="src\scene\SceneManager.cpp" />
   </ItemGroup>
 </Project>

@@ -5,6 +5,8 @@
 #include "core/Coretypes.h"
 #include "core/Window.h"
 
+#include <Windows.h>
+
 
 namespace trace {
 

@@ -22,8 +22,3 @@
 #include <time.h>
 #include <stdio.h>
 #include <intrin.h>
-
-
-#ifdef TRC_WINDOWS
-#include <Windows.h>
-#endif

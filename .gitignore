@@ -4,8 +4,6 @@
 bin/
 bin-int/
 ipch/
-trace/trace.vcxproj
-trace/trace.vcxproj.filters
 Debug/
 externals/
 assets/textures
@@ -22,9 +20,6 @@ logs.txt
 **.filters
 **.vcxproj
 *.exe
-.vscode/configurationCache.log
-.vscode/dryrun.log
-.vscode/targets.log
 *.sln
 
 

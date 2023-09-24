@@ -171,7 +171,7 @@ bool __MSDF_LoadAndInitializeFont(const std::string& name, trace::Font* _font)
 				float, // pixel type of buffer for individual glyphs depends on generator function
 				3, // number of atlas color channels
 				&msdf_atlas::msdfGenerator, // function to generate bitmaps for individual glyphs
-				msdf_atlas::BitmapAtlasStorage<byte, 3> // class that stores the atlas bitmap
+				msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3> // class that stores the atlas bitmap
 				// For example, a custom atlas storage class that stores it in VRAM can be used.
 			> generator(width, height);
 			// GeneratorAttributes can be modified to change the generator's default settings.

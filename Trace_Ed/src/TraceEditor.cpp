@@ -1,6 +1,9 @@
 #include "TraceEditor.h"
 #include "imgui.h"
-#include <backends/UIutils.h>
+#include "backends/UIutils.h"
+#include "scene/SceneManager.h"
+#include "scene/Entity.h"
+#include "scene/Componets.h"
 #include "glm/gtc/type_ptr.hpp"
 
 int translateKeyTrace_ImGui(trace::Keys key);
@@ -26,6 +29,8 @@ namespace trace {
 		UIFuncLoader::LoadImGuiFunc();
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
 
+		m_hierachyPanel.m_editor = this;
+
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, BIND_EVENT_FN(TraceEditor::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
@@ -50,17 +55,26 @@ namespace trace {
 		point_light.params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f)) };
 		point_light.params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };
 
+
+		m_currentScene = SceneManager::get_instance()->CreateScene();
+		m_currentScene->CreateEntity("First Entity");
+		m_currentScene->CreateEntity("Second Entity");
+		m_currentScene->CreateEntity("Third Entity");
+		m_currentScene->CreateEntity();
+
 		return true;
 	}
 
 	void TraceEditor::Shutdown()
 	{
+		m_currentScene.release();
 		UIFunc::ShutdownUIRenderBackend();
 	}
 
 	void TraceEditor::Update(float deltaTime)
 	{
-		editor_cam.Update(deltaTime);
+		if(m_viewportFocused || m_viewportHovered)
+			editor_cam.Update(deltaTime);
 		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 
 		Renderer* renderer = Renderer::get_instance();
@@ -162,6 +176,10 @@ namespace trace {
 			ImGui::End();
 		}
 		elapsed += deltaTime;
+		
+		// -------------------/////////////////-----------------------------------
+		m_hierachyPanel.Render(deltaTime);
+
 	}
 
 	void TraceEditor::RenderViewport(void* texture)
@@ -175,6 +193,8 @@ namespace trace {
 			m_viewportSize = v_size;
 			editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
 		}
+		m_viewportFocused = ImGui::IsWindowFocused();
+		m_viewportHovered = ImGui::IsWindowHovered();
 		ImGui::Image(texture, view_size);
 		ImGui::End();
 		ImGui::PopStyleVar();
