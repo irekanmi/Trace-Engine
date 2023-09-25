@@ -1,6 +1,7 @@
 #pragma once
 #include "EditorRenderComposer.h"
 #include "panels/HierachyPanel.h"
+#include "panels/InspectorPanel.h"
 
 #include "scene/Scene.h"
 
@@ -29,6 +30,7 @@ namespace trace {
 	private:
 		EditorRenderComposer* m_renderComposer = nullptr;
 		HierachyPanel m_hierachyPanel;
+		InspectorPanel m_inspectorPanel;
 
 		glm::vec2 m_viewportSize;
 		bool m_viewportFocused;
@@ -42,6 +44,7 @@ namespace trace {
 	protected:
 		friend EditorRenderComposer;
 		friend HierachyPanel;
+		friend InspectorPanel;
 	};
 
 }

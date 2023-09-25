@@ -6,16 +6,15 @@ namespace trace {
 
 	class TraceEditor;
 
-	class HierachyPanel
+	class InspectorPanel
 	{
 
 	public:
-		HierachyPanel();
-		~HierachyPanel(){}
+		InspectorPanel();
+		~InspectorPanel() {}
 
-		void Render(float deltaTime);
 
-		void DrawEntity(Entity entity);
+		void DrawEntityComponent(Entity entity);
 
 	private:
 		TraceEditor* m_editor;

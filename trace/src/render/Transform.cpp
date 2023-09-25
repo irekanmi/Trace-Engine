@@ -65,7 +65,7 @@ namespace trace {
 		return m_model;
 	}
 
-	void Transform::SetPositon(glm::vec3 position)
+	void Transform::SetPosition(glm::vec3 position)
 	{
 		m_position = position;
 		m_dirty = true;
@@ -105,9 +105,9 @@ namespace trace {
 	void Transform::recalculate_local_matrix()
 	{
 		m_model = glm::identity<glm::mat4>();
-		m_model = glm::scale(m_model, m_scale);
 		m_model = glm::translate(m_model, m_position);
 		m_model *= glm::toMat4(m_rotation);
+		m_model = glm::scale(m_model, m_scale);
 	}
 
 	Transform::Transform(glm::vec3 position, glm::quat rotation)

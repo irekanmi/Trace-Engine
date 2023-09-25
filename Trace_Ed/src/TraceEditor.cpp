@@ -30,6 +30,7 @@ namespace trace {
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
 
 		m_hierachyPanel.m_editor = this;
+		m_inspectorPanel.m_editor = this;
 
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, BIND_EVENT_FN(TraceEditor::OnEvent));
@@ -56,11 +57,18 @@ namespace trace {
 		point_light.params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };
 
 
+		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
+		Ref<Mesh> cube = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
 		m_currentScene = SceneManager::get_instance()->CreateScene();
-		m_currentScene->CreateEntity("First Entity");
-		m_currentScene->CreateEntity("Second Entity");
-		m_currentScene->CreateEntity("Third Entity");
-		m_currentScene->CreateEntity();
+		Entity first_ent = m_currentScene->CreateEntity("Camera Entity");
+		Entity second_ent = m_currentScene->CreateEntity("Light Entity");
+		Entity third_ent = m_currentScene->CreateEntity("Mesh Cube");
+		m_currentScene->CreateEntity().AddComponent<MeshComponent>(sphere);
+		
+		first_ent.GetComponent<TransformComponent>()._transform.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
+		first_ent.AddComponent<CameraComponent>(editor_cam, true);
+		second_ent.AddComponent<LightComponent>(point_light, LightType::POINT, sphere);
+		third_ent.AddComponent<MeshComponent>(cube);
 
 		return true;
 	}
@@ -75,15 +83,15 @@ namespace trace {
 	{
 		if(m_viewportFocused || m_viewportHovered)
 			editor_cam.Update(deltaTime);
-		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
 
 		Renderer* renderer = Renderer::get_instance();
 
 		CommandList cmd_list = renderer->BeginCommandList();
 		renderer->BeginScene(cmd_list, &editor_cam);
-		renderer->DrawLight(cmd_list, sphere, point_light, LightType::POINT);
+		m_currentScene->OnRender(cmd_list);
 		renderer->EndScene(cmd_list);
 		renderer->SubmitCommandList(cmd_list);
+
 
 	}
 
@@ -180,6 +188,12 @@ namespace trace {
 		// -------------------/////////////////-----------------------------------
 		m_hierachyPanel.Render(deltaTime);
 
+		ImGui::Begin("Inspector");
+		if (m_hierachyPanel.m_selectedEntity)
+			m_inspectorPanel.DrawEntityComponent(m_hierachyPanel.m_selectedEntity);
+
+		ImGui::End();
+
 	}
 
 	void TraceEditor::RenderViewport(void* texture)
@@ -192,6 +206,7 @@ namespace trace {
 		{
 			m_viewportSize = v_size;
 			editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 		}
 		m_viewportFocused = ImGui::IsWindowFocused();
 		m_viewportHovered = ImGui::IsWindowHovered();

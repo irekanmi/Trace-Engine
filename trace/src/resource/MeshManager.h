@@ -22,7 +22,7 @@ namespace trace {
 
 		Mesh* GetMesh(const std::string& name);
 		bool LoadMesh(const std::string& name);
-		void Unload(Mesh* mesh);
+		void Unload(Mesh* _mesh);
 		Ref<Mesh> GetDefault(const std::string& name);
 		bool LoadDefaults();
 

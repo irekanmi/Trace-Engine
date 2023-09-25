@@ -19,7 +19,7 @@
 // MSDF -----------------------------------
 bool __MSDF_LoadAndInitializeFont(const std::string & name, trace::Font * font);
 bool __MSDF_DestroyFont(trace::Font * font);
-bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, uint32_t pos_index, std::vector<glm::vec4>&tex_coords, glm::mat4 & transform, float tex_index, uint32_t& count);
+bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, uint32_t pos_index, std::vector<glm::vec4>&tex_coords, glm::mat4 & _transform, float tex_index, uint32_t& count);
 // ----------------------------------------
 
 
@@ -50,10 +50,10 @@ namespace trace {
 		return _destroyFont(font);
 	}
 
-	bool FontFunc::ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& transform, float tex_index, uint32_t& count)
+	bool FontFunc::ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, float tex_index, uint32_t& count)
 	{
 		FONT_FUNC_IS_VALID(_computeTextString);
-		return _computeTextString(font, text, positions, pos_index, tex_coords, transform, tex_index, count);
+		return _computeTextString(font, text, positions, pos_index, tex_coords, _transform, tex_index, count);
 	}
 
 }
@@ -214,7 +214,7 @@ bool __MSDF_DestroyFont(trace::Font* font)
 	return true;
 }
 
-bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& transform, float tex_index, uint32_t& count)
+bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, float tex_index, uint32_t& count)
 {
 
 	if (!font->GetInternal())
@@ -292,27 +292,27 @@ bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::v
 		}
 		x += fsScale * advance;
 
-		positions[current_vert] = transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		positions[current_vert] = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
 		tex_coords[current_vert] = glm::vec4(texMin, tex_index, 0.0f);
 		current_vert++;
 
-		positions[current_vert] = transform * glm::vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+		positions[current_vert] = _transform * glm::vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
 		tex_coords[current_vert] = glm::vec4(texMax.x, texMin.y, tex_index, 0.0f);
 		current_vert++;
 
-		positions[current_vert] = transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		positions[current_vert] = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
 		tex_coords[current_vert] = glm::vec4(texMax, tex_index, 0.0f);
 		current_vert++;
 
-		positions[current_vert] = transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		positions[current_vert] = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
 		tex_coords[current_vert] = glm::vec4(texMax, tex_index, 0.0f);
 		current_vert++;
 
-		positions[current_vert] = transform * glm::vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
+		positions[current_vert] = _transform * glm::vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
 		tex_coords[current_vert] = glm::vec4(texMin.x, texMax.y, tex_index, 0.0f);
 		current_vert++;
 
-		positions[current_vert] = transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		positions[current_vert] = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
 		tex_coords[current_vert] = glm::vec4(texMin, tex_index, 0.0f);
 		current_vert++;
 		count++;

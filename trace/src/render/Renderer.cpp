@@ -309,7 +309,7 @@ namespace trace {
 		TRC_ASSERT(false, "Implement funtion {}", __FUNCTION__);
 	}
 
-	void Renderer::DrawQuad(glm::mat4 transform, Ref<GTexture> texture)
+	void Renderer::DrawQuad(glm::mat4 _transform, Ref<GTexture> texture)
 	{
 		if (quadBatches[current_quad_batch].current_texture_unit >= quadBatches[current_quad_batch].max_texture_units - 1)
 		{
@@ -341,27 +341,27 @@ namespace trace {
 		}
 
 		uint32_t current_vert = quadBatches[current_quad_batch].current_unit * 6;
-		quadBatches[current_quad_batch].positions[current_vert] = transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
 		current_vert++;
 
@@ -369,7 +369,7 @@ namespace trace {
 
 	}
 
-	void Renderer::DrawString(Ref<Font> font, const std::string& text, glm::mat4 transform)
+	void Renderer::DrawString(Ref<Font> font, const std::string& text, glm::mat4 _transform)
 	{
 		Ref<GTexture> texture = font->GetAtlas();
 		if (textBatches[current_text_batch].current_texture_unit >= textBatches[current_text_batch].max_texture_units - 1)
@@ -403,7 +403,7 @@ namespace trace {
 
 		uint32_t current_vert = textBatches[current_text_batch].current_unit;
 		uint32_t count = 0;
-		FontFunc::ComputeTextString(font.get(), text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, transform, current_tex_index, count);
+		FontFunc::ComputeTextString(font.get(), text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, _transform, current_tex_index, count);
 		textBatches[current_text_batch].current_unit += count;
 	}
 
@@ -413,6 +413,7 @@ namespace trace {
 		glm::mat4 proj = _camera->GetProjectionMatix();
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
+		glm::mat4 view_proj = proj * view;
 
 		for (uint32_t i = 0; i < m_opaqueObjectsSize; i++)
 		{
@@ -448,11 +449,11 @@ namespace trace {
 		{
 			auto& data = m_meshedLights[i];
 			int index = data.first;
-			Light& light = lights[index];
+			Light& _light = lights[index];
 			Model* _model = data.second;
 			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(light.position));
-			glm::vec4 light_color = glm::vec4(glm::vec3(light.color), light.params2.y);
+			model = glm::translate(model, glm::vec3(_light.position));
+			glm::vec4 light_color = glm::vec4(glm::vec3(_light.color), _light.params2.y);
 
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
@@ -551,14 +552,14 @@ namespace trace {
 
 	void Renderer::draw_mesh(CommandParams& params)
 	{
-		Mesh* mesh = (Mesh*)params.ptrs[0];
+		Mesh* _mesh = (Mesh*)params.ptrs[0];
 
 		glm::mat4* M_model = (glm::mat4*)(params.data);
 		glm::mat4 proj = _camera->GetProjectionMatix();
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
 
-		for (Ref<Model> _model : mesh->GetModels())
+		for (Ref<Model> _model : _mesh->GetModels())
 		{
 			m_opaqueObjects[m_opaqueObjectsSize++] = std::make_pair(*M_model, _model.get());
 		}
@@ -649,10 +650,10 @@ namespace trace {
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model)
+	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model)
 	{
 		Command cmd;
-		cmd.params.ptrs[0] = mesh.get();
+		cmd.params.ptrs[0] = _mesh.get();
 		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_mesh);
 		memcpy(cmd.params.data, &model, sizeof(glm::mat4));
 		cmd_list._commands.emplace_back(cmd);
@@ -667,24 +668,24 @@ namespace trace {
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> mesh, Light& light, LightType light_type)
+	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& _light, LightType light_type)
 	{
 		Command cmd;
-		cmd.params.ptrs[0] = mesh.get();
+		cmd.params.ptrs[0] = _mesh.get();
 		cmd.params.val[0] = light_type;
-		memcpy(cmd.params.data, &light, sizeof(Light));
+		memcpy(cmd.params.data, &_light, sizeof(Light));
 
 		cmd.func = [&](CommandParams& params) {
-			Mesh* mesh = (Mesh*)params.ptrs[0];
+			Mesh* _mesh = (Mesh*)params.ptrs[0];
 			uint32_t light_type_ = params.val[0];
-			Light* light = (Light*)params.data;
+			Light* _light = (Light*)params.data;
 			uint32_t light_index = 0;
 			if (light_type_ == LightType::DIRECTIONAL)
 			{
 				auto it = lights.begin();
 				uint32_t dir_light_count = light_data.x;
 				light_index = dir_light_count;
-				lights.insert(it + dir_light_count, *light);
+				lights.insert(it + dir_light_count, *_light);
 				light_data.x++;
 			}
 			else if (light_type_ == LightType::POINT)
@@ -692,7 +693,7 @@ namespace trace {
 				auto it = lights.begin();
 				uint32_t point_light_count = light_data.x + light_data.y;
 				light_index = point_light_count;
-				lights.insert(it + point_light_count, *light);
+				lights.insert(it + point_light_count, *_light);
 				light_data.y++;
 			}
 			else if (light_type_ == LightType::SPOT)
@@ -700,11 +701,11 @@ namespace trace {
 				auto it = lights.begin();
 				uint32_t spot_light_count = light_data.x + light_data.y + light_data.z;
 				light_index = spot_light_count;
-				lights.insert(it + spot_light_count, *light);
+				lights.insert(it + spot_light_count, *_light);
 				light_data.y++;
 			}
 
-			for (Ref<Model> _model : mesh->GetModels())
+			for (Ref<Model> _model : _mesh->GetModels())
 			{
 				m_meshedLights[m_meshLightSize++] = std::make_pair(light_index, _model.get());
 			}

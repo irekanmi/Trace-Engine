@@ -32,7 +32,7 @@ namespace trace {
 
 		static bool LoadAndInitializeFont(const std::string& name, Font* font);
 		static bool DestroyFont(Font* font);
-		static bool ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& transform, float tex_index, uint32_t& count);
+		static bool ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, float tex_index, uint32_t& count);
 
 	private:
 		static __LoadAndInitializeFont _loadAndInitializeFont;

@@ -115,10 +115,13 @@ namespace trace {
 		if (m_meshes.empty())
 			return;
 
-		for (Mesh& mesh : m_meshes)
+		for (Mesh& _mesh : m_meshes)
 		{
-			if (mesh.m_id != INVALID_ID)
-				Unload(&mesh);
+			if (_mesh.m_id != INVALID_ID)
+			{
+				Unload(&_mesh);
+				TRC_TRACE("Mesh not released , id : {}", _mesh.m_id);
+			}
 		}
 		m_meshes.clear();
 	}
@@ -159,10 +162,10 @@ namespace trace {
 		return result;
 	}
 
-	void MeshManager::Unload(Mesh* mesh)
+	void MeshManager::Unload(Mesh* _mesh)
 	{
 
-		if (mesh->m_refCount > 0)
+		if (_mesh->m_refCount > 0)
 		{
 			TRC_WARN("Current mesh is still in use can't unload");
 			return;
@@ -170,8 +173,8 @@ namespace trace {
 
 
 
-		mesh->m_id = INVALID_ID;
-		mesh->~Mesh();
+		_mesh->m_id = INVALID_ID;
+		_mesh->~Mesh();
 
 	}
 
@@ -299,35 +302,35 @@ namespace trace {
 			}
 			for (uint32_t i = 0; i < loader.LoadedMeshes.size(); i++)
 			{
-				objl::Mesh mesh = loader.LoadedMeshes[i];
+				objl::Mesh obj_mesh = loader.LoadedMeshes[i];
 
 				std::vector<Vertex> vert;
 				std::vector<uint32_t> _ind;
 
-				vert.reserve(mesh.Vertices.size());
-				for (uint32_t j = 0; j < mesh.Vertices.size(); j++)
+				vert.reserve(obj_mesh.Vertices.size());
+				for (uint32_t j = 0; j < obj_mesh.Vertices.size(); j++)
 				{
 					Vertex current_vertex;
-					current_vertex.pos.x = mesh.Vertices[j].Position.X;
-					current_vertex.pos.y = mesh.Vertices[j].Position.Y;
-					current_vertex.pos.z = mesh.Vertices[j].Position.Z;
+					current_vertex.pos.x = obj_mesh.Vertices[j].Position.X;
+					current_vertex.pos.y = obj_mesh.Vertices[j].Position.Y;
+					current_vertex.pos.z = obj_mesh.Vertices[j].Position.Z;
 
-					current_vertex.normal.x = mesh.Vertices[j].Normal.X;
-					current_vertex.normal.y = mesh.Vertices[j].Normal.Y;
-					current_vertex.normal.z = mesh.Vertices[j].Normal.Z;
+					current_vertex.normal.x = obj_mesh.Vertices[j].Normal.X;
+					current_vertex.normal.y = obj_mesh.Vertices[j].Normal.Y;
+					current_vertex.normal.z = obj_mesh.Vertices[j].Normal.Z;
 
-					current_vertex.texCoord.x = mesh.Vertices[j].TextureCoordinate.X;
-					current_vertex.texCoord.y = mesh.Vertices[j].TextureCoordinate.Y;
+					current_vertex.texCoord.x = obj_mesh.Vertices[j].TextureCoordinate.X;
+					current_vertex.texCoord.y = obj_mesh.Vertices[j].TextureCoordinate.Y;
 
 					vert.push_back(current_vertex);
 				}
 
-				_ind.resize(mesh.Indices.size());
-				for (uint32_t j = 0; j < mesh.Indices.size(); j += 3)
+				_ind.resize(obj_mesh.Indices.size());
+				for (uint32_t j = 0; j < obj_mesh.Indices.size(); j += 3)
 				{
-					_ind[j + 0] = mesh.Indices[j + 0];
-					_ind[j + 1] = mesh.Indices[j + 1];
-					_ind[j + 2] = mesh.Indices[j + 2];
+					_ind[j + 0] = obj_mesh.Indices[j + 0];
+					_ind[j + 1] = obj_mesh.Indices[j + 1];
+					_ind[j + 2] = obj_mesh.Indices[j + 2];
 				}
 
 				generateVertexTangent(vert, _ind);
@@ -336,29 +339,29 @@ namespace trace {
 				mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
 				mat.m_normalMap = texture_manager->GetDefault("normal_map");
 				mat.m_specularMap = texture_manager->GetDefault("specular_map");
-				if (!mesh.MeshMaterial.map_Kd.empty())
+				if (!obj_mesh.MeshMaterial.map_Kd.empty())
 				{
-					if (texture_manager->LoadTexture(mesh.MeshMaterial.map_Kd))
+					if (texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Kd))
 					{
-						mat.m_albedoMap = { texture_manager->GetTexture(mesh.MeshMaterial.map_Kd), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+						mat.m_albedoMap = { texture_manager->GetTexture(obj_mesh.MeshMaterial.map_Kd), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Kd);
+						TRC_WARN("Failed to load texture {}", obj_mesh.MeshMaterial.map_Kd);
 					}
 				}
-				if (!mesh.MeshMaterial.map_Ks.empty())
+				if (!obj_mesh.MeshMaterial.map_Ks.empty())
 				{
-					if (texture_manager->LoadTexture(mesh.MeshMaterial.map_Ks))
+					if (texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Ks))
 					{
-						mat.m_specularMap = { texture_manager->GetTexture(mesh.MeshMaterial.map_Ks), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+						mat.m_specularMap = { texture_manager->GetTexture(obj_mesh.MeshMaterial.map_Ks), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_Ks);
+						TRC_WARN("Failed to load texture {}", obj_mesh.MeshMaterial.map_Ks);
 					}
 				}
-				if (!mesh.MeshMaterial.map_bump.empty())
+				if (!obj_mesh.MeshMaterial.map_bump.empty())
 				{
 					TextureDesc texture_desc;
 					texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
@@ -366,40 +369,40 @@ namespace trace {
 					texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 					texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 					texture_desc.m_usage = UsageFlag::DEFAULT;
-					if (texture_manager->LoadTexture(mesh.MeshMaterial.map_bump, texture_desc))
+					if (texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_bump, texture_desc))
 					{
-						mat.m_normalMap = { texture_manager->GetTexture(mesh.MeshMaterial.map_bump), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+						mat.m_normalMap = { texture_manager->GetTexture(obj_mesh.MeshMaterial.map_bump), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
 					}
 					else
 					{
-						TRC_WARN("Failed to load texture {}", mesh.MeshMaterial.map_bump);
+						TRC_WARN("Failed to load texture {}", obj_mesh.MeshMaterial.map_bump);
 					}
 				}
 				mat.m_diffuseColor = {
-					mesh.MeshMaterial.Kd.X,
-					mesh.MeshMaterial.Kd.Y,
-					mesh.MeshMaterial.Kd.Z,
+					obj_mesh.MeshMaterial.Kd.X,
+					obj_mesh.MeshMaterial.Kd.Y,
+					obj_mesh.MeshMaterial.Kd.Z,
 					1.0f
 				};
 
-				mat.m_shininess = mesh.MeshMaterial.Ns;
+				mat.m_shininess = obj_mesh.MeshMaterial.Ns;
 
 				Model* _model = nullptr;
 				if (model_manager->LoadModel(
 					vert,
 					_ind,
-					mesh.MeshName
+					obj_mesh.MeshName
 				))
 				{
-					_model = model_manager->GetModel(mesh.MeshName);
+					_model = model_manager->GetModel(obj_mesh.MeshName);
 					Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
 					material_manager->CreateMaterial(
-						mesh.MeshMaterial.name,
+						obj_mesh.MeshMaterial.name,
 						mat,
 						sp
 					);
 
-					Ref<MaterialInstance> _mi = {material_manager->GetMaterial(mesh.MeshMaterial.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager)};
+					Ref<MaterialInstance> _mi = {material_manager->GetMaterial(obj_mesh.MeshMaterial.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager)};
 					_model->m_matInstance = _mi;
 				}
 

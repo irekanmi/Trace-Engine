@@ -52,6 +52,9 @@
     <Filter Include="src\resource">
       <UniqueIdentifier>{040C9454-F06E-23F9-99F4-5BAF8536EF7B}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\scene">
+      <UniqueIdentifier>{2A1615B6-9680-C92C-DFBE-7AD24B68A781}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\backends\Fontutils.h">
@@ -330,13 +333,21 @@
     <ClInclude Include="src\resource\TextureManager.h">
       <Filter>src\resource</Filter>
     </ClInclude>
+    <ClInclude Include="src\scene\Componets.h">
+      <Filter>src\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\Entity.h">
+      <Filter>src\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\Scene.h">
+      <Filter>src\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\SceneManager.h">
+      <Filter>src\scene</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\Scene.h" />
-    <ClInclude Include="src\scene\Entity.h" />
-    <ClInclude Include="src\scene\Componets.h" />
-    <ClInclude Include="src\scene\SceneManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -355,6 +366,9 @@
       <Filter>_externals\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="_externals\ImGUI\imgui_impl_win32.cpp">
+      <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_stdlib.cpp">
       <Filter>_externals\ImGUI</Filter>
     </ClCompile>
     <ClCompile Include="_externals\ImGUI\imgui_tables.cpp">
@@ -603,7 +617,11 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\Scene.cpp" />
-    <ClCompile Include="src\scene\SceneManager.cpp" />
+    <ClCompile Include="src\scene\Scene.cpp">
+      <Filter>src\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\SceneManager.cpp">
+      <Filter>src\scene</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

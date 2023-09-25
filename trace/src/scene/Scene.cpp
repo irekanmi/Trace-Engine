@@ -2,8 +2,8 @@
 
 #include "Scene.h"
 #include "Entity.h"
-
 #include "Componets.h"
+#include "render/Renderer.h"
 
 namespace trace {
 	void Scene::OnCreate()
@@ -13,22 +13,121 @@ namespace trace {
 	{
 		m_registry.clear();
 	}
+	void Scene::OnUpdate(float deltaTime)
+	{
+
+	}
+
+
+	void Scene::OnRender()
+	{
+		Camera* main_camera = nullptr;
+
+		auto view = m_registry.view<CameraComponent , TransformComponent>();
+	
+		for (auto entity : view)
+		{
+			auto [camera, _transform] = view.get<CameraComponent, TransformComponent>(entity);
+			if (camera.is_main)
+			{
+				camera._camera.SetPosition(_transform._transform.GetPosition());
+				main_camera = &camera._camera;
+				break;
+			}
+		}
+
+		if (main_camera)
+		{
+			Renderer* renderer = Renderer::get_instance();
+			CommandList cmd_list = renderer->BeginCommandList();
+			renderer->BeginScene(cmd_list, main_camera);
+
+			auto light_group = m_registry.view<LightComponent, TransformComponent>();
+
+			for (auto entity : light_group)
+			{
+				auto [light, transform] = light_group.get(entity);
+				light._light.position = glm::vec4(transform._transform.GetPosition(), 0.0f);
+				if (light._mesh.is_valid())
+					renderer->DrawLight(cmd_list, light._mesh, light._light, light.light_type);
+			}
+
+			auto group = m_registry.group<MeshComponent, TransformComponent>();
+
+			for (auto entity : group)
+			{
+				auto [mesh, transform] = group.get(entity);
+
+				renderer->DrawMesh(cmd_list, mesh._mesh, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+
+			}
+			
+			
+
+			renderer->EndScene(cmd_list);
+
+			renderer->SubmitCommandList(cmd_list);
+		}
+
+	}
+
+	void Scene::OnRender(CommandList& cmd_list)
+	{
+
+		Renderer* renderer = Renderer::get_instance();
+
+		auto light_group = m_registry.view<LightComponent, TransformComponent>();
+
+		for (auto entity : light_group)
+		{
+			auto [light, transform] = light_group.get(entity);
+			light._light.position = glm::vec4(transform._transform.GetPosition(), 0.0f);
+			if (light._mesh.is_valid())
+				renderer->DrawLight(cmd_list, light._mesh, light._light, light.light_type);
+		}
+
+		auto group = m_registry.group<MeshComponent, TransformComponent>();
+
+		for (auto entity : group)
+		{
+			auto [mesh, transform] = group.get(entity);
+
+			renderer->DrawMesh(cmd_list, mesh._mesh, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+
+		}
+
+	}
+
+	void Scene::OnViewportChange(float width, float height)
+	{
+		auto view = m_registry.view<CameraComponent>();
+
+		for (auto entity : view)
+		{
+			auto& camera = view.get<CameraComponent>(entity);
+			camera._camera.SetAspectRatio(width / height);
+		}
+	}
+
+
 	Entity Scene::CreateEntity()
 	{
 		entt::entity handle = m_registry.create();
 		Entity entity(handle, this);
-		TagComponent& Tag = entity.AddComponent<TagComponent>();
-		Tag.tag = "New Entity";
+		TagComponent& tag = entity.AddComponent<TagComponent>();
+		entity.AddComponent<TransformComponent>();
+		tag._tag = "New Entity";
 
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(const std::string& tag)
+	Entity Scene::CreateEntity(const std::string& _tag)
 	{
 		entt::entity handle = m_registry.create();
 
 		Entity entity(handle, this);
-		entity.AddComponent<TagComponent>(tag);
+		entity.AddComponent<TagComponent>(_tag);
+		entity.AddComponent<TransformComponent>();
 
 		return entity;
 	}

@@ -257,6 +257,7 @@ namespace trace {
 
 	enum LightType
 	{
+		UNKNOWN,
 		DIRECTIONAL,
 		POINT,
 		SPOT

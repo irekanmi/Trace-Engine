@@ -59,11 +59,11 @@ namespace trace {
 		// Command List
 		CommandList BeginCommandList();
 		void SubmitCommandList(CommandList& list);
-		void BeginScene(CommandList& cmd_list, Camera* camera);
+		void BeginScene(CommandList& cmd_list, Camera* _camera);
 		void EndScene(CommandList& cmd_list);
-		void DrawMesh(CommandList& cmd_list, Ref<Mesh> mesh, glm::mat4 model);
+		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
-		void DrawLight(CommandList& cmd_list, Ref<Mesh> mesh, Light& light_data, LightType light_type);
+		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
 
 
 		// Getters
@@ -77,8 +77,8 @@ namespace trace {
 
 		void Render(float deltaTime);
 		void DrawQuad();
-		void DrawQuad(glm::mat4 transform, Ref<GTexture> texture);
-		void DrawString(Ref<Font> font, const std::string& text, glm::mat4 transform);
+		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
+		void DrawString(Ref<Font> font, const std::string& text, glm::mat4 _transform);
 
 
 		void RenderOpaqueObjects();

@@ -244,8 +244,6 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\scene\Scene.cpp" />
-    <ClCompile Include="src\scene\SceneManager.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -262,6 +260,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="_externals\ImGUI\imgui_impl_win32.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGUI\imgui_stdlib.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="_externals\ImGUI\imgui_tables.cpp">
@@ -354,6 +355,8 @@
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
     <ClCompile Include="src\resource\ShaderManager.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
+    <ClCompile Include="src\scene\Scene.cpp" />
+    <ClCompile Include="src\scene\SceneManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
