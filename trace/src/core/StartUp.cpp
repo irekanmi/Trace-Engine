@@ -67,7 +67,7 @@ namespace trace {
 			return false;
 		}
 
-		if (!ResourceSystem::get_instance()->Init())
+		if (!ResourceSystem::Init())
 		{
 			TRC_ERROR("Failed to initialize Resource System");
 			return false;
@@ -80,9 +80,8 @@ namespace trace {
 	{
 
 
-		ResourceSystem::get_instance()->ShutDown();
+		ResourceSystem::ShutDown();
 		Renderer::get_instance()->ShutDown();
-		SAFE_DELETE(ResourceSystem::get_instance(), ResourceSystem);
 		SAFE_DELETE(Renderer::get_instance(), Renderer);
 		return;
 	}

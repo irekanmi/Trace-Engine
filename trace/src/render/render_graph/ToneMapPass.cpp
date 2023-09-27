@@ -5,7 +5,8 @@
 #include "RenderGraph.h"
 #include "render/Renderutils.h"
 #include "render/GPipeline.h"
-#include "resource/ResourceSystem.h"
+#include "resource/PipelineManager.h"
+#include "resource/ShaderManager.h"
 #include "FrameData.h"
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
@@ -52,8 +53,8 @@ namespace trace {
 
 
 		{
-			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("tone_map.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("tone_map.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -75,12 +76,12 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "tone_map_pass_pipeline"))
+			m_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "tone_map_pass_pipeline");
+			if (!m_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create tone_map_pass_pipeline");
 				return;
 			}
-			m_pipeline = ResourceSystem::get_instance()->GetPipeline("tone_map_pass_pipeline");
 
 		};
 

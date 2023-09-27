@@ -20,8 +20,9 @@ namespace trace {
 		bool Init(uint32_t max_entries);
 		void ShutDown();
 
-		Mesh* GetMesh(const std::string& name);
-		bool LoadMesh(const std::string& name);
+		Ref<Mesh> GetMesh(const std::string& name);
+		Ref<Mesh> LoadMesh(const std::string& name);
+		Ref<Mesh> LoadMesh_(const std::string& path);
 		void Unload(Mesh* _mesh);
 		Ref<Mesh> GetDefault(const std::string& name);
 		bool LoadDefaults();
@@ -41,8 +42,8 @@ namespace trace {
 		std::filesystem::path mesh_resource_path;
 
 		void unloadDefaultModels(Model* model);
-		bool LoadMesh_OBJ(const std::string& name);
-		bool LoadMesh__OBJ(const std::string& name);
+		bool LoadMesh_OBJ(std::filesystem::path& name);
+		bool LoadMesh__OBJ(std::filesystem::path& name);
 
 	protected:
 

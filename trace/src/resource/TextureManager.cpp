@@ -113,28 +113,26 @@ namespace trace {
 
 	}
 
-	GTexture* TextureManager::GetTexture(const std::string& name)
+	Ref<GTexture> TextureManager::GetTexture(const std::string& name)
 	{
-
+		Ref<GTexture> result;
+		GTexture* _tex = nullptr;
 		TextureHash& _hash = m_hashTable.Get_Ref(name);
 
 		if (_hash._id != INVALID_ID)
 		{
-			return &m_textures[_hash._id];
+			_tex = &m_textures[_hash._id];
+			result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+			return result;
 		}
 		else
 		{
-
-			if (LoadTexture(name))
-			{
-				return &m_textures[_hash._id];
-			}
-
+			return LoadTexture(name);
 		}
 
 		//TODO: replace with the default texture
 		TRC_ERROR("Please enter a vaild texture");
-		return nullptr;
+		return result;
 	}
 
 	Texture_Ref TextureManager::GetDefault(const std::string& name)
@@ -155,12 +153,14 @@ namespace trace {
 		return Texture_Ref();
 	}
 
-	bool TextureManager::CreateTexture(const std::string& name, TextureDesc desc)
+	Ref<GTexture> TextureManager::CreateTexture(const std::string& name, TextureDesc desc)
 	{
+		Ref<GTexture> result;
+		GTexture* _tex = nullptr;
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);
-			return true;
+			return GetTexture(name);
 		}
 
 		TRC_ASSERT(desc.m_width != 0 || desc.m_height != 0, "width or height of a texture can not zero(0)");
@@ -175,36 +175,44 @@ namespace trace {
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
+				_tex = &m_textures[_hash._id];
 				m_hashTable.Set(name, _hash);
-				return true;
+				break;
 			}
 			i++;
 		}
 
-		return true;
+		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+		return result;
 	}
 
-	bool TextureManager::LoadTexture(const std::string& name)
+	Ref<GTexture> TextureManager::LoadTexture(const std::string& name)
 	{
+		return LoadTexture_((texture_resource_path / name).string());
+	}
+
+	Ref<GTexture> TextureManager::LoadTexture_(const std::string& path)
+	{
+		Ref<GTexture> result;
+		GTexture* _tex = nullptr;
+		std::filesystem::path p(path);
+		std::string name = p.filename().string();
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);
-			return true;
+			return GetTexture(name);
 		}
 		int _width, _height, _channels;
 		unsigned char* pixel_data = nullptr;
 
 		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load((texture_resource_path / name).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+		pixel_data = stbi_load(p.string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
 			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
 			stbi__err(0, 0);
-			return false;
+			return result;
 		}
-
-
-
 
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
@@ -231,36 +239,45 @@ namespace trace {
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
+				tex.m_path = p;
+				_tex = &m_textures[_hash._id];
 				m_hashTable.Set(name, _hash);
-				return true;
+				break;
 			}
-	
+
 			i++;
 		}
-
-
-		return true;
+		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+		return result;
 	}
 
-	bool TextureManager::LoadTexture(const std::string& name, TextureDesc desc)
+	Ref<GTexture> TextureManager::LoadTexture(const std::string& name, TextureDesc desc)
 	{
+		return LoadTexture_((texture_resource_path / name).string(), desc);
+	}
 
+	Ref<GTexture> TextureManager::LoadTexture_(const std::string& path, TextureDesc desc)
+	{
+		Ref<GTexture> result;
+		GTexture* _tex = nullptr;
+		std::filesystem::path p(path);
+		std::string name = p.filename().string();
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);
-			return true;
+			return GetTexture(name);
 		}
 
 		int _width, _height, _channels;
 		unsigned char* pixel_data = nullptr;
 
 		stbi_set_flip_vertically_on_load(true);
-		pixel_data = stbi_load((texture_resource_path / name).string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
+		pixel_data = stbi_load(p.string().c_str(), &_width, &_height, &_channels, STBI_rgb_alpha);
 		if (!pixel_data)
 		{
 			TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
 			stbi__err(0, 0);
-			return false;
+			return result;
 		}
 
 		desc.m_width = _width;
@@ -281,22 +298,26 @@ namespace trace {
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
+				tex.m_path = p;
+				_tex = &m_textures[_hash._id];
 				m_hashTable.Set(name, _hash);
-				return true;
+				break;
 			}
 			i++;
 		}
 
-
-		return true;
+		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+		return result;
 	}
 
-	bool TextureManager::LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc,const std::string& name)
+	Ref<GTexture> TextureManager::LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc,const std::string& name)
 	{
+		Ref<GTexture> result;
+		GTexture* _tex = nullptr;
 		if (m_hashTable.Get(name)._id != INVALID_ID)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);
-			return true;
+			return GetTexture(name);
 		}
 		desc.m_numLayers = static_cast<uint32_t>(filenames.size());
 
@@ -311,7 +332,7 @@ namespace trace {
 			{
 				TRC_ERROR("Unable to load texture {}: Error=> {}", name.c_str(), stbi_failure_reason());
 				stbi__err(0, 0);
-				return false;
+				return result;
 			}
 
 			desc.m_width = _width;
@@ -337,13 +358,14 @@ namespace trace {
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
+				_tex = &m_textures[_hash._id];
 				m_hashTable.Set(name, _hash);
-				return true;
+				break;
 			}
 			i++;
 		}
-
-		return true;
+		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+		return result;
 	}
 
 	void TextureManager::UnloadTexture(GTexture* texture)
@@ -376,8 +398,6 @@ namespace trace {
 
 	bool TextureManager::LoadDefaultTextures()
 	{
-
-
 		uint32_t dimension = 256;
 		uint32_t channels = 4;
 			
@@ -411,7 +431,7 @@ namespace trace {
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
 		texture_desc.m_channels = 4;
-		texture_desc.m_format = Format::R8G8B8A8_SRBG;
+		texture_desc.m_format = Format::R8G8B8A8_UNORM;
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;
@@ -424,6 +444,7 @@ namespace trace {
 
 		// Default Diffuse texture
 		RenderFunc::CreateTexture(&default_diffuse_texture, texture_desc);
+		default_diffuse_texture.m_path = "albedo_map";
 		default_diffuse_map = { &default_diffuse_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 		delete[] pixel;
 
@@ -456,6 +477,7 @@ namespace trace {
 		
 		// Default specular
 		RenderFunc::CreateTexture(&default_specular_texture, texture_desc);
+		default_specular_texture.m_path = "specular_map";
 		default_specular_map = { &default_specular_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 		delete[] pixel;
 
@@ -489,6 +511,7 @@ namespace trace {
 
 		// Default normal
 		RenderFunc::CreateTexture(&default_normal_texture, texture_desc);
+		default_normal_texture.m_path = "normal_map";
 		default_normal_map = { &default_normal_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
 		delete[] pixel;
 

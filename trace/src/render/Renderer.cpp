@@ -5,7 +5,6 @@
 #include "GContext.h"
 #include "core/Enums.h"
 #include "core/io/Logging.h"
-#include "resource/ResourceSystem.h"
 #include "core/events/EventsSystem.h"
 #include "core/Enums.h"
 #include "Model.h"
@@ -15,6 +14,8 @@
 #include "RenderComposer.h"
 #include "render_graph/RenderGraph.h"
 #include "backends/UIutils.h"
+#include "resource/MaterialManager.h"
+#include "resource/PipelineManager.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -420,7 +421,7 @@ namespace trace {
 			auto& data = m_opaqueObjects[i];
 			glm::mat4* M_model = &data.first;
 			Model* _model = data.second;
-			Ref<MaterialInstance> _mi = _model->m_matInstance.is_valid() ? _model->m_matInstance : ResourceSystem::get_instance()->GetMaterial("default");
+			Ref<MaterialInstance> _mi = _model->m_matInstance.is_valid() ? _model->m_matInstance : MaterialManager::get_instance()->GetMaterial("default");
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
@@ -442,8 +443,8 @@ namespace trace {
 
 	void Renderer::RenderLights()
 	{
-		Ref<GPipeline> sp = ResourceSystem::get_instance()->GetPipeline("light_pipeline");
-		glm::mat4 view_proj= _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+		Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("light_pipeline");
+		glm::mat4 view_proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
 		for (int i = 0; i < m_meshLightSize; i++)
 		{
@@ -480,7 +481,7 @@ namespace trace {
 			glm::mat4 view = _camera->GetViewMatrix();
 			glm::vec3 view_position = _camera->GetPosition();
 
-			Ref<GPipeline> sp = ResourceSystem::get_instance()->GetDefaultPipeline("skybox");
+			Ref<GPipeline> sp = PipelineManager::get_instance()->GetDefault("skybox");
 			RenderFunc::OnDrawStart(&g_device, sp.get());
 
 			RenderFunc::SetPipelineTextureData(
@@ -507,7 +508,7 @@ namespace trace {
 
 	void Renderer::RenderQuads()
 	{
-		quadBatchPipeline = ResourceSystem::get_instance()->GetPipeline("quad_batch_pipeline");
+		quadBatchPipeline = PipelineManager::get_instance()->GetPipeline("quad_batch_pipeline");
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
 		{
@@ -529,7 +530,7 @@ namespace trace {
 	
 	void Renderer::RenderTexts()
 	{
-		textBatchPipeline = ResourceSystem::get_instance()->GetPipeline("text_batch_pipeline");
+		textBatchPipeline = PipelineManager::get_instance()->GetPipeline("text_batch_pipeline");
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (uint32_t i = 0; i < num_avalible_text_batch; i++)
 		{
@@ -702,12 +703,51 @@ namespace trace {
 				uint32_t spot_light_count = light_data.x + light_data.y + light_data.z;
 				light_index = spot_light_count;
 				lights.insert(it + spot_light_count, *_light);
-				light_data.y++;
+				light_data.z++;
 			}
 
 			for (Ref<Model> _model : _mesh->GetModels())
 			{
 				m_meshedLights[m_meshLightSize++] = std::make_pair(light_index, _model.get());
+			}
+		};
+
+		cmd_list._commands.push_back(cmd);
+	}
+
+	void Renderer::AddLight(CommandList& cmd_list, Light& _light, LightType light_type)
+	{
+		Command cmd;
+		cmd.params.val[0] = light_type;
+		memcpy(cmd.params.data, &_light, sizeof(Light));
+
+		cmd.func = [&](CommandParams& params) {
+			uint32_t light_type_ = params.val[0];
+			Light* _light = (Light*)params.data;
+			uint32_t light_index = 0;
+			if (light_type_ == LightType::DIRECTIONAL)
+			{
+				auto it = lights.begin();
+				uint32_t dir_light_count = light_data.x;
+				light_index = dir_light_count;
+				lights.insert(it + dir_light_count, *_light);
+				light_data.x++;
+			}
+			else if (light_type_ == LightType::POINT)
+			{
+				auto it = lights.begin();
+				uint32_t point_light_count = light_data.x + light_data.y;
+				light_index = point_light_count;
+				lights.insert(it + point_light_count, *_light);
+				light_data.y++;
+			}
+			else if (light_type_ == LightType::SPOT)
+			{
+				auto it = lights.begin();
+				uint32_t spot_light_count = light_data.x + light_data.y + light_data.z;
+				light_index = spot_light_count;
+				lights.insert(it + spot_light_count, *_light);
+				light_data.z++;
 			}
 		};
 

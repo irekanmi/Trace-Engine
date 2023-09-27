@@ -6,7 +6,8 @@
 #include "FrameData.h"
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
-#include "resource/ResourceSystem.h"
+#include "resource/PipelineManager.h"
+#include "resource/ShaderManager.h"
 #include "RenderGraph.h"
 
 namespace trace {
@@ -102,34 +103,7 @@ namespace trace {
 		depth_desc = depth;
 		};
 
-		{
-
-			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("trace_core.shader.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("g_buffer.frag.glsl", ShaderStage::PIXEL_SHADER);
-			
-			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
-			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
-
-			PipelineStateDesc _ds;
-			_ds.vertex_shader = VertShader.get();
-			_ds.pixel_shader = FragShader.get();
-			_ds.resources = s_res;
-
-			AutoFillPipelineDesc(
-				_ds
-			);
-			_ds.render_pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
-			_ds.blend_state.alpha_to_blend_coverage = false;
-
-
-			if (!ResourceSystem::get_instance()->CreatePipeline(_ds, "gbuffer_pipeline"))
-			{
-				TRC_ERROR("Failed to initialize or create default g_buffer pipeline");
-				return;
-			}
-
-		};
+		
 
 	}
 	void GBufferPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)

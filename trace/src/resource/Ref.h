@@ -36,6 +36,10 @@ public:
 	}
 	void operator=(Ref&& other)
 	{
+		if (!other.is_valid())
+		{
+			return;
+		}
 		if (is_valid())
 		{
 			_ptr->m_refCount--;
@@ -54,7 +58,7 @@ public:
 
 	Ref(T* value, _action<T> unload)
 	{
-		TRC_ASSERT(value != nullptr, "Can't not construct from a null pointer Ref<{}>", _STR(T));
+		TRC_ASSERT(value != nullptr, "Can't not construct from a null pointer Ref<{}>", typeid(T).name());
 		Unload = unload;
 		_ptr = value;
 		_ptr->m_refCount++;
@@ -135,6 +139,8 @@ public:
 			}
 		}
 	}
+
+	operator bool() { return is_valid(); }
 
 	_action<T> Unload;
 private:

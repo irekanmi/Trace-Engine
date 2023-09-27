@@ -17,8 +17,8 @@ namespace trace {
 		bool Init(uint32_t max_units);
 		void ShutDown();
 
-		Model* GetModel(const std::string& name);
-		bool LoadModel(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& name);
+		Ref<Model> GetModel(const std::string& name);
+		Ref<Model> LoadModel(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& name);
 		void UnLoadModel(Model* model);
 
 		static ModelManager* get_instance();

@@ -101,13 +101,22 @@ namespace trace {
 		return true;
 	}
 
-	bool FontManager::LoadFont(const std::string& name)
+	Ref<Font> FontManager::LoadFont(const std::string& name)
 	{
+		return LoadFont_((font_resource_path / name).string());
+	}
+
+	Ref<Font> FontManager::LoadFont_(const std::string& path)
+	{
+		std::filesystem::path p(path);
+		std::string name = p.filename().string();
+		Ref<Font> result;
+		Font* _font = nullptr;
 		uint32_t hash = hashTable.Get(name);
 		if (hash != INVALID_ID)
 		{
 			TRC_WARN("{} font has been loaded", name);
-			return true;
+			return result;
 		}
 
 		uint32_t i = 0;
@@ -115,34 +124,40 @@ namespace trace {
 		{
 			if (font.m_id == INVALID_ID)
 			{
-				std::string file_path = (font_resource_path / name).string();
-				font.SetFontName(name);
+				std::string file_path = path;
 				if (!FontFunc::LoadAndInitializeFont(file_path, &font))
 				{
 					TRC_ERROR("Failed to load to font, path->{}", file_path);
-					return false;
+					return result;
 				}
+				font.SetFontName(name);
 				font.m_id = i;
 				hashTable.Set(name, i);
-				return true;
+				_font = &font;
+				_font->m_path = p;
+				break;
 			}
 
 			i++;
 		}
 
-		return true;
+		result = { _font, BIND_RENDER_COMMAND_FN(FontManager::UnloadFont) };
+		return result;
 	}
 
-	Font* FontManager::GetFont(const std::string& name)
+	Ref<Font> FontManager::GetFont(const std::string& name)
 	{
+		Ref<Font> result;
+		Font* _font = nullptr;
 		uint32_t hash = hashTable.Get(name);
 		if (hash == INVALID_ID)
 		{
 			TRC_WARN("{} font has not been loaded", name);
-			return nullptr;
+			return result;
 		}
-
-		return &m_fonts[hash];
+		_font = &m_fonts[hash];
+		result = { _font, BIND_RENDER_COMMAND_FN(FontManager::UnloadFont) };
+		return result;
 	}
 
 	void FontManager::UnloadFont(Font* font)

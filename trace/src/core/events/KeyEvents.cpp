@@ -48,6 +48,17 @@ namespace trace {
 
 	}
 
+	MouseDBClick::MouseDBClick(Buttons button)
+	{
+		m_type = EventType::TRC_MOUSE_DB_CLICK;
+		m_button = button;
+	}
+
+	MouseDBClick::~MouseDBClick()
+	{
+
+	}
+
 	MouseReleased::MouseReleased(Buttons button)
 	{
 		m_type = EventType::TRC_BUTTON_RELEASED;

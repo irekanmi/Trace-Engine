@@ -22,8 +22,8 @@ namespace trace {
 		bool Init(uint32_t max_entries);
 		void ShutDown();
 
-		bool CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill = true);
-		GPipeline* GetPipeline(const std::string& name);
+		Ref<GPipeline> CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill = true);
+		Ref<GPipeline> GetPipeline(const std::string& name);
 		Ref<GPipeline> GetDefault(const std::string& name);
 		void Unload(GPipeline* pipeline);
 
@@ -41,6 +41,9 @@ namespace trace {
 		HashTable<uint32_t> m_hashtable;
 		Ref<GPipeline> skybox_pipeline;
 		Ref<GPipeline> light_pipeline;
+		Ref<GPipeline> gbuffer_pipeline;
+		Ref<GPipeline> text_pipeline;
+		Ref<GPipeline> quad_pipeline;
 
 	protected:
 

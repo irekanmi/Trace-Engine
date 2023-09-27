@@ -5,7 +5,8 @@
 #include "render/Renderutils.h"
 #include "render/ShaderParser.h"
 #include "FrameData.h"
-#include "resource/ResourceSystem.h"
+#include "resource/PipelineManager.h"
+#include "resource/ShaderManager.h"
 #include "render/GShader.h"
 #include "RenderGraph.h"
 
@@ -57,8 +58,8 @@ namespace trace {
 
 		{
 
-			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -80,19 +81,19 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline"))
+			m_prefilterPipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline");
+			if (!m_prefilterPipeline)
 			{
 				TRC_ERROR("Failed to initialize or create bloom_prefilter_pass_pipeline");
 				return;
 			}
 
-			m_prefilterPipeline = ResourceSystem::get_instance()->GetPipeline("bloom_prefilter_pass_pipeline");
 
 		};
 
 		{
-			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -115,19 +116,19 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline"))
+			m_downSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline");
+			if (!m_downSamplePipeline)
 			{
 				TRC_ERROR("Failed to initialize or create bloom_downsample_pass_pipeline");
 				return;
 			}
 
-			m_downSamplePipeline = ResourceSystem::get_instance()->GetPipeline("bloom_downsample_pass_pipeline");
 
 		};
 
 		{
-			Ref<GShader> VertShader = ResourceSystem::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ResourceSystem::get_instance()->CreateShader("bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -157,12 +158,12 @@ namespace trace {
 			_ds2.blend_state = clr_bld;
 
 
-			if (!ResourceSystem::get_instance()->CreatePipeline(_ds2, "bloom_upsample_pass_pipeline"))
+			m_upSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_upsample_pass_pipeline");
+			if (!m_upSamplePipeline)
 			{
 				TRC_ERROR("Failed to initialize or create bloom_upsample_pass_pipeline");
 				return;
 			}
-			m_upSamplePipeline = ResourceSystem::get_instance()->GetPipeline("bloom_upsample_pass_pipeline");
 
 		};
 

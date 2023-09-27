@@ -126,35 +126,44 @@ namespace trace {
 		m_meshes.clear();
 	}
 
-	Mesh* MeshManager::GetMesh(const std::string& name)
+	Ref<Mesh> MeshManager::GetMesh(const std::string& name)
 	{
+		Ref<Mesh> result;
+		Mesh* _mesh = nullptr;
 		uint32_t _id = m_hashtable.Get(name);
 		if (_id == INVALID_ID)
 		{
 			TRC_WARN("Please ensure mesh loaded before getting; trying to load");
-			if (LoadMesh(name))
-			{
-				return &m_meshes[m_hashtable.Get(name)];
-			}
+			return LoadMesh(name);
+			
 		}
-
-		return &m_meshes[m_hashtable.Get(name)];
+		_mesh = &m_meshes[_id];
+		result = { _mesh, BIND_RENDER_COMMAND_FN(MeshManager::Unload) };
+		return result;
 	}
 
-	bool MeshManager::LoadMesh(const std::string& name)
+	Ref<Mesh> MeshManager::LoadMesh(const std::string& name)
 	{
-		bool result = false;
+		return LoadMesh_((mesh_resource_path / name).string());
+	}
+
+	Ref<Mesh> MeshManager::LoadMesh_(const std::string& path)
+	{
+		std::filesystem::path p(path);
+		std::string name = p.filename().string();
+		Ref<Mesh> result;
+		Mesh* _mesh = nullptr;
 		if (m_hashtable.Get(name) != INVALID_ID)
 		{
-			result = true;
 			TRC_WARN("mesh has already loaded {}", name);
-			return result;
+			return GetMesh(name);
 		}
-		std::filesystem::path p("/");
-		p /= name;
 		if (p.extension() == ".obj")
 		{
-			result = LoadMesh__OBJ(name);
+			if (LoadMesh__OBJ(p))
+			{
+				return GetMesh(name);
+			}
 
 		}
 
@@ -223,6 +232,7 @@ namespace trace {
 		Ref<Model> cube_ref(&cube, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
 
 		DefaultCube->GetModels().push_back(cube_ref);
+		DefaultCube->m_path = "Cube";
 
 		verts.clear();
 		_ind.clear();
@@ -247,6 +257,7 @@ namespace trace {
 
 		DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
 		DefaultSphere->GetModels().push_back(sphere_ref);
+		DefaultSphere->m_path = "Sphere";
 
 		return true;
 	}
@@ -274,13 +285,13 @@ namespace trace {
 
 	}
 
-	bool MeshManager::LoadMesh_OBJ(const std::string& name)
+	bool MeshManager::LoadMesh_OBJ(std::filesystem::path& path)
 	{
 		bool result = false;
 
 		objl::Loader loader;
-
-		result = loader.LoadFile((mesh_resource_path / name).string());
+		std::string name = path.filename().string();
+		result = loader.LoadFile(path.string());
 		if (result)
 		{
 			ModelManager* model_manager = ModelManager::get_instance();
@@ -297,6 +308,7 @@ namespace trace {
 					_id = k;
 					m_hashtable.Set(name, k);
 					_mesh = &m_meshes[k];
+					_mesh->m_path = path;
 					break;
 				}
 			}
@@ -341,9 +353,10 @@ namespace trace {
 				mat.m_specularMap = texture_manager->GetDefault("specular_map");
 				if (!obj_mesh.MeshMaterial.map_Kd.empty())
 				{
-					if (texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Kd))
+
+					if (Ref<GTexture> albe = texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Kd))
 					{
-						mat.m_albedoMap = { texture_manager->GetTexture(obj_mesh.MeshMaterial.map_Kd), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+						mat.m_albedoMap = albe;
 					}
 					else
 					{
@@ -352,9 +365,9 @@ namespace trace {
 				}
 				if (!obj_mesh.MeshMaterial.map_Ks.empty())
 				{
-					if (texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Ks))
+					if (Ref<GTexture> spec = texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Ks))
 					{
-						mat.m_specularMap = { texture_manager->GetTexture(obj_mesh.MeshMaterial.map_Ks), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+						mat.m_specularMap = spec;
 					}
 					else
 					{
@@ -369,9 +382,9 @@ namespace trace {
 					texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 					texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 					texture_desc.m_usage = UsageFlag::DEFAULT;
-					if (texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_bump, texture_desc))
+					if (Ref<GTexture> nrm = texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_bump, texture_desc))
 					{
-						mat.m_normalMap = { texture_manager->GetTexture(obj_mesh.MeshMaterial.map_bump), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+						mat.m_normalMap = nrm;
 					}
 					else
 					{
@@ -387,26 +400,15 @@ namespace trace {
 
 				mat.m_shininess = obj_mesh.MeshMaterial.Ns;
 
-				Model* _model = nullptr;
-				if (model_manager->LoadModel(
-					vert,
-					_ind,
-					obj_mesh.MeshName
-				))
+				Ref<Model> _model = model_manager->LoadModel(vert,_ind,obj_mesh.MeshName);
+				if (_model)
 				{
-					_model = model_manager->GetModel(obj_mesh.MeshName);
-					Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
-					material_manager->CreateMaterial(
-						obj_mesh.MeshMaterial.name,
-						mat,
-						sp
-					);
-
-					Ref<MaterialInstance> _mi = {material_manager->GetMaterial(obj_mesh.MeshMaterial.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager)};
+					Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
+					Ref<MaterialInstance> _mi = material_manager->CreateMaterial(obj_mesh.MeshMaterial.name,mat,sp);
 					_model->m_matInstance = _mi;
 				}
 
-				_mesh->GetModels().push_back({ _model, BIND_RESOURCE_UNLOAD_FN(ModelManager::UnLoadModel, model_manager) });
+				_mesh->GetModels().push_back(_model);
 
 			}
 
@@ -415,7 +417,7 @@ namespace trace {
 		return result;
 	}
 
-	bool MeshManager::LoadMesh__OBJ(const std::string& name)
+	bool MeshManager::LoadMesh__OBJ(std::filesystem::path& path)
 	{
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -423,14 +425,14 @@ namespace trace {
 		std::string err;
 
 		bool result = true;
-
+		std::string name = path.filename().string();
 		result = tinyobj::LoadObj(
 			&attrib,
 			&shapes,
 			&materials,
 			&err,
-			(mesh_resource_path / name).string().c_str(),
-			(mesh_resource_path / "").string().c_str()
+			path.string().c_str(),
+			path.parent_path().string().c_str()
 		);
 
 		if (!result)
@@ -454,6 +456,7 @@ namespace trace {
 				_id = k;
 				m_hashtable.Set(name, k);
 				_mesh = &m_meshes[k];
+				_mesh->m_path = path;
 				break;
 			}
 		}
@@ -504,24 +507,24 @@ namespace trace {
 			mat.m_normalMap = texture_manager->GetDefault("normal_map");
 			mat.m_specularMap = texture_manager->GetDefault("specular_map");
 			int mat_id = s.mesh.material_ids[0];
-			Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
+			Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
 			tinyobj::material_t& material = materials[mat_id];
-			Ref<MaterialInstance> _mi = { material_manager->GetMaterial("default"), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager) };
+			Ref<MaterialInstance> _mi = material_manager->GetMaterial("default");
 
 			if (mat_id >= 0)
 			{
 
 				if (!material.diffuse_texname.empty())
 				{
-					if (texture_manager->LoadTexture(material.diffuse_texname))
-						mat.m_albedoMap = { texture_manager->GetTexture(material.diffuse_texname), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+					if (Ref<GTexture> albe = texture_manager->LoadTexture(material.diffuse_texname))
+						mat.m_albedoMap = albe;
 					else
 						TRC_ERROR("Failed to load texture {}", material.diffuse_texname);
 				}
 				if (!material.specular_texname.empty())
 				{
-					if (texture_manager->LoadTexture(material.specular_texname))
-						mat.m_specularMap = { texture_manager->GetTexture(material.specular_texname), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+					if (Ref<GTexture> spec = texture_manager->LoadTexture(material.specular_texname))
+						mat.m_specularMap = spec;
 					else
 						TRC_ERROR("Failed to load texture {}", material.specular_texname);
 				}
@@ -534,8 +537,8 @@ namespace trace {
 					texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 					texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 					texture_desc.m_usage = UsageFlag::DEFAULT;
-					if (texture_manager->LoadTexture(material.bump_texname, texture_desc))
-						mat.m_normalMap = { texture_manager->GetTexture(material.bump_texname), BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadTexture, texture_manager) };
+					if (Ref<GTexture> nrm = texture_manager->LoadTexture(material.bump_texname, texture_desc))
+						mat.m_normalMap = nrm;
 					else
 						TRC_ERROR("Failed to load texture {}", material.bump_texname);
 				}
@@ -554,22 +557,17 @@ namespace trace {
 					sp
 				);
 
-				_mi = { material_manager->GetMaterial(material.name), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, material_manager) };
+				_mi = material_manager->GetMaterial(material.name);
 
 			}
 
-			Model* _model = nullptr;
-			if (model_manager->LoadModel(
-				verts,
-				_inds,
-				s.name
-			))
+			Ref<Model> _model = model_manager->LoadModel(verts,_inds,s.name);
+			if (_model.is_valid())
 			{
-				_model = model_manager->GetModel(s.name);
 				_model->m_matInstance = _mi;
 			}
 
-			_mesh->GetModels().push_back({ _model, BIND_RESOURCE_UNLOAD_FN(ModelManager::UnLoadModel, model_manager) });
+			_mesh->GetModels().push_back(_model);
 		}
 
 		

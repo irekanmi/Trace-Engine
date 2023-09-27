@@ -6,7 +6,7 @@
 #include "core/FileSystem.h"
 #include "spirv_cross/spirv_reflect.h"
 #include "render/GShader.h"
-#include "resource/ResourceSystem.h"
+#include "resource/ShaderManager.h"
 #include <filesystem>
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
@@ -21,7 +21,7 @@ public:
 		const char* requesting_source,
 		size_t include_depth) override
 	{
-		std::string shader_res_path = trace::ResourceSystem::get_instance()->GetShaderResourcePath();
+		std::string shader_res_path = trace::ShaderManager::get_instance()->GetShaderResourcePath();
 		std::filesystem::path path(shader_res_path);
 		path /= requested_source;
 

@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "backends/UIutils.h"
 #include "scene/SceneManager.h"
+#include "resource/MeshManager.h"
 #include "scene/Entity.h"
 #include "scene/Componets.h"
 #include "glm/gtc/type_ptr.hpp"
@@ -24,22 +25,29 @@ namespace trace {
 
 	bool TraceEditor::Init()
 	{
-		m_viewportSize = { 800.0f, 600.0f };
 
 		UIFuncLoader::LoadImGuiFunc();
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
-
 		m_hierachyPanel.m_editor = this;
 		m_inspectorPanel.m_editor = this;
 
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_CLOSE, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_MOVE, BIND_EVENT_FN(TraceEditor::OnEvent));
-		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_TYPED, BIND_EVENT_FN(TraceEditor::OnEvent));
+		// Register Events
+		{
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_CLOSE, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_MOVE, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_DB_CLICK, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_TYPED, BIND_EVENT_FN(TraceEditor::OnEvent));
+		};
+
+		//TEMP: Finding project path
+		{
+
+		};
 
 		editor_cam.SetCameraType(CameraType::PERSPECTIVE);
 		editor_cam.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
@@ -50,26 +58,19 @@ namespace trace {
 		editor_cam.SetNear(0.1f);
 		editor_cam.SetFar(1500.0f);
 
-		point_light.position = { 0.0f, 2.5f, 2.0f, 0.0f };
-		point_light.direction = { -0.3597f, 0.4932f, -0.7943f, 0.0f };
-		point_light.color = { 0.37f, 0.65f, 0.66f, 1.0f };
-		point_light.params1 = { 1.0f, 0.022f, 0.0019f, glm::cos(glm::radians(6.0f)) };
-		point_light.params2 = { glm::cos(glm::radians(30.0f)), 5.5f, 0.0f, 0.0f };
+		// Temp
+		{
+			Ref<Mesh> sphere = MeshManager::get_instance()->GetDefault("Sphere");
+			Ref<Mesh> cube = MeshManager::get_instance()->GetDefault("Cube");
+			m_currentScene = SceneManager::get_instance()->CreateScene();
+			Entity first_ent = m_currentScene->CreateEntity("Camera Entity");
+			Entity third_ent = m_currentScene->CreateEntity("Cube");
+			m_currentScene->CreateEntity("Sphere").AddComponent<MeshComponent>(sphere);
 
-
-		Ref<Mesh> sphere = ResourceSystem::get_instance()->GetDefaultMesh("Sphere");
-		Ref<Mesh> cube = ResourceSystem::get_instance()->GetDefaultMesh("Cube");
-		m_currentScene = SceneManager::get_instance()->CreateScene();
-		Entity first_ent = m_currentScene->CreateEntity("Camera Entity");
-		Entity second_ent = m_currentScene->CreateEntity("Light Entity");
-		Entity third_ent = m_currentScene->CreateEntity("Mesh Cube");
-		m_currentScene->CreateEntity().AddComponent<MeshComponent>(sphere);
-		
-		first_ent.GetComponent<TransformComponent>()._transform.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
-		first_ent.AddComponent<CameraComponent>(editor_cam, true);
-		second_ent.AddComponent<LightComponent>(point_light, LightType::POINT, sphere);
-		third_ent.AddComponent<MeshComponent>(cube);
-
+			first_ent.GetComponent<TransformComponent>()._transform.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
+			first_ent.AddComponent<CameraComponent>(editor_cam, true);
+			third_ent.AddComponent<MeshComponent>(cube);
+		};
 		return true;
 	}
 
@@ -97,10 +98,11 @@ namespace trace {
 
 	void TraceEditor::Render(float deltaTime)
 	{
-		static bool show_demo = true;
+		static bool show_demo = false;
 		static float seek_time = 1.0f;
 		static float elapsed = 0.0f;
 		static float FPS = 0.0f;
+		m_viewportSize = { 800.0f, 600.0f };
 
 		// DockSpace
 		{
@@ -121,8 +123,12 @@ namespace trace {
 
 			ImGui::PopStyleVar(2);
 
+			ImGuiStyle& style = ImGui::GetStyle();
+			float min_window_size = style.WindowMinSize.x;
+			style.WindowMinSize.x = 265.0f;
 			ImGuiID dockspace_id = ImGui::GetID("DockSpace");
 			ImGui::DockSpace(dockspace_id);
+			style.WindowMinSize.x = min_window_size;
 
 
 			if (ImGui::BeginMenuBar())
@@ -142,7 +148,7 @@ namespace trace {
 						if (ImGui::MenuItem("Light Yellow Theme")) { light_yellow(); }
 						if (ImGui::MenuItem("Dark Green Theme")) { dark_green(); }
 						if (ImGui::MenuItem("Dark Red Theme")) { dark_red(); }
-						if (ImGui::MenuItem("Embrace Yhe Darkness")) { embraceTheDarkness(); }
+						if (ImGui::MenuItem("Embrace The Darkness")) { embraceTheDarkness(); }
 						if (ImGui::MenuItem("Dark Purple Theme")) { dark_purple(); }
 						if (ImGui::MenuItem("Custom Solid Theme")) { custom_solid(); }
 
@@ -178,8 +184,6 @@ namespace trace {
 			}
 			ImGui::TextColored({ .0f, .59f, .40f, 1.0f }, "Coker Ayanfe");
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
-			ImGui::ColorEdit4("Light Color", glm::value_ptr(point_light.color));
-			ImGui::DragFloat("Light Intensity", &point_light.params2.y, 0.05f, 0.0f, 0.0f);
 			
 			ImGui::End();
 		}
@@ -273,6 +277,12 @@ namespace trace {
 		{
 			trace::MouseMove* move = reinterpret_cast<trace::MouseMove*>(p_event);
 			io.AddMousePosEvent(move->m_x, move->m_y);
+			break;
+		}
+		case trace::EventType::TRC_MOUSE_DB_CLICK:
+		{
+			trace::MouseDBClick* click = reinterpret_cast<trace::MouseDBClick*>(p_event);
+			io.AddMouseButtonEvent(translateButtonTrace_ImGui(click->m_button), true);
 			break;
 		}
 

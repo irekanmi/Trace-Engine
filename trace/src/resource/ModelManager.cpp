@@ -33,36 +33,41 @@ namespace trace {
 		}
 
 	}
-	Model* ModelManager::GetModel(const std::string& name)
+	Ref<Model> ModelManager::GetModel(const std::string& name)
 	{
+		Ref<Model> result;
+		Model* _model = nullptr;
 		uint32_t _id = m_hashtable.Get(name);
 		if (_id == INVALID_ID)
 		{
 			TRC_ERROR("Please ensure model has been loaded => {}", name.c_str());
-			return nullptr;
+			return result;
 		}
 
-
-		return &m_models[_id];
+		_model = &m_models[_id];
+		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
+		return result;
 	}
-	bool ModelManager::LoadModel(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& name)
+	Ref<Model> ModelManager::LoadModel(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& name)
 	{
-		bool found = false;
+		Ref<Model> result;
+		Model* _model = nullptr;
 		for (uint32_t i = 0; i < m_numModelUnits; i++)
 		{
-
 			if (m_models[i].m_id == INVALID_ID)
 			{
 				m_models[i].Init(vertices, indices);
 				m_models[i].m_id = i;
 				m_hashtable.Set(name, i);
-				found = true;
+				_model = &m_models[i];
+				_model->m_path = name;
 				break;
 			}
 
 		}
 
-		return found;
+		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
+		return result;
 	}
 	void ModelManager::UnLoadModel(Model* model)
 	{

@@ -3,6 +3,11 @@
 #include "Transform.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/quaternion.hpp"
+#include "glm/gtx/euler_angles.hpp"
+
+
+
+
 
 namespace trace {
 
@@ -65,6 +70,11 @@ namespace trace {
 		return m_model;
 	}
 
+	glm::vec3 Transform::GetRotationEuler()
+	{
+		return glm::degrees(glm::eulerAngles(m_rotation));
+	}
+
 	void Transform::SetPosition(glm::vec3 position)
 	{
 		m_position = position;
@@ -83,6 +93,12 @@ namespace trace {
 		m_dirty = true;
 	}
 
+	void Transform::SetRotationEuler(glm::vec3 rotation)
+	{
+		m_rotation = glm::quat(glm::radians(rotation));
+		m_dirty = true;
+	}
+
 	void Transform::Translate(glm::vec3 value)
 	{
 		m_position += value;
@@ -93,6 +109,12 @@ namespace trace {
 	void Transform::Rotate(float value, glm::vec3 direction)
 	{
 		m_rotation = glm::rotate(m_rotation, glm::radians(value), direction);
+		m_dirty = true;
+	}
+
+	void Transform::Rotate(glm::vec3 euler)
+	{
+		m_rotation = glm::quat(glm::radians(euler));
 		m_dirty = true;
 	}
 

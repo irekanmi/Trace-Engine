@@ -103,7 +103,7 @@ namespace trace {
 #include "core/platform/Vulkan/VKtypes.h"
 #include "core/platform/Vulkan/VkUtils.h"
 #include "core/events/EventsSystem.h"
-#include "resource/ResourceSystem.h"
+#include "resource/FontManager.h"
 #include "render/GRenderPass.h"
 #include "render/render_graph/RenderGraph.h"
 #include "render/GTexture.h"
@@ -340,7 +340,7 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
-	std::string font_path = trace::ResourceSystem::get_instance()->GetFontResourcePath() + "/monos.ttf";
+	std::string font_path = trace::FontManager::get_instance()->GetFontResourcePath() + "/monos.ttf";
 	io.FontDefault = io.Fonts->AddFontFromFileTTF(font_path.c_str(), 13.0f);
 
 

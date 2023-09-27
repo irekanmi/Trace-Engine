@@ -64,7 +64,7 @@ namespace trace {
 
 #include "msdf-atlas-gen/msdf-atlas-gen.h"
 #include "msdfgen.h"
-#include "resource/ResourceSystem.h"
+#include "resource/TextureManager.h"
 
 struct MSDF_Handle
 {
@@ -111,7 +111,7 @@ bool submitAtlasBitmapAndLayout(msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3>
 	tex_desc.m_numLayers = 1;
 	tex_desc.m_usage = trace::UsageFlag::DEFAULT;
 
-	font->SetAtlas(trace::ResourceSystem::get_instance()->CreateTexture(name, tex_desc));
+	font->SetAtlas(trace::TextureManager::get_instance()->CreateTexture(name, tex_desc));
 	TRC_ASSERT(font->GetAtlas().is_valid(), "Texture Creation Failed");
 
 	bool result = true;

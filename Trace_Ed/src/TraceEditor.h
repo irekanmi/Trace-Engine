@@ -4,6 +4,7 @@
 #include "panels/InspectorPanel.h"
 
 #include "scene/Scene.h"
+#include <filesystem>
 
 namespace trace {
 
@@ -37,9 +38,9 @@ namespace trace {
 		bool m_viewportHovered;
 
 		Camera editor_cam;
-		Light point_light;
 		Ref<Scene> m_currentScene;
-
+		
+		std::filesystem::path current_project_path;
 		static TraceEditor* s_instance;
 	protected:
 		friend EditorRenderComposer;

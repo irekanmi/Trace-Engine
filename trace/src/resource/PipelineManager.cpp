@@ -54,44 +54,49 @@ namespace trace {
 		}
 
 	}
-	bool PipelineManager::CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill)
+	Ref<GPipeline> PipelineManager::CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill)
 	{
-
-
-
-		bool found = false;
+		Ref<GPipeline> result;
+		GPipeline* _pipe = nullptr;
 		for (uint32_t i = 0; i < m_numEntries; i++)
 		{
 			if (m_pipelines[i].m_id == INVALID_ID)
 			{
-				RenderFunc::CreatePipeline(&m_pipelines[i], desc);
+				if (!RenderFunc::CreatePipeline(&m_pipelines[i], desc))
+				{
+					TRC_ERROR("Failed to create pipeline {}", name);
+					return result;
+				}
 				if (!RenderFunc::InitializePipeline(&m_pipelines[i]))
-					return false;
+				{
+					TRC_ERROR("Failed to initialize pipeline {}", name);
+					RenderFunc::DestroyPipeline(&m_pipelines[i]);
+					return result;
+				}
 				m_pipelines[i].m_id = i;
 				m_hashtable.Set(name, i);
-				found = true;
+				_pipe = &m_pipelines[i];
+				_pipe->m_path = name;
 				break;
 			}
 		}
 
-		if (!found)
-		{
-			TRC_ERROR("Failed to create pipeline {}", name);
-			return false;
-		}
-
-		return true;
+		result = { _pipe, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
+		return result;
 	}
-	GPipeline* PipelineManager::GetPipeline(const std::string& name)
+	Ref<GPipeline> PipelineManager::GetPipeline(const std::string& name)
 	{
+		Ref<GPipeline> result;
+		GPipeline* _pipe = nullptr;
 		uint32_t hash = m_hashtable.Get(name);
-
-		if (hash != INVALID_ID)
+		if (hash == INVALID_ID)
 		{
-			return &m_pipelines[hash];
+			return result;
 		}
 
-		return nullptr;
+		_pipe = &m_pipelines[hash];
+		result = { _pipe, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
+		return result;
 	}
 	Ref<GPipeline> PipelineManager::GetDefault(const std::string& name)
 	{
@@ -129,8 +134,8 @@ namespace trace {
 
 				ShaderManager::get_instance()->CreateShader("cubemap.vert.glsl", ShaderStage::VERTEX_SHADER);
 				ShaderManager::get_instance()->CreateShader("cubemap.frag.glsl", ShaderStage::PIXEL_SHADER);
-				VertShader = ShaderManager::get_instance()->GetShader("cubemap.vert.glsl");
-				FragShader = ShaderManager::get_instance()->GetShader("cubemap.frag.glsl");
+				VertShader = ShaderManager::get_instance()->GetShader("cubemap.vert.glsl").get();
+				FragShader = ShaderManager::get_instance()->GetShader("cubemap.frag.glsl").get();
 
 				ShaderResources s_res = {};
 				ShaderParser::generate_shader_resources(VertShader, s_res);
@@ -148,24 +153,20 @@ namespace trace {
 					false
 				);
 				_ds1.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
-
-
-
-				if (!CreatePipeline(_ds1, "skybox_pipeline"))
+				skybox_pipeline = CreatePipeline(_ds1, "skybox_pipeline");
+				if (!skybox_pipeline)
 				{
 					TRC_ERROR("Failed to initialize or create default skybox_pipeline");
 					return false;
 				}
-
-				skybox_pipeline = { GetPipeline("skybox_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };
 			}
 
 		{
 
 			ShaderManager::get_instance()->CreateShader("lights.vert.glsl", ShaderStage::VERTEX_SHADER);
 			ShaderManager::get_instance()->CreateShader("lights.frag.glsl", ShaderStage::PIXEL_SHADER);
-			VertShader = ShaderManager::get_instance()->GetShader("lights.vert.glsl");
-			FragShader = ShaderManager::get_instance()->GetShader("lights.frag.glsl");
+			VertShader = ShaderManager::get_instance()->GetShader("lights.vert.glsl").get();
+			FragShader = ShaderManager::get_instance()->GetShader("lights.frag.glsl").get();
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader, s_res);
@@ -185,20 +186,19 @@ namespace trace {
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
 
-
-			if (!CreatePipeline(_ds2, "light_pipeline"))
+			light_pipeline = CreatePipeline(_ds2, "light_pipeline");
+			if (!light_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create light_pipeline");
 				return false;
 			}
-			light_pipeline = { GetPipeline("light_pipeline") , BIND_RESOURCE_UNLOAD_FN(PipelineManager::unloadDefault, this) };;
 
 		};
 		{
 			ShaderManager::get_instance()->CreateShader("quad.vert.glsl", ShaderStage::VERTEX_SHADER);
 			ShaderManager::get_instance()->CreateShader("quad.frag.glsl", ShaderStage::PIXEL_SHADER);
-			GShader* VertShader = ShaderManager::get_instance()->GetShader("quad.vert.glsl");
-			GShader* FragShader = ShaderManager::get_instance()->GetShader("quad.frag.glsl");
+			GShader* VertShader = ShaderManager::get_instance()->GetShader("quad.vert.glsl").get();
+			GShader* FragShader = ShaderManager::get_instance()->GetShader("quad.frag.glsl").get();
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader, s_res);
@@ -218,8 +218,8 @@ namespace trace {
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
 			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
 
-
-			if (!CreatePipeline(_ds2, "quad_batch_pipeline"))
+			quad_pipeline = CreatePipeline(_ds2, "quad_batch_pipeline");
+			if (!quad_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create quad_batch_pipeline");
 				return false;
@@ -229,8 +229,8 @@ namespace trace {
 		{
 			ShaderManager::get_instance()->CreateShader("text.vert.glsl", ShaderStage::VERTEX_SHADER);
 			ShaderManager::get_instance()->CreateShader("text_MSDF.frag.glsl", ShaderStage::PIXEL_SHADER);
-			GShader* VertShader = ShaderManager::get_instance()->GetShader("text.vert.glsl");
-			GShader* FragShader = ShaderManager::get_instance()->GetShader("text_MSDF.frag.glsl");
+			GShader* VertShader = ShaderManager::get_instance()->GetShader("text.vert.glsl").get();
+			GShader* FragShader = ShaderManager::get_instance()->GetShader("text_MSDF.frag.glsl").get();
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader, s_res);
@@ -260,12 +260,41 @@ namespace trace {
 			_ds2.blend_state = clr_bld;
 			_ds2.depth_sten_state = { false, false, 0.0f, 1.0f };
 
-
-			if (!CreatePipeline(_ds2, "text_batch_pipeline"))
+			text_pipeline = CreatePipeline(_ds2, "text_batch_pipeline");
+			if (!text_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create quad_batch_pipeline");
 				return false;
 			}
+		};
+
+		{
+
+			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("trace_core.shader.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("g_buffer.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
+
+			PipelineStateDesc _ds;
+			_ds.vertex_shader = VertShader.get();
+			_ds.pixel_shader = FragShader.get();
+			_ds.resources = s_res;
+
+			AutoFillPipelineDesc(
+				_ds
+			);
+			_ds.render_pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
+			_ds.blend_state.alpha_to_blend_coverage = false;
+
+			gbuffer_pipeline = CreatePipeline(_ds, "gbuffer_pipeline");
+			if (!gbuffer_pipeline)
+			{
+				TRC_ERROR("Failed to initialize or create default gbuffer pipeline");
+				return false;
+			}
+
 		};
 
 		return true;

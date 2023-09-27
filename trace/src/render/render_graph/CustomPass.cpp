@@ -62,7 +62,6 @@ namespace trace {
 
 		pass->AddColorAttachmentOuput(color_output_index);
 
-		m_pipeline = ResourceSystem::get_instance()->GetPipeline("custom_pass_pipeline");
 
 
 		pass->SetRunCB([=](std::vector<uint32_t>& inputs)

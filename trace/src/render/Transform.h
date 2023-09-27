@@ -30,6 +30,8 @@ namespace trace {
 		glm::quat GetRotation();
 		// Return the local space matrix
 		glm::mat4 GetLocalMatrix();
+		// Return the rotation in euler angle
+		glm::vec3 GetRotationEuler();
 
 		// Overrides current position
 		void SetPosition(glm::vec3 position);
@@ -37,9 +39,12 @@ namespace trace {
 		void SetScale(glm::vec3 scale);
 		// Overrides current rotation
 		void SetRotation(glm::quat rotation);
+		// Overrides current rotation
+		void SetRotationEuler(glm::vec3 rotation);
 
 		void Translate(glm::vec3 value);
 		void Rotate(float value, glm::vec3 direction);
+		void Rotate(glm::vec3 euler);
 		void Scale(float value);
 
 	private:

@@ -91,25 +91,36 @@ namespace trace {
 
 	}
 
-	GShader* ShaderManager::GetShader(const std::string& name)
+	Ref<GShader> ShaderManager::GetShader(const std::string& name)
 	{
+		Ref<GShader> result;
+		GShader* _shad = nullptr;
 		uint32_t hash = m_hashTable.Get(name);
 		if (hash == INVALID_ID)
 		{
 			TRC_WARN("{} Shader has not been created yet", name);
-			return nullptr;
+			return result;
 		}
-
-		return &m_shaders[hash];
+		_shad = &m_shaders[hash];
+		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
+		return result;
 	}
 
-	bool ShaderManager::CreateShader(const std::string& name, ShaderStage shader_stage)
+	Ref<GShader> ShaderManager::CreateShader(const std::string& name, ShaderStage shader_stage)
 	{
+		return CreateShader_((shader_resource_path/name).string(), shader_stage);
+	}
 
+	Ref<GShader> ShaderManager::CreateShader_(const std::string& path, ShaderStage shader_stage)
+	{
+		std::filesystem::path p(path);
+		std::string name = p.filename().string();
+		Ref<GShader> result;
+		GShader* _shad = nullptr;
 		if (m_hashTable.Get(name) != INVALID_ID)
 		{
 			TRC_WARN("Shader {} already exists", name);
-			return true;
+			return GetShader(name);
 		}
 
 		uint32_t i = 0;
@@ -117,21 +128,23 @@ namespace trace {
 		{
 			if (shader.m_id == INVALID_ID)
 			{
-				std::string shader_data = ShaderParser::load_shader_file((shader_resource_path / name ).string());
+				std::string shader_data = ShaderParser::load_shader_file(path);
 				if (RenderFunc::CreateShader(&shader, shader_data, shader_stage))
 				{
 					shader.m_id = i;
 					m_hashTable.Set(name, i);
+					shader.m_path = p;
+					_shad = &shader;
 					break;
 				}
 				TRC_ERROR("Failed to create shader => {}", name);
-				return false;
 				break;
 			}
 			i++;
 		}
 
-		return true;
+		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
+		return result;
 	}
 
 	void ShaderManager::UnloadShader(GShader* shader)

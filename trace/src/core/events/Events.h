@@ -26,6 +26,7 @@ namespace trace {
 		TRC_BUTTON_PRESSED,
 		TRC_BUTTON_RELEASED,
 		TRC_MOUSE_MOVE,
+		TRC_MOUSE_DB_CLICK,
 
 		MAX_EVENTS
 	};
@@ -215,6 +216,20 @@ namespace trace {
 		float m_y;
 	private:
 	protected:
+	};
+
+	class TRACE_API MouseDBClick : public Event
+	{
+
+	public:
+		MouseDBClick(Buttons buttons);
+		~MouseDBClick();
+
+		virtual const char* GetName() override { return _STR(MouseDBClick); }
+		Buttons m_button;
+	private:
+	protected:
+
 	};
 
 }

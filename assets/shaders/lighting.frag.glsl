@@ -80,7 +80,7 @@ vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, v
 {
     vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
     mat3 view_mat = mat3(view);
-    vec3 light_direction = view_mat * u_gLights[index].direction.xyz;
+    vec3 light_direction = normalize(view_mat * u_gLights[index].direction.xyz);
     float _lgt_intensity = u_gLights[index].params2.y;
     vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
     

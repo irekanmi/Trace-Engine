@@ -64,6 +64,7 @@ namespace trace {
 		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
+		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type);
 
 
 		// Getters

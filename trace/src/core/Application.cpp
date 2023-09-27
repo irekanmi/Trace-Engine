@@ -116,8 +116,7 @@ namespace trace
 
 		Renderer* renderer = Renderer::get_instance();
 		renderer->Start();
-
-		ResourceSystem::get_instance()->LoadDefaults();
+		ResourceSystem::LoadDefaults();
 
 		//----------CLIENT--------------//
 		m_client_start();

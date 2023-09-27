@@ -3,6 +3,7 @@
 #include "core/Core.h"
 #include "core/Enums.h"
 #include "render/GShader.h"
+#include "Ref.h"
 #include "HashTable.h"
 #include <string>
 #include <filesystem>
@@ -19,8 +20,9 @@ namespace trace {
 		bool Init(uint32_t max_shader_units);
 		void ShutDown();
 
-		GShader* GetShader(const std::string& name);
-		bool CreateShader(const std::string& name, ShaderStage shader_stage);
+		Ref<GShader> GetShader(const std::string& name);
+		Ref<GShader> CreateShader(const std::string& name, ShaderStage shader_stage);
+		Ref<GShader> CreateShader_(const std::string& path, ShaderStage shader_stage);
 		void UnloadShader(GShader* shader);
 		std::string GetShaderResourcePath() { return shader_resource_path.string(); }
 

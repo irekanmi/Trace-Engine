@@ -54,13 +54,14 @@ namespace trace {
 	}
 
 
-	bool MaterialManager::CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline)
+	Ref<MaterialInstance> MaterialManager::CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline)
 	{
-
+		Ref<MaterialInstance> result;
+		MaterialInstance* _mat = nullptr;
 		if (m_hashtable.Get(name) != INVALID_ID)
 		{
 			TRC_WARN("Material {} already exists", name);
-			return true;
+			return result;
 		}
 
 		uint32_t i = 0;
@@ -75,29 +76,34 @@ namespace trace {
 				))
 				{
 					TRC_WARN("Failed to initialize material {}", name);
-					return false;
+					return result;
 				}
 				mat_instance.m_id = i;
 				m_hashtable.Set(name, i);
+				_mat = &mat_instance;
+				_mat->m_path = name;
 				break;
 			}
 			i++;
 		}
 
-		return true;
+		result = { _mat, BIND_RENDER_COMMAND_FN(MaterialManager::Unload) };
+		return result;
 	}
 
-	MaterialInstance* MaterialManager::GetMaterial(const std::string& name)
+	Ref<MaterialInstance> MaterialManager::GetMaterial(const std::string& name)
 	{
-
+		Ref<MaterialInstance> result;
+		MaterialInstance* _mat = nullptr;
 		uint32_t hash = m_hashtable.Get(name);
-		if (hash != INVALID_ID)
+		if (hash == INVALID_ID)
 		{
-			return &m_materials[hash];
+			return result;
 		}
 
-		TRC_WARN("Failed to create material {} please ensure material has been created", name);
-		return nullptr;
+		_mat = &m_materials[hash];
+		result = { _mat, BIND_RENDER_COMMAND_FN(MaterialManager::Unload) };
+		return result;
 	}
 
 	void MaterialManager::Unload(MaterialInstance* material)
@@ -125,14 +131,13 @@ namespace trace {
 		mat.m_diffuseColor = glm::vec4(1.0f);
 		mat.m_shininess = 32.0f;
 
-		Ref<GPipeline> sp = { pipeline_manager->GetPipeline("gbuffer_pipeline"), BIND_RESOURCE_UNLOAD_FN(PipelineManager::Unload, pipeline_manager) };
-		this->CreateMaterial(
+		Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
+		default_material  = CreateMaterial(
 			"default",
 			mat,
 			sp
 		);
-
-		default_material = { this->GetMaterial("default"), BIND_RESOURCE_UNLOAD_FN(MaterialManager::Unload, this) };
+		default_material->m_path = "default";
 
 		return true;
 	}

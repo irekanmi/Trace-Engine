@@ -84,6 +84,8 @@ namespace trace {
 			light._light.position = glm::vec4(transform._transform.GetPosition(), 0.0f);
 			if (light._mesh.is_valid())
 				renderer->DrawLight(cmd_list, light._mesh, light._light, light.light_type);
+			else
+				renderer->AddLight(cmd_list, light._light, light.light_type);
 		}
 
 		auto group = m_registry.group<MeshComponent, TransformComponent>();
