@@ -39,7 +39,7 @@ namespace trace {
 		static void write(void* data, size_t sizeBytes, FileHandle& file);
 
 		static void readline(FileHandle& file, std::string& out_line);
-		static void writeline(FileHandle& file, const std::string& line);
+		static void writestring(FileHandle& file, const std::string& line);
 
 		static void read_all_bytes(FileHandle& file, void* data, uint32_t& read_bytes);
 		static void read_all_lines(FileHandle& file, std::string& out);

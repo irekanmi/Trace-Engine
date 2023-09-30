@@ -28,6 +28,7 @@ namespace trace {
 		void DestroyEntity(Entity entity);
 
 		std::string& GetName() { return m_name; }
+		void SetName(const std::string& name) { m_name = name; }
 
 	private:
 		entt::registry m_registry;
@@ -37,6 +38,7 @@ namespace trace {
 		friend class Entity;
 		friend class TraceEditor;
 		friend class HierachyPanel;
+		friend class SceneSerializer;
 	};
 
 }

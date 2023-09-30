@@ -81,14 +81,18 @@ namespace trace {
 		result = FontManager::get_instance()->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default fonts");
 
-		result = MeshManager::get_instance()->LoadDefaults();
-		TRC_ASSERT(result, "Failed to load default meshes");
-
 		result = PipelineManager::get_instance()->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default pipelines");
 
 		result = MaterialManager::get_instance()->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default materials");
+
+		result = MeshManager::get_instance()->LoadDefaults();
+		TRC_ASSERT(result, "Failed to load default meshes");
+
+		
+
+		
 
 		return result;
 	}

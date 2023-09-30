@@ -62,6 +62,7 @@ namespace trace {
 		void BeginScene(CommandList& cmd_list, Camera* _camera);
 		void EndScene(CommandList& cmd_list);
 		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model);
+		void DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
 		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type);

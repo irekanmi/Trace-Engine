@@ -26,6 +26,7 @@ IncludeDir["msdfgen"] = "externals/msdfgen"
 IncludeDir["msdf_atlas_gen"] = "externals/msdf_atlas_gen"
 IncludeDir["imgui"] = "externals/imgui"
 IncludeDir["entt"] = "externals/entt"
+IncludeDir["yaml_cpp"] = "externals/yaml_cpp"
 
 
 project "trace"
@@ -65,6 +66,7 @@ project "trace"
 		"%{IncludeDir.msdf_atlas_gen}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.entt}",
+		"%{IncludeDir.yaml_cpp}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -87,7 +89,8 @@ project "trace"
 		"spirv-cross-cpp.lib",
 		"spirv-cross-glsl.lib",
 		"msdfgen.lib",
-		"msdf_atlas_gen.lib"
+		"msdf_atlas_gen.lib",
+		"yaml_cpp.lib"
 	}
 	
 	filter "files:trace/_externals/**.cpp"

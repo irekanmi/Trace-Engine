@@ -348,6 +348,7 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\scene\SceneSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -623,5 +624,6 @@
     <ClCompile Include="src\scene\SceneManager.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\SceneSerializer.cpp" />
   </ItemGroup>
 </Project>

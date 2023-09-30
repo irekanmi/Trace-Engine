@@ -75,4 +75,12 @@ namespace trace {
 			:_mesh(data){}
 	};
 
+	struct ModelComponent
+	{
+		Ref<Model> _model;
+		ModelComponent() = default;
+		ModelComponent(Ref<Model> data)
+			:_model(data) {}
+	};
+
 }

@@ -2,10 +2,12 @@
 #include "imgui.h"
 #include "backends/UIutils.h"
 #include "scene/SceneManager.h"
+#include "resource/ModelManager.h"
 #include "resource/MeshManager.h"
 #include "scene/Entity.h"
 #include "scene/Componets.h"
 #include "glm/gtc/type_ptr.hpp"
+#include "scene/SceneSerializer.h"
 
 int translateKeyTrace_ImGui(trace::Keys key);
 int translateButtonTrace_ImGui(trace::Buttons button);
@@ -60,16 +62,22 @@ namespace trace {
 
 		// Temp
 		{
-			Ref<Mesh> sphere = MeshManager::get_instance()->GetDefault("Sphere");
-			Ref<Mesh> cube = MeshManager::get_instance()->GetDefault("Cube");
-			m_currentScene = SceneManager::get_instance()->CreateScene();
+			//Ref<Mesh> _f = MeshManager::get_instance()->LoadMesh("falcon.obj");
+			Ref<Model> falcon = ModelManager::get_instance()->GetModel("Plane_Plane.001");
+
+			Ref<Model> sphere = ModelManager::get_instance()->GetModel("Sphere");
+			Ref<Model> cube = ModelManager::get_instance()->GetModel("Cube");
+			m_currentScene = SceneManager::get_instance()->CreateScene("Sample Scene");
 			Entity first_ent = m_currentScene->CreateEntity("Camera Entity");
 			Entity third_ent = m_currentScene->CreateEntity("Cube");
-			m_currentScene->CreateEntity("Sphere").AddComponent<MeshComponent>(sphere);
+			//m_currentScene->CreateEntity("Falcon").AddComponent<ModelComponent>(falcon);
+			m_currentScene->CreateEntity("Sphere").AddComponent<ModelComponent>(sphere);
 
 			first_ent.GetComponent<TransformComponent>()._transform.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
 			first_ent.AddComponent<CameraComponent>(editor_cam, true);
-			third_ent.AddComponent<MeshComponent>(cube);
+			third_ent.AddComponent<ModelComponent>(cube);
+
+			SceneSerializer::Serialize(m_currentScene, "../assets/scenes/SampleScene.trscn");
 		};
 		return true;
 	}
@@ -184,18 +192,18 @@ namespace trace {
 			}
 			ImGui::TextColored({ .0f, .59f, .40f, 1.0f }, "Coker Ayanfe");
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
-			
-			ImGui::End();
 		}
+		ImGui::End();
 		elapsed += deltaTime;
 		
 		// -------------------/////////////////-----------------------------------
 		m_hierachyPanel.Render(deltaTime);
 
-		ImGui::Begin("Inspector");
-		if (m_hierachyPanel.m_selectedEntity)
-			m_inspectorPanel.DrawEntityComponent(m_hierachyPanel.m_selectedEntity);
-
+		if (ImGui::Begin("Inspector"))
+		{
+			if (m_hierachyPanel.m_selectedEntity)
+				m_inspectorPanel.DrawEntityComponent(m_hierachyPanel.m_selectedEntity);
+		}
 		ImGui::End();
 
 	}

@@ -152,7 +152,7 @@ namespace trace {
 		}
 		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 	}
-	void FileSystem::writeline(FileHandle& file, const std::string& line)
+	void FileSystem::writestring(FileHandle& file, const std::string& line)
 	{
 		if (file.m_isVaild)
 		{

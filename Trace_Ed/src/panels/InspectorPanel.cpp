@@ -135,7 +135,7 @@ namespace trace {
 		ImGui::NextColumn();
 		void* a = nullptr;
 		UIFunc::GetDrawTextureHandle(tex.get(), a);
-		ImGui::ImageButton(a, ImVec2(64.0f, 32.0f));
+		ImGui::ImageButton(a, ImVec2(32.0f, 32.0f));
 		ImGui::Columns(1);
 
 		ImGui::Columns(2);
@@ -145,7 +145,7 @@ namespace trace {
 		ImGui::NextColumn();
 		void* s = nullptr;
 		UIFunc::GetDrawTextureHandle(tex.get(), s);
-		ImGui::ImageButton(s, ImVec2(64.0f, 32.0f));
+		ImGui::ImageButton(s, ImVec2(32.0f, 32.0f));
 		ImGui::Columns(1);
 
 		ImGui::Columns(2);
@@ -155,7 +155,7 @@ namespace trace {
 		ImGui::NextColumn();
 		void* n = nullptr;
 		UIFunc::GetDrawTextureHandle(tex.get(), n);
-		ImGui::ImageButton(n, ImVec2(64.0f, 32.0f));
+		ImGui::ImageButton(n, ImVec2(32.0f, 32.0f));
 		ImGui::Columns(1);
 
 	}
@@ -345,8 +345,22 @@ namespace trace {
 
 			Ref<Mesh> mesh = comp._mesh;
 			std::string mesh_name = mesh->m_path.string();
-			ImGui::Text(mesh_name.c_str());
-			DrawMaterial(MaterialManager::get_instance()->GetMaterial("default"));
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height};
+			ImGui::Button(mesh_name.c_str(), button_size);
+			});
+
+		DrawComponent<ModelComponent>(entity, "Model", [](Entity obj, ModelComponent& comp) {
+
+			Ref<Model> model = comp._model;
+			std::string model_name = model->GetName();
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+			ImGui::Button(model_name.c_str(), button_size);
+
+			DrawMaterial(model->m_matInstance);
 
 			});
 

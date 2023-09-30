@@ -14,8 +14,9 @@ namespace trace {
 		bool Init(uint32_t num_entries);
 		void Shutdown();
 
-		Ref<Scene> CreateScene();
-		Ref<Scene> CreateScene(const std::string& file_path);
+		Ref<Scene> CreateScene(const std::string& name);
+		Ref<Scene> GetScene(const std::string& name);
+		Ref<Scene> CreateScene_(const std::string& file_path);
 
 		void UnloadScene(Scene* scene);
 

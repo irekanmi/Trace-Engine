@@ -210,7 +210,8 @@ namespace trace {
 
 		generateDefaultCube(verts, _ind);
 		generateVertexTangent(verts, _ind);
-		cube.Init(verts, _ind);
+		Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
+		cube_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
 
 		Mesh* _mesh = nullptr;
 		uint32_t _id = INVALID_ID;
@@ -229,8 +230,6 @@ namespace trace {
 
 		DefaultCube = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
 		_mesh = nullptr;
-		Ref<Model> cube_ref(&cube, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
-
 		DefaultCube->GetModels().push_back(cube_ref);
 		DefaultCube->m_path = "Cube";
 
@@ -239,7 +238,8 @@ namespace trace {
 
 		generateSphere(verts, _ind, 5.0f, 50, 50);
 		generateVertexTangent(verts, _ind);
-		sphere.Init(verts, _ind);
+		Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
+		sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
 
 
 		for (uint32_t k = 0; k < m_numEntries; k++)
@@ -253,8 +253,6 @@ namespace trace {
 				break;
 			}
 		}
-		Ref<Model> sphere_ref(&sphere, BIND_RESOURCE_UNLOAD_FN(MeshManager::unloadDefaultModels, this));
-
 		DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
 		DefaultSphere->GetModels().push_back(sphere_ref);
 		DefaultSphere->m_path = "Sphere";
@@ -400,7 +398,7 @@ namespace trace {
 
 				mat.m_shininess = obj_mesh.MeshMaterial.Ns;
 
-				Ref<Model> _model = model_manager->LoadModel(vert,_ind,obj_mesh.MeshName);
+				Ref<Model> _model = model_manager->LoadModel_(vert,_ind,( path / obj_mesh.MeshName).string());
 				if (_model)
 				{
 					Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
@@ -423,6 +421,7 @@ namespace trace {
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string err;
+		std::string parent_path = (path.parent_path() / "").generic_string();
 
 		bool result = true;
 		std::string name = path.filename().string();
@@ -432,7 +431,7 @@ namespace trace {
 			&materials,
 			&err,
 			path.string().c_str(),
-			path.parent_path().string().c_str()
+			parent_path.c_str()
 		);
 
 		if (!result)
@@ -561,13 +560,13 @@ namespace trace {
 
 			}
 
-			Ref<Model> _model = model_manager->LoadModel(verts,_inds,s.name);
+			Ref<Model> _model = model_manager->LoadModel_(verts,_inds,(path / s.name).string());
 			if (_model.is_valid())
 			{
 				_model->m_matInstance = _mi;
 			}
 
-			_mesh->GetModels().push_back(_model);
+			_mesh->GetModels().emplace_back(_model);
 		}
 
 		

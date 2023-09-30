@@ -47,6 +47,7 @@ namespace trace {
 			{
 				if (mat_instance.m_id == INVALID_ID)
 					continue;
+				TRC_WARN("{} material was still in use ref count {} ", mat_instance.GetName(), mat_instance.m_refCount);
 				mat_instance.~MaterialInstance();
 			}
 			m_materials.clear();
@@ -64,6 +65,7 @@ namespace trace {
 			return result;
 		}
 
+		
 		uint32_t i = 0;
 		for (MaterialInstance& mat_instance : m_materials)
 		{
@@ -82,10 +84,14 @@ namespace trace {
 				m_hashtable.Set(name, i);
 				_mat = &mat_instance;
 				_mat->m_path = name;
+				//Temp ======
+				_mat->m_refCount++;
 				break;
 			}
 			i++;
 		}
+
+		
 
 		result = { _mat, BIND_RENDER_COMMAND_FN(MaterialManager::Unload) };
 		return result;

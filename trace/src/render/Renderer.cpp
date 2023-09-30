@@ -302,6 +302,7 @@ namespace trace {
 		m_opaqueObjectsSize = 0;
 		m_meshLightSize = 0;
 		light_data = glm::ivec4(0);
+		lights.clear();
 
 	}
 
@@ -660,6 +661,20 @@ namespace trace {
 		cmd_list._commands.emplace_back(cmd);
 	}
 
+	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform)
+	{
+		Command cmd;
+		cmd.params.ptrs[0] = _model.get();
+		cmd.func = [&](CommandParams params) {
+			Model* model = (Model*)params.ptrs[0];
+
+			glm::mat4* M_transform = (glm::mat4*)(params.data);
+			m_opaqueObjects[m_opaqueObjectsSize++] = std::make_pair(*M_transform, model);
+		};
+		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
+		cmd_list._commands.emplace_back(cmd);
+	}
+
 	void Renderer::DrawSky(CommandList& cmd_list, SkyBox* sky)
 	{
 
@@ -669,6 +684,7 @@ namespace trace {
 		cmd_list._commands.emplace_back(cmd);
 	}
 
+	//FIX: Find a way if fit the types light in an array {DIRECTIONAL - POINT - SPOT}
 	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& _light, LightType light_type)
 	{
 		Command cmd;
@@ -715,6 +731,7 @@ namespace trace {
 		cmd_list._commands.push_back(cmd);
 	}
 
+	//FIX: Find a way if fit the types light in an array {DIRECTIONAL - POINT - SPOT}
 	void Renderer::AddLight(CommandList& cmd_list, Light& _light, LightType light_type)
 	{
 		Command cmd;

@@ -62,7 +62,15 @@ namespace trace {
 
 			}
 			
-			
+			auto model_group = m_registry.view<ModelComponent, TransformComponent>();
+
+			for (auto entity : model_group)
+			{
+				auto [model, transform] = model_group.get(entity);
+
+				renderer->DrawModel(cmd_list, model._model, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+
+			}
 
 			renderer->EndScene(cmd_list);
 
@@ -95,6 +103,16 @@ namespace trace {
 			auto [mesh, transform] = group.get(entity);
 
 			renderer->DrawMesh(cmd_list, mesh._mesh, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+
+		}
+
+		auto model_group = m_registry.view<ModelComponent, TransformComponent>();
+
+		for (auto entity : model_group)
+		{
+			auto [model, transform] = model_group.get(entity);
+
+			renderer->DrawModel(cmd_list, model._model, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
 
 		}
 

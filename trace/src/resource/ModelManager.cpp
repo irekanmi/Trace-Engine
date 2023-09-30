@@ -69,6 +69,29 @@ namespace trace {
 		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
 		return result;
 	}
+	Ref<Model> ModelManager::LoadModel_(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& path)
+	{
+		std::filesystem::path p(path);
+		std::string name = p.filename().string();
+		Ref<Model> result;
+		Model* _model = nullptr;
+		for (uint32_t i = 0; i < m_numModelUnits; i++)
+		{
+			if (m_models[i].m_id == INVALID_ID)
+			{
+				m_models[i].Init(vertices, indices);
+				m_models[i].m_id = i;
+				m_hashtable.Set(name, i);
+				_model = &m_models[i];
+				_model->m_path = p;
+				break;
+			}
+
+		}
+
+		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
+		return result;
+	}
 	void ModelManager::UnLoadModel(Model* model)
 	{
 
