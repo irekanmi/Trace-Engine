@@ -37,7 +37,7 @@ namespace trace {
 	{
 		Ref<Model> result;
 		Model* _model = nullptr;
-		uint32_t _id = m_hashtable.Get(name);
+		uint32_t& _id = m_hashtable.Get_Ref(name);
 		if (_id == INVALID_ID)
 		{
 			TRC_ERROR("Please ensure model has been loaded => {}", name.c_str());
@@ -45,6 +45,12 @@ namespace trace {
 		}
 
 		_model = &m_models[_id];
+		if (_model->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} model has been destroyed", name);
+			_id = INVALID_ID;
+			return result;
+		}
 		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
 		return result;
 	}
@@ -52,6 +58,12 @@ namespace trace {
 	{
 		Ref<Model> result;
 		Model* _model = nullptr;
+		result = GetModel(name);
+		if (result)
+		{
+			TRC_WARN("{} model has already been loaded", name);
+			return result;
+		}
 		for (uint32_t i = 0; i < m_numModelUnits; i++)
 		{
 			if (m_models[i].m_id == INVALID_ID)
@@ -75,6 +87,12 @@ namespace trace {
 		std::string name = p.filename().string();
 		Ref<Model> result;
 		Model* _model = nullptr;
+		result = GetModel(name);
+		if (result)
+		{
+			TRC_WARN("{} model has already been loaded", name);
+			return result;
+		}
 		for (uint32_t i = 0; i < m_numModelUnits; i++)
 		{
 			if (m_models[i].m_id == INVALID_ID)

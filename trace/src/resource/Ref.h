@@ -36,10 +36,6 @@ public:
 	}
 	void operator=(Ref&& other)
 	{
-		if (!other.is_valid())
-		{
-			return;
-		}
 		if (is_valid())
 		{
 			_ptr->m_refCount--;
@@ -49,10 +45,10 @@ public:
 			}
 		}
 
-		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<{}>", _STR(T));
-		other.get()->m_refCount++;
+		//TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<{}>", _STR(T));
 		_ptr = other._ptr;
 		Unload = other.Unload;
+		if(_ptr) other.get()->m_refCount++;
 	}
 
 

@@ -59,7 +59,8 @@ namespace trace {
 	{
 		Ref<MaterialInstance> result;
 		MaterialInstance* _mat = nullptr;
-		if (m_hashtable.Get(name) != INVALID_ID)
+		result = GetMaterial(name);
+		if (result)
 		{
 			TRC_WARN("Material {} already exists", name);
 			return result;
@@ -101,13 +102,19 @@ namespace trace {
 	{
 		Ref<MaterialInstance> result;
 		MaterialInstance* _mat = nullptr;
-		uint32_t hash = m_hashtable.Get(name);
+		uint32_t& hash = m_hashtable.Get_Ref(name);
 		if (hash == INVALID_ID)
 		{
 			return result;
 		}
 
 		_mat = &m_materials[hash];
+		if (_mat->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} material has been destroyed", name);
+			hash = INVALID_ID;
+			return result;
+		}
 		result = { _mat, BIND_RENDER_COMMAND_FN(MaterialManager::Unload) };
 		return result;
 	}

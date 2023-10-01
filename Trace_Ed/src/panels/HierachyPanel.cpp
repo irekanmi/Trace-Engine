@@ -14,26 +14,28 @@ namespace trace {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
 		ImGui::Begin("Scene Hierachy", 0, ImGuiWindowFlags_NoCollapse);
 
-		for (auto& [entity] : m_editor->m_currentScene->m_registry.storage<entt::entity>().each())
+		if (m_editor->m_currentScene)
 		{
-
-			Entity current_entity(entity, m_editor->m_currentScene.get());
-			DrawEntity(current_entity);
-
-		}
-
-		if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
-			m_selectedEntity = Entity();
-
-		if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
-		{
-			if (ImGui::MenuItem("Create Empty Entity"))
+			for (auto& [entity] : m_editor->m_currentScene->m_registry.storage<entt::entity>().each())
 			{
-				m_editor->m_currentScene->CreateEntity();
-			}
-			ImGui::EndPopup();
-		}
 
+				Entity current_entity(entity, m_editor->m_currentScene.get());
+				DrawEntity(current_entity);
+
+			}
+
+			if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
+				m_selectedEntity = Entity();
+
+			if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+			{
+				if (ImGui::MenuItem("Create Empty Entity"))
+				{
+					m_editor->m_currentScene->CreateEntity();
+				}
+				ImGui::EndPopup();
+			}
+		}
 		ImGui::End();
 		ImGui::PopStyleVar();
 

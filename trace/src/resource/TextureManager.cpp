@@ -119,19 +119,21 @@ namespace trace {
 		GTexture* _tex = nullptr;
 		TextureHash& _hash = m_hashTable.Get_Ref(name);
 
-		if (_hash._id != INVALID_ID)
+		if (_hash._id == INVALID_ID)
 		{
-			_tex = &m_textures[_hash._id];
-			result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+			//TODO: replace with the default texture
+			TRC_ERROR("Please enter a vaild texture");
 			return result;
 		}
-		else
-		{
-			return LoadTexture(name);
-		}
 
-		//TODO: replace with the default texture
-		TRC_ERROR("Please enter a vaild texture");
+		_tex = &m_textures[_hash._id];
+		if (_tex->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} texture has been destroyed", name);
+			_hash._id = INVALID_ID;
+			return result;
+		}
+		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
 		return result;
 	}
 
@@ -197,10 +199,11 @@ namespace trace {
 		GTexture* _tex = nullptr;
 		std::filesystem::path p(path);
 		std::string name = p.filename().string();
-		if (m_hashTable.Get(name)._id != INVALID_ID)
+		result = GetTexture(name);
+		if (result)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);
-			return GetTexture(name);
+			return result;
 		}
 		int _width, _height, _channels;
 		unsigned char* pixel_data = nullptr;
@@ -262,10 +265,11 @@ namespace trace {
 		GTexture* _tex = nullptr;
 		std::filesystem::path p(path);
 		std::string name = p.filename().string();
-		if (m_hashTable.Get(name)._id != INVALID_ID)
+		result = GetTexture(name);
+		if (result)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);
-			return GetTexture(name);
+			return result;
 		}
 
 		int _width, _height, _channels;

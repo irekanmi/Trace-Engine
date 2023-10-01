@@ -59,10 +59,10 @@ namespace trace {
 		editor_cam.SetFov(60.0f);
 		editor_cam.SetNear(0.1f);
 		editor_cam.SetFar(1500.0f);
-
+#if 0
 		// Temp
 		{
-			//Ref<Mesh> _f = MeshManager::get_instance()->LoadMesh("falcon.obj");
+			Ref<Mesh> _f = MeshManager::get_instance()->LoadMesh("falcon.obj");
 			Ref<Model> falcon = ModelManager::get_instance()->GetModel("Plane_Plane.001");
 
 			Ref<Model> sphere = ModelManager::get_instance()->GetModel("Sphere");
@@ -70,15 +70,16 @@ namespace trace {
 			m_currentScene = SceneManager::get_instance()->CreateScene("Sample Scene");
 			Entity first_ent = m_currentScene->CreateEntity("Camera Entity");
 			Entity third_ent = m_currentScene->CreateEntity("Cube");
-			//m_currentScene->CreateEntity("Falcon").AddComponent<ModelComponent>(falcon);
+			m_currentScene->CreateEntity("Falcon").AddComponent<ModelComponent>(falcon);
 			m_currentScene->CreateEntity("Sphere").AddComponent<ModelComponent>(sphere);
 
 			first_ent.GetComponent<TransformComponent>()._transform.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
 			first_ent.AddComponent<CameraComponent>(editor_cam, true);
 			third_ent.AddComponent<ModelComponent>(cube);
 
-			SceneSerializer::Serialize(m_currentScene, "../assets/scenes/SampleScene.trscn");
+			
 		};
+#endif
 		return true;
 	}
 
@@ -97,7 +98,7 @@ namespace trace {
 
 		CommandList cmd_list = renderer->BeginCommandList();
 		renderer->BeginScene(cmd_list, &editor_cam);
-		m_currentScene->OnRender(cmd_list);
+		if(m_currentScene) m_currentScene->OnRender(cmd_list);
 		renderer->EndScene(cmd_list);
 		renderer->SubmitCommandList(cmd_list);
 
@@ -141,8 +142,14 @@ namespace trace {
 
 			if (ImGui::BeginMenuBar())
 			{
-				if (ImGui::BeginMenu("Options"))
+				if (ImGui::BeginMenu("File"))
 				{
+					if (ImGui::MenuItem("Save")) SceneSerializer::Serialize(m_currentScene, "../assets/scenes/SampleScene.trscn");
+					if (ImGui::MenuItem("Load")) m_currentScene = SceneSerializer::Deserialize("../assets/scenes/SampleScene.trscn");
+					if (ImGui::MenuItem("Close Scene"))
+					{
+						m_currentScene = Ref<Scene>();
+					}
 					ImGui::EndMenu();
 				}
 				if (ImGui::BeginMenu("Settings"))
@@ -218,7 +225,7 @@ namespace trace {
 		{
 			m_viewportSize = v_size;
 			editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
-			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
+			if(m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 		}
 		m_viewportFocused = ImGui::IsWindowFocused();
 		m_viewportHovered = ImGui::IsWindowHovered();

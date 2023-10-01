@@ -46,10 +46,10 @@ namespace trace {
 
 		Ref<Scene> result;
 		Scene* _scene = nullptr;
-		uint32_t _id = m_hashTable.Get(name);
-		if (_id != INVALID_ID)
+		result = GetScene(name);
+		if (result)
 		{
-			return GetScene(name);
+			return result;
 		}
 
 		for (uint32_t i = 0; i < m_entries; i++)
@@ -72,13 +72,19 @@ namespace trace {
 	{
 		Ref<Scene> result;
 		Scene* _scene = nullptr;
-		uint32_t _id = m_hashTable.Get(name);
+		uint32_t& _id = m_hashTable.Get_Ref(name);
 		if (_id == INVALID_ID)
 		{
 			TRC_WARN("These scene has not been created , \"{}\"", name);
 			return result;
 		}
 		_scene = &m_scenes[_id];
+		if (_scene->m_id == INVALID_ID)
+		{
+			TRC_WARN("These scene has been destroyed , \"{}\"", name);
+			_id = INVALID_ID;
+			return result;
+		}
 		result = { _scene, BIND_RESOURCE_UNLOAD_FN(SceneManager::UnloadScene, this) };
 		return result;
 	}

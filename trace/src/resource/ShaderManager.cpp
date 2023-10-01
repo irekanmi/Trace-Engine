@@ -95,13 +95,19 @@ namespace trace {
 	{
 		Ref<GShader> result;
 		GShader* _shad = nullptr;
-		uint32_t hash = m_hashTable.Get(name);
+		uint32_t& hash = m_hashTable.Get_Ref(name);
 		if (hash == INVALID_ID)
 		{
 			TRC_WARN("{} Shader has not been created yet", name);
 			return result;
 		}
 		_shad = &m_shaders[hash];
+		if (_shad->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} shader has already been destroyed", name);
+			hash = INVALID_ID;
+			return result;
+		}
 		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
 		return result;
 	}
@@ -117,10 +123,11 @@ namespace trace {
 		std::string name = p.filename().string();
 		Ref<GShader> result;
 		GShader* _shad = nullptr;
-		if (m_hashTable.Get(name) != INVALID_ID)
+		result = GetShader(name);
+		if (result)
 		{
 			TRC_WARN("Shader {} already exists", name);
-			return GetShader(name);
+			return result;
 		}
 
 		uint32_t i = 0;
@@ -149,6 +156,7 @@ namespace trace {
 
 	void ShaderManager::UnloadShader(GShader* shader)
 	{
+		// TODO: Implement Shader Unloading
 	}
 
 	ShaderManager* ShaderManager::get_instance()

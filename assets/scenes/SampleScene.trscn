@@ -1,13 +1,80 @@
 Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: Sample Scene
-Entites:
+Entities:
+  - UUID: 4294967295
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Position: [0, 27.3999996, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.666666627, 0.510957241, 0.0784313604, 0]
+      Direction: [0.300000012, -1.10000002, 0, 0]
+      Position: [0, 27.3999996, 0, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 1.05999994, 0, 0]
+      Light Type: 0
   - UUID: 4294967295
     TagComponent:
       Tag: Sphere
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      Name: Sphere
+      Resource Path: ""
+  - UUID: 4294967295
+    TagComponent:
+      Tag: Falcon
+    TransformComponent:
+      Position: [0, 51.2000008, 0]
+      Rotation: [0.628654957, 0.188594341, -0.0753074735, 0.750702262]
+      Scale: [10, 10, 10]
+    ModelComponent:
+      Name: Plane_Plane.001
+      Resource Path: ../assets\meshes\falcon.obj
   - UUID: 4294967295
     TagComponent:
       Tag: Cube
+    TransformComponent:
+      Position: [0, -46.7999992, 0]
+      Rotation: [0.433012813, 0.433012366, -0.249999791, 0.750000179]
+      Scale: [180, 1, 180]
+    ModelComponent:
+      Name: Cube
+      Resource Path: ""
   - UUID: 4294967295
     TagComponent:
       Tag: Camera Entity
+    TransformComponent:
+      Position: [109.724457, 95.7055664, -10.9207497]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Is Main: true
+      Camera Type: 0
+      Position: [109.724457, 95.7055664, -10.9207497]
+      Look Direction: [-0.910027981, -0.4126378, 0.0397383273]
+      Up Direction: [0, 1, 0]
+      Near: 0.100000001
+      Far: 1500
+      Fov: 60
+      Aspect Ratio: 2.09708738
+      Orthographic Size: 10
+  - UUID: 4294967295
+    TagComponent:
+      Tag: New Entity
+    TransformComponent:
+      Position: [0, 32, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.218665913, 0.31770876, 0.892156839, 0]
+      Direction: [-0.5, -0.899999976, -0.600000024, 0]
+      Position: [0, 32, 0, 0]
+      Params1: [0, 0, 0, 0.990747869]
+      Params2: [0.781520486, 1.63999999, 0, 0]
+      Light Type: 2

@@ -130,14 +130,20 @@ namespace trace {
 	{
 		Ref<Mesh> result;
 		Mesh* _mesh = nullptr;
-		uint32_t _id = m_hashtable.Get(name);
+		uint32_t& _id = m_hashtable.Get_Ref(name);
 		if (_id == INVALID_ID)
 		{
-			TRC_WARN("Please ensure mesh loaded before getting; trying to load");
-			return LoadMesh(name);
+			TRC_WARN("Please ensure mesh loaded before getting {}", name);
+			return result;
 			
 		}
 		_mesh = &m_meshes[_id];
+		if (_mesh->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} mesh has been destroyed", name);
+			_id = INVALID_ID;
+			return result;
+		}
 		result = { _mesh, BIND_RENDER_COMMAND_FN(MeshManager::Unload) };
 		return result;
 	}
@@ -153,10 +159,11 @@ namespace trace {
 		std::string name = p.filename().string();
 		Ref<Mesh> result;
 		Mesh* _mesh = nullptr;
-		if (m_hashtable.Get(name) != INVALID_ID)
+		result = GetMesh(name);
+		if (result)
 		{
 			TRC_WARN("mesh has already loaded {}", name);
-			return GetMesh(name);
+			return result;
 		}
 		if (p.extension() == ".obj")
 		{

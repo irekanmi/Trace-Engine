@@ -58,6 +58,12 @@ namespace trace {
 	{
 		Ref<GPipeline> result;
 		GPipeline* _pipe = nullptr;
+		result = GetPipeline(name);
+		if (result)
+		{
+			TRC_WARN("{} name has already been created", name);
+			return result;
+		}
 		for (uint32_t i = 0; i < m_numEntries; i++)
 		{
 			if (m_pipelines[i].m_id == INVALID_ID)
@@ -88,13 +94,19 @@ namespace trace {
 	{
 		Ref<GPipeline> result;
 		GPipeline* _pipe = nullptr;
-		uint32_t hash = m_hashtable.Get(name);
+		uint32_t& hash = m_hashtable.Get_Ref(name);
 		if (hash == INVALID_ID)
 		{
 			return result;
 		}
 
 		_pipe = &m_pipelines[hash];
+		if (_pipe->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} has already been destroyed", name);
+			hash = INVALID_ID;
+			return result;
+		}
 		result = { _pipe, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
 		return result;
 	}
