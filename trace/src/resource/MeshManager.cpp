@@ -191,6 +191,7 @@ namespace trace {
 
 		_mesh->m_id = INVALID_ID;
 		_mesh->~Mesh();
+		_mesh->GetModels() = std::vector<Ref<Model>>();
 
 	}
 
@@ -471,6 +472,9 @@ namespace trace {
 		// process mesh
 		for (tinyobj::shape_t& s : shapes)
 		{
+			Ref<Model> _model = model_manager->GetModel(s.name);
+			if (_model) break;
+
 			std::vector<Vertex> verts;
 			std::vector<uint32_t> _inds;
 			for (tinyobj::index_t& index : s.mesh.indices)
@@ -567,7 +571,7 @@ namespace trace {
 
 			}
 
-			Ref<Model> _model = model_manager->LoadModel_(verts,_inds,(path / s.name).string());
+			_model = model_manager->LoadModel_(verts,_inds,(path / s.name).string());
 			if (_model.is_valid())
 			{
 				_model->m_matInstance = _mi;

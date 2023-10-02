@@ -107,6 +107,7 @@ namespace trace {
 #include "render/GRenderPass.h"
 #include "render/render_graph/RenderGraph.h"
 #include "render/GTexture.h"
+#include "ImGuizmo.h"
 
 // NOTE: To hold set to be destoryed after textures are rendered
 static std::vector<VkDescriptorSet> frame_rendered_textures[VK_MAX_NUM_FRAMES];
@@ -406,6 +407,7 @@ bool __ImGui_UINewFrame()
 	}
 	}
 	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
 
 	return true;
 }

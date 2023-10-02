@@ -276,7 +276,10 @@ namespace trace {
 			if (!path.empty())
 			{
 				Ref<Mesh> res = MeshManager::get_instance()->LoadMesh_(path);
-				if(res) model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+				if (res)
+				{
+					model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+				}
 			}
 
 		}}

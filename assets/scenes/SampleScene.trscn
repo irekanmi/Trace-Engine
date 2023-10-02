@@ -4,48 +4,18 @@ Scene Name: Sample Scene
 Entities:
   - UUID: 4294967295
     TagComponent:
-      Tag: Directional Light
+      Tag: New Entity
     TransformComponent:
-      Position: [0, 27.3999996, 0]
+      Position: [0, 32, 0]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.666666627, 0.510957241, 0.0784313604, 0]
-      Direction: [0.300000012, -1.10000002, 0, 0]
-      Position: [0, 27.3999996, 0, 0]
-      Params1: [0, 0, 0, 0]
-      Params2: [0, 1.05999994, 0, 0]
-      Light Type: 0
-  - UUID: 4294967295
-    TagComponent:
-      Tag: Sphere
-    TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    ModelComponent:
-      Name: Sphere
-      Resource Path: ""
-  - UUID: 4294967295
-    TagComponent:
-      Tag: Falcon
-    TransformComponent:
-      Position: [0, 51.2000008, 0]
-      Rotation: [0.628654957, 0.188594341, -0.0753074735, 0.750702262]
-      Scale: [10, 10, 10]
-    ModelComponent:
-      Name: Plane_Plane.001
-      Resource Path: ../assets\meshes\falcon.obj
-  - UUID: 4294967295
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Position: [0, -46.7999992, 0]
-      Rotation: [0.433012813, 0.433012366, -0.249999791, 0.750000179]
-      Scale: [180, 1, 180]
-    ModelComponent:
-      Name: Cube
-      Resource Path: ""
+      Color: [0.218665913, 0.31770876, 0.892156839, 0]
+      Direction: [-0.5, -0.899999976, -0.600000024, 0]
+      Position: [0, 32, 0, 0]
+      Params1: [0, 0, 0, 0.990747869]
+      Params2: [0.781520486, 1.63999999, 0, 0]
+      Light Type: 2
   - UUID: 4294967295
     TagComponent:
       Tag: Camera Entity
@@ -62,19 +32,49 @@ Entities:
       Near: 0.100000001
       Far: 1500
       Fov: 60
-      Aspect Ratio: 2.09708738
+      Aspect Ratio: 1.9403578
       Orthographic Size: 10
   - UUID: 4294967295
     TagComponent:
-      Tag: New Entity
+      Tag: Cube
     TransformComponent:
-      Position: [0, 32, 0]
+      Position: [0, -46.7999992, 0]
+      Rotation: [0.433011442, 0.433012426, -0.249998569, 0.750001371]
+      Scale: [101.899918, 3.89831114, 84.4959259]
+    ModelComponent:
+      Name: Cube
+      Resource Path: ""
+  - UUID: 4294967295
+    TagComponent:
+      Tag: Falcon
+    TransformComponent:
+      Position: [0, 51.2000008, 0]
+      Rotation: [0.628651798, 0.188593373, -0.0753061622, 0.750705302]
+      Scale: [2.30000019, 2.30000019, 2.30000019]
+    ModelComponent:
+      Name: Plane_Plane.001
+      Resource Path: ../assets\meshes\falcon.obj
+  - UUID: 4294967295
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [4.9817996, 4.9817996, 4.92743874]
+    ModelComponent:
+      Name: Sphere
+      Resource Path: ""
+  - UUID: 4294967295
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Position: [0, 27.3999996, 0]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.218665913, 0.31770876, 0.892156839, 0]
-      Direction: [-0.5, -0.899999976, -0.600000024, 0]
-      Position: [0, 32, 0, 0]
-      Params1: [0, 0, 0, 0.990747869]
-      Params2: [0.781520486, 1.63999999, 0, 0]
-      Light Type: 2
+      Color: [0.666666627, 0.510957241, 0.0784313604, 0]
+      Direction: [0.300000012, -1.10000002, 0, 0]
+      Position: [0, 27.3999996, 0, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 1.05999994, 0, 0]
+      Light Type: 0

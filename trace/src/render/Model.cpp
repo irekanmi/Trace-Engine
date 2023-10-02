@@ -18,8 +18,7 @@ namespace trace {
 
 	Model::~Model()
 	{
-		RenderFunc::DestroyBuffer(&m_vertexBuffer);
-		RenderFunc::DestroyBuffer(&m_indexBuffer);
+		
 
 	}
 
@@ -44,6 +43,14 @@ namespace trace {
 		index_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
 
 		RenderFunc::CreateBuffer(&m_indexBuffer, index_buffer_info);
+	}
+
+	void Model::Release()
+	{
+		m_vertices.clear();
+		m_indices.clear();
+		RenderFunc::DestroyBuffer(&m_vertexBuffer);
+		RenderFunc::DestroyBuffer(&m_indexBuffer);
 	}
 
 	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices)

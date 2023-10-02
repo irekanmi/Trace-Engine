@@ -27,6 +27,7 @@ namespace trace {
 		static TraceEditor* get_instance();
 
 	private:
+		void DrawGizmo();
 
 	private:
 		EditorRenderComposer* m_renderComposer = nullptr;

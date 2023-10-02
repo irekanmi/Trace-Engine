@@ -123,7 +123,7 @@ namespace trace {
 		}
 
 		model->m_id = INVALID_ID;
-		model->~Model();
+		model->Release();
 	}
 	ModelManager* ModelManager::get_instance()
 	{

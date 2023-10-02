@@ -13,6 +13,7 @@ namespace trace {
 
 	Mesh::~Mesh()
 	{
+		
 	}
 
 	bool Mesh::Init(const std::vector<Ref<Model>>& models)

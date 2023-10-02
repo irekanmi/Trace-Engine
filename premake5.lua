@@ -27,6 +27,7 @@ IncludeDir["msdf_atlas_gen"] = "externals/msdf_atlas_gen"
 IncludeDir["imgui"] = "externals/imgui"
 IncludeDir["entt"] = "externals/entt"
 IncludeDir["yaml_cpp"] = "externals/yaml_cpp"
+IncludeDir["ImGuizmo"] = "externals/ImGuizmo"
 
 
 project "trace"
@@ -67,6 +68,7 @@ project "trace"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.ImGuizmo}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -231,6 +233,7 @@ project "Trace_Ed"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.entt}",
+		"%{IncludeDir.ImGuizmo}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

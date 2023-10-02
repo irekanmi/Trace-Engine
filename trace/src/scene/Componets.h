@@ -81,6 +81,10 @@ namespace trace {
 		ModelComponent() = default;
 		ModelComponent(Ref<Model> data)
 			:_model(data) {}
+		~ModelComponent()
+		{
+
+		}
 	};
 
 }

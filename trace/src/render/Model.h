@@ -21,6 +21,7 @@ namespace trace {
 		uint32_t GetIndexCount() { return static_cast<uint32_t>(m_indices.size()); }
 		GBuffer* GetIndexBuffer() { return &m_indexBuffer; }
 		GBuffer* GetVertexBuffer() { return &m_vertexBuffer; }
+		void Release();
 
 
 		Ref<MaterialInstance> m_matInstance;

@@ -7,6 +7,9 @@
     <Filter Include="_externals\ImGUI">
       <UniqueIdentifier>{E47213B4-D06B-3206-F99D-178BE5F51112}</UniqueIdentifier>
     </Filter>
+    <Filter Include="_externals\ImGuizmo">
+      <UniqueIdentifier>{1AEA89E0-864B-67EE-0FB9-ADA07B199EAD}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
@@ -345,10 +348,12 @@
     <ClInclude Include="src\scene\SceneManager.h">
       <Filter>src\scene</Filter>
     </ClInclude>
+    <ClInclude Include="src\scene\SceneSerializer.h">
+      <Filter>src\scene</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\SceneSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -377,6 +382,9 @@
     </ClCompile>
     <ClCompile Include="_externals\ImGUI\imgui_widgets.cpp">
       <Filter>_externals\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\ImGuizmo\ImGuizmo.cpp">
+      <Filter>_externals\ImGuizmo</Filter>
     </ClCompile>
     <ClCompile Include="_externals\spirv_reflect.cpp">
       <Filter>_externals</Filter>
@@ -624,6 +632,8 @@
     <ClCompile Include="src\scene\SceneManager.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\SceneSerializer.cpp" />
+    <ClCompile Include="src\scene\SceneSerializer.cpp">
+      <Filter>src\scene</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

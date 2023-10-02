@@ -8,6 +8,7 @@
 #include "scene/Componets.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "scene/SceneSerializer.h"
+#include "ImGuizmo.h"
 
 int translateKeyTrace_ImGui(trace::Keys key);
 int translateButtonTrace_ImGui(trace::Buttons button);
@@ -98,7 +99,10 @@ namespace trace {
 
 		CommandList cmd_list = renderer->BeginCommandList();
 		renderer->BeginScene(cmd_list, &editor_cam);
-		if(m_currentScene) m_currentScene->OnRender(cmd_list);
+		if (m_currentScene)
+		{
+			m_currentScene->OnRender(cmd_list);
+		}
 		renderer->EndScene(cmd_list);
 		renderer->SubmitCommandList(cmd_list);
 
@@ -230,6 +234,10 @@ namespace trace {
 		m_viewportFocused = ImGui::IsWindowFocused();
 		m_viewportHovered = ImGui::IsWindowHovered();
 		ImGui::Image(texture, view_size);
+		if (m_hierachyPanel.m_selectedEntity)
+		{
+			DrawGizmo();
+		}
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
@@ -323,6 +331,45 @@ namespace trace {
 			s_instance = new TraceEditor();
 		}
 		return s_instance;
+	}
+	void TraceEditor::DrawGizmo()
+	{
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::SetDrawlist();
+		float windowWidth = (float)ImGui::GetWindowWidth();
+		float windowHeight = (float)ImGui::GetWindowHeight();
+		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+		glm::mat4 cam_view = editor_cam.GetViewMatrix();
+		glm::mat4 proj = editor_cam.GetProjectionMatix();
+		
+		//TODO: Fix added due to vulkan viewport
+		proj[1][1] *= -1.0f;
+
+		TransformComponent& trans = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
+		glm::mat4 transform = trans._transform.GetLocalMatrix();
+
+		ImGuizmo::Manipulate(
+			glm::value_ptr(cam_view),
+			glm::value_ptr(proj),
+			ImGuizmo::OPERATION::SCALE,
+			ImGuizmo::MODE::LOCAL,
+			glm::value_ptr(transform),
+			nullptr,// TODO: Check Docs {deltaMatrix}
+			false,// snap
+			nullptr,// TODO: Check Docs {localBounds}
+			false //bounds snap
+		);
+
+		
+		if (ImGuizmo::IsUsing())
+		{
+			glm::vec3 pos, rot, scale;
+			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform), glm::value_ptr(pos), glm::value_ptr(rot), glm::value_ptr(scale));
+			trans._transform.SetPosition(pos);
+			trans._transform.SetRotationEuler(rot);
+			trans._transform.SetScale(scale);
+		}
+
 	}
 }
 
