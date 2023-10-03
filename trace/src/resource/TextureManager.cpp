@@ -417,16 +417,16 @@ namespace trace {
 				{
 					if (coloumn % 2)
 					{
-						pixel[_idx + 0] = 0;
-						pixel[_idx + 1] = 0;
+						pixel[_idx + 0] = 255;//0;
+						pixel[_idx + 1] = 255;//0;
 					}
 				}
 				else
 				{
 					if (!(coloumn % 2))
 					{
-						pixel[_idx + 0] = 0;
-						pixel[_idx + 1] = 0;
+						pixel[_idx + 0] = 255;//0;
+						pixel[_idx + 1] = 255;//0;
 					}
 				}
 			}

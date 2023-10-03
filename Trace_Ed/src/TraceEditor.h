@@ -2,6 +2,7 @@
 #include "EditorRenderComposer.h"
 #include "panels/HierachyPanel.h"
 #include "panels/InspectorPanel.h"
+#include "panels/ContentBrowser.h"
 
 #include "scene/Scene.h"
 #include <filesystem>
@@ -28,11 +29,13 @@ namespace trace {
 
 	private:
 		void DrawGizmo();
+		void CloseCurrentScene();
 
 	private:
 		EditorRenderComposer* m_renderComposer = nullptr;
 		HierachyPanel m_hierachyPanel;
 		InspectorPanel m_inspectorPanel;
+		ContentBrowser m_contentBrowser;
 
 		glm::vec2 m_viewportSize;
 		bool m_viewportFocused;
@@ -41,12 +44,13 @@ namespace trace {
 		Camera editor_cam;
 		Ref<Scene> m_currentScene;
 		
-		std::filesystem::path current_project_path;
+		std::filesystem::path current_project_path = "../assets"; //Temp
 		static TraceEditor* s_instance;
 	protected:
 		friend EditorRenderComposer;
 		friend HierachyPanel;
 		friend InspectorPanel;
+		friend ContentBrowser;
 	};
 
 }

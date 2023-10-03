@@ -61,6 +61,7 @@ namespace trace {
 				m_hashTable.Set(name, i);
 				_scene = &scene;
 				_scene->SetName(name);
+				_scene->m_id = i;
 				break;
 			}
 		}

@@ -33,6 +33,8 @@ namespace trace {
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
 		m_hierachyPanel.m_editor = this;
 		m_inspectorPanel.m_editor = this;
+		m_contentBrowser.m_editor = this;
+		m_contentBrowser.Init();
 
 		// Register Events
 		{
@@ -152,7 +154,7 @@ namespace trace {
 					if (ImGui::MenuItem("Load")) m_currentScene = SceneSerializer::Deserialize("../assets/scenes/SampleScene.trscn");
 					if (ImGui::MenuItem("Close Scene"))
 					{
-						m_currentScene = Ref<Scene>();
+						CloseCurrentScene();
 					}
 					ImGui::EndMenu();
 				}
@@ -217,6 +219,8 @@ namespace trace {
 		}
 		ImGui::End();
 
+		m_contentBrowser.Render(deltaTime);
+
 	}
 
 	void TraceEditor::RenderViewport(void* texture)
@@ -238,6 +242,22 @@ namespace trace {
 		{
 			DrawGizmo();
 		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
+			{
+				std::string path = (const char*)payload->Data;
+				Ref<Scene> scene = SceneSerializer::Deserialize(path);
+				if (scene)
+				{
+					CloseCurrentScene();
+					m_currentScene = scene;
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
@@ -370,6 +390,11 @@ namespace trace {
 			trans._transform.SetScale(scale);
 		}
 
+	}
+	void TraceEditor::CloseCurrentScene()
+	{
+		m_currentScene = Ref<Scene>();
+		m_hierachyPanel.m_selectedEntity = Entity();
 	}
 }
 
