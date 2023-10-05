@@ -1,8 +1,10 @@
 #pragma once
 
 #include "resource/Resource.h"
+#include "resource/Ref.h"
 #include "entt.hpp"
 #include "render/Commands.h"
+#include "UUID.h"
 
 namespace trace {
 
@@ -25,10 +27,14 @@ namespace trace {
 
 		Entity CreateEntity();
 		Entity CreateEntity(const std::string& _tag);
+		Entity CreateEntity_UUID(UUID id,const std::string& _tag);
 		void DestroyEntity(Entity entity);
 
 		std::string& GetName() { return m_name; }
 		void SetName(const std::string& name) { m_name = name; }
+
+
+		static void Copy(Ref<Scene> from, Ref<Scene> to);
 
 	private:
 		entt::registry m_registry;

@@ -4,8 +4,11 @@
 #include "scene/SceneManager.h"
 #include "resource/ModelManager.h"
 #include "resource/MeshManager.h"
+#include "scene/SceneManager.h"
 #include "scene/Entity.h"
 #include "scene/Componets.h"
+#include "core/input/Input.h"
+
 #include "glm/gtc/type_ptr.hpp"
 #include "scene/SceneSerializer.h"
 #include "ImGuizmo.h"
@@ -31,6 +34,7 @@ namespace trace {
 
 		UIFuncLoader::LoadImGuiFunc();
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
+		dark_purple();
 		m_hierachyPanel.m_editor = this;
 		m_inspectorPanel.m_editor = this;
 		m_contentBrowser.m_editor = this;
@@ -54,6 +58,7 @@ namespace trace {
 
 		};
 
+		m_editScene_duplicate = SceneManager::get_instance()->CreateScene("Duplicate Edit Scene");
 		editor_cam.SetCameraType(CameraType::PERSPECTIVE);
 		editor_cam.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
 		editor_cam.SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
@@ -89,24 +94,46 @@ namespace trace {
 	void TraceEditor::Shutdown()
 	{
 		m_currentScene.release();
+		m_editScene.release();
+		m_editScene_duplicate.release();
 		UIFunc::ShutdownUIRenderBackend();
 	}
 
 	void TraceEditor::Update(float deltaTime)
 	{
-		if(m_viewportFocused || m_viewportHovered)
-			editor_cam.Update(deltaTime);
 
-		Renderer* renderer = Renderer::get_instance();
-
-		CommandList cmd_list = renderer->BeginCommandList();
-		renderer->BeginScene(cmd_list, &editor_cam);
-		if (m_currentScene)
+		switch (current_state)
 		{
-			m_currentScene->OnRender(cmd_list);
+		case SceneEdit:
+		{
+			if (m_viewportFocused || m_viewportHovered)
+				editor_cam.Update(deltaTime);
+
+			Renderer* renderer = Renderer::get_instance();
+
+			CommandList cmd_list = renderer->BeginCommandList();
+			renderer->BeginScene(cmd_list, &editor_cam);
+			if (m_currentScene)
+			{
+				m_currentScene->OnRender(cmd_list);
+			}
+			renderer->EndScene(cmd_list);
+			renderer->SubmitCommandList(cmd_list);
+			break;
 		}
-		renderer->EndScene(cmd_list);
-		renderer->SubmitCommandList(cmd_list);
+		case ScenePlay:
+		{
+			if (m_currentScene)
+			{
+				m_currentScene->OnRender();
+			}
+			break;
+		}
+		}
+
+		
+
+		
 
 
 	}
@@ -151,7 +178,7 @@ namespace trace {
 				if (ImGui::BeginMenu("File"))
 				{
 					if (ImGui::MenuItem("Save")) SceneSerializer::Serialize(m_currentScene, "../assets/scenes/SampleScene.trscn");
-					if (ImGui::MenuItem("Load")) m_currentScene = SceneSerializer::Deserialize("../assets/scenes/SampleScene.trscn");
+					if (ImGui::MenuItem("Load")) LoadScene();
 					if (ImGui::MenuItem("Close Scene"))
 					{
 						CloseCurrentScene();
@@ -221,6 +248,8 @@ namespace trace {
 
 		m_contentBrowser.Render(deltaTime);
 
+		RenderSceneToolBar();
+
 	}
 
 	void TraceEditor::RenderViewport(void* texture)
@@ -253,6 +282,7 @@ namespace trace {
 				{
 					CloseCurrentScene();
 					m_currentScene = scene;
+					m_editScene = scene;
 				}
 			}
 			ImGui::EndDragDropTarget();
@@ -260,6 +290,31 @@ namespace trace {
 
 		ImGui::End();
 		ImGui::PopStyleVar();
+	}
+
+	void TraceEditor::RenderSceneToolBar()
+	{
+		ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+
+		if (ImGui::Button("Play"))
+		{
+			if (m_currentScene)
+			{
+				current_state = ScenePlay;
+				OnScenePlay();
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Pause"))
+		{
+			if (m_currentScene)
+			{
+				current_state = SceneEdit;
+				OnSceneStop();
+			}
+		}
+
+		ImGui::End();
 	}
 
 	RenderComposer* TraceEditor::GetRenderComposer()
@@ -281,6 +336,8 @@ namespace trace {
 		{
 			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
 			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(press->m_keycode), true);
+			HandleKeyPressed(press);
+			
 
 			break;
 		}
@@ -354,47 +411,107 @@ namespace trace {
 	}
 	void TraceEditor::DrawGizmo()
 	{
-		ImGuizmo::SetOrthographic(false);
-		ImGuizmo::SetDrawlist();
-		float windowWidth = (float)ImGui::GetWindowWidth();
-		float windowHeight = (float)ImGui::GetWindowHeight();
-		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-		glm::mat4 cam_view = editor_cam.GetViewMatrix();
-		glm::mat4 proj = editor_cam.GetProjectionMatix();
-		
-		//TODO: Fix added due to vulkan viewport
-		proj[1][1] *= -1.0f;
-
-		TransformComponent& trans = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
-		glm::mat4 transform = trans._transform.GetLocalMatrix();
-
-		ImGuizmo::Manipulate(
-			glm::value_ptr(cam_view),
-			glm::value_ptr(proj),
-			ImGuizmo::OPERATION::SCALE,
-			ImGuizmo::MODE::LOCAL,
-			glm::value_ptr(transform),
-			nullptr,// TODO: Check Docs {deltaMatrix}
-			false,// snap
-			nullptr,// TODO: Check Docs {localBounds}
-			false //bounds snap
-		);
-
-		
-		if (ImGuizmo::IsUsing())
+		if (gizmo_mode != -1)
 		{
-			glm::vec3 pos, rot, scale;
-			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform), glm::value_ptr(pos), glm::value_ptr(rot), glm::value_ptr(scale));
-			trans._transform.SetPosition(pos);
-			trans._transform.SetRotationEuler(rot);
-			trans._transform.SetScale(scale);
-		}
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+			float windowWidth = (float)ImGui::GetWindowWidth();
+			float windowHeight = (float)ImGui::GetWindowHeight();
+			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+			glm::mat4 cam_view = editor_cam.GetViewMatrix();
+			glm::mat4 proj = editor_cam.GetProjectionMatix();
 
+			//TODO: Fix added due to vulkan viewport
+			proj[1][1] *= -1.0f;
+
+			TransformComponent& trans = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
+			glm::mat4 transform = trans._transform.GetLocalMatrix();
+
+			ImGuizmo::Manipulate(
+				glm::value_ptr(cam_view),
+				glm::value_ptr(proj),
+				(ImGuizmo::OPERATION)gizmo_mode,
+				ImGuizmo::MODE::LOCAL,
+				glm::value_ptr(transform),
+				nullptr,// TODO: Check Docs {deltaMatrix}
+				false,// snap
+				nullptr,// TODO: Check Docs {localBounds}
+				false //bounds snap
+			);
+
+
+			if (ImGuizmo::IsUsing())
+			{
+				glm::vec3 pos, rot, scale;
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform), glm::value_ptr(pos), glm::value_ptr(rot), glm::value_ptr(scale));
+				trans._transform.SetPosition(pos);
+				trans._transform.SetRotationEuler(rot);
+				trans._transform.SetScale(scale);
+			}
+		}
 	}
 	void TraceEditor::CloseCurrentScene()
 	{
 		m_currentScene = Ref<Scene>();
 		m_hierachyPanel.m_selectedEntity = Entity();
+	}
+	void TraceEditor::LoadScene()
+	{
+		m_currentScene = SceneSerializer::Deserialize("../assets/scenes/SampleScene.trscn");
+		m_editScene = m_currentScene;
+	}
+	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
+	{
+		InputSystem* input = InputSystem::get_instance();
+		bool control = input->GetKey(KEY_LCONTROL) || input->GetKey(KEY_RCONTROL);
+		bool shift = input->GetKey(KEY_LSHIFT) || input->GetKey(KEY_RSHIFT);
+		switch (p_event->m_keycode)
+		{
+		case KEY_Q:
+		{
+			gizmo_mode = -1;
+			break;
+		}
+		case KEY_W:
+		{
+			gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
+			break;
+		}
+		case KEY_E:
+		{
+			gizmo_mode = ImGuizmo::OPERATION::ROTATE;
+			break;
+		}
+		case KEY_R:
+		{
+			gizmo_mode = ImGuizmo::OPERATION::SCALE;
+			break;
+		}
+		case KEY_T:
+		{
+
+			break;
+		}
+		case KEY_S:
+		{
+
+			break;
+		}
+		}
+
+	}
+	void TraceEditor::HandleKeyRelesed(KeyReleased* p_event)
+	{
+	}
+	void TraceEditor::OnScenePlay()
+	{
+		Scene::Copy(m_editScene, m_editScene_duplicate);
+		m_currentScene = m_editScene_duplicate;
+		m_hierachyPanel.m_selectedEntity = Entity();
+	}
+	void TraceEditor::OnSceneStop()
+	{
+		m_currentScene = m_editScene;
 	}
 }
 

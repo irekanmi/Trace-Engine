@@ -77,6 +77,16 @@ namespace trace {
 		return KeyState::KEY_NULL;
 	}
 
+	bool InputSystem::GetKey(Keys key)
+	{
+		return keyboard_curr.keys[key];
+	}
+
+	bool InputSystem::GetButton(Buttons button)
+	{
+		return mouse_curr.buttons[button];
+	}
+
 	void InputSystem::SetKey(Keys key, bool val)
 	{
 		keyboard_curr.keys[key] = val;

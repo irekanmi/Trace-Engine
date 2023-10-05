@@ -226,6 +226,9 @@ namespace trace {
 
 			Camera& camera = comp._camera;
 			CameraType cam_type = camera.GetCameraType();
+
+			ImGui::Checkbox("Is Main", &comp.is_main);
+
 			const char* type_string[] = { "Perspective", "Orthographic" };
 			const char* current_type = type_string[(int)cam_type];
 			if (ImGui::BeginCombo("Camera Type", current_type))

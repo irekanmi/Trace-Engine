@@ -1,18 +1,30 @@
 #pragma once
 
-#include <string>
 #include "render/Transform.h"
 #include "render/Camera.h"
 #include "render/Graphics.h"
 #include "render/Mesh.h"
+#include "scene/UUID.h"
+
+
+#include <string>
 
 namespace trace {
+
+	struct IDComponent
+	{
+		UUID _id;
+
+		IDComponent() = default;
+		IDComponent(const IDComponent&) = default;
+	};
 
 	struct TagComponent
 	{
 		std::string _tag;
 
 		TagComponent() = default;
+		TagComponent(const TagComponent&) = default;
 		TagComponent(const std::string& name) { _tag = name; }
 		TagComponent(std::string& name) { _tag = name; }
 
@@ -23,6 +35,7 @@ namespace trace {
 		Transform _transform;
 
 		TransformComponent() = default;
+		TransformComponent(const TransformComponent&) = default;
 		TransformComponent(const Transform& location)
 			: _transform(location){}
 
@@ -37,6 +50,7 @@ namespace trace {
 		bool is_main = false;
 
 		CameraComponent() = default;
+		CameraComponent(const CameraComponent&) = default;
 		CameraComponent(const Camera& location)
 			: _camera(location), is_main(false) {}
 
@@ -54,6 +68,7 @@ namespace trace {
 		Ref<Mesh> _mesh;
 
 		LightComponent() = default;
+		LightComponent(const LightComponent&) = default;
 		LightComponent(const Light& location)
 			: _light(location), light_type(LightType::UNKNOWN) {}
 
@@ -71,6 +86,7 @@ namespace trace {
 	{
 		Ref<Mesh> _mesh;
 		MeshComponent() = default;
+		MeshComponent(const MeshComponent&) = default;
 		MeshComponent(Ref<Mesh> data)
 			:_mesh(data){}
 	};
@@ -79,6 +95,7 @@ namespace trace {
 	{
 		Ref<Model> _model;
 		ModelComponent() = default;
+		ModelComponent(const ModelComponent&) = default;
 		ModelComponent(Ref<Model> data)
 			:_model(data) {}
 		~ModelComponent()

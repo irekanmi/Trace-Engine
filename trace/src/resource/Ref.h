@@ -22,7 +22,7 @@ public:
 	{
 		if (is_valid())
 		{
-			_ptr->m_refCount--;
+			if(other._ptr != _ptr) _ptr->m_refCount--;
 			if (_ptr->m_refCount <= 0)
 			{
 				Unload(_ptr);

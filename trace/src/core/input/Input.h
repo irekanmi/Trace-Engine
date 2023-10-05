@@ -37,6 +37,9 @@ namespace trace {
 		KeyState GetKeyState(Keys key);
 		KeyState GetButtonState(Buttons button);
 
+		bool GetKey(Keys key);
+		bool GetButton(Buttons button);
+
 		void SetKey(Keys key, bool val);
 		void SetButton(Buttons button, bool val);
 

@@ -290,8 +290,10 @@ namespace trace {
 
 	static bool SerializeEntites(Ref<Scene> scene, Entity entity, YAML::Emitter& emit)
 	{
+		IDComponent& uuid = entity.GetComponent<IDComponent>();
+
 		emit << YAML::BeginMap;
-		emit << YAML::Key << "UUID" << YAML::Value << INVALID_ID;
+		emit << YAML::Key << "UUID" << YAML::Value << uuid._id;
 
 		for (uint32_t i = 0; i < ARRAYSIZE(_serialize_components); i++)
 		{
@@ -371,7 +373,8 @@ namespace trace {
 		{
 			for (auto entity : entities)
 			{
-				Entity obj = scene->CreateEntity();
+				UUID uuid = entity["UUID"].as<uint64_t>();
+				Entity obj = scene->CreateEntity_UUID(uuid, "");
 				for (auto& i : _deserialize_components)
 				{
 					if (entity[i.first]) i.second(obj, entity);

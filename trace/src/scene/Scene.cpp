@@ -42,35 +42,7 @@ namespace trace {
 			CommandList cmd_list = renderer->BeginCommandList();
 			renderer->BeginScene(cmd_list, main_camera);
 
-			auto light_group = m_registry.view<LightComponent, TransformComponent>();
-
-			for (auto entity : light_group)
-			{
-				auto [light, transform] = light_group.get(entity);
-				light._light.position = glm::vec4(transform._transform.GetPosition(), 0.0f);
-				if (light._mesh.is_valid())
-					renderer->DrawLight(cmd_list, light._mesh, light._light, light.light_type);
-			}
-
-			auto group = m_registry.group<MeshComponent, TransformComponent>();
-
-			for (auto entity : group)
-			{
-				auto [mesh, transform] = group.get(entity);
-
-				renderer->DrawMesh(cmd_list, mesh._mesh, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
-
-			}
-			
-			auto model_group = m_registry.view<ModelComponent, TransformComponent>();
-
-			for (auto entity : model_group)
-			{
-				auto [model, transform] = model_group.get(entity);
-
-				renderer->DrawModel(cmd_list, model._model, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
-
-			}
+			OnRender(cmd_list);
 
 			renderer->EndScene(cmd_list);
 
@@ -132,22 +104,22 @@ namespace trace {
 
 	Entity Scene::CreateEntity()
 	{
-		entt::entity handle = m_registry.create();
-		Entity entity(handle, this);
-		TagComponent& tag = entity.AddComponent<TagComponent>();
-		entity.AddComponent<TransformComponent>();
-		tag._tag = "New Entity";
-
-		return entity;
+		return CreateEntity_UUID(UUID::GenUUID(), "");
 	}
 
 	Entity Scene::CreateEntity(const std::string& _tag)
 	{
-		entt::entity handle = m_registry.create();
+		return CreateEntity_UUID(UUID::GenUUID(), _tag);
+	}
 
+	Entity Scene::CreateEntity_UUID(UUID id, const std::string& _tag)
+	{
+		entt::entity handle = m_registry.create();
 		Entity entity(handle, this);
-		entity.AddComponent<TagComponent>(_tag);
+		TagComponent& tag = entity.AddComponent<TagComponent>();
+		tag._tag = _tag.empty() ? "New Entity" : _tag;
 		entity.AddComponent<TransformComponent>();
+		entity.AddComponent<IDComponent>()._id = id;
 
 		return entity;
 	}
@@ -155,6 +127,47 @@ namespace trace {
 	void Scene::DestroyEntity(Entity entity)
 	{
 		m_registry.destroy(entity);
+	}
+
+	template<typename Component>
+	void CopyComponent(entt::registry& from, entt::registry& to, std::unordered_map<UUID, entt::entity>& entity_map)
+	{
+		auto view = from.view<Component>();
+
+		for (auto e : view)
+		{
+			UUID uuid = from.get<IDComponent>(e)._id;
+			auto [comp] = view.get(e);
+			entt::entity en = entity_map[uuid];
+			to.emplace_or_replace<Component>(en, comp);
+		}
+
+	}
+
+	void Scene::Copy(Ref<Scene> from, Ref<Scene> to)
+	{
+
+		entt::registry& f_reg = from->m_registry;
+		entt::registry& t_reg = to->m_registry;
+		t_reg.clear();
+
+		std::unordered_map<UUID, entt::entity> entity_map;
+
+		auto id_view = f_reg.view<IDComponent>();
+		for (auto e : id_view)
+		{
+			UUID uuid = id_view.get<IDComponent>(e)._id;
+			Entity en = to->CreateEntity_UUID(uuid, "");
+			entity_map[uuid] = en;
+		}
+
+		CopyComponent<TagComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<TransformComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<CameraComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<LightComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<MeshComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<ModelComponent>(f_reg, t_reg, entity_map);
+
 	}
 
 }
