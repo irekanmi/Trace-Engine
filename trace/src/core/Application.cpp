@@ -12,6 +12,7 @@
 #include "render/Renderer.h"
 #include "memory/memory.h"
 #include "resource/ResourceSystem.h"
+#include "core/memory/MemoryManager.h"
 
 //Temp==================
 #include "render/Graphics.h"
@@ -129,6 +130,8 @@ namespace trace
 
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
+		MemoryManager* mem_manager = MemoryManager::get_instance();
+
 		
 		m_clock.Begin();
 
@@ -138,6 +141,8 @@ namespace trace
 			float _time = m_clock.GetElapsedTime();
 			float deltaTime = _time - m_lastTime;
 			m_lastTime = _time;
+
+			mem_manager->BeginFrame();
 
 			m_Window->Update(0.0f);
 			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
@@ -155,6 +160,9 @@ namespace trace
 			renderer->Render(deltaTime);
 
 			input->Update(deltaTime);
+
+			mem_manager->EndFrame();
+
 			float end_time = m_clock.GetElapsedTime();
 			float total_frame_time = end_time - _time;
 			float frame_per_sec = 1.0f / 55;

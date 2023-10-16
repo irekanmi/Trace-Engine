@@ -8,6 +8,7 @@
 #include "scene/Entity.h"
 #include "scene/Componets.h"
 #include "core/input/Input.h"
+#include "core/memory/StackAllocator.h"
 
 #include "glm/gtc/type_ptr.hpp"
 #include "scene/SceneSerializer.h"
@@ -88,11 +89,13 @@ namespace trace {
 			
 		};
 #endif
+
 		return true;
 	}
 
 	void TraceEditor::Shutdown()
 	{
+		m_contentBrowser.Shutdown();
 		m_currentScene.release();
 		m_editScene.release();
 		m_editScene_duplicate.release();
@@ -276,7 +279,9 @@ namespace trace {
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
 			{
-				std::string path = (const char*)payload->Data;
+				static char buf[1024] = {0};
+				memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+				std::string path = buf;
 				Ref<Scene> scene = SceneSerializer::Deserialize(path);
 				if (scene)
 				{
@@ -294,7 +299,7 @@ namespace trace {
 
 	void TraceEditor::RenderSceneToolBar()
 	{
-		ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 		if (ImGui::Button("Play"))
 		{

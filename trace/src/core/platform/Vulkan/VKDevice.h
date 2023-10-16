@@ -23,6 +23,7 @@ namespace vk {
 	bool __DrawInstanceIndexed(trace::GDevice* device, trace::GBuffer* index_buffer, uint32_t instances);
 	bool __BindViewport(trace::GDevice* device, trace::Viewport view_port);
 	bool __BindRect(trace::GDevice* device, trace::Rect2D rect);
+	bool __BindLineWidth(trace::GDevice* device, float value);
 	bool __BindPipeline(trace::GDevice* device, trace::GPipeline* pipeline);
 	bool __BindVertexBuffer(trace::GDevice* device, trace::GBuffer* buffer);
 	bool __BindVertexBufferBatch(trace::GDevice* device, trace::GBuffer* buffer);

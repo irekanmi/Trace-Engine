@@ -66,6 +66,7 @@ namespace trace {
 				renderer->DrawLight(cmd_list, light._mesh, light._light, light.light_type);
 			else
 				renderer->AddLight(cmd_list, light._light, light.light_type);
+
 		}
 
 		auto group = m_registry.group<MeshComponent, TransformComponent>();
@@ -86,6 +87,7 @@ namespace trace {
 
 			renderer->DrawModel(cmd_list, model._model, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
 
+			renderer->DrawDebugSphere(cmd_list, 10.0f, 20, transform._transform.GetLocalMatrix());
 		}
 
 	}

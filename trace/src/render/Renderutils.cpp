@@ -122,6 +122,7 @@ namespace trace {
 		RenderFunc::_drawInstancedIndexed = vk::__DrawInstanceIndexed;
 		RenderFunc::_bindViewport = vk::__BindViewport;
 		RenderFunc::_bindRect = vk::__BindRect;
+		RenderFunc::_bindLineWidth = vk::__BindLineWidth;
 		RenderFunc::_bindPipeline = vk::__BindPipeline;
 		RenderFunc::_bindVertexBuffer = vk::__BindVertexBuffer;
 		RenderFunc::_bindVertexBufferBatch = vk::__BindVertexBufferBatch;
@@ -201,6 +202,7 @@ namespace trace {
 	__DrawInstanceIndexed RenderFunc::_drawInstancedIndexed = nullptr;
 	__BindViewport RenderFunc::_bindViewport = nullptr;
 	__BindRect RenderFunc::_bindRect = nullptr;
+	__BindLineWidth RenderFunc::_bindLineWidth = nullptr;
 	__BindPipeline RenderFunc::_bindPipeline = nullptr;
 	__BindVertexBuffer RenderFunc::_bindVertexBuffer = nullptr;
 	__BindVertexBufferBatch RenderFunc::_bindVertexBufferBatch = nullptr;
@@ -764,6 +766,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_bindRect);
 		result = _bindRect(device, rect);
+
+		return result;
+	}
+
+	bool RenderFunc::BindLineWidth(GDevice* device, float value)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_bindLineWidth);
+		result = _bindLineWidth(device, value);
 
 		return result;
 	}

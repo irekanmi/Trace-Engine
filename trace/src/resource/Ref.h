@@ -22,7 +22,7 @@ public:
 	{
 		if (is_valid())
 		{
-			if(other._ptr != _ptr) _ptr->m_refCount--;
+			_ptr->m_refCount--;
 			if (_ptr->m_refCount <= 0)
 			{
 				Unload(_ptr);
@@ -94,7 +94,7 @@ public:
 
 	~Ref()
 	{
-		release();
+		free();
 	}
 
 	T* operator->()
@@ -122,7 +122,8 @@ public:
 	{
 		return _ptr != nullptr;
 	}
-
+	
+	//NOTE: reduces ref count
 	void release()
 	{
 		if (_ptr != nullptr)
@@ -134,6 +135,13 @@ public:
 				_ptr = nullptr;
 			}
 		}
+	}
+
+	//NOTE: reduces ref count and invalidates Ref
+	void free()
+	{
+		release();
+		_ptr = nullptr;
 	}
 
 	operator bool() { return is_valid(); }

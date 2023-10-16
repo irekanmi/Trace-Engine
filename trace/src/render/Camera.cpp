@@ -49,16 +49,17 @@ namespace trace {
 			if (m_type == CameraType::PERSPECTIVE)
 			{
 				m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
-				m_projection[1][1] *= -1.0f;
+				m_projection[1][1] *= -1.0f; //FIX: Added due to vulkan viewport issuses
 			}
 			else if (m_type == CameraType::ORTHOGRAPHIC)
 			{
-				float left = -m_orthographicSize * m_aspectRatio * 0.5f;
-				float right = m_orthographicSize * m_aspectRatio * 0.5f;
+				float left = m_orthographicSize * m_aspectRatio * 0.5f;
+				float right = -m_orthographicSize * m_aspectRatio * 0.5f;
 				float top = m_orthographicSize * 0.5f;
 				float bottom = -m_orthographicSize * 0.5f;
 
 				m_projection = glm::ortho(left, right, bottom, top, m_zNear, m_zFar);
+				m_projection[1][1] *= -1.0f; //FIX: Added due to vulkan viewport issuses
 			}
 			is_dirty[0] = false;
 		}

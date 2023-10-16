@@ -16,6 +16,7 @@
 #include "backends/UIutils.h"
 #include "resource/MaterialManager.h"
 #include "resource/PipelineManager.h"
+#include "core/memory/MemoryManager.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -100,14 +101,16 @@ namespace trace {
 			return false;
 		}
 		m_client_render = app_data.client_render;
-
-		
+				
 
 		m_composer = nullptr;
 		if (app_data.render_composer)
 		{
 			m_composer = (RenderComposer*)app_data.render_composer;
 		}
+
+		m_debug = nullptr;
+		m_debug = new DebugData();
 
 		return result;
 	}
@@ -121,7 +124,7 @@ namespace trace {
 	{
 		bool result = RenderFunc::BeginFrame(&g_device, &m_swapChain);
 
-		UIFunc::UINewFrame();
+		if(result) UIFunc::UINewFrame();
 		return result;
 	}
 
@@ -145,6 +148,11 @@ namespace trace {
 		}
 		boundTextTextures.clear();
 
+		if (m_debug)
+		{
+			m_debug->positions.clear();
+			m_debug->vert_count = 0;
+		}
 
 		UIFunc::UIEndFrame();
 		RenderFunc::EndFrame(&g_device);
@@ -193,13 +201,14 @@ namespace trace {
 		create_text_batch();
  		// ..................................................	
 
-
 	}
 
 	void Renderer::End()
 	{
 
 		m_composer->Shutdowm();
+		delete m_debug;
+		m_debug = nullptr;
 		delete m_composer;
 		m_composer = nullptr;
 		_camera = nullptr;
@@ -551,6 +560,26 @@ namespace trace {
 		}
 	}
 
+	void Renderer::RenderDebugData()
+	{
+		if (m_debug)
+		{
+			if (m_debug->vert_count <= 0) return;
+			if(!m_debug->m_linePipeline) m_debug->m_linePipeline = PipelineManager::get_instance()->GetPipeline("debug_line_pipeline");
+
+			glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+			Ref<GPipeline> sp = m_debug->m_linePipeline;
+			RenderFunc::OnDrawStart(&g_device, sp.get());
+			RenderFunc::BindLineWidth(&g_device, 2.0f);
+			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, m_debug->positions.data(), m_debug->vert_count * sizeof(glm::vec4));
+			RenderFunc::BindPipeline_(sp.get());
+			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::Draw(&g_device, 0, m_debug->vert_count);
+			RenderFunc::OnDrawEnd(&g_device, sp.get());
+		}
+	}
+
 
 	void Renderer::draw_mesh(CommandParams& params)
 	{
@@ -654,9 +683,11 @@ namespace trace {
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model)
 	{
+		
 		Command cmd;
 		cmd.params.ptrs[0] = _mesh.get();
 		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_mesh);
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
 		memcpy(cmd.params.data, &model, sizeof(glm::mat4));
 		cmd_list._commands.emplace_back(cmd);
 	}
@@ -671,6 +702,7 @@ namespace trace {
 			glm::mat4* M_transform = (glm::mat4*)(params.data);
 			m_opaqueObjects[m_opaqueObjectsSize++] = std::make_pair(*M_transform, model);
 		};
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
 		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
 		cmd_list._commands.emplace_back(cmd);
 	}
@@ -690,6 +722,7 @@ namespace trace {
 		Command cmd;
 		cmd.params.ptrs[0] = _mesh.get();
 		cmd.params.val[0] = light_type;
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(Light));
 		memcpy(cmd.params.data, &_light, sizeof(Light));
 
 		cmd.func = [&](CommandParams& params) {
@@ -736,6 +769,7 @@ namespace trace {
 	{
 		Command cmd;
 		cmd.params.val[0] = light_type;
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(Light));
 		memcpy(cmd.params.data, &_light, sizeof(Light));
 
 		cmd.func = [&](CommandParams& params) {
@@ -769,6 +803,78 @@ namespace trace {
 		};
 
 		cmd_list._commands.push_back(cmd);
+	}
+
+	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to)
+	{
+		Command cmd;
+		uint32_t data_size = sizeof(glm::vec3) * 2;
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(data_size);
+		memcpy(cmd.params.data, &from, sizeof(glm::vec3));
+		memcpy((cmd.params.data + sizeof(glm::vec3)), &to, sizeof(glm::vec3));
+		cmd.func = [&](CommandParams params) {
+			if (!m_debug) return;
+			glm::vec3& from = *(glm::vec3*)(params.data);
+			glm::vec3& to = *(glm::vec3*)(params.data + sizeof(glm::vec3));
+
+			m_debug->positions.emplace_back(glm::vec4(from, 0.0f));
+			m_debug->positions.emplace_back(glm::vec4(to, 0.0f));
+			m_debug->vert_count += 2;
+
+		};
+		cmd_list._commands.emplace_back(cmd);
+	}
+
+	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform)
+	{
+		Command cmd;
+		uint32_t data_size = (sizeof(glm::vec3) * 2) + sizeof(glm::mat4);
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(data_size);
+		memcpy(cmd.params.data, &p0, sizeof(glm::vec3));
+		memcpy((cmd.params.data + sizeof(glm::vec3)), &p1, sizeof(glm::vec3));
+		memcpy((cmd.params.data + (sizeof(glm::vec3) * 2)), &transform, sizeof(glm::mat4));
+		cmd.func = [&](CommandParams params) {
+			if (!m_debug) return;
+			glm::vec3& p0 = *(glm::vec3*)(params.data);
+			glm::vec3& p1 = *(glm::vec3*)(params.data + sizeof(glm::vec3));
+			glm::mat4& transform = *(glm::mat4*)(params.data + (sizeof(glm::vec3) * 2));
+
+			m_debug->positions.emplace_back(transform * glm::vec4(p0, 1.0f));
+			m_debug->positions.emplace_back(transform * glm::vec4(p1, 1.0f));
+			m_debug->vert_count += 2;
+
+		};
+	}
+
+	void Renderer::DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform)
+	{
+		float ar = (glm::pi<float>() * 2.0f) / (float)steps;
+		float theta = ar * (float)0;
+		float x = radius * glm::cos(theta);
+		float y = radius * glm::sin(theta);
+
+		glm::vec4 prev_p = glm::vec4(x, y, 0.0f, 1.0f);
+		for (uint32_t i = 1; i <= steps; i++)
+		{
+			float theta = ar * (float)i;
+			float x = radius * glm::cos(theta);
+			float y = radius * glm::sin(theta);
+
+			glm::vec4 p = glm::vec4(x, y, 0.0f, 1.0f);
+			DrawDebugLine(cmd_list, glm::vec3(transform * prev_p), glm::vec3(transform * p));
+			prev_p = p;
+		}
+	}
+
+	void Renderer::DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform)
+	{
+		DrawDebugCircle(cmd_list, radius, steps, transform);
+		glm::mat4 tr = glm::rotate(transform, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		DrawDebugCircle(cmd_list, radius, steps, tr);
+		tr = glm::rotate(transform, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		DrawDebugCircle(cmd_list, radius, steps, tr);
+		tr = glm::rotate(transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		DrawDebugCircle(cmd_list, radius, steps, tr);
 	}
 
 	CommandList Renderer::BeginCommandList()

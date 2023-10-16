@@ -423,11 +423,8 @@ namespace vk {
 	}
 	bool __BindRect(trace::GDevice* device, trace::Rect2D rect)
 	{
-
 		bool result = true;
-
 		
-
 		if (!device)
 		{
 			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
@@ -456,9 +453,33 @@ namespace vk {
 
 		return result;
 	}
+	bool __BindLineWidth(trace::GDevice* device, float value)
+	{
+		bool result = true;
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vkCmdSetLineWidth(command_buffer->m_handle, value);
+
+		return result;
+	}
 	bool __BindPipeline(trace::GDevice* device, trace::GPipeline* pipeline)
 	{
-
 		bool result = true;
 
 		

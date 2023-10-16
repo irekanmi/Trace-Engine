@@ -38,6 +38,7 @@ namespace trace {
 	typedef bool (*__DrawInstanceIndexed)(GDevice*,GBuffer*, uint32_t);
 	typedef bool (*__BindViewport)(GDevice*,Viewport);
 	typedef bool (*__BindRect)(GDevice*,Rect2D);
+	typedef bool (*__BindLineWidth)(GDevice*,float);
 	typedef bool (*__BindPipeline)(GDevice*,GPipeline*);
 	typedef bool (*__BindVertexBuffer)(GDevice*,GBuffer*);
 	typedef bool (*__BindVertexBufferBatch)(GDevice*,GBuffer*);
@@ -148,6 +149,7 @@ namespace trace {
 		static bool DrawInstanceIndexed(GDevice* device, GBuffer* index_buffer, uint32_t instances);
 		static bool BindViewport(GDevice* device, Viewport view_port);
 		static bool BindRect(GDevice* device, Rect2D rect);
+		static bool BindLineWidth(GDevice* device, float value);
 		static bool BindPipeline(GDevice* device, GPipeline* pipeline);
 		static bool BindVertexBuffer(GDevice* device, GBuffer* buffer);
 		static bool BindVertexBufferBatch(GDevice* device, GBuffer* buffer);
@@ -229,6 +231,7 @@ namespace trace {
 		static __DrawInstanceIndexed _drawInstancedIndexed;
 		static __BindViewport _bindViewport;
 		static __BindRect _bindRect;
+		static __BindLineWidth _bindLineWidth;
 		static __BindPipeline _bindPipeline;
 		static __BindVertexBuffer _bindVertexBuffer;
 		static __BindVertexBufferBatch _bindVertexBufferBatch;

@@ -9,6 +9,7 @@
 #include "core/Platform.h"
 #include "core/Application.h"
 #include "resource/ResourceSystem.h"
+#include "core/memory/MemoryManager.h"
 
 
 namespace trace {
@@ -28,6 +29,18 @@ namespace trace {
 #else
 			Logger::get_instance()->set_log_level(LogLevel::warn);
 #endif
+		}
+
+		if (MemoryManager::get_instance() == nullptr)
+		{
+			TRC_ERROR("failed to create Memory Manager");
+			return false;
+		}
+		
+		if (!MemoryManager::get_instance()->Init())
+		{
+			TRC_ERROR("Memory Manager failed to initialize");
+			return false;
 		}
 
 		if (EventsSystem::get_instance() == nullptr)

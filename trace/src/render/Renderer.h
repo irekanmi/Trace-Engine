@@ -40,6 +40,8 @@ namespace trace {
 		std::vector<glm::vec4> tex_coords;
 	};
 
+	
+
 	class TRACE_API Renderer : public Object
 	{
 	public:
@@ -66,6 +68,10 @@ namespace trace {
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
 		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type);
+		void DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to);
+		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform);
+		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
+		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
 
 
 		// Getters
@@ -87,13 +93,14 @@ namespace trace {
 		void RenderLights();
 		void RenderQuads();
 		void RenderTexts();
+		void RenderDebugData();
 
 		static Renderer* s_instance;
 		static Renderer* get_instance();
 
 
 
-		// Per Frame Objects----------------------------- Temp ---
+		// Per CmdList Objects----------------------------- Temp ---
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera = nullptr;
@@ -117,6 +124,20 @@ namespace trace {
 		void flush_current_text_batch();
 		void destroy_text_batchs();
 		// ....................................................
+
+	private:
+		// Debug Renderering
+		struct DebugData
+		{
+			DebugData() {};
+			~DebugData() {};
+
+			std::vector<glm::vec4> positions;
+			uint32_t vert_count = 0;
+			Ref<GPipeline> m_linePipeline;
+		};
+		DebugData* m_debug;
+				
 
 	private:
 		GSwapchain m_swapChain;

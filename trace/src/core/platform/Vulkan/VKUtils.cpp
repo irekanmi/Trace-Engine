@@ -429,6 +429,7 @@ namespace vk {
 		phy_feat = {};
 		phy_feat.samplerAnisotropy = VK_TRUE;
 		phy_feat.geometryShader = VK_TRUE;
+		phy_feat.wideLines = VK_TRUE;
 
 		VkDeviceCreateInfo device_info = {};
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -2521,9 +2522,19 @@ namespace vk {
 			result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			break;
 		}
+		case trace::PRIMITIVETOPOLOGY::LINE_LIST:
+		{
+			result = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+			break;
+		}
 		case trace::PRIMITIVETOPOLOGY::TRIANGLE_STRIP:
 		{
 			result = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+			break;
+		}
+		case trace::PRIMITIVETOPOLOGY::LINE_STRIP:
+		{
+			result = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 			break;
 		}
 		}

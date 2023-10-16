@@ -122,7 +122,7 @@ namespace trace {
 		if (_hash._id == INVALID_ID)
 		{
 			//TODO: replace with the default texture
-			TRC_ERROR("Please enter a vaild texture");
+			TRC_ERROR("Please enter a vaild texture {}", name);
 			return result;
 		}
 

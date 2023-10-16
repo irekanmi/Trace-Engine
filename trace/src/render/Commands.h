@@ -12,8 +12,7 @@ namespace trace {
 	{
 		void* ptrs[4];
 		uint32_t val[4];
-		//TODO: Find another way to store data for each command
-		unsigned char data[256];
+		char* data = nullptr;// NOTE: It uses frame allocation
 	};
 
 	using CommandFunc = std::function<void(CommandParams&)>;

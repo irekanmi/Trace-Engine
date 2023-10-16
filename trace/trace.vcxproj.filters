@@ -355,6 +355,8 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\scene\UUID.h" />
+    <ClInclude Include="src\core\memory\MemoryManager.h" />
+    <ClInclude Include="src\core\memory\StackAllocator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -637,5 +639,7 @@
       <Filter>src\scene</Filter>
     </ClCompile>
     <ClCompile Include="src\scene\UUID.cpp" />
+    <ClCompile Include="src\core\memory\MemoryManager.cpp" />
+    <ClCompile Include="src\core\memory\StackAllocator.cpp" />
   </ItemGroup>
 </Project>

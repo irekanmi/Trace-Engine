@@ -156,7 +156,9 @@ namespace trace {
 	{
 		NONE,
 		TRIANGLE_LIST,
-		TRIANGLE_STRIP
+		LINE_LIST,
+		TRIANGLE_STRIP,
+		LINE_STRIP
 	};
 
 	enum class ShaderData

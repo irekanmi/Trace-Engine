@@ -281,6 +281,39 @@ namespace trace {
 		};
 
 		{
+			ShaderManager::get_instance()->CreateShader("debug_line.vert.glsl", ShaderStage::VERTEX_SHADER);
+			ShaderManager::get_instance()->CreateShader("debug_line.frag.glsl", ShaderStage::PIXEL_SHADER);
+			GShader* VertShader = ShaderManager::get_instance()->GetShader("debug_line.vert.glsl").get();
+			GShader* FragShader = ShaderManager::get_instance()->GetShader("debug_line.frag.glsl").get();
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(VertShader, s_res);
+			ShaderParser::generate_shader_resources(FragShader, s_res);
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = VertShader;
+			_ds2.pixel_shader = FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = {};
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS"); // TODO: Create custom debug pass
+			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+			_ds2.topology = PRIMITIVETOPOLOGY::LINE_LIST;
+
+			debug_line_pipeline = CreatePipeline(_ds2, "debug_line_pipeline");
+			if (!debug_line_pipeline)
+			{
+				TRC_ERROR("Failed to initialize or create debug_line_pipeline");
+				return false;
+			}
+		};
+
+		{
 
 			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("trace_core.shader.vert.glsl", ShaderStage::VERTEX_SHADER);
 			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("g_buffer.frag.glsl", ShaderStage::PIXEL_SHADER);

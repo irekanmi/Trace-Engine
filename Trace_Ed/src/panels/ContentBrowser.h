@@ -1,5 +1,8 @@
 #pragma once
 
+#include "resource/Ref.h"
+#include "render/GTexture.h"
+
 #include <filesystem>
 #include <vector>
 
@@ -22,7 +25,8 @@ namespace trace {
 		std::filesystem::path m_currentDir;
 		std::vector<std::filesystem::path> m_dirContents;
 		std::vector<std::string> m_dirItems;
-		
+		Ref<GTexture> directory_icon;
+		Ref<GTexture> default_icon;
 
 		TraceEditor* m_editor;
 	protected:
