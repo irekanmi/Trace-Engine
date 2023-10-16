@@ -123,6 +123,12 @@
     <ClInclude Include="src\core\io\TrcConsole.h">
       <Filter>src\core\io</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\memory\MemoryManager.h">
+      <Filter>src\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\memory\StackAllocator.h">
+      <Filter>src\core\memory</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\memory\memory.h">
       <Filter>src\core\memory</Filter>
     </ClInclude>
@@ -351,12 +357,12 @@
     <ClInclude Include="src\scene\SceneSerializer.h">
       <Filter>src\scene</Filter>
     </ClInclude>
+    <ClInclude Include="src\scene\UUID.h">
+      <Filter>src\scene</Filter>
+    </ClInclude>
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\UUID.h" />
-    <ClInclude Include="src\core\memory\MemoryManager.h" />
-    <ClInclude Include="src\core\memory\StackAllocator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -442,6 +448,12 @@
     </ClCompile>
     <ClCompile Include="src\core\io\TrcConsole.cpp">
       <Filter>src\core\io</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\memory\MemoryManager.cpp">
+      <Filter>src\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\memory\StackAllocator.cpp">
+      <Filter>src\core\memory</Filter>
     </ClCompile>
     <ClCompile Include="src\core\memory\memory.cpp">
       <Filter>src\core\memory</Filter>
@@ -638,8 +650,8 @@
     <ClCompile Include="src\scene\SceneSerializer.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\UUID.cpp" />
-    <ClCompile Include="src\core\memory\MemoryManager.cpp" />
-    <ClCompile Include="src\core\memory\StackAllocator.cpp" />
+    <ClCompile Include="src\scene\UUID.cpp">
+      <Filter>src\scene</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

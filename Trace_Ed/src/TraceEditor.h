@@ -37,13 +37,25 @@ namespace trace {
 	private:
 		void DrawGizmo();
 		void CloseCurrentScene();
-		void LoadScene();
+		void LoadScene(const std::string& file_path);
+		void SaveScene();
+		std::string SaveSceneAs();
+		std::string OpenScene();
 		void HandleKeyPressed(KeyPressed* p_event);
 		void HandleKeyRelesed(KeyReleased* p_event);
 		void OnScenePlay();
 		void OnSceneStop();
 
+		struct AllProjectAssets
+		{
+			std::unordered_set<std::filesystem::path> models;
+			std::unordered_set<std::filesystem::path> textures;
+		};
+		AllProjectAssets all_assets;
 	private:
+		
+
+
 		EditorRenderComposer* m_renderComposer = nullptr;
 		HierachyPanel m_hierachyPanel;
 		InspectorPanel m_inspectorPanel;
@@ -61,6 +73,7 @@ namespace trace {
 		EditorState current_state = EditorState::SceneEdit;
 		
 		std::filesystem::path current_project_path = "../assets"; //Temp
+		std::string current_scene_path;
 		static TraceEditor* s_instance;
 	protected:
 		friend EditorRenderComposer;

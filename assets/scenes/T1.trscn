@@ -39,15 +39,15 @@ Entities:
       Near: 0.100000001
       Far: 700
       Fov: 60.2999992
-      Aspect Ratio: 1.86533666
+      Aspect Ratio: 1.82885087
       Orthographic Size: 7.30000019
   - UUID: 3634860917324020060
     TagComponent:
       Tag: Cube
     TransformComponent:
       Position: [9.96661282, -54.0283585, -14.727725]
-      Rotation: [0.313237399, 0.46120581, -0.168006703, 0.81298542]
-      Scale: [179.410812, 6.25518227, 385.239807]
+      Rotation: [0.0256298073, 0.199761644, -0.0161395948, 0.979376256]
+      Scale: [179.410828, 6.25519323, 385.239868]
     ModelComponent:
       Name: Cube
       Resource Path: ""
@@ -79,7 +79,7 @@ Entities:
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.40196079, 0.372404844, 0.372404844, 0]
+      Color: [0.448937953, 0.69415611, 0.769607842, 0]
       Direction: [0.300000012, -1.10000002, 0, 0]
       Position: [123.875198, -43.2015877, 25.321909, 0]
       Params1: [0, 0, 0, 0]

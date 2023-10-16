@@ -28,6 +28,7 @@ IncludeDir["imgui"] = "externals/imgui"
 IncludeDir["entt"] = "externals/entt"
 IncludeDir["yaml_cpp"] = "externals/yaml_cpp"
 IncludeDir["ImGuizmo"] = "externals/ImGuizmo"
+IncludeDir["portable_file_dialogs"] = "externals/portable_file_dialogs"
 
 
 project "trace"
@@ -223,7 +224,8 @@ project "Trace_Ed"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/_externals/**.cpp"
 	}
 
 	includedirs
@@ -234,6 +236,7 @@ project "Trace_Ed"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.portable_file_dialogs}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

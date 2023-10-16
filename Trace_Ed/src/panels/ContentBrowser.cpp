@@ -2,6 +2,7 @@
 #include "ContentBrowser.h"
 #include "../TraceEditor.h"
 #include "resource/TextureManager.h"
+#include "resource/MeshManager.h"
 #include "backends/UIutils.h"
 #include "imgui.h"
 
@@ -24,6 +25,7 @@ namespace trace {
 		directory_icon = TextureManager::get_instance()->LoadTexture("directory.png");
 		default_icon = TextureManager::get_instance()->LoadTexture("default_file_icon.png");
 
+		//Items callbacks
 		{
 			item_callbacks["directory"] = [&](std::filesystem::path& path)
 			{
@@ -65,12 +67,33 @@ namespace trace {
 				{
 					std::string res_path = path.string();
 					res_path += "\0";
-					ImGui::SetDragDropPayload(".trscn", res_path.c_str(), res_path.size());
+					ImGui::SetDragDropPayload(".trscn", res_path.c_str(), res_path.size() + 1);
 					ImGui::EndDragDropSource();
 				}
 				ImGui::TextWrapped(filename.c_str());
 
 			};
+		};
+
+		//Process callbacks
+		{
+			process_callbacks[".obj"] = [&](std::filesystem::path& path) 
+			{
+				Ref<Mesh> mesh = MeshManager::get_instance()->LoadMesh_(path.string());
+				for (auto i : mesh->GetModels())
+				{
+					m_editor->all_assets.models.emplace(i->m_path);
+				}
+			};
+
+			auto tex_lambda = [&](std::filesystem::path& path)
+			{
+				m_editor->all_assets.textures.emplace(path);
+			};
+
+			process_callbacks[".png"] = tex_lambda;
+			process_callbacks[".jpg"] = tex_lambda;
+			process_callbacks[".tga"] = tex_lambda;
 		};
 
 		OnDirectoryChanged();

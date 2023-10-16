@@ -9,10 +9,13 @@
 #include "scene/Componets.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
+#include "scene/SceneSerializer.h"
+
 
 #include "glm/gtc/type_ptr.hpp"
-#include "scene/SceneSerializer.h"
 #include "ImGuizmo.h"
+#include "portable-file-dialogs.h"
+
 
 int translateKeyTrace_ImGui(trace::Keys key);
 int translateButtonTrace_ImGui(trace::Buttons button);
@@ -180,8 +183,19 @@ namespace trace {
 			{
 				if (ImGui::BeginMenu("File"))
 				{
-					if (ImGui::MenuItem("Save")) SceneSerializer::Serialize(m_currentScene, "../assets/scenes/SampleScene.trscn");
-					if (ImGui::MenuItem("Load")) LoadScene();
+					
+					if (ImGui::MenuItem("Save Scene", "Crtl+S"))
+					{
+						SaveScene();
+					}
+					if (ImGui::MenuItem("Save Scene As", "Crtl+Shift+S"))
+					{
+						SaveSceneAs();
+					}
+					if (ImGui::MenuItem("Open Scene", "Crtl+O"))
+					{
+						OpenScene();
+					}
 					if (ImGui::MenuItem("Close Scene"))
 					{
 						CloseCurrentScene();
@@ -214,7 +228,6 @@ namespace trace {
 			ImGui::End();
 		};
     
-
 
 		if (show_demo) ImGui::ShowDemoWindow(&show_demo);
 		if (ImGui::Begin("Sample Tab"))
@@ -274,23 +287,20 @@ namespace trace {
 		{
 			DrawGizmo();
 		}
-
-		if (ImGui::BeginDragDropTarget())
+		if (current_state == SceneEdit)
 		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
+			if (ImGui::BeginDragDropTarget())
 			{
-				static char buf[1024] = {0};
-				memcpy_s(buf, 1024, payload->Data, payload->DataSize);
-				std::string path = buf;
-				Ref<Scene> scene = SceneSerializer::Deserialize(path);
-				if (scene)
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
 				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::string path = buf;
 					CloseCurrentScene();
-					m_currentScene = scene;
-					m_editScene = scene;
+					LoadScene(path);
 				}
+				ImGui::EndDragDropTarget();
 			}
-			ImGui::EndDragDropTarget();
 		}
 
 		ImGui::End();
@@ -457,13 +467,51 @@ namespace trace {
 	}
 	void TraceEditor::CloseCurrentScene()
 	{
-		m_currentScene = Ref<Scene>();
+		m_currentScene.free();
+		m_editScene.free();
 		m_hierachyPanel.m_selectedEntity = Entity();
+		current_scene_path = "";
 	}
-	void TraceEditor::LoadScene()
+	void TraceEditor::LoadScene(const std::string& file_path)
 	{
-		m_currentScene = SceneSerializer::Deserialize("../assets/scenes/SampleScene.trscn");
+		m_currentScene = SceneSerializer::Deserialize(file_path);
 		m_editScene = m_currentScene;
+	}
+	void TraceEditor::SaveScene()
+	{
+		if (current_scene_path.empty())
+		{
+			current_scene_path = SaveSceneAs();
+			return;
+		}
+		if (m_currentScene)
+		{
+			SceneSerializer::Serialize(m_currentScene, current_scene_path);
+		}
+	}
+	std::string TraceEditor::SaveSceneAs()
+	{
+		if (m_currentScene)
+		{
+			auto result = pfd::save_file("Save Scene As", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
+			if (!result.empty())
+			{
+				SceneSerializer::Serialize(m_currentScene, result);
+			}
+			return result;
+		}
+		return std::string();
+	}
+	std::string TraceEditor::OpenScene()
+	{
+		CloseCurrentScene();
+		std::vector<std::string> result = pfd::open_file("Open Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
+		if (!result.empty())
+		{
+			LoadScene(result[0]);
+			return result[0];
+		}
+		return std::string();
 	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
@@ -499,6 +547,27 @@ namespace trace {
 		}
 		case KEY_S:
 		{
+			if (current_state != SceneEdit) break;
+
+			if (control && shift)
+			{
+				SaveSceneAs();
+			}
+			else if (control)
+			{
+				SaveScene();
+			}
+
+			break;
+		}
+		case KEY_O:
+		{
+			if (current_state != SceneEdit) break;
+
+			if (control)
+			{
+				OpenScene();
+			}
 
 			break;
 		}

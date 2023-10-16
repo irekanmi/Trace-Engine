@@ -112,12 +112,6 @@ namespace trace {
 
 		MSG msg;
 
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-
 		for (int i = 0; i < Keys::KEYS_MAX_KEYS; i++)
 		{
 			InputSystem::get_instance()->SetKey((Keys)i, GetAsyncKeyState(i) & 0x8000f);
@@ -127,6 +121,13 @@ namespace trace {
 			InputSystem::get_instance()->SetButton((Buttons)i, GetAsyncKeyState(i) & 0x8000f);
 		}
 
+		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		
 	}
 
 	void trace::Win32Window::ShutDown()
