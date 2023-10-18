@@ -5,7 +5,7 @@
 #include "imgui_internal.h"
 #include "imgui_stdlib.h"
 #include "glm/gtc/type_ptr.hpp"
-#include "render/Renderutils.h"
+#include "backends/Renderutils.h"
 #include "backends/UIutils.h"
 #include "resource/MaterialManager.h"
 
@@ -123,40 +123,126 @@ namespace trace {
 		ImGui::Button(sp->m_path.string().c_str());
 		ImGui::Columns(1);
 
-		
-		ImGui::ColorEdit4("Diffuse color", glm::value_ptr(mat->m_material.m_diffuseColor));
-		ImGui::DragFloat("Shineness", &mat->m_material.m_shininess);
 
-		Ref<GTexture> tex;
-		ImGui::Columns(2);
-		ImGui::Text("Albedo Map");
-		tex = mat->m_material.m_albedoMap;
-		ImGui::Text(tex->GetName().c_str());
-		ImGui::NextColumn();
-		void* a = nullptr;
-		UIFunc::GetDrawTextureHandle(tex.get(), a);
-		ImGui::ImageButton(a, ImVec2(32.0f, 32.0f));
-		ImGui::Columns(1);
+		auto lambda = [&](trace::ShaderData type, std::any& dst,const std::string& name)
+            {
+			switch (type)
+			{
+			case trace::ShaderData::CUSTOM_DATA_BOOL:
+			{
+				bool* data = &std::any_cast<bool&>(dst);
+				ImGui::Checkbox(name.c_str(), data);
+				dst = *data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_FLOAT:
+			{
+				float* data = &std::any_cast<float&>(dst);
+				ImGui::DragFloat(name.c_str(), data);
+				dst = *data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_INT:
+			{
+				int* data = &std::any_cast<int&>(dst);
+				ImGui::DragInt(name.c_str(), data);
+				dst = *data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC2:
+			{
+				glm::ivec2& data = std::any_cast<glm::ivec2&>(dst);
+				ImGui::DragInt2(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC3:
+			{
+				glm::ivec3& data = std::any_cast<glm::ivec3&>(dst);
+				ImGui::DragInt3(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC4:
+			{
+				glm::ivec4* data = &std::any_cast<glm::ivec4&>(dst);
+				ImGui::DragInt4(name.c_str(), (int*)data);
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT2:
+			{
+				glm::mat2& data = std::any_cast<glm::mat2&>(dst);
+				ImGui::Text(name.c_str());
+				ImGui::DragFloat2((name + "row_0").c_str(), glm::value_ptr(data[0]));
+				ImGui::DragFloat2((name + "row_1").c_str(), glm::value_ptr(data[1]));
+				dst = data;
+				break;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT3:
+			{
+				glm::mat3& data = std::any_cast<glm::mat3&>(dst);
+				ImGui::Text(name.c_str());
+				ImGui::DragFloat3((name + "row_0").c_str(), glm::value_ptr(data[0]));
+				ImGui::DragFloat3((name + "row_1").c_str(), glm::value_ptr(data[1]));
+				ImGui::DragFloat3((name + "row_2").c_str(), glm::value_ptr(data[2]));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT4:
+			{
+				glm::mat4& data = std::any_cast<glm::mat4&>(dst);
+				ImGui::Text(name.c_str());
+				ImGui::DragFloat4((name + "row_0").c_str(), glm::value_ptr(data[0]));
+				ImGui::DragFloat4((name + "row_1").c_str(), glm::value_ptr(data[1]));
+				ImGui::DragFloat4((name + "row_2").c_str(), glm::value_ptr(data[2]));
+				ImGui::DragFloat4((name + "row_3").c_str(), glm::value_ptr(data[3]));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
+			{
+				Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
+				ImGui::Columns(2);
+				ImGui::Text(name.c_str());
+				ImGui::Text(tex->GetName().c_str());
+				ImGui::NextColumn();
+				void* a = nullptr;
+				UIFunc::GetDrawTextureHandle(tex.get(), a);
+				ImGui::ImageButton(a, ImVec2(32.0f, 32.0f));
+				ImGui::Columns(1);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC2:
+			{
+				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
+				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC3:
+			{
+				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
+				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC4:
+			{
+				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
+				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			}
+        };
 
-		ImGui::Columns(2);
-		ImGui::Text("Specular Map");
-		tex = mat->m_material.m_specularMap;
-		ImGui::Text(tex->GetName().c_str());
-		ImGui::NextColumn();
-		void* s = nullptr;
-		UIFunc::GetDrawTextureHandle(tex.get(), s);
-		ImGui::ImageButton(s, ImVec2(32.0f, 32.0f));
-		ImGui::Columns(1);
-
-		ImGui::Columns(2);
-		ImGui::Text("Normal Map");
-		tex = mat->m_material.m_normalMap;
-		ImGui::Text(tex->GetName().c_str());
-		ImGui::NextColumn();
-		void* n = nullptr;
-		UIFunc::GetDrawTextureHandle(tex.get(), n);
-		ImGui::ImageButton(n, ImVec2(32.0f, 32.0f));
-		ImGui::Columns(1);
+		for (auto& m_data : mat->m_data)
+		{
+			trace::UniformMetaData& meta_data = mat->m_renderPipeline->Scene_uniforms[m_data.second.second];
+			lambda(meta_data.data_type, m_data.second.first, m_data.first);
+		}
 
 	}
 

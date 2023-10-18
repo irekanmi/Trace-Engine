@@ -4,7 +4,7 @@
 
 layout(set = 0, binding = 0)uniform SceneData
 {
-    mat4 projection;
+    mat4 _projection;
 };
 
 // TODO: use SSBO insted of a uniform buffer
@@ -17,5 +17,5 @@ void main()
 {
     vec4 current_pos;
     current_pos = positions[gl_VertexIndex];
-    gl_Position = projection * vec4(current_pos.xyz, 1.0);
+    gl_Position = _projection * vec4(current_pos.xyz, 1.0);
 }

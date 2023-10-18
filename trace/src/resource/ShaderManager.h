@@ -29,6 +29,10 @@ namespace trace {
 		static ShaderManager* get_instance();
 
 	private:
+		void SaveShaderCode(std::filesystem::path& code_path, std::vector<uint32_t>& code);
+		std::vector<uint32_t> LoadShaderCode(std::filesystem::path& code_path);
+
+	private:
 		uint32_t m_numShaderUnits;
 		std::vector<GShader> m_shaders;
 		HashTable<uint32_t> m_hashTable;

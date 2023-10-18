@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "Renderer.h"
-#include "Renderutils.h"
+#include "backends/Renderutils.h"
 #include "GContext.h"
 #include "core/Enums.h"
 #include "core/io/Logging.h"
@@ -317,7 +317,7 @@ namespace trace {
 
 	void Renderer::DrawQuad()
 	{
-		TRC_ASSERT(false, "Implement funtion {}", __FUNCTION__);
+		TRC_ASSERT(false, "Funtion {} has not been implemented", __FUNCTION__);
 	}
 
 	void Renderer::DrawQuad(glm::mat4 _transform, Ref<GTexture> texture)
@@ -435,11 +435,11 @@ namespace trace {
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
-			RenderFunc::SetPipelineData(sp.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &light_data, sizeof(glm::ivec4));
-			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
+			RenderFunc::SetPipelineData(sp.get(), "_light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &light_data, sizeof(glm::ivec4));
+			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
 			RenderFunc::ApplyMaterial(_mi.get());
 			RenderFunc::BindPipeline(&g_device, sp.get());
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
@@ -468,9 +468,9 @@ namespace trace {
 
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::SetPipelineData(sp.get(), "view_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "color", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &light_color, sizeof(glm::vec4));
-			RenderFunc::SetPipelineData(sp.get(), "model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
 			RenderFunc::BindPipeline_(sp.get());
 			RenderFunc::BindPipeline(&g_device, sp.get());
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
@@ -500,9 +500,9 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				sky_box->GetCubeMap()
 			);
-			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
 			RenderFunc::BindPipeline_(sp.get());
 
 			Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
@@ -528,7 +528,7 @@ namespace trace {
 				RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, quadBatches[i].textures[j], j);
 			}
 			RenderFunc::OnDrawStart(&g_device, quadBatchPipeline.get());
-			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].positions.data(), quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].tex_coords.data(), quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
 			RenderFunc::BindPipeline_(quadBatchPipeline.get());
@@ -550,7 +550,7 @@ namespace trace {
 				RenderFunc::SetPipelineTextureData(textBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, textBatches[i].textures[j], j);
 			}
 			RenderFunc::OnDrawStart(&g_device, textBatchPipeline.get());
-			RenderFunc::SetPipelineData(textBatchPipeline.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(textBatchPipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(textBatchPipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, textBatches[i].positions.data(), textBatches[i].current_unit * sizeof(glm::vec4) * 6);
 			RenderFunc::SetPipelineData(textBatchPipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, textBatches[i].tex_coords.data(), textBatches[i].current_unit * sizeof(glm::vec4) * 6);
 			RenderFunc::BindPipeline_(textBatchPipeline.get());
@@ -571,7 +571,7 @@ namespace trace {
 			Ref<GPipeline> sp = m_debug->m_linePipeline;
 			RenderFunc::OnDrawStart(&g_device, sp.get());
 			RenderFunc::BindLineWidth(&g_device, 2.0f);
-			RenderFunc::SetPipelineData(sp.get(), "projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, m_debug->positions.data(), m_debug->vert_count * sizeof(glm::vec4));
 			RenderFunc::BindPipeline_(sp.get());
 			RenderFunc::BindPipeline(&g_device, sp.get());

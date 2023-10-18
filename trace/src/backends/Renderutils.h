@@ -1,7 +1,10 @@
 #pragma once
 
-#include "Graphics.h"
+#include "render/Graphics.h"
 #include "resource/Ref.h"
+
+#include <any>
+
 
 namespace trace {
 
@@ -22,6 +25,7 @@ namespace trace {
 
 
 	void AutoFillPipelineDesc(PipelineStateDesc& desc, bool input_layout = true, bool raterizer_state = true, bool depth_sten_state = true, bool color_blend_state = true, bool view_port = true, bool scissor = true, bool render_pass = true, bool primitive_topology = true);
+	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline);
 	bool operator ==(ShaderResourceBinding lhs, ShaderResourceBinding rhs);
 
 
@@ -69,6 +73,7 @@ namespace trace {
 
 	// Materials -------------------
 	typedef bool (*__InitializeMaterial)(MaterialInstance*, Ref<GPipeline>, Material);
+	typedef bool (*__PostInitializeMaterial)(MaterialInstance*, Ref<GPipeline>, Material);
 	typedef bool (*__ApplyMaterial)(MaterialInstance*);
 	//-----------------------------
 
@@ -89,6 +94,7 @@ namespace trace {
 
 	// Shader ----------------------
 	typedef bool (*__CreateShader)(GShader* , const std::string& , ShaderStage);
+	typedef bool (*__CreateShader_)(GShader* , std::vector<uint32_t>& , ShaderStage);
 	typedef bool (*__DestroyShader)(GShader*);
 	//------------------------------
 
@@ -176,6 +182,7 @@ namespace trace {
 		static bool DestroyFramebuffer(GFramebuffer* framebuffer);
 
 		static bool InitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material);
+		static bool PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material);
 		static bool ApplyMaterial(MaterialInstance* mat_instance);
 
 		static bool CreatePipeline(GPipeline* pipeline, PipelineStateDesc desc);
@@ -190,6 +197,7 @@ namespace trace {
 		static bool DestroyRenderPass(GRenderPass* render_pass);
 
 		static bool CreateShader(GShader* shader, const std::string& src, ShaderStage stage);
+		static bool CreateShader(GShader* shader, std::vector<uint32_t> & src, ShaderStage stage);
 		static bool DestroyShader(GShader* shader);
 
 		static bool CreateSwapchain(GSwapchain* swapchain, GDevice* device, GContext* context);
@@ -256,6 +264,7 @@ namespace trace {
 		static __DestroyFramebuffer _destroyFramebuffer;
 
 		static __InitializeMaterial _initializeMaterial;
+		static __PostInitializeMaterial _postInitializeMaterial;
 		static __ApplyMaterial _applyMaterial;
 
 		static  __CreatePipeline _createPipeline;
@@ -270,6 +279,7 @@ namespace trace {
 		static __DestroyRenderPass _destroyRenderPass;
 
 		static __CreateShader _createShader;
+		static __CreateShader_ _createShader_;
 		static __DestroyShader _destroyShader;
 
 		static __CreateSwapchain _createSwapchain;

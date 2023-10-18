@@ -1,9 +1,5 @@
 #version 450
 
-
-#define DIFFUSE_MAP 0
-#define SPECULAR_MAP 1
-#define NORMAL_MAP 2
 #define MAX_LIGHT_COUNT 4
 
 layout(location = 0)out vec4 g_Position;
@@ -25,11 +21,13 @@ layout(set = 1, binding = 0)uniform InstanceBufferObject{
     vec4 diffuse_color;
     float shininess;
 };
-layout(set = 1, binding = 1)uniform sampler2D testing[3];
+layout(set = 1, binding = 1)uniform sampler2D DIFFUSE_MAP;
+layout(set = 1, binding = 2)uniform sampler2D SPECULAR_MAP;
+layout(set = 1, binding = 3)uniform sampler2D NORMAL_MAP;
 
 void main()
 {
-    vec3 _normal = texture(testing[NORMAL_MAP], _data._texCoord).rgb;
+    vec3 _normal = texture(NORMAL_MAP, _data._texCoord).rgb;
     _normal = _normal * 2.0f - 1.0f;
     
     vec3 obj_norm = normalize(_data._normal);
@@ -41,6 +39,6 @@ void main()
 
     g_Position = vec4(_data._fragPos, 1.0f);
     g_Normal = vec4(normal, shininess);
-    g_ColorSpecular = vec4(texture(testing[DIFFUSE_MAP], _data._texCoord).rgb, texture(testing[SPECULAR_MAP], _data._texCoord).r);
+    g_ColorSpecular = vec4(texture(DIFFUSE_MAP, _data._texCoord).rgb, texture(SPECULAR_MAP, _data._texCoord).r);
 
 }

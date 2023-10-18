@@ -26,6 +26,32 @@ namespace vk {
 		{
 			TRC_ERROR("These handle is valid can't recreate the shader ::Try to destroy and then create, {}, Function -> {}", (const void*)shader->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
+		}	
+
+
+		std::vector<uint32_t> _code = trace::ShaderParser::glsl_to_spirv(src, stage);
+		__CreateShader_(shader, _code, stage);
+		
+
+
+		return result;
+	}
+	bool __CreateShader_(trace::GShader* shader, std::vector<uint32_t>& src, trace::ShaderStage stage)
+	{
+		bool result = true;
+
+
+
+		if (!shader)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)shader, __FUNCTION__);
+			return false;
+		}
+
+		if (shader->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These handle is valid can't recreate the shader ::Try to destroy and then create, {}, Function -> {}", (const void*)shader->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
 		}
 
 		trace::VKShader* _handle = new trace::VKShader(); //TODO: Use a custom allocator
@@ -38,15 +64,12 @@ namespace vk {
 
 		shader->SetShaderStage(stage);
 
-
-		std::vector<uint32_t> _code = trace::ShaderParser::glsl_to_spirv(src, stage);
-
-		shader->SetCode(_code);
+		shader->SetCode(src);
 
 		VkShaderModuleCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		create_info.codeSize = _code.size() * sizeof(uint32_t);
-		create_info.pCode = _code.data();
+		create_info.codeSize = src.size() * sizeof(uint32_t);
+		create_info.pCode = src.data();
 
 		VkResult _result = vkCreateShaderModule(_device->m_device, &create_info, _instance->m_alloc_callback, &_handle->m_module);
 
@@ -67,8 +90,7 @@ namespace vk {
 			result = false;
 		}
 
-
-		return result;
+		return true;
 	}
 	bool __DestroyShader(trace::GShader* shader)
 	{

@@ -7,7 +7,7 @@ layout(location = 1)out float out_texIndex;
 
 layout(set = 0, binding = 0)uniform SceneData
 {
-    mat4 projection;
+    mat4 _projection;
 };
 
 // TODO: use SSBO insted of a uniform buffer
@@ -26,5 +26,5 @@ void main()
     current_tex = tex_coords[gl_VertexIndex];
     out_texCoord = vec2(current_tex.x, current_tex.y);
     out_texIndex = current_tex.z;
-    gl_Position = projection * vec4(current_pos.xyz, 1.0);
+    gl_Position = _projection * vec4(current_pos.xyz, 1.0);
 }

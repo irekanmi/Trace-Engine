@@ -298,6 +298,7 @@ namespace trace {
 					std::string path = buf;
 					CloseCurrentScene();
 					LoadScene(path);
+					current_scene_path = path;
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -503,12 +504,13 @@ namespace trace {
 		return std::string();
 	}
 	std::string TraceEditor::OpenScene()
-	{
-		CloseCurrentScene();
-		std::vector<std::string> result = pfd::open_file("Open Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
+	{		
+		std::vector<std::string> result = pfd::open_file("Open Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }).result();
 		if (!result.empty())
 		{
+			CloseCurrentScene();
 			LoadScene(result[0]);
+			current_scene_path = result[0];
 			return result[0];
 		}
 		return std::string();

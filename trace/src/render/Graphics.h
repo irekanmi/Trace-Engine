@@ -175,8 +175,11 @@ namespace trace {
 		CUSTOM_DATA_FLOAT,
 		CUSTOM_DATA_BOOL,
 		CUSTOM_DATA_VEC2,
+		CUSTOM_DATA_IVEC2,
 		CUSTOM_DATA_VEC3,
+		CUSTOM_DATA_IVEC3,
 		CUSTOM_DATA_VEC4,
+		CUSTOM_DATA_IVEC4,
 		CUSTOM_DATA_MAT2,
 		CUSTOM_DATA_MAT3,
 		CUSTOM_DATA_MAT4,
@@ -357,6 +360,7 @@ namespace trace {
 		uint16_t _num_frame_update = 0;
 		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 		ShaderStage _shader_stage = ShaderStage::STAGE_NONE;
+		ShaderData data_type = ShaderData::NONE;
 	};
 
 	struct ShaderStruct
@@ -395,6 +399,7 @@ namespace trace {
 			uint32_t index = 0;
 			ShaderData resource_data_type = ShaderData::NONE;
 			void* data = nullptr;
+			ShaderData data_type = ShaderData::NONE;
 		};
 		std::vector<ArrayInfo> members;
 	};

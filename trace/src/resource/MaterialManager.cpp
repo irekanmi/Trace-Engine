@@ -4,7 +4,7 @@
 #include "MaterialManager.h"
 #include "TextureManager.h"
 #include "PipelineManager.h"
-#include "render/Renderutils.h"
+#include "backends/Renderutils.h"
 namespace trace {
 
 	MaterialManager* MaterialManager::s_instance = nullptr;
@@ -72,6 +72,10 @@ namespace trace {
 		{
 			if (mat_instance.m_id == INVALID_ID)
 			{
+				auto res = GetPipelineMaterialData(pipeline);
+				mat_instance.m_data.clear();
+				mat_instance.m_data = std::move(res);
+
 				if (!RenderFunc::InitializeMaterial(
 					&mat_instance,
 					pipeline,
@@ -145,11 +149,44 @@ namespace trace {
 		mat.m_shininess = 32.0f;
 
 		Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
+
+
 		default_material  = CreateMaterial(
 			"default",
 			mat,
 			sp
 		);
+
+		//New Default
+		{
+			auto it1 = default_material->m_data.find("DIFFUSE_MAP");
+			if (it1 != default_material->m_data.end())
+			{
+				it1->second.first = texture_manager->GetDefault("albedo_map");
+			}
+			auto it2 = default_material->m_data.find("SPECULAR_MAP");
+			if (it2 != default_material->m_data.end())
+			{
+				it2->second.first = texture_manager->GetDefault("specular_map");
+			}
+			auto it3 = default_material->m_data.find("NORMAL_MAP");
+			if (it3 != default_material->m_data.end())
+			{
+				it3->second.first = texture_manager->GetDefault("normal_map");
+			}
+			auto it4 = default_material->m_data.find("diffuse_color");
+			if (it4 != default_material->m_data.end())
+			{
+				it4->second.first = glm::vec4(1.0f);
+			}
+			auto it5 = default_material->m_data.find("shininess");
+			if (it5 != default_material->m_data.end())
+			{
+				it5->second.first = 32.0f;
+			}
+		};
+
+		RenderFunc::PostInitializeMaterial(default_material.get(), sp, mat);
 		default_material->m_path = "default";
 
 		return true;

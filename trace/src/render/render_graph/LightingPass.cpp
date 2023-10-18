@@ -3,7 +3,7 @@
 #include "LightingPass.h"
 #include "render/Renderer.h"
 #include "RenderGraph.h"
-#include "render/Renderutils.h"
+#include "backends/Renderutils.h"
 #include "render/GPipeline.h"
 #include "resource/PipelineManager.h"
 #include "resource/ShaderManager.h"
@@ -196,7 +196,7 @@ namespace trace {
 
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
-					"ssao_dat",
+					"_ssao_dat",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&res,
 					sizeof(uint32_t)
@@ -215,13 +215,13 @@ namespace trace {
 
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
-					"view",
+					"_view",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&view,
 					sizeof(glm::mat4)
 				);
 
-				RenderFunc::SetPipelineData(m_pipeline.get(), "light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
+				RenderFunc::SetPipelineData(m_pipeline.get(), "_light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &m_renderer->light_data, sizeof(glm::ivec4));
 				frame_count++;
 
 				RenderFunc::BindPipeline_(m_pipeline.get());

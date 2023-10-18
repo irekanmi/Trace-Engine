@@ -12,9 +12,9 @@ layout(location = 0)out vec4 FragColor;
 layout(location = 0)in vec2 in_texCoord;
 
 layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
-    mat4 view;
-    ivec4 light_data;
-    int ssao_dat;
+    mat4 _view;
+    ivec4 _light_data;
+    int _ssao_dat;
 };
 
 layout(set = 0, binding = 1)uniform sampler2D g_bufferData[3];
@@ -51,24 +51,24 @@ void main()
 
 
     float ssao_res = 1.0f;
-    if(ssao_dat == 1)
+    if(_ssao_dat == 1)
     {
         ssao_res = texture(ssao_blur, in_texCoord).r;
     }
 
-    for(int i = 0; i < light_data.x; i++)
+    for(int i = 0; i < _light_data.x; i++)
     {
         FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);
     }
 
-    int num = light_data.x + light_data.y;
-    for(int i = light_data.x; i < num; i++)
+    int num = _light_data.x + _light_data.y;
+    for(int i = _light_data.x; i < num; i++)
     {
         FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
     }
 
-    num = light_data.x + light_data.y + light_data.z;
-    for(int i = light_data.x + light_data.y; i < num; i++)
+    num = _light_data.x + _light_data.y + _light_data.z;
+    for(int i = _light_data.x + _light_data.y; i < num; i++)
     {
         FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
     }
@@ -78,8 +78,8 @@ void main()
 
 vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine, int index, float ssao)
 {
-    vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
-    mat3 view_mat = mat3(view);
+    vec3 light_pos =  ( _view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
+    mat3 view_mat = mat3(_view);
     vec3 light_direction = normalize(view_mat * u_gLights[index].direction.xyz);
     float _lgt_intensity = u_gLights[index].params2.y;
     vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
@@ -101,7 +101,7 @@ vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, v
 
 vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index, float ssao)
 {
-    vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
+    vec3 light_pos =  ( _view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
     vec3 light_dir;
     float _lgt_intensity = u_gLights[index].params2.y;
     vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
@@ -130,8 +130,8 @@ vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 al
 
 vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index, float ssao)
 {
-    vec3 light_pos =  ( view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
-    mat3 view_mat = mat3(view);
+    vec3 light_pos =  ( _view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
+    mat3 view_mat = mat3(_view);
     vec3 light_direction = normalize(view_mat * u_gLights[index].direction.xyz);
     vec3 light_dir = light_pos - position;
     float _lgt_intensity = u_gLights[index].params2.y;

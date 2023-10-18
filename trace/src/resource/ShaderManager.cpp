@@ -1,8 +1,9 @@
 #include "pch.h"
 
 #include "ShaderManager.h"
-#include "render/Renderutils.h"
+#include "backends/Renderutils.h"
 #include "render/ShaderParser.h"
+#include "core/FileSystem.h"
 
 namespace trace {
 
@@ -120,6 +121,8 @@ namespace trace {
 	Ref<GShader> ShaderManager::CreateShader_(const std::string& path, ShaderStage shader_stage)
 	{
 		std::filesystem::path p(path);
+		std::filesystem::path code_path = p;
+		code_path += ".shcode";
 		std::string name = p.filename().string();
 		Ref<GShader> result;
 		GShader* _shad = nullptr;
@@ -130,13 +133,24 @@ namespace trace {
 			return result;
 		}
 
+		std::string shader_data = ShaderParser::load_shader_file(path);
+		std::vector<uint32_t> code;
+		if (!std::filesystem::exists(code_path))
+		{
+			if (p.extension() == ".glsl") code = ShaderParser::glsl_to_spirv(shader_data, shader_stage);
+			SaveShaderCode(code_path, code);
+		}
+		else
+		{
+			code = LoadShaderCode(code_path);
+		}
+
 		uint32_t i = 0;
 		for (GShader& shader : m_shaders)
 		{
 			if (shader.m_id == INVALID_ID)
-			{
-				std::string shader_data = ShaderParser::load_shader_file(path);
-				if (RenderFunc::CreateShader(&shader, shader_data, shader_stage))
+			{				
+				if (RenderFunc::CreateShader(&shader, code, shader_stage))
 				{
 					shader.m_id = i;
 					m_hashTable.Set(name, i);
@@ -166,6 +180,37 @@ namespace trace {
 			s_instance =  new ShaderManager();
 		}
 		return s_instance;
+	}
+
+	void ShaderManager::SaveShaderCode(std::filesystem::path& code_path, std::vector<uint32_t>& code)
+	{
+		FileHandle handle;
+		std::string path = code_path.string();
+		if (FileSystem::open_file(path, (FileMode)(FileMode::BINARY | FileMode::WRITE), handle))
+		{
+			uint32_t code_size = code.size() * 4;
+			FileSystem::write(code.data(), code.size() * 4, handle);
+		}
+		FileSystem::close_file(handle);
+
+
+	}
+
+	std::vector<uint32_t> ShaderManager::LoadShaderCode(std::filesystem::path& code_path)
+	{
+		FileHandle handle;
+		std::string path = code_path.string();
+		std::vector<uint32_t> result;
+		if (FileSystem::open_file(path, (FileMode)(FileMode::BINARY | FileMode::READ), handle))
+		{
+			uint32_t code_size = 0;
+			FileSystem::read_all_bytes(handle, nullptr, code_size);
+			result.resize(code_size / 4);
+			FileSystem::read_all_bytes(handle, result.data(), code_size);
+		}
+		FileSystem::close_file(handle);
+
+		return result;
 	}
 
 }

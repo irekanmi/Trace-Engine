@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "SSAO.h"
-#include "render/Renderutils.h"
+#include "backends/Renderutils.h"
 #include "render/Renderer.h"
 #include "FrameData.h"
 #include "core/Utils.h"
@@ -242,7 +242,7 @@ namespace trace {
 
 			RenderFunc::SetPipelineData(
 				m_pipeline.get(),
-				"projection",
+				"_projection",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&proj,
 				sizeof(glm::mat4)

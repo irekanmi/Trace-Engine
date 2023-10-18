@@ -54,6 +54,57 @@ std::string IncludeInterface::include_src_data = std::string();
 std::string IncludeInterface::include_src_name = std::string();
 
 namespace trace {
+
+	static ShaderData GetDataType(SpvReflectTypeDescription& desc)
+	{
+		ShaderData result = ShaderData::NONE;
+
+		bool _float = (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_FLOAT));
+		bool _int = (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_INT));
+		bool _vec = (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_VECTOR));
+		bool _mat = (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_MATRIX));
+		bool _tex = (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE)) || (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE));
+
+		if (_float && !_vec && !_mat)
+		{
+			result = ShaderData::CUSTOM_DATA_FLOAT;
+		}
+
+		if (_int && !_vec && !_mat)
+		{
+			result = ShaderData::CUSTOM_DATA_INT;
+		}
+
+		if (_float && _vec && !_mat)
+		{
+			if(desc.traits.numeric.vector.component_count == 4)
+				result = ShaderData::CUSTOM_DATA_VEC4;
+			if (desc.traits.numeric.vector.component_count == 3)
+				result = ShaderData::CUSTOM_DATA_VEC3;
+		}
+
+		if (_int && _vec && !_mat)
+		{
+			if (desc.traits.numeric.vector.component_count == 4)
+				result = ShaderData::CUSTOM_DATA_IVEC4;
+			if (desc.traits.numeric.vector.component_count == 3)
+				result = ShaderData::CUSTOM_DATA_IVEC3;
+		}
+
+		if (_float && _mat)
+		{
+			if (desc.traits.numeric.matrix.row_count == 4 && desc.traits.numeric.matrix.column_count == 4)
+				result = ShaderData::CUSTOM_DATA_MAT4;
+			if (desc.traits.numeric.matrix.row_count == 3 && desc.traits.numeric.matrix.column_count == 3)
+				result = ShaderData::CUSTOM_DATA_MAT3;
+		}
+
+		if (_tex)
+			result = ShaderData::CUSTOM_DATA_TEXTURE;
+
+		return result;
+	}
+
 	static void GenShaderRes(const std::vector<uint32_t>& code, ShaderResources& out_res, ShaderStage shader_stage)
 	{
 		SpvReflectShaderModule shader;
@@ -89,7 +140,7 @@ namespace trace {
 					Array.shader_stage = shader_stage;
 					Array.slot = binding->binding;
 					Array.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-					out_res.resources.push_back({ {}, Array, {}, ShaderDataDef::STRUCT_ARRAY });
+					out_res.resources.push_back({ {}, Array, {}, ShaderDataDef::STRUCT_ARRAY }); // TODO: Either remove Struct Array or Find a way to GetShaderType
 				}
 				else if (u_buffer && !isArray)
 				{
@@ -107,6 +158,7 @@ namespace trace {
 						ShaderStruct::StructInfo s_info;
 						s_info.resource_name = blck_var.name;
 						s_info.resource_size = blck_var.size;
+						s_info.resource_data_type = GetDataType(*blck_var.type_description);
 						Struct.members.push_back(s_info);
 					}
 					out_res.resources.push_back({ Struct, {}, {}, ShaderDataDef::STRUCTURE });
@@ -129,6 +181,7 @@ namespace trace {
 						ShaderArray::ArrayInfo a_info;
 						a_info.index = 0;
 						a_info.resource_name = binding->name;
+						a_info.data_type = GetDataType(*binding->type_description);
 						Array.members.push_back(a_info);
 					}
 					else
@@ -138,6 +191,7 @@ namespace trace {
 							ShaderArray::ArrayInfo a_info;
 							a_info.index = k;
 							a_info.resource_name = std::string(binding->name) + std::to_string(k);
+							a_info.data_type = GetDataType(*binding->type_description);
 							Array.members.push_back(a_info);
 						}
 					}
@@ -164,6 +218,7 @@ namespace trace {
 				ShaderStruct::StructInfo s_info;
 				s_info.resource_name = blck_var.name;
 				s_info.resource_size = blck_var.size;
+				s_info.resource_data_type = GetDataType(*blck_var.type_description);
 				Struct.members.push_back(s_info);
 			}
 			out_res.resources.push_back({ Struct, {}, {}, ShaderDataDef::STRUCTURE });

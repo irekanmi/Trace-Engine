@@ -167,8 +167,12 @@ namespace trace {
 		if (file.m_isVaild)
 		{
 			std::fstream* _file = (std::fstream*)file.m_handle;
-			_file->seekg(_file->end);
-			read_bytes = _file->tellg();
+			size_t begin = _file->tellg();
+			_file->seekg(0, std::ios::end);
+			size_t end = _file->tellg();
+			read_bytes = end - begin;
+			_file->seekg(0, std::ios::beg);
+			if (!data) return;
 			read(data, read_bytes, file);
 			return;
 		}

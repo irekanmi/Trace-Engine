@@ -8,16 +8,16 @@ layout(location = 3)in vec4 in_tangent;
 layout(location = 0)out vec3 out_texCoord;
 
 layout( set = 0, binding = 0)uniform SceneBufferObject{
-    mat4 projection;
-    mat4 view;
-    vec3 view_position;
+    mat4 _projection;
+    mat4 _view;
+    vec3 _view_position;
     vec2 _test;
 } scene_globals;
 
 void main()
 {
     out_texCoord = in_pos;
-    vec3 position = mat3(scene_globals.view) * in_pos;
-    vec4 out_pos = scene_globals.projection * vec4(position, 1.0f);
+    vec3 position = mat3(scene_globals._view) * in_pos;
+    vec4 out_pos = scene_globals._projection * vec4(position, 1.0f);
     gl_Position = out_pos.xyww;
 }

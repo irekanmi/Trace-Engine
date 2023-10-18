@@ -6,6 +6,7 @@
 #include "PipelineManager.h"
 #include "MaterialManager.h"
 #include "OBJ_Loader.h"
+#include "backends/Renderutils.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -521,55 +522,87 @@ namespace trace {
 			tinyobj::material_t& material = materials[mat_id];
 			Ref<MaterialInstance> _mi = material_manager->GetMaterial("default");
 
-			if (mat_id >= 0)
+
+			//New Way
 			{
-
-				if (!material.diffuse_texname.empty())
+				if (mat_id >= 0)
 				{
-					if (Ref<GTexture> albe = texture_manager->LoadTexture(material.diffuse_texname))
-						mat.m_albedoMap = albe;
-					else
-						TRC_ERROR("Failed to load texture {}", material.diffuse_texname);
+					Ref<MaterialInstance> res = material_manager->CreateMaterial(
+						material.name,
+						mat,
+						sp
+					);
+
+					auto it1 = res->m_data.find("DIFFUSE_MAP");
+					if (it1 != res->m_data.end())
+					{
+						if (!material.diffuse_texname.empty())
+						{
+							if (Ref<GTexture> albe = texture_manager->LoadTexture(material.diffuse_texname))
+								it1->second.first = albe;
+							else
+								TRC_ERROR("Failed to load texture {}", material.diffuse_texname);
+						}
+						else
+						{
+							it1->second.first = texture_manager->GetDefault("albedo_map");
+						}
+					}
+					auto it2 = res->m_data.find("SPECULAR_MAP");
+					if (it2 != res->m_data.end())
+					{
+						if (!material.specular_texname.empty())
+						{
+							if (Ref<GTexture> spec = texture_manager->LoadTexture(material.specular_texname))
+								it2->second.first = spec;
+							else
+								TRC_ERROR("Failed to load texture {}", material.specular_texname);
+						}
+						else
+						{
+							it2->second.first = texture_manager->GetDefault("specular_map");
+						}
+					}
+					auto it3 = res->m_data.find("NORMAL_MAP");
+					if (it3 != res->m_data.end())
+					{
+						if (!material.bump_texname.empty())
+						{
+							TextureDesc texture_desc;
+							texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
+							texture_desc.m_format = Format::R8G8B8A8_UNORM;
+							texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
+							texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
+							texture_desc.m_usage = UsageFlag::DEFAULT;
+							if (Ref<GTexture> nrm = texture_manager->LoadTexture(material.bump_texname, texture_desc))
+								it3->second.first = nrm;
+							else
+								TRC_ERROR("Failed to load texture {}", material.bump_texname);
+						}
+						else
+						{
+							it3->second.first = texture_manager->GetDefault("normal_map");
+						}
+					}
+					auto it4 = res->m_data.find("diffuse_color");
+					if (it4 != res->m_data.end())
+					{
+						it4->second.first = glm::vec4(
+							material.diffuse[0],
+							material.diffuse[1],
+							material.diffuse[2],
+							1.0f
+						);
+					}
+					auto it5 = res->m_data.find("shininess");
+					if (it5 != res->m_data.end())
+					{
+						it5->second.first = material.shininess <= 0.0f ? 32.0f : material.shininess;
+					}
+					_mi = res;
+					RenderFunc::PostInitializeMaterial(_mi.get(), sp, mat);
 				}
-				if (!material.specular_texname.empty())
-				{
-					if (Ref<GTexture> spec = texture_manager->LoadTexture(material.specular_texname))
-						mat.m_specularMap = spec;
-					else
-						TRC_ERROR("Failed to load texture {}", material.specular_texname);
-				}
-
-				if (!material.bump_texname.empty())
-				{
-					TextureDesc texture_desc;
-					texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
-					texture_desc.m_format = Format::R8G8B8A8_UNORM;
-					texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
-					texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
-					texture_desc.m_usage = UsageFlag::DEFAULT;
-					if (Ref<GTexture> nrm = texture_manager->LoadTexture(material.bump_texname, texture_desc))
-						mat.m_normalMap = nrm;
-					else
-						TRC_ERROR("Failed to load texture {}", material.bump_texname);
-				}
-
-				mat.m_shininess = material.shininess < 0.0f ? mat.m_shininess : material.shininess;
-				mat.m_diffuseColor = glm::vec4(
-					material.diffuse[0],
-					material.diffuse[1],
-					material.diffuse[2],
-					1.0f
-				);
-
-				material_manager->CreateMaterial(
-					material.name,
-					mat,
-					sp
-				);
-
-				_mi = material_manager->GetMaterial(material.name);
-
-			}
+			};
 
 			_model = model_manager->LoadModel_(verts,_inds,(path / s.name).string());
 			if (_model.is_valid())

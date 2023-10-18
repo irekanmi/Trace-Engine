@@ -39,7 +39,7 @@ Entities:
       Near: 0.100000001
       Far: 700
       Fov: 60.2999992
-      Aspect Ratio: 1.86533666
+      Aspect Ratio: 2.25981879
       Orthographic Size: 7.30000019
   - UUID: 3634860917324020060
     TagComponent:
@@ -55,9 +55,9 @@ Entities:
     TagComponent:
       Tag: Falcon
     TransformComponent:
-      Position: [66.6873779, -23.7894535, 44.4812965]
-      Rotation: [-0.0396275371, 0.4865596, -0.00522335246, 0.87273258]
-      Scale: [6.76201677, 6.76201677, 6.76199102]
+      Position: [20.052372, 73.0635376, -17.7796841]
+      Rotation: [0.414866716, 0.414589107, -0.254719079, 0.768843055]
+      Scale: [6.76201391, 6.76201391, 6.76199055]
     ModelComponent:
       Name: Plane_Plane.001
       Resource Path: ../assets\meshes\falcon.obj

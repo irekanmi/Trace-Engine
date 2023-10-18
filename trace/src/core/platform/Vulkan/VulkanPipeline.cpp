@@ -5,7 +5,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanTexture.h"
 #include "core/memory/memory.h"
-#include "render/Renderutils.h"
+#include "backends/Renderutils.h"
 
 	extern trace::VKHandle g_Vkhandle;
 	extern trace::VKDeviceHandle g_VkDevice;
@@ -68,6 +68,7 @@ namespace trace {
 							_pipeline->Scene_uniforms[j]._resource_type = i._struct.resource_type;
 							_pipeline->Scene_uniforms[j]._shader_stage = i._struct.shader_stage;
 							_pipeline->Scene_uniforms[j]._offset = struct_size;
+							_pipeline->Scene_uniforms[j].data_type = mem.resource_data_type;
 							struct_size += mem.resource_size;
 							struct_size = get_alignment(struct_size, 16);
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
@@ -114,6 +115,7 @@ namespace trace {
 							_pipeline->Scene_uniforms[j]._count = i._array.count;
 							_pipeline->Scene_uniforms[j]._resource_type = i._array.resource_type;
 							_pipeline->Scene_uniforms[j]._shader_stage = i._array.shader_stage;
+							_pipeline->Scene_uniforms[j].data_type = mem.data_type;
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 							{
 								_pipeline->Scene_uniforms[j]._offset = total_size_local;

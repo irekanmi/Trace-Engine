@@ -1,10 +1,12 @@
 #include "pch.h"
 
-#include "Renderutils.h"
-#include "Material.h"
-#include "GPipeline.h"
+#include "backends/Renderutils.h"
+#include "render/Material.h"
+#include "render/GPipeline.h"
 #include "core/platform/Vulkan/VulkanRenderFunc.h"
-#include "render_graph/RenderGraph.h"
+#include "render/render_graph/RenderGraph.h"
+#include "resource/TextureManager.h"
+
 
 #define RENDER_FUNC_IS_VALID(function)                           \
 	if(!function)                                                \
@@ -100,6 +102,67 @@ namespace trace {
 		}
 	}
 
+	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline)
+	{
+		std::unordered_map<std::string, std::pair<std::any, uint32_t>> result;
+
+		PipelineStateDesc& desc = pipeline->GetDesc();
+
+		auto lambda = [&](ShaderData type, std::any& dst)
+		{
+			switch (type)
+			{
+			case ShaderData::CUSTOM_DATA_BOOL: { dst = bool(); break; }
+			case ShaderData::CUSTOM_DATA_FLOAT: {dst = float(); break; }
+			case ShaderData::CUSTOM_DATA_INT: { dst = int(); break; }
+			case ShaderData::CUSTOM_DATA_IVEC2: {dst = glm::ivec2(); break; }
+			case ShaderData::CUSTOM_DATA_IVEC3: {dst = glm::ivec3(); break; }
+			case ShaderData::CUSTOM_DATA_IVEC4: {dst = glm::ivec4(); break; }
+			case ShaderData::CUSTOM_DATA_MAT2: {dst = glm::mat2(); break; }
+			case ShaderData::CUSTOM_DATA_MAT3: {dst = glm::mat3(); break; }
+			case ShaderData::CUSTOM_DATA_MAT4: {dst = glm::mat4(); break; }
+			case ShaderData::CUSTOM_DATA_TEXTURE:{	dst = TextureManager::get_instance()->GetDefault("albedo_map"); break; }
+			case ShaderData::CUSTOM_DATA_VEC2: {dst = glm::vec2(); break; }
+			case ShaderData::CUSTOM_DATA_VEC3: {dst = glm::vec3(); break; }
+			case ShaderData::CUSTOM_DATA_VEC4: {dst = glm::vec4(); break; }
+			}
+		};
+
+		for (auto i : desc.resources.resources)
+		{
+			bool is_struct = i.def == ShaderDataDef::STRUCTURE;
+			bool is_array = i.def == ShaderDataDef::ARRAY;
+			bool is_varible = i.def == ShaderDataDef::VARIABLE;
+			bool is_sArray = i.def == ShaderDataDef::STRUCT_ARRAY;
+
+			if (is_struct)
+			{
+				for (auto& mem : i._struct.members)
+				{
+					if (mem.resource_name[0] == '_') continue;
+					std::any a;
+					lambda(mem.resource_data_type, a);
+					uint32_t hash = pipeline->_hashTable.Get(mem.resource_name);
+					result[mem.resource_name] = std::make_pair(a, hash);
+				}
+
+			}
+			if (is_array)
+			{
+				for (auto& mem : i._array.members)
+				{
+					std::any a;
+					lambda(mem.data_type, a);
+					uint32_t hash = pipeline->_hashTable.Get(mem.resource_name);
+					result[mem.resource_name] = std::make_pair(a, hash);
+				}
+
+			}
+		}
+
+		return result;
+	}
+
 	bool operator==(ShaderResourceBinding lhs, ShaderResourceBinding rhs)
 	{
 		bool result = (lhs.count == rhs.count) &&
@@ -147,6 +210,7 @@ namespace trace {
 		RenderFunc::_destroyFramebuffer = vk::__DestroyFrameBuffer;
 
 		RenderFunc::_initializeMaterial = vk::__InitializeMaterial;
+		RenderFunc::_postInitializeMaterial = vk::__PostInitializeMaterial;
 		RenderFunc::_applyMaterial = vk::__ApplyMaterial;
 
 		RenderFunc::_createPipeline = vk::__CreatePipeline;
@@ -161,6 +225,7 @@ namespace trace {
 		RenderFunc::_destroyRenderPass = vk::__DestroyRenderPass;
 
 		RenderFunc::_createShader = vk::__CreateShader;
+		RenderFunc::_createShader_ = vk::__CreateShader_;
 		RenderFunc::_destroyShader = vk::__DestroyShader;
 
 		RenderFunc::_createSwapchain = vk::__CreateSwapchain;
@@ -227,6 +292,7 @@ namespace trace {
 	__DestroyFramebuffer RenderFunc::_destroyFramebuffer = nullptr;
 
 	__InitializeMaterial RenderFunc::_initializeMaterial = nullptr;
+	__PostInitializeMaterial RenderFunc::_postInitializeMaterial = nullptr;
 	__ApplyMaterial RenderFunc::_applyMaterial = nullptr;
 
 	__CreatePipeline RenderFunc::_createPipeline = nullptr;
@@ -241,6 +307,7 @@ namespace trace {
 	__DestroyRenderPass RenderFunc::_destroyRenderPass = nullptr;
 
 	__CreateShader RenderFunc::_createShader = nullptr;
+	__CreateShader_ RenderFunc::_createShader_ = nullptr;
 	__DestroyShader RenderFunc::_destroyShader = nullptr;
 
 	__CreateSwapchain RenderFunc::_createSwapchain = nullptr;
@@ -429,6 +496,16 @@ namespace trace {
 		return result;
 	}
 
+	bool RenderFunc::PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_postInitializeMaterial);
+		result = _postInitializeMaterial(mat_instance, pipeline, material);
+
+		return result;
+	}
+
 	bool RenderFunc::ApplyMaterial(MaterialInstance* mat_instance)
 	{
 		bool result = true;
@@ -535,6 +612,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_createShader);
 		result = _createShader(shader, src, stage);
+
+		return result;
+	}
+
+	bool RenderFunc::CreateShader(GShader* shader, std::vector<uint32_t>& src, ShaderStage stage)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_createShader_);
+		result = _createShader_(shader, src, stage);
 
 		return result;
 	}

@@ -255,7 +255,7 @@
     <ClInclude Include="src\render\Renderer.h">
       <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="src\render\Renderutils.h">
+    <ClInclude Include="src\backends\Renderutils.h">
       <Filter>src\render</Filter>
     </ClInclude>
     <ClInclude Include="src\render\ShaderParser.h">
@@ -569,7 +569,7 @@
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\Renderutils.cpp">
+    <ClCompile Include="src\backends\Renderutils.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
     <ClCompile Include="src\render\ShaderParser.cpp">

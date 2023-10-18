@@ -20,7 +20,7 @@
 #include <resource/ResourceSystem.h>
 
 #include <render/Graphics.h>
-#include <render/Renderutils.h>
+#include <backends/Renderutils.h>
 #include <render/ShaderParser.h>
 #include <render/Renderer.h>
 #include <render/GShader.h>
