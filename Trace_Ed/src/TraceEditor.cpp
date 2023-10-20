@@ -9,7 +9,7 @@
 #include "scene/Componets.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
-#include "scene/SceneSerializer.h"
+#include "serialize/SceneSerializer.h"
 
 
 #include "glm/gtc/type_ptr.hpp"

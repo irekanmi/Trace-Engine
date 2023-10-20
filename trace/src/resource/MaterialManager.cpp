@@ -55,7 +55,7 @@ namespace trace {
 	}
 
 
-	Ref<MaterialInstance> MaterialManager::CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline)
+	Ref<MaterialInstance> MaterialManager::CreateMaterial(const std::string& name, Ref<GPipeline> pipeline)
 	{
 		Ref<MaterialInstance> result;
 		MaterialInstance* _mat = nullptr;
@@ -78,8 +78,7 @@ namespace trace {
 
 				if (!RenderFunc::InitializeMaterial(
 					&mat_instance,
-					pipeline,
-					material
+					pipeline
 				))
 				{
 					TRC_WARN("Failed to initialize material {}", name);
@@ -141,19 +140,12 @@ namespace trace {
 		TextureManager* texture_manager = TextureManager::get_instance();
 		PipelineManager* pipeline_manager = PipelineManager::get_instance();
 
-		Material mat;
-		mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
-		mat.m_normalMap = texture_manager->GetDefault("normal_map");
-		mat.m_specularMap = texture_manager->GetDefault("specular_map");
-		mat.m_diffuseColor = glm::vec4(1.0f);
-		mat.m_shininess = 32.0f;
 
 		Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
 
 
 		default_material  = CreateMaterial(
 			"default",
-			mat,
 			sp
 		);
 
@@ -186,7 +178,7 @@ namespace trace {
 			}
 		};
 
-		RenderFunc::PostInitializeMaterial(default_material.get(), sp, mat);
+		RenderFunc::PostInitializeMaterial(default_material.get(), sp);
 		default_material->m_path = "default";
 
 		return true;

@@ -486,22 +486,22 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::InitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material)
+	bool RenderFunc::InitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_initializeMaterial);
-		result = _initializeMaterial(mat_instance, pipeline, material);
+		result = _initializeMaterial(mat_instance, pipeline);
 
 		return result;
 	}
 
-	bool RenderFunc::PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material)
+	bool RenderFunc::PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_postInitializeMaterial);
-		result = _postInitializeMaterial(mat_instance, pipeline, material);
+		result = _postInitializeMaterial(mat_instance, pipeline);
 
 		return result;
 	}

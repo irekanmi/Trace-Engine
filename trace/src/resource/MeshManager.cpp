@@ -354,16 +354,11 @@ namespace trace {
 
 				generateVertexTangent(vert, _ind);
 
-				Material mat;
-				mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
-				mat.m_normalMap = texture_manager->GetDefault("normal_map");
-				mat.m_specularMap = texture_manager->GetDefault("specular_map");
 				if (!obj_mesh.MeshMaterial.map_Kd.empty())
 				{
 
 					if (Ref<GTexture> albe = texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Kd))
 					{
-						mat.m_albedoMap = albe;
 					}
 					else
 					{
@@ -374,7 +369,6 @@ namespace trace {
 				{
 					if (Ref<GTexture> spec = texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_Ks))
 					{
-						mat.m_specularMap = spec;
 					}
 					else
 					{
@@ -391,27 +385,19 @@ namespace trace {
 					texture_desc.m_usage = UsageFlag::DEFAULT;
 					if (Ref<GTexture> nrm = texture_manager->LoadTexture(obj_mesh.MeshMaterial.map_bump, texture_desc))
 					{
-						mat.m_normalMap = nrm;
 					}
 					else
 					{
 						TRC_WARN("Failed to load texture {}", obj_mesh.MeshMaterial.map_bump);
 					}
 				}
-				mat.m_diffuseColor = {
-					obj_mesh.MeshMaterial.Kd.X,
-					obj_mesh.MeshMaterial.Kd.Y,
-					obj_mesh.MeshMaterial.Kd.Z,
-					1.0f
-				};
 
-				mat.m_shininess = obj_mesh.MeshMaterial.Ns;
 
 				Ref<Model> _model = model_manager->LoadModel_(vert,_ind,( path / obj_mesh.MeshName).string());
 				if (_model)
 				{
 					Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
-					Ref<MaterialInstance> _mi = material_manager->CreateMaterial(obj_mesh.MeshMaterial.name,mat,sp);
+					Ref<MaterialInstance> _mi = material_manager->CreateMaterial(obj_mesh.MeshMaterial.name,sp);
 					_model->m_matInstance = _mi;
 				}
 
@@ -513,10 +499,7 @@ namespace trace {
 			generateVertexTangent(verts, _inds);
 
 			// process material
-			Material mat;
-			mat.m_albedoMap = texture_manager->GetDefault("albedo_map");
-			mat.m_normalMap = texture_manager->GetDefault("normal_map");
-			mat.m_specularMap = texture_manager->GetDefault("specular_map");
+
 			int mat_id = s.mesh.material_ids[0];
 			Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
 			tinyobj::material_t& material = materials[mat_id];
@@ -529,7 +512,6 @@ namespace trace {
 				{
 					Ref<MaterialInstance> res = material_manager->CreateMaterial(
 						material.name,
-						mat,
 						sp
 					);
 
@@ -600,7 +582,7 @@ namespace trace {
 						it5->second.first = material.shininess <= 0.0f ? 32.0f : material.shininess;
 					}
 					_mi = res;
-					RenderFunc::PostInitializeMaterial(_mi.get(), sp, mat);
+					RenderFunc::PostInitializeMaterial(_mi.get(), sp);
 				}
 			};
 

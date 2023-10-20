@@ -87,7 +87,6 @@ namespace trace {
 
 			renderer->DrawModel(cmd_list, model._model, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
 
-			renderer->DrawDebugSphere(cmd_list, 10.0f, 20, transform._transform.GetLocalMatrix());
 		}
 
 	}

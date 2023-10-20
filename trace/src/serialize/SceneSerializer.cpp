@@ -1,126 +1,16 @@
 #include "pch.h"
 
 #include "SceneSerializer.h"
-#include "Entity.h"
-#include "Componets.h"
+#include "scene/Entity.h"
+#include "scene/Componets.h"
 #include "core/FileSystem.h"
-#include "SceneManager.h"
+#include "scene/SceneManager.h"
 #include "resource/MeshManager.h"
 #include "resource/ModelManager.h"
 #include <functional>
 #include <unordered_map>
 
-#define YAML_CPP_STATIC_DEFINE
-#include "yaml-cpp/yaml.h"
-
-namespace YAML {
-
-	template<>
-	struct convert<glm::vec3>
-	{
-
-		static Node encode(const glm::vec3& value)
-		{
-			Node node;
-			node.push_back(value.x);
-			node.push_back(value.y);
-			node.push_back(value.z);
-			return node;
-		}
-
-		static bool decode(const Node& node, glm::vec3& value)
-		{
-			if (!node.IsSequence() || node.size() != 3)
-				return false;
-
-			value.x = node[0].as<float>();
-			value.y = node[1].as<float>();
-			value.z = node[2].as<float>();
-			return true;
-		}
-
-	};
-
-	template<>
-	struct convert<glm::vec4>
-	{
-
-		static Node encode(const glm::vec4& value)
-		{
-			Node node;
-			node.push_back(value.x);
-			node.push_back(value.y);
-			node.push_back(value.z);
-			node.push_back(value.w);
-			return node;
-		}
-
-		static bool decode(const Node& node, glm::vec4& value)
-		{
-			if (!node.IsSequence() || node.size() != 4)
-				return false;
-
-			value.x = node[0].as<float>();
-			value.y = node[1].as<float>();
-			value.z = node[2].as<float>();
-			value.w = node[3].as<float>();
-			return true;
-		}
-
-	};
-
-
-	template<>
-	struct convert<glm::quat>
-	{
-
-		static Node encode(const glm::quat& value)
-		{
-			Node node;
-			node.push_back(value.x);
-			node.push_back(value.y);
-			node.push_back(value.z);
-			node.push_back(value.w);
-			return node;
-		}
-
-		static bool decode(const Node& node, glm::quat& value)
-		{
-			if (!node.IsSequence() || node.size() != 4)
-				return false;
-
-			value.x = node[0].as<float>();
-			value.y = node[1].as<float>();
-			value.z = node[2].as<float>();
-			value.w = node[3].as<float>();
-			return true;
-		}
-
-	};
-
-
-	Emitter& operator <<(Emitter& emit, const glm::vec3& value)
-	{
-		emit << Flow;
-		emit << BeginSeq << value.x << value.y << value.z << EndSeq;
-		return emit;
-	}
-
-	Emitter& operator <<(Emitter& emit, const glm::vec4& value)
-	{
-		emit << Flow;
-		emit << BeginSeq << value.x << value.y << value.z << value.w << EndSeq;
-		return emit;
-	}
-
-	Emitter& operator <<(Emitter& emit, const glm::quat& value)
-	{
-		emit << Flow;
-		emit << BeginSeq << value.x << value.y << value.z << value.w << EndSeq;
-		return emit;
-	}
-
-}
+#include "yaml_util.h"
 
 namespace trace {
 

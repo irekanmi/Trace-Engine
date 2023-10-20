@@ -8,8 +8,8 @@
 
 namespace vk {
 
-	bool __InitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline, trace::Material material);
-	bool __PostInitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline, trace::Material material);
+	bool __InitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline);
+	bool __PostInitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline);
 	bool __ApplyMaterial(trace::MaterialInstance* mat_instance);
 
 }

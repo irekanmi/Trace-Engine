@@ -19,7 +19,7 @@ namespace trace {
 		bool Init(uint32_t max_entries);
 		void ShutDown();
 
-		Ref<MaterialInstance> CreateMaterial(const std::string& name, Material material, Ref<GPipeline> pipeline);
+		Ref<MaterialInstance> CreateMaterial(const std::string& name, Ref<GPipeline> pipeline);
 		Ref<MaterialInstance> GetMaterial(const std::string& name);
 		void Unload(MaterialInstance* material);
 		bool LoadDefaults();

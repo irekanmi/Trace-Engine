@@ -9,7 +9,7 @@ extern trace::VKDeviceHandle g_VkDevice;
 
 namespace vk {
 
-    bool __InitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline, trace::Material material)
+    bool __InitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline)
     {
         bool result = true;
 
@@ -70,13 +70,13 @@ namespace vk {
 
         VK_ASSERT(_result);
 
-        __PostInitializeMaterial(mat_instance, pipeline, material);
+        __PostInitializeMaterial(mat_instance, pipeline);
 
 
 
         return result;
     }
-    bool __PostInitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline, trace::Material material)
+    bool __PostInitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline)
     {
         bool result = true;
 

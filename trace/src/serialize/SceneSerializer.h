@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene.h"
+#include "scene/Scene.h"
 #include "resource/Ref.h"
 #include <string>
 

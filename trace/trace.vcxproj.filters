@@ -354,7 +354,7 @@
     <ClInclude Include="src\scene\SceneManager.h">
       <Filter>src\scene</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\SceneSerializer.h">
+    <ClInclude Include="src\serialize\SceneSerializer.h">
       <Filter>src\scene</Filter>
     </ClInclude>
     <ClInclude Include="src\scene\UUID.h">
@@ -363,6 +363,8 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\serialize\MaterialSerializer.h" />
+    <ClInclude Include="src\serialize\yaml_util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -647,11 +649,12 @@
     <ClCompile Include="src\scene\SceneManager.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\SceneSerializer.cpp">
+    <ClCompile Include="src\serialize\SceneSerializer.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
     <ClCompile Include="src\scene\UUID.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
   </ItemGroup>
 </Project>

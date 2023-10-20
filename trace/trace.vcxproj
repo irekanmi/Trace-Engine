@@ -243,11 +243,14 @@
     <ClInclude Include="src\scene\Entity.h" />
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneManager.h" />
-    <ClInclude Include="src\scene\SceneSerializer.h" />
+    <ClInclude Include="src\serialize\yaml_util.h" />
+    <ClInclude Include="src\serialize\MaterialSerializer.h" />
+    <ClInclude Include="src\serialize\SceneSerializer.h" />
     <ClInclude Include="src\scene\UUID.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -366,7 +369,7 @@
     <ClCompile Include="src\resource\TextureManager.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneManager.cpp" />
-    <ClCompile Include="src\scene\SceneSerializer.cpp" />
+    <ClCompile Include="src\serialize\SceneSerializer.cpp" />
     <ClCompile Include="src\scene\UUID.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

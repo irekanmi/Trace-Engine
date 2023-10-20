@@ -72,8 +72,8 @@ namespace trace {
 	// ----------------------------
 
 	// Materials -------------------
-	typedef bool (*__InitializeMaterial)(MaterialInstance*, Ref<GPipeline>, Material);
-	typedef bool (*__PostInitializeMaterial)(MaterialInstance*, Ref<GPipeline>, Material);
+	typedef bool (*__InitializeMaterial)(MaterialInstance*, Ref<GPipeline>);
+	typedef bool (*__PostInitializeMaterial)(MaterialInstance*, Ref<GPipeline>);
 	typedef bool (*__ApplyMaterial)(MaterialInstance*);
 	//-----------------------------
 
@@ -181,8 +181,8 @@ namespace trace {
 		static bool CreateFramebuffer(GFramebuffer* framebuffer, uint32_t num_attachment, GTexture** attachments, GRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t swapchain_image_index, GSwapchain* swapchain);
 		static bool DestroyFramebuffer(GFramebuffer* framebuffer);
 
-		static bool InitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material);
-		static bool PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline, Material material);
+		static bool InitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline);
+		static bool PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline);
 		static bool ApplyMaterial(MaterialInstance* mat_instance);
 
 		static bool CreatePipeline(GPipeline* pipeline, PipelineStateDesc desc);
