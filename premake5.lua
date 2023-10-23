@@ -237,6 +237,7 @@ project "Trace_Ed"
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.portable_file_dialogs}",
+		"%{IncludeDir.yaml_cpp}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

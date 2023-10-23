@@ -1,0 +1,20 @@
+Trace Version: 0.0.0.0
+Material Version: 0.0.0.0
+Material Name: default
+Pipeline Name: gbuffer_pipeline
+Data:
+  - Name: SPECULAR_MAP
+    Type: 7
+    Value: specular_map
+  - Name: diffuse_color
+    Type: 15
+    Value: [1, 1, 1, 1]
+  - Name: shininess
+    Type: 9
+    Value: 32
+  - Name: DIFFUSE_MAP
+    Type: 7
+    Value: albedo_map
+  - Name: NORMAL_MAP
+    Type: 7
+    Value: normal_map

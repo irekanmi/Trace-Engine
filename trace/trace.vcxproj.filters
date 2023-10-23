@@ -58,9 +58,15 @@
     <Filter Include="src\scene">
       <UniqueIdentifier>{2A1615B6-9680-C92C-DFBE-7AD24B68A781}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\serialize">
+      <UniqueIdentifier>{44B52BFF-B075-A735-79B0-F0B2E52FEC11}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\backends\Fontutils.h">
+      <Filter>src\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="src\backends\Renderutils.h">
       <Filter>src\backends</Filter>
     </ClInclude>
     <ClInclude Include="src\backends\UIutils.h">
@@ -255,9 +261,6 @@
     <ClInclude Include="src\render\Renderer.h">
       <Filter>src\render</Filter>
     </ClInclude>
-    <ClInclude Include="src\backends\Renderutils.h">
-      <Filter>src\render</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\ShaderParser.h">
       <Filter>src\render</Filter>
     </ClInclude>
@@ -354,17 +357,21 @@
     <ClInclude Include="src\scene\SceneManager.h">
       <Filter>src\scene</Filter>
     </ClInclude>
-    <ClInclude Include="src\serialize\SceneSerializer.h">
-      <Filter>src\scene</Filter>
-    </ClInclude>
     <ClInclude Include="src\scene\UUID.h">
       <Filter>src\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\MaterialSerializer.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\SceneSerializer.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\yaml_util.h">
+      <Filter>src\serialize</Filter>
     </ClInclude>
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\serialize\MaterialSerializer.h" />
-    <ClInclude Include="src\serialize\yaml_util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -401,6 +408,9 @@
       <Filter>_externals</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\Fontutils.cpp">
+      <Filter>src\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\Renderutils.cpp">
       <Filter>src\backends</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\UIutils.cpp">
@@ -571,9 +581,6 @@
     <ClCompile Include="src\render\Renderer.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
-    <ClCompile Include="src\backends\Renderutils.cpp">
-      <Filter>src\render</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\ShaderParser.cpp">
       <Filter>src\render</Filter>
     </ClCompile>
@@ -649,12 +656,17 @@
     <ClCompile Include="src\scene\SceneManager.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\serialize\SceneSerializer.cpp">
-      <Filter>src\scene</Filter>
-    </ClCompile>
     <ClCompile Include="src\scene\UUID.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
+    <ClCompile Include="src\serialize\MaterialSerializer.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serialize\SceneSerializer.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serialize\yaml_util.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

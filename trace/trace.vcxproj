@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\backends\Fontutils.h" />
+    <ClInclude Include="src\backends\Renderutils.h" />
     <ClInclude Include="src\backends\UIutils.h" />
     <ClInclude Include="src\core\Application.h" />
     <ClInclude Include="src\core\Clock.h" />
@@ -210,7 +211,6 @@
     <ClInclude Include="src\render\RenderComposer.h" />
     <ClInclude Include="src\render\RenderPassInfo.h" />
     <ClInclude Include="src\render\Renderer.h" />
-    <ClInclude Include="src\backends\Renderutils.h" />
     <ClInclude Include="src\render\ShaderParser.h" />
     <ClInclude Include="src\render\SkyBox.h" />
     <ClInclude Include="src\render\Transform.h" />
@@ -243,14 +243,13 @@
     <ClInclude Include="src\scene\Entity.h" />
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneManager.h" />
-    <ClInclude Include="src\serialize\yaml_util.h" />
+    <ClInclude Include="src\scene\UUID.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
     <ClInclude Include="src\serialize\SceneSerializer.h" />
-    <ClInclude Include="src\scene\UUID.h" />
+    <ClInclude Include="src\serialize\yaml_util.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -285,6 +284,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\backends\Fontutils.cpp" />
+    <ClCompile Include="src\backends\Renderutils.cpp" />
     <ClCompile Include="src\backends\UIutils.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Clock.cpp" />
@@ -343,7 +343,6 @@
     <ClCompile Include="src\render\Model.cpp" />
     <ClCompile Include="src\render\RenderComposer.cpp" />
     <ClCompile Include="src\render\Renderer.cpp" />
-    <ClCompile Include="src\backends\Renderutils.cpp" />
     <ClCompile Include="src\render\ShaderParser.cpp" />
     <ClCompile Include="src\render\SkyBox.cpp" />
     <ClCompile Include="src\render\Transform.cpp" />
@@ -369,8 +368,10 @@
     <ClCompile Include="src\resource\TextureManager.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneManager.cpp" />
-    <ClCompile Include="src\serialize\SceneSerializer.cpp" />
     <ClCompile Include="src\scene\UUID.cpp" />
+    <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
+    <ClCompile Include="src\serialize\SceneSerializer.cpp" />
+    <ClCompile Include="src\serialize\yaml_util.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

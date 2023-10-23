@@ -4,8 +4,10 @@
 #include "resource/TextureManager.h"
 #include "resource/MeshManager.h"
 #include "backends/UIutils.h"
+#include "scene/UUID.h"
 #include "imgui.h"
 
+#include "serialize/yaml_util.h"
 #include <unordered_map>
 #include <functional>
 #include <string>
@@ -17,6 +19,7 @@ namespace trace {
 	static uint32_t item_index = 0;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> process_callbacks;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> item_callbacks;
+	std::unordered_map<std::string, std::function<void(YAML::Emitter& ,std::filesystem::path&)>> extensions_callbacks;
 
 	bool ContentBrowser::Init()
 	{
@@ -96,7 +99,19 @@ namespace trace {
 			process_callbacks[".tga"] = tex_lambda;
 		};
 
+		//extensions callbacks
+		{
+
+			extensions_callbacks["default"] = [](YAML::Emitter& emit, std::filesystem::path& path)
+			{
+				emit << YAML::Key << "Meta Type" << YAML::Value << path.extension().string();
+
+			};
+
+		};
+
 		OnDirectoryChanged();
+		ProcessAllDirectory();
 		return true;
 	}
 	void ContentBrowser::Shutdown()
@@ -197,5 +212,155 @@ namespace trace {
 
 		}
 
+	}
+	void ContentBrowser::ProcessAllDirectory()
+	{
+		all_files_id.clear();
+		all_id_path.clear();
+		std::filesystem::path db_path = m_editor->current_project_path / "InternalAssetsDB";
+		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
+		if (!std::filesystem::exists(assetsDB_path))
+		{
+			if(!std::filesystem::exists(db_path)) std::filesystem::create_directory(db_path);
+
+			YAML::Emitter emit;
+
+			emit << YAML::BeginMap;
+			emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
+			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
+			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
+			for (auto p : std::filesystem::directory_iterator(m_editor->current_project_path))
+			{
+				std::filesystem::path path = p.path();
+				if (path == db_path) continue;
+				if (std::filesystem::is_directory(path))
+				{
+					for (auto r : std::filesystem::recursive_directory_iterator(path))
+					{
+						if (std::filesystem::is_regular_file(r.path()))
+						{
+							std::string filename = r.path().filename().string();
+							emit << YAML::BeginMap;
+							emit << YAML::Key << "Name" << YAML::Value << filename;
+							emit << YAML::Key << "UUID" << YAML::Value << UUID::GenUUID();
+
+							emit << YAML::EndMap;
+						}
+					}
+				}
+				else if (std::filesystem::is_regular_file(path))
+				{
+					std::string filename = path.filename().string();
+					emit << YAML::BeginMap;
+					emit << YAML::Key << "Name" << YAML::Value << filename;
+					emit << YAML::Key << "UUID" << YAML::Value << UUID::GenUUID();
+
+					emit << YAML::EndMap;
+				}
+			}
+
+			emit << YAML::EndSeq;
+			emit << YAML::EndMap;
+
+			FileHandle out_handle;
+			if (FileSystem::open_file(assetsDB_path.string(), FileMode::WRITE, out_handle))
+			{
+				FileSystem::writestring(out_handle, emit.c_str());
+				FileSystem::close_file(out_handle);
+			}
+			
+
+		}
+		if (std::filesystem::exists(assetsDB_path))
+		{
+			FileHandle in_handle;
+			if (!FileSystem::open_file(assetsDB_path.string(), FileMode::READ, in_handle))
+			{
+				TRC_ERROR("Unable to open file {}", assetsDB_path.string());
+				return;
+			}
+			std::string file_data;
+			FileSystem::read_all_lines(in_handle, file_data);
+			FileSystem::close_file(in_handle);
+
+			YAML::Node data = YAML::Load(file_data);
+			std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+			std::string db_version = data["DataBase Version"].as<std::string>(); // TODO: To be used later
+			std::string db_type = data["DataBase Type"].as<std::string>(); // TODO: To be used later
+			YAML::Node DATA = data["DATA"];
+			for (auto i : DATA)
+			{
+				std::string filename = i["Name"].as<std::string>();
+				UUID id = i["UUID"].as<uint64_t>();
+				all_files_id[filename] = id;
+			}
+			
+		}
+		bool dirty_ids = false;
+		for (auto p : std::filesystem::directory_iterator(m_editor->current_project_path))
+		{
+			std::filesystem::path path = p.path();
+			if (path == db_path) continue;
+			if (std::filesystem::is_directory(path))
+			{
+				for (auto r : std::filesystem::recursive_directory_iterator(path))
+				{
+					if (std::filesystem::is_regular_file(r.path()))
+					{
+						std::string filename = r.path().filename().string();
+						auto it = all_files_id.find(filename);
+						if (it == all_files_id.end())
+						{
+							dirty_ids = true;
+							all_files_id[filename] = UUID::GenUUID();
+						}
+						UUID id = all_files_id[filename];
+						all_id_path[id] = r.path();
+					}
+				}
+			}
+			else if (std::filesystem::is_regular_file(path))
+			{
+				std::string filename = path.filename().string();
+				auto it = all_files_id.find(filename);
+				if (it == all_files_id.end())
+				{
+					dirty_ids = true;
+					all_files_id[filename] = UUID::GenUUID();
+				}
+				UUID id = all_files_id[filename];
+				all_id_path[id] = path;
+			}
+		}
+
+		if (dirty_ids)
+		{
+			YAML::Emitter emit;
+
+			emit << YAML::BeginMap;
+			emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
+			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
+			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
+
+			for (auto i : all_files_id)
+			{
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "Name" << YAML::Value << i.first;
+				emit << YAML::Key << "UUID" << YAML::Value << i.second;
+				emit << YAML::EndMap;
+			}
+
+			emit << YAML::EndSeq;
+			emit << YAML::EndMap;
+
+			FileHandle out_handle;
+			if (FileSystem::open_file(assetsDB_path.string(), FileMode::WRITE, out_handle))
+			{
+				FileSystem::writestring(out_handle, emit.c_str());
+				FileSystem::close_file(out_handle);
+			}
+		}
 	}
 }

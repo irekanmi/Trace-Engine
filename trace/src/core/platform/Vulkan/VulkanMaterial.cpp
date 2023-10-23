@@ -69,6 +69,7 @@ namespace vk {
         );
 
         VK_ASSERT(_result);
+        mat_instance->m_renderPipeline = pipeline;
 
         __PostInitializeMaterial(mat_instance, pipeline);
 
@@ -103,7 +104,7 @@ namespace vk {
         trace::VKMaterialData* _handle = (trace::VKMaterialData*)mat_instance->GetRenderHandle()->m_internalData;
         trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
         trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
-        mat_instance->m_renderPipeline = pipeline;
+        
 
         trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
 
