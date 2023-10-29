@@ -6,9 +6,6 @@
 #include "PipelineManager.h"
 #include "backends/Renderutils.h"
 
-//Temp
-#include "serialize/MaterialSerializer.h"
-
 namespace trace {
 
 	MaterialManager* MaterialManager::s_instance = nullptr;
@@ -52,6 +49,7 @@ namespace trace {
 				if (mat_instance.m_id == INVALID_ID)
 					continue;
 
+				
 				TRC_WARN("{} material was still in use ref count {} ", mat_instance.GetName(), mat_instance.m_refCount);
 				mat_instance.~MaterialInstance();
 			}
@@ -137,7 +135,7 @@ namespace trace {
 		}
 
 		material->m_id = INVALID_ID;
-		material->~MaterialInstance();
+		RenderFunc::DestroyMaterial(material);
 	}
 
 	bool MaterialManager::LoadDefaults()

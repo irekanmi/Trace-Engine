@@ -446,11 +446,8 @@ namespace trace {
 		texture_desc.m_numLayers = 1;
 		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
 
-		// Default Diffuse texture
-		RenderFunc::CreateTexture(&default_diffuse_texture, texture_desc);
-		default_diffuse_texture.m_path = "albedo_map";
-		default_diffuse_map = { &default_diffuse_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
-		delete[] pixel;
+		default_diffuse_map = CreateTexture("albedo_map", texture_desc);
+		default_diffuse_map->m_path = "albedo_map";
 
 		dimension = 16;
 		channels = 4;
@@ -479,12 +476,10 @@ namespace trace {
 			}
 		}
 		
-		// Default specular
-		RenderFunc::CreateTexture(&default_specular_texture, texture_desc);
-		default_specular_texture.m_path = "specular_map";
-		default_specular_map = { &default_specular_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
-		delete[] pixel;
+		default_specular_map = CreateTexture("specular_map", texture_desc);
+		default_specular_map->m_path = "specular_map";
 
+		
 		dimension = 16;
 		channels = 4;
 
@@ -513,13 +508,9 @@ namespace trace {
 			}
 		}
 
-		// Default normal
-		RenderFunc::CreateTexture(&default_normal_texture, texture_desc);
-		default_normal_texture.m_path = "normal_map";
-		default_normal_map = { &default_normal_texture, BIND_RESOURCE_UNLOAD_FN(TextureManager::UnloadDefaults, this) };
-		delete[] pixel;
+		default_normal_map = CreateTexture("normal_map", texture_desc);
+		default_normal_map->m_path = "normal_map";
 
-		
 		return true;
 	}
 

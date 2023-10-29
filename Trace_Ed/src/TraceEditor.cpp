@@ -13,6 +13,7 @@
 
 
 #include "glm/gtc/type_ptr.hpp"
+#include "imgui_internal.h"
 #include "ImGuizmo.h"
 #include "portable-file-dialogs.h"
 
@@ -71,27 +72,16 @@ namespace trace {
 		editor_cam.SetFov(60.0f);
 		editor_cam.SetNear(0.1f);
 		editor_cam.SetFar(1500.0f);
-#if 0
-		// Temp
-		{
-			Ref<Mesh> _f = MeshManager::get_instance()->LoadMesh("falcon.obj");
-			Ref<Model> falcon = ModelManager::get_instance()->GetModel("Plane_Plane.001");
 
-			Ref<Model> sphere = ModelManager::get_instance()->GetModel("Sphere");
-			Ref<Model> cube = ModelManager::get_instance()->GetModel("Cube");
-			m_currentScene = SceneManager::get_instance()->CreateScene("Sample Scene");
-			Entity first_ent = m_currentScene->CreateEntity("Camera Entity");
-			Entity third_ent = m_currentScene->CreateEntity("Cube");
-			m_currentScene->CreateEntity("Falcon").AddComponent<ModelComponent>(falcon);
-			m_currentScene->CreateEntity("Sphere").AddComponent<ModelComponent>(sphere);
 
-			first_ent.GetComponent<TransformComponent>()._transform.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
-			first_ent.AddComponent<CameraComponent>(editor_cam, true);
-			third_ent.AddComponent<ModelComponent>(cube);
+		all_assets.models.emplace("Cube");
+		all_assets.models.emplace("Sphere");
 
-			
-		};
-#endif
+		all_assets.textures.emplace("albedo_map");
+		all_assets.textures.emplace("specular_map");
+		all_assets.textures.emplace("normal_map");
+
+		all_assets.materials.emplace("default");
 
 		return true;
 	}
@@ -178,7 +168,7 @@ namespace trace {
 			ImGui::DockSpace(dockspace_id);
 			style.WindowMinSize.x = min_window_size;
 
-
+			// Menu Bar
 			if (ImGui::BeginMenuBar())
 			{
 				if (ImGui::BeginMenu("File"))
@@ -195,6 +185,11 @@ namespace trace {
 					if (ImGui::MenuItem("Open Scene", "Crtl+O"))
 					{
 						OpenScene();
+					}
+					ImGui::Separator();
+					if (ImGui::MenuItem("New Scene", "Crtl+N"))
+					{
+						NewScene();
 					}
 					if (ImGui::MenuItem("Close Scene"))
 					{
@@ -416,6 +411,115 @@ namespace trace {
 
 	}
 
+	std::string TraceEditor::DrawModelsPopup()
+	{
+		std::string res;
+		ImGui::SetNextWindowSize({ 280.0f, 320.0f });
+		ImGuiWindowFlags pop_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
+		if (ImGui::BeginPopup("ALL_MODELS"))
+		{
+			ImVec2 avail = ImGui::GetContentRegionAvail();
+			float padding = 16.0f;
+			float cell_size = 64.0f + padding;
+			int column_count = (int)(avail.x / cell_size);
+			if (column_count <= 0) column_count = 1;
+
+
+
+			ImGui::Columns(column_count, nullptr, false);
+
+			for (auto& i : all_assets.models)
+			{
+				std::string filename = i.filename().string();
+				void* textureID = nullptr;
+				UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
+				{
+					res = i.string();
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::TextWrapped(filename.c_str());
+
+				ImGui::NextColumn();
+			}
+			ImGui::Columns(1);
+			ImGui::EndPopup();
+		}
+		return res;
+	}
+
+	std::string TraceEditor::DrawMaterialsPopup()
+	{
+		std::string res;
+		ImGui::SetNextWindowSize({ 280.0f, 320.0f });
+		ImGuiWindowFlags pop_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
+		if (ImGui::BeginPopup("ALL_MATERIALS"))
+		{
+			ImVec2 avail = ImGui::GetContentRegionAvail();
+			float padding = 16.0f;
+			float cell_size = 64.0f + padding;
+			int column_count = (int)(avail.x / cell_size);
+			if (column_count <= 0) column_count = 1;
+
+			ImGui::Columns(column_count, nullptr, false);
+
+			for (auto& i : all_assets.materials)
+			{
+				std::string filename = i.filename().string();
+				void* textureID = nullptr;
+				UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
+				{
+					res = i.string();
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::TextWrapped(filename.c_str());
+
+				ImGui::NextColumn();
+			}
+			ImGui::Columns(1);
+			ImGui::EndPopup();
+		}
+		return res;
+	}
+
+	std::string TraceEditor::DrawTexturesPopup()
+	{
+		std::string res;
+		ImGui::SetNextWindowSize({ 280.0f, 320.0f });
+		ImGuiWindowFlags pop_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
+		if (ImGui::BeginPopup("ALL_TEXTURES"))
+		{
+			ImVec2 avail = ImGui::GetContentRegionAvail();
+			float padding = 16.0f;
+			float cell_size = 64.0f + padding;
+			int column_count = (int)(avail.x / cell_size);
+			if (column_count <= 0) column_count = 1;
+
+
+
+			ImGui::Columns(column_count, nullptr, false);
+
+			for (auto& i : all_assets.textures)
+			{
+				std::string filename = i.filename().string();
+				void* textureID = nullptr;
+				UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
+				{
+					res = i.string();
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::TextWrapped(filename.c_str());
+
+				ImGui::NextColumn();
+			}
+			ImGui::Columns(1);
+			ImGui::EndPopup();
+		}
+		return res;
+	}
+
 
 	TraceEditor* TraceEditor::get_instance()
 	{
@@ -477,6 +581,18 @@ namespace trace {
 	{
 		m_currentScene = SceneSerializer::Deserialize(file_path);
 		m_editScene = m_currentScene;
+	}
+	void TraceEditor::NewScene()
+	{
+		if (m_currentScene) CloseCurrentScene();
+		auto result = pfd::save_file("New Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
+		if (!result.empty())
+		{
+			std::filesystem::path p = result;
+			m_currentScene = SceneManager::get_instance()->CreateScene(p.filename().string());
+			m_editScene = m_currentScene;
+			current_scene_path = result;
+		}
 	}
 	void TraceEditor::SaveScene()
 	{
@@ -573,6 +689,17 @@ namespace trace {
 
 			break;
 		}
+		case KEY_N:
+		{
+			if (current_state != SceneEdit) break;
+
+			if (control)
+			{
+				NewScene();
+			}
+
+			break;
+		}
 		}
 
 	}
@@ -588,6 +715,19 @@ namespace trace {
 	void TraceEditor::OnSceneStop()
 	{
 		m_currentScene = m_editScene;
+	}
+
+	std::filesystem::path GetPathFromUUID(UUID uuid)
+	{
+		//TODO: Add Error Handling
+		TraceEditor* editor = TraceEditor::get_instance();
+		return editor->m_contentBrowser.all_id_path[uuid];
+	}
+	UUID GetUUIDFromName(const std::string& name)
+	{
+		//TODO: Add Error Handling
+		TraceEditor* editor = TraceEditor::get_instance();
+		return editor->m_contentBrowser.all_files_id[name];
 	}
 }
 

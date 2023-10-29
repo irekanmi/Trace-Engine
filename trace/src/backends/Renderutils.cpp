@@ -210,6 +210,7 @@ namespace trace {
 		RenderFunc::_destroyFramebuffer = vk::__DestroyFrameBuffer;
 
 		RenderFunc::_initializeMaterial = vk::__InitializeMaterial;
+		RenderFunc::_destroyMaterial = vk::__DestroyMaterial;
 		RenderFunc::_postInitializeMaterial = vk::__PostInitializeMaterial;
 		RenderFunc::_applyMaterial = vk::__ApplyMaterial;
 
@@ -292,6 +293,7 @@ namespace trace {
 	__DestroyFramebuffer RenderFunc::_destroyFramebuffer = nullptr;
 
 	__InitializeMaterial RenderFunc::_initializeMaterial = nullptr;
+	__DestroyMaterial RenderFunc::_destroyMaterial = nullptr;
 	__PostInitializeMaterial RenderFunc::_postInitializeMaterial = nullptr;
 	__ApplyMaterial RenderFunc::_applyMaterial = nullptr;
 
@@ -492,6 +494,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_initializeMaterial);
 		result = _initializeMaterial(mat_instance, pipeline);
+
+		return result;
+	}
+
+	bool RenderFunc::DestroyMaterial(MaterialInstance* mat_instance)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_destroyMaterial);
+		result = _destroyMaterial(mat_instance);
 
 		return result;
 	}

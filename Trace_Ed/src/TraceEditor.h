@@ -29,8 +29,11 @@ namespace trace {
 		void RenderSceneToolBar();
 
 		RenderComposer* GetRenderComposer();
-
 		void OnEvent(Event* p_event);
+
+		std::string DrawModelsPopup();
+		std::string DrawMaterialsPopup();
+		std::string DrawTexturesPopup();
 
 		static TraceEditor* get_instance();
 
@@ -38,6 +41,7 @@ namespace trace {
 		void DrawGizmo();
 		void CloseCurrentScene();
 		void LoadScene(const std::string& file_path);
+		void NewScene();
 		void SaveScene();
 		std::string SaveSceneAs();
 		std::string OpenScene();
@@ -50,9 +54,11 @@ namespace trace {
 		{
 			std::unordered_set<std::filesystem::path> models;
 			std::unordered_set<std::filesystem::path> textures;
+			std::unordered_set<std::filesystem::path> meshes;
+			std::unordered_set<std::filesystem::path> materials;
 		};
 		AllProjectAssets all_assets;
-	private:
+	public:
 		
 
 

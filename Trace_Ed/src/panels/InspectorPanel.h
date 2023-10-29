@@ -16,8 +16,8 @@ namespace trace {
 
 		void DrawEntityComponent(Entity entity);
 
-	private:
 		TraceEditor* m_editor;
+	private:
 		Entity m_selectedEntity;
 
 	protected:

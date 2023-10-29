@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	trace::Application::s_instance->Run();
 	trace::Application::s_instance->End();
 
-	delete trace::Application::s_instance;
+	delete trace::Application::s_instance; //TODO: Use custom allocator
 
 	trace::_SHUTDOWN(app_data);
 

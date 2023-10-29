@@ -77,6 +77,37 @@ namespace vk {
 
         return result;
     }
+    bool __DestroyMaterial(trace::MaterialInstance* mat_instance)
+    {
+        bool result = true;
+
+
+        Ref<trace::GPipeline> pipeline = mat_instance->m_renderPipeline;
+        if (!mat_instance || !pipeline.get())
+        {
+            TRC_ERROR("Please input valid pointer -> {} || {}, Function -> {}", (const void*)mat_instance, (const void*)pipeline.get(), __FUNCTION__);
+            return false;
+        }
+
+        if (!mat_instance->GetRenderHandle()->m_internalData)
+        {
+            TRC_WARN("This material is not valid or has not been initialized, {}", (const void*)mat_instance->GetRenderHandle()->m_internalData);
+            return false;
+        }
+
+        if (!pipeline->GetRenderHandle()->m_internalData)
+        {
+            TRC_ERROR("Invalid render handle, {} || {}, Function -> {}", (const void*)mat_instance->GetRenderHandle()->m_internalData, (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+            return false;
+        }
+        
+        //TODO: Implement destruction of descriptor sets
+        delete mat_instance->GetRenderHandle()->m_internalData;
+        mat_instance->GetRenderHandle()->m_internalData = nullptr;
+        mat_instance->m_renderPipeline.free();
+
+        return result;
+    }
     bool __PostInitializeMaterial(trace::MaterialInstance* mat_instance, Ref<trace::GPipeline> pipeline)
     {
         bool result = true;

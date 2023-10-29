@@ -13,6 +13,8 @@
 #include <string>
 
 namespace trace {
+	extern void ImportOBJ(const std::string& path, std::vector<std::string>& out_models, bool create_materials);
+
 
 	static float thumbnail_size = 96.0f;
 	static std::filesystem::path item_data[2048];
@@ -55,6 +57,8 @@ namespace trace {
 
 				ImGui::TextWrapped(filename.c_str());
 			};
+			item_callbacks[".obj"] = item_callbacks["default"];
+			item_callbacks[".trmat"] = item_callbacks["default"];
 
 			item_callbacks[".trscn"] = [&](std::filesystem::path& path)
 			{
@@ -82,11 +86,22 @@ namespace trace {
 		{
 			process_callbacks[".obj"] = [&](std::filesystem::path& path) 
 			{
-				Ref<Mesh> mesh = MeshManager::get_instance()->LoadMesh_(path.string());
-				for (auto i : mesh->GetModels())
+				auto it = m_editor->all_assets.meshes.find(path);
+				if (it == m_editor->all_assets.meshes.end())
 				{
-					m_editor->all_assets.models.emplace(i->m_path);
+					m_editor->all_assets.meshes.emplace(path);
+					std::vector<std::string> models;
+					ImportOBJ(path.string(), models, true);
+					for (auto& i : models)
+					{
+						m_editor->all_assets.models.emplace(path / i);
+					}
 				}
+			};
+			process_callbacks[".trmat"] = [&](std::filesystem::path& path)
+			{
+				m_editor->all_assets.materials.emplace(path);
+
 			};
 
 			auto tex_lambda = [&](std::filesystem::path& path)
@@ -217,6 +232,29 @@ namespace trace {
 	{
 		all_files_id.clear();
 		all_id_path.clear();
+
+		//TEMP: Find a better way to identify default data
+
+		all_files_id["albedo_map"] = 1;
+		all_files_id["specular_map"] = 2;
+		all_files_id["normal_map"] = 3;
+
+		all_files_id["Cube"] = 4;
+		all_files_id["Sphere"] = 5;
+
+		all_files_id["default"] = 6;
+
+		all_id_path[1] = "albedo_map";
+		all_id_path[2] = "specular_map";
+		all_id_path[3] = "normal_map";
+
+		all_id_path[4] = "Cube";
+		all_id_path[5] = "Sphere";
+
+		all_id_path[6] = "default";
+
+		//::-----::
+
 		std::filesystem::path db_path = m_editor->current_project_path / "InternalAssetsDB";
 		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
 		if (!std::filesystem::exists(assetsDB_path))
@@ -331,6 +369,16 @@ namespace trace {
 				}
 				UUID id = all_files_id[filename];
 				all_id_path[id] = path;
+			}
+		}
+
+		for (auto& i : all_files_id)
+		{
+			auto it = all_id_path.find(i.second);
+			if (it == all_id_path.end())
+			{
+				all_files_id.erase(i.first);
+				dirty_ids = true;
 			}
 		}
 

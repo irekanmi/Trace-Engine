@@ -7,6 +7,8 @@
 #include "scene/SceneManager.h"
 #include "resource/MeshManager.h"
 #include "resource/ModelManager.h"
+#include "resource/MaterialManager.h"
+#include "serialize/MaterialSerializer.h"
 #include <functional>
 #include <unordered_map>
 
@@ -14,6 +16,8 @@
 
 namespace trace {
 
+	extern std::filesystem::path GetPathFromUUID(UUID uuid);
+	extern UUID GetUUIDFromName(const std::string& name);
 
 	static std::function<void(Entity entity, YAML::Emitter& emit)> _serialize_components[] = {
 		[](Entity entity, YAML::Emitter& emit)
@@ -87,7 +91,7 @@ namespace trace {
 			MeshComponent& mesh = entity.GetComponent<MeshComponent>();
 			emit << YAML::Key << "MeshComponent" << YAML::Value;
 			emit << YAML::BeginMap;
-			emit << YAML::Key << "Resource Path" << mesh._mesh->m_path.string();
+			emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(mesh._mesh->m_path.filename().string());
 
 			emit << YAML::EndMap;
 			}
@@ -100,7 +104,18 @@ namespace trace {
 			emit << YAML::Key << "ModelComponent" << YAML::Value;
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "Name" << model._model->GetName();
-			emit << YAML::Key << "Resource Path" << model._model->m_path.parent_path().string();
+			std::string filename = model._model->m_path.parent_path().filename().string();
+			if (filename.empty()) filename = model._model->m_path.filename().string();
+			emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(filename);
+
+			//TEMP : Create ModelRendererComponent
+			if (model._model->m_matInstance)
+			{
+				emit << YAML::Key << "Material" << YAML::Value;
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(model._model->m_matInstance->GetName());
+				emit << YAML::EndMap;
+			}
 
 			emit << YAML::EndMap;
 			}
@@ -150,11 +165,11 @@ namespace trace {
 			MeshComponent& mesh = entity.AddComponent<MeshComponent>();
 			mesh._mesh = MeshManager::get_instance()->GetDefault("Cube");
 			Ref<Mesh> res;
-			std::string path = comp["Resource Path"].as<std::string>();
-			if (!path.empty())
-			{
-				res = MeshManager::get_instance()->LoadMesh_(path);
-			}
+			UUID id = comp["file id"].as<uint64_t>();
+			std::filesystem::path p = GetPathFromUUID(id);
+			res = MeshManager::get_instance()->GetMesh(p.filename().string());
+			if (res) {}
+			else res = MeshManager::get_instance()->LoadMesh_(p.string());
 			if (res) mesh._mesh = res;
 
 		}},
@@ -162,13 +177,24 @@ namespace trace {
 			auto comp = value["ModelComponent"];
 			ModelComponent& model = entity.AddComponent<ModelComponent>();
 			model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
-			std::string path = comp["Resource Path"].as<std::string>();
-			if (!path.empty())
+			UUID id = comp["file id"].as<uint64_t>();
+			std::filesystem::path p = GetPathFromUUID(id);
+			Ref<Mesh> res;
+			res = MeshManager::get_instance()->GetMesh(p.filename().string());
+			if (res) {}
+			else res = MeshManager::get_instance()->LoadMeshOnly_(p.string());
+			if (res)
 			{
-				Ref<Mesh> res = MeshManager::get_instance()->LoadMesh_(path);
-				if (res)
+				model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+				//TEMP : Create ModelRendererComponent
+				if (comp["Material"])
 				{
-					model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+					auto mat = comp["Material"];
+					UUID mat_id = mat["file id"].as<uint64_t>();
+					std::filesystem::path mat_path = GetPathFromUUID(mat_id);
+					Ref<MaterialInstance> mat_ = MaterialManager::get_instance()->GetMaterial(mat_path.filename().string());
+					if (!mat_) mat_ = MaterialSerializer::Deserialize(mat_path.string());
+					model._model->m_matInstance = mat_;
 				}
 			}
 
@@ -193,7 +219,6 @@ namespace trace {
 		emit << YAML::EndMap;
 		return true;
 	}
-
 
 	bool SceneSerializer::Serialize(Ref<Scene> scene, const std::string& file_path)
 	{
@@ -224,9 +249,6 @@ namespace trace {
 
 		return true;
 	}
-
-
-
 
 	Ref<Scene> SceneSerializer::Deserialize(const std::string& file_path)
 	{

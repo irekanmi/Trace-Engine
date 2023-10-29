@@ -8,6 +8,10 @@
 #include "backends/Renderutils.h"
 #include "backends/UIutils.h"
 #include "resource/MaterialManager.h"
+#include "resource/ModelManager.h"
+#include "resource/MeshManager.h"
+#include "serialize/MaterialSerializer.h"
+#include "../TraceEditor.h"
 
 
 namespace trace {
@@ -279,6 +283,10 @@ namespace trace {
 			{
 				entity.AddComponent<LightComponent>();
 			}
+			if (ImGui::MenuItem("Model"))
+			{
+				entity.AddComponent<ModelComponent>();
+			}
 
 			ImGui::EndPopup();
 		}
@@ -440,16 +448,57 @@ namespace trace {
 			ImGui::Button(mesh_name.c_str(), button_size);
 			});
 
-		DrawComponent<ModelComponent>(entity, "Model", [](Entity obj, ModelComponent& comp) {
+		DrawComponent<ModelComponent>(entity, "Model", [&](Entity obj, ModelComponent& comp) {
 
 			Ref<Model> model = comp._model;
-			std::string model_name = model->GetName();
+			std::string model_name = "None (Model)";
+			std::string mat_name = "None (Material)";
+			if (model)
+			{
+				model_name = model->GetName();
+				if(model->m_matInstance) mat_name = model->m_matInstance->GetName();
+			}
+			
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
 			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 			ImVec2 button_size = { content_ava.x, line_height };
-			ImGui::Button(model_name.c_str(), button_size);
+			if (ImGui::Button(model_name.c_str(), button_size))
+			{
+				ImGui::OpenPopup("ALL_MODELS");
+			}
+			std::string model_res = m_editor->DrawModelsPopup();
+			if (!model_res.empty())
+			{
+				std::filesystem::path p = model_res;
+				Ref<Model> md_res = ModelManager::get_instance()->GetModel(p.filename().string());
+				if (md_res) comp._model = md_res;
+				else
+				{
+					Ref<Mesh> mesh = MeshManager::get_instance()->LoadMeshOnly_(p.parent_path().string());
+					md_res = ModelManager::get_instance()->GetModel(p.filename().string());
+					if (md_res) comp._model = md_res;
+				}
+			}
 
-			DrawMaterial(model->m_matInstance);
+			ImGui::Text("Material :");
+			ImGui::SameLine();
+			if(ImGui::Button(mat_name.c_str()))
+			{
+				ImGui::OpenPopup("ALL_MATERIALS");
+			}
+
+			std::string mat_res = m_editor->DrawMaterialsPopup();
+			if (!mat_res.empty())
+			{
+				std::filesystem::path p = mat_res;
+				Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+				if (mt_res && model) comp._model->m_matInstance = mt_res;
+				else if (model)
+				{
+					mt_res = MaterialSerializer::Deserialize(p.string());
+					if (mt_res) comp._model->m_matInstance = mt_res;
+				}
+			}
 
 			});
 

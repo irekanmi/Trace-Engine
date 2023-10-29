@@ -12,7 +12,7 @@ layout(set = 0, binding = 2)uniform Kernel{
 } u_kernel[MAX_NUM_KERNEL];
 layout(set = 0, binding = 3)uniform sampler2D g_bufferData[2];
 layout(set = 0, binding = 4)uniform FrameData{
-    mat4 projection;
+    mat4 _projection;
     vec2 frame_size;
 };
 
@@ -40,7 +40,7 @@ void main()
         samp_pos = frag_pos + (samp_pos * radius);
         
         vec4 offset = vec4(samp_pos, 1.0f);
-        offset = projection * offset;
+        offset = _projection * offset;
         offset.xyz /= offset.w;
         offset.xyz = offset.xyz * 0.5f + 0.5f;
 

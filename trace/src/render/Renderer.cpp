@@ -683,7 +683,7 @@ namespace trace {
 
 	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model)
 	{
-		
+		if (!_mesh) return;
 		Command cmd;
 		cmd.params.ptrs[0] = _mesh.get();
 		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_mesh);
@@ -694,6 +694,7 @@ namespace trace {
 
 	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform)
 	{
+		if (!_model) return;
 		Command cmd;
 		cmd.params.ptrs[0] = _model.get();
 		cmd.func = [&](CommandParams params) {

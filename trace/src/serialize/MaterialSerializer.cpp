@@ -6,6 +6,7 @@
 #include "resource/TextureManager.h"
 #include "core/FileSystem.h"
 #include "backends/Renderutils.h"
+#include "scene/UUID.h"
 
 
 #include "glm/glm.hpp"
@@ -17,6 +18,9 @@
 
 
 namespace trace {
+
+	extern std::filesystem::path GetPathFromUUID(UUID uuid);
+	extern UUID GetUUIDFromName(const std::string& name);
 
 	bool MaterialSerializer::Serialize(Ref<MaterialInstance> mat, const std::string& file_path)
 	{
@@ -83,7 +87,10 @@ namespace trace {
 			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
 			{
 				Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
-				emit << tex->m_path.string();
+				emit << YAML::BeginMap;
+				std::string filename = tex->m_path.filename().string();
+				emit << YAML::Key << "file_id" << YAML::Value << GetUUIDFromName(filename);
+				emit << YAML::EndMap;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC2:
@@ -230,8 +237,12 @@ namespace trace {
 			}
 			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
 			{
-				std::string path = value["Value"].as<std::string>();
-				Ref<GTexture> tex = TextureManager::get_instance()->LoadTexture_(path);
+				auto info = value["Value"];
+				UUID id = info["file_id"].as<uint64_t>();
+				Ref<GTexture> tex;
+				std::filesystem::path p = GetPathFromUUID(id);
+				tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+				if(!tex) tex = TextureManager::get_instance()->LoadTexture_(p.string());
 				if (tex)
 					dst = tex;
 				break;

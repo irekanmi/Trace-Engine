@@ -20,6 +20,8 @@ public:
 
 	void operator=(Ref& other)
 	{
+		if (!other.is_valid()) return;
+
 		if (is_valid())
 		{
 			_ptr->m_refCount--;
@@ -99,20 +101,20 @@ public:
 
 	T* operator->()
 	{
-		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<{}>", _STR(T));
+		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<{}>", typeid(T).name());
 		return _ptr;
 
 	}
 
 	T* get()
 	{
-		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<{}>", _STR(T));
+		TRC_ASSERT(_ptr != nullptr, "Can't not dereference an invaild Ref<{}>", typeid(T).name());
 		return _ptr;
 	}
 
 	uint32_t get_count()
 	{
-		if (_ptr != nullptr)
+		if (is_valid())
 			return (_ptr->m_refCount);
 
 		return 0;

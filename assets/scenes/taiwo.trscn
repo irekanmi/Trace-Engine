@@ -2,44 +2,25 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: Sample Scene
 Entities:
-  - UUID: 7006816233964152135
-    TagComponent:
-      Tag: yjyghkh
-    TransformComponent:
-      Position: [28.679163, -38.8165054, -15.4853563]
-      Rotation: [0, 0.161626607, 0, 0.98685199]
-      Scale: [0.941303849, 0.941303968, 0.941303849]
-    ModelComponent:
-      Name: sponza_327_sponza_327_fabric_f
-      file id: 14997834820541274483
-      Material:
-        file id: 8438180326744005356
-  - UUID: 7415873377772161487
-    TagComponent:
-      Tag: Test 2
-    TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
   - UUID: 6998084007703663453
     TagComponent:
       Tag: point light
     TransformComponent:
-      Position: [28.567543, -22.4154053, 33.8006477]
+      Position: [-1.31432724, -7.73916245, -207.683655]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.172577858, 0.838235259, 0.603297293, 0]
+      Color: [0.931372523, 0.0821799487, 0.157108754, 0]
       Direction: [-0.5, -0.899999976, -0.600000024, 0]
-      Position: [28.567543, -22.4154053, 33.8006477, 0]
+      Position: [-1.31432724, -7.73916245, -207.683655, 0]
       Params1: [1, 0.0329999998, 0, 0.976672292]
-      Params2: [0.798635542, 1.92999995, 0, 0]
+      Params2: [0.798635542, 1.40999997, 0, 0]
       Light Type: 1
   - UUID: 4280035173306708868
     TagComponent:
       Tag: Camera Entity
     TransformComponent:
-      Position: [243.202057, 124.377892, 28.8485241]
+      Position: [159.578568, 11.1871881, 57.3448944]
       Rotation: [0.0340626761, 0.0244947746, 0.000836007763, 0.999119163]
       Scale: [0.999992907, 0.999987125, 0.999991477]
     CameraComponent:
@@ -51,7 +32,7 @@ Entities:
       Near: 0.100000001
       Far: 700
       Fov: 60.2999992
-      Aspect Ratio: 2.02122021
+      Aspect Ratio: 2.04289556
       Orthographic Size: 7.30000019
   - UUID: 3634860917324020060
     TagComponent:
@@ -64,14 +45,14 @@ Entities:
       Name: Cube
       file id: 4
       Material:
-        file id: 1656641231356361523
+        file id: 6
   - UUID: 13276428335963239659
     TagComponent:
       Tag: Falcon
     TransformComponent:
-      Position: [66.6873779, -23.7894535, 44.4812965]
-      Rotation: [-0.0396275371, 0.4865596, -0.00522335246, 0.87273258]
-      Scale: [6.76201677, 6.76201677, 6.76199102]
+      Position: [1.71793771, -42.6499557, 5.24645424]
+      Rotation: [-0.0396275334, 0.486559182, -0.0052234605, 0.872732818]
+      Scale: [8.9258604, 8.92586136, 8.92582798]
     ModelComponent:
       Name: Plane_Plane.001
       file id: 9770986204108760100
@@ -93,27 +74,39 @@ Entities:
     TagComponent:
       Tag: Directional Light
     TransformComponent:
-      Position: [123.875198, -43.2015877, 25.321909]
+      Position: [123.875198, -26.9012985, 25.321909]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.448937953, 0.69415611, 0.769607842, 0]
+      Color: [0.305488914, 0.210255682, 0.857843161, 0]
       Direction: [0.300000012, -1.10000002, 0, 0]
-      Position: [123.875198, -43.2015877, 25.321909, 0]
+      Position: [123.875198, -26.9012985, 25.321909, 0]
       Params1: [0, 0, 0, 0]
-      Params2: [0, 1.05999994, 0, 0]
+      Params2: [0, 0.270000011, 0, 0]
       Light Type: 0
   - UUID: 15496671427956962647
     TagComponent:
       Tag: Spot light
     TransformComponent:
-      Position: [-203.089218, 192.431534, -99.2516556]
+      Position: [-75.1016541, 63.7829475, -29.1939278]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.872548997, 0.809648991, 0.33789891, 0]
-      Direction: [0.400000006, -0.699999988, -1.20000005, 0]
-      Position: [-203.089218, 192.431534, -99.2516556, 0]
+      Color: [0.609632671, 0.960784316, 0.164840445, 0]
+      Direction: [0.300000012, -0.300000012, 0.100000001, 0]
+      Position: [-75.1016541, 63.7829475, -29.1939278, 0]
       Params1: [0, 0, 0, 0.999945164]
       Params2: [0.832921267, 1.32000005, 0, 0]
       Light Type: 2
+  - UUID: 1808496975612877984
+    TagComponent:
+      Tag: New Entity
+    TransformComponent:
+      Position: [-46.3393555, -38.6585083, -263.516266]
+      Rotation: [-0.0198429264, 0.939815283, -0.0266786888, -0.340061367]
+      Scale: [0.151755154, 0.151755169, 0.151754752]
+    ModelComponent:
+      Name: sponza_327_sponza_327_fabric_f
+      file id: 14997834820541274483
+      Material:
+        file id: 2770490000703934355
