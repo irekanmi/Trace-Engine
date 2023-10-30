@@ -194,7 +194,8 @@ namespace trace {
 					std::filesystem::path mat_path = GetPathFromUUID(mat_id);
 					Ref<MaterialInstance> mat_ = MaterialManager::get_instance()->GetMaterial(mat_path.filename().string());
 					if (!mat_) mat_ = MaterialSerializer::Deserialize(mat_path.string());
-					model._model->m_matInstance = mat_;
+					if (model._model) model._model->m_matInstance = mat_;
+					else TRC_ERROR("Failed to load model, -> {}, function-{}", comp["Name"].as<std::string>(), __FUNCTION__);
 				}
 			}
 

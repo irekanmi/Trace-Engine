@@ -681,7 +681,6 @@ namespace trace {
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string err;
-		std::string parent_path = (path.parent_path() / "").generic_string();
 
 		bool result = true;
 		std::string name = path.filename().string();
@@ -691,7 +690,7 @@ namespace trace {
 			&materials,
 			&err,
 			path.string().c_str(),
-			parent_path.c_str()
+			nullptr
 		);
 
 		if (!result)
@@ -725,7 +724,11 @@ namespace trace {
 		for (tinyobj::shape_t& s : shapes)
 		{
 			Ref<Model> _model = model_manager->GetModel(s.name);
-			if (_model) break;
+			if (_model)
+			{
+				_mesh->GetModels().emplace_back(_model);
+				continue;
+			}
 
 			std::vector<Vertex> verts;
 			std::vector<uint32_t> _inds;

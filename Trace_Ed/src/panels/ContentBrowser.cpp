@@ -17,10 +17,7 @@ namespace trace {
 
 
 	static float thumbnail_size = 96.0f;
-	static std::filesystem::path item_data[2048];
-	static uint32_t item_index = 0;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> process_callbacks;
-	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> item_callbacks;
 	std::unordered_map<std::string, std::function<void(YAML::Emitter& ,std::filesystem::path&)>> extensions_callbacks;
 
 	bool ContentBrowser::Init()
@@ -30,57 +27,6 @@ namespace trace {
 		directory_icon = TextureManager::get_instance()->LoadTexture("directory.png");
 		default_icon = TextureManager::get_instance()->LoadTexture("default_file_icon.png");
 
-		//Items callbacks
-		{
-			item_callbacks["directory"] = [&](std::filesystem::path& path)
-			{
-				std::string filename = path.filename().string();
-				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(directory_icon.get(), textureID);
-				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, {1, 0}))
-				{
-					m_currentDir /= filename;
-					OnDirectoryChanged();
-				}
-				ImGui::TextWrapped(filename.c_str());
-			};
-
-			item_callbacks["default"] = [&](std::filesystem::path& path)
-			{
-				std::string filename = path.filename().string();
-				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(default_icon.get(), textureID);
-				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 }))
-				{
-
-				}
-
-				ImGui::TextWrapped(filename.c_str());
-			};
-			item_callbacks[".obj"] = item_callbacks["default"];
-			item_callbacks[".trmat"] = item_callbacks["default"];
-
-			item_callbacks[".trscn"] = [&](std::filesystem::path& path)
-			{
-				std::string filename = path.filename().string();
-				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(default_icon.get(), textureID);
-				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 }))
-				{
-
-				}
-
-				if (ImGui::BeginDragDropSource())
-				{
-					std::string res_path = path.string();
-					res_path += "\0";
-					ImGui::SetDragDropPayload(".trscn", res_path.c_str(), res_path.size() + 1);
-					ImGui::EndDragDropSource();
-				}
-				ImGui::TextWrapped(filename.c_str());
-
-			};
-		};
 
 		//Process callbacks
 		{
@@ -168,20 +114,53 @@ namespace trace {
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { button_hov.x, button_hov.y, button_hov.z, 0.5f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { button_act.x, button_act.y, button_act.z, 0.5f });
 
-		for (uint32_t i = 0; i < m_dirItems.size(); i++)
+
+		for (uint32_t i = 0; i < m_dirContents.size(); i++)
 		{
-			auto& path = item_data[i];
-			std::string& item_id = m_dirItems[i];
-			if (item_callbacks[item_id])
-				item_callbacks[item_id](path);
-			else
-				item_callbacks["default"](path);
+			std::filesystem::path& path = m_dirContents[i];
+
+			std::string filename = path.filename().string();
+			void* textureID = nullptr;
+			if (std::filesystem::is_directory(path))
+			{
+				UIFunc::GetDrawTextureHandle(directory_icon.get(), textureID);
+				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 }))
+				{
+					m_currentDir /= filename;
+					OnDirectoryChanged();
+				}
+			}
+			else if (std::filesystem::is_regular_file(path))
+			{
+				UIFunc::GetDrawTextureHandle(default_icon.get(), textureID);
+
+				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 }))
+				{
+
+				}
+			}
+
+			OnItemPopup();
+
+			if (ImGui::BeginDragDropSource())
+			{
+				std::string res_path = path.string();
+				res_path += "\0";
+				std::string ext = path.extension().string();
+				ImGui::SetDragDropPayload(ext.c_str(), res_path.c_str(), res_path.size() + 1);
+				ImGui::EndDragDropSource();
+			}
+
+			ImGui::TextWrapped(filename.c_str());
+
 
 			ImGui::NextColumn();
 		}
 
 		ImGui::PopStyleColor(3);
 		ImGui::Columns(1);
+
+		OnWindowPopup();
 
 		ImGui::End();
 
@@ -198,31 +177,16 @@ namespace trace {
 	}
 	void ContentBrowser::ProcessDirectory()
 	{
-		m_dirItems.clear();
-		item_index = 0;
+
 		for (uint32_t i = 0; i < m_dirContents.size(); i++)
 		{
 			std::filesystem::path& path = m_dirContents[i];
-			
-			if (std::filesystem::is_directory(path))
+			if (!std::filesystem::is_regular_file(path)) continue;
+
+			std::string ext = path.extension().string();
+			if (process_callbacks[ext])
 			{
-				m_dirItems.emplace_back("directory");
-				item_data[item_index] = path;
-				item_index++;
-			}
-			else if (std::filesystem::is_regular_file(path))
-			{
-				std::string ext = path.extension().string();
-				if (process_callbacks[ext])
-				{
-					process_callbacks[ext](path);
-				}
-				else
-				{
-					m_dirItems.emplace_back(ext);
-					item_data[item_index] = path;
-					item_index++;
-				}
+				process_callbacks[ext](path);
 			}
 
 		}
@@ -409,6 +373,29 @@ namespace trace {
 				FileSystem::writestring(out_handle, emit.c_str());
 				FileSystem::close_file(out_handle);
 			}
+		}
+	}
+	void ContentBrowser::OnWindowPopup()
+	{
+
+		if (ImGui::BeginPopupContextWindow("Content_Browser_Window", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+		{
+			if (ImGui::BeginMenu("Create"))
+			{
+				if (ImGui::MenuItem("Material")) {}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndPopup();
+		}
+
+	}
+	void ContentBrowser::OnItemPopup()
+	{
+		if (ImGui::BeginPopupContextItem())
+		{
+			if(ImGui::MenuItem("Delete")){}
+			ImGui::EndPopup();
 		}
 	}
 }

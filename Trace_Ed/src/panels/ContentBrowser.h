@@ -25,6 +25,8 @@ namespace trace {
 		void OnDirectoryChanged();
 		void ProcessDirectory();
 		void ProcessAllDirectory();
+		void OnWindowPopup();
+		void OnItemPopup();
 
 	public:
 		//TODO: Check if there is a better way to store uuid and paths
@@ -34,7 +36,6 @@ namespace trace {
 	private:
 		std::filesystem::path m_currentDir;
 		std::vector<std::filesystem::path> m_dirContents;
-		std::vector<std::string> m_dirItems;
 		Ref<GTexture> directory_icon;
 		Ref<GTexture> default_icon;
 		

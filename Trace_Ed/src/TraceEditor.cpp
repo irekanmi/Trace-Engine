@@ -278,10 +278,6 @@ namespace trace {
 		m_viewportFocused = ImGui::IsWindowFocused();
 		m_viewportHovered = ImGui::IsWindowHovered();
 		ImGui::Image(texture, view_size);
-		if (m_hierachyPanel.m_selectedEntity)
-		{
-			DrawGizmo();
-		}
 		if (current_state == SceneEdit)
 		{
 			if (ImGui::BeginDragDropTarget())
@@ -298,8 +294,12 @@ namespace trace {
 				ImGui::EndDragDropTarget();
 			}
 		}
-
+		if (m_hierachyPanel.m_selectedEntity)
+		{
+			DrawGizmo();
+		}
 		ImGui::End();
+		
 		ImGui::PopStyleVar();
 	}
 

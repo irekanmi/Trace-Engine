@@ -487,6 +487,24 @@ namespace trace {
 				ImGui::OpenPopup("ALL_MATERIALS");
 			}
 
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trmat"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::filesystem::path p = buf;
+					Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+					if (mt_res && model) comp._model->m_matInstance = mt_res;
+					else if (model)
+					{
+						mt_res = MaterialSerializer::Deserialize(p.string());
+						if (mt_res) comp._model->m_matInstance = mt_res;
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
 			std::string mat_res = m_editor->DrawMaterialsPopup();
 			if (!mat_res.empty())
 			{
