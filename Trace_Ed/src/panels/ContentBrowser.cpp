@@ -3,10 +3,13 @@
 #include "../TraceEditor.h"
 #include "resource/TextureManager.h"
 #include "resource/MeshManager.h"
+#include "resource/MaterialManager.h"
+#include "resource/PipelineManager.h"
 #include "backends/UIutils.h"
 #include "scene/UUID.h"
-#include "imgui.h"
+#include "serialize/MaterialSerializer.h"
 
+#include "imgui.h"
 #include "serialize/yaml_util.h"
 #include <unordered_map>
 #include <functional>
@@ -14,7 +17,8 @@
 
 namespace trace {
 	extern void ImportOBJ(const std::string& path, std::vector<std::string>& out_models, bool create_materials);
-
+	extern std::filesystem::path GetPathFromUUID(UUID uuid);
+	extern UUID GetUUIDFromName(const std::string& name);
 
 	static float thumbnail_size = 96.0f;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> process_callbacks;
@@ -124,7 +128,8 @@ namespace trace {
 			if (std::filesystem::is_directory(path))
 			{
 				UIFunc::GetDrawTextureHandle(directory_icon.get(), textureID);
-				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 }))
+				ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 });
+				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
 				{
 					m_currentDir /= filename;
 					OnDirectoryChanged();
@@ -140,7 +145,7 @@ namespace trace {
 				}
 			}
 
-			OnItemPopup();
+			OnItemPopup(path);
 
 			if (ImGui::BeginDragDropSource())
 			{
@@ -377,20 +382,80 @@ namespace trace {
 	}
 	void ContentBrowser::OnWindowPopup()
 	{
+		enum CreateItem
+		{
+			MATERIAL = 1,
+			FOLDER
+		};
+
+		static CreateItem c_item = (CreateItem)0;
 
 		if (ImGui::BeginPopupContextWindow("Content_Browser_Window", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 		{
 			if (ImGui::BeginMenu("Create"))
 			{
-				if (ImGui::MenuItem("Material")) {}
+				if (ImGui::MenuItem("Material")) c_item = MATERIAL;
+				if (ImGui::MenuItem("Folder"))
+				{
+					c_item = FOLDER;
+				}
 				ImGui::EndMenu();
 			}
 
 			ImGui::EndPopup();
 		}
 
+		switch (c_item)
+		{
+		case FOLDER:
+		{
+
+			std::string res;
+			if (m_editor->InputTextPopup("Folder Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					std::filesystem::create_directory(m_currentDir / res);
+					OnDirectoryChanged();
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case MATERIAL:
+		{
+			std::string res;
+			if (m_editor->InputTextPopup("Material Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + ".trmat");
+					if (id == 0)
+					{
+						Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline");
+						Ref<MaterialInstance> mat = MaterialManager::get_instance()->CreateMaterial(res + ".trmat", sp);
+						if (mat)
+						{
+							std::string path = (m_currentDir / (res + ".trmat")).string();
+							MaterialSerializer::Serialize(mat, path);
+						}
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trmat");
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		}
+
 	}
-	void ContentBrowser::OnItemPopup()
+	void ContentBrowser::OnItemPopup(std::filesystem::path& path)
 	{
 		if (ImGui::BeginPopupContextItem())
 		{

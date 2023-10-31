@@ -1,0 +1,23 @@
+Trace Version: 0.0.0.0
+Material Version: 0.0.0.0
+Material Name: new_t1.trmat
+Pipeline Name: gbuffer_pipeline
+Data:
+  - Name: SPECULAR_MAP
+    Type: 7
+    Value:
+      file_id: 1
+  - Name: diffuse_color
+    Type: 15
+    Value: [0, 0, 0, 0]
+  - Name: shininess
+    Type: 9
+    Value: 0
+  - Name: DIFFUSE_MAP
+    Type: 7
+    Value:
+      file_id: 1
+  - Name: NORMAL_MAP
+    Type: 7
+    Value:
+      file_id: 1

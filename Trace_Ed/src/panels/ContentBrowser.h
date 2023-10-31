@@ -26,7 +26,7 @@ namespace trace {
 		void ProcessDirectory();
 		void ProcessAllDirectory();
 		void OnWindowPopup();
-		void OnItemPopup();
+		void OnItemPopup(std::filesystem::path& path);
 
 	public:
 		//TODO: Check if there is a better way to store uuid and paths

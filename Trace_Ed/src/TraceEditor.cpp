@@ -14,6 +14,7 @@
 
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui_internal.h"
+#include "imgui_stdlib.h"
 #include "ImGuizmo.h"
 #include "portable-file-dialogs.h"
 
@@ -517,6 +518,33 @@ namespace trace {
 			ImGui::Columns(1);
 			ImGui::EndPopup();
 		}
+		return res;
+	}
+
+	bool TraceEditor::InputTextPopup(const std::string& label, std::string& result)
+	{
+		bool res = true;
+
+		ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+
+		if (ImGui::Begin(label.c_str()))
+		{
+			static std::string value;
+			ImGui::InputText(("##" + label).c_str(), &value);
+			if (ImGui::IsKeyReleased(ImGuiKey_Enter))
+			{
+				result = value;
+				value.clear();
+			}
+
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsWindowFocused())
+			{
+				res = false;
+			}
+
+			ImGui::End();
+		}
+
 		return res;
 	}
 

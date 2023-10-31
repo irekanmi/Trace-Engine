@@ -35,6 +35,8 @@ namespace trace {
 		std::string DrawMaterialsPopup();
 		std::string DrawTexturesPopup();
 
+		bool TraceEditor::InputTextPopup(const std::string& label, std::string& result);
+
 		static TraceEditor* get_instance();
 
 	private:
