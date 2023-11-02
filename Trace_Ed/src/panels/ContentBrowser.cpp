@@ -5,11 +5,14 @@
 #include "resource/MeshManager.h"
 #include "resource/MaterialManager.h"
 #include "resource/PipelineManager.h"
+#include "resource/TextureManager.h"
 #include "backends/UIutils.h"
 #include "scene/UUID.h"
 #include "serialize/MaterialSerializer.h"
 
 #include "imgui.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include "serialize/yaml_util.h"
 #include <unordered_map>
 #include <functional>
@@ -22,7 +25,7 @@ namespace trace {
 
 	static float thumbnail_size = 96.0f;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> process_callbacks;
-	std::unordered_map<std::string, std::function<void(YAML::Emitter& ,std::filesystem::path&)>> extensions_callbacks;
+	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> extensions_callbacks;
 
 	bool ContentBrowser::Init()
 	{
@@ -67,10 +70,10 @@ namespace trace {
 		//extensions callbacks
 		{
 
-			extensions_callbacks["default"] = [](YAML::Emitter& emit, std::filesystem::path& path)
+			extensions_callbacks[".trmat"] = [&](std::filesystem::path& path)
 			{
-				emit << YAML::Key << "Meta Type" << YAML::Value << path.extension().string();
-
+				m_editMaterialPath = path;
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); });
 			};
 
 		};
@@ -84,6 +87,7 @@ namespace trace {
 		// TODO: Add a data structure that holds and releases all textures
 		directory_icon.release();
 		default_icon.release();
+		m_editMaterial.free();
 	}
 	void ContentBrowser::Render(float deltaTime)
 	{
@@ -124,6 +128,7 @@ namespace trace {
 			std::filesystem::path& path = m_dirContents[i];
 
 			std::string filename = path.filename().string();
+			std::string extension = path.extension().string();
 			void* textureID = nullptr;
 			if (std::filesystem::is_directory(path))
 			{
@@ -139,9 +144,10 @@ namespace trace {
 			{
 				UIFunc::GetDrawTextureHandle(default_icon.get(), textureID);
 
-				if (ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 }))
+				ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 });
+				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
 				{
-
+					if (extensions_callbacks[extension]) extensions_callbacks[extension](path);
 				}
 			}
 
@@ -341,7 +347,7 @@ namespace trace {
 			}
 		}
 
-		for (auto& i : all_files_id)
+		/*for (auto& i : all_files_id)
 		{
 			auto it = all_id_path.find(i.second);
 			if (it == all_id_path.end())
@@ -349,7 +355,7 @@ namespace trace {
 				all_files_id.erase(i.first);
 				dirty_ids = true;
 			}
-		}
+		}*/
 
 		if (dirty_ids)
 		{
@@ -462,5 +468,210 @@ namespace trace {
 			if(ImGui::MenuItem("Delete")){}
 			ImGui::EndPopup();
 		}
+	}
+	void ContentBrowser::DrawEditMaterial()
+	{
+		std::string filename = m_editMaterialPath.filename().string();
+		m_editMaterial.free();
+		m_editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
+		if (m_editMaterial) {}
+		else m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
+
+		Ref<MaterialInstance> mat = m_editMaterial;
+
+		ImGui::Text("Material : %s", mat->m_path.string().c_str());
+		ImGui::Columns(2);
+		ImGui::Text("Render Pipeline");
+		ImGui::NextColumn();
+		Ref<GPipeline> sp = mat->GetRenderPipline();
+		ImGui::Button(sp->m_path.string().c_str());
+		ImGui::Columns(1);
+
+
+		auto lambda = [&](trace::ShaderData type, std::any& dst, const std::string& name)
+		{
+			switch (type)
+			{
+			case trace::ShaderData::CUSTOM_DATA_BOOL:
+			{
+				bool* data = &std::any_cast<bool&>(dst);
+				ImGui::Checkbox(name.c_str(), data);
+				dst = *data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_FLOAT:
+			{
+				float* data = &std::any_cast<float&>(dst);
+				ImGui::DragFloat(name.c_str(), data);
+				dst = *data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_INT:
+			{
+				int* data = &std::any_cast<int&>(dst);
+				ImGui::DragInt(name.c_str(), data);
+				dst = *data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC2:
+			{
+				glm::ivec2& data = std::any_cast<glm::ivec2&>(dst);
+				ImGui::DragInt2(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC3:
+			{
+				glm::ivec3& data = std::any_cast<glm::ivec3&>(dst);
+				ImGui::DragInt3(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC4:
+			{
+				glm::ivec4* data = &std::any_cast<glm::ivec4&>(dst);
+				ImGui::DragInt4(name.c_str(), (int*)data);
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT2:
+			{
+				glm::mat2& data = std::any_cast<glm::mat2&>(dst);
+				ImGui::Text(name.c_str());
+				ImGui::DragFloat2((name + "row_0").c_str(), glm::value_ptr(data[0]));
+				ImGui::DragFloat2((name + "row_1").c_str(), glm::value_ptr(data[1]));
+				dst = data;
+				break;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT3:
+			{
+				glm::mat3& data = std::any_cast<glm::mat3&>(dst);
+				ImGui::Text(name.c_str());
+				ImGui::DragFloat3((name + "row_0").c_str(), glm::value_ptr(data[0]));
+				ImGui::DragFloat3((name + "row_1").c_str(), glm::value_ptr(data[1]));
+				ImGui::DragFloat3((name + "row_2").c_str(), glm::value_ptr(data[2]));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT4:
+			{
+				glm::mat4& data = std::any_cast<glm::mat4&>(dst);
+				ImGui::Text(name.c_str());
+				ImGui::DragFloat4((name + "row_0").c_str(), glm::value_ptr(data[0]));
+				ImGui::DragFloat4((name + "row_1").c_str(), glm::value_ptr(data[1]));
+				ImGui::DragFloat4((name + "row_2").c_str(), glm::value_ptr(data[2]));
+				ImGui::DragFloat4((name + "row_3").c_str(), glm::value_ptr(data[3]));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
+			{
+				Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
+				ImGui::Columns(2);
+				ImGui::Text(name.c_str());
+				ImGui::Text(tex->GetName().c_str());
+				ImGui::NextColumn();
+				void* a = nullptr;
+				UIFunc::GetDrawTextureHandle(tex.get(), a);
+				ImGui::Image(a, ImVec2(128.0f, 128.0f));
+				if (ImGui::IsItemClicked())
+				{
+					ImGui::OpenPopup("ALL_TEXTURES");
+				}
+				if (ImGui::BeginDragDropTarget())
+				{
+					static char buf[1024] = { 0 };
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".png"))
+					{
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::filesystem::path p = buf;
+						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						if (tex) {}
+						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+						
+						if (tex) dst = tex;
+					}
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".tga"))
+					{
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::filesystem::path p = buf;
+						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						if (tex) {}
+						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+
+						if (tex) dst = tex;
+					}
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpg"))
+					{
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::filesystem::path p = buf;
+						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						if (tex) {}
+						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+
+						if (tex) dst = tex;
+					}
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpeg"))
+					{
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::filesystem::path p = buf;
+						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						if (tex) {}
+						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+
+						if (tex) dst = tex;
+					}
+					ImGui::EndDragDropTarget();
+				}
+				std::string tex_res = m_editor->DrawTexturesPopup();
+				if (!tex_res.empty())
+				{
+					std::filesystem::path p = tex_res;
+					Ref<GTexture> tex_r = TextureManager::get_instance()->GetTexture(p.filename().string());
+					if (tex_r) {}
+					else tex_r = TextureManager::get_instance()->LoadTexture_(p.string());
+
+					if (tex_r) dst = tex_r;
+				}
+				ImGui::Columns(1);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC2:
+			{
+				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
+				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC3:
+			{
+				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
+				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC4:
+			{
+				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
+				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data));
+				dst = data;
+				break;
+			}
+			}
+		};
+
+		for (auto& m_data : mat->m_data)
+		{
+			trace::UniformMetaData& meta_data = mat->m_renderPipeline->Scene_uniforms[m_data.second.second];
+			lambda(meta_data.data_type, m_data.second.first, m_data.first);
+		}
+
+		if (ImGui::Button("Apply"))
+		{
+			RenderFunc::PostInitializeMaterial(mat.get(), mat->m_renderPipeline);
+			MaterialSerializer::Serialize(mat, m_editMaterialPath.string());
+		}
+
 	}
 }

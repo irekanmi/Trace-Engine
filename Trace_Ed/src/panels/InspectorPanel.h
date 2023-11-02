@@ -15,9 +15,11 @@ namespace trace {
 
 
 		void DrawEntityComponent(Entity entity);
+		void SetDrawCallbackFn(std::function<void()> cb) { m_drawCallback = cb; }
 
 		TraceEditor* m_editor;
 	private:
+		std::function<void()> m_drawCallback;
 		Entity m_selectedEntity;
 
 	protected:

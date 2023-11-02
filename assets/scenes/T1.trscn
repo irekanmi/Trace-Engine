@@ -2,70 +2,39 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: Sample Scene
 Entities:
-  - UUID: 15496671427956962647
+  - UUID: 7006816233964152135
     TagComponent:
-      Tag: Spot light
+      Tag: yjyghkh
     TransformComponent:
-      Position: [-203.089218, 192.431534, -99.2516556]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.872548997, 0.809648991, 0.33789891, 0]
-      Direction: [0.400000006, -0.699999988, -1.20000005, 0]
-      Position: [-203.089218, 192.431534, -99.2516556, 0]
-      Params1: [0, 0, 0, 0.999945164]
-      Params2: [0.832921267, 1.32000005, 0, 0]
-      Light Type: 2
-  - UUID: 14479376527013190481
-    TagComponent:
-      Tag: Directional Light
-    TransformComponent:
-      Position: [123.875198, -43.2015877, 25.321909]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.448937953, 0.69415611, 0.769607842, 0]
-      Direction: [0.300000012, -1.10000002, 0, 0]
-      Position: [123.875198, -43.2015877, 25.321909, 0]
-      Params1: [0, 0, 0, 0]
-      Params2: [0, 1.05999994, 0, 0]
-      Light Type: 0
-  - UUID: 7836663257749491887
-    TagComponent:
-      Tag: Sphere
-    TransformComponent:
-      Position: [-102.427879, -7.34450245, -22.1501484]
-      Rotation: [0, 0, 0, 1]
-      Scale: [6.43897629, 6.43897629, 6.36871481]
+      Position: [4.11126518, -38.6026421, -88.4760437]
+      Rotation: [0, 0.161626607, 0, 0.98685199]
+      Scale: [0.941303849, 0.941303968, 0.941303849]
     ModelComponent:
-      Name: Sphere
-      file id: 5
-      Material:
-        file id: 7489833591596875514
-  - UUID: 13276428335963239659
-    TagComponent:
-      Tag: Falcon
-    TransformComponent:
-      Position: [66.6873779, -23.7894535, 44.4812965]
-      Rotation: [-0.0396275371, 0.4865596, -0.00522335246, 0.87273258]
-      Scale: [6.76201677, 6.76201677, 6.76199102]
-    ModelComponent:
-      Name: Plane_Plane.001
-      file id: 9770986204108760100
-      Material:
-        file id: 2426028521616981881
-  - UUID: 3634860917324020060
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Position: [-51.0994682, -48.1942444, -158.272034]
-      Rotation: [0.0256297924, 0.199761644, -0.0161395185, 0.979376256]
-      Scale: [179.410828, 6.25519323, 385.239868]
-    ModelComponent:
-      Name: Cube
-      file id: 4
+      Name: sponza_327_sponza_327_fabric_f
+      file id: 14997834820541274483
       Material:
         file id: 1656641231356361523
+  - UUID: 7415873377772161487
+    TagComponent:
+      Tag: Test 2
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+  - UUID: 6998084007703663453
+    TagComponent:
+      Tag: point light
+    TransformComponent:
+      Position: [28.567543, -22.4154053, 33.8006477]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.172577858, 0.838235259, 0.603297293, 0]
+      Direction: [-0.5, -0.899999976, -0.600000024, 0]
+      Position: [28.567543, -22.4154053, 33.8006477, 0]
+      Params1: [1, 0.0329999998, 0, 0.976672292]
+      Params2: [0.798635542, 1.92999995, 0, 0]
+      Light Type: 1
   - UUID: 4280035173306708868
     TagComponent:
       Tag: Camera Entity
@@ -84,36 +53,67 @@ Entities:
       Fov: 60.2999992
       Aspect Ratio: 2.28954434
       Orthographic Size: 7.30000019
-  - UUID: 6998084007703663453
+  - UUID: 3634860917324020060
     TagComponent:
-      Tag: point light
+      Tag: Cube
     TransformComponent:
-      Position: [28.567543, -22.4154053, 33.8006477]
+      Position: [-51.0994682, -48.1942444, -158.272034]
+      Rotation: [0.0256297924, 0.199761644, -0.0161395185, 0.979376256]
+      Scale: [179.410828, 6.25519323, 385.239868]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+      Material:
+        file id: 1656641231356361523
+  - UUID: 13276428335963239659
+    TagComponent:
+      Tag: Falcon
+    TransformComponent:
+      Position: [66.6873779, -23.7894535, 44.4812965]
+      Rotation: [-0.0396275371, 0.4865596, -0.00522335246, 0.87273258]
+      Scale: [6.76201677, 6.76201677, 6.76199102]
+    ModelComponent:
+      Name: Plane_Plane.001
+      file id: 9770986204108760100
+      Material:
+        file id: 2426028521616981881
+  - UUID: 7836663257749491887
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [-150.940704, 74.934639, -278.713806]
+      Rotation: [0, 0, 0, 1]
+      Scale: [6.43897629, 6.43897629, 6.36871481]
+    ModelComponent:
+      Name: Sphere
+      file id: 5
+      Material:
+        file id: 7489833591596875514
+  - UUID: 14479376527013190481
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Position: [123.875198, -43.2015877, 25.321909]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.172577858, 0.838235259, 0.603297293, 0]
-      Direction: [-0.5, -0.899999976, -0.600000024, 0]
-      Position: [28.567543, -22.4154053, 33.8006477, 0]
-      Params1: [1, 0.0329999998, 0, 0.976672292]
-      Params2: [0.798635542, 1.92999995, 0, 0]
-      Light Type: 1
-  - UUID: 7415873377772161487
+      Color: [0.448937953, 0.69415611, 0.769607842, 0]
+      Direction: [0.300000012, -1.10000002, 0, 0]
+      Position: [123.875198, -43.2015877, 25.321909, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 1.05999994, 0, 0]
+      Light Type: 0
+  - UUID: 15496671427956962647
     TagComponent:
-      Tag: Test 2
+      Tag: Spot light
     TransformComponent:
-      Position: [0, 0, 0]
+      Position: [-203.089218, 192.431534, -99.2516556]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
-  - UUID: 7006816233964152135
-    TagComponent:
-      Tag: yjyghkh
-    TransformComponent:
-      Position: [4.11126518, -38.8165054, -88.4760437]
-      Rotation: [0, 0.161626607, 0, 0.98685199]
-      Scale: [0.941303849, 0.941303968, 0.941303849]
-    ModelComponent:
-      Name: sponza_327_sponza_327_fabric_f
-      file id: 14997834820541274483
-      Material:
-        file id: 1656641231356361523
+    LightComponent:
+      Color: [0.872548997, 0.809648991, 0.33789891, 0]
+      Direction: [0.400000006, -0.699999988, -1.20000005, 0]
+      Position: [-203.089218, 192.431534, -99.2516556, 0]
+      Params1: [0, 0, 0, 0.999945164]
+      Params2: [0.832921267, 1.32000005, 0, 0]
+      Light Type: 2

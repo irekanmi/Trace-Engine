@@ -6,7 +6,7 @@ Data:
   - Name: SPECULAR_MAP
     Type: 7
     Value:
-      file_id: 1
+      file_id: 2298783965271061754
   - Name: diffuse_color
     Type: 15
     Value: [0, 0, 0, 0]
@@ -16,8 +16,8 @@ Data:
   - Name: DIFFUSE_MAP
     Type: 7
     Value:
-      file_id: 1
+      file_id: 16639023432294724554
   - Name: NORMAL_MAP
     Type: 7
     Value:
-      file_id: 1
+      file_id: 5635488990878626653

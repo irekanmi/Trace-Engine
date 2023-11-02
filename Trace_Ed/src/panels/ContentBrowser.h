@@ -2,6 +2,7 @@
 
 #include "resource/Ref.h"
 #include "render/GTexture.h"
+#include "render/Material.h"
 #include "scene/UUID.h"
 
 #include <filesystem>
@@ -27,6 +28,7 @@ namespace trace {
 		void ProcessAllDirectory();
 		void OnWindowPopup();
 		void OnItemPopup(std::filesystem::path& path);
+		void DrawEditMaterial();
 
 	public:
 		//TODO: Check if there is a better way to store uuid and paths
@@ -38,6 +40,8 @@ namespace trace {
 		std::vector<std::filesystem::path> m_dirContents;
 		Ref<GTexture> directory_icon;
 		Ref<GTexture> default_icon;
+		Ref<MaterialInstance> m_editMaterial;
+		std::filesystem::path m_editMaterialPath;
 		
 
 		TraceEditor* m_editor;

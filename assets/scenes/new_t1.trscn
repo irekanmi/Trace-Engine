@@ -2,32 +2,30 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: new_t1.trscn
 Entities:
-  - UUID: 17604085128011595727
+  - UUID: 789607815271590800
     TagComponent:
-      Tag: Floor
+      Tag: New Entity
     TransformComponent:
-      Position: [0, -21.8854561, -3.8016367]
-      Rotation: [0.264619082, 0.00164584222, 0.00599783659, 0.964332998]
-      Scale: [63.8860092, 1, 56.6599388]
-    ModelComponent:
-      Name: Cube
-      file id: 4
-      Material:
-        file id: 7828286796282832855
-  - UUID: 15353958122290312413
-    TagComponent:
-      Tag: blue light
-    TransformComponent:
-      Position: [-0.708070815, 7.0796833, 18.7178345]
+      Position: [-0.895508051, -7.51692581, -16.2098732]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.190555573, 0.816666663, 0.75405544, 0]
-      Direction: [0, 0, 0, 0]
-      Position: [-0.708070815, 7.0796833, 18.7178345, 0]
-      Params1: [1.01900005, 0.0170000009, 0.00200000009, 0]
-      Params2: [0, 4.51000023, 0, 0]
-      Light Type: 1
+    ModelComponent:
+      Name: Sphere
+      file id: 5
+      Material:
+        file id: 7489833591596875514
+  - UUID: 14303815213726832690
+    TagComponent:
+      Tag: car
+    TransformComponent:
+      Position: [8.17724514, -19.3335629, 0]
+      Rotation: [0.181521326, 0, 0, 0.983386993]
+      Scale: [1, 0.999999881, 0.999999881]
+    ModelComponent:
+      Name: Plane_Plane.001
+      file id: 9770986204108760100
+      Material:
+        file id: 2426028521616981881
   - UUID: 1836790970572848754
     TagComponent:
       Tag: camera
@@ -44,17 +42,31 @@ Entities:
       Near: 0.100000001
       Far: 1000
       Fov: 45
-      Aspect Ratio: 2.26525187
+      Aspect Ratio: 2.29222512
       Orthographic Size: 10
-  - UUID: 14303815213726832690
+  - UUID: 15353958122290312413
     TagComponent:
-      Tag: car
+      Tag: blue light
     TransformComponent:
-      Position: [8.17724514, -19.3335629, 0]
-      Rotation: [0.181521326, 0, 0, 0.983386993]
-      Scale: [1, 0.999999881, 0.999999881]
+      Position: [-0.708070815, 7.0796833, 18.7178345]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.190555573, 0.816666663, 0.75405544, 0]
+      Direction: [0, 0, 0, 0]
+      Position: [-0.708070815, 7.0796833, 18.7178345, 0]
+      Params1: [1.01900005, 0.0170000009, 0.00200000009, 0]
+      Params2: [0, 4.51000023, 0, 0]
+      Light Type: 1
+  - UUID: 17604085128011595727
+    TagComponent:
+      Tag: Floor
+    TransformComponent:
+      Position: [0, -21.8854561, -3.8016367]
+      Rotation: [0.159545481, 0.000992316403, 0.00613988237, 0.987170994]
+      Scale: [63.8860092, 1, 56.6599617]
     ModelComponent:
-      Name: Plane_Plane.001
-      file id: 9770986204108760100
+      Name: Cube
+      file id: 4
       Material:
-        file id: 2426028521616981881
+        file id: 10670985502615273580

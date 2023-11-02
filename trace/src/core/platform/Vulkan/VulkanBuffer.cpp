@@ -108,8 +108,11 @@ namespace vk {
 			vkUnmapMemory(_device->m_device, _handle->m_memory);
 		}
 
-		vkDeviceWaitIdle(_device->m_device);
-		vk::_DestoryBuffer(_instance, _device, _handle);
+		/*vkDeviceWaitIdle(_device->m_device);
+		vk::_DestoryBuffer(_instance, _device, _handle);*/
+
+		_device->frames_resources[_device->m_imageIndex]._buffers.push_back(_handle->m_handle);
+		_device->frames_resources[_device->m_imageIndex]._memorys.push_back(_handle->m_memory);
 
 		delete buffer->GetRenderHandle()->m_internalData;
 

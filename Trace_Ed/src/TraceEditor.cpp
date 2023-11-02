@@ -253,8 +253,8 @@ namespace trace {
 
 		if (ImGui::Begin("Inspector"))
 		{
-			if (m_hierachyPanel.m_selectedEntity)
-				m_inspectorPanel.DrawEntityComponent(m_hierachyPanel.m_selectedEntity);
+			if (m_inspectorPanel.m_drawCallback)
+				m_inspectorPanel.m_drawCallback();
 		}
 		ImGui::End();
 

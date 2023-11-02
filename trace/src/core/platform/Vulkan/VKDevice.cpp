@@ -914,7 +914,7 @@ namespace vk {
 		}
 
 		vk::_CommandBufferSubmitted(command_buffer);
-		// Destroy frame resources "RenderGraph"
+		// Destroy previous frame resources 
 		destroy_frame_resources(device, _handle->m_imageIndex);
 
 
@@ -1046,6 +1046,12 @@ namespace vk {
 			vkFreeMemory(_handle->m_device, i, _instance->m_alloc_callback);
 		}
 		_handle->frames_resources[currentIndex]._memorys.clear();
+
+		for (auto& i : _handle->frames_resources[currentIndex]._buffers)
+		{
+			vkDestroyBuffer(_handle->m_device, i, _instance->m_alloc_callback);
+		}
+		_handle->frames_resources[currentIndex]._buffers.clear();
 	}
 
 }

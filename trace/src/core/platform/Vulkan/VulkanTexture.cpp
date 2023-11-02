@@ -271,7 +271,7 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
-		vk::_DestroyImage(
+		/*vk::_DestroyImage(
 			_instance,
 			_device,
 			_handle
@@ -281,7 +281,12 @@ namespace vk {
 			_instance,
 			_device,
 			_handle->m_sampler
-		);
+		);*/
+
+		_device->frames_resources[_device->m_imageIndex]._images.push_back(_handle->m_handle);
+		_device->frames_resources[_device->m_imageIndex]._image_views.push_back(_handle->m_view);
+		_device->frames_resources[_device->m_imageIndex]._samplers.push_back(_handle->m_sampler);
+		_device->frames_resources[_device->m_imageIndex]._memorys.push_back(_handle->m_mem);
 
 
 		delete texture->GetRenderHandle()->m_internalData;
