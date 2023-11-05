@@ -10,10 +10,10 @@ DATA:
     UUID: 3
   - Name: Sphere
     UUID: 5
-  - Name: box_stack.mtl
-    UUID: 13134816208481438938
   - Name: vase_plant.tga
     UUID: 18432360986423305447
+  - Name: box_stack.mtl
+    UUID: 13134816208481438938
   - Name: Cube
     UUID: 4
   - Name: cubemap.frag.glsl.shcode
@@ -22,22 +22,26 @@ DATA:
     UUID: 12936007851862420531
   - Name: default
     UUID: 6
-  - Name: box_stack.obj
-    UUID: 16902035853334562898
-  - Name: T1.trscn
-    UUID: 12437338064509514968
   - Name: trace_core.shader.vert.glsl
     UUID: 17971878597675636412
   - Name: cubemap.frag.glsl
     UUID: 13909859449416446513
-  - Name: quad.frag.glsl
-    UUID: 6353956508799390050
-  - Name: custom.frag.glsl
-    UUID: 7937825943564980314
+  - Name: box_stack.obj
+    UUID: 16902035853334562898
+  - Name: T1.trscn
+    UUID: 12437338064509514968
   - Name: ALGER.TTF
     UUID: 4113681025385876608
+  - Name: custom.frag.glsl
+    UUID: 7937825943564980314
+  - Name: quad.frag.glsl
+    UUID: 6353956508799390050
   - Name: BAUHS93.TTF
     UUID: 6456025844781365329
+  - Name: sponza.mtl
+    UUID: 2545329887001082707
+  - Name: bloom_downsample.frag.glsl
+    UUID: 17758447517081337962
   - Name: test.tga
     UUID: 7985964929972913479
   - Name: sky_top.jpg
@@ -46,30 +50,26 @@ DATA:
     UUID: 3567564683209163988
   - Name: text.vert.glsl
     UUID: 15467719201412864605
-  - Name: bloom_downsample.frag.glsl
-    UUID: 17758447517081337962
-  - Name: sponza.mtl
-    UUID: 2545329887001082707
   - Name: sponza_fabric_ddn.tga
     UUID: 7097631733212632578
   - Name: falcon.mtl
     UUID: 15044493578884651715
   - Name: falcon.obj
     UUID: 9770986204108760100
-  - Name: text.vert.glsl.shcode
-    UUID: 10833814059598641586
-  - Name: bloom_downsample.frag.glsl.shcode
-    UUID: 11259783129564595740
   - Name: vase_hanging.trmat
     UUID: 12194545372371332704
   - Name: sponza.obj
     UUID: 14997834820541274483
-  - Name: ssao_blur.frag.glsl
-    UUID: 5662266075077017305
+  - Name: bloom_downsample.frag.glsl.shcode
+    UUID: 11259783129564595740
+  - Name: text.vert.glsl.shcode
+    UUID: 10833814059598641586
   - Name: column_a.trmat
     UUID: 11869499362128269084
   - Name: cubemap.vert.glsl.shcode
     UUID: 8123266884019599323
+  - Name: ssao_blur.frag.glsl
+    UUID: 5662266075077017305
   - Name: quad.vert.glsl.shcode
     UUID: 10348219448437483031
   - Name: bloom_prefilter.frag.glsl
@@ -78,24 +78,24 @@ DATA:
     UUID: 15327287691222625621
   - Name: bloom_upsample.frag.glsl
     UUID: 9597884180082853538
-  - Name: bricks2.jpg
-    UUID: 16639023432294724554
   - Name: vase_dif.tga
     UUID: 16592637253558225234
   - Name: bloom_upsample.frag.glsl.shcode
     UUID: 12507972580909520174
-  - Name: lights.vert.glsl.shcode
-    UUID: 7488092608670198286
+  - Name: bricks2.jpg
+    UUID: 16639023432294724554
   - Name: cubemap.vert.glsl
     UUID: 1990149950451115120
+  - Name: lights.vert.glsl.shcode
+    UUID: 7488092608670198286
   - Name: mat_top.trmat
     UUID: 6748061113922072790
   - Name: debug_line.frag.glsl
     UUID: 13890102107615572791
-  - Name: bricks2_disp.jpg
-    UUID: 2298783965271061754
   - Name: debug_line.frag.glsl.shcode
     UUID: 10973003286474260673
+  - Name: bricks2_disp.jpg
+    UUID: 2298783965271061754
   - Name: debug_line.vert.glsl
     UUID: 6314518689558941394
   - Name: fabric_a.trmat
@@ -104,54 +104,54 @@ DATA:
     UUID: 3683941797406581253
   - Name: bricks2_normal.jpg
     UUID: 5635488990878626653
-  - Name: sponza_curtain_green_diff.tga
-    UUID: 18103199352466058466
-  - Name: text_MSDF.frag.glsl
-    UUID: 8995506812038225515
   - Name: sponza_curtain_spec.tga
     UUID: 5995634438617138025
   - Name: fullscreen.vert.glsl
     UUID: 6928139252929084236
-  - Name: text_MSDF.frag.glsl.shcode
-    UUID: 16159061004284816490
+  - Name: sponza_curtain_green_diff.tga
+    UUID: 18103199352466058466
+  - Name: text_MSDF.frag.glsl
+    UUID: 8995506812038225515
   - Name: fullscreen.vert.glsl.shcode
     UUID: 586959046504548613
-  - Name: tone_map.frag.glsl
-    UUID: 6594547919714087763
+  - Name: text_MSDF.frag.glsl.shcode
+    UUID: 16159061004284816490
   - Name: functions.glsl
     UUID: 15941412542743366774
+  - Name: tone_map.frag.glsl
+    UUID: 6594547919714087763
   - Name: g_buffer.frag.glsl
     UUID: 714942716572124765
   - Name: g_buffer.frag.glsl.shcode
     UUID: 12687000086517214135
+  - Name: lighting.frag.glsl
+    UUID: 5496637430075754210
   - Name: fabric_d.trmat
     UUID: 9225102758383585518
   - Name: ssao_main.frag.glsl
     UUID: 10771646985719397802
-  - Name: lighting.frag.glsl
-    UUID: 5496637430075754210
-  - Name: lighting.frag.glsl.shcode
-    UUID: 4792282450725504412
   - Name: sponza_roof_diff.tga
     UUID: 4809879519430885731
+  - Name: lighting.frag.glsl.shcode
+    UUID: 4792282450725504412
   - Name: ssao_main.frag.glsl.shcode
     UUID: 4860841989656252027
   - Name: lights.frag.glsl
     UUID: 7752250555969412665
-  - Name: lights.frag.glsl.shcode
-    UUID: 5529451124023243284
   - Name: chain_texture.tga
     UUID: 5665555150704501165
-  - Name: lion_spec.tga
-    UUID: 9419681466323745710
+  - Name: lights.frag.glsl.shcode
+    UUID: 5529451124023243284
   - Name: lights.vert.glsl
     UUID: 14040114935072440899
+  - Name: lion_spec.tga
+    UUID: 9419681466323745710
   - Name: quad.frag.glsl.shcode
     UUID: 17538149150313167163
-  - Name: sky_left.jpg
-    UUID: 16809844227076234392
   - Name: quad.vert.glsl
     UUID: 543519902620837539
+  - Name: sky_left.jpg
+    UUID: 16809844227076234392
   - Name: reflect.frag.glsl
     UUID: 1704301374269989169
   - Name: ssao_blur.frag.glsl.shcode
@@ -184,10 +184,10 @@ DATA:
     UUID: 6533643514532367651
   - Name: falc_wreck_low_DefaultMaterial_MetallicSmoothness.png
     UUID: 4105019863221146554
-  - Name: sponza_arch_diff.tga
-    UUID: 10383414610469389865
   - Name: falc_wreck_low_DefaultMaterial_Normal.png
     UUID: 4563791292858434604
+  - Name: sponza_arch_diff.tga
+    UUID: 10383414610469389865
   - Name: lion.tga
     UUID: 4345344656647426797
   - Name: lion2_ddn.tga
@@ -196,30 +196,30 @@ DATA:
     UUID: 8264340195522400639
   - Name: paving.png
     UUID: 7210744251976608177
-  - Name: sponza_arch_spec.tga
-    UUID: 17277168348033721908
   - Name: paving_NRM.png
     UUID: 6932347473385436693
+  - Name: sponza_arch_spec.tga
+    UUID: 17277168348033721908
   - Name: paving_SPEC.png
     UUID: 12087352339273322257
-  - Name: sky_bottom.jpg
-    UUID: 16443504350606086843
-  - Name: sky_back.jpg
-    UUID: 10352872966838473393
   - Name: Material__25.trmat
     UUID: 1646451339485226260
-  - Name: sky_front.jpg
-    UUID: 6919245667252159477
+  - Name: sky_back.jpg
+    UUID: 10352872966838473393
+  - Name: sky_bottom.jpg
+    UUID: 16443504350606086843
   - Name: fabric_f.trmat
     UUID: 8438180326744005356
+  - Name: sky_front.jpg
+    UUID: 6919245667252159477
   - Name: sky_right.jpg
     UUID: 11626600878619119053
   - Name: spnza_bricks_a_ddn.tga
     UUID: 1003211611349333113
-  - Name: vase_spec.tga
-    UUID: 2258879778250055494
   - Name: spnza_bricks_a_diff.tga
     UUID: 1568186089583105957
+  - Name: vase_spec.tga
+    UUID: 2258879778250055494
   - Name: spnza_bricks_a_spec.tga
     UUID: 17313977870518612299
   - Name: sponza_arch_ddn.tga
@@ -238,10 +238,10 @@ DATA:
     UUID: 6077393779315251495
   - Name: sponza_column_b_ddn.tga
     UUID: 5412644093738403238
-  - Name: sponza_column_b_diff.tga
-    UUID: 1247030136241212579
   - Name: column_b.trmat
     UUID: 3293861269839104858
+  - Name: sponza_column_b_diff.tga
+    UUID: 1247030136241212579
   - Name: sponza_column_b_spec.tga
     UUID: 15727125273245799179
   - Name: sponza_column_c_ddn.tga
@@ -266,26 +266,26 @@ DATA:
     UUID: 11055878005310336973
   - Name: sponza_fabric_diff.tga
     UUID: 17897328275824250276
-  - Name: sponza_fabric_green_diff.tga
-    UUID: 16022477184295626621
   - Name: mat_mid.trmat
     UUID: 9869656889785634075
+  - Name: sponza_fabric_green_diff.tga
+    UUID: 16022477184295626621
   - Name: sponza_fabric_spec.tga
     UUID: 2853842253339877403
   - Name: sponza_flagpole_ddn.tga
     UUID: 1303634811577554099
   - Name: sponza_flagpole_diff.tga
     UUID: 3148141299785353172
-  - Name: vase_hanging.tga
-    UUID: 1072222985242963916
   - Name: sponza_flagpole_spec.tga
     UUID: 17743989550138663307
+  - Name: vase_hanging.tga
+    UUID: 1072222985242963916
   - Name: sponza_floor_a_ddn.tga
     UUID: 4289194421405268096
-  - Name: vase_hanging_spec.tga
-    UUID: 15695746002903360935
   - Name: sponza_floor_a_diff.tga
     UUID: 1611369334320708995
+  - Name: vase_hanging_spec.tga
+    UUID: 15695746002903360935
   - Name: sponza_floor_a_spec.tga
     UUID: 5545645125599605216
   - Name: sponza_roof_ddn.tga
@@ -312,10 +312,10 @@ DATA:
     UUID: 12010607319004214687
   - Name: vase_round_spec.tga
     UUID: 1308206289685637177
-  - Name: taiwo.trscn
-    UUID: 521516725311196587
   - Name: floor.trmat
     UUID: 1656641231356361523
+  - Name: taiwo.trscn
+    UUID: 521516725311196587
   - Name: arch.trmat
     UUID: 2708008144077323333
   - Name: bricks.trmat
@@ -348,10 +348,10 @@ DATA:
     UUID: 7870633344237291003
   - Name: mat_bot.trmat
     UUID: 5166693267151181378
-  - Name: new_t1.trscn
-    UUID: 17020181030397008702
   - Name: roof.trmat
     UUID: 10239611191913587018
+  - Name: new_t1.trscn
+    UUID: 17020181030397008702
   - Name: vase.trmat
     UUID: 10874080098514961532
   - Name: vase_round.trmat
@@ -362,3 +362,5 @@ DATA:
     UUID: 10670985502615273580
   - Name: new_t2.trmat
     UUID: 7489833591596875514
+  - Name: cobblestone.trmat
+    UUID: 18125184272921980320

@@ -57,6 +57,7 @@ namespace trace {
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_MOVE, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_DB_CLICK, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_TYPED, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_WHEEL, BIND_EVENT_FN(TraceEditor::OnEvent));
 		};
 
 		//TEMP: Finding project path
@@ -251,13 +252,13 @@ namespace trace {
 		// -------------------/////////////////-----------------------------------
 		m_hierachyPanel.Render(deltaTime);
 
-		if (ImGui::Begin("Inspector"))
-		{
-			if (m_inspectorPanel.m_drawCallback)
-				m_inspectorPanel.m_drawCallback();
-		}
+		//Inspector
+		ImGui::Begin("Inspector");
+		if (m_inspectorPanel.m_drawCallback)
+			m_inspectorPanel.m_drawCallback();
 		ImGui::End();
 
+		// Content Browser
 		m_contentBrowser.Render(deltaTime);
 
 		RenderSceneToolBar();
@@ -344,7 +345,7 @@ namespace trace {
 
 		switch (p_event->m_type)
 		{
-		case trace::EventType::TRC_KEY_PRESSED:
+		case TRC_KEY_PRESSED:
 		{
 			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
 			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(press->m_keycode), true);
@@ -353,19 +354,19 @@ namespace trace {
 
 			break;
 		}
-		case trace::EventType::TRC_WND_CLOSE:
+		case TRC_WND_CLOSE:
 		{
 
 			break;
 		}
-		case trace::EventType::TRC_KEY_RELEASED:
+		case TRC_KEY_RELEASED:
 		{
 			trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
 			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(release->m_keycode), false);
 			break;
 		}
 
-		case trace::EventType::TRC_WND_RESIZE:
+		case TRC_WND_RESIZE:
 		{
 			trace::WindowResize* wnd = reinterpret_cast<trace::WindowResize*>(p_event);
 			io.DisplaySize = ImVec2(static_cast<float>(wnd->m_width), static_cast<float>(wnd->m_height));
@@ -373,38 +374,45 @@ namespace trace {
 
 			break;
 		}
-		case trace::EventType::TRC_BUTTON_PRESSED:
+		case TRC_BUTTON_PRESSED:
 		{
 			trace::MousePressed* press = reinterpret_cast<trace::MousePressed*>(p_event);
 			io.AddMouseButtonEvent(translateButtonTrace_ImGui(press->m_button), true);
 			break;
 		}
-		case trace::EventType::TRC_BUTTON_RELEASED:
+		case TRC_BUTTON_RELEASED:
 		{
 			trace::MouseReleased* release = reinterpret_cast<trace::MouseReleased*>(p_event);
 			io.AddMouseButtonEvent(translateButtonTrace_ImGui(release->m_button), false);
 			break;
 		}
-		case trace::EventType::TRC_MOUSE_MOVE:
+		case TRC_MOUSE_MOVE:
 		{
 			trace::MouseMove* move = reinterpret_cast<trace::MouseMove*>(p_event);
 			io.AddMousePosEvent(move->m_x, move->m_y);
 			break;
 		}
-		case trace::EventType::TRC_MOUSE_DB_CLICK:
+		case TRC_MOUSE_DB_CLICK:
 		{
 			trace::MouseDBClick* click = reinterpret_cast<trace::MouseDBClick*>(p_event);
 			io.AddMouseButtonEvent(translateButtonTrace_ImGui(click->m_button), true);
 			break;
 		}
 
-		case trace::EventType::TRC_KEY_TYPED:
+		case TRC_KEY_TYPED:
 		{
 			trace::KeyTyped* typed = reinterpret_cast<trace::KeyTyped*>(p_event);
 			unsigned int c = typed->m_keycode;
 			if (c > 0 && c < 0x10000)
 				io.AddInputCharacter((unsigned short)c);
 
+			break;
+		}
+
+		case TRC_MOUSE_WHEEL:
+		{
+			MouseWheel* wheel = reinterpret_cast<MouseWheel*>(p_event);
+			io.AddMouseWheelEvent(wheel->m_x, wheel->m_y);
 			break;
 		}
 
@@ -484,40 +492,46 @@ namespace trace {
 		return res;
 	}
 
-	std::string TraceEditor::DrawTexturesPopup()
+	bool TraceEditor::DrawTexturesPopup(std::string& result)
 	{
-		std::string res;
+		bool res = true;
 		ImGui::SetNextWindowSize({ 280.0f, 320.0f });
+		ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+
 		ImGuiWindowFlags pop_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
-		if (ImGui::BeginPopup("ALL_TEXTURES"))
+
+		ImGui::Begin("ALL_TEXTURES", nullptr, ImGuiWindowFlags_NoDocking);
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		float padding = 16.0f;
+		float cell_size = 64.0f + padding;
+		int column_count = (int)(avail.x / cell_size);
+		if (column_count <= 0) column_count = 1;
+
+
+		ImGui::Columns(column_count, nullptr, false);
+
+		for (auto& i : all_assets.textures)
 		{
-			ImVec2 avail = ImGui::GetContentRegionAvail();
-			float padding = 16.0f;
-			float cell_size = 64.0f + padding;
-			int column_count = (int)(avail.x / cell_size);
-			if (column_count <= 0) column_count = 1;
-
-
-
-			ImGui::Columns(column_count, nullptr, false);
-
-			for (auto& i : all_assets.textures)
+			std::string filename = i.filename().string();
+			void* textureID = nullptr;
+			UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
-				std::string filename = i.filename().string();
-				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
-				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
-				{
-					res = i.string();
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::TextWrapped(filename.c_str());
-
-				ImGui::NextColumn();
+				result = i.string();
 			}
-			ImGui::Columns(1);
-			ImGui::EndPopup();
+			ImGui::TextWrapped(filename.c_str());
+
+			ImGui::NextColumn();
 		}
+		ImGui::Columns(1);
+
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsWindowFocused())
+		{
+			res = false;
+		}
+		ImGui::End();
+
+
 		return res;
 	}
 
@@ -527,7 +541,7 @@ namespace trace {
 
 		ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
 
-		if (ImGui::Begin(label.c_str()))
+		if (ImGui::Begin(label.c_str(), nullptr, ImGuiWindowFlags_NoDocking))
 		{
 			static std::string value;
 			ImGui::InputText(("##" + label).c_str(), &value);

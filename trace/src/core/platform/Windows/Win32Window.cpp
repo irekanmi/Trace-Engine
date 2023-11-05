@@ -248,9 +248,31 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 		break;
 	}
 
-	// TODO: mouse wheel
 	case WM_MOUSEWHEEL:
 	{
+		trace::Win32Window::WindowData* data = (trace::Win32Window::WindowData*)GetWindowLongPtr(wnd, GWLP_USERDATA);
+
+		float zDelta = (float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WHEEL_DELTA;
+		float x = 0.0f;
+		float y = zDelta;
+
+		trace::MouseWheel mouse_wheel(x, y);
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::TRC_MOUSE_WHEEL, &mouse_wheel);
+
+		break;
+	}
+
+	case WM_MOUSEHWHEEL:
+	{
+		trace::Win32Window::WindowData* data = (trace::Win32Window::WindowData*)GetWindowLongPtr(wnd, GWLP_USERDATA);
+
+		float zDelta = (float)GET_WHEEL_DELTA_WPARAM(wparam) / (float)WHEEL_DELTA;
+		float x = zDelta;
+		float y = 0.0f;
+
+		trace::MouseWheel mouse_wheel(x, y);
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::TRC_MOUSE_WHEEL, &mouse_wheel);
+
 		break;
 	}
 

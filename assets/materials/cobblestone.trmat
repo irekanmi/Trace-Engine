@@ -1,0 +1,23 @@
+Trace Version: 0.0.0.0
+Material Version: 0.0.0.0
+Material Name: cobblestone.trmat
+Pipeline Name: gbuffer_pipeline
+Data:
+  - Name: SPECULAR_MAP
+    Type: 7
+    Value:
+      file_id: 16676589632844932861
+  - Name: diffuse_color
+    Type: 15
+    Value: [0, 0, 0, 0]
+  - Name: shininess
+    Type: 9
+    Value: 32
+  - Name: DIFFUSE_MAP
+    Type: 7
+    Value:
+      file_id: 11692445167452828591
+  - Name: NORMAL_MAP
+    Type: 7
+    Value:
+      file_id: 2053230367166669194

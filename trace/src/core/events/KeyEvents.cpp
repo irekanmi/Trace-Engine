@@ -85,4 +85,20 @@ namespace trace {
 	{
 
 	}
+
+	MouseWheel::MouseWheel()
+	{
+		m_type = EventType::TRC_MOUSE_WHEEL;
+	}
+
+	MouseWheel::MouseWheel(float x, float y)
+	{
+		m_type = EventType::TRC_MOUSE_WHEEL;
+		m_x = x; m_y = y;
+	}
+
+	MouseWheel::~MouseWheel()
+	{
+
+	}
 }

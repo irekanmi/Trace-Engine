@@ -478,6 +478,8 @@ namespace trace {
 		else m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
 
 		Ref<MaterialInstance> mat = m_editMaterial;
+		static bool tex_modified = false;
+		static std::string tex_name;
 
 		ImGui::Text("Material : %s", mat->m_path.string().c_str());
 		ImGui::Columns(2);
@@ -577,7 +579,8 @@ namespace trace {
 				ImGui::Image(a, ImVec2(128.0f, 128.0f));
 				if (ImGui::IsItemClicked())
 				{
-					ImGui::OpenPopup("ALL_TEXTURES");
+					tex_modified = true;
+					tex_name = name;
 				}
 				if (ImGui::BeginDragDropTarget())
 				{
@@ -624,16 +627,7 @@ namespace trace {
 					}
 					ImGui::EndDragDropTarget();
 				}
-				std::string tex_res = m_editor->DrawTexturesPopup();
-				if (!tex_res.empty())
-				{
-					std::filesystem::path p = tex_res;
-					Ref<GTexture> tex_r = TextureManager::get_instance()->GetTexture(p.filename().string());
-					if (tex_r) {}
-					else tex_r = TextureManager::get_instance()->LoadTexture_(p.string());
-
-					if (tex_r) dst = tex_r;
-				}
+				
 				ImGui::Columns(1);
 				break;
 			}
@@ -665,6 +659,26 @@ namespace trace {
 		{
 			trace::UniformMetaData& meta_data = mat->m_renderPipeline->Scene_uniforms[m_data.second.second];
 			lambda(meta_data.data_type, m_data.second.first, m_data.first);
+		}
+
+		// Select Texture
+		if (tex_modified)
+		{
+			std::string tex_res;
+			if (m_editor->DrawTexturesPopup(tex_res))
+			{
+				if (!tex_res.empty())
+				{
+					std::filesystem::path p = tex_res;
+					Ref<GTexture> tex_r = TextureManager::get_instance()->GetTexture(p.filename().string());
+					if (tex_r) {}
+					else tex_r = TextureManager::get_instance()->LoadTexture_(p.string());
+
+					if (tex_r) mat->m_data[tex_name].first = tex_r;
+					tex_modified = false;
+				}
+			}
+			else tex_modified = false;
 		}
 
 		if (ImGui::Button("Apply"))

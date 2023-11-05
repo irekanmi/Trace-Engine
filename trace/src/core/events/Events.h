@@ -26,6 +26,7 @@ namespace trace {
 		TRC_BUTTON_PRESSED,
 		TRC_BUTTON_RELEASED,
 		TRC_MOUSE_MOVE,
+		TRC_MOUSE_WHEEL,
 		TRC_MOUSE_DB_CLICK,
 
 		MAX_EVENTS
@@ -211,6 +212,23 @@ namespace trace {
 		~MouseMove();
 
 		virtual const char* GetName() override { return _STR(MouseMove); }
+
+		float m_x;
+		float m_y;
+	private:
+	protected:
+	};
+
+	class TRACE_API MouseWheel : public Event
+	{
+
+
+	public:
+		MouseWheel();
+		MouseWheel(float x, float y);
+		~MouseWheel();
+
+		virtual const char* GetName() override { return _STR(MouseWheel); }
 
 		float m_x;
 		float m_y;
