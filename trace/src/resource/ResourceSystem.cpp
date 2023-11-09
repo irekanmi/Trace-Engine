@@ -18,7 +18,7 @@ namespace trace {
 		bool result = true;
 
 		//NOTE: The resource initializes the scene manager because scenes are also resources
-		result = result && SceneManager::get_instance()->Init(24);
+		result = result && SceneManager::get_instance()->Init(256);
 
 		//TODO: Configurable
 		result = result && TextureManager::get_instance()->Init(4096);

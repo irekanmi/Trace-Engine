@@ -1,0 +1,30 @@
+Trace Version: 0.0.0.0
+Scene Version: 0.0.0.0
+Scene Name: hsd
+Entities:
+  - UUID: 14961912831575236110
+    TagComponent:
+      Tag: New Entity
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [8.0216341, 1, 16.8068027]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+  - UUID: 18444963821587594819
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.725490212, 0.6828143, 0.6828143, 0]
+      Direction: [0, -0.5, 0, 0]
+      Position: [0, 0, 0, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 0.889999986, 0, 0]
+      Light Type: 0

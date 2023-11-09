@@ -380,7 +380,7 @@ namespace trace {
 
 	}
 
-	void Renderer::DrawString(Ref<Font> font, const std::string& text, glm::mat4 _transform)
+	void Renderer::DrawString(Font* font, const std::string& text, glm::mat4 _transform)
 	{
 		Ref<GTexture> texture = font->GetAtlas();
 		if (textBatches[current_text_batch].current_texture_unit >= textBatches[current_text_batch].max_texture_units - 1)
@@ -414,7 +414,7 @@ namespace trace {
 
 		uint32_t current_vert = textBatches[current_text_batch].current_unit;
 		uint32_t count = 0;
-		FontFunc::ComputeTextString(font.get(), text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, _transform, current_tex_index, count);
+		FontFunc::ComputeTextString(font, text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, _transform, current_tex_index, count);
 		textBatches[current_text_batch].current_unit += count;
 	}
 
@@ -429,9 +429,9 @@ namespace trace {
 		for (uint32_t i = 0; i < m_opaqueObjectsSize; i++)
 		{
 			auto& data = m_opaqueObjects[i];
-			glm::mat4* M_model = &data.first;
-			Model* _model = data.second;
-			Ref<MaterialInstance> _mi = _model->m_matInstance.is_valid() ? _model->m_matInstance : MaterialManager::get_instance()->GetMaterial("default");
+			glm::mat4* M_model = &data.transform;
+			Model* _model = data.object;
+			MaterialInstance* _mi = data.material? data.material : MaterialManager::get_instance()->GetMaterial("default").get();
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
@@ -440,7 +440,7 @@ namespace trace {
 			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
 			RenderFunc::SetPipelineData(sp.get(), "_light_data", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &light_data, sizeof(glm::ivec4));
 			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
-			RenderFunc::ApplyMaterial(_mi.get());
+			RenderFunc::ApplyMaterial(_mi);
 			RenderFunc::BindPipeline(&g_device, sp.get());
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
 			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
@@ -590,10 +590,7 @@ namespace trace {
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
 
-		for (Ref<Model> _model : _mesh->GetModels())
-		{
-			m_opaqueObjects[m_opaqueObjectsSize++] = std::make_pair(*M_model, _model.get());
-		}
+		//TODO: Implement draw mesh
 
 	}
 
@@ -699,9 +696,33 @@ namespace trace {
 		cmd.params.ptrs[0] = _model.get();
 		cmd.func = [&](CommandParams params) {
 			Model* model = (Model*)params.ptrs[0];
+			Renderer::RenderObjectData data;
+			data.transform = *(glm::mat4*)(params.data);
+			data.material = _model->m_matInstance.get();
+			data.object = _model.get();
 
-			glm::mat4* M_transform = (glm::mat4*)(params.data);
-			m_opaqueObjects[m_opaqueObjectsSize++] = std::make_pair(*M_transform, model);
+			m_opaqueObjects[m_opaqueObjectsSize++] = data;
+		};
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
+		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
+		cmd_list._commands.emplace_back(cmd);
+	}
+
+	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform)
+	{
+		if (!_model || !material) return;
+		Command cmd;
+		cmd.params.ptrs[0] = _model.get();
+		cmd.params.ptrs[1] = material.get();
+		cmd.func = [&](CommandParams params) {
+			Model* model = (Model*)params.ptrs[0];
+			MaterialInstance* mat = (MaterialInstance*)params.ptrs[1];
+			Renderer::RenderObjectData data;
+			data.transform = *(glm::mat4*)(params.data);
+			data.material = mat;
+			data.object = model;
+
+			m_opaqueObjects[m_opaqueObjectsSize++] = data;
 		};
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
 		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
@@ -876,6 +897,28 @@ namespace trace {
 		DrawDebugCircle(cmd_list, radius, steps, tr);
 		tr = glm::rotate(transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		DrawDebugCircle(cmd_list, radius, steps, tr);
+	}
+
+	void Renderer::DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::mat4 _transform)
+	{
+
+		if (!font) return;
+		Command cmd;
+		cmd.params.ptrs[0] = font.get();
+		cmd.params.val[0] = text.size() + 1;
+		cmd.func = [&](CommandParams params) {
+			Font* font = (Font*)params.ptrs[0];
+			glm::mat4* transform = (glm::mat4*)params.data;
+			std::string text = (const char*)(params.data + sizeof(glm::mat4));
+
+			DrawString(font, text, *transform);
+
+		};
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4) + cmd.params.val[0]);
+		memcpy(cmd.params.data, &_transform, sizeof(glm::mat4));
+		memcpy(cmd.params.data + sizeof(glm::mat4), text.c_str(), cmd.params.val[0]);
+		cmd_list._commands.emplace_back(cmd);
+
 	}
 
 	CommandList Renderer::BeginCommandList()

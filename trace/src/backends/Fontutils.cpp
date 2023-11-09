@@ -185,7 +185,7 @@ bool __MSDF_LoadAndInitializeFont(const std::string& name, trace::Font* _font)
 			generator.generate(_internal->glyphs.data(), _internal->glyphs.size());
 			// The atlas bitmap can now be retrieved via atlasStorage as a BitmapConstRef.
 			// The glyphs array (or fontGeometry) contains positioning data for typesetting text.
-			success = submitAtlasBitmapAndLayout(generator.atlasStorage(), _internal->glyphs, _font->GetFontName(), _font);
+			success = submitAtlasBitmapAndLayout(generator.atlasStorage(), _internal->glyphs, name, _font);
 			// Cleanup
 			msdfgen::destroyFont(font);
 

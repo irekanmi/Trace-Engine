@@ -12,8 +12,8 @@ Entities:
     ModelComponent:
       Name: sponza_327_sponza_327_fabric_f
       file id: 14997834820541274483
-      Material:
-        file id: 2770490000703934355
+    ModelRendererComponent:
+      file id: 8438180326744005356
   - UUID: 7415873377772161487
     TagComponent:
       Tag: Test 2
@@ -25,13 +25,13 @@ Entities:
     TagComponent:
       Tag: point light
     TransformComponent:
-      Position: [28.567543, -22.4154053, 33.8006477]
+      Position: [-30.9858017, -19.727478, -113.912781]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
       Color: [0.172577858, 0.838235259, 0.603297293, 0]
       Direction: [-0.5, -0.899999976, -0.600000024, 0]
-      Position: [28.567543, -22.4154053, 33.8006477, 0]
+      Position: [-30.9858017, -19.727478, -113.912781, 0]
       Params1: [1, 0.0329999998, 0, 0.976672292]
       Params2: [0.798635542, 1.92999995, 0, 0]
       Light Type: 1
@@ -51,7 +51,7 @@ Entities:
       Near: 0.100000001
       Far: 700
       Fov: 60.2999992
-      Aspect Ratio: 2.26525187
+      Aspect Ratio: 2.00268102
       Orthographic Size: 7.30000019
   - UUID: 3634860917324020060
     TagComponent:
@@ -63,8 +63,8 @@ Entities:
     ModelComponent:
       Name: Cube
       file id: 4
-      Material:
-        file id: 1656641231356361523
+    ModelRendererComponent:
+      file id: 1656641231356361523
   - UUID: 13276428335963239659
     TagComponent:
       Tag: Falcon
@@ -75,8 +75,8 @@ Entities:
     ModelComponent:
       Name: Plane_Plane.001
       file id: 9770986204108760100
-      Material:
-        file id: 2426028521616981881
+    ModelRendererComponent:
+      file id: 10239611191913587018
   - UUID: 7836663257749491887
     TagComponent:
       Tag: Sphere
@@ -87,8 +87,8 @@ Entities:
     ModelComponent:
       Name: Sphere
       file id: 5
-      Material:
-        file id: 6
+    ModelRendererComponent:
+      file id: 10670985502615273580
   - UUID: 14479376527013190481
     TagComponent:
       Tag: Directional Light

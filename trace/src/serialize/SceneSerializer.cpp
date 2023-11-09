@@ -6,6 +6,7 @@
 #include "core/FileSystem.h"
 #include "scene/SceneManager.h"
 #include "resource/MeshManager.h"
+#include "resource/FontManager.h"
 #include "resource/ModelManager.h"
 #include "resource/MaterialManager.h"
 #include "serialize/MaterialSerializer.h"
@@ -108,16 +109,33 @@ namespace trace {
 			if (filename.empty()) filename = model._model->m_path.filename().string();
 			emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(filename);
 
-			//TEMP : Create ModelRendererComponent
-			if (model._model->m_matInstance)
+			emit << YAML::EndMap;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<ModelRendererComponent>())
 			{
-				emit << YAML::Key << "Material" << YAML::Value;
+				ModelRendererComponent& model_renderer = entity.GetComponent<ModelRendererComponent>();
+				emit << YAML::Key << "ModelRendererComponent" << YAML::Value;
 				emit << YAML::BeginMap;
-				emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(model._model->m_matInstance->GetName());
+				emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(model_renderer._material->GetName());
+
 				emit << YAML::EndMap;
 			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<TextComponent>())
+			{
+				TextComponent& Txt = entity.GetComponent<TextComponent>();
+				emit << YAML::Key << "TextComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "Text Data" << YAML::Value << Txt.text;
+				if(Txt.font)
+					emit << YAML::Key << "Font file_id" << YAML::Value << GetUUIDFromName(Txt.font->GetName());
 
-			emit << YAML::EndMap;
+				emit << YAML::EndMap;
 			}
 		}
 	};
@@ -186,21 +204,37 @@ namespace trace {
 			if (res)
 			{
 				model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
-				//TEMP : Create ModelRendererComponent
-				if (comp["Material"])
-				{
-					auto mat = comp["Material"];
-					UUID mat_id = mat["file id"].as<uint64_t>();
-					std::filesystem::path mat_path = GetPathFromUUID(mat_id);
-					Ref<MaterialInstance> mat_ = MaterialManager::get_instance()->GetMaterial(mat_path.filename().string());
-					if (!mat_) mat_ = MaterialSerializer::Deserialize(mat_path.string());
-					if (model._model) model._model->m_matInstance = mat_;
-					else TRC_ERROR("Failed to load model, -> {}, function-{}", comp["Name"].as<std::string>(), __FUNCTION__);
-				}
 			}
 
-		}}
+		}},
+		{"ModelRendererComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["ModelRendererComponent"];
+		ModelRendererComponent& model_renderer = entity.AddComponent<ModelRendererComponent>();
+		Ref<MaterialInstance> res;
+		UUID id = comp["file id"].as<uint64_t>();
+		std::filesystem::path p = GetPathFromUUID(id);
+		res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+		if (res) {}
+		else res = MaterialSerializer::Deserialize(p.string());
+		if (res) model_renderer._material = res;
 
+		}},
+		{"TextComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["TextComponent"];
+		TextComponent& Txt = entity.AddComponent<TextComponent>();
+		Txt.text = comp["Text Data"].as<std::string>();
+		if (comp["Font file_id"])
+		{
+			Ref<Font> res;
+			UUID id = comp["Font file_id"].as<uint64_t>();
+			std::filesystem::path p = GetPathFromUUID(id);
+			res = FontManager::get_instance()->GetFont(p.filename().string());
+			if (res) {}
+			else res = FontManager::get_instance()->LoadFont_(p.string());
+			if (res) Txt.font = res;
+		}
+
+		}}
 	};
 
 	

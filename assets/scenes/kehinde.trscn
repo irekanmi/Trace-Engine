@@ -13,7 +13,7 @@ Entities:
       Name: Cube
       file id: 4
     ModelRendererComponent:
-      file id: 6
+      file id: 18125184272921980320
   - UUID: 15353958122290312413
     TagComponent:
       Tag: blue light
@@ -51,36 +51,49 @@ Entities:
       Tag: car
     TransformComponent:
       Position: [8.17724514, -19.3335629, 0]
-      Rotation: [0.176044568, -0.0442488641, 0.239716128, 0.953722537]
-      Scale: [1.00000012, 1, 1]
+      Rotation: [0.176044002, -0.0442488939, 0.239715979, 0.953722596]
+      Scale: [1.9200002, 1.92000008, 1.9200002]
     ModelComponent:
       Name: Plane_Plane.001
       file id: 9770986204108760100
     ModelRendererComponent:
-      file id: 6
+      file id: 2426028521616981881
   - UUID: 789607815271590800
     TagComponent:
       Tag: New Entity
     TransformComponent:
-      Position: [-0.895508051, -7.51692581, -16.2098732]
+      Position: [-26.144249, -7.51692581, -16.2098732]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     ModelComponent:
       Name: Sphere
       file id: 5
     ModelRendererComponent:
-      file id: 2148809698469975454
+      file id: 8438180326744005356
   - UUID: 3137501352561339422
     TagComponent:
       Tag: red light
     TransformComponent:
-      Position: [-30.3244247, 9.17323685, -15.659193]
+      Position: [-30.3244247, 9.20165157, -15.659193]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
       Color: [0.931372523, 0.333285302, 0.333285302, 0]
       Direction: [0.400000006, -7.19999981, -0.100000001, 0]
-      Position: [-30.3244247, 9.17323685, -15.659193, 0]
+      Position: [-30.3244247, 9.20165157, -15.659193, 0]
       Params1: [0, 0, 0, 0.959313989]
       Params2: [0.809017003, 2.88000011, 0, 0]
       Light Type: 2
+    TextComponent:
+      Text Data: Red Light
+      Font file_id: 4113681025385876608
+  - UUID: 13361703342697183581
+    TagComponent:
+      Tag: Text
+    TransformComponent:
+      Position: [2.58676243, -7.08099461, 0.0285641551]
+      Rotation: [-9.69647999e-07, 0.0207219515, 2.53715803e-06, 0.999785304]
+      Scale: [12.9064331, 12.9064007, 12.9064331]
+    TextComponent:
+      Text Data: Coker Ayanfe
+      Font file_id: 6456025844781365329

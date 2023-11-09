@@ -79,13 +79,23 @@ namespace trace {
 
 		}
 
-		auto model_group = m_registry.view<ModelComponent, TransformComponent>();
+		auto model_view = m_registry.view<ModelComponent, ModelRendererComponent, TransformComponent>();
 
-		for (auto entity : model_group)
+		for (auto entity : model_view)
 		{
-			auto [model, transform] = model_group.get(entity);
+			auto [model, model_renderer, transform] = model_view.get(entity);
 
-			renderer->DrawModel(cmd_list, model._model, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+
+		}
+
+		auto text_view = m_registry.view<TextComponent, TransformComponent>();
+
+		for (auto entity : text_view)
+		{
+			auto [txt, transform] = text_view.get(entity);
+
+			renderer->DrawString(cmd_list, txt.font, txt.text, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
 
 		}
 

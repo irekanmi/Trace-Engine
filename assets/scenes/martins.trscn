@@ -1,0 +1,48 @@
+Trace Version: 0.0.0.0
+Scene Version: 0.0.0.0
+Scene Name: martins.trscn
+Entities:
+  - UUID: 17043310775940516967
+    TagComponent:
+      Tag: camera
+    TransformComponent:
+      Position: [79.944313, -63.7500381, 92.2837524]
+      Rotation: [-0.253325671, -0, 0, 0.96738106]
+      Scale: [1, 1.00000012, 1.00000012]
+    CameraComponent:
+      Is Main: true
+      Camera Type: 0
+      Position: [0, 0, 1]
+      Look Direction: [0, 0, -1]
+      Up Direction: [0, 1, 0]
+      Near: 0.100000001
+      Far: 1000
+      Fov: 45
+      Aspect Ratio: 2.00268102
+      Orthographic Size: 10
+  - UUID: 6046804441338631920
+    TagComponent:
+      Tag: light
+    TransformComponent:
+      Position: [0, 8.04917336, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.799019575, 0.689350247, 0.689350247, 0]
+      Direction: [0, -2, 0, 0]
+      Position: [0, 8.04917336, 0, 0]
+      Params1: [1, 0.0590000004, 0.00200000009, 0]
+      Params2: [0, 1.66999996, 0, 0]
+      Light Type: 1
+  - UUID: 6364074996872090214
+    TagComponent:
+      Tag: floor
+    TransformComponent:
+      Position: [0, -13.2581358, -21.6690712]
+      Rotation: [0.276101142, 0, 0, 0.961128592]
+      Scale: [118.245148, 3.33000135, 102.978355]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 225046154682475770

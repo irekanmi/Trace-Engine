@@ -1,0 +1,23 @@
+Trace Version: 0.0.0.0
+Material Version: 0.0.0.0
+Material Name: paving.trmat
+Pipeline Name: gbuffer_pipeline
+Data:
+  - Name: SPECULAR_MAP
+    Type: 7
+    Value:
+      file_id: 12087352339273322257
+  - Name: diffuse_color
+    Type: 15
+    Value: [0, 0, 0, 0]
+  - Name: shininess
+    Type: 9
+    Value: 0
+  - Name: DIFFUSE_MAP
+    Type: 7
+    Value:
+      file_id: 7210744251976608177
+  - Name: NORMAL_MAP
+    Type: 7
+    Value:
+      file_id: 6932347473385436693

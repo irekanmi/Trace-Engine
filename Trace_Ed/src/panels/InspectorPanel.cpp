@@ -10,6 +10,7 @@
 #include "resource/MaterialManager.h"
 #include "resource/ModelManager.h"
 #include "resource/MeshManager.h"
+#include "resource/FontManager.h"
 #include "serialize/MaterialSerializer.h"
 #include "../TraceEditor.h"
 
@@ -287,6 +288,15 @@ namespace trace {
 			{
 				entity.AddComponent<ModelComponent>();
 			}
+			if (ImGui::MenuItem("Model Renderer"))
+			{
+				ModelRendererComponent& i = entity.AddComponent<ModelRendererComponent>();
+				i._material = MaterialManager::get_instance()->GetMaterial("default");
+			}
+			if (ImGui::MenuItem("Text"))
+			{
+				entity.AddComponent<TextComponent>();
+			}
 
 			ImGui::EndPopup();
 		}
@@ -452,11 +462,9 @@ namespace trace {
 
 			Ref<Model> model = comp._model;
 			std::string model_name = "None (Model)";
-			std::string mat_name = "None (Material)";
 			if (model)
 			{
 				model_name = model->GetName();
-				if(model->m_matInstance) mat_name = model->m_matInstance->GetName();
 			}
 			
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
@@ -480,9 +488,26 @@ namespace trace {
 				}
 			}
 
+
+			});
+
+		DrawComponent<ModelRendererComponent>(entity, "Model Renderer", [&](Entity obj, ModelRendererComponent& comp) {
+
+			std::string mat_name = "None";
+			if (comp._material)
+			{
+				mat_name = comp._material->GetName();
+			}
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+
+
 			ImGui::Text("Material :");
 			ImGui::SameLine();
-			if(ImGui::Button(mat_name.c_str()))
+			ImGui::Button(mat_name.c_str(), button_size);
+
+			if (ImGui::IsItemClicked())
 			{
 				ImGui::OpenPopup("ALL_MATERIALS");
 			}
@@ -495,12 +520,9 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
 					Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-					if (mt_res && model) comp._model->m_matInstance = mt_res;
-					else if (model)
-					{
-						mt_res = MaterialSerializer::Deserialize(p.string());
-						if (mt_res) comp._model->m_matInstance = mt_res;
-					}
+					if (mt_res) comp._material = mt_res;
+					mt_res = MaterialSerializer::Deserialize(p.string());
+					if (mt_res) comp._material = mt_res;
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -510,14 +532,59 @@ namespace trace {
 			{
 				std::filesystem::path p = mat_res;
 				Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-				if (mt_res && model) comp._model->m_matInstance = mt_res;
-				else if (model)
-				{
-					mt_res = MaterialSerializer::Deserialize(p.string());
-					if (mt_res) comp._model->m_matInstance = mt_res;
-				}
+				if (mt_res) comp._material = mt_res;
+				mt_res = MaterialSerializer::Deserialize(p.string());
+				if (mt_res) comp._material = mt_res;
 			}
 
+
+			}
+		);
+
+		DrawComponent<TextComponent>(entity, "Text", [](Entity obj, TextComponent& comp) {
+
+			std::string font_name = "None (FONT)";
+			if (comp.font)
+			{
+				font_name = comp.font->GetName();
+			}
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+
+			ImGui::Text("Font: ");
+			ImGui::SameLine();
+			ImGui::Button(font_name.c_str(), button_size);
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".ttf"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::filesystem::path p = buf;
+					Ref<Font> ft = FontManager::get_instance()->GetFont(p.filename().string());
+					if (ft) comp.font = ft;
+					ft = FontManager::get_instance()->LoadFont_(p.string());
+					if (ft) comp.font = ft;
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".TTF"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::filesystem::path p = buf;
+					Ref<Font> ft = FontManager::get_instance()->GetFont(p.filename().string());
+					if (ft) comp.font = ft;
+					ft = FontManager::get_instance()->LoadFont_(p.string());
+					if (ft) comp.font = ft;
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::Text("Enter Text: ");
+			ImGui::InputText("##Text Data", &comp.text/*, ImGuiInputTextFlags_Multiline*/);
+			
 			});
 
 		

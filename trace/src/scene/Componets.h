@@ -4,6 +4,7 @@
 #include "render/Camera.h"
 #include "render/Graphics.h"
 #include "render/Mesh.h"
+#include "render/Font.h"
 #include "scene/UUID.h"
 
 
@@ -99,6 +100,33 @@ namespace trace {
 		ModelComponent(Ref<Model> data)
 			:_model(data) {}
 		~ModelComponent()
+		{
+
+		}
+	};
+
+	struct ModelRendererComponent
+	{
+		Ref<MaterialInstance> _material;
+		ModelRendererComponent() = default;
+		ModelRendererComponent(const ModelRendererComponent&) = default;
+		ModelRendererComponent(Ref<MaterialInstance> data)
+			:_material(data) {}
+		~ModelRendererComponent()
+		{
+
+		}
+	};
+
+	struct TextComponent
+	{
+		Ref<Font> font;
+		std::string text;
+		TextComponent() = default;
+		TextComponent(const TextComponent&) = default;
+		TextComponent(std::string data)
+			:text(data) {}
+		~TextComponent()
 		{
 
 		}

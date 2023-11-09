@@ -76,6 +76,11 @@ namespace trace {
 				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); });
 			};
 
+			extensions_callbacks[".trscn"] = [&](std::filesystem::path& path)
+			{
+				m_editor->OpenScene(path.string());
+			};
+
 		};
 
 		OnDirectoryChanged();
@@ -576,7 +581,7 @@ namespace trace {
 				ImGui::NextColumn();
 				void* a = nullptr;
 				UIFunc::GetDrawTextureHandle(tex.get(), a);
-				ImGui::Image(a, ImVec2(128.0f, 128.0f));
+				ImGui::Image(a, ImVec2(128.0f, 128.0f) , {0.0f, 1.0f}, {1.0f, 0.0f});
 				if (ImGui::IsItemClicked())
 				{
 					tex_modified = true;

@@ -673,6 +673,15 @@ namespace trace {
 		}
 		return std::string();
 	}
+	void TraceEditor::OpenScene(std::string& path)
+	{
+		if (current_state == EditorState::ScenePlay) return;
+
+		if (m_currentScene) CloseCurrentScene();
+		LoadScene(path);
+		current_scene_path = path;
+
+	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
 		InputSystem* input = InputSystem::get_instance();

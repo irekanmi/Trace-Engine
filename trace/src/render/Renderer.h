@@ -25,6 +25,7 @@ namespace trace {
 	class GRenderPass;
 	class Mesh;
 	class Model;
+	class MaterialInstance;
 	class Event;
 	class Font;
 
@@ -65,6 +66,7 @@ namespace trace {
 		void EndScene(CommandList& cmd_list);
 		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model);
 		void DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform);
+		void DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
 		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type);
@@ -72,6 +74,7 @@ namespace trace {
 		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform);
 		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
 		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
+		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::mat4 _transform);
 
 
 		// Getters
@@ -86,7 +89,7 @@ namespace trace {
 		void Render(float deltaTime);
 		void DrawQuad();
 		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
-		void DrawString(Ref<Font> font, const std::string& text, glm::mat4 _transform);
+		void DrawString(Font* font, const std::string& text, glm::mat4 _transform);
 
 
 		void RenderOpaqueObjects();
@@ -125,6 +128,14 @@ namespace trace {
 		void destroy_text_batchs();
 		// ....................................................
 
+
+		struct RenderObjectData
+		{
+			glm::mat4 transform = glm::mat4(1.0f);
+			Model* object = nullptr;
+			MaterialInstance* material = nullptr;
+		};
+
 	private:
 		// Debug Renderering
 		struct DebugData
@@ -136,8 +147,7 @@ namespace trace {
 			uint32_t vert_count = 0;
 			Ref<GPipeline> m_linePipeline;
 		};
-		DebugData* m_debug;
-				
+		DebugData* m_debug;		
 
 	private:
 		GSwapchain m_swapChain;
@@ -147,7 +157,7 @@ namespace trace {
 		uint32_t m_frameWidth;
 		uint32_t m_frameHeight;
 		ClientRenderCallback m_client_render;
-		std::vector<std::pair<glm::mat4, Model*>> m_opaqueObjects;
+		std::vector<RenderObjectData> m_opaqueObjects;
 		std::vector<std::pair<uint32_t, Model*>> m_meshedLights;
 		uint32_t m_opaqueObjectsSize;
 		uint32_t m_meshLightSize;

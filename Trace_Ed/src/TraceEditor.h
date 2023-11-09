@@ -38,7 +38,7 @@ namespace trace {
 
 		static TraceEditor* get_instance();
 
-	private:
+	public:
 		void DrawGizmo();
 		void CloseCurrentScene();
 		void LoadScene(const std::string& file_path);
@@ -46,6 +46,7 @@ namespace trace {
 		void SaveScene();
 		std::string SaveSceneAs();
 		std::string OpenScene();
+		void OpenScene(std::string& path);
 		void HandleKeyPressed(KeyPressed* p_event);
 		void HandleKeyRelesed(KeyReleased* p_event);
 		void OnScenePlay();

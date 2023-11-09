@@ -233,7 +233,11 @@ namespace vk {
 		vkDeviceWaitIdle(_handle->m_device);
 
 		// Destroy frame resources "RenderGraph"
-		for(uint32_t i = 0; i < _handle->frames_in_flight; i++) destroy_frame_resources(device, i);
+		for (uint32_t i = 0; i < _handle->frames_in_flight * 24; i++)
+		{
+			uint32_t j = i % _handle->frames_in_flight;
+			destroy_frame_resources(device, j);
+		}
 		
 
 		// Null placeholders
@@ -989,6 +993,15 @@ namespace vk {
 
 	void destroy_frame_resources(trace::GDevice* device, uint32_t currentIndex)
 	{
+
+		static uint8_t elasped_frames[VK_MAX_NUM_FRAMES];
+
+		++elasped_frames[currentIndex];
+
+		// it is used to differ resource destruction to ensure the GPU is done with the resource 
+		if (elasped_frames[currentIndex] < 12) return;
+		elasped_frames[currentIndex] = 0;
+
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
