@@ -116,9 +116,6 @@ namespace trace {
 
 	void MeshManager::ShutDown()
 	{
-		DefaultCube.~Ref();
-		DefaultSphere.~Ref();
-
 		if (m_meshes.empty())
 			return;
 
@@ -127,7 +124,7 @@ namespace trace {
 			if (_mesh.m_id != INVALID_ID)
 			{
 				Unload(&_mesh);
-				TRC_TRACE("Mesh not released , id : {}", _mesh.m_id);
+				TRC_TRACE("Mesh not released , name : {}, RefCount : {}", _mesh.GetName(), _mesh.m_refCount);
 			}
 		}
 		m_meshes.clear();
@@ -254,55 +251,83 @@ namespace trace {
 
 		std::vector<Vertex> verts;
 		std::vector<uint32_t> _ind;
-
-		generateDefaultCube(verts, _ind);
-		generateVertexTangent(verts, _ind);
-		Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
-		cube_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
-
 		Mesh* _mesh = nullptr;
-		uint32_t _id = INVALID_ID;
-		for (uint32_t k = 0; k < m_numEntries; k++)
+		
+		//Cube
 		{
-			if (m_meshes[k].m_id == INVALID_ID)
+			generateDefaultCube(verts, _ind);
+			generateVertexTangent(verts, _ind);
+			Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
+			cube_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
+
+			for (uint32_t k = 0; k < m_numEntries; k++)
 			{
-				m_meshes[k].m_id = k;
-				_id = k;
-				m_hashtable.Set("Cube", k);
-				_mesh = &m_meshes[k];
-				break;
+				if (m_meshes[k].m_id == INVALID_ID)
+				{
+					m_meshes[k].m_id = k;
+					m_hashtable.Set("Cube", k);
+					_mesh = &m_meshes[k];
+					break;
+				}
 			}
+
+
+			DefaultCube = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+			_mesh = nullptr;
+			DefaultCube->GetModels().push_back(cube_ref);
+			DefaultCube->m_path = "Cube";
 		}
 
-
-		DefaultCube = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
-		_mesh = nullptr;
-		DefaultCube->GetModels().push_back(cube_ref);
-		DefaultCube->m_path = "Cube";
-
-		verts.clear();
-		_ind.clear();
-
-		generateSphere(verts, _ind, 1.0f, 50, 50);
-		generateVertexTangent(verts, _ind);
-		Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
-		sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
-
-
-		for (uint32_t k = 0; k < m_numEntries; k++)
+		// Sphere
 		{
-			if (m_meshes[k].m_id == INVALID_ID)
+			verts.clear();
+			_ind.clear();
+
+			generateSphere(verts, _ind, 1.0f, 50, 50);
+			generateVertexTangent(verts, _ind);
+			Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
+			sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
+
+
+			for (uint32_t k = 0; k < m_numEntries; k++)
 			{
-				m_meshes[k].m_id = k;
-				_id = k;
-				m_hashtable.Set("Sphere", k);
-				_mesh = &m_meshes[k];
-				break;
+				if (m_meshes[k].m_id == INVALID_ID)
+				{
+					m_meshes[k].m_id = k;
+					m_hashtable.Set("Sphere", k);
+					_mesh = &m_meshes[k];
+					break;
+				}
 			}
-		}
-		DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
-		DefaultSphere->GetModels().push_back(sphere_ref);
-		DefaultSphere->m_path = "Sphere";
+			DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+			DefaultSphere->GetModels().push_back(sphere_ref);
+			DefaultSphere->m_path = "Sphere";
+		};
+
+		//Plane
+		{
+			verts.clear();
+			_ind.clear();
+
+			generateDefaultPlane(verts, _ind);
+			generateVertexTangent(verts, _ind);
+			Ref<Model> plane_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Plane");
+
+
+			for (uint32_t k = 0; k < m_numEntries; k++)
+			{
+				if (m_meshes[k].m_id == INVALID_ID)
+				{
+					m_meshes[k].m_id = k;
+					m_hashtable.Set("Plane", k);
+					_mesh = &m_meshes[k];
+					break;
+				}
+			}
+			DefaultPlane = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+			DefaultPlane->GetModels().push_back(plane_ref);
+			DefaultPlane->m_path = "Plane";
+		};
 
 		return true;
 	}

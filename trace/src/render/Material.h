@@ -13,6 +13,7 @@
 namespace trace {
 
 	using Texture_Ref = Ref<GTexture>;
+	using MaterialData = std::unordered_map<std::string, std::pair<std::any, uint32_t>>;
 	class GPipeline;
 
 	class TRACE_API MaterialInstance : public Resource
@@ -20,10 +21,10 @@ namespace trace {
 
 	public:
 		MaterialInstance();
-		virtual ~MaterialInstance();
+		~MaterialInstance();
 
-		virtual bool Init(Ref<GPipeline> pipeline) { return false; };
-		virtual void Apply() {};
+		bool Init(Ref<GPipeline> pipeline) { return false; };
+		void Apply() {};
 
 		Ref<GPipeline> GetRenderPipline() { 
 			return m_renderPipeline; 
@@ -32,8 +33,7 @@ namespace trace {
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 		Ref<GPipeline> m_renderPipeline;
-		std::unordered_map<ShaderData, std::pair<void*, uint32_t>> m_shaderData;
-		std::unordered_map<std::string, std::pair<std::any, uint32_t>> m_data;
+		MaterialData m_data;
 	private:
 		GHandle m_renderHandle;
 	protected:

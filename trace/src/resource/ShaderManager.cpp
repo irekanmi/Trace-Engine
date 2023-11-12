@@ -84,8 +84,11 @@ namespace trace {
 
 		for (GShader& i : m_shaders)
 		{
-			if(i.m_id != INVALID_ID)
+			if (i.m_id != INVALID_ID)
+			{
 				RenderFunc::DestroyShader(&i);
+				TRC_TRACE("Shader was still in use, name : {}, RefCount : {}", i.GetName(), i.m_refCount);
+			}
 		}
 
 		m_shaders.clear();

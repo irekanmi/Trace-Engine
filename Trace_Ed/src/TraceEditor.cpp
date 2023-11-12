@@ -73,11 +73,12 @@ namespace trace {
 		editor_cam.SetAspectRatio(((float)800.0f) / ((float)600.0f));
 		editor_cam.SetFov(60.0f);
 		editor_cam.SetNear(0.1f);
-		editor_cam.SetFar(1500.0f);
+		editor_cam.SetFar(15000.0f);
 
-
+		// Temp
 		all_assets.models.emplace("Cube");
 		all_assets.models.emplace("Sphere");
+		all_assets.models.emplace("Plane");
 
 		all_assets.textures.emplace("albedo_map");
 		all_assets.textures.emplace("specular_map");
@@ -115,6 +116,7 @@ namespace trace {
 			{
 				m_currentScene->OnRender(cmd_list);
 			}
+			DrawGrid(cmd_list);
 			renderer->EndScene(cmd_list);
 			renderer->SubmitCommandList(cmd_list);
 			break;
@@ -611,6 +613,33 @@ namespace trace {
 				trans._transform.SetScale(scale);
 			}
 		}
+	}
+	void TraceEditor::DrawGrid(CommandList& cmd_list)
+	{
+		float cell_size = 60.0f;
+		uint32_t num_line = 3;
+		float line_lenght = cell_size * (num_line - 1);
+
+		Renderer* renderer = Renderer::get_instance();
+
+		//Horizontal
+		for (uint32_t i = 0; i < num_line; i++)
+		{
+			glm::vec3 from(line_lenght, 0.0f, line_lenght - (cell_size * (float)i));
+			glm::vec3 to(-line_lenght, 0.0f, line_lenght - (cell_size * (float)i));
+
+			renderer->DrawDebugLine(cmd_list, from, to);
+		}
+
+		//Vertical
+		for (uint32_t i = 0; i < num_line; i++)
+		{
+			glm::vec3 from(line_lenght - (cell_size * (float)i), 0.0f, line_lenght );
+			glm::vec3 to(line_lenght - (cell_size * (float)i), 0.0f, -line_lenght);
+
+			renderer->DrawDebugLine(cmd_list, from, to);
+		}
+
 	}
 	void TraceEditor::CloseCurrentScene()
 	{

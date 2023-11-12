@@ -95,16 +95,14 @@ namespace trace {
 
 	void TextureManager::ShutDown()
 	{
-		default_diffuse_map.~Ref();
-		default_specular_map.~Ref();
-		default_normal_map.~Ref();
+
 		if (!m_textures.empty())
 		{
 			for (GTexture& tex : m_textures)
 			{
 				if (tex.m_id == INVALID_ID)
 					continue;
-				TRC_DEBUG("Unloaded texture  id:{}", tex.m_id);
+				TRC_TRACE("Texture Was still in use, name : {}, RefCount : {}", tex.GetName(), tex.m_refCount);
 				RenderFunc::DestroyTexture(&tex);
 				tex.~GTexture();
 			}

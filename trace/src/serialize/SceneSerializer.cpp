@@ -102,6 +102,7 @@ namespace trace {
 			if (entity.HasComponent<ModelComponent>())
 			{
 			ModelComponent& model = entity.GetComponent<ModelComponent>();
+			if (!model._model) return;
 			emit << YAML::Key << "ModelComponent" << YAML::Value;
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "Name" << model._model->GetName();

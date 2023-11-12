@@ -88,7 +88,7 @@ namespace trace {
 			{
 				if (font.m_id == INVALID_ID)
 					continue;
-				TRC_DEBUG("Unloaded Font name:{}", font.GetFontName());
+				TRC_DEBUG("Unloaded Font name:{}, RefCount : {}", font.GetFontName(), font.m_refCount);
 				FontFunc::DestroyFont(&font);
 			}
 			m_fonts.clear();

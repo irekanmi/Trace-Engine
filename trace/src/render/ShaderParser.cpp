@@ -7,10 +7,15 @@
 #include "spirv_cross/spirv_reflect.h"
 #include "render/GShader.h"
 #include "resource/ShaderManager.h"
+#include "scene/UUID.h"
 #include <filesystem>
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
 
+namespace trace {
+	extern std::filesystem::path GetPathFromUUID(UUID uuid);
+	extern UUID GetUUIDFromName(const std::string& name);
+}
 // Interface that determines how include files in shader will be processed
 class IncludeInterface : public shaderc::CompileOptions::IncluderInterface
 {
@@ -55,6 +60,7 @@ std::string IncludeInterface::include_src_name = std::string();
 
 namespace trace {
 
+	
 	static ShaderData GetDataType(SpvReflectTypeDescription& desc)
 	{
 		ShaderData result = ShaderData::NONE;

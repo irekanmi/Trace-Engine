@@ -40,8 +40,11 @@ namespace trace {
 		std::vector<std::filesystem::path> m_dirContents;
 		Ref<GTexture> directory_icon;
 		Ref<GTexture> default_icon;
+
+		// Material edit
 		Ref<MaterialInstance> m_editMaterial;
 		std::filesystem::path m_editMaterialPath;
+		MaterialData m_materialDataCache;
 		
 
 		TraceEditor* m_editor;

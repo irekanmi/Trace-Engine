@@ -73,7 +73,31 @@ namespace trace {
 			extensions_callbacks[".trmat"] = [&](std::filesystem::path& path)
 			{
 				m_editMaterialPath = path;
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); });
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); }, 
+					[&]()
+					{
+						m_editMaterialPath = path;
+						std::string filename = m_editMaterialPath.filename().string();
+						m_editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
+						if (!m_editMaterial) m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
+
+						if (m_editMaterial)
+						{
+							m_materialDataCache.clear();
+							m_materialDataCache = m_editMaterial->m_data;
+						}
+						
+					},
+					[&]() 
+					{
+						m_editMaterial->m_data = m_materialDataCache;
+						RenderFunc::PostInitializeMaterial(m_editMaterial.get(), m_editMaterial->m_renderPipeline);
+
+						m_editMaterialPath = "";
+						m_editMaterial.free();
+						m_materialDataCache.clear();
+
+					});
 			};
 
 			extensions_callbacks[".trscn"] = [&](std::filesystem::path& path)
@@ -90,8 +114,8 @@ namespace trace {
 	void ContentBrowser::Shutdown()
 	{
 		// TODO: Add a data structure that holds and releases all textures
-		directory_icon.release();
-		default_icon.release();
+		directory_icon.free();
+		default_icon.free();
 		m_editMaterial.free();
 	}
 	void ContentBrowser::Render(float deltaTime)
@@ -221,6 +245,7 @@ namespace trace {
 
 		all_files_id["Cube"] = 4;
 		all_files_id["Sphere"] = 5;
+		all_files_id["Plane"] = 7;
 
 		all_files_id["default"] = 6;
 
@@ -230,6 +255,7 @@ namespace trace {
 
 		all_id_path[4] = "Cube";
 		all_id_path[5] = "Sphere";
+		all_id_path[7] = "Plane";
 
 		all_id_path[6] = "default";
 
@@ -476,15 +502,11 @@ namespace trace {
 	}
 	void ContentBrowser::DrawEditMaterial()
 	{
-		std::string filename = m_editMaterialPath.filename().string();
-		m_editMaterial.free();
-		m_editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
-		if (m_editMaterial) {}
-		else m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
-
+		
 		Ref<MaterialInstance> mat = m_editMaterial;
 		static bool tex_modified = false;
 		static std::string tex_name;
+		bool dirty = false;
 
 		ImGui::Text("Material : %s", mat->m_path.string().c_str());
 		ImGui::Columns(2);
@@ -598,7 +620,11 @@ namespace trace {
 						if (tex) {}
 						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
 						
-						if (tex) dst = tex;
+						if (tex)
+						{
+							dst = tex;
+							dirty = true;
+						}
 					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".tga"))
 					{
@@ -608,7 +634,11 @@ namespace trace {
 						if (tex) {}
 						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
 
-						if (tex) dst = tex;
+						if (tex)
+						{
+							dst = tex;
+							dirty = true;
+						}
 					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpg"))
 					{
@@ -618,7 +648,11 @@ namespace trace {
 						if (tex) {}
 						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
 
-						if (tex) dst = tex;
+						if (tex)
+						{
+							dst = tex;
+							dirty = true;
+						}
 					}
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpeg"))
 					{
@@ -628,7 +662,11 @@ namespace trace {
 						if (tex) {}
 						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
 
-						if (tex) dst = tex;
+						if (tex)
+						{
+							dst = tex;
+							dirty = true;
+						}
 					}
 					ImGui::EndDragDropTarget();
 				}
@@ -679,16 +717,22 @@ namespace trace {
 					if (tex_r) {}
 					else tex_r = TextureManager::get_instance()->LoadTexture_(p.string());
 
-					if (tex_r) mat->m_data[tex_name].first = tex_r;
+					if (tex_r)
+					{
+						mat->m_data[tex_name].first = tex_r;
+						dirty = true;
+					}
 					tex_modified = false;
 				}
 			}
 			else tex_modified = false;
 		}
 
+		if(dirty) RenderFunc::PostInitializeMaterial(mat.get(), mat->m_renderPipeline);
+
 		if (ImGui::Button("Apply"))
 		{
-			RenderFunc::PostInitializeMaterial(mat.get(), mat->m_renderPipeline);
+			m_materialDataCache = mat->m_data;
 			MaterialSerializer::Serialize(mat, m_editMaterialPath.string());
 		}
 

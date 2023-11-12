@@ -2,29 +2,83 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: hsd
 Entities:
-  - UUID: 14961912831575236110
+  - UUID: 2548814355339829469
     TagComponent:
-      Tag: New Entity
+      Tag: Scene Name
     TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [8.0216341, 1, 16.8068027]
-    ModelComponent:
-      Name: Cube
-      file id: 4
-    ModelRendererComponent:
-      file id: 6
+      Position: [-26.5513325, 17.8088551, -0.905582845]
+      Rotation: [-4.52968038e-07, 0.0232385583, -2.75794534e-08, 0.999729931]
+      Scale: [5.1100049, 5.10999966, 5.1100049]
+    TextComponent:
+      Text Data: "Adeyanju Taiwo\n\nObafemi awolowo University\n"
+      Font file_id: 6456025844781365329
   - UUID: 18444963821587594819
     TagComponent:
       Tag: Light
     TransformComponent:
-      Position: [0, 0, 0]
+      Position: [0, 2.58143377, 0]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.725490212, 0.6828143, 0.6828143, 0]
+      Color: [0.777131796, 0.799019575, 0.426927179, 0]
       Direction: [0, -0.5, 0, 0]
-      Position: [0, 0, 0, 0]
+      Position: [0, 2.58143377, 0, 0]
       Params1: [0, 0, 0, 0]
-      Params2: [0, 0.889999986, 0, 0]
+      Params2: [0, 0.119999997, 0, 0]
       Light Type: 0
+  - UUID: 9534666440362379338
+    TagComponent:
+      Tag: Plane
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [38.8536797, 38.8536797, 38.866909]
+    ModelComponent:
+      Name: Plane
+      file id: 7
+    ModelRendererComponent:
+      file id: 1656641231356361523
+  - UUID: 17763017499740789555
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [0, 13.6794367, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [2.71999979, 2.71999979, 2.71999979]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+  - UUID: 15148774463757376145
+    TagComponent:
+      Tag: point light
+    TransformComponent:
+      Position: [9.3384819, 16.0142059, 10.2002048]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.336024582, 0.90196079, 0.868670404, 0]
+      Direction: [0, 0, 0, 0]
+      Position: [9.3384819, 16.0142059, 10.2002048, 0]
+      Params1: [1, 0.0109999999, 0.00200000009, 0]
+      Params2: [0, 1.01999998, 0, 0]
+      Light Type: 1
+  - UUID: 17187384277944736367
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Position: [-0.948882103, 13.8215141, 34.8721428]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Is Main: true
+      Camera Type: 0
+      Position: [0, 0, 1]
+      Look Direction: [0, 0, -1]
+      Up Direction: [0, 1, 0]
+      Near: 0.100000001
+      Far: 1000
+      Fov: 45
+      Aspect Ratio: 2.22321439
+      Orthographic Size: 10

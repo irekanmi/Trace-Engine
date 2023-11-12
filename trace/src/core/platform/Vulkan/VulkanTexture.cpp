@@ -271,7 +271,8 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
-		/*vk::_DestroyImage(
+		/*vkDeviceWaitIdle(_device->m_device);
+		vk::_DestroyImage(
 			_instance,
 			_device,
 			_handle

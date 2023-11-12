@@ -40,6 +40,7 @@ namespace trace {
 
 	public:
 		void DrawGizmo();
+		void DrawGrid(CommandList& cmd_list);
 		void CloseCurrentScene();
 		void LoadScene(const std::string& file_path);
 		void NewScene();

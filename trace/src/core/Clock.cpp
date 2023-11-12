@@ -12,18 +12,18 @@ namespace trace {
 	}
 	void Clock::Begin()
 	{
-		start_time = std::chrono::steady_clock::now();
+		start_time = std::chrono::system_clock::now();
 	}
 	void Clock::Tick()
 	{
-		auto now = std::chrono::steady_clock::now();
+		auto now = std::chrono::system_clock::now();
 
 		elapsedTime = std::chrono::duration<float, std::chrono::seconds::period>(now - start_time).count();
-		//start_time = std::chrono::steady_clock::now();
+		//start_time = std::chrono::system_clock::now();
 	}
 	float Clock::GetElapsedTime()
 	{
-		auto now = std::chrono::steady_clock::now();
-		return std::chrono::duration<float, std::chrono::seconds::period>(now - start_time).count();
+		auto now = std::chrono::system_clock::now();
+		return std::chrono::duration<float>(now - start_time).count();
 	}
 }

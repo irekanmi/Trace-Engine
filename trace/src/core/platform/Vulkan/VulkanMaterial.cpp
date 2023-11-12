@@ -141,7 +141,6 @@ namespace vk {
 
         trace::PipelineStateDesc& desc = mat_instance->m_renderPipeline->GetDesc();
 
-        std::unordered_map<trace::ShaderData, std::pair<void*, uint32_t>>& _shaderData = mat_instance->m_shaderData;
 
 
         for (uint32_t i = 0; i < 3; i++)
@@ -231,7 +230,6 @@ namespace vk {
 
         trace::GPipeline* pipeline = mat_instance->m_renderPipeline.get();
         trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
-        std::unordered_map<trace::ShaderData, std::pair<void*, uint32_t>>& _shaderData = mat_instance->m_shaderData;
 
 
         //New Application

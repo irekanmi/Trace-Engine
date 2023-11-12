@@ -178,6 +178,8 @@ namespace trace {
 		CopyComponent<LightComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<MeshComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<ModelComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<ModelRendererComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<TextComponent>(f_reg, t_reg, entity_map);
 
 	}
 

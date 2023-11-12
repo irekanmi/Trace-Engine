@@ -583,11 +583,19 @@ namespace trace {
 			}
 
 			ImGui::Text("Enter Text: ");
-			ImGui::InputText("##Text Data", &comp.text/*, ImGuiInputTextFlags_Multiline*/);
+			ImGui::InputTextMultiline("##Text Data", &comp.text);
 			
 			});
 
 		
+	}
+
+	void InspectorPanel::SetDrawCallbackFn(std::function<void()> cb, std::function<void()> on_enter, std::function<void()> on_exit)
+	{
+		if (m_onExit) m_onExit();
+		m_onExit = on_exit;
+		m_drawCallback = cb;
+		on_enter();
 	}
 
 }

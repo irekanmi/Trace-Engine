@@ -48,9 +48,8 @@ namespace trace {
 			{
 				if (mat_instance.m_id == INVALID_ID)
 					continue;
-
 				
-				TRC_WARN("{} material was still in use ref count {} ", mat_instance.GetName(), mat_instance.m_refCount);
+				TRC_TRACE("{} material was still in use ref count {} ", mat_instance.GetName(), mat_instance.m_refCount);
 				mat_instance.~MaterialInstance();
 			}
 			m_materials.clear();

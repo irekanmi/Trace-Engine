@@ -61,7 +61,7 @@ namespace trace {
 				{
 					if (m_selectedEntity)
 						m_editor->m_inspectorPanel.DrawEntityComponent(m_selectedEntity);
-				});
+				}, []() {}, []() {});
 		}
 
 		//FIX: Rendering twice if tag is the same

@@ -173,8 +173,44 @@ namespace trace {
 			_ind[i_offset + 5] = v_offset + 1;
 		}
 
-		data = verts;
-		indices = _ind;
+		data = std::move(verts);
+		indices = std::move(_ind);
+
+	}
+	void generateDefaultPlane(std::vector<Vertex>& data, std::vector<uint32_t>& indices)
+	{
+		Vertex p0;
+		Vertex p1;
+		Vertex p2;
+		Vertex p3;
+
+		p0.pos = glm::vec3(-1.0f, 0.0f, -1.0f);
+		p0.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		p0.texCoord = glm::vec2(0.0f, 1.0f);
+		data.push_back(p0);
+
+		p1.pos = glm::vec3(-1.0f, 0.0f, 1.0f);
+		p1.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		p1.texCoord = glm::vec2(0.0f, 0.0f);
+		data.push_back(p1);
+
+		p2.pos = glm::vec3(1.0f, 0.0f, 1.0f);
+		p2.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		p2.texCoord = glm::vec2(1.0f, 0.0f);
+		data.push_back(p2);
+
+		p3.pos = glm::vec3(1.0f, 0.0f, -1.0f);
+		p3.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		p3.texCoord = glm::vec2(1.0f, 1.0f);
+		data.push_back(p3);
+
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(2);
+		indices.push_back(2);
+		indices.push_back(3);
+		indices.push_back(0);
+
 
 	}
 	void generateSphere(std::vector<Vertex>& data, std::vector<uint32_t>& indices, float radius, uint32_t num_vertical, uint32_t num_horizontal)

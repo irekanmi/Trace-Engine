@@ -39,6 +39,7 @@ namespace trace {
 		uint32_t m_numEntries;
 		Ref<Mesh> DefaultCube;
 		Ref<Mesh> DefaultSphere;
+		Ref<Mesh> DefaultPlane;
 		std::filesystem::path mesh_resource_path;
 
 		void unloadDefaultModels(Model* model);
