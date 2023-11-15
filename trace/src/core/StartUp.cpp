@@ -10,6 +10,7 @@
 #include "core/Application.h"
 #include "resource/ResourceSystem.h"
 #include "core/memory/MemoryManager.h"
+#include "backends/Physicsutils.h"
 
 
 namespace trace {
@@ -86,12 +87,28 @@ namespace trace {
 			return false;
 		}
 
+		//Physics Initialization
+		//TODO: Allow physics to be dynamic
+		{
+			if (!PhysicsFuncLoader::LoadPhysxFunctions())
+			{
+				TRC_ERROR("Failed to load physics functions");
+			}
+			else
+			{
+				if (!PhysicsFunc::InitPhysics3D())
+				{
+					TRC_ERROR("Failed initialize 3D Physics");
+				}
+			}
+		};
+
 		return true;
 	}
 
 	void TRACE_API _SHUTDOWN(trc_app_data app_data)
 	{
-
+		PhysicsFunc::ShutdownPhysics3D();
 
 		ResourceSystem::ShutDown();
 		Renderer::get_instance()->ShutDown();

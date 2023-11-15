@@ -6,12 +6,18 @@
 #include "render/Renderer.h"
 
 namespace trace {
-	void Scene::OnCreate()
+	void Scene::Create()
 	{
 	}
-	void Scene::OnDestroy()
+	void Scene::Destroy()
 	{
 		m_registry.clear();
+	}
+	void Scene::OnStart()
+	{
+	}
+	void Scene::OnStop()
+	{
 	}
 	void Scene::OnUpdate(float deltaTime)
 	{

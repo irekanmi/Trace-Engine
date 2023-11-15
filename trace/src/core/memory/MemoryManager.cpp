@@ -11,7 +11,7 @@ namespace trace {
 	bool MemoryManager::Init()
 	{
 		bool result = true;
-		result = result && m_frameAllocator.Init(KB * 8); // TODO: Configurable
+		result = result && m_frameAllocator.Init(MB * 2); // TODO: Configurable
 		return result;
 	}
 

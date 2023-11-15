@@ -10,8 +10,8 @@ Entities:
       Rotation: [-4.52968038e-07, 0.0232385583, -2.75794534e-08, 0.999729931]
       Scale: [5.1100049, 5.10999966, 5.1100049]
     TextComponent:
-      Text Data: "Adeyanju Taiwo\n\nObafemi awolowo University\n"
-      Font file_id: 6456025844781365329
+      Text Data: "Adegboye Kayode\nBLD\n"
+      Font file_id: 4113681025385876608
   - UUID: 18444963821587594819
     TagComponent:
       Tag: Light
@@ -30,7 +30,7 @@ Entities:
     TagComponent:
       Tag: Plane
     TransformComponent:
-      Position: [0, 0, 0]
+      Position: [0, -4.85070038, 0]
       Rotation: [0, 0, 0, 1]
       Scale: [38.8536797, 38.8536797, 38.866909]
     ModelComponent:

@@ -311,12 +311,22 @@ namespace trace {
 	{
 		ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-		if (ImGui::Button("Play"))
+		bool playing = (current_state == EditorState::ScenePlay);
+
+		if (ImGui::Button(playing ? "Stop" : "Play"))
 		{
 			if (m_currentScene)
 			{
-				current_state = ScenePlay;
-				OnScenePlay();
+				if (playing)
+				{
+					OnSceneStop();
+					current_state = EditorState::SceneEdit;
+				}
+				else
+				{
+					OnScenePlay();
+					current_state = EditorState::ScenePlay;
+				}
 			}
 		}
 		ImGui::SameLine();
@@ -324,8 +334,7 @@ namespace trace {
 		{
 			if (m_currentScene)
 			{
-				current_state = SceneEdit;
-				OnSceneStop();
+				
 			}
 		}
 
@@ -616,8 +625,8 @@ namespace trace {
 	}
 	void TraceEditor::DrawGrid(CommandList& cmd_list)
 	{
-		float cell_size = 60.0f;
-		uint32_t num_line = 3;
+		float cell_size = 8.0f;
+		uint32_t num_line = 100;
 		float line_lenght = cell_size * (num_line - 1);
 
 		Renderer* renderer = Renderer::get_instance();
@@ -625,8 +634,8 @@ namespace trace {
 		//Horizontal
 		for (uint32_t i = 0; i < num_line; i++)
 		{
-			glm::vec3 from(line_lenght, 0.0f, line_lenght - (cell_size * (float)i));
-			glm::vec3 to(-line_lenght, 0.0f, line_lenght - (cell_size * (float)i));
+			glm::vec3 from(line_lenght, 0.0f, line_lenght - (cell_size * 2.0f * (float)i));
+			glm::vec3 to(-line_lenght, 0.0f, line_lenght - (cell_size * 2.0f * (float)i));
 
 			renderer->DrawDebugLine(cmd_list, from, to);
 		}
@@ -634,8 +643,8 @@ namespace trace {
 		//Vertical
 		for (uint32_t i = 0; i < num_line; i++)
 		{
-			glm::vec3 from(line_lenght - (cell_size * (float)i), 0.0f, line_lenght );
-			glm::vec3 to(line_lenght - (cell_size * (float)i), 0.0f, -line_lenght);
+			glm::vec3 from(line_lenght - (cell_size * 2.0f * (float)i), 0.0f, line_lenght);
+			glm::vec3 to(line_lenght - (cell_size * 2.0f * (float)i), 0.0f, -line_lenght);
 
 			renderer->DrawDebugLine(cmd_list, from, to);
 		}
@@ -788,13 +797,19 @@ namespace trace {
 	}
 	void TraceEditor::OnScenePlay()
 	{
+		if ((current_state == EditorState::ScenePlay)) return;
+
 		Scene::Copy(m_editScene, m_editScene_duplicate);
 		m_currentScene = m_editScene_duplicate;
+		m_currentScene->OnStart();
 		m_hierachyPanel.m_selectedEntity = Entity();
 	}
 	void TraceEditor::OnSceneStop()
 	{
+		if ((current_state == EditorState::SceneEdit)) return;
+
 		m_currentScene = m_editScene;
+		m_currentScene->OnStop();
 	}
 
 	std::filesystem::path GetPathFromUUID(UUID uuid)

@@ -36,7 +36,7 @@ namespace trace {
 		uint32_t next_mark = m_currMark + num_bytes;
 		if (next_mark + 4 >= m_numBytes)
 		{
-			TRC_ERROR("Stack out of memory, -> {}", (const void*)m_data);
+			TRC_ERROR("Stack out of memory, -> stack size : {} bytes, ptr : {}", m_numBytes, (const void*)m_data);
 			return nullptr;
 		}
 		unsigned char* result = (m_data) + m_currMark;

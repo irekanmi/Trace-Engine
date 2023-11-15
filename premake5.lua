@@ -29,6 +29,7 @@ IncludeDir["entt"] = "externals/entt"
 IncludeDir["yaml_cpp"] = "externals/yaml_cpp"
 IncludeDir["ImGuizmo"] = "externals/ImGuizmo"
 IncludeDir["portable_file_dialogs"] = "externals/portable_file_dialogs"
+IncludeDir["Physx"] = "externals/Physx"
 
 
 project "trace"
@@ -70,6 +71,7 @@ project "trace"
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.Physx}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -91,6 +93,12 @@ project "trace"
 		"spirv-cross-core.lib",
 		"spirv-cross-cpp.lib",
 		"spirv-cross-glsl.lib",
+		"PhysX_static_64.lib",
+		"PhysXCommon_static_64.lib",
+		"PhysXCooking_static_64.lib",
+		"PhysXFoundation_static_64.lib",
+		"PhysXPvdSDK_static_64.lib",
+		"PhysXExtensions_static_64.lib",
 		"msdfgen.lib",
 		"msdf_atlas_gen.lib",
 		"yaml_cpp.lib"
@@ -123,7 +131,6 @@ project "trace"
 
 		defines
 		{
-			"TRC_WINDOWS",
 			"TRC_CORE",
 			"TRC_RELEASE_BUILD",
 			"GLEW_STATIC"
@@ -141,6 +148,8 @@ project "trace"
 
 	filter "system:windows"
 		staticruntime "off"
+
+		defines "TRC_WINDOWS"
 
 project "TestApp"
 	kind "ConsoleApp"

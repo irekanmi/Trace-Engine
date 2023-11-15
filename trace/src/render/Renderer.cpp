@@ -570,7 +570,7 @@ namespace trace {
 			glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 			Ref<GPipeline> sp = m_debug->m_linePipeline;
 			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::BindLineWidth(&g_device, 2.0f);
+			RenderFunc::BindLineWidth(&g_device, 1.5f);
 			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, m_debug->positions.data(), m_debug->vert_count * sizeof(glm::vec4));
 			RenderFunc::BindPipeline_(sp.get());

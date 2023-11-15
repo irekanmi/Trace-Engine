@@ -66,6 +66,9 @@
     <ClInclude Include="src\backends\Fontutils.h">
       <Filter>src\backends</Filter>
     </ClInclude>
+    <ClInclude Include="src\backends\Physicsutils.h">
+      <Filter>src\backends</Filter>
+    </ClInclude>
     <ClInclude Include="src\backends\Renderutils.h">
       <Filter>src\backends</Filter>
     </ClInclude>
@@ -372,6 +375,7 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Physx\Physx_backend.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -408,6 +412,9 @@
       <Filter>_externals</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\Fontutils.cpp">
+      <Filter>src\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\Physicsutils.cpp">
       <Filter>src\backends</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\Renderutils.cpp">
@@ -668,5 +675,6 @@
     <ClCompile Include="src\serialize\yaml_util.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
   </ItemGroup>
 </Project>

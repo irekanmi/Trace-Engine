@@ -33,7 +33,7 @@ namespace trace {
 			Scene& scene = m_scenes[i];
 			if (scene.m_id != INVALID_ID)
 			{
-				scene.OnDestroy();
+				scene.Destroy();
 				scene.m_id = INVALID_ID;
 			}
 		}
@@ -57,7 +57,7 @@ namespace trace {
 			Scene& scene = m_scenes[i];
 			if (scene.m_id == INVALID_ID)
 			{
-				scene.OnCreate();
+				scene.Create();
 				m_hashTable.Set(name, i);
 				_scene = &scene;
 				_scene->SetName(name);
@@ -103,7 +103,7 @@ namespace trace {
 		}
 
 		scene->m_id = INVALID_ID;
-		scene->OnDestroy();
+		scene->Destroy();
 
 	}
 	SceneManager* SceneManager::get_instance()

@@ -18,8 +18,10 @@ namespace trace {
 		Scene(const Scene& other) {/*TODO: Implement*/ };
 		~Scene(){}
 
-		void OnCreate();
-		void OnDestroy();
+		void Create();
+		void Destroy();
+		void OnStart();
+		void OnStop();
 		void OnUpdate(float deltaTime);
 		void OnRender();
 		void OnRender(CommandList& cmd_list);
@@ -39,6 +41,7 @@ namespace trace {
 	private:
 		entt::registry m_registry;
 		std::string m_name;
+		void* m_physics3D = nullptr;
 
 	protected:
 		friend class Entity;
