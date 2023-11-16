@@ -297,6 +297,14 @@ namespace trace {
 			{
 				entity.AddComponent<TextComponent>();
 			}
+			if (ImGui::MenuItem("Box Coillder"))
+			{
+				entity.AddComponent<BoxCoillderComponent>();
+			}
+			if (ImGui::MenuItem("Rigid Body"))
+			{
+				entity.AddComponent<RigidBodyComponent>();
+			}
 
 			ImGui::EndPopup();
 		}
@@ -585,6 +593,45 @@ namespace trace {
 			ImGui::Text("Enter Text: ");
 			ImGui::InputTextMultiline("##Text Data", &comp.text);
 			
+			});
+
+		DrawComponent<BoxCoillderComponent>(entity, "Box Coillder", [](Entity obj, BoxCoillderComponent& comp) {
+			
+			PhyShape& shp = comp.shape;
+
+			ImGui::Checkbox("Is Trigger", &comp.is_trigger);
+			ImGui::DragFloat3("Extent", glm::value_ptr(shp.box.half_extents));
+			ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset));
+			
+			});
+
+		DrawComponent<RigidBodyComponent>(entity, "Rigid Body", [](Entity obj, RigidBodyComponent& comp) {
+
+			RigidBody& body = comp.body;
+			RigidBody::Type type = body.GetType();
+
+			const char* type_string[] = { "Static", "Kinematic", "Dynamic" };
+			const char* current_type = type_string[(int)type];
+			if (ImGui::BeginCombo("Body Type", current_type))
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					bool selected = (current_type == type_string[i]);
+					if (ImGui::Selectable(type_string[i], selected))
+					{
+						body.SetType((RigidBody::Type)i);
+					}
+
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::DragFloat("Mass", &body.mass);
+			ImGui::DragFloat("Density", &body.density);
+
 			});
 
 		

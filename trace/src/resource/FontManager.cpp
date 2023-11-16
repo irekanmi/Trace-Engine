@@ -116,7 +116,7 @@ namespace trace {
 		if (hash != INVALID_ID)
 		{
 			TRC_WARN("{} font has been loaded", name);
-			return result;
+			return GetFont(name);
 		}
 
 		uint32_t i = 0;

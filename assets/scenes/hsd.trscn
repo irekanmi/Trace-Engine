@@ -7,11 +7,11 @@ Entities:
       Tag: Scene Name
     TransformComponent:
       Position: [-26.5513325, 17.8088551, -0.905582845]
-      Rotation: [-4.52968038e-07, 0.0232385583, -2.75794534e-08, 0.999729931]
-      Scale: [5.1100049, 5.10999966, 5.1100049]
+      Rotation: [-0.451982856, 0.178407416, 0.297262132, 0.821898699]
+      Scale: [5.11000299, 5.10999298, 5.10998631]
     TextComponent:
-      Text Data: "Adegboye Kayode\nBLD\n"
-      Font file_id: 4113681025385876608
+      Text Data: "Aladare Goodness\nBLD/2019/037\n"
+      Font file_id: 6456025844781365329
   - UUID: 18444963821587594819
     TagComponent:
       Tag: Light
@@ -31,8 +31,8 @@ Entities:
       Tag: Plane
     TransformComponent:
       Position: [0, -4.85070038, 0]
-      Rotation: [0, 0, 0, 1]
-      Scale: [38.8536797, 38.8536797, 38.866909]
+      Rotation: [0, -0, -0.111497372, 0.993764758]
+      Scale: [38.8536644, 38.8536644, 38.866909]
     ModelComponent:
       Name: Plane
       file id: 7
@@ -42,7 +42,7 @@ Entities:
     TagComponent:
       Tag: Floating Cube
     TransformComponent:
-      Position: [0, 13.6794367, 0]
+      Position: [-9.59558868, 13.6794367, 0]
       Rotation: [0, 0, 0, 1]
       Scale: [2.71999979, 2.71999979, 2.71999979]
     ModelComponent:
@@ -68,7 +68,7 @@ Entities:
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Position: [-0.948882103, 13.8215141, 34.8721428]
+      Position: [-0.948882103, 13.8215141, 54.1792984]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     CameraComponent:
@@ -80,5 +80,5 @@ Entities:
       Near: 0.100000001
       Far: 1000
       Fov: 45
-      Aspect Ratio: 2.22321439
+      Aspect Ratio: 1.77020204
       Orthographic Size: 10

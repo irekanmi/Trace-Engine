@@ -194,6 +194,7 @@
     <ClInclude Include="src\core\platform\Vulkan\VulkanTexture.h" />
     <ClInclude Include="src\core\platform\Windows\Win32Window.h" />
     <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
+    <ClInclude Include="src\physics\Physics.h" />
     <ClInclude Include="src\render\Camera.h" />
     <ClInclude Include="src\render\Commands.h" />
     <ClInclude Include="src\render\Font.h" />

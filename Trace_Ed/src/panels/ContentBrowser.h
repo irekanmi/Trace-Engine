@@ -3,6 +3,7 @@
 #include "resource/Ref.h"
 #include "render/GTexture.h"
 #include "render/Material.h"
+#include "render/Font.h"
 #include "scene/UUID.h"
 
 #include <filesystem>
@@ -29,6 +30,7 @@ namespace trace {
 		void OnWindowPopup();
 		void OnItemPopup(std::filesystem::path& path);
 		void DrawEditMaterial();
+		void DrawEditFont();
 
 	public:
 		//TODO: Check if there is a better way to store uuid and paths
@@ -46,6 +48,8 @@ namespace trace {
 		std::filesystem::path m_editMaterialPath;
 		MaterialData m_materialDataCache;
 		
+		// Font edit
+		Ref<Font> m_editFont;	
 
 		TraceEditor* m_editor;
 	protected:

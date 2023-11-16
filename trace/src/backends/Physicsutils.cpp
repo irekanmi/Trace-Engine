@@ -22,12 +22,38 @@ namespace trace {
 
 	__CreateScene3D PhysicsFunc::_createScene3D = nullptr;
 	__DestroyScene3D PhysicsFunc::_destroyScene3D = nullptr;
+	__AddActor PhysicsFunc::_addActor = nullptr;
+	__RemoveActor PhysicsFunc::_removeActor = nullptr;
+	__Stimulate PhysicsFunc::_stimulate = nullptr;
+
+	__CreateShape PhysicsFunc::_createShape = nullptr;
+	__AttachShape PhysicsFunc::_attachShape = nullptr;
+	__DetachShape PhysicsFunc::_detachShape = nullptr;
+
+	__CreateRigidBody PhysicsFunc::_createRigidBody = nullptr;
+	__DestroyRigidBody PhysicsFunc::_destroyRigidBody = nullptr;
+	__GetRigidBodyTransform PhysicsFunc::_getRigidBodyTransform = nullptr;
 
 	// Loader ---------------------------------------
 	bool PhysicsFuncLoader::LoadPhysxFunctions()
 	{
 		PhysicsFunc::_initPhysics3D = physx::__InitPhysics3D;
 		PhysicsFunc::_shutdownPhysics3D = physx::__ShutdownPhysics3D;
+
+		PhysicsFunc::_createScene3D = physx::__CreateScene3D;
+		PhysicsFunc::_destroyScene3D = physx::__DestroyScene3D;
+		PhysicsFunc::_addActor = physx::__AddActor;
+		PhysicsFunc::_removeActor = physx::__RemoveActor;
+		PhysicsFunc::_stimulate = physx::__Stimulate;
+
+		PhysicsFunc::_createShape = physx::__CreateShape;
+		PhysicsFunc::_attachShape = physx::__AttachShape;
+		PhysicsFunc::_detachShape = physx::__DetachShape;
+
+		PhysicsFunc::_createRigidBody = physx::__CreateRigidBody;
+		PhysicsFunc::_destroyRigidBody = physx::__DestroyRigidBody;
+		PhysicsFunc::_getRigidBodyTransform = physx::__GetRigidBodyTransform;
+
 		return true;
 	}
 
@@ -50,16 +76,70 @@ namespace trace {
 		return _shutdownPhysics3D();
 	}
 
-	bool PhysicsFunc::CreateScene3D(void* scene, glm::vec3 gravity)
+	bool PhysicsFunc::CreateScene3D(void*& scene, glm::vec3 gravity)
 	{
-		PHYSICS_FUNC_IS_VALID(_createScene3D)
+		PHYSICS_FUNC_IS_VALID(_createScene3D);
 		return _createScene3D(scene, gravity);
 	}
 
-	bool PhysicsFunc::DestroyScene3D(void* scene)
+	bool PhysicsFunc::DestroyScene3D(void*& scene)
 	{
 		PHYSICS_FUNC_IS_VALID(_destroyScene3D);
 		return _destroyScene3D(scene);
+	}
+
+	bool PhysicsFunc::AddActor(void*& scene, void*& actor)
+	{
+		PHYSICS_FUNC_IS_VALID(_addActor);
+		return _addActor(scene, actor);
+	}
+
+	bool PhysicsFunc::RemoveActor(void*& scene, void*& actor)
+	{
+		PHYSICS_FUNC_IS_VALID(_removeActor);
+		return _removeActor(scene, actor);
+	}
+
+	bool PhysicsFunc::Stimulate(void*& scene, float deltaTime)
+	{
+		PHYSICS_FUNC_IS_VALID(_stimulate);
+		return _stimulate(scene, deltaTime);
+	}
+
+	bool PhysicsFunc::CreateShape(void*& shape, PhyShape geometry, bool trigger)
+	{
+		PHYSICS_FUNC_IS_VALID(_createShape);
+		return _createShape(shape, geometry, trigger);
+	}
+
+	bool PhysicsFunc::AttachShape(void*& shape, void*& actor)
+	{
+		PHYSICS_FUNC_IS_VALID(_attachShape);
+		return _attachShape(shape, actor);
+	}
+
+	bool PhysicsFunc::DetachShape(void*& shape, void*& actor)
+	{
+		PHYSICS_FUNC_IS_VALID(_detachShape);
+		return _detachShape(shape, actor);
+	}
+
+	bool PhysicsFunc::CreateRigidBody(RigidBody& rigid_body, Transform& transform)
+	{
+		PHYSICS_FUNC_IS_VALID(_createRigidBody);
+		return _createRigidBody(rigid_body,transform);
+	}
+
+	bool PhysicsFunc::DestroyRigidBody(RigidBody& rigid_body)
+	{
+		PHYSICS_FUNC_IS_VALID(_destroyRigidBody);
+		return _destroyRigidBody(rigid_body);
+	}
+
+	bool PhysicsFunc::GetRigidBodyTransform(RigidBody& rigid_body, Transform& transform)
+	{
+		PHYSICS_FUNC_IS_VALID(_getRigidBodyTransform);
+		return _getRigidBodyTransform(rigid_body, transform);
 	}
 
 }

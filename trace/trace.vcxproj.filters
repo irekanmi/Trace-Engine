@@ -376,6 +376,7 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\core\platform\Physx\Physx_backend.h" />
+    <ClInclude Include="src\physics\Physics.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">

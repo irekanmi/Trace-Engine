@@ -6,6 +6,7 @@
 #include "render/Mesh.h"
 #include "render/Font.h"
 #include "scene/UUID.h"
+#include "physics/Physics.h"
 
 
 #include <string>
@@ -131,5 +132,31 @@ namespace trace {
 
 		}
 	};
+
+	struct BoxCoillderComponent
+	{
+		PhyShape shape;
+		bool is_trigger = false;
+		void* _internal = nullptr;
+		BoxCoillderComponent() { shape.SetBox(glm::vec3(0.5f)); shape.offset = glm::vec3(0.0f); };
+		BoxCoillderComponent(const BoxCoillderComponent&) = default;
+		~BoxCoillderComponent()
+		{
+
+		}
+	};
+
+	struct RigidBodyComponent
+	{
+		RigidBody body;
+		RigidBodyComponent() = default;
+		RigidBodyComponent(const RigidBodyComponent&) = default;
+		~RigidBodyComponent()
+		{
+
+		}
+	};
+
+
 
 }

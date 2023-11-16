@@ -6,6 +6,7 @@
 #include "resource/MaterialManager.h"
 #include "resource/PipelineManager.h"
 #include "resource/TextureManager.h"
+#include "resource/FontManager.h"
 #include "backends/UIutils.h"
 #include "scene/UUID.h"
 #include "serialize/MaterialSerializer.h"
@@ -104,6 +105,34 @@ namespace trace {
 			{
 				m_editor->OpenScene(path.string());
 			};
+
+			extensions_callbacks[".ttf"] = [&](std::filesystem::path& path)
+			{
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditFont(); },
+					[&]()
+					{
+						m_editFont = FontManager::get_instance()->LoadFont_(path.string());
+					},
+					[&]()
+					{
+						m_editFont.free();
+					});
+			};
+
+			extensions_callbacks[".TTF"] = [&](std::filesystem::path& path)
+			{
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditFont(); },
+					[&]()
+					{
+						m_editFont = FontManager::get_instance()->LoadFont_(path.string());
+					},
+					[&]()
+					{
+						m_editFont.free();
+					});
+			};
+
+
 
 		};
 
@@ -736,5 +765,17 @@ namespace trace {
 			MaterialSerializer::Serialize(mat, m_editMaterialPath.string());
 		}
 
+	}
+	void ContentBrowser::DrawEditFont()
+	{
+		if (m_editFont)
+		{
+			ImGui::Text("Font Name: %s",m_editFont->GetName().c_str());
+			ImGui::Text("Font Atlas : ");
+			void* texture = nullptr;
+			UIFunc::GetDrawTextureHandle(m_editFont->GetAtlas().get(), texture);
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			ImGui::Image(texture, { content_ava.x, content_ava.y * 0.65f }, {0.0f, 1.0f}, {1.0f, 0.0f});
+		}
 	}
 }

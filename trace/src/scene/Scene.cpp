@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Componets.h"
 #include "render/Renderer.h"
+#include "backends/Physicsutils.h"
 
 namespace trace {
 	void Scene::Create()
@@ -15,13 +16,69 @@ namespace trace {
 	}
 	void Scene::OnStart()
 	{
+		PhysicsFunc::CreateScene3D(m_physics3D, glm::vec3(0.0f, -9.81f, 0.0f));
+		if (m_physics3D)
+		{
+			auto view = m_registry.view<TransformComponent ,RigidBodyComponent, BoxCoillderComponent>();
+			for (auto i : view)
+			{
+				auto [pose,rigid, shp] = view.get(i);
+
+				Transform local;
+				glm::vec3 extent = shp.shape.box.half_extents;
+				shp.shape.box.half_extents *= pose._transform.GetScale();
+				local.SetPosition(pose._transform.GetPosition() + shp.shape.offset);
+				local.SetRotation(pose._transform.GetRotation());
+				PhysicsFunc::CreateRigidBody(rigid.body, pose._transform);
+				PhysicsFunc::CreateShape(shp._internal, shp.shape, shp.is_trigger);
+				PhysicsFunc::AttachShape(shp._internal, rigid.body.GetInternal());
+				PhysicsFunc::AddActor(m_physics3D, rigid.body.GetInternal());
+				shp.shape.box.half_extents = extent;
+			}
+		}
 	}
 	void Scene::OnStop()
 	{
+		if (m_physics3D)
+		{
+
+			auto bodies = m_registry.view<RigidBodyComponent>();
+			for (auto i : bodies)
+			{
+				auto [ rigid] = bodies.get(i);
+
+				PhysicsFunc::RemoveActor(m_physics3D, rigid.body.GetInternal());
+				PhysicsFunc::DestroyRigidBody(rigid.body);
+			}
+
+			auto box_coillders = m_registry.view<BoxCoillderComponent>();
+			for (auto i : box_coillders)
+			{
+				auto [box] = box_coillders.get(i);
+
+			}
+
+			PhysicsFunc::DestroyScene3D(m_physics3D);
+		}
 	}
 	void Scene::OnUpdate(float deltaTime)
 	{
 
+	}
+
+	void Scene::OnPhysicsUpdate(float deltaTime)
+	{
+		if (m_physics3D)
+		{
+			PhysicsFunc::Stimulate(m_physics3D, deltaTime);
+			auto bodies = m_registry.view<TransformComponent, RigidBodyComponent>();
+			for (auto i : bodies)
+			{
+				auto [transform ,rigid] = bodies.get(i);
+
+				PhysicsFunc::GetRigidBodyTransform(rigid.body, transform._transform);
+			}
+		}
 	}
 
 
@@ -186,6 +243,8 @@ namespace trace {
 		CopyComponent<ModelComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<ModelRendererComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<TextComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<BoxCoillderComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<RigidBodyComponent>(f_reg, t_reg, entity_map);
 
 	}
 

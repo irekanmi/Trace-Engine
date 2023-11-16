@@ -125,6 +125,7 @@ namespace trace {
 		{
 			if (m_currentScene)
 			{
+				m_currentScene->OnPhysicsUpdate(deltaTime);
 				m_currentScene->OnRender();
 			}
 			break;

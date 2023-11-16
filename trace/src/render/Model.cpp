@@ -58,9 +58,9 @@ namespace trace {
 	{
 
 
-		float half_width = /*width*/  1.5f * 0.5f;
-		float half_height = /*height*/1.5f * 0.5f;
-		float half_depth = /*depth*/  1.5f * 0.5f;
+		float half_width = /*width*/  1.0f * 0.5f;
+		float half_height = /*height*/1.0f * 0.5f;
+		float half_depth = /*depth*/  1.0f * 0.5f;
 		float min_x = -half_width;
 		float min_y = -half_height;
 		float min_z = -half_depth;

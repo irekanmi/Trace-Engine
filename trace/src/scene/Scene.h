@@ -23,6 +23,7 @@ namespace trace {
 		void OnStart();
 		void OnStop();
 		void OnUpdate(float deltaTime);
+		void OnPhysicsUpdate(float deltaTime);
 		void OnRender();
 		void OnRender(CommandList& cmd_list);
 		void OnViewportChange(float width, float height);
