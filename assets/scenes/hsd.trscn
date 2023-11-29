@@ -2,47 +2,38 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: hsd
 Entities:
-  - UUID: 2548814355339829469
+  - UUID: 4696756564098000552
     TagComponent:
-      Tag: Scene Name
+      Tag: trigger
     TransformComponent:
-      Position: [-26.5513325, 17.8088551, -0.905582845]
-      Rotation: [-0.451982856, 0.178407416, 0.297262132, 0.821898699]
-      Scale: [5.11000299, 5.10999298, 5.10998631]
-    TextComponent:
-      Text Data: "Aladare Goodness\nBLD/2019/037\n"
-      Font file_id: 6456025844781365329
-  - UUID: 18444963821587594819
-    TagComponent:
-      Tag: Light
-    TransformComponent:
-      Position: [0, 2.58143377, 0]
+      Position: [0, 15.461195, 8.37870026]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.777131796, 0.799019575, 0.426927179, 0]
-      Direction: [0, -0.5, 0, 0]
-      Position: [0, 2.58143377, 0, 0]
-      Params1: [0, 0, 0, 0]
-      Params2: [0, 0.119999997, 0, 0]
-      Light Type: 0
-  - UUID: 9534666440362379338
+    SphereColliderComponent:
+      Is Trigger: true
+      Radius: 16.5
+      Offset: [0, 0, 0]
+  - UUID: 10037143859604966104
     TagComponent:
-      Tag: Plane
+      Tag: plane
     TransformComponent:
-      Position: [0, -4.85070038, 0]
-      Rotation: [0, -0, -0.111497372, 0.993764758]
-      Scale: [38.8536644, 38.8536644, 38.866909]
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0.227225617, 0.973842144]
+      Scale: [104.242058, 0.99999994, 64.8216248]
     ModelComponent:
-      Name: Plane
-      file id: 7
+      Name: Cube
+      file id: 4
     ModelRendererComponent:
-      file id: 1656641231356361523
-  - UUID: 17763017499740789555
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 9018587334436508292
     TagComponent:
       Tag: Floating Cube
     TransformComponent:
-      Position: [-9.59558868, 13.6794367, 0]
+      Position: [-5.35879517, 27.6312046, -1.71390343]
       Rotation: [0, 0, 0, 1]
       Scale: [2.71999979, 2.71999979, 2.71999979]
     ModelComponent:
@@ -50,20 +41,170 @@ Entities:
       file id: 4
     ModelRendererComponent:
       file id: 18125184272921980320
-  - UUID: 15148774463757376145
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 7670926036830826146
     TagComponent:
-      Tag: point light
+      Tag: Floating Cube
     TransformComponent:
-      Position: [9.3384819, 16.0142059, 10.2002048]
+      Position: [-0.435217857, 27.6312046, -5.20728827]
+      Rotation: [0.250694126, -0.120778158, 0.031540487, 0.959984541]
+      Scale: [2.7199986, 2.71999955, 2.71999907]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 4502266694406539646
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [-0.435217857, 27.6312046, 6.97366333]
+      Rotation: [0, 0, 0.345397681, 0.938456416]
+      Scale: [2.71999907, 2.71999907, 2.71999979]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 2127387566026696481
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [-0.435217857, 22.6299362, 6.97366333]
       Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.336024582, 0.90196079, 0.868670404, 0]
-      Direction: [0, 0, 0, 0]
-      Position: [9.3384819, 16.0142059, 10.2002048, 0]
-      Params1: [1, 0.0109999999, 0.00200000009, 0]
-      Params2: [0, 1.01999998, 0, 0]
-      Light Type: 1
+      Scale: [2.71999979, 2.71999979, 2.71999979]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 16052055990187948943
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [-21.3460579, 22.6299362, -2.56364417]
+      Rotation: [0, 0, 0, 1]
+      Scale: [12.5162468, 2.71999979, 2.71999979]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 225046154682475770
+    RigidBodyComponent:
+      Type: 2
+      Density: 16
+      Mass: 3
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 16571080797658638296
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [-7.20300245, 17.5685158, -4.45309114]
+      Rotation: [0.0871123821, 0.307054371, 0.258657366, 0.911715746]
+      Scale: [2.71999979, 2.71999979, 2.71999812]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 1232541453168380462
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [0.686534882, 13.6794367, -2.56364417]
+      Rotation: [0, 0, 0.269782096, 0.962921381]
+      Scale: [2.61119866, 8.16414642, 2.61119986]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 7489833591596875514
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 1134028168276482768
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [-5.35879517, 17.7180634, -1.71390343]
+      Rotation: [0, 0, 0, 1]
+      Scale: [2.71999979, 2.71999979, 2.71999979]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 8968845958568749811
+    TagComponent:
+      Tag: plane
+    TransformComponent:
+      Position: [-32.9771156, 5.57111692, 0]
+      Rotation: [0, -0, -0.122848451, 0.992425442]
+      Scale: [104.242104, 0.999999821, 64.8216248]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
   - UUID: 17187384277944736367
     TagComponent:
       Tag: Camera
@@ -80,5 +221,95 @@ Entities:
       Near: 0.100000001
       Far: 1000
       Fov: 45
-      Aspect Ratio: 1.77020204
+      Aspect Ratio: 1.8075
       Orthographic Size: 10
+  - UUID: 15148774463757376145
+    TagComponent:
+      Tag: point light
+    TransformComponent:
+      Position: [-8.06476021, 17.0560036, 10.2002048]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.100880586, 0.0146913575, 0.661111116, 0]
+      Direction: [0, 0, 0, 0]
+      Position: [-8.06476021, 17.0560036, 10.2002048, 0]
+      Params1: [1, 0.0109999999, 0.00200000009, 0]
+      Params2: [0, 1.86000001, 0, 0]
+      Light Type: 1
+  - UUID: 15436372623316466969
+    TagComponent:
+      Tag: Floating Cube
+    TransformComponent:
+      Position: [-9.68993664, 13.6794367, -2.56364417]
+      Rotation: [0, 0, 0, 1]
+      Scale: [2.71999979, 2.71999979, 2.71999979]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 18125184272921980320
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+  - UUID: 3807862237898131127
+    TagComponent:
+      Tag: New Entity
+    TransformComponent:
+      Position: [-8.94404316, 17.5877438, -6.96429062]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+  - UUID: 18444963821587594819
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Position: [0, 2.58143377, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.777131796, 0.799019575, 0.426927179, 0]
+      Direction: [0, -0.5, 0, 0]
+      Position: [0, 2.58143377, 0, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 0.639999986, 0, 0]
+      Light Type: 0
+  - UUID: 2548814355339829469
+    TagComponent:
+      Tag: Scene Name
+    TransformComponent:
+      Position: [-6.85851717, 25.8100815, -13.6186647]
+      Rotation: [0.0824874192, 0.313755035, 0.147484258, 0.934345782]
+      Scale: [5.11000252, 5.10998917, 5.10998821]
+    TextComponent:
+      Text Data: "Coker\n"
+      Font file_id: 6456025844781365329
+  - UUID: 6285344043886882674
+    TagComponent:
+      Tag: hgf
+    TransformComponent:
+      Position: [-55.9568863, 32.2666168, 19.6556625]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      Name: Sphere
+      file id: 5
+    ModelRendererComponent:
+      file id: 6
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    SphereColliderComponent:
+      Is Trigger: false
+      Radius: 1
+      Offset: [0, 0, 0]

@@ -20,12 +20,19 @@ namespace trace {
 
 	//Shapes
 	typedef bool (*__CreateShape)(void*&, PhyShape&, bool);
+	typedef bool (*__CreateShapeWithTransform)(void*&,void*&, PhyShape&, Transform&,bool);
+	typedef bool (*__DestroyShape)(void*&);
+	typedef bool (*__SetShapePtr)(void*&, void*);
+	typedef bool (*__SetShapeMask)(void*&, uint32_t, uint32_t);
+	typedef bool (*__UpdateShapeTransform)(void*&, Transform&);
 	typedef bool (*__AttachShape)(void*&, void*&);
 	typedef bool (*__DetachShape)(void*&, void*&);
 
 	//Rigid Body
 	typedef bool (*__CreateRigidBody)(RigidBody&, Transform&);
+	typedef bool (*__CreateRigidBody_Scene)(void*&, RigidBody&, Transform&);
 	typedef bool (*__DestroyRigidBody)(RigidBody&);
+	typedef bool (*__SetRigidBodyTransform)(RigidBody&, Transform&);
 	typedef bool (*__GetRigidBodyTransform)(RigidBody&, Transform&);
 
 	class PhysicsFuncLoader
@@ -49,11 +56,18 @@ namespace trace {
 		static bool Stimulate(void*& scene, float deltaTime);
 
 		static bool CreateShape(void*& shape, PhyShape geometry, bool trigger = false);
+		static bool CreateShapeWithTransform(void*& scene, void*& shape, PhyShape geometry, Transform& transform,bool trigger = false);
+		static bool DestroyShape(void*& shape);
+		static bool SetShapePtr(void*& shape, void* ptr);
+		static bool SetShapeMask(void*& shape, uint32_t mask0, uint32_t mask1);
+		static bool UpdateShapeTransform(void*& shape, Transform& transform);
 		static bool AttachShape(void*& shape, void*& actor);
 		static bool DetachShape(void*& shape, void*& actor);
 
 		static bool CreateRigidBody(RigidBody& rigid_body, Transform& transform);
+		static bool CreateRigidBody_Scene(void*& scene, RigidBody& rigid_body, Transform& transform);
 		static bool DestroyRigidBody(RigidBody& rigid_body);
+		static bool SetRigidBodyTransform(RigidBody& rigid_body, Transform& transform);
 		static bool GetRigidBodyTransform(RigidBody& rigid_body, Transform&);
 
 
@@ -70,11 +84,18 @@ namespace trace {
 		static __Stimulate _stimulate;
 
 		static __CreateShape _createShape;
+		static __CreateShapeWithTransform _createShapeWithTransform;
+		static __DestroyShape _destroyShape;
+		static __SetShapePtr _setShapePtr;
+		static __SetShapeMask _setShapeMask;
+		static __UpdateShapeTransform _updateShapeTransform;
 		static __AttachShape _attachShape;
 		static __DetachShape _detachShape;
 
 		static __CreateRigidBody _createRigidBody;
+		static __CreateRigidBody_Scene _createRigidBody_Scene;
 		static __DestroyRigidBody _destroyRigidBody;
+		static __SetRigidBodyTransform _setRigidBodyTransform;
 		static __GetRigidBodyTransform _getRigidBodyTransform;
 
 

@@ -31,6 +31,12 @@ namespace trace {
 			return m_scene->m_registry.emplace<T>(m_handle, std::forward<Args>(args)...);
 		}
 
+		template<typename T, typename ...Args>
+		T& AddOrReplaceComponent(Args ...args)
+		{
+			return m_scene->m_registry.emplace_or_replace<T>(m_handle, std::forward<Args>(args)...);
+		}
+
 		template<typename T>
 		void RemoveComponent()
 		{

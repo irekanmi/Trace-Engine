@@ -2,82 +2,140 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: Sample Scene
 Entities:
-  - UUID: 1808496975612877984
-    TagComponent:
-      Tag: New Entity
-    TransformComponent:
-      Position: [-46.3393555, -38.6585083, -263.516266]
-      Rotation: [-0.0198429264, 0.939815283, -0.0266786888, -0.340061367]
-      Scale: [0.151755154, 0.151755169, 0.151754752]
-    ModelComponent:
-      Name: sponza_327_sponza_327_fabric_f
-      file id: 14997834820541274483
-    ModelRendererComponent:
-      file id: 2708008144077323333
-  - UUID: 15496671427956962647
-    TagComponent:
-      Tag: Spot light
-    TransformComponent:
-      Position: [-75.1016541, 63.7829475, -29.1939278]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.609632671, 0.960784316, 0.164840445, 0]
-      Direction: [0.300000012, -0.300000012, 0.100000001, 0]
-      Position: [-75.1016541, 63.7829475, -29.1939278, 0]
-      Params1: [0, 0, 0, 0.999945164]
-      Params2: [0.832921267, 1.32000005, 0, 0]
-      Light Type: 2
-  - UUID: 14479376527013190481
-    TagComponent:
-      Tag: Directional Light
-    TransformComponent:
-      Position: [123.875198, -26.9012985, 25.321909]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.305488914, 0.210255682, 0.857843161, 0]
-      Direction: [0.300000012, -1.10000002, 0, 0]
-      Position: [123.875198, -26.9012985, 25.321909, 0]
-      Params1: [0, 0, 0, 0]
-      Params2: [0, 0.270000011, 0, 0]
-      Light Type: 0
-  - UUID: 7836663257749491887
-    TagComponent:
-      Tag: Sphere
-    TransformComponent:
-      Position: [17.4557533, -7.34450245, -22.1501484]
-      Rotation: [0, 0, 0, 1]
-      Scale: [6.43897629, 6.43897629, 6.36871481]
-    ModelComponent:
-      Name: Sphere
-      file id: 5
-    ModelRendererComponent:
-      file id: 5654164920192765757
-  - UUID: 13276428335963239659
-    TagComponent:
-      Tag: Falcon
-    TransformComponent:
-      Position: [1.71793771, -42.6499557, 5.24645424]
-      Rotation: [-0.039956674, 0.344043553, 0.00103972107, 0.938102663]
-      Scale: [8.92585945, 8.92585564, 8.92582798]
-    ModelComponent:
-      Name: Plane_Plane.001
-      file id: 9770986204108760100
-    ModelRendererComponent:
-      file id: 2426028521616981881
-  - UUID: 3634860917324020060
+  - UUID: 7007839604567743240
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Position: [9.96661282, -54.0283585, -14.727725]
-      Rotation: [0.0256298073, 0.199761644, -0.0161395948, 0.979376256]
-      Scale: [179.410828, 6.25519323, 385.239868]
+      Position: [69.474144, 34.5445099, 3.39453125]
+      Rotation: [0, 0, 0, 1]
+      Scale: [12.959898, 12.959898, 12.959898]
     ModelComponent:
       Name: Cube
       file id: 4
     ModelRendererComponent:
       file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+  - UUID: 1792817939859688882
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [69.474144, 8.68857384, 3.39453125]
+      Rotation: [-0.174473435, -0.0466852449, -0.254233271, 0.950128973]
+      Scale: [12.9599028, 12.9598951, 12.9598999]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+  - UUID: 15678910960730267472
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [50.6900024, 8.68857384, 3.39453125]
+      Rotation: [0.20472011, 0.163249746, 0.0346512198, 0.964488685]
+      Scale: [12.9598913, 12.9598999, 12.9598951]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+  - UUID: 7867161239837873920
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [68.1894989, -9.8098259, 3.39453125]
+      Rotation: [0, 0, 0, 1]
+      Scale: [12.959898, 12.959898, 12.959898]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+  - UUID: 10061649595592624414
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [51.013916, -9.4900198, 3.39453125]
+      Rotation: [0, 0, 0, 1]
+      Scale: [12.959898, 12.959898, 12.959898]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+  - UUID: 1829419726656644201
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [45.6896591, 28.59935, 3.39453125]
+      Rotation: [0, 0, 0, 1]
+      Scale: [12.959898, 12.959898, 12.959898]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+  - UUID: 6998084007703663453
+    TagComponent:
+      Tag: point light
+    TransformComponent:
+      Position: [-1.31432724, -7.73916245, -207.683655]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.931372523, 0.0821799487, 0.157108754, 0]
+      Direction: [-0.5, -0.899999976, -0.600000024, 0]
+      Position: [-1.31432724, -7.73916245, -207.683655, 0]
+      Params1: [1, 0.0329999998, 0, 0.976672292]
+      Params2: [0.798635542, 1.40999997, 0, 0]
+      Light Type: 1
   - UUID: 4280035173306708868
     TagComponent:
       Tag: Camera Entity
@@ -94,19 +152,89 @@ Entities:
       Near: 0.100000001
       Far: 700
       Fov: 60.2999992
-      Aspect Ratio: 2.06313133
+      Aspect Ratio: 1.78999996
       Orthographic Size: 7.30000019
-  - UUID: 6998084007703663453
+  - UUID: 3634860917324020060
     TagComponent:
-      Tag: point light
+      Tag: Floor
     TransformComponent:
-      Position: [-1.31432724, -7.73916245, -207.683655]
+      Position: [9.96661282, -54.0283585, -14.727725]
+      Rotation: [0.0256298073, 0.199761644, -0.0161395948, 0.979376256]
+      Scale: [179.410828, 6.25519323, 385.239868]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 0
+      Density: 10
+      Mass: 1
+  - UUID: 13276428335963239659
+    TagComponent:
+      Tag: Falcon
+    TransformComponent:
+      Position: [1.71793771, -42.6499557, 5.24645424]
+      Rotation: [-0.039956674, 0.344043553, 0.00103972107, 0.938102663]
+      Scale: [8.92585945, 8.92585564, 8.92582798]
+    ModelComponent:
+      Name: Plane_Plane.001
+      file id: 9770986204108760100
+    ModelRendererComponent:
+      file id: 2426028521616981881
+  - UUID: 7836663257749491887
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [17.4557533, -7.34450245, -22.1501484]
+      Rotation: [0, 0, 0, 1]
+      Scale: [6.43897629, 6.43897629, 6.36871481]
+    ModelComponent:
+      Name: Sphere
+      file id: 5
+    ModelRendererComponent:
+      file id: 5654164920192765757
+  - UUID: 14479376527013190481
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Position: [123.875198, -26.9012985, 25.321909]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.931372523, 0.0821799487, 0.157108754, 0]
-      Direction: [-0.5, -0.899999976, -0.600000024, 0]
-      Position: [-1.31432724, -7.73916245, -207.683655, 0]
-      Params1: [1, 0.0329999998, 0, 0.976672292]
-      Params2: [0.798635542, 1.40999997, 0, 0]
-      Light Type: 1
+      Color: [0.305488914, 0.210255682, 0.857843161, 0]
+      Direction: [0.300000012, -1.10000002, 0, 0]
+      Position: [123.875198, -26.9012985, 25.321909, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 0.270000011, 0, 0]
+      Light Type: 0
+  - UUID: 15496671427956962647
+    TagComponent:
+      Tag: Spot light
+    TransformComponent:
+      Position: [-75.1016541, 63.7829475, -29.1939278]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.609632671, 0.960784316, 0.164840445, 0]
+      Direction: [0.300000012, -0.300000012, 0.100000001, 0]
+      Position: [-75.1016541, 63.7829475, -29.1939278, 0]
+      Params1: [0, 0, 0, 0.999945164]
+      Params2: [0.832921267, 1.32000005, 0, 0]
+      Light Type: 2
+  - UUID: 1808496975612877984
+    TagComponent:
+      Tag: New Entity
+    TransformComponent:
+      Position: [-46.3393555, -38.6585083, -263.516266]
+      Rotation: [-0.0198429264, 0.939815283, -0.0266786888, -0.340061367]
+      Scale: [0.151755154, 0.151755169, 0.151754752]
+    ModelComponent:
+      Name: sponza_327_sponza_327_fabric_f
+      file id: 14997834820541274483
+    ModelRendererComponent:
+      file id: 2708008144077323333

@@ -3,6 +3,8 @@
 #include "glm/glm.hpp"
 
 namespace trace {
+	
+	class Entity;
 
 	class PhyShape
 	{
@@ -97,5 +99,7 @@ namespace trace {
 	protected:
 
 	};
+
+	using CollisionPair = std::pair<Entity, Entity>;
 
 }

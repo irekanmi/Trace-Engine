@@ -133,18 +133,7 @@ namespace trace {
 		}
 	};
 
-	struct BoxCoillderComponent
-	{
-		PhyShape shape;
-		bool is_trigger = false;
-		void* _internal = nullptr;
-		BoxCoillderComponent() { shape.SetBox(glm::vec3(0.5f)); shape.offset = glm::vec3(0.0f); };
-		BoxCoillderComponent(const BoxCoillderComponent&) = default;
-		~BoxCoillderComponent()
-		{
-
-		}
-	};
+	
 
 	struct RigidBodyComponent
 	{
@@ -156,6 +145,34 @@ namespace trace {
 
 		}
 	};
+
+	struct BoxColliderComponent
+	{
+		PhyShape shape;
+		bool is_trigger = false;
+		void* _internal = nullptr;
+		BoxColliderComponent() { shape.SetBox(glm::vec3(0.5f)); shape.offset = glm::vec3(0.0f); };
+		BoxColliderComponent(const BoxColliderComponent&) = default;
+		~BoxColliderComponent()
+		{
+
+		}
+	};
+
+	struct SphereColliderComponent
+	{
+		PhyShape shape;
+		bool is_trigger = false;
+		void* _internal = nullptr;
+		SphereColliderComponent() { shape.SetSphere(0.5f); shape.offset = glm::vec3(0.0f); };
+		SphereColliderComponent(const SphereColliderComponent&) = default;
+		~SphereColliderComponent()
+		{
+
+		}
+	};
+
+
 
 
 

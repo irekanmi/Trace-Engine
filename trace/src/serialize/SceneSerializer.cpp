@@ -138,6 +138,48 @@ namespace trace {
 
 				emit << YAML::EndMap;
 			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<RigidBodyComponent>())
+			{
+				RigidBodyComponent& body = entity.GetComponent<RigidBodyComponent>();
+				emit << YAML::Key << "RigidBodyComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "Type" << YAML::Value << (int)body.body.GetType();
+				emit << YAML::Key << "Density" << YAML::Value << body.body.density;
+				emit << YAML::Key << "Mass" << YAML::Value << body.body.mass;
+
+				emit << YAML::EndMap;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<BoxColliderComponent>())
+			{
+				BoxColliderComponent& box = entity.GetComponent<BoxColliderComponent>();
+				emit << YAML::Key << "BoxCoillderComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "Is Trigger" << YAML::Value << box.is_trigger;
+				emit << YAML::Key << "Extents" << YAML::Value << box.shape.box.half_extents;
+				emit << YAML::Key << "Offset" << YAML::Value << box.shape.offset;
+
+				emit << YAML::EndMap;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<SphereColliderComponent>())
+			{
+				SphereColliderComponent& sc = entity.GetComponent<SphereColliderComponent>();
+				emit << YAML::Key << "SphereColliderComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "Is Trigger" << YAML::Value << sc.is_trigger;
+				emit << YAML::Key << "Radius" << YAML::Value << sc.shape.sphere.radius;
+				emit << YAML::Key << "Offset" << YAML::Value << sc.shape.offset;
+
+				emit << YAML::EndMap;
+			}
 		}
 	};
 
@@ -235,7 +277,32 @@ namespace trace {
 			if (res) Txt.font = res;
 		}
 
-		}}
+		}},
+		{ "RigidBodyComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["RigidBodyComponent"];
+		RigidBodyComponent& body = entity.AddComponent<RigidBodyComponent>();
+		body.body.SetType((RigidBody::Type)comp["Type"].as<int>());
+		body.body.density = comp["Density"].as<float>();
+		body.body.mass = comp["Mass"].as<float>();
+
+
+		}},
+		{ "BoxCoillderComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["BoxCoillderComponent"];
+		BoxColliderComponent& box = entity.AddComponent<BoxColliderComponent>();
+		box.is_trigger = comp["Is Trigger"].as<bool>();
+		box.shape.SetBox(comp["Extents"].as<glm::vec3>());
+		box.shape.offset = comp["Offset"].as<glm::vec3>();
+
+		}},
+		{ "SphereColliderComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["SphereColliderComponent"];
+		SphereColliderComponent& sc = entity.AddComponent<SphereColliderComponent>();
+		sc.is_trigger = comp["Is Trigger"].as<bool>();
+		sc.shape.SetSphere(comp["Radius"].as<float>());
+		sc.shape.offset = comp["Offset"].as<glm::vec3>();
+
+		} }
 	};
 
 	

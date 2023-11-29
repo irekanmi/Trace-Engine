@@ -1,0 +1,56 @@
+Trace Version: 0.0.0.0
+Scene Version: 0.0.0.0
+Scene Name: physX.trscn
+Entities:
+  - UUID: 17247322738515920002
+    TagComponent:
+      Tag: Main Camera
+    TransformComponent:
+      Position: [1.88414001, -2.70306301, -20.9406013]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Is Main: true
+      Camera Type: 0
+      Position: [0, 0, 1]
+      Look Direction: [0, 0, -1]
+      Up Direction: [0, 1, 0]
+      Near: 0.100000001
+      Far: 1000
+      Fov: 45
+      Aspect Ratio: 1.75250006
+      Orthographic Size: 10
+  - UUID: 1973436402553046962
+    TagComponent:
+      Tag: Plane
+    TransformComponent:
+      Position: [-0.36447686, -1.12692499, 0.698224843]
+      Rotation: [-0.338481724, -0, 0, 0.940972984]
+      Scale: [19.071537, 0.99999994, 31.9033241]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 6
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]
+    RigidBodyComponent:
+      Type: 0
+      Density: 10
+      Mass: 9
+  - UUID: 16388384640707919812
+    TagComponent:
+      Tag: Sun Light
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.683333337, 0.612722218, 0.447962999, 0]
+      Direction: [0, -0.699999988, 0, 0]
+      Position: [0, 0, 0, 0]
+      Params1: [0, 0, 0, 0]
+      Params2: [0, 0.709999979, 0, 0]
+      Light Type: 0

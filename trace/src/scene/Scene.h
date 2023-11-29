@@ -31,6 +31,7 @@ namespace trace {
 		Entity CreateEntity();
 		Entity CreateEntity(const std::string& _tag);
 		Entity CreateEntity_UUID(UUID id,const std::string& _tag);
+		void DuplicateEntity(Entity entity);
 		void DestroyEntity(Entity entity);
 
 		std::string& GetName() { return m_name; }
@@ -43,6 +44,7 @@ namespace trace {
 		entt::registry m_registry;
 		std::string m_name;
 		void* m_physics3D = nullptr;
+		std::unordered_map<UUID, Entity> m_entityMap;
 
 	protected:
 		friend class Entity;

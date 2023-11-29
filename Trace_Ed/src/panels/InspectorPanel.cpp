@@ -297,13 +297,17 @@ namespace trace {
 			{
 				entity.AddComponent<TextComponent>();
 			}
-			if (ImGui::MenuItem("Box Coillder"))
-			{
-				entity.AddComponent<BoxCoillderComponent>();
-			}
 			if (ImGui::MenuItem("Rigid Body"))
 			{
 				entity.AddComponent<RigidBodyComponent>();
+			}
+			if (ImGui::MenuItem("Box Coillder"))
+			{
+				entity.AddComponent<BoxColliderComponent>();
+			}
+			if (ImGui::MenuItem("Sphere Coillder"))
+			{
+				entity.AddComponent<SphereColliderComponent>();
 			}
 
 			ImGui::EndPopup();
@@ -541,7 +545,7 @@ namespace trace {
 				std::filesystem::path p = mat_res;
 				Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
 				if (mt_res) comp._material = mt_res;
-				mt_res = MaterialSerializer::Deserialize(p.string());
+				else mt_res = MaterialSerializer::Deserialize(p.string());
 				if (mt_res) comp._material = mt_res;
 			}
 
@@ -595,15 +599,6 @@ namespace trace {
 			
 			});
 
-		DrawComponent<BoxCoillderComponent>(entity, "Box Coillder", [](Entity obj, BoxCoillderComponent& comp) {
-			
-			PhyShape& shp = comp.shape;
-
-			ImGui::Checkbox("Is Trigger", &comp.is_trigger);
-			ImGui::DragFloat3("Extent", glm::value_ptr(shp.box.half_extents));
-			ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset));
-			
-			});
 
 		DrawComponent<RigidBodyComponent>(entity, "Rigid Body", [](Entity obj, RigidBodyComponent& comp) {
 
@@ -634,6 +629,42 @@ namespace trace {
 
 			});
 
+		DrawComponent<BoxColliderComponent>(entity, "Box Coillder", [](Entity obj, BoxColliderComponent& comp) {
+			
+			PhyShape& shp = comp.shape;
+
+			ImGui::Checkbox("Is Trigger", &comp.is_trigger);
+			ImGui::DragFloat3("Extent", glm::value_ptr(shp.box.half_extents));
+			ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset));
+			
+			});
+
+		DrawComponent<SphereColliderComponent>(entity, "Sphere Coillder", [&](Entity obj, SphereColliderComponent& comp) {
+
+			static bool show_collider = true;
+			ImGui::Checkbox("Show Collider", &show_collider);
+
+			PhyShape& shp = comp.shape;
+
+			ImGui::Checkbox("Is Trigger", &comp.is_trigger);
+			ImGui::DragFloat("Radius", &shp.sphere.radius);
+			ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset));
+
+			if (show_collider)
+			{
+				Renderer* renderer = Renderer::get_instance();
+
+				Transform pose = obj.GetComponent<TransformComponent>()._transform;
+				pose.SetPosition(pose.GetPosition() + shp.offset);
+
+				CommandList cmd_list = renderer->BeginCommandList();
+				renderer->BeginScene(cmd_list, &m_editor->editor_cam);
+				renderer->DrawDebugSphere(cmd_list, shp.sphere.radius + 0.001f, 25, pose.GetLocalMatrix());
+				renderer->EndScene(cmd_list);
+				renderer->SubmitCommandList(cmd_list);
+			}
+
+			});
 		
 	}
 

@@ -1,7 +1,7 @@
 #include "pch.h"
 
-#include "Scene.h"
 #include "Entity.h"
+#include "Scene.h"
 #include "Componets.h"
 #include "render/Renderer.h"
 #include "backends/Physicsutils.h"
@@ -19,21 +19,70 @@ namespace trace {
 		PhysicsFunc::CreateScene3D(m_physics3D, glm::vec3(0.0f, -9.81f, 0.0f));
 		if (m_physics3D)
 		{
-			auto view = m_registry.view<TransformComponent ,RigidBodyComponent, BoxCoillderComponent>();
-			for (auto i : view)
+			auto rigid_view = m_registry.view<TransformComponent, RigidBodyComponent>();
+			for (auto i : rigid_view)
 			{
-				auto [pose,rigid, shp] = view.get(i);
+				auto [pose, rigid] = rigid_view.get(i);
+				PhysicsFunc::CreateRigidBody_Scene(m_physics3D,rigid.body, pose._transform);
+			}
 
+			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent>();
+			for (auto i : bcd)
+			{
+				auto [pose, box] = bcd.get(i);
+				glm::vec3 extent = box.shape.box.half_extents;
+				box.shape.box.half_extents *= pose._transform.GetScale();
 				Transform local;
-				glm::vec3 extent = shp.shape.box.half_extents;
-				shp.shape.box.half_extents *= pose._transform.GetScale();
-				local.SetPosition(pose._transform.GetPosition() + shp.shape.offset);
+				local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
 				local.SetRotation(pose._transform.GetRotation());
-				PhysicsFunc::CreateRigidBody(rigid.body, pose._transform);
-				PhysicsFunc::CreateShape(shp._internal, shp.shape, shp.is_trigger);
-				PhysicsFunc::AttachShape(shp._internal, rigid.body.GetInternal());
-				PhysicsFunc::AddActor(m_physics3D, rigid.body.GetInternal());
-				shp.shape.box.half_extents = extent;
+				PhysicsFunc::CreateShapeWithTransform(m_physics3D,box._internal, box.shape, local, box.is_trigger);
+				//Temp _______________
+				PhysicsFunc::SetShapeMask(box._internal, BIT(1), BIT(1));
+				// -------------------
+
+				box.shape.box.half_extents = extent;
+
+
+				Entity entity(i, this);
+				UUID _id = entity.GetComponent<IDComponent>()._id;
+				Entity* shp_ptr = &m_entityMap[_id];
+				PhysicsFunc::SetShapePtr(box._internal, shp_ptr);
+				if (!box.is_trigger && entity.HasComponent<RigidBodyComponent>())
+				{
+					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
+					PhysicsFunc::AttachShape(box._internal, rigid.body.GetInternal());
+
+				}
+
+			}
+
+			auto scd = m_registry.view<TransformComponent, SphereColliderComponent>();
+			for (auto i : scd)
+			{
+				auto [pose, sc] = scd.get(i);
+				float raduis = sc.shape.sphere.radius;
+				Transform local;
+				local.SetPosition(pose._transform.GetPosition() + sc.shape.offset);
+				local.SetRotation(pose._transform.GetRotation());
+				PhysicsFunc::CreateShapeWithTransform(m_physics3D, sc._internal, sc.shape, local, sc.is_trigger);
+				//Temp _______________
+				PhysicsFunc::SetShapeMask(sc._internal, BIT(1), BIT(1));
+				// -------------------
+
+				Entity entity(i, this);
+				UUID _id = entity.GetComponent<IDComponent>()._id;
+				Entity* shp_ptr = &m_entityMap[_id];
+				PhysicsFunc::SetShapePtr(sc._internal, shp_ptr);
+				if (!sc.is_trigger && entity.HasComponent<RigidBodyComponent>())
+				{
+					
+					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
+					PhysicsFunc::AttachShape(sc._internal, rigid.body.GetInternal());
+
+				}
+
 			}
 		}
 	}
@@ -51,10 +100,19 @@ namespace trace {
 				PhysicsFunc::DestroyRigidBody(rigid.body);
 			}
 
-			auto box_coillders = m_registry.view<BoxCoillderComponent>();
+			auto box_coillders = m_registry.view<BoxColliderComponent>();
 			for (auto i : box_coillders)
 			{
 				auto [box] = box_coillders.get(i);
+				PhysicsFunc::DestroyShape(box._internal);
+
+			}
+
+			auto scd = m_registry.view<SphereColliderComponent>();
+			for (auto i : scd)
+			{
+				auto [sc] = scd.get(i);
+				PhysicsFunc::DestroyShape(sc._internal);
 
 			}
 
@@ -70,8 +128,30 @@ namespace trace {
 	{
 		if (m_physics3D)
 		{
-			PhysicsFunc::Stimulate(m_physics3D, deltaTime);
 			auto bodies = m_registry.view<TransformComponent, RigidBodyComponent>();
+			for (auto i : bodies)
+			{
+				auto [transform, rigid] = bodies.get(i);
+
+				PhysicsFunc::SetRigidBodyTransform(rigid.body, transform._transform);
+			}
+
+			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent>();
+			for (auto i : bcd)
+			{
+				auto [pose, bc] = bcd.get(i);
+				PhysicsFunc::UpdateShapeTransform(bc._internal, pose._transform);
+			}
+
+			auto scd = m_registry.view<TransformComponent, SphereColliderComponent>();
+			for (auto i : scd)
+			{
+				auto [pose, sc] = scd.get(i);
+				PhysicsFunc::UpdateShapeTransform(sc._internal, pose._transform);
+			}
+			
+
+			PhysicsFunc::Stimulate(m_physics3D, deltaTime);
 			for (auto i : bodies)
 			{
 				auto [transform ,rigid] = bodies.get(i);
@@ -194,12 +274,40 @@ namespace trace {
 		tag._tag = _tag.empty() ? "New Entity" : _tag;
 		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<IDComponent>()._id = id;
+		m_entityMap[id] = entity;
 
 		return entity;
 	}
 
+	template<typename Component>
+	void CopyComponent(Entity from, Entity to)
+	{
+		if (from.HasComponent<Component>())
+		{
+			to.AddOrReplaceComponent<Component>(from.GetComponent<Component>());
+		}
+	}
+
+	void Scene::DuplicateEntity(Entity entity)
+	{
+		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>()._tag);
+
+		CopyComponent<TagComponent>(entity, res);
+		CopyComponent<TransformComponent>(entity, res);
+		CopyComponent<CameraComponent>(entity, res);
+		CopyComponent<LightComponent>(entity, res);
+		CopyComponent<MeshComponent>(entity, res);
+		CopyComponent<ModelComponent>(entity, res);
+		CopyComponent<ModelRendererComponent>(entity, res);
+		CopyComponent<TextComponent>(entity, res);
+		CopyComponent<BoxColliderComponent>(entity, res);
+		CopyComponent<RigidBodyComponent>(entity, res);
+
+	}
+
 	void Scene::DestroyEntity(Entity entity)
 	{
+		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
 	}
 
@@ -217,6 +325,8 @@ namespace trace {
 		}
 
 	}
+
+
 
 	void Scene::Copy(Ref<Scene> from, Ref<Scene> to)
 	{
@@ -243,8 +353,9 @@ namespace trace {
 		CopyComponent<ModelComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<ModelRendererComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<TextComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<BoxCoillderComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<RigidBodyComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<BoxColliderComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<SphereColliderComponent>(f_reg, t_reg, entity_map);
 
 	}
 

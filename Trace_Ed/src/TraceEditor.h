@@ -12,7 +12,7 @@ namespace trace {
 
 	enum EditorState
 	{
-		SceneEdit, ScenePlay
+		SceneEdit, ScenePlay, SceneStimulate
 	};
 
 	class TraceEditor
@@ -51,6 +51,7 @@ namespace trace {
 		void HandleKeyPressed(KeyPressed* p_event);
 		void HandleKeyRelesed(KeyReleased* p_event);
 		void OnScenePlay();
+		void OnSceneStimulate();
 		void OnSceneStop();
 
 		struct AllProjectAssets

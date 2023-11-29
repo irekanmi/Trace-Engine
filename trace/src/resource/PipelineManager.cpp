@@ -270,7 +270,7 @@ namespace trace {
 			clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
 			clr_bld.src_color = BlendFactor::BLEND_ONE;
 			_ds2.blend_state = clr_bld;
-			_ds2.depth_sten_state = { false, false, 0.0f, 1.0f };
+			_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
 
 			text_pipeline = CreatePipeline(_ds2, "text_batch_pipeline");
 			if (!text_pipeline)

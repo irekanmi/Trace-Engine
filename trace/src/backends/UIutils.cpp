@@ -341,7 +341,7 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
-	std::string font_path = trace::FontManager::get_instance()->GetFontResourcePath() + "/monos.ttf";
+	std::string font_path = trace::FontManager::get_instance()->GetFontResourcePath() + "/Ruda-Bold.ttf";
 	io.FontDefault = io.Fonts->AddFontFromFileTTF(font_path.c_str(), 13.0f);
 
 

@@ -40,7 +40,7 @@ namespace trace {
 
 		UIFuncLoader::LoadImGuiFunc();
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
-		dark_purple();
+		embraceTheDarkness();
 		m_hierachyPanel.m_editor = this;
 		m_inspectorPanel.m_editor = this;
 		m_contentBrowser.m_editor = this;
@@ -128,6 +128,25 @@ namespace trace {
 				m_currentScene->OnPhysicsUpdate(deltaTime);
 				m_currentScene->OnRender();
 			}
+			break;
+		}
+		case SceneStimulate:
+		{
+			if (m_viewportFocused || m_viewportHovered)
+				editor_cam.Update(deltaTime);
+
+			Renderer* renderer = Renderer::get_instance();
+
+			CommandList cmd_list = renderer->BeginCommandList();
+			renderer->BeginScene(cmd_list, &editor_cam);
+			if (m_currentScene)
+			{
+				m_currentScene->OnPhysicsUpdate(deltaTime);
+				m_currentScene->OnRender(cmd_list);
+			}
+			DrawGrid(cmd_list);
+			renderer->EndScene(cmd_list);
+			renderer->SubmitCommandList(cmd_list);
 			break;
 		}
 		}
@@ -313,6 +332,7 @@ namespace trace {
 		ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 		bool playing = (current_state == EditorState::ScenePlay);
+		bool stimulating = (current_state == EditorState::SceneStimulate);
 
 		if (ImGui::Button(playing ? "Stop" : "Play"))
 		{
@@ -331,11 +351,20 @@ namespace trace {
 			}
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Pause"))
+		if (ImGui::Button(!stimulating ? "Stimulate" : "Stop Stimulation"))
 		{
 			if (m_currentScene)
 			{
-				
+				if (stimulating)
+				{
+					OnSceneStop();
+					current_state = EditorState::SceneEdit;
+				}
+				else
+				{
+					OnSceneStimulate();
+					current_state = EditorState::SceneStimulate;
+				}
 			}
 		}
 
@@ -790,6 +819,17 @@ namespace trace {
 
 			break;
 		}
+		case KEY_D:
+		{
+			if (current_state != SceneEdit) break;
+
+			if (control && m_hierachyPanel.m_selectedEntity)
+			{
+				m_currentScene->DuplicateEntity(m_hierachyPanel.m_selectedEntity);
+			}
+
+			break;
+		}
 		}
 
 	}
@@ -799,6 +839,15 @@ namespace trace {
 	void TraceEditor::OnScenePlay()
 	{
 		if ((current_state == EditorState::ScenePlay)) return;
+
+		Scene::Copy(m_editScene, m_editScene_duplicate);
+		m_currentScene = m_editScene_duplicate;
+		m_currentScene->OnStart();
+		m_hierachyPanel.m_selectedEntity = Entity();
+	}
+	void TraceEditor::OnSceneStimulate()
+	{
+		if ((current_state == EditorState::SceneStimulate)) return;
 
 		Scene::Copy(m_editScene, m_editScene_duplicate);
 		m_currentScene = m_editScene_duplicate;

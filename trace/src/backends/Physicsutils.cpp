@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "scene/Entity.h"
 #include "Physicsutils.h"
 #include "core/io/Logging.h"
 #include "core/platform/Physx/Physx_backend.h"
@@ -27,11 +28,18 @@ namespace trace {
 	__Stimulate PhysicsFunc::_stimulate = nullptr;
 
 	__CreateShape PhysicsFunc::_createShape = nullptr;
+	__CreateShapeWithTransform PhysicsFunc::_createShapeWithTransform = nullptr;
+	__DestroyShape PhysicsFunc::_destroyShape = nullptr;
+	__SetShapePtr PhysicsFunc::_setShapePtr = nullptr;
+	__SetShapeMask PhysicsFunc::_setShapeMask = nullptr;
+	__UpdateShapeTransform PhysicsFunc::_updateShapeTransform = nullptr;
 	__AttachShape PhysicsFunc::_attachShape = nullptr;
 	__DetachShape PhysicsFunc::_detachShape = nullptr;
 
 	__CreateRigidBody PhysicsFunc::_createRigidBody = nullptr;
+	__CreateRigidBody_Scene PhysicsFunc::_createRigidBody_Scene = nullptr;
 	__DestroyRigidBody PhysicsFunc::_destroyRigidBody = nullptr;
+	__SetRigidBodyTransform PhysicsFunc::_setRigidBodyTransform = nullptr;
 	__GetRigidBodyTransform PhysicsFunc::_getRigidBodyTransform = nullptr;
 
 	// Loader ---------------------------------------
@@ -47,11 +55,18 @@ namespace trace {
 		PhysicsFunc::_stimulate = physx::__Stimulate;
 
 		PhysicsFunc::_createShape = physx::__CreateShape;
+		PhysicsFunc::_destroyShape = physx::__DestroyShape;
+		PhysicsFunc::_createShapeWithTransform = physx::__CreateShapeWithTransform;
+		PhysicsFunc::_updateShapeTransform = physx::__UpdateShapeTransform;
+		PhysicsFunc::_setShapePtr = physx::__SetShapePtr;
+		PhysicsFunc::_setShapeMask = physx::__SetShapeMask;
 		PhysicsFunc::_attachShape = physx::__AttachShape;
 		PhysicsFunc::_detachShape = physx::__DetachShape;
 
 		PhysicsFunc::_createRigidBody = physx::__CreateRigidBody;
+		PhysicsFunc::_createRigidBody_Scene = physx::__CreateRigidBody_Scene;
 		PhysicsFunc::_destroyRigidBody = physx::__DestroyRigidBody;
+		PhysicsFunc::_setRigidBodyTransform = physx::__SetRigidBodyTransform;
 		PhysicsFunc::_getRigidBodyTransform = physx::__GetRigidBodyTransform;
 
 		return true;
@@ -112,6 +127,36 @@ namespace trace {
 		return _createShape(shape, geometry, trigger);
 	}
 
+	bool PhysicsFunc::CreateShapeWithTransform(void*& scene, void*& shape, PhyShape geometry, Transform& transform, bool trigger)
+	{
+		PHYSICS_FUNC_IS_VALID(_createShapeWithTransform);
+		return _createShapeWithTransform(scene, shape, geometry, transform, trigger);
+	}
+
+	bool PhysicsFunc::DestroyShape(void*& shape)
+	{
+		PHYSICS_FUNC_IS_VALID(_destroyShape);
+		return _destroyShape(shape);
+	}
+
+	bool PhysicsFunc::SetShapePtr(void*& shape, void* ptr)
+	{
+		PHYSICS_FUNC_IS_VALID(_setShapePtr);
+		return _setShapePtr(shape, ptr);
+	}
+
+	bool PhysicsFunc::SetShapeMask(void*& shape, uint32_t mask0, uint32_t mask1)
+	{
+		PHYSICS_FUNC_IS_VALID(_setShapeMask);
+		return _setShapeMask(shape, mask0, mask1);
+	}
+
+	bool PhysicsFunc::UpdateShapeTransform(void*& shape, Transform& transform)
+	{
+		PHYSICS_FUNC_IS_VALID(_updateShapeTransform);
+		return _updateShapeTransform(shape, transform);
+	}
+
 	bool PhysicsFunc::AttachShape(void*& shape, void*& actor)
 	{
 		PHYSICS_FUNC_IS_VALID(_attachShape);
@@ -130,10 +175,22 @@ namespace trace {
 		return _createRigidBody(rigid_body,transform);
 	}
 
+	bool PhysicsFunc::CreateRigidBody_Scene(void*& scene, RigidBody& rigid_body, Transform& transform)
+	{
+		PHYSICS_FUNC_IS_VALID(_createRigidBody_Scene);
+		return _createRigidBody_Scene(scene, rigid_body, transform);
+	}
+
 	bool PhysicsFunc::DestroyRigidBody(RigidBody& rigid_body)
 	{
 		PHYSICS_FUNC_IS_VALID(_destroyRigidBody);
 		return _destroyRigidBody(rigid_body);
+	}
+
+	bool PhysicsFunc::SetRigidBodyTransform(RigidBody& rigid_body, Transform& transform)
+	{
+		PHYSICS_FUNC_IS_VALID(_setRigidBodyTransform);
+		return _setRigidBodyTransform(rigid_body, transform);
 	}
 
 	bool PhysicsFunc::GetRigidBodyTransform(RigidBody& rigid_body, Transform& transform)
