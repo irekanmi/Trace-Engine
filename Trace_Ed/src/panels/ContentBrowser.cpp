@@ -274,9 +274,11 @@ namespace trace {
 
 		all_files_id["Cube"] = 4;
 		all_files_id["Sphere"] = 5;
-		all_files_id["Plane"] = 7;
 
 		all_files_id["default"] = 6;
+		all_files_id["Plane"] = 7;
+
+		all_files_id["gbuffer_pipeline"] = 8;
 
 		all_id_path[1] = "albedo_map";
 		all_id_path[2] = "specular_map";
@@ -284,9 +286,10 @@ namespace trace {
 
 		all_id_path[4] = "Cube";
 		all_id_path[5] = "Sphere";
-		all_id_path[7] = "Plane";
 
 		all_id_path[6] = "default";
+		all_id_path[7] = "Plane";
+		all_id_path[8] = "gbuffer_pipeline";
 
 		//::-----::
 

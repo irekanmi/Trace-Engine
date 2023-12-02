@@ -9,6 +9,9 @@
 #include "backends/Renderutils.h"
 #include "ShaderManager.h"
 
+
+#include "serialize/PipelineSerializer.h"
+
 namespace trace {
 
 	PipelineManager* PipelineManager::s_instance = nullptr;
@@ -339,6 +342,8 @@ namespace trace {
 				TRC_ERROR("Failed to initialize or create default gbuffer pipeline");
 				return false;
 			}
+			gbuffer_pipeline->pipeline_type = PipelineType::Surface_Material;
+
 
 		};
 

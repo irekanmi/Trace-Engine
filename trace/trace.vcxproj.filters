@@ -377,6 +377,7 @@
     </ClInclude>
     <ClInclude Include="src\core\platform\Physx\Physx_backend.h" />
     <ClInclude Include="src\physics\Physics.h" />
+    <ClInclude Include="src\serialize\PipelineSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -677,5 +678,6 @@
       <Filter>src\serialize</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
+    <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
   </ItemGroup>
 </Project>

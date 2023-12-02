@@ -268,6 +268,13 @@ namespace trace {
 		SPOT
 	};
 
+	enum PipelineType
+	{
+		Unknown = BIT(1),
+		Surface_Material = BIT(2),
+		Post_Process = BIT(3)
+	};
+
 	typedef uint32_t FrameSettings;
 
 	struct BufferInfo

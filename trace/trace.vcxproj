@@ -249,12 +249,14 @@
     <ClInclude Include="src\scene\SceneManager.h" />
     <ClInclude Include="src\scene\UUID.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
+    <ClInclude Include="src\serialize\PipelineSerializer.h" />
     <ClInclude Include="src\serialize\SceneSerializer.h" />
     <ClInclude Include="src\serialize\yaml_util.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
+    <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

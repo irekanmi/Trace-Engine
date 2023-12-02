@@ -4,12 +4,14 @@
 #include "scene/SceneManager.h"
 #include "resource/ModelManager.h"
 #include "resource/MeshManager.h"
+#include "resource/PipelineManager.h"
 #include "scene/SceneManager.h"
 #include "scene/Entity.h"
 #include "scene/Componets.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
 #include "serialize/SceneSerializer.h"
+#include "serialize/PipelineSerializer.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -86,6 +88,7 @@ namespace trace {
 
 		all_assets.materials.emplace("default");
 
+		
 		return true;
 	}
 

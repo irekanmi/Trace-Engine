@@ -61,11 +61,13 @@ namespace trace {
 			for (auto i : scd)
 			{
 				auto [pose, sc] = scd.get(i);
-				float raduis = sc.shape.sphere.radius;
+				float radius = sc.shape.sphere.radius;
+				sc.shape.sphere.radius *= pose._transform.GetScale().x; //TODO: Determine maybe scale in transform should be used or not
 				Transform local;
 				local.SetPosition(pose._transform.GetPosition() + sc.shape.offset);
 				local.SetRotation(pose._transform.GetRotation());
 				PhysicsFunc::CreateShapeWithTransform(m_physics3D, sc._internal, sc.shape, local, sc.is_trigger);
+				sc.shape.sphere.radius = radius;
 				//Temp _______________
 				PhysicsFunc::SetShapeMask(sc._internal, BIT(1), BIT(1));
 				// -------------------
@@ -300,8 +302,9 @@ namespace trace {
 		CopyComponent<ModelComponent>(entity, res);
 		CopyComponent<ModelRendererComponent>(entity, res);
 		CopyComponent<TextComponent>(entity, res);
-		CopyComponent<BoxColliderComponent>(entity, res);
 		CopyComponent<RigidBodyComponent>(entity, res);
+		CopyComponent<BoxColliderComponent>(entity, res);
+		CopyComponent<SphereColliderComponent>(entity, res);
 
 	}
 

@@ -1,0 +1,43 @@
+Trace Version: 0.0.0.0
+Pipeline Version: 0.0.0.0
+Pipeline Name: destaturate_pipeline
+Pipeline Type: 4
+Vertex Shader: 17971878597675636412
+Pixel Shader: 714942716572124765
+InputLayout:
+  Stride: 48
+  Input Class: 0
+  Elements:
+    - Index: 0
+      Offset: 0
+      Stride: 12
+      Format: 3
+    - Index: 1
+      Offset: 12
+      Stride: 12
+      Format: 3
+    - Index: 2
+      Offset: 24
+      Stride: 8
+      Format: 5
+    - Index: 3
+      Offset: 32
+      Stride: 16
+      Format: 2
+RasterizerState:
+  Cull Mode: 2
+  Fill Mode: 2
+ColorBlendState:
+  alpha_to_blend_coverage: false
+  Src Color: 0
+  Dst Color: 0
+  Color Op: 0
+  Src Alpha: 0
+  Dst Alpha: 0
+  Alpha Op: 0
+DepthStencilState:
+  depth_test_enable: true
+  stencil_test_enable: false
+  Min Depth: 0
+  Max Depth: 1
+Topology: 1

@@ -2,19 +2,11 @@
 
 #define MAX_LIGHT_COUNT 4
 
-layout(location = 0)out vec4 g_Position;
-layout(location = 1)out vec4 g_Normal;
-layout(location = 2)out vec4 g_ColorSpecular;
+#include "globals_data.glsl"
+#include "utils.glsl"
 
-layout(location = 0)in data_object
-{
-    vec3 _normal;
-    vec3 _fragPos;
-    vec3 _view_position;
-    vec2 _texCoord;
-    vec4 _tangent;
-    flat ivec4 light_data;
-} _data;
+OUT_FRAG_DATA
+IN_VERTEX_DATA
 
 
 layout(set = 1, binding = 0)uniform InstanceBufferObject{
@@ -27,18 +19,12 @@ layout(set = 1, binding = 3)uniform sampler2D NORMAL_MAP;
 
 void main()
 {
-    vec3 _normal = texture(NORMAL_MAP, _data._texCoord).rgb;
-    _normal = _normal * 2.0f - 1.0f;
-    
-    vec3 obj_norm = normalize(_data._normal);
-    vec3 _tangent = normalize( _data._tangent.xyz - (dot(_data._tangent.xyz, obj_norm) * obj_norm) );
-    vec3 _bitangent = cross(obj_norm, _tangent) * _data._tangent.w;
-    mat3 TBN = mat3(_tangent, _bitangent, obj_norm);
-    vec3 normal = normalize(TBN * _normal);
+    vec3 normal;
+    SAMPLE_NORMAL_MAP(NORMAL_MAP, _texCoord, _normal_, _tangent_, normal );
 
-
-    g_Position = vec4(_data._fragPos, 1.0f);
-    g_Normal = vec4(normal, shininess);
-    g_ColorSpecular = vec4(texture(DIFFUSE_MAP, _data._texCoord).rgb, texture(SPECULAR_MAP, _data._texCoord).r);
-
+    FRAG_POS = _fragPos;
+    FRAG_NORMAL = normal;
+    FRAG_SHININESS = shininess;
+    FRAG_COLOR = SampleTextureMap_RGB(DIFFUSE_MAP, _texCoord);
+    FRAG_SPECULAR = SampleTextureMap_R(SPECULAR_MAP, _texCoord);
 }

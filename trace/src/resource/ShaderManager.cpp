@@ -136,12 +136,13 @@ namespace trace {
 			return result;
 		}
 
-		std::string shader_data = ShaderParser::load_shader_file(path);
 		std::vector<uint32_t> code;
 		if (!std::filesystem::exists(code_path))
 		{
+			std::string shader_data = ShaderParser::load_shader_file(path);
 			if (p.extension() == ".glsl") code = ShaderParser::glsl_to_spirv(shader_data, shader_stage);
-			SaveShaderCode(code_path, code);
+			if(!code.empty())
+				SaveShaderCode(code_path, code);
 		}
 		else
 		{
