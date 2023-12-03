@@ -12,6 +12,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "yaml_util.h"
+#include "PipelineSerializer.h"
 
 #include <string>
 
@@ -118,7 +119,7 @@ namespace trace {
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Material Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Material Name" << YAML::Value << mat->GetName();
-		emit << YAML::Key << "Pipeline Name" << YAML::Value << mat->GetRenderPipline()->GetName();
+		emit << YAML::Key << "Pipeline ID" << YAML::Value << GetUUIDFromName(mat->GetRenderPipline()->GetName());
 		emit << YAML::Key << "Data" << YAML::Value << YAML::BeginSeq;
 
 		for (auto& data : mat->m_data)
@@ -268,8 +269,14 @@ namespace trace {
 			}
 		};
 
-		std::string pipe_name = data["Pipeline Name"].as<std::string>();
+		std::filesystem::path pipe_path = GetPathFromUUID(data["Pipeline ID"].as<uint64_t>());
+		std::string pipe_name = pipe_path.filename().string();
 		Ref<GPipeline> pipeline = PipelineManager::get_instance()->GetPipeline(pipe_name);
+
+		if (!pipeline)
+		{
+			pipeline = PipelineSerializer::Deserialize(pipe_path.string());
+		}
 
 		if(!pipeline)
 		{

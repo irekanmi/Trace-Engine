@@ -235,6 +235,7 @@ namespace trace {
 		_ds2.topology = (PRIMITIVETOPOLOGY)data["Topology"].as<int>();
 
 		result = PipelineManager::get_instance()->CreatePipeline(_ds2, pipeline_name, false);
+		if (result) result->pipeline_type = type;
 
 		if (!result)
 		{

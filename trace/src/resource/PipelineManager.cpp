@@ -122,6 +122,28 @@ namespace trace {
 
 		return Ref<GPipeline>();
 	}
+	bool PipelineManager::RecreatePipeline(Ref<GPipeline> pipeline, PipelineStateDesc desc)
+	{
+		RenderFunc::DestroyPipeline(pipeline.get());
+
+		if (!RenderFunc::CreatePipeline(pipeline.get(), desc))
+		{
+			TRC_ERROR("Failed to create pipeline {}", pipeline->GetName());
+			pipeline->m_id = INVALID_ID;
+			pipeline->GetRenderHandle()->m_internalData = nullptr;
+			return false;
+		}
+		if (!RenderFunc::InitializePipeline(pipeline.get()))
+		{
+			TRC_ERROR("Failed to initialize pipeline {}", pipeline->GetName());
+			RenderFunc::DestroyPipeline(pipeline.get());
+			pipeline->m_id = INVALID_ID;
+			pipeline->GetRenderHandle()->m_internalData = nullptr;
+			return false;
+		}
+
+		return true;
+	}
 	void PipelineManager::Unload(GPipeline* pipeline)
 	{
 		if (pipeline->m_refCount > 0)

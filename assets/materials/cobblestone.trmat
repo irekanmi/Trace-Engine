@@ -1,7 +1,7 @@
 Trace Version: 0.0.0.0
 Material Version: 0.0.0.0
 Material Name: cobblestone.trmat
-Pipeline Name: gbuffer_pipeline
+Pipeline ID: 8
 Data:
   - Name: SPECULAR_MAP
     Type: 7

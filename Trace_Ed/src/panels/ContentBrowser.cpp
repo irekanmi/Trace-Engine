@@ -5,11 +5,13 @@
 #include "resource/MeshManager.h"
 #include "resource/MaterialManager.h"
 #include "resource/PipelineManager.h"
+#include "resource/ShaderManager.h"
 #include "resource/TextureManager.h"
 #include "resource/FontManager.h"
 #include "backends/UIutils.h"
 #include "scene/UUID.h"
 #include "serialize/MaterialSerializer.h"
+#include "serialize/PipelineSerializer.h"
 
 #include "imgui.h"
 #include "glm/glm.hpp"
@@ -58,6 +60,18 @@ namespace trace {
 
 			};
 
+			process_callbacks[".trpip"] = [&](std::filesystem::path& path)
+			{
+				m_editor->all_assets.pipelines.emplace(path);
+
+			};
+
+			process_callbacks[".glsl"] = [&](std::filesystem::path& path)
+			{
+				m_editor->all_assets.shaders.emplace(path);
+
+			};
+
 			auto tex_lambda = [&](std::filesystem::path& path)
 			{
 				m_editor->all_assets.textures.emplace(path);
@@ -81,6 +95,7 @@ namespace trace {
 						std::string filename = m_editMaterialPath.filename().string();
 						m_editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
 						if (!m_editMaterial) m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
+						m_editMaterialPipe = m_editMaterial->m_renderPipeline;
 
 						if (m_editMaterial)
 						{
@@ -91,12 +106,18 @@ namespace trace {
 					},
 					[&]() 
 					{
+						if (m_editMaterialPipeChanged)
+						{
+							MaterialManager::get_instance()->RecreateMaterial(m_editMaterial, m_editMaterialPipe);
+							m_editMaterialPipeChanged = false;
+						}
 						m_editMaterial->m_data = m_materialDataCache;
-						RenderFunc::PostInitializeMaterial(m_editMaterial.get(), m_editMaterial->m_renderPipeline);
+						RenderFunc::PostInitializeMaterial(m_editMaterial.get(), m_editMaterialPipe);
 
 						m_editMaterialPath = "";
 						m_editMaterial.free();
 						m_materialDataCache.clear();
+						m_editMaterialPipe.free();
 
 					});
 			};
@@ -129,6 +150,28 @@ namespace trace {
 					[&]()
 					{
 						m_editFont.free();
+					});
+			};
+
+			extensions_callbacks[".trpip"] = [&](std::filesystem::path& path)
+			{
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditPipeline(); },
+					[&]()
+					{
+						m_editPipeline = PipelineSerializer::Deserialize(path.string());
+						m_editPipePath = path;
+						if (m_editPipeline)
+						{
+							m_editPipeDesc = m_editPipeline->GetDesc();
+							m_editPipeType = (PipelineType)m_editPipeline->pipeline_type;
+						}
+					},
+					[&]()
+					{
+						m_editPipeline.free();
+						m_editPipePath = "";
+						m_editPipeDesc = {};
+						m_editPipeType = PipelineType::Unknown;
 					});
 			};
 
@@ -539,13 +582,46 @@ namespace trace {
 		static bool tex_modified = false;
 		static std::string tex_name;
 		bool dirty = false;
+		static bool popup = false;
+
 
 		ImGui::Text("Material : %s", mat->m_path.string().c_str());
 		ImGui::Columns(2);
 		ImGui::Text("Render Pipeline");
 		ImGui::NextColumn();
 		Ref<GPipeline> sp = mat->GetRenderPipline();
-		ImGui::Button(sp->m_path.string().c_str());
+		if (ImGui::Button(sp->m_path.string().c_str())) popup = true;
+
+		if (popup)
+		{
+			std::string pipe_res;
+			if (popup = m_editor->DrawPipelinesPopup(pipe_res))
+			{
+				if (!pipe_res.empty())
+				{
+					std::filesystem::path p = pipe_res;
+					Ref<GPipeline> p_res = PipelineManager::get_instance()->GetPipeline(p.filename().string());
+					if (!p_res) p_res = PipelineSerializer::Deserialize(p.string());
+
+					if (p_res)
+					{
+						if (MaterialManager::get_instance()->RecreateMaterial(mat, p_res))
+						{
+							m_editMaterialPipeChanged = true;
+						}
+						else
+						{
+							m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
+							mat = m_editMaterial;
+						}
+
+					}
+
+					popup = false;
+				}
+			}
+		}
+
 		ImGui::Columns(1);
 
 
@@ -765,6 +841,8 @@ namespace trace {
 		if (ImGui::Button("Apply"))
 		{
 			m_materialDataCache = mat->m_data;
+			m_editMaterialPipe = mat->m_renderPipeline;
+			m_editMaterialPipeChanged = false;
 			MaterialSerializer::Serialize(mat, m_editMaterialPath.string());
 		}
 
@@ -780,5 +858,81 @@ namespace trace {
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
 			ImGui::Image(texture, { content_ava.x, content_ava.y * 0.65f }, {0.0f, 1.0f}, {1.0f, 0.0f});
 		}
+	}
+	void ContentBrowser::DrawEditPipeline()
+	{
+		ImGui::Text("Name : %s ", m_editPipeline->GetName().c_str());
+
+		static ShaderStage shad_stage = ShaderStage::STAGE_NONE;
+
+		static bool shad_pop = false;
+
+		//Input Layout
+		{
+			ImGui::InputInt("Stride", (int*)&m_editPipeDesc.input_layout.stride);
+			const char* type_string[] = { "Vertex", "Instance" };
+			const char* current_type = type_string[(int)m_editPipeDesc.input_layout.input_class];
+			if (ImGui::BeginCombo("Input Classification", current_type))
+			{
+				for (int i = 0; i < 2; i++)
+				{
+					bool selected = (current_type == type_string[i]);
+					if (ImGui::Selectable(type_string[i], selected))
+					{
+						m_editPipeDesc.input_layout.input_class = (InputClassification)i;
+					}
+
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+
+				ImGui::EndCombo();
+			}
+
+		};
+
+		ImGui::Text("Vertex Shader : ");
+		ImGui::SameLine();
+		if (ImGui::Button(m_editPipeDesc.vertex_shader->GetName().c_str()))
+		{
+			shad_pop = true;
+			shad_stage = ShaderStage::VERTEX_SHADER;
+		}
+
+		ImGui::Text("Pixel Shader : ");
+		ImGui::SameLine();
+		if (ImGui::Button(m_editPipeDesc.pixel_shader->GetName().c_str()))
+		{
+			shad_pop = true;
+			shad_stage = ShaderStage::PIXEL_SHADER;
+		}
+
+		if (shad_pop)
+		{
+			std::string shad_res;
+			if (shad_pop = m_editor->DrawShadersPopup(shad_res))
+			{
+				if (!shad_res.empty())
+				{
+					Ref<GShader> res = ShaderManager::get_instance()->CreateShader_(shad_res, shad_stage);
+					if (shad_stage == ShaderStage::VERTEX_SHADER)
+						m_editPipeDesc.vertex_shader = res.get();
+					if (shad_stage == ShaderStage::PIXEL_SHADER)
+						m_editPipeDesc.pixel_shader = res.get();
+					
+					shad_pop = false;
+				}
+			}
+		}
+
+		if (ImGui::Button("Apply"))
+		{
+			if (PipelineManager::get_instance()->RecreatePipeline(m_editPipeline, m_editPipeDesc))
+			{
+				m_editPipeline->pipeline_type = m_editPipeType;
+				PipelineSerializer::Serialize(m_editPipeline, m_editPipePath.string());
+			}
+		}
+
 	}
 }

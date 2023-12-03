@@ -124,6 +124,30 @@ namespace trace {
 		return result;
 	}
 
+	bool MaterialManager::RecreateMaterial(Ref<MaterialInstance> mat, Ref<GPipeline> pipeline)
+	{
+		RenderFunc::DestroyMaterial(mat.get());
+
+		auto res = GetPipelineMaterialData(pipeline);
+		mat->m_data.clear();
+		mat->m_data = std::move(res);
+
+		if (!RenderFunc::InitializeMaterial(
+			mat.get(),
+			pipeline
+		))
+		{
+			TRC_WARN("Failed to initialize material {}", mat->GetName());
+			mat->m_id = INVALID_ID;
+			mat->GetRenderHandle()->m_internalData = nullptr;
+			return false;
+		}
+
+		RenderFunc::PostInitializeMaterial(mat.get(), pipeline);
+
+		return true;
+	}
+
 	void MaterialManager::Unload(MaterialInstance* material)
 	{
 

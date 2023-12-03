@@ -1,9 +1,9 @@
 Trace Version: 0.0.0.0
 Pipeline Version: 0.0.0.0
-Pipeline Name: gbuffer_pipeline.trpip
+Pipeline Name: destaturate_pipeline.trpip
 Pipeline Type: 4
 Vertex Shader: 17971878597675636412
-Pixel Shader: 714942716572124765
+Pixel Shader: 9199824058444457166
 InputLayout:
   Stride: 48
   Input Class: 0

@@ -88,6 +88,8 @@ namespace trace {
 
 		all_assets.materials.emplace("default");
 
+		all_assets.pipelines.emplace("gbuffer_pipeline");
+
 		
 		return true;
 	}
@@ -555,6 +557,92 @@ namespace trace {
 		ImGui::Columns(column_count, nullptr, false);
 
 		for (auto& i : all_assets.textures)
+		{
+			std::string filename = i.filename().string();
+			void* textureID = nullptr;
+			UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
+			{
+				result = i.string();
+			}
+			ImGui::TextWrapped(filename.c_str());
+
+			ImGui::NextColumn();
+		}
+		ImGui::Columns(1);
+
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsWindowFocused())
+		{
+			res = false;
+		}
+		ImGui::End();
+
+
+		return res;
+	}
+
+	bool TraceEditor::DrawPipelinesPopup(std::string& result)
+	{
+		bool res = true;
+		ImGui::SetNextWindowSize({ 280.0f, 320.0f });
+		ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+
+		ImGuiWindowFlags pop_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
+
+		ImGui::Begin("ALL_PIPELINES", nullptr, ImGuiWindowFlags_NoDocking);
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		float padding = 16.0f;
+		float cell_size = 64.0f + padding;
+		int column_count = (int)(avail.x / cell_size);
+		if (column_count <= 0) column_count = 1;
+
+
+		ImGui::Columns(column_count, nullptr, false);
+
+		for (auto& i : all_assets.pipelines)
+		{
+			std::string filename = i.filename().string();
+			void* textureID = nullptr;
+			UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
+			{
+				result = i.string();
+			}
+			ImGui::TextWrapped(filename.c_str());
+
+			ImGui::NextColumn();
+		}
+		ImGui::Columns(1);
+
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsWindowFocused())
+		{
+			res = false;
+		}
+		ImGui::End();
+
+
+		return res;
+	}
+
+	bool TraceEditor::DrawShadersPopup(std::string& result)
+	{
+		bool res = true;
+		ImGui::SetNextWindowSize({ 280.0f, 320.0f });
+		ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Appearing);
+
+		ImGuiWindowFlags pop_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar;
+
+		ImGui::Begin("ALL_SHADERS", nullptr, ImGuiWindowFlags_NoDocking);
+		ImVec2 avail = ImGui::GetContentRegionAvail();
+		float padding = 16.0f;
+		float cell_size = 64.0f + padding;
+		int column_count = (int)(avail.x / cell_size);
+		if (column_count <= 0) column_count = 1;
+
+
+		ImGui::Columns(column_count, nullptr, false);
+
+		for (auto& i : all_assets.shaders)
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;

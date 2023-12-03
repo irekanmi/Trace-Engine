@@ -1,23 +1,22 @@
 Trace Version: 0.0.0.0
 Material Version: 0.0.0.0
 Material Name: new_t2.trmat
-Pipeline Name: gbuffer_pipeline
+Pipeline ID: 6672521448232264971
 Data:
-  - Name: SPECULAR_MAP
-    Type: 7
-    Value:
-      file_id: 1
+  - Name: mix_ratio
+    Type: 9
+    Value: 0
   - Name: diffuse_color
     Type: 15
-    Value: [0, 0, 0, 0]
+    Value: [0.560000002, 0.439999998, 0.280000001, 0]
   - Name: shininess
     Type: 9
     Value: 0
   - Name: DIFFUSE_MAP
     Type: 7
     Value:
-      file_id: 1
+      file_id: 16639023432294724554
   - Name: NORMAL_MAP
     Type: 7
     Value:
-      file_id: 1
+      file_id: 5635488990878626653

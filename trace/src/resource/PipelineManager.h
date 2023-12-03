@@ -25,6 +25,7 @@ namespace trace {
 		Ref<GPipeline> CreatePipeline(PipelineStateDesc desc, const std::string& name, bool auto_fill = true);
 		Ref<GPipeline> GetPipeline(const std::string& name);
 		Ref<GPipeline> GetDefault(const std::string& name);
+		bool RecreatePipeline(Ref<GPipeline> pipeline, PipelineStateDesc desc);
 		void Unload(GPipeline* pipeline);
 
 		bool LoadDefaults();

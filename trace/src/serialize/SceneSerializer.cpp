@@ -258,7 +258,10 @@ namespace trace {
 		std::filesystem::path p = GetPathFromUUID(id);
 		res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
 		if (res) {}
-		else res = MaterialSerializer::Deserialize(p.string());
+		else
+		{
+			res = MaterialSerializer::Deserialize(p.string());
+		}
 		if (res) model_renderer._material = res;
 
 		}},

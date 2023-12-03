@@ -33,8 +33,10 @@ namespace trace {
 
 		std::string DrawModelsPopup();
 		std::string DrawMaterialsPopup();
-		bool TraceEditor::DrawTexturesPopup(std::string& result);
-		bool TraceEditor::InputTextPopup(const std::string& label, std::string& result);
+		bool DrawTexturesPopup(std::string& result);
+		bool DrawPipelinesPopup(std::string& result);
+		bool DrawShadersPopup(std::string& result);
+		bool InputTextPopup(const std::string& label, std::string& result);
 
 		static TraceEditor* get_instance();
 
@@ -61,6 +63,7 @@ namespace trace {
 			std::unordered_set<std::filesystem::path> meshes;
 			std::unordered_set<std::filesystem::path> materials;
 			std::unordered_set<std::filesystem::path> pipelines;
+			std::unordered_set<std::filesystem::path> shaders;
 		};
 		AllProjectAssets all_assets;
 	public:

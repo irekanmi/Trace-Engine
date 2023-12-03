@@ -2,86 +2,16 @@ Trace Version: 0.0.0.0
 Scene Version: 0.0.0.0
 Scene Name: new_t1.trscn
 Entities:
-  - UUID: 17604085128011595727
+  - UUID: 13361703342697183581
     TagComponent:
-      Tag: Floor
+      Tag: Text
     TransformComponent:
-      Position: [0, -21.8854561, -3.8016367]
-      Rotation: [0.159545481, 0.000992316403, 0.00613988237, 0.987170994]
-      Scale: [63.8860092, 1, 56.6599617]
-    ModelComponent:
-      Name: Cube
-      file id: 4
-    ModelRendererComponent:
-      file id: 18125184272921980320
-    BoxCoillderComponent:
-      Is Trigger: false
-      Extents: [0.5, 0.5, 0.5]
-      Offset: [0, 0, 0]
-  - UUID: 15353958122290312413
-    TagComponent:
-      Tag: blue light
-    TransformComponent:
-      Position: [-2.75561738, -19.5167618, 17.663147]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Color: [0.190555573, 0.816666663, 0.75405544, 0]
-      Direction: [0, 0, 0, 0]
-      Position: [-2.75561738, -19.5167618, 17.663147, 0]
-      Params1: [1.01900005, 0.0170000009, 0.00200000009, 0]
-      Params2: [0, 4.51000023, 0, 0]
-      Light Type: 1
-  - UUID: 1836790970572848754
-    TagComponent:
-      Tag: camera
-    TransformComponent:
-      Position: [4.95520067, -17.3192158, 55.7711563]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Is Main: true
-      Camera Type: 0
-      Position: [0, 0, 1]
-      Look Direction: [0, 0, -1]
-      Up Direction: [0, 1, 0]
-      Near: 0.100000001
-      Far: 1000
-      Fov: 45
-      Aspect Ratio: 1.8075
-      Orthographic Size: 10
-  - UUID: 14303815213726832690
-    TagComponent:
-      Tag: car
-    TransformComponent:
-      Position: [8.17724514, -19.3335629, 0]
-      Rotation: [0.176044002, -0.0442488939, 0.239715979, 0.953722596]
-      Scale: [1.9200002, 1.92000008, 1.9200002]
-    ModelComponent:
-      Name: Plane_Plane.001
-      file id: 9770986204108760100
-    ModelRendererComponent:
-      file id: 2426028521616981881
-  - UUID: 789607815271590800
-    TagComponent:
-      Tag: New Entity
-    TransformComponent:
-      Position: [-26.144249, -7.51692581, -16.2098732]
-      Rotation: [0, 0, 0, 1]
-      Scale: [1, 1, 1]
-    ModelComponent:
-      Name: Sphere
-      file id: 5
-    ModelRendererComponent:
-      file id: 8438180326744005356
-    RigidBodyComponent:
-      Type: 2
-      Density: 10
-      Mass: 1
-    SphereColliderComponent:
-      Is Trigger: false
-      Radius: 1
-      Offset: [0, 0, 0]
+      Position: [2.58676243, -7.08099461, 0.0285641551]
+      Rotation: [-9.69647999e-07, 0.0207219515, 2.53715803e-06, 0.999785304]
+      Scale: [12.9064331, 12.9064007, 12.9064331]
+    TextComponent:
+      Text Data: Favour
+      Font file_id: 3567564683209163988
   - UUID: 3137501352561339422
     TagComponent:
       Tag: red light
@@ -99,13 +29,83 @@ Entities:
     TextComponent:
       Text Data: Red Light
       Font file_id: 4113681025385876608
-  - UUID: 13361703342697183581
+  - UUID: 789607815271590800
     TagComponent:
-      Tag: Text
+      Tag: New Entity
     TransformComponent:
-      Position: [2.58676243, -7.08099461, 0.0285641551]
-      Rotation: [-9.69647999e-07, 0.0207219515, 2.53715803e-06, 0.999785304]
-      Scale: [12.9064331, 12.9064007, 12.9064331]
-    TextComponent:
-      Text Data: Favour
-      Font file_id: 3567564683209163988
+      Position: [-26.144249, -7.51692581, -16.2098732]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      Name: Sphere
+      file id: 5
+    ModelRendererComponent:
+      file id: 10670985502615273580
+    RigidBodyComponent:
+      Type: 2
+      Density: 10
+      Mass: 1
+    SphereColliderComponent:
+      Is Trigger: false
+      Radius: 1
+      Offset: [0, 0, 0]
+  - UUID: 14303815213726832690
+    TagComponent:
+      Tag: car
+    TransformComponent:
+      Position: [8.17724514, -19.3335629, 0]
+      Rotation: [0.176044002, -0.0442488939, 0.239715979, 0.953722596]
+      Scale: [1.9200002, 1.92000008, 1.9200002]
+    ModelComponent:
+      Name: Plane_Plane.001
+      file id: 9770986204108760100
+    ModelRendererComponent:
+      file id: 2426028521616981881
+  - UUID: 1836790970572848754
+    TagComponent:
+      Tag: camera
+    TransformComponent:
+      Position: [4.95520067, -17.3192158, 55.7711563]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Is Main: true
+      Camera Type: 0
+      Position: [0, 0, 1]
+      Look Direction: [0, 0, -1]
+      Up Direction: [0, 1, 0]
+      Near: 0.100000001
+      Far: 1000
+      Fov: 45
+      Aspect Ratio: 2.013587
+      Orthographic Size: 10
+  - UUID: 15353958122290312413
+    TagComponent:
+      Tag: blue light
+    TransformComponent:
+      Position: [-2.75561738, -19.5167618, 17.663147]
+      Rotation: [0, 0, 0, 1]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Color: [0.190555573, 0.816666663, 0.75405544, 0]
+      Direction: [0, 0, 0, 0]
+      Position: [-2.75561738, -19.5167618, 17.663147, 0]
+      Params1: [1.01900005, 0.0170000009, 0.00200000009, 0]
+      Params2: [0, 4.51000023, 0, 0]
+      Light Type: 1
+  - UUID: 17604085128011595727
+    TagComponent:
+      Tag: Floor
+    TransformComponent:
+      Position: [0, -21.8854561, -3.8016367]
+      Rotation: [0.159545481, 0.000992316403, 0.00613988237, 0.987170994]
+      Scale: [63.8860092, 1, 56.6599617]
+    ModelComponent:
+      Name: Cube
+      file id: 4
+    ModelRendererComponent:
+      file id: 0
+    BoxCoillderComponent:
+      Is Trigger: false
+      Extents: [0.5, 0.5, 0.5]
+      Offset: [0, 0, 0]

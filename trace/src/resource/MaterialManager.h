@@ -21,6 +21,7 @@ namespace trace {
 
 		Ref<MaterialInstance> CreateMaterial(const std::string& name, Ref<GPipeline> pipeline);
 		Ref<MaterialInstance> GetMaterial(const std::string& name);
+		bool RecreateMaterial(Ref<MaterialInstance> mat, Ref<GPipeline> pipeline);
 		void Unload(MaterialInstance* material);
 		bool LoadDefaults();
 

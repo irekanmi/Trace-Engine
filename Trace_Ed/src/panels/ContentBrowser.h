@@ -31,6 +31,7 @@ namespace trace {
 		void OnItemPopup(std::filesystem::path& path);
 		void DrawEditMaterial();
 		void DrawEditFont();
+		void DrawEditPipeline();
 
 	public:
 		//TODO: Check if there is a better way to store uuid and paths
@@ -45,11 +46,20 @@ namespace trace {
 
 		// Material edit
 		Ref<MaterialInstance> m_editMaterial;
+		Ref<GPipeline> m_editMaterialPipe;
 		std::filesystem::path m_editMaterialPath;
 		MaterialData m_materialDataCache;
+		bool m_editMaterialPipeChanged = false;
+
 		
 		// Font edit
-		Ref<Font> m_editFont;	
+		Ref<Font> m_editFont;
+
+		//Pipeline edit
+		Ref<GPipeline> m_editPipeline;
+		PipelineStateDesc m_editPipeDesc;
+		std::filesystem::path m_editPipePath;
+		PipelineType m_editPipeType;
 
 		TraceEditor* m_editor;
 	protected:

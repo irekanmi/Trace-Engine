@@ -1,12 +1,11 @@
 Trace Version: 0.0.0.0
 Material Version: 0.0.0.0
-Material Name: paving.trmat
-Pipeline ID: 8
+Material Name: desaturate.trmat
+Pipeline ID: 6672521448232264971
 Data:
-  - Name: SPECULAR_MAP
-    Type: 7
-    Value:
-      file_id: 12087352339273322257
+  - Name: mix_ratio
+    Type: 9
+    Value: 0
   - Name: diffuse_color
     Type: 15
     Value: [0, 0, 0, 0]
@@ -16,8 +15,8 @@ Data:
   - Name: DIFFUSE_MAP
     Type: 7
     Value:
-      file_id: 7210744251976608177
+      file_id: 11692445167452828591
   - Name: NORMAL_MAP
     Type: 7
     Value:
-      file_id: 6932347473385436693
+      file_id: 2053230367166669194
