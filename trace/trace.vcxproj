@@ -248,6 +248,7 @@
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneManager.h" />
     <ClInclude Include="src\scene\UUID.h" />
+    <ClInclude Include="src\scripting\ScriptEngine.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
     <ClInclude Include="src\serialize\PipelineSerializer.h" />
     <ClInclude Include="src\serialize\SceneSerializer.h" />
@@ -256,6 +257,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
+    <ClCompile Include="src\scripting\ScriptEngine.cpp" />
     <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

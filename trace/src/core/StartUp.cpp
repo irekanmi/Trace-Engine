@@ -11,10 +11,42 @@
 #include "resource/ResourceSystem.h"
 #include "core/memory/MemoryManager.h"
 #include "backends/Physicsutils.h"
+#include "scripting/ScriptEngine.h"
+#include "core/Coretypes.h"
 
 
 namespace trace {
+	int initialize(int argc, char** argv)
+	{
+		AppSettings::exe_path = argv[0];
+		if (!trace::INIT())
+		{
+			TRC_CRITICAL("Engine Startup failed");
+			return -1;
+		}
 
+		trace::trc_app_data app_data = trace::CreateApp();
+		trace::init(app_data);
+
+		trace::Application::s_instance = new trace::Application(app_data); //TODO: Use custom allocator
+		if (!trace::_INIT(app_data))
+		{
+			TRC_CRITICAL("Engine / Application Startup failed");
+			return -1;
+		}
+
+		trace::Application::s_instance->Start();
+		trace::Application::s_instance->Run();
+		trace::Application::s_instance->End();
+
+		delete trace::Application::s_instance; //TODO: Use custom allocator
+
+		trace::_SHUTDOWN(app_data);
+
+		trace::SHUTDOWN();
+
+		return 0;
+	}
 	bool INIT()
 	{
 		if (Logger::get_instance() == nullptr)
@@ -103,11 +135,27 @@ namespace trace {
 			}
 		};
 
+
+		//Script Engine
+		if (ScriptEngine::get_instance() == nullptr)
+		{
+			TRC_ERROR("failed to create Script Engine");
+			return false;
+		}
+
+		if (!ScriptEngine::get_instance()->Init())
+		{
+			TRC_ERROR("ScriptEngine failed to initialize");
+			return false;
+		}
+
 		return true;
 	}
 
 	void TRACE_API _SHUTDOWN(trc_app_data app_data)
 	{
+		ScriptEngine::get_instance()->Shutdown();
+
 		PhysicsFunc::ShutdownPhysics3D();
 
 		ResourceSystem::ShutDown();
@@ -125,4 +173,5 @@ namespace trace {
 		SAFE_DELETE(Logger::get_instance(), Logger);
 
 	}
+
 }

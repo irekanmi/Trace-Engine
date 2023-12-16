@@ -12,5 +12,6 @@ namespace trace {
 	PlatformAPI  AppSettings::platform_api = PlatformAPI::NO;
 	bool         AppSettings::enable_vsync = false;
 	bool         AppSettings::windowed = false;
+	std::string  AppSettings::exe_path = "";
 
 }

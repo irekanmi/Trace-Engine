@@ -3,6 +3,7 @@
 #include "Core.h"
 #include "Enums.h"
 #include "render/Graphics.h"
+#include <string>
 
 namespace trace {
 
@@ -72,6 +73,7 @@ namespace trace {
 		static PlatformAPI platform_api;
 		static bool enable_vsync;
 		static bool windowed;
+		static std::string exe_path;
 	};
 
 	
