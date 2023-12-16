@@ -40,11 +40,17 @@
     <Filter Include="src\core\platform\OpenGL">
       <UniqueIdentifier>{ED406E72-D965-BDF2-02B1-A282EE34BC10}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\core\platform\Physx">
+      <UniqueIdentifier>{E43B76C5-5073-BE5C-597D-2280C533E555}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\core\platform\Vulkan">
       <UniqueIdentifier>{39A52083-25CA-6F03-4E15-55933A996E21}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\core\platform\Windows">
       <UniqueIdentifier>{13395218-7FFB-85A2-C8AB-142F34AD5E80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\physics">
+      <UniqueIdentifier>{BF23DBB5-2BD9-53AB-B4CD-4D8220824AAF}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\render">
       <UniqueIdentifier>{1CA98B76-0861-CDC3-7168-A61F5D3F68B4}</UniqueIdentifier>
@@ -57,6 +63,9 @@
     </Filter>
     <Filter Include="src\scene">
       <UniqueIdentifier>{2A1615B6-9680-C92C-DFBE-7AD24B68A781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\scripting">
+      <UniqueIdentifier>{8FDCBB27-FB9C-375E-C4D7-80DB30577C3A}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\serialize">
       <UniqueIdentifier>{44B52BFF-B075-A735-79B0-F0B2E52FEC11}</UniqueIdentifier>
@@ -156,6 +165,9 @@
     <ClInclude Include="src\core\platform\OpenGL\OpenGLDevice.h">
       <Filter>src\core\platform\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\platform\Physx\Physx_backend.h">
+      <Filter>src\core\platform\Physx</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\platform\Vulkan\VKContext.h">
       <Filter>src\core\platform\Vulkan</Filter>
     </ClInclude>
@@ -203,6 +215,9 @@
     </ClInclude>
     <ClInclude Include="src\core\platform\Windows\WinConsole.h">
       <Filter>src\core\platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\Physics.h">
+      <Filter>src\physics</Filter>
     </ClInclude>
     <ClInclude Include="src\render\Camera.h">
       <Filter>src\render</Filter>
@@ -363,7 +378,22 @@
     <ClInclude Include="src\scene\UUID.h">
       <Filter>src\scene</Filter>
     </ClInclude>
+    <ClInclude Include="src\scripting\Script.h">
+      <Filter>src\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scripting\ScriptBackend.h">
+      <Filter>src\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scripting\ScriptEngine.h">
+      <Filter>src\scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scripting\ScriptRegistry.h">
+      <Filter>src\scripting</Filter>
+    </ClInclude>
     <ClInclude Include="src\serialize\MaterialSerializer.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\PipelineSerializer.h">
       <Filter>src\serialize</Filter>
     </ClInclude>
     <ClInclude Include="src\serialize\SceneSerializer.h">
@@ -375,10 +405,6 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\platform\Physx\Physx_backend.h" />
-    <ClInclude Include="src\physics\Physics.h" />
-    <ClInclude Include="src\serialize\PipelineSerializer.h" />
-    <ClInclude Include="src\scripting\ScriptEngine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -494,6 +520,9 @@
     </ClCompile>
     <ClCompile Include="src\core\platform\OpenGL\OpenGLDevice.cpp">
       <Filter>src\core\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp">
+      <Filter>src\core\platform\Physx</Filter>
     </ClCompile>
     <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp">
       <Filter>src\core\platform\Vulkan</Filter>
@@ -669,7 +698,22 @@
     <ClCompile Include="src\scene\UUID.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\scripting\Script.cpp">
+      <Filter>src\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scripting\ScriptBackend.cpp">
+      <Filter>src\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scripting\ScriptEngine.cpp">
+      <Filter>src\scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scripting\ScriptRegistry.cpp">
+      <Filter>src\scripting</Filter>
+    </ClCompile>
     <ClCompile Include="src\serialize\MaterialSerializer.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serialize\PipelineSerializer.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
     <ClCompile Include="src\serialize\SceneSerializer.cpp">
@@ -678,8 +722,5 @@
     <ClCompile Include="src\serialize\yaml_util.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
-    <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
-    <ClCompile Include="src\scripting\ScriptEngine.cpp" />
   </ItemGroup>
 </Project>

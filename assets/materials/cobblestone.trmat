@@ -12,7 +12,10 @@ Data:
     Value: [0, 0, 0, 0]
   - Name: shininess
     Type: 9
-    Value: 32
+    Value: 328
+  - Name: emissive
+    Type: 9
+    Value: 0
   - Name: DIFFUSE_MAP
     Type: 7
     Value:

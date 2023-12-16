@@ -76,7 +76,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;GLEW_STATIC;TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -89,7 +89,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;yaml_cpp.lib;EASTL_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;libmono-static-sgen.lib;yaml_cpp.lib;EASTL_d.lib;Ws2_32.lib;Winmm.lib;Version.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -99,7 +99,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_CORE;TRC_RELEASE_BUILD;GLEW_STATIC;TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -115,7 +115,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;yaml_cpp.lib;EASTL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;libmono-static-sgen.lib;yaml_cpp.lib;EASTL.lib;Ws2_32.lib;Winmm.lib;Version.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -125,7 +125,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -141,7 +141,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;yaml_cpp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;libmono-static-sgen.lib;yaml_cpp.lib;Ws2_32.lib;Winmm.lib;Version.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -160,7 +160,6 @@
     <ClInclude Include="src\core\Layer.h" />
     <ClInclude Include="src\core\Object.h" />
     <ClInclude Include="src\core\Platform.h" />
-    <ClInclude Include="src\core\platform\Physx\Physx_backend.h" />
     <ClInclude Include="src\core\StartUp.h" />
     <ClInclude Include="src\core\Utils.h" />
     <ClInclude Include="src\core\Window.h" />
@@ -178,6 +177,7 @@
     <ClInclude Include="src\core\platform\OpenGL\OpenGLBuffer.h" />
     <ClInclude Include="src\core\platform\OpenGL\OpenGLContext.h" />
     <ClInclude Include="src\core\platform\OpenGL\OpenGLDevice.h" />
+    <ClInclude Include="src\core\platform\Physx\Physx_backend.h" />
     <ClInclude Include="src\core\platform\Vulkan\VKContext.h" />
     <ClInclude Include="src\core\platform\Vulkan\VKDevice.h" />
     <ClInclude Include="src\core\platform\Vulkan\VKtypes.h" />
@@ -248,7 +248,10 @@
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneManager.h" />
     <ClInclude Include="src\scene\UUID.h" />
+    <ClInclude Include="src\scripting\Script.h" />
+    <ClInclude Include="src\scripting\ScriptBackend.h" />
     <ClInclude Include="src\scripting\ScriptEngine.h" />
+    <ClInclude Include="src\scripting\ScriptRegistry.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
     <ClInclude Include="src\serialize\PipelineSerializer.h" />
     <ClInclude Include="src\serialize\SceneSerializer.h" />
@@ -256,9 +259,6 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
-    <ClCompile Include="src\scripting\ScriptEngine.cpp" />
-    <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -321,6 +321,7 @@
     <ClCompile Include="src\core\platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="src\core\platform\OpenGL\OpenGLContext.cpp" />
     <ClCompile Include="src\core\platform\OpenGL\OpenGLDevice.cpp" />
+    <ClCompile Include="src\core\platform\Physx\Physx_backend.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VKContext.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VKDevice.cpp" />
     <ClCompile Include="src\core\platform\Vulkan\VKUtils.cpp" />
@@ -379,7 +380,12 @@
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneManager.cpp" />
     <ClCompile Include="src\scene\UUID.cpp" />
+    <ClCompile Include="src\scripting\Script.cpp" />
+    <ClCompile Include="src\scripting\ScriptBackend.cpp" />
+    <ClCompile Include="src\scripting\ScriptEngine.cpp" />
+    <ClCompile Include="src\scripting\ScriptRegistry.cpp" />
     <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
+    <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
     <ClCompile Include="src\serialize\SceneSerializer.cpp" />
     <ClCompile Include="src\serialize\yaml_util.cpp" />
   </ItemGroup>

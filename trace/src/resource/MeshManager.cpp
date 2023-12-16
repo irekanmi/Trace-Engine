@@ -202,6 +202,8 @@ namespace trace {
 			}
 
 		}
+
+		return result;
 	}
 
 	void MeshManager::Unload(Mesh* _mesh)

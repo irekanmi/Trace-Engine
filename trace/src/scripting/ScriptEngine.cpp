@@ -1,6 +1,9 @@
 #include "pch.h"
 
 #include "ScriptEngine.h"
+#include "ScriptBackend.h"
+#include "core/Coretypes.h"
+#include <filesystem>
 
 namespace trace {
 
@@ -8,6 +11,7 @@ namespace trace {
 
 	ScriptEngine::ScriptEngine()
 	{
+
 	}
 
 	ScriptEngine::~ScriptEngine()
@@ -16,11 +20,15 @@ namespace trace {
 
 	bool ScriptEngine::Init()
 	{
-		return true;
+		bool result = true;
+		result = result && get_dir_path();
+		result = result && InitializeInternal(bin_dir_path);
+		return result;
 	}
 
 	void ScriptEngine::Shutdown()
 	{
+		ShutdownInternal();
 	}
 
 	ScriptEngine* ScriptEngine::get_instance()
@@ -30,6 +38,25 @@ namespace trace {
 			s_instance = new ScriptEngine();
 		}
 		return s_instance;
+	}
+
+	bool ScriptEngine::get_dir_path()
+	{
+		std::filesystem::path current_dir = std::filesystem::path(AppSettings::exe_path).parent_path();
+
+
+		while (current_dir != "")
+		{
+			if (std::filesystem::exists(current_dir / "Data"))
+			{
+				bin_dir_path = (current_dir / "Data").string();
+				return true;
+			}
+
+			current_dir = current_dir.parent_path();
+		}
+
+		return false;
 	}
 
 }

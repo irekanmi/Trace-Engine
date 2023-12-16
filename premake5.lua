@@ -30,6 +30,7 @@ IncludeDir["yaml_cpp"] = "externals/yaml_cpp"
 IncludeDir["ImGuizmo"] = "externals/ImGuizmo"
 IncludeDir["portable_file_dialogs"] = "externals/portable_file_dialogs"
 IncludeDir["Physx"] = "externals/Physx"
+IncludeDir["mono"] = "externals/mono-2.0"
 
 
 project "trace"
@@ -72,6 +73,7 @@ project "trace"
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.Physx}",
+		"%{IncludeDir.mono}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -101,6 +103,7 @@ project "trace"
 		"PhysXExtensions_static_64.lib",
 		"msdfgen.lib",
 		"msdf_atlas_gen.lib",
+		"libmono-static-sgen.lib",
 		"yaml_cpp.lib"
 	}
 	
@@ -150,6 +153,14 @@ project "trace"
 		staticruntime "off"
 
 		defines "TRC_WINDOWS"
+
+		links
+		{
+			"Ws2_32.lib",
+			"Winmm.lib",
+			"Version.lib",
+			"Bcrypt.lib"
+		}
 
 project "TestApp"
 	kind "ConsoleApp"
