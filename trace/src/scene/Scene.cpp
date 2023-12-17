@@ -9,10 +9,12 @@
 namespace trace {
 	void Scene::Create()
 	{
+		m_scriptRegistry.Init();
 	}
 	void Scene::Destroy()
 	{
 		m_registry.clear();
+		m_scriptRegistry.Clear();
 	}
 	void Scene::OnStart()
 	{
@@ -306,12 +308,19 @@ namespace trace {
 		CopyComponent<BoxColliderComponent>(entity, res);
 		CopyComponent<SphereColliderComponent>(entity, res);
 
+		m_scriptRegistry.Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
+			{
+				ScriptInstance* sc_ins = res.AddScript(script->GetID());
+				*sc_ins = *other;
+			});
+
 	}
 
 	void Scene::DestroyEntity(Entity entity)
 	{
 		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
+		m_scriptRegistry.Erase(entity.GetID());
 	}
 
 	template<typename Component>
@@ -359,6 +368,8 @@ namespace trace {
 		CopyComponent<RigidBodyComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<BoxColliderComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<SphereColliderComponent>(f_reg, t_reg, entity_map);
+
+		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 
 	}
 

@@ -13,6 +13,9 @@ namespace trace {
 
 		bool Init();
 		void Shutdown();
+		bool LoadAssembly(const std::string& assembly_path);
+		void ReloadAssembly();
+
 		std::unordered_map<std::string, Script>& GetScripts() { return m_scripts; }
 
 		static ScriptEngine* get_instance();

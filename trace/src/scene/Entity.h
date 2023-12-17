@@ -51,6 +51,20 @@ namespace trace {
 			return m_scene->m_registry.try_get<T>(m_handle) != nullptr;
 		}
 
+		UUID GetID();
+
+		bool HasScript(const std::string& script_name);
+		bool HasScript(uintptr_t handle);
+
+		ScriptInstance* GetScript(const std::string& script_name);
+		ScriptInstance* GetScript(uintptr_t handle);
+
+		ScriptInstance* AddScript(const std::string& script_name);
+		ScriptInstance* AddScript(uintptr_t handle);
+
+		bool RemoveScript(const std::string& script_name);
+		bool RemoveScript(uintptr_t handle);
+
 		operator entt::entity() { return m_handle; }
 		operator uint32_t() { return (uint32_t)m_handle; }
 		operator bool() { return m_handle != entt::null; }

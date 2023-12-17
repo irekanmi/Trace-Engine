@@ -377,6 +377,7 @@
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
     <ClCompile Include="src\resource\ShaderManager.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
+    <ClCompile Include="src\scene\Entity.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneManager.cpp" />
     <ClCompile Include="src\scene\UUID.cpp" />

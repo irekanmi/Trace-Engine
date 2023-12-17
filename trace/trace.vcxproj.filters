@@ -689,6 +689,9 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\Entity.cpp">
+      <Filter>src\scene</Filter>
+    </ClCompile>
     <ClCompile Include="src\scene\Scene.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>

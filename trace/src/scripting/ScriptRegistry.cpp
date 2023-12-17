@@ -28,7 +28,12 @@ namespace trace {
 		return true;
 	}
 
-	bool ScriptRegistry::HasScript(uint64_t id, const std::string& script_name)
+	void ScriptRegistry::Clear()
+	{
+		m_scripts.clear();
+	}
+
+	bool ScriptRegistry::HasScript(UUID id, const std::string& script_name)
 	{
 		std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
 		auto s_it = g_Scripts.find(script_name);
@@ -45,7 +50,7 @@ namespace trace {
 		return false;
 	}
 
-	bool ScriptRegistry::HasScript(uint64_t id, uintptr_t handle)
+	bool ScriptRegistry::HasScript(UUID id, uintptr_t handle)
 	{
 		auto it = m_scripts.find(handle);
 		if (it != m_scripts.end())
@@ -58,7 +63,7 @@ namespace trace {
 		return false;
 	}
 
-	ScriptInstance* ScriptRegistry::GetScript(uint64_t id, const std::string& script_name)
+	ScriptInstance* ScriptRegistry::GetScript(UUID id, const std::string& script_name)
 	{
 		std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
 		auto s_it = g_Scripts.find(script_name);
@@ -78,7 +83,7 @@ namespace trace {
 		return nullptr;
 	}
 
-	ScriptInstance* ScriptRegistry::GetScript(uint64_t id, uintptr_t handle)
+	ScriptInstance* ScriptRegistry::GetScript(UUID id, uintptr_t handle)
 	{
 		auto it = m_scripts.find(handle);
 		if (it != m_scripts.end())
@@ -94,7 +99,7 @@ namespace trace {
 		return nullptr;
 	}
 
-	ScriptInstance* ScriptRegistry::AddScript(uint64_t id, const std::string& script_name)
+	ScriptInstance* ScriptRegistry::AddScript(UUID id, const std::string& script_name)
 	{
 		if (HasScript(id, script_name)) return GetScript(id, script_name);
 
@@ -120,7 +125,7 @@ namespace trace {
 		return nullptr;
 	}
 
-	ScriptInstance* ScriptRegistry::AddScript(uint64_t id, uintptr_t handle)
+	ScriptInstance* ScriptRegistry::AddScript(UUID id, uintptr_t handle)
 	{
 		if (HasScript(id, handle)) return GetScript(id, handle);
 
@@ -137,7 +142,7 @@ namespace trace {
 		return nullptr;
 	}
 
-	bool ScriptRegistry::RemoveScript(uint64_t id, const std::string& script_name)
+	bool ScriptRegistry::RemoveScript(UUID id, const std::string& script_name)
 	{
 		std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
 		auto s_it = g_Scripts.find(script_name);
@@ -163,7 +168,7 @@ namespace trace {
 		return false;
 	}
 
-	bool ScriptRegistry::RemoveScript(uint64_t id, uintptr_t handle)
+	bool ScriptRegistry::RemoveScript(UUID id, uintptr_t handle)
 	{
 		auto it = m_scripts.find(handle);
 		if (it != m_scripts.end())
@@ -181,7 +186,7 @@ namespace trace {
 		return false;
 	}
 
-	bool ScriptRegistry::Erase(uint64_t id)
+	bool ScriptRegistry::Erase(UUID id)
 	{
 		for (auto& i : m_scripts)
 		{
@@ -189,6 +194,34 @@ namespace trace {
 		}
 
 		return true;
+	}
+
+	void ScriptRegistry::Iterate(UUID id, std::function<void(UUID, Script*, ScriptInstance*)> callback, bool has_script)
+	{
+
+		for (auto& i : m_scripts)
+		{
+			auto it = i.second.handle_map.find(id);
+			if (has_script)
+			{
+				if (it != i.second.handle_map.end())
+				{
+					callback(id, i.second.script, &i.second.instances[it->second]);
+				}
+			}
+			else callback(id, i.second.script, nullptr);
+		}
+
+	}
+
+	void ScriptRegistry::ReloadScripts()
+	{
+
+		for (auto& i : ScriptEngine::get_instance()->GetScripts())
+		{
+			m_scripts[i.second.GetID()].script = &i.second;
+		}
+
 	}
 
 	void ScriptRegistry::Copy(ScriptRegistry& from, ScriptRegistry& to)

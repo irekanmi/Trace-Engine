@@ -12,6 +12,7 @@
 #include "resource/MeshManager.h"
 #include "resource/FontManager.h"
 #include "serialize/MaterialSerializer.h"
+#include "scripting/ScriptEngine.h"
 #include "../TraceEditor.h"
 
 
@@ -308,6 +309,14 @@ namespace trace {
 			if (ImGui::MenuItem("Sphere Coillder"))
 			{
 				entity.AddComponent<SphereColliderComponent>();
+			}
+
+			for (auto& i : ScriptEngine::get_instance()->GetScripts())
+			{
+				if (ImGui::MenuItem(i.second.script_name.c_str()))
+				{
+					
+				}
 			}
 
 			ImGui::EndPopup();

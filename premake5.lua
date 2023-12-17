@@ -306,3 +306,15 @@ project "Trace_Ed"
 		}
 
 
+
+
+project "TraceScriptLib"
+	location "TraceScriptLib"
+	kind "SharedLib"
+	language "C#"
+	dotnetframework "4.5"
+
+	targetdir ("Data/Assembly")
+	objdir ("bin-int/" .. OutputDir .. "/%{prj.name}")
+
+	files "%{prj.name}/Source/**.cs"

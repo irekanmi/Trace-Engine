@@ -23,12 +23,30 @@ namespace trace {
 		bool result = true;
 		result = result && get_dir_path();
 		result = result && InitializeInternal(bin_dir_path);
+
+		result = result && LoadCoreAssembly(bin_dir_path + "/Assembly/TraceScriptLib.dll");
+
+		//Temp -----------------------------
+		LoadAllScripts(m_scripts);
+		//----------------------------------
+
 		return result;
 	}
 
 	void ScriptEngine::Shutdown()
 	{
 		ShutdownInternal();
+	}
+
+	bool ScriptEngine::LoadAssembly(const std::string& assembly_path)
+	{
+
+
+		return true;
+	}
+
+	void ScriptEngine::ReloadAssembly()
+	{
 	}
 
 	ScriptEngine* ScriptEngine::get_instance()

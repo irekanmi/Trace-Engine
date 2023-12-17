@@ -5,6 +5,7 @@
 #include "entt.hpp"
 #include "render/Commands.h"
 #include "UUID.h"
+#include "scripting/ScriptRegistry.h"
 
 namespace trace {
 
@@ -42,6 +43,7 @@ namespace trace {
 
 	private:
 		entt::registry m_registry;
+		ScriptRegistry m_scriptRegistry;
 		std::string m_name;
 		void* m_physics3D = nullptr;
 		std::unordered_map<UUID, Entity> m_entityMap;
@@ -51,6 +53,7 @@ namespace trace {
 		friend class TraceEditor;
 		friend class HierachyPanel;
 		friend class SceneSerializer;
+		friend class InspectorPanel;
 	};
 
 }

@@ -63,7 +63,6 @@ static std::unordered_map<std::string, ScriptFieldType> s_FieldTypes =
 };
 
 
-bool GetLibDirectory(const std::string& exe_path, std::string& result);
 char* ReadBytes(const std::string& filepath, uint32_t* outSize);
 MonoAssembly* LoadAssembly(const std::string& filePath);
 void PrintAssemblyTypes(MonoAssembly* assembly);
@@ -284,7 +283,7 @@ MonoAssembly* LoadAssembly(const std::string& filePath)
 
 	if (status != MONO_IMAGE_OK)
 	{
-		std::cout << "Failed to load image " << filePath << std::endl;
+		TRC_ERROR("Failed to load image {}", filePath);
 		return nullptr;
 	}
 
@@ -347,7 +346,7 @@ char* ReadBytes(const std::string& filepath, uint32_t* outSize)
 	
 
 	FileHandle in_file;
-	if (!FileSystem::open_file(filepath, FileMode::READ, in_file))
+	if (!FileSystem::open_file(filepath, (FileMode)(FileMode::READ | FileMode::BINARY), in_file))
 	{
 		TRC_ERROR("Failed to load file {}", filepath);
 		return nullptr;
@@ -399,7 +398,7 @@ void Debug_Log(MonoString* text)
 	char* c_str = mono_string_to_utf8(text);
 	std::string res(c_str);
 	mono_free(c_str);
-	std::cout<< "Log: " << res << ":)" << std::endl;
+	TRC_TRACE(res);
 }
 
 void Debug_Info(MonoString* text)
@@ -407,7 +406,7 @@ void Debug_Info(MonoString* text)
 	char* c_str = mono_string_to_utf8(text);
 	std::string res(c_str);
 	mono_free(c_str);
-	std::cout << "Info: " << res << ":)" << std::endl;
+	TRC_INFO(res);
 }
 
 void Debug_Trace(MonoString* text)
@@ -415,7 +414,7 @@ void Debug_Trace(MonoString* text)
 	char* c_str = mono_string_to_utf8(text);
 	std::string res(c_str);
 	mono_free(c_str);
-	std::cout << "Trace: " << res << ":)" << std::endl;
+	TRC_TRACE(res);
 }
 
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
