@@ -1,13 +1,20 @@
 #pragma once
 
 #include "Script.h"
+#include "scene/UUID.h"
 
 namespace trace {
+
+	using FieldManager = std::unordered_map<UUID, ScriptFieldInstance>;
 
 	class ScriptEngine
 	{
 
 	public:
+
+		
+
+
 		ScriptEngine();
 		~ScriptEngine();
 
@@ -16,11 +23,19 @@ namespace trace {
 		bool LoadAssembly(const std::string& assembly_path);
 		void ReloadAssembly();
 
+		ScriptMethod* GetConstructor();
+
 		std::unordered_map<std::string, Script>& GetScripts() { return m_scripts; }
+		std::unordered_map<Script*, FieldManager>& GetFieldInstances() { return m_fieldInstance; }
 
 		static ScriptEngine* get_instance();
 	private:
 		static ScriptEngine* s_instance;
+
+		Script Action;
+		ScriptMethod Action_Construtor;
+		std::unordered_map<Script*, FieldManager> m_fieldInstance;
+
 
 		bool get_dir_path();
 

@@ -5,6 +5,9 @@
 #include "Componets.h"
 #include "render/Renderer.h"
 #include "backends/Physicsutils.h"
+#include "scripting/Script.h"
+#include "scripting/ScriptBackend.h"
+#include "scripting/ScriptEngine.h"
 
 namespace trace {
 	void Scene::Create()
@@ -90,6 +93,70 @@ namespace trace {
 			}
 		}
 	}
+	void Scene::OnScriptStart()
+	{
+
+		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+			{
+				ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
+				auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+
+				uint32_t index = 0;
+				for (ScriptInstance& i : manager.instances)
+				{
+					CreateScriptInstance(*manager.script, i);
+
+					// Setting values from the editor to the scene runtime..............
+					auto it = fields_instances.find(manager.script);
+					if (it != fields_instances.end())
+					{
+						auto field_it = it->second.find(manager.entities[index]);
+						if (field_it != it->second.end())
+						{
+							for (auto& [name, data] : field_it->second.m_fields)
+							{
+								if (data.type == ScriptFieldType::String) continue;
+								i.SetFieldValueInternal(name, data.data, 16);
+							}
+						}
+					}
+					// ..................................................................
+
+					void* params[1] =
+					{
+						&manager.entities[index]
+					};
+					InvokeScriptMethod_Instance(*constructor, i, params);
+					++index;
+				}
+
+			});
+
+		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+			{
+				ScriptMethod* on_start = manager.script->GetMethod("OnStart");
+				if (!on_start) return;
+
+				for (ScriptInstance& i : manager.instances)
+				{
+					InvokeScriptMethod_Instance(*on_start, i, nullptr);
+				}
+
+			});
+
+		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+			{
+				ScriptMethod* on_create = manager.script->GetMethod("OnCreate");
+				if (!on_create) return;
+
+				for (ScriptInstance& i : manager.instances)
+				{
+					InvokeScriptMethod_Instance(*on_create, i, nullptr);
+				}
+
+			});
+
+	}
 	void Scene::OnStop()
 	{
 		if (m_physics3D)
@@ -123,9 +190,44 @@ namespace trace {
 			PhysicsFunc::DestroyScene3D(m_physics3D);
 		}
 	}
+	void Scene::OnScriptStop()
+	{
+
+		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+			{
+
+				for (ScriptInstance& i : manager.instances)
+				{
+					DestroyScriptInstance(i);
+				}
+
+			});
+
+	}
 	void Scene::OnUpdate(float deltaTime)
 	{
 
+	}
+
+	void Scene::OnScriptUpdate(float deltaTime)
+	{
+		m_scriptRegistry.Iterate([deltaTime](ScriptRegistry::ScriptManager& manager)
+			{
+				ScriptMethod* on_update = manager.script->GetMethod("OnUpdate");
+
+				if (!on_update) return;
+				float dt = deltaTime;
+
+				for (ScriptInstance& i : manager.instances)
+				{
+					void* params[1] =
+					{
+						&dt
+					};
+					InvokeScriptMethod_Instance(*on_update, i, params);
+				}
+
+			});
 	}
 
 	void Scene::OnPhysicsUpdate(float deltaTime)
@@ -281,6 +383,13 @@ namespace trace {
 		m_entityMap[id] = entity;
 
 		return entity;
+	}
+
+	Entity Scene::GetEntity(UUID uuid)
+	{
+		auto it = m_entityMap.find(uuid);
+		if (it != m_entityMap.end()) return it->second;
+		return Entity();
 	}
 
 	template<typename Component>

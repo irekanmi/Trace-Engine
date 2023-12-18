@@ -169,7 +169,7 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 
 		field_res.m_internal = field;
 
-		script.m_fields.emplace_back(field_res);
+		script.m_fields[field_name] = field_res;
 		
 	}
 
@@ -200,6 +200,8 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 		std::cout << "Failed to create script instance " << std::endl;
 		return false;
 	}
+	mono_runtime_object_init(out_object);
+
 	out_instance.m_internal = out_object;
 	out_instance.m_script = &script;
 
@@ -211,10 +213,11 @@ bool DestroyScriptInstance(ScriptInstance& instance)
 {
 	if (!instance.m_internal)
 	{
-		std::cout << "Can't destory an invalid instance" << std::endl;
+		TRC_ERROR("Can't destory an invalid instance");
 		return false;
 	}
 
+	
 	instance.m_internal = nullptr;
 	return true;
 }

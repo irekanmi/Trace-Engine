@@ -23,6 +23,7 @@ namespace trace {
 		{
 			m_scripts[i.second.GetID()].script = &i.second;
 			m_scripts[i.second.GetID()].instances.reserve(reserved_count);
+			m_scripts[i.second.GetID()].entities.reserve(reserved_count);
 		}
 
 		return true;
@@ -39,15 +40,7 @@ namespace trace {
 		auto s_it = g_Scripts.find(script_name);
 		if (s_it == g_Scripts.end()) return false;
 		uintptr_t handle = s_it->second.GetID();
-		auto it = m_scripts.find(handle);
-		if (it != m_scripts.end())
-		{
-			ScriptManager& sm = it->second;
-			auto in_it = sm.handle_map.find(id);
-			if (in_it != sm.handle_map.end()) return true;
-		}
-
-		return false;
+		return HasScript(id, handle);
 	}
 
 	bool ScriptRegistry::HasScript(UUID id, uintptr_t handle)
@@ -69,18 +62,7 @@ namespace trace {
 		auto s_it = g_Scripts.find(script_name);
 		if (s_it == g_Scripts.end()) return nullptr;
 		uintptr_t handle = s_it->second.GetID();
-		auto it = m_scripts.find(handle);
-		if (it != m_scripts.end())
-		{
-			ScriptManager& sm = it->second;
-			auto in_it = sm.handle_map.find(id);
-			if (in_it != sm.handle_map.end())
-			{
-				return &sm.instances[in_it->second];
-			}
-		}
-
-		return nullptr;
+		return GetScript(id, handle);
 	}
 
 	ScriptInstance* ScriptRegistry::GetScript(UUID id, uintptr_t handle)
@@ -112,17 +94,7 @@ namespace trace {
 			return nullptr;
 		}
 		uintptr_t handle = s_it->second.GetID();
-		auto it = m_scripts.find(handle);
-		if (it != m_scripts.end())
-		{
-			ScriptManager& sm = it->second;
-			sm.handle_map[id] = sm.instances.size();
-			ScriptInstance& res = sm.instances.emplace_back();
-			res.m_script = sm.script;
-			return &sm.instances.back();
-		}
-
-		return nullptr;
+		return AddScript(id, handle);
 	}
 
 	ScriptInstance* ScriptRegistry::AddScript(UUID id, uintptr_t handle)
@@ -134,6 +106,7 @@ namespace trace {
 		{
 			ScriptManager& sm = it->second;
 			sm.handle_map[id] = sm.instances.size();
+			sm.entities.emplace_back(id);
 			ScriptInstance& res = sm.instances.emplace_back();
 			res.m_script = sm.script;
 			return &sm.instances.back();
@@ -152,20 +125,7 @@ namespace trace {
 			return false;
 		}
 		uintptr_t handle = s_it->second.GetID();
-		auto it = m_scripts.find(handle);
-		if (it != m_scripts.end())
-		{
-			ScriptManager& sm = it->second;
-
-			sm.instances[sm.handle_map[id]] = std::move(sm.instances.back());
-
-			sm.instances.pop_back();
-			sm.handle_map.erase(id);
-
-			return true;
-		}
-
-		return false;
+		return RemoveScript(id, handle);
 	}
 
 	bool ScriptRegistry::RemoveScript(UUID id, uintptr_t handle)
@@ -176,8 +136,10 @@ namespace trace {
 			ScriptManager& sm = it->second;
 
 			sm.instances[sm.handle_map[id]] = std::move(sm.instances.back());
+			sm.entities[sm.handle_map[id]] = std::move(sm.entities.back());
 
 			sm.instances.pop_back();
+			sm.entities.pop_back();
 			sm.handle_map.erase(id);
 
 			return true;
@@ -214,6 +176,16 @@ namespace trace {
 
 	}
 
+	void ScriptRegistry::Iterate(std::function<void(ScriptManager&)> callback)
+	{
+
+		for (auto& i : m_scripts)
+		{
+			callback(i.second);
+		}
+
+	}
+
 	void ScriptRegistry::ReloadScripts()
 	{
 
@@ -232,6 +204,7 @@ namespace trace {
 		{
 			to.m_scripts[i.first].handle_map = i.second.handle_map;
 			to.m_scripts[i.first].instances = i.second.instances;
+			to.m_scripts[i.first].entities = i.second.entities;
 			to.m_scripts[i.first].script = i.second.script;
 		}
 	}

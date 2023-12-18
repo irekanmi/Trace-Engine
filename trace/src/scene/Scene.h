@@ -22,8 +22,11 @@ namespace trace {
 		void Create();
 		void Destroy();
 		void OnStart();
+		void OnScriptStart();
 		void OnStop();
+		void OnScriptStop();
 		void OnUpdate(float deltaTime);
+		void OnScriptUpdate(float deltaTime);
 		void OnPhysicsUpdate(float deltaTime);
 		void OnRender();
 		void OnRender(CommandList& cmd_list);
@@ -32,6 +35,7 @@ namespace trace {
 		Entity CreateEntity();
 		Entity CreateEntity(const std::string& _tag);
 		Entity CreateEntity_UUID(UUID id,const std::string& _tag);
+		Entity GetEntity(UUID uuid);
 		void DuplicateEntity(Entity entity);
 		void DestroyEntity(Entity entity);
 

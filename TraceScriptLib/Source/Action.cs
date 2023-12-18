@@ -11,7 +11,7 @@ namespace Trace
         public readonly ulong Id;
         public Action() { Id = 0; }
 
-        Action(ulong id)
+        public Action(ulong id)
         {
             Id = id;
         }

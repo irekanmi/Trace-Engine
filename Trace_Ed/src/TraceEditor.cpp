@@ -130,6 +130,7 @@ namespace trace {
 		{
 			if (m_currentScene)
 			{
+				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
 				m_currentScene->OnRender();
 			}
@@ -934,7 +935,11 @@ namespace trace {
 		Scene::Copy(m_editScene, m_editScene_duplicate);
 		m_currentScene = m_editScene_duplicate;
 		m_currentScene->OnStart();
-		m_hierachyPanel.m_selectedEntity = Entity();
+		m_currentScene->OnScriptStart();
+		if (m_hierachyPanel.m_selectedEntity)
+		{
+			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
+		}
 	}
 	void TraceEditor::OnSceneStimulate()
 	{
@@ -943,14 +948,22 @@ namespace trace {
 		Scene::Copy(m_editScene, m_editScene_duplicate);
 		m_currentScene = m_editScene_duplicate;
 		m_currentScene->OnStart();
-		m_hierachyPanel.m_selectedEntity = Entity();
+		if (m_hierachyPanel.m_selectedEntity)
+		{
+			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
+		}
 	}
 	void TraceEditor::OnSceneStop()
 	{
 		if ((current_state == EditorState::SceneEdit)) return;
 
-		m_currentScene = m_editScene;
 		m_currentScene->OnStop();
+		m_currentScene->OnScriptStop();
+		m_currentScene = m_editScene;
+		if (m_hierachyPanel.m_selectedEntity)
+		{
+			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
+		}
 	}
 
 	std::filesystem::path GetPathFromUUID(UUID uuid)

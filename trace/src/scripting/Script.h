@@ -65,6 +65,55 @@ namespace trace {
 
 	};
 
+	class ScriptFieldInstance
+	{
+
+	public:
+		ScriptFieldInstance();
+		ScriptFieldInstance(const ScriptFieldInstance& other) = default;
+		~ScriptFieldInstance();
+
+		bool Init(Script* script);
+		void Shutdown();
+
+		//NOTE: To be used for builtin types not for (std types and custom types)
+		template<typename T>
+		bool GetValue(const std::string& field_name, T& out_value)
+		{
+			static_assert(sizeof(T) < 16);
+			auto it = m_fields.find(field_name);
+			if (it == m_fields.end()) return false;
+			out_value = (T)it->second.data;
+			return true;
+		}
+
+		//NOTE: To be used for builtin types not for (std types and custom types)
+		template<typename T>
+		void SetValue(const std::string& field_name, T& value)
+		{
+			static_assert(sizeof(T) < 16);
+			auto it = m_fields.find(field_name);
+			if (it == m_fields.end()) return;
+			it->second.data = value;
+		}
+
+		Script* m_script = nullptr;
+		struct ScriptData
+		{
+			char data[16];
+			void* ptr = nullptr;
+			ScriptFieldType type;
+		};
+		std::unordered_map<std::string, ScriptData> m_fields;
+	private:
+		
+	private:
+
+	protected:
+
+
+	};
+
 	class ScriptInstance
 	{
 
@@ -75,10 +124,6 @@ namespace trace {
 
 		bool Init();
 		void Shutdown();
-
-		void OnCreate();
-		void OnStart();
-		void OnUpdate(float deltaTime);
 
 		//NOTE: To be used for builtin types not for (std types and custom types)
 		template<typename T>
@@ -96,17 +141,17 @@ namespace trace {
 
 		void* m_internal = nullptr;
 		Script* m_script = nullptr;
-	private:
+	public:
 		bool GetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size);
 		void SetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size);
 
 	private:
-		ScriptMethod* m_onCreate = nullptr;
-		ScriptMethod* m_onStart = nullptr;
-		ScriptMethod* m_onUpdate = nullptr;
 		std::unordered_map<std::string, ScriptField*> m_fields;
 
 	protected:
+		friend class ScriptFieldInstance;
+		friend class ScriptRegistry;
+		friend class Scene;
 
 
 	};
@@ -124,7 +169,7 @@ namespace trace {
 
 		void* m_internal = nullptr;
 		std::map<std::string, ScriptMethod> m_methods;
-		std::vector<ScriptField> m_fields;
+		std::map<std::string, ScriptField> m_fields;
 		std::string script_name;
 	private:
 

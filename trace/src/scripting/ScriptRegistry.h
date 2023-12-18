@@ -10,6 +10,15 @@ namespace trace {
 	{
 
 	public:
+		struct ScriptManager
+		{
+			std::vector<ScriptInstance> instances;
+			std::vector<UUID> entities;
+			std::unordered_map<UUID, size_t> handle_map;
+			Script* script = nullptr;
+		};
+
+
 		ScriptRegistry();
 		~ScriptRegistry();
 
@@ -32,21 +41,18 @@ namespace trace {
 
 		bool Erase(UUID id);
 		void Iterate(UUID id, std::function<void(UUID, Script*, ScriptInstance*)> callback, bool has_script = true);
+		void Iterate(std::function<void(ScriptManager&)> callback);
 
 		void ReloadScripts();
 
 		static void Copy(ScriptRegistry& from, ScriptRegistry& to);
 
-		struct ScriptManager
-		{
-			std::vector<ScriptInstance> instances;
-			std::unordered_map<UUID, size_t> handle_map;
-			Script* script = nullptr;
-		};
+		
 	private:
 		std::unordered_map<uintptr_t, ScriptManager> m_scripts;
 
 	protected:
+		friend class Scene;
 
 	};
 

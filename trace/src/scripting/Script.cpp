@@ -15,9 +15,6 @@ namespace trace {
 		m_script = other.m_script;
 		m_internal = other.m_internal;
 		m_fields = other.m_fields;
-		m_onCreate = other.m_onCreate;
-		m_onStart = other.m_onStart;
-		m_onUpdate = other.m_onUpdate;
 
 	}
 
@@ -29,16 +26,9 @@ namespace trace {
 	{
 		if (!m_script) return false;
 
-		m_onCreate = m_script->GetMethod("OnCreate");
-		m_onStart = m_script->GetMethod("OnStart");
-		m_onUpdate = m_script->GetMethod("OnUpdate");
-
 		for (auto& i : m_script->m_fields)
 		{
-			if (i.field_flags & ScriptFieldFlagBit::Public)
-			{
-				m_fields[i.field_name] = &i;
-			}
+			
 		}
 
 		return true;
@@ -47,45 +37,15 @@ namespace trace {
 	void ScriptInstance::Shutdown()
 	{
 		m_fields.clear();
-
-		m_onCreate = nullptr;
-		m_onStart = nullptr;
-		m_onUpdate = nullptr;
 	}
 
-	void ScriptInstance::OnCreate()
-	{
-		if (m_onCreate)
-		{
-			InvokeScriptMethod_Instance(*m_onCreate, *this, nullptr);
-		}
-	}
-
-	void ScriptInstance::OnStart()
-	{
-		if (m_onStart)
-		{
-			InvokeScriptMethod_Instance(*m_onStart, *this, nullptr);
-		}
-	}
-
-	void ScriptInstance::OnUpdate(float deltaTime)
-	{
-		if (m_onUpdate)
-		{
-			void* params[1] =
-			{
-				GetValueInternal(&deltaTime)
-			};
-			InvokeScriptMethod_Instance(*m_onUpdate, *this, params);
-		}
-	}
+	
 
 	bool ScriptInstance::GetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size)
 	{
-		if (m_fields.find(field_name) != m_fields.end())
+		if (m_script->m_fields.find(field_name) != m_script->m_fields.end())
 		{
-			return GetInstanceFieldValue(*this, *m_fields.at(field_name), value, val_size);
+			return GetInstanceFieldValue(*this, m_script->m_fields.at(field_name), value, val_size);
 		}
 
 		return false;
@@ -93,9 +53,9 @@ namespace trace {
 
 	void ScriptInstance::SetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size)
 	{
-		if (m_fields.find(field_name) != m_fields.end())
+		if (m_script->m_fields.find(field_name) != m_script->m_fields.end())
 		{
-			SetInstanceFieldValue(*this, *m_fields.at(field_name), value, val_size);
+			SetInstanceFieldValue(*this, m_script->m_fields.at(field_name), value, val_size);
 		}
 	}
 
@@ -137,6 +97,38 @@ namespace trace {
 	}
 
 	ScriptMethod::~ScriptMethod()
+	{
+	}
+
+	ScriptFieldInstance::ScriptFieldInstance()
+	{
+	}
+
+	ScriptFieldInstance::~ScriptFieldInstance()
+	{
+	}
+
+	bool ScriptFieldInstance::Init(Script* script)
+	{
+		m_script = script;
+
+		ScriptInstance ins;
+		CreateScriptInstance(*m_script, ins);
+		for (auto& i : m_script->m_fields)
+		{
+			ScriptData& data = m_fields[i.first];
+			data.type = i.second.field_type;
+			if (i.second.field_type == ScriptFieldType::String) continue;
+			ins.GetFieldValueInternal(i.first, data.data, 16);
+
+		}
+
+		DestroyScriptInstance(ins);
+
+		return true;
+	}
+
+	void ScriptFieldInstance::Shutdown()
 	{
 	}
 

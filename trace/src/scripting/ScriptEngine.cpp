@@ -30,11 +30,18 @@ namespace trace {
 		LoadAllScripts(m_scripts);
 		//----------------------------------
 
+		CreateScript("Action", Action, "Trace", true);
+
 		return result;
 	}
 
 	void ScriptEngine::Shutdown()
 	{
+		m_fieldInstance.clear();
+		for (auto& i : m_scripts)
+		{
+			DestroyScript(i.second);
+		}
 		ShutdownInternal();
 	}
 
@@ -47,6 +54,13 @@ namespace trace {
 
 	void ScriptEngine::ReloadAssembly()
 	{
+	}
+
+	ScriptMethod* ScriptEngine::GetConstructor()
+	{
+		GetScriptMethod(".ctor", Action_Construtor, Action, 1);
+
+		return &Action_Construtor;
 	}
 
 	ScriptEngine* ScriptEngine::get_instance()

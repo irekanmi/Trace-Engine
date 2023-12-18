@@ -7,19 +7,25 @@ using System.Threading.Tasks;
 using Trace;
 class Player : Trace.Action
 {
-    public float Speed = 5.0f;
-    
+    public float Speed = 5.5f;
+    public ulong test_id = 8327832;
+
+    public void OnStart()
+    {
+        Debug.Trace($"Player Started Id:{Id}");
+        Speed -= 4.5f;
+    }
 
     public void OnCreate()
     {
-        Console.WriteLine("Player Created");
+        Debug.Info("Player Created");
         Speed -= 4.5f;
     }
     
     public void OnUpdate(float deltaTime)
     {
-        Console.WriteLine($"Player Update Float {deltaTime}");
-        Speed -= 1.1f;
+        //Console.WriteLine($"Player Update Float {deltaTime}");
+        Speed -= deltaTime;
     }   
 
     public void OnCollisionEnter(Trace.Collision collision)
