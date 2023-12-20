@@ -80,10 +80,10 @@ namespace trace {
 		template<typename T>
 		bool GetValue(const std::string& field_name, T& out_value)
 		{
-			static_assert(sizeof(T) < 16);
+			static_assert(sizeof(T) <= 16);
 			auto it = m_fields.find(field_name);
 			if (it == m_fields.end()) return false;
-			out_value = (T)it->second.data;
+			out_value = *(T*)&it->second.data;
 			return true;
 		}
 
@@ -91,10 +91,10 @@ namespace trace {
 		template<typename T>
 		void SetValue(const std::string& field_name, T& value)
 		{
-			static_assert(sizeof(T) < 16);
+			static_assert(sizeof(T) <= 16);
 			auto it = m_fields.find(field_name);
 			if (it == m_fields.end()) return;
-			it->second.data = value;
+			memcpy_s(it->second.data, 16, &value, sizeof(T));
 		}
 
 		Script* m_script = nullptr;

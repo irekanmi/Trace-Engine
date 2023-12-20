@@ -10,6 +10,8 @@
 #include "resource/ModelManager.h"
 #include "resource/MaterialManager.h"
 #include "serialize/MaterialSerializer.h"
+#include "scripting/ScriptEngine.h"
+
 #include <functional>
 #include <unordered_map>
 
@@ -314,7 +316,6 @@ namespace trace {
 	{
 		IDComponent& uuid = entity.GetComponent<IDComponent>();
 
-		emit << YAML::BeginMap;
 		emit << YAML::Key << "UUID" << YAML::Value << uuid._id;
 
 		for (uint32_t i = 0; i < ARRAYSIZE(_serialize_components); i++)
@@ -322,7 +323,6 @@ namespace trace {
 			_serialize_components[i](entity, emit);
 		}
 
-		emit << YAML::EndMap;
 		return true;
 	}
 
@@ -339,7 +339,153 @@ namespace trace {
 		for (auto& [entity] : scene->m_registry.storage<entt::entity>().each())
 		{
 			Entity en(entity, scene.get());
+			emit << YAML::BeginMap;
 			SerializeEntites(scene, en, emit);
+
+
+			//Scripts ----------------------------------------
+			emit << YAML::Key << "Scripts" << YAML::Value;
+			emit << YAML::BeginSeq;
+
+			scene->m_scriptRegistry.Iterate(en.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
+				{
+					auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					auto& field_manager = fields_instances[script];
+					auto field_it = field_manager.find(uuid);
+					if (field_it == field_manager.end())
+					{
+						TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->script_name);
+						return;
+					}
+					emit << YAML::BeginMap;
+
+					emit << YAML::Key << "Script Name" << YAML::Value << script->script_name;
+					emit << YAML::Key << "Script Values" << YAML::Value << YAML::BeginSeq; // Script values
+					ScriptFieldInstance& ins = field_manager[uuid];
+					for (auto& [name, field] : ins.m_fields)
+					{
+						emit << YAML::BeginMap;
+
+						emit << YAML::Key << "Name" << YAML::Value << name;
+						//emit << YAML::Key << "Type" << YAML::Value << (int)field.type;
+						switch (field.type)
+						{
+						case ScriptFieldType::String:
+						{
+							break;
+						}
+						case ScriptFieldType::Bool:
+						{
+							bool data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Byte:
+						{
+							char data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Double:
+						{
+							double data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Char:
+						{
+							char data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Float:
+						{
+							float data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Int16:
+						{
+							int16_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Int32:
+						{
+							int32_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Int64:
+						{
+							int64_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::UInt16:
+						{
+							uint16_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::UInt32:
+						{
+							uint32_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::UInt64:
+						{
+							uint64_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Vec2:
+						{
+							glm::vec2 data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Vec3:
+						{
+							glm::vec3 data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Vec4:
+						{
+							glm::vec4 data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+
+						}
+
+						emit << YAML::EndMap;
+					}
+					emit << YAML::EndSeq; // Script values
+
+					emit << YAML::EndMap;
+				});
+
+			emit << YAML::EndSeq;
+			// --------------------------------------------------
+
+			emit << YAML::EndMap;
 		}
 
 		emit << YAML::EndSeq;
@@ -396,6 +542,134 @@ namespace trace {
 				for (auto& i : _deserialize_components)
 				{
 					if (entity[i.first]) i.second(obj, entity);
+				}
+				YAML::Node scripts = entity["Scripts"];
+				if (!scripts) continue;
+				std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
+				
+				for (auto script : scripts)
+				{
+					std::string script_name = script["Script Name"].as<std::string>();
+					auto it = g_Scripts.find(script_name);
+					if (it == g_Scripts.end())
+					{
+						TRC_WARN("Script:{} does not exist in the assembly", script_name);
+						continue;
+					}
+					obj.AddScript(script_name);
+
+					auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					auto& field_manager = fields_instances[&it->second];
+					auto field_it = field_manager.find(uuid);
+					if (field_it == field_manager.end())
+					{
+						ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
+						field_ins.Init(&it->second);
+					}
+					ScriptFieldInstance& ins = field_manager[obj.GetID()];
+
+					for (auto values : script["Script Values"])
+					{
+						std::string field_name = values["Name"].as<std::string>();
+						auto f_it = ins.m_fields.find(field_name);
+						if (f_it == ins.m_fields.end())
+						{
+							TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
+							continue;
+						}
+						switch (f_it->second.type)
+						{
+						case ScriptFieldType::String:
+						{
+							break;
+						}
+						case ScriptFieldType::Bool:
+						{
+							bool data = values["Value"].as<bool>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Byte:
+						{
+							char data = values["Value"].as<char>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Double:
+						{
+							double data = values["Value"].as<double>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Char:
+						{
+							char data = values["Value"].as<char>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Float:
+						{
+							float data = values["Value"].as<float>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Int16:
+						{
+							int16_t data = values["Value"].as<int16_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Int32:
+						{
+							int32_t data = values["Value"].as<int32_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Int64:
+						{
+							int64_t data = values["Value"].as<int64_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::UInt16:
+						{
+							uint16_t data = values["Value"].as<uint16_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::UInt32:
+						{
+							uint32_t data = values["Value"].as<uint32_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::UInt64:
+						{
+							uint64_t data = values["Value"].as<uint64_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Vec2:
+						{
+							glm::vec2 data = values["Value"].as<glm::vec2>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Vec3:
+						{
+							glm::vec3 data = values["Value"].as<glm::vec3>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Vec4:
+						{
+							glm::vec4 data = values["Value"].as<glm::vec4>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						}
+					}
+
 				}
 			}
 		}
