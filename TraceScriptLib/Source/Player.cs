@@ -13,19 +13,23 @@ class Player : Trace.Action
     public void OnStart()
     {
         Debug.Trace($"Player Started Id:{Id}");
-        Speed -= 4.5f;
     }
 
     public void OnCreate()
     {
         Debug.Info("Player Created");
-        Speed -= 4.5f;
     }
     
     public void OnUpdate(float deltaTime)
     {
-        //Console.WriteLine($"Player Update Float {deltaTime}");
-        Speed -= deltaTime;
+        TransformComponent pose = GetComponent<TransformComponent>();
+        if (pose != null)
+        {
+            Vec3 position = pose.Position;
+            position.x += (Speed * deltaTime);
+            pose.Position = position;
+        }
+
     }   
 
     public void OnCollisionEnter(Trace.Collision collision)

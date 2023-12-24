@@ -95,6 +95,7 @@ namespace trace {
 	}
 	void Scene::OnScriptStart()
 	{
+		ScriptEngine::get_instance()->OnSceneStart(this);
 
 		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
 			{
@@ -202,6 +203,8 @@ namespace trace {
 				}
 
 			});
+
+		ScriptEngine::get_instance()->OnSceneStop(this);
 
 	}
 	void Scene::OnUpdate(float deltaTime)
@@ -427,9 +430,9 @@ namespace trace {
 
 	void Scene::DestroyEntity(Entity entity)
 	{
+		m_scriptRegistry.Erase(entity.GetID());
 		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
-		m_scriptRegistry.Erase(entity.GetID());
 	}
 
 	template<typename Component>

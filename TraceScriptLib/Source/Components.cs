@@ -8,7 +8,17 @@ namespace Trace
 {
     public class Component
     {
-        public Action entity { get; internal set; }
+        public ulong entityId { get; protected set; }
+
+        protected Component()
+        {
+            entityId = 0;
+        }
+
+        internal protected Component(ulong ent)
+        {
+            entityId = ent;
+        }
     }
 
     public class TransformComponent : Component
@@ -17,11 +27,12 @@ namespace Trace
         {
             get
             {
-                return Vec3.Zero;
+                InternalCalls.TransformComponent_GetPosition(entityId, out Vec3 position);
+                return position;
             }
             set
             {
-
+                InternalCalls.TransformComponent_SetPosition(entityId,ref value);
             }
         }
 

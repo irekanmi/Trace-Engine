@@ -152,7 +152,8 @@ namespace trace {
 	{
 		for (auto& i : m_scripts)
 		{
-			RemoveScript(id, i.first);
+			if(HasScript(id, i.first))
+				RemoveScript(id, i.first);
 		}
 
 		return true;

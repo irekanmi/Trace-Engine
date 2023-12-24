@@ -4,15 +4,23 @@
 #include "Script.h"
 #include <string>
 
+namespace trace {
+	class Scene;
+}
+
 using namespace trace;
 
 bool InitializeInternal(const std::string& bin_dir);
 bool ShutdownInternal();
+bool LoadComponents();
 
 bool LoadCoreAssembly(const std::string& file_path);
 bool LoadMainAssembly(const std::string& file_path);
 
 bool LoadAllScripts(std::unordered_map<std::string, Script>& out_data);
+
+bool OnSceneStartInternal(Scene* scene);
+bool OnSceneStopInternal(Scene* scene);
 
 bool CreateScript(const std::string& name, Script& script, const std::string& nameSpace = "", bool core = false);
 bool GetScriptID(Script& script, uintptr_t& res);

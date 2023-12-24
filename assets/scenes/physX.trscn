@@ -23,8 +23,8 @@ Entities:
       Tag: Plane
     TransformComponent:
       Position: [-0.36447686, -1.12692499, 0.698224843]
-      Rotation: [-0.338481724, -0, 0, 0.940972984]
-      Scale: [19.071537, 0.99999994, 31.9033241]
+      Rotation: [0.236291528, 0, 0, 0.971682191]
+      Scale: [19.071537, 1, 31.9033089]
     ModelComponent:
       Name: Cube
       file id: 4
@@ -42,16 +42,14 @@ Entities:
       - Script Name: Player
         Script Values:
           - Name: Speed
-            Type: 1
-            Value: 52.5
+            Value: -1.5
           - Name: test_id
-            Type: 6
             Value: 4556
   - UUID: 17247322738515920002
     TagComponent:
       Tag: Main Camera
     TransformComponent:
-      Position: [1.88414001, -2.70306301, -20.9406013]
+      Position: [1.88414001, -2.70306301, 69.7868271]
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     CameraComponent:

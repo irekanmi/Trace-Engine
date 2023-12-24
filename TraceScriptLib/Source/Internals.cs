@@ -26,6 +26,15 @@ namespace Trace
         extern public static object Action_GetScript(ulong id, Type script_type);
         #endregion
 
+        #region TransformComponent
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_GetPosition(ulong id, out Vec3 position);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_SetPosition(ulong id, ref Vec3 position);
+
+        #endregion
 
         #region Debug
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

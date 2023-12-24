@@ -7,6 +7,8 @@ namespace trace {
 
 	using FieldManager = std::unordered_map<UUID, ScriptFieldInstance>;
 
+	class Scene;
+
 	class ScriptEngine
 	{
 
@@ -22,6 +24,9 @@ namespace trace {
 		void Shutdown();
 		bool LoadAssembly(const std::string& assembly_path);
 		void ReloadAssembly();
+
+		void OnSceneStart(Scene* scene);
+		void OnSceneStop(Scene* scene);
 
 		ScriptMethod* GetConstructor();
 

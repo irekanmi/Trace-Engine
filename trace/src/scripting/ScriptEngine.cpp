@@ -31,6 +31,7 @@ namespace trace {
 		//----------------------------------
 
 		CreateScript("Action", Action, "Trace", true);
+		LoadComponents();
 
 		return result;
 	}
@@ -54,6 +55,16 @@ namespace trace {
 
 	void ScriptEngine::ReloadAssembly()
 	{
+	}
+
+	void ScriptEngine::OnSceneStart(Scene* scene)
+	{
+		OnSceneStartInternal(scene);
+	}
+
+	void ScriptEngine::OnSceneStop(Scene* scene)
+	{
+		OnSceneStopInternal(scene);
 	}
 
 	ScriptMethod* ScriptEngine::GetConstructor()

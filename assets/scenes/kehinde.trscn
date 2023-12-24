@@ -14,6 +14,13 @@ Entities:
       file id: 5
     ModelRendererComponent:
       file id: 10670985502615273580
+    Scripts:
+      - Script Name: Player
+        Script Values:
+          - Name: Speed
+            Value: 34.5
+          - Name: test_id
+            Value: 8327832
   - UUID: 13361703342697183581
     TagComponent:
       Tag: Text
@@ -24,6 +31,8 @@ Entities:
     TextComponent:
       Text Data: Favour
       Font file_id: 3567564683209163988
+    Scripts:
+      []
   - UUID: 3137501352561339422
     TagComponent:
       Tag: red light
@@ -41,6 +50,8 @@ Entities:
     TextComponent:
       Text Data: Red Light
       Font file_id: 4113681025385876608
+    Scripts:
+      []
   - UUID: 789607815271590800
     TagComponent:
       Tag: New Entity
@@ -61,6 +72,8 @@ Entities:
       Is Trigger: false
       Radius: 1
       Offset: [0, 0, 0]
+    Scripts:
+      []
   - UUID: 14303815213726832690
     TagComponent:
       Tag: car
@@ -73,6 +86,8 @@ Entities:
       file id: 9770986204108760100
     ModelRendererComponent:
       file id: 2426028521616981881
+    Scripts:
+      []
   - UUID: 1836790970572848754
     TagComponent:
       Tag: camera
@@ -89,8 +104,10 @@ Entities:
       Near: 0.100000001
       Far: 1000
       Fov: 45
-      Aspect Ratio: 1.81748068
+      Aspect Ratio: 1.85476196
       Orthographic Size: 10
+    Scripts:
+      []
   - UUID: 15353958122290312413
     TagComponent:
       Tag: blue light
@@ -105,6 +122,8 @@ Entities:
       Params1: [1.01900005, 0.0170000009, 0.00200000009, 0]
       Params2: [0, 4.51000023, 0, 0]
       Light Type: 1
+    Scripts:
+      []
   - UUID: 17604085128011595727
     TagComponent:
       Tag: Floor
@@ -121,6 +140,8 @@ Entities:
       Is Trigger: false
       Extents: [0.5, 0.5, 0.5]
       Offset: [0, 0, 0]
+    Scripts:
+      []
   - UUID: 10364448283751591706
     TagComponent:
       Tag: Plane
@@ -133,3 +154,5 @@ Entities:
       file id: 7
     ModelRendererComponent:
       file id: 9226787562277584793
+    Scripts:
+      []
