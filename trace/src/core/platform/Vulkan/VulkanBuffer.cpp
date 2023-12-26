@@ -222,12 +222,12 @@ namespace vk {
 			vk::_CreateBuffer(_instance, _device, &stage_buffer, stage_info);
 
 			void* data0;
-			vkMapMemory(_device->m_device, stage_buffer.m_memory, offset, stage_info.m_size, 0, &data0);
+			vkMapMemory(_device->m_device, stage_buffer.m_memory, 0, stage_info.m_size, 0, &data0);
 			memcpy(data0, data, size);
 			vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
 
 
-			vk::_CopyBuffer(_instance, _device, &stage_buffer, _handle, stage_info.m_size, 0);
+			vk::_CopyBuffer(_instance, _device, &stage_buffer, _handle, stage_info.m_size, offset);
 
 			vk::_DestoryBuffer(_instance, _device, &stage_buffer);
 

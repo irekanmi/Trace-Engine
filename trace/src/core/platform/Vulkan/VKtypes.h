@@ -221,9 +221,9 @@ namespace trace {
 		VkPhysicalDeviceProperties m_properties;
 		VkPhysicalDeviceFeatures m_features;
 		SwapchainInfo m_swapchainInfo;
-		VKBuffer m_frameDescriptorBuffer;
-		void* m_bufferPtr;
-		char* m_bufferData;
+		VKBuffer m_frameDescriptorBuffer[VK_MAX_NUM_FRAMES];
+		void* m_bufferPtr[VK_MAX_NUM_FRAMES];
+		char* m_bufferData[VK_MAX_NUM_FRAMES];
 		uint32_t m_bufCurrentOffset;
 		VkDeviceMemory frame_memory;
 		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];

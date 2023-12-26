@@ -20,6 +20,7 @@
 bool __MSDF_LoadAndInitializeFont(const std::string & name, trace::Font * font);
 bool __MSDF_DestroyFont(trace::Font * font);
 bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, uint32_t pos_index, std::vector<glm::vec4>&tex_coords, glm::mat4 & _transform, float tex_index, uint32_t& count);
+bool __MSDF_ComputeTextVertex(trace::Font* font, const std::string & text, std::vector<trace::TextVertex>&text_vertices, glm::mat4 & _transform, glm::vec3& color);
 // ----------------------------------------
 
 
@@ -31,12 +32,14 @@ namespace trace {
 		FontFunc::_loadAndInitializeFont = __MSDF_LoadAndInitializeFont;
 		FontFunc::_destroyFont = __MSDF_DestroyFont;
 		FontFunc::_computeTextString = __MSDF_ComputeTextString;
+		FontFunc::_computeTextVertex = __MSDF_ComputeTextVertex;
 		return true;
 	}
 
 	__LoadAndInitializeFont FontFunc::_loadAndInitializeFont = nullptr;
 	__DestroyFont FontFunc::_destroyFont = nullptr;
 	__ComputeTextString FontFunc::_computeTextString = nullptr;
+	__ComputeTextVertex FontFunc::_computeTextVertex = nullptr;
 
 	bool FontFunc::LoadAndInitializeFont(const std::string& name, Font* font)
 	{
@@ -54,6 +57,12 @@ namespace trace {
 	{
 		FONT_FUNC_IS_VALID(_computeTextString);
 		return _computeTextString(font, text, positions, pos_index, tex_coords, _transform, tex_index, count);
+	}
+
+	bool FontFunc::ComputeTextVertex(Font* font, const std::string& text, std::vector<TextVertex>& text_vertices, glm::mat4& _transform, glm::vec3& color)
+	{
+		FONT_FUNC_IS_VALID(_computeTextVertex);
+		return _computeTextVertex(font, text, text_vertices, _transform, color);
 	}
 
 }
@@ -321,6 +330,122 @@ bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::v
 
 }
 
+bool __MSDF_ComputeTextVertex(trace::Font* font, const std::string& text, std::vector<trace::TextVertex>& text_vertices, glm::mat4& _transform, glm::vec3& color)
+{
+
+	if (!font->GetInternal())
+	{
+		TRC_ERROR("Handle passed in is invalid : {}", __FUNCTION__);
+		return false;
+	}
+
+	MSDF_Handle* _internal = (MSDF_Handle*)font->GetInternal();
+	msdf_atlas::FontGeometry& fontGeometry = _internal->fontGeometry;
+	const msdfgen::FontMetrics& fontMetrics = fontGeometry.getMetrics();
+	Ref<trace::GTexture> fontAtlas = font->GetAtlas();
+	float texWidth = 1.0f / (float)fontAtlas->GetTextureDescription().m_width;
+	float texHeight = 1.0f / (float)fontAtlas->GetTextureDescription().m_height;
+
+	double x = 0.0f;
+	double y = 0.0f;
+	float fsScale = 1.0f / fontMetrics.ascenderY - fontMetrics.descenderY;
+
+	double spaceAdvance = fontGeometry.getGlyph(' ')->getAdvance();
+
+
+	for (uint32_t i = 0; i < text.length(); i++)
+	{
+		char character = text[i];
+
+		if (character == '\n')
+		{
+			x = 0;
+			y -= fsScale * fontMetrics.lineHeight;
+			continue;
+		}
+
+		if (character == '\t')
+		{
+			x += fsScale * (4 * spaceAdvance);
+			continue;
+		}
+
+		auto glyph = fontGeometry.getGlyph(character);
+		if (!glyph)
+		{
+			TRC_WARN("Can't find glyph for these character {}", character);
+			glyph = fontGeometry.getGlyph('?');
+		}
+		if (!glyph)
+		{
+			TRC_ERROR("Can't find glyph for these character {}", '?');
+			return false;
+		}
+		double pl, pb, pr, pt;
+		glyph->getQuadPlaneBounds(pl, pb, pr, pt);
+		double al, ab, ar, at;
+		glyph->getQuadAtlasBounds(al, ab, ar, at);
+		glm::vec2 quadMin((float)pl, (float)pb);
+		glm::vec2 quadMax((float)pr, (float)pt);
+		quadMin *= fsScale;
+		quadMax *= fsScale;
+		quadMin += glm::vec2(x, y);
+		quadMax += glm::vec2(x, y);
+
+		glm::vec2 texMin((float)al, (float)ab);
+		glm::vec2 texMax((float)ar, (float)at);
+
+
+		texMin *= glm::vec2(texWidth, texHeight);
+		texMax *= glm::vec2(texWidth, texHeight);
+
+		double advance = glyph->getAdvance();
+		if (i < text.length() - 1)
+		{
+			char nextChracter = text[i + 1];
+			fontGeometry.getAdvance(advance, character, nextChracter);
+		}
+		x += fsScale * advance;
+		
+		trace::TextVertex v0;
+		v0.pos = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		v0.texCoord = texMin;
+		v0.color = color;
+		text_vertices.emplace_back(v0);
+
+		trace::TextVertex v1;
+		v1.pos = _transform * glm::vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+		v1.texCoord = glm::vec2(texMax.x, texMin.y);
+		v1.color = color;
+		text_vertices.emplace_back(v1);
+
+		trace::TextVertex v2;
+		v2.pos = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		v2.texCoord = glm::vec2(texMax);
+		v2.color = color;
+		text_vertices.emplace_back(v2);
+
+		trace::TextVertex v3;
+		v3.pos = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		v3.texCoord = glm::vec2(texMax);
+		v3.color = color;
+		text_vertices.emplace_back(v3);
+
+		trace::TextVertex v4;
+		v4.pos = _transform * glm::vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
+		v4.texCoord = glm::vec2(texMin.x, texMax.y);
+		v4.color = color;
+		text_vertices.emplace_back(v4);
+
+		trace::TextVertex v5;
+		v5.pos = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		v5.texCoord = glm::vec2(texMin);
+		v5.color = color;
+		text_vertices.emplace_back(v5);
+	}
+
+	return true;
+}
 
 // -------------------------------------------------------------------------------- 
 

@@ -23,12 +23,29 @@ class Player : Trace.Action
     public void OnUpdate(float deltaTime)
     {
         TransformComponent pose = GetComponent<TransformComponent>();
-        if (pose != null)
+
+        Vec3 dir = Vec3.Zero;
+        if(Input.GetKey(Keys.KEY_W))
         {
-            Vec3 position = pose.Position;
-            position.x += (Speed * deltaTime);
-            pose.Position = position;
+            dir.y = 1.0f;
         }
+        if (Input.GetKey(Keys.KEY_A))
+        {
+            dir.x = -1.0f;
+        }
+        if (Input.GetKey(Keys.KEY_S))
+        {
+            dir.y = -1.0f;
+        }
+        if (Input.GetKey(Keys.KEY_D))
+        {
+            dir.x = 1.0f;
+        }
+        dir *= Speed * deltaTime;
+
+        Vec3 pos = pose.Position;
+        pos += dir;
+        pose.Position = pos;
 
     }   
 

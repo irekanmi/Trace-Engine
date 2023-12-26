@@ -112,6 +112,23 @@ namespace trace {
 		m_debug = nullptr;
 		m_debug = new DebugData();
 
+		// Text rendering initializaton ----------------------------
+
+		//TODO: allow it to automatically grow when needed
+		text_vertices.resize(16);
+
+		BufferInfo text_buffer_info;
+		text_buffer_info.m_data = nullptr;
+		text_buffer_info.m_flag = BindFlag::VERTEX_BIT;
+		text_buffer_info.m_size = sizeof(TextVertex) * KB * 2;
+		text_buffer_info.m_stide = sizeof(TextVertex);
+		text_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
+
+		RenderFunc::CreateBuffer(&text_buffer, text_buffer_info);
+
+
+		// --------------------------------------------------------
+
 		return result;
 	}
 
@@ -157,6 +174,13 @@ namespace trace {
 		UIFunc::UIEndFrame();
 		RenderFunc::EndFrame(&g_device);
 		current_sky_box = nullptr;
+
+		for (auto& i : text_vertices)
+		{
+			i.clear();
+		}
+		bound_text_atlases.clear();
+		text_atlases.clear();
 	}
 
 
@@ -205,6 +229,11 @@ namespace trace {
 
 	void Renderer::End()
 	{
+		//Text Rendering -------------------------
+
+		RenderFunc::DestroyBuffer(&text_buffer);
+
+		// ---------------------------------------
 
 		m_composer->Shutdowm();
 		delete m_debug;
@@ -313,6 +342,8 @@ namespace trace {
 		light_data = glm::ivec4(0);
 		lights.clear();
 
+		
+
 	}
 
 	void Renderer::DrawQuad()
@@ -416,6 +447,38 @@ namespace trace {
 		uint32_t count = 0;
 		FontFunc::ComputeTextString(font, text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, _transform, current_tex_index, count);
 		textBatches[current_text_batch].current_unit += count;
+	}
+
+	void Renderer::DrawString_(Font* font, const std::string& text, glm::mat4 _transform)
+	{
+		Ref<GTexture> texture = font->GetAtlas();
+
+		// Finding texture index ===========================================
+		uint32_t current_tex_index;
+		auto tex_index = bound_text_atlases.find(texture->m_id);
+		if (tex_index == bound_text_atlases.end())
+		{
+			current_tex_index = text_atlases.size();
+			text_atlases.emplace_back(texture.get());
+			bound_text_atlases.emplace(texture->m_id);
+		}
+		else
+		{
+			uint32_t index = 0;
+			//TODO: Find a better to find texture index
+			auto value = std::find_if(text_atlases.begin(), text_atlases.end(), [&tex_index, &index](GTexture* tex) {
+				index++;
+				return tex->m_id == *tex_index;
+				});
+			current_tex_index = (float)(index - 1);
+		}
+		// ==================================================================
+
+
+		std::vector<TextVertex>& vertices = text_vertices[current_tex_index];
+		glm::vec3 color(12.0f, 15.0f, 14.1f);
+		FontFunc::ComputeTextVertex(font, text, vertices, _transform, color);
+
 	}
 
 	void Renderer::RenderOpaqueObjects()
@@ -557,6 +620,37 @@ namespace trace {
 			RenderFunc::Draw(&g_device, 0, textBatches[i].current_unit * 6);
 			RenderFunc::OnDrawEnd(&g_device, textBatchPipeline.get());
 		}
+	}
+
+	void Renderer::RenderTextVerts()
+	{
+		uint32_t index = 0;
+		uint32_t offset = 0;
+		uint32_t start_vertex = 0;
+		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+		text_pipeline = PipelineManager::get_instance()->GetPipeline("text_pipeline");
+		for (GTexture*& i : text_atlases)
+		{
+			std::vector<TextVertex>& vertices = text_vertices[index];
+			uint32_t count = vertices.size();
+			if (count == 0) continue;
+			uint32_t size = count * sizeof(TextVertex);
+			RenderFunc::SetBufferDataOffset(&text_buffer, vertices.data(), offset, size);
+
+			RenderFunc::SetPipelineTextureData(text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, i);
+			RenderFunc::OnDrawStart(&g_device, text_pipeline.get());
+			RenderFunc::SetPipelineData(text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::BindVertexBuffer(&g_device, &text_buffer);
+			RenderFunc::BindPipeline_(text_pipeline.get());
+			RenderFunc::BindPipeline(&g_device, text_pipeline.get());
+			RenderFunc::Draw(&g_device, start_vertex, count);
+			RenderFunc::OnDrawEnd(&g_device, text_pipeline.get());
+
+			++index;
+			offset += size;
+			start_vertex += count;
+		}
+
 	}
 
 	void Renderer::RenderDebugData()
@@ -910,7 +1004,8 @@ namespace trace {
 			glm::mat4* transform = (glm::mat4*)params.data;
 			std::string text = (const char*)(params.data + sizeof(glm::mat4));
 
-			DrawString(font, text, *transform);
+			//DrawString(font, text, *transform);
+			DrawString_(font, text, *transform);
 
 		};
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4) + cmd.params.val[0]);

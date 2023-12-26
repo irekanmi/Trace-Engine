@@ -449,7 +449,7 @@ namespace vk {
 		vkGetDeviceQueue(device->m_device, device->m_queues.transfer_queue, 0, &device->m_transferQueue);
 		TRC_INFO("Queues Acquired");
 
-		TRC_ASSERT(FindDepthFormat(device), "DepthFormat not found");
+		TRC_ASSERT(FindDepthFormat(device), "Depth Format not found");
 
 		VkCommandPoolCreateInfo graphics_pool_info = {};
 		graphics_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -459,28 +459,32 @@ namespace vk {
 		VK_ASSERT(vkCreateCommandPool(device->m_device, &graphics_pool_info, instance->m_alloc_callback, &device->m_graphicsCommandPool));
 		TRC_INFO("Graphics command pool created");
 
+		//Per Frame descriptor buffer
+		{
+			for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
+			{
+				vk::createBuffer(
+					instance,
+					device,
+					MB,
+					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					device->m_frameDescriptorBuffer[i].m_handle,
+					device->m_frameDescriptorBuffer[i].m_memory
+				);
 
-		vk::createBuffer(
-			instance,
-			device,
-			MB,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			device->m_frameDescriptorBuffer.m_handle,
-			device->m_frameDescriptorBuffer.m_memory
-		);
+				vkMapMemory(
+					device->m_device,
+					device->m_frameDescriptorBuffer[i].m_memory,
+					0,
+					MB,
+					VK_NO_FLAGS,
+					&device->m_bufferPtr[i]
+				);
 
-		vkMapMemory(
-			device->m_device,
-			device->m_frameDescriptorBuffer.m_memory,
-			0,
-			MB,
-			VK_NO_FLAGS,
-			&device->m_bufferPtr
-		);
-
-		device->m_bufferData = new char[MB];
-
+				device->m_bufferData[i] = new char[MB];
+			}
+		}
 
 		return device_created;
 	}
@@ -488,15 +492,19 @@ namespace vk {
 	void _DestoryDevice(trace::VKDeviceHandle* device, trace::VKHandle* instance)
 	{
 
-		delete[] device->m_bufferData;
+		//Per Frame descriptor buffer
+		for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
+		{
+			delete[] device->m_bufferData[i];
+			vkUnmapMemory(
+				device->m_device,
+				device->m_frameDescriptorBuffer[i].m_memory
+			);
 
-		vkUnmapMemory(
-			device->m_device,
-			device->m_frameDescriptorBuffer.m_memory
-		);
+			_DestoryBuffer(instance, device, &device->m_frameDescriptorBuffer[i]);
+		}
 
-		_DestoryBuffer(instance, device, &device->m_frameDescriptorBuffer);
-
+		// Graphics command pool
 		vkDestroyCommandPool(device->m_device, device->m_graphicsCommandPool, instance->m_alloc_callback);
 
 		vkDestroyDevice(device->m_device, instance->m_alloc_callback);
@@ -1952,8 +1960,8 @@ namespace vk {
 
 		VkBufferCopy copy_region = {};
 		copy_region.size = size;
-		copy_region.dstOffset = 0;
-		copy_region.srcOffset = offset;
+		copy_region.dstOffset = offset;
+		copy_region.srcOffset = 0;
 
 		vkCmdCopyBuffer(cmd_buf.m_handle, src->m_handle, dst->m_handle, 1, &copy_region);
 

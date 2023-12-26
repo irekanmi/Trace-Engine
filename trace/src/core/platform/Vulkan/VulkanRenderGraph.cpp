@@ -709,13 +709,13 @@ namespace vk {
 		}
 
 		uint32_t set_index = (device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
-		
+		meta_data._num_frame_update++;
 
 		write.descriptorCount = 1; //HACK: Fix
 		write.dstBinding = meta_data._slot;
 		write.pImageInfo = &image_info;
 		write.dstArrayElement = index;
-		meta_data._num_frame_update++;
+		
 		switch (meta_data._resource_type)
 		{
 		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:

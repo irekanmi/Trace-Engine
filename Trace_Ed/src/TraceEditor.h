@@ -86,7 +86,8 @@ namespace trace {
 		int gizmo_mode = -1;
 		EditorState current_state = EditorState::SceneEdit;
 		
-		std::filesystem::path current_project_path = "../assets"; //Temp
+		//std::filesystem::path current_project_path = "../assets"; //Temp
+		std::filesystem::path current_project_path = "C:\\Dev\\VisualSutdio\\Cpp\\Trace\\assets"; //Temp
 		std::string current_scene_path;
 		static TraceEditor* s_instance;
 	protected:

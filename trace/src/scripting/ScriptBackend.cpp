@@ -7,6 +7,7 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 #include "scene/Componets.h"
+#include "core/input/Input.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -406,6 +407,8 @@ void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, S
 	const MonoTableInfo* type_defs = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
 	int32_t num_types = mono_table_info_get_rows(type_defs);
 
+	MonoClass* action = mono_class_from_name(s_MonoData.coreImage, "Trace", "Action");
+
 	for (int32_t i = 0; i < num_types; i++)
 	{
 		uint32_t cols[MONO_TYPEDEF_SIZE];
@@ -423,7 +426,11 @@ void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, S
 			fullName = name;
 		}
 
-		CreateScript(name, data[fullName], nameSpace, true);
+		MonoClass* k_class =  mono_class_from_name(image, nameSpace, name);
+		bool is_action = (action != k_class) && mono_class_is_subclass_of(k_class, action, false);
+		
+
+		if(is_action) CreateScript(name, data[fullName], nameSpace, true);
 		
 	}
 }
@@ -713,6 +720,20 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 #pragma endregion
 
 
+#pragma region Input
+
+bool Input_GetKey(Keys key)
+{
+	return InputSystem::get_instance()->GetKey(key);
+}
+
+bool Input_GetButton(Buttons button)
+{
+	return InputSystem::get_instance()->GetButton(button);
+}
+
+#pragma endregion
+
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
 
 void BindInternalFuncs()
@@ -732,5 +753,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TransformComponent_GetPosition);
 	ADD_INTERNAL_CALL(TransformComponent_SetPosition);
 
+	ADD_INTERNAL_CALL(Input_GetKey);
+	ADD_INTERNAL_CALL(Input_GetButton);
 
 }

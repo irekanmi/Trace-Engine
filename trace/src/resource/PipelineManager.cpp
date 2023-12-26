@@ -297,10 +297,51 @@ namespace trace {
 			_ds2.blend_state = clr_bld;
 			_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
 
-			text_pipeline = CreatePipeline(_ds2, "text_batch_pipeline");
-			if (!text_pipeline)
+			text_batch_pipeline = CreatePipeline(_ds2, "text_batch_pipeline");
+			if (!text_batch_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create quad_batch_pipeline");
+				return false;
+			}
+		};
+
+		{
+			GShader* VertShader = ShaderManager::get_instance()->CreateShader("text_v.vert.glsl", ShaderStage::VERTEX_SHADER).get();
+			GShader* FragShader = ShaderManager::get_instance()->CreateShader("text_f.frag.glsl", ShaderStage::PIXEL_SHADER).get();
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(VertShader, s_res);
+			ShaderParser::generate_shader_resources(FragShader, s_res);
+
+			PipelineStateDesc _ds2 = {};
+			_ds2.vertex_shader = VertShader;
+			_ds2.pixel_shader = FragShader;
+			_ds2.resources = s_res;
+			_ds2.input_layout = {};
+
+
+			AutoFillPipelineDesc(
+				_ds2,
+				false
+			);
+			_ds2.input_layout = TextVertex::get_input_layout();
+			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+			ColorBlendState clr_bld;
+			clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
+			clr_bld.alpha_to_blend_coverage = true;
+			clr_bld.color_op = BlendOp::BLEND_OP_ADD;
+			clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
+			clr_bld.src_alpha = BlendFactor::BLEND_ONE;
+			clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
+			clr_bld.src_color = BlendFactor::BLEND_ONE;
+			_ds2.blend_state = clr_bld;
+			_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
+
+			text_pipeline = CreatePipeline(_ds2, "text_pipeline");
+			if (!text_pipeline)
+			{
+				TRC_ERROR("Failed to initialize or create text_pipeline");
 				return false;
 			}
 		};

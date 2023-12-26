@@ -60,30 +60,31 @@ namespace vk {
 
 		// Sync Objects
 		uint32_t frames_in_flight = _handle->frames_in_flight;
-		std::vector<VkSemaphore>& image_avaliable_sem = _handle->m_imageAvailableSemaphores;
-		std::vector<VkSemaphore>& queue_completed_sem = _handle->m_queueCompleteSemaphores;
-		std::array<trace::VKFence, VK_MAX_NUM_FRAMES>& in_flight_fence = _handle->m_inFlightFence;
-		std::array<trace::VKFence*, VK_MAX_NUM_FRAMES>& images_fence = _handle->m_imagesFence;
-
-		image_avaliable_sem.resize(frames_in_flight);
-		queue_completed_sem.resize(frames_in_flight);
-
-		for (uint32_t i = 0; i < frames_in_flight; i++)
 		{
-			VkSemaphoreCreateInfo sem_create_info = {};
-			sem_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			std::vector<VkSemaphore>& image_avaliable_sem = _handle->m_imageAvailableSemaphores;
+			std::vector<VkSemaphore>& queue_completed_sem = _handle->m_queueCompleteSemaphores;
+			std::array<trace::VKFence, VK_MAX_NUM_FRAMES>& in_flight_fence = _handle->m_inFlightFence;
+			std::array<trace::VKFence*, VK_MAX_NUM_FRAMES>& images_fence = _handle->m_imagesFence;
 
-			VK_ASSERT(vkCreateSemaphore(_handle->m_device, &sem_create_info, _instance->m_alloc_callback, &image_avaliable_sem[i]));
-			VK_ASSERT(vkCreateSemaphore(_handle->m_device, &sem_create_info, _instance->m_alloc_callback, &queue_completed_sem[i]));
+			image_avaliable_sem.resize(frames_in_flight);
+			queue_completed_sem.resize(frames_in_flight);
 
-			vk::_CreateFence(_instance, _handle, &in_flight_fence[i], true);
-		}
+			for (uint32_t i = 0; i < frames_in_flight; i++)
+			{
+				VkSemaphoreCreateInfo sem_create_info = {};
+				sem_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-		for (uint32_t i = 0; i < frames_in_flight; i++)
-		{
-			images_fence[i] = nullptr;
-		}
+				VK_ASSERT(vkCreateSemaphore(_handle->m_device, &sem_create_info, _instance->m_alloc_callback, &image_avaliable_sem[i]));
+				VK_ASSERT(vkCreateSemaphore(_handle->m_device, &sem_create_info, _instance->m_alloc_callback, &queue_completed_sem[i]));
 
+				vk::_CreateFence(_instance, _handle, &in_flight_fence[i], true);
+			}
+
+			for (uint32_t i = 0; i < frames_in_flight; i++)
+			{
+				images_fence[i] = nullptr;
+			}
+		};
 		VkDescriptorPoolSize pool_sizes[3] = {};
 		pool_sizes[0].descriptorCount = KB;
 		pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -111,6 +112,9 @@ namespace vk {
 			);
 		}
 
+
+		//Null Placeholders -------------------------------------
+		{
 		vk::_CreateImage(
 			_instance,
 			_handle,
@@ -203,6 +207,8 @@ namespace vk {
 			_handle->m_graphicsQueue,
 			&cmd_buf
 		);
+		};
+		// ---------------------------------------------------------------
 
 		return result;
 	}
@@ -829,7 +835,7 @@ namespace vk {
 		}
 
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
-		_handle->m_bufCurrentOffset = frame_offset;
+		_handle->m_bufCurrentOffset = 0;
 
 		// Wait for work to finish "if any"
 		if (!vk::_WaitFence(_instance, _handle, &_handle->m_inFlightFence[_handle->m_currentFrame], UINT64_MAX))
@@ -881,10 +887,10 @@ namespace vk {
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
-		char* from = _handle->m_bufferData + frame_offset;
-		char* to = (char*)_handle->m_bufferPtr + frame_offset;
+		char* from = _handle->m_bufferData[_handle->m_imageIndex];
+		char* to = (char*)_handle->m_bufferPtr[_handle->m_imageIndex];
 
-		memcpy(to, from, uint32_t(MB / (_handle->frames_in_flight)));
+		memcpy(to, from, MB);
 
 		vk::_EndCommandBuffer(command_buffer);
 

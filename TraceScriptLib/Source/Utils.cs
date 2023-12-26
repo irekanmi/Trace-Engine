@@ -30,20 +30,21 @@ namespace Trace
             }
         }
 
-        public static Vec2 Zero
-        {
-            get
-            {
-                return new Vec2(0.0f, 0.0f);
-            }
-            private set
-            {
-                return;
-            }
-        }
+        public static Vec2 Zero => new Vec2 { x = 0, y = 0 };
 
         public float x;
         public float y;
+
+
+        static public Vec2 operator*(Vec2 a, float b)
+        {
+            return new Vec2 { x = a.x * b, y = a.y * b };
+        }
+
+        static public Vec2 operator +(Vec2 a, Vec2 b)
+        {
+            return new Vec2 { x = a.x * b.x, y = a.y * b.y };
+        }
 
     }
 
@@ -122,21 +123,24 @@ namespace Trace
             }
         }
 
-        public static Vec3 Zero
-        {
-            get
-            {
-                return new Vec3(0.0f, 0.0f, 0.0f);
-            }
-            private set
-            {
-                return;
-            }
-        }
+        public static Vec3 Zero => new Vec3 { x = 0, y = 0, z = 0 };
 
         public float x;
         public float y;
         public float z;
+
+
+        static public Vec3 operator*(Vec3 a, float b)
+        {
+            return new Vec3 { x = a.x * b, y = a.y * b, z = a.z * b };
+        }
+
+
+        static public Vec3 operator +(Vec3 a, Vec3 b)
+        {
+            return new Vec3 { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z };
+        }
+
 
     }
 

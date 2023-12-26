@@ -43,6 +43,7 @@ namespace trace {
 		Ref<GPipeline> skybox_pipeline;
 		Ref<GPipeline> light_pipeline;
 		Ref<GPipeline> gbuffer_pipeline;
+		Ref<GPipeline> text_batch_pipeline;
 		Ref<GPipeline> text_pipeline;
 		Ref<GPipeline> quad_pipeline;
 		Ref<GPipeline> debug_line_pipeline;

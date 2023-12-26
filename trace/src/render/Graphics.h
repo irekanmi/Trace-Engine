@@ -565,10 +565,45 @@ namespace trace {
 
 	};
 
-	struct QuadBatch
+	struct TextVertex
 	{
-		glm::vec4 pos;
-		glm::vec4 texCoord;
+		glm::vec3 pos;
+		glm::vec3 color;
+		glm::vec2 texCoord;
+
+		static InputLayout get_input_layout()
+		{
+			InputLayout layout;
+			layout.stride = sizeof(TextVertex);
+			layout.input_class = InputClassification::PER_VERTEX_DATA;
+
+			InputLayout::Element _pos;
+			_pos.format = Format::R32G32_FLOAT;
+			_pos.index = 0;
+			_pos.offset = offsetof(TextVertex, pos);
+			_pos.stride = sizeof(glm::vec3);
+
+			layout.elements.push_back(_pos);
+
+			InputLayout::Element _color;
+			_color.format = Format::R32G32B32_FLOAT;
+			_color.index = 1;
+			_color.offset = offsetof(TextVertex, color);
+			_color.stride = sizeof(glm::vec3);
+
+			layout.elements.push_back(_color);
+
+			InputLayout::Element _texCoord;
+			_texCoord.format = Format::R32G32_FLOAT;
+			_texCoord.index = 2;
+			_texCoord.offset = offsetof(TextVertex, texCoord);
+			_texCoord.stride = sizeof(glm::vec2);
+
+			layout.elements.push_back(_texCoord);
+
+			return layout;
+		}
+
 	};
 
 

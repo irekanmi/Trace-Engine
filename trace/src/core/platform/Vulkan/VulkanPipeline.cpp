@@ -245,7 +245,7 @@ namespace trace {
 						bufs[k].offset = 0;
 						write.dstSet = _handle->Instance_sets[i];
 						write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-						bufs[k].buffer = device->m_frameDescriptorBuffer.m_handle;
+						bufs[k].buffer = device->m_frameDescriptorBuffer[i].m_handle;
 					}
 					else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 					{
@@ -352,7 +352,7 @@ namespace trace {
 							bufs[k].offset = 0;
 							write.dstSet = _handle->Instance_sets[i];
 							write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-							bufs[k].buffer = device->m_frameDescriptorBuffer.m_handle;
+							bufs[k].buffer = device->m_frameDescriptorBuffer[i].m_handle;
 						}
 						else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 						{
@@ -676,7 +676,7 @@ namespace vk {
 
 
 
-		char* data_point = _device->m_bufferData;
+		char* data_point = _device->m_bufferData[_device->m_imageIndex];
 		uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
 
 		void* map_point = data_point + location;
@@ -735,7 +735,18 @@ namespace vk {
 		write.dstBinding = meta_data._slot;
 		write.pImageInfo = &image_info;
 		write.dstArrayElement = index;
-		uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
+
+		bool _updated = true;
+		if (meta_data._frame_index != _device->m_imageIndex)
+		{
+			meta_data._frame_index = _device->m_imageIndex;
+			meta_data._num_frame_update = 0;
+			_updated = false;
+		}
+
+		uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
+		++meta_data._num_frame_update;
+
 		switch (meta_data._resource_type)
 		{
 		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
@@ -758,6 +769,7 @@ namespace vk {
 		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
 		{
 			write.dstSet = _handle->Instance_sets[set_index];
+			_handle->Instance_set = _handle->Instance_sets[set_index];
 			break;
 		}
 

@@ -262,7 +262,7 @@ namespace vk {
                     void* data = nullptr;
                     lambda(meta_data.data_type, m_data.second.first, data);
 
-                    char* data_point = _device->m_bufferData;
+                    char* data_point = _device->m_bufferData[_device->m_imageIndex];
                     uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
 
                     void* map_point = data_point + location;

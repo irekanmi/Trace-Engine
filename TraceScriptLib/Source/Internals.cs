@@ -56,5 +56,15 @@ namespace Trace
         extern public static void Debug_Critical(string message);
         #endregion
 
+        #region Input
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Input_GetKey(Keys key);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Input_GetButton(Buttons buttons);
+
+        #endregion
+
     }
 }

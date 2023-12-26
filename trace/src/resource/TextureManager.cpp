@@ -175,6 +175,7 @@ namespace trace {
 				tex.m_id = i;
 				TextureHash _hash;
 				_hash._id = i;
+				tex.m_path = name;
 				_tex = &m_textures[_hash._id];
 				m_hashTable.Set(name, _hash);
 				break;

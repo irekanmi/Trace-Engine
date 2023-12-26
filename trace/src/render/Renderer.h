@@ -90,12 +90,14 @@ namespace trace {
 		void DrawQuad();
 		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
 		void DrawString(Font* font, const std::string& text, glm::mat4 _transform);
+		void DrawString_(Font* font, const std::string& text, glm::mat4 _transform);
 
 
 		void RenderOpaqueObjects();
 		void RenderLights();
 		void RenderQuads();
 		void RenderTexts();
+		void RenderTextVerts();
 		void RenderDebugData();
 
 		static Renderer* s_instance;
@@ -181,6 +183,13 @@ namespace trace {
 		uint32_t num_avalible_text_batch = 0;
 		// ....................................................
 
+		//Text Renderering ..............................
+		std::vector<std::vector<TextVertex>> text_vertices;
+		std::vector<GTexture*> text_atlases;
+		Ref<GPipeline> text_pipeline;
+		std::unordered_set<uint32_t> bound_text_atlases;
+		GBuffer text_buffer;
+		// ..............................................
 
 		friend class RenderGraph;
 
