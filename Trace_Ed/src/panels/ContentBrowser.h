@@ -32,6 +32,7 @@ namespace trace {
 		void DrawEditMaterial();
 		void DrawEditFont();
 		void DrawEditPipeline();
+		void SetDirectory(const std::string& dir);
 
 	public:
 		//TODO: Check if there is a better way to store uuid and paths

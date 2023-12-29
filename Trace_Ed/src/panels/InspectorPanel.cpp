@@ -605,6 +605,9 @@ namespace trace {
 
 			ImGui::Text("Enter Text: ");
 			ImGui::InputTextMultiline("##Text Data", &comp.text);
+
+			ImGui::ColorEdit3("Color", glm::value_ptr(comp.color));
+			ImGui::DragFloat("Intensity", &comp.intensity);
 			
 			});
 

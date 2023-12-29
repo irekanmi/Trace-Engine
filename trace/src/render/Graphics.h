@@ -578,7 +578,7 @@ namespace trace {
 			layout.input_class = InputClassification::PER_VERTEX_DATA;
 
 			InputLayout::Element _pos;
-			_pos.format = Format::R32G32_FLOAT;
+			_pos.format = Format::R32G32B32_FLOAT;
 			_pos.index = 0;
 			_pos.offset = offsetof(TextVertex, pos);
 			_pos.stride = sizeof(glm::vec3);

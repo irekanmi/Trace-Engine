@@ -449,7 +449,7 @@ namespace trace {
 		textBatches[current_text_batch].current_unit += count;
 	}
 
-	void Renderer::DrawString_(Font* font, const std::string& text, glm::mat4 _transform)
+	void Renderer::DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform)
 	{
 		Ref<GTexture> texture = font->GetAtlas();
 
@@ -476,7 +476,6 @@ namespace trace {
 
 
 		std::vector<TextVertex>& vertices = text_vertices[current_tex_index];
-		glm::vec3 color(12.0f, 15.0f, 14.1f);
 		FontFunc::ComputeTextVertex(font, text, vertices, _transform, color);
 
 	}
@@ -992,7 +991,7 @@ namespace trace {
 		DrawDebugCircle(cmd_list, radius, steps, tr);
 	}
 
-	void Renderer::DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::mat4 _transform)
+	void Renderer::DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform)
 	{
 
 		if (!font) return;
@@ -1002,15 +1001,18 @@ namespace trace {
 		cmd.func = [&](CommandParams params) {
 			Font* font = (Font*)params.ptrs[0];
 			glm::mat4* transform = (glm::mat4*)params.data;
-			std::string text = (const char*)(params.data + sizeof(glm::mat4));
+			glm::vec3* _color = (glm::vec3*)(params.data + sizeof(glm::mat4));
+			std::string text = (const char*)(params.data + sizeof(glm::mat4) + sizeof(glm::vec3));
 
-			//DrawString(font, text, *transform);
-			DrawString_(font, text, *transform);
+			if(text_verts) DrawString_(font, text, *_color, *transform);
+			else DrawString(font, text, *transform);
+			
 
 		};
-		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4) + cmd.params.val[0]);
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4) + sizeof(glm::vec3) + cmd.params.val[0]);
 		memcpy(cmd.params.data, &_transform, sizeof(glm::mat4));
-		memcpy(cmd.params.data + sizeof(glm::mat4), text.c_str(), cmd.params.val[0]);
+		memcpy(cmd.params.data + sizeof(glm::mat4), &color, sizeof(glm::vec3));
+		memcpy(cmd.params.data + sizeof(glm::mat4) + sizeof(glm::vec3), text.c_str(), cmd.params.val[0]);
 		cmd_list._commands.emplace_back(cmd);
 
 	}

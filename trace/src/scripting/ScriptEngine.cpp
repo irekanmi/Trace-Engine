@@ -3,6 +3,7 @@
 #include "ScriptEngine.h"
 #include "ScriptBackend.h"
 #include "core/Coretypes.h"
+#include "core/Utils.h"
 #include <filesystem>
 
 namespace trace {
@@ -21,7 +22,7 @@ namespace trace {
 	bool ScriptEngine::Init()
 	{
 		bool result = true;
-		result = result && get_dir_path();
+		result = result && FindDirectory(AppSettings::exe_path, "Data", bin_dir_path);
 		result = result && InitializeInternal(bin_dir_path);
 
 		result = result && LoadCoreAssembly(bin_dir_path + "/Assembly/TraceScriptLib.dll");
@@ -83,23 +84,5 @@ namespace trace {
 		return s_instance;
 	}
 
-	bool ScriptEngine::get_dir_path()
-	{
-		std::filesystem::path current_dir = std::filesystem::path(AppSettings::exe_path).parent_path();
-
-
-		while (current_dir != "")
-		{
-			if (std::filesystem::exists(current_dir / "Data"))
-			{
-				bin_dir_path = (current_dir / "Data").string();
-				return true;
-			}
-
-			current_dir = current_dir.parent_path();
-		}
-
-		return false;
-	}
 
 }

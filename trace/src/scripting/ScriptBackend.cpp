@@ -719,7 +719,6 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 
 #pragma endregion
 
-
 #pragma region Input
 
 bool Input_GetKey(Keys key)
@@ -730,6 +729,58 @@ bool Input_GetKey(Keys key)
 bool Input_GetButton(Buttons button)
 {
 	return InputSystem::get_instance()->GetButton(button);
+}
+
+#pragma endregion
+
+#pragma region TextComponent
+
+MonoString* TextComponent_GetString(UUID id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return nullptr;
+	}
+
+	std::string& txt = entity.GetComponent<TextComponent>().text;
+
+	if (txt.empty()) return nullptr;
+
+	return mono_string_new(s_MonoData.appDomain, txt.c_str());
+
+}
+
+void TextComponent_SetString(UUID id, MonoString* string)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	std::string& txt = entity.GetComponent<TextComponent>().text;
+
+	char* c_str = mono_string_to_utf8(string);
+	txt = c_str;
+	mono_free(c_str);
+
 }
 
 #pragma endregion
@@ -755,5 +806,8 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(Input_GetKey);
 	ADD_INTERNAL_CALL(Input_GetButton);
+
+	ADD_INTERNAL_CALL(TextComponent_GetString);
+	ADD_INTERNAL_CALL(TextComponent_SetString);
 
 }

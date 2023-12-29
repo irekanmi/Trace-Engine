@@ -212,7 +212,7 @@ Entities:
       Near: 0.100000001
       Far: 1000
       Fov: 45
-      Aspect Ratio: 1.85476196
+      Aspect Ratio: 1.90931368
       Orthographic Size: 10
     Scripts:
       []
@@ -293,14 +293,18 @@ Entities:
     TagComponent:
       Tag: Scene Name
     TransformComponent:
-      Position: [-6.85851717, 25.8100815, -13.6186647]
-      Rotation: [0.0824874192, 0.313755035, 0.147484258, 0.934345782]
-      Scale: [5.11000252, 5.10998917, 5.10998821]
+      Position: [-17.0369301, 22.2651081, 1.84408915]
+      Rotation: [-0.0263844803, -0.0414869525, 0.0260367859, 0.998451233]
+      Scale: [5.11000299, 5.10998917, 5.10998631]
     TextComponent:
       Text Data: "Coker\n"
+      Color: [0.905555546, 0.382345647, 0.382345647]
+      Intensity: 3
       Font file_id: 6456025844781365329
     Scripts:
-      []
+      - Script Name: GUID
+        Script Values:
+          []
   - UUID: 4696756564098000552
     TagComponent:
       Tag: trigger

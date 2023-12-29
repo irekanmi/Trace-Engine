@@ -12,6 +12,8 @@
 #include "core/memory/StackAllocator.h"
 #include "serialize/SceneSerializer.h"
 #include "serialize/PipelineSerializer.h"
+#include "serialize/ProjectSerializer.h"
+#include "core/Utils.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -19,6 +21,7 @@
 #include "imgui_stdlib.h"
 #include "ImGuizmo.h"
 #include "portable-file-dialogs.h"
+#include "spdlog/fmt/fmt.h"
 
 
 int translateKeyTrace_ImGui(trace::Keys key);
@@ -222,9 +225,16 @@ namespace trace {
 						NewScene();
 					}
 					if (ImGui::MenuItem("Close Scene"))
+					ImGui::Separator();
+					if (ImGui::MenuItem("New project"))
 					{
-						CloseCurrentScene();
+						p_createProject = true;
 					}
+					if (ImGui::MenuItem("Open project"))
+					{
+						OpenProject();
+					}
+
 					ImGui::EndMenu();
 				}
 				if (ImGui::BeginMenu("Settings"))
@@ -273,6 +283,9 @@ namespace trace {
 			}
 			ImGui::TextColored({ .0f, .59f, .40f, 1.0f }, "Coker Ayanfe");
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
+			ImGui::Checkbox("Text Verts", &Renderer::get_instance()->text_verts);
+
+
 		}
 		ImGui::End();
 		elapsed += deltaTime;
@@ -290,6 +303,42 @@ namespace trace {
 		m_contentBrowser.Render(deltaTime);
 
 		RenderSceneToolBar();
+
+
+		//Create Project
+		if (p_createProject)
+		{
+			ImGui::Begin("Create Project", &p_createProject);
+			static std::string project_dir;
+			ImGui::InputText("Project Directory", &project_dir);
+			ImGui::SameLine();
+			if (ImGui::Button("..."))
+			{
+				std::string result = pfd::select_folder("Select Directory").result();
+				if (!result.empty())
+				{
+					project_dir = result;
+				}
+			}
+			static std::string project_name;
+			ImGui::InputText("Project Name", &project_name);
+
+			if (ImGui::Button("Create Project"))
+			{
+				CreateProject(project_dir, project_name);
+
+				p_createProject = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				project_dir.clear();
+				project_name.clear();
+				p_createProject = false;
+			}
+
+			ImGui::End();
+		}
 
 	}
 
@@ -964,6 +1013,116 @@ namespace trace {
 		{
 			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
 		}
+	}
+
+	bool TraceEditor::CreateProject(const std::string& dir, const std::string& name)
+	{
+		if (!std::filesystem::exists(dir))
+		{
+			TRC_ERROR("Directory dosen't exits, dir:{}", dir);
+			return false;
+		}
+
+		if(!std::filesystem::is_empty(dir))
+		{
+			TRC_ERROR("Directory is not empty, Please select an empty directory, dir:{}", dir);
+			return false;
+		}
+
+		if (name.empty())
+		{
+			TRC_ERROR("Please enter a name for the project");
+			return false;
+		}
+
+
+		std::string premake_data = R"(
+workspace "{}"
+	architecture "x64"
+
+	configurations
+	{{
+		"Debug",
+		"Release"
+	}}
+project "{}"
+	location "Scripts"
+	kind "SharedLib"
+	language "C#"
+	dotnetframework "4.5"
+
+	targetdir ("Data/Assembly")
+	objdir ("Data/bin-int")
+
+	files "Scripts/**.cs"
+	
+	links
+	{{
+		"TraceScriptLib.dll"
+	}}
+
+	libdirs
+	{{
+		"{}"
+	}}
+
+)";
+
+		std::string lib_dir;
+		std::string premake5_location;
+		FindDirectory(AppSettings::exe_path, "Data/Assembly", lib_dir);
+		FindDirectory(AppSettings::exe_path, "externals/premake/premake5.exe", premake5_location);
+		premake_data = fmt::format(premake_data, name, name, lib_dir);
+
+		FileHandle out_handle;
+		if (FileSystem::open_file(dir + "/premake5.lua", FileMode::WRITE, out_handle))
+		{
+			FileSystem::writestring(out_handle, premake_data);
+			FileSystem::close_file(out_handle);
+		}
+
+		std::filesystem::create_directory(dir + "/Assets");
+		std::filesystem::create_directory(dir + "/Scripts");
+		std::filesystem::create_directory(dir + "/Data");
+		std::filesystem::create_directory(dir + "/Data/Assembly");
+
+		std::string create_cmd = fmt::format("cd {} && {} vs2022", dir, premake5_location);
+		system(create_cmd.c_str());
+
+		Ref<Project> result;
+		Project* res = new Project(); // TODO: Use custom allocator
+		res->SetName(name);
+
+		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ } };
+		ProjectSerializer::Serialize(result, dir + "/" + name + ".trproj");
+
+		return true;
+	}
+
+	bool TraceEditor::OpenProject()
+	{
+		std::vector<std::string> result = pfd::open_file("Open Project", current_project_path.string(), { "Trace Project", "*.trproj" }).result();
+		if (!result.empty())
+		{
+			CloseProject();
+			return LoadProject(result[0]);
+		}
+
+		return false;
+	}
+
+	bool TraceEditor::LoadProject(const std::string& file_path)
+	{
+		current_project = ProjectSerializer::Deserialize(file_path);
+		if (!current_project) return false;
+		m_contentBrowser.SetDirectory(current_project->assets_directory);
+		return true;
+	}
+
+	bool TraceEditor::CloseProject()
+	{
+		current_project.free();
+		return true;
 	}
 
 	std::filesystem::path GetPathFromUUID(UUID uuid)

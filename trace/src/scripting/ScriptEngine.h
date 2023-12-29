@@ -42,7 +42,6 @@ namespace trace {
 		std::unordered_map<Script*, FieldManager> m_fieldInstance;
 
 
-		bool get_dir_path();
 
 		std::string bin_dir_path;
 		std::unordered_map<std::string, Script> m_scripts;

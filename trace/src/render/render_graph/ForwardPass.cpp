@@ -86,8 +86,9 @@ namespace trace {
 			m_renderer->RenderQuads();
 			m_renderer->RenderLights();
 			m_renderer->RenderDebugData(); // Temp
-			//m_renderer->RenderTexts();
-			m_renderer->RenderTextVerts();
+			if(m_renderer->text_verts) m_renderer->RenderTextVerts();
+			else m_renderer->RenderTexts();
+			
 
 
 			});

@@ -66,5 +66,15 @@ namespace Trace
 
         #endregion
 
+        #region TextComponent
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static string TextComponent_GetString(ulong id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TextComponent_SetString(ulong id, string text);
+
+        #endregion
+
     }
 }

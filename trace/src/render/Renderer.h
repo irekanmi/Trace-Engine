@@ -74,7 +74,7 @@ namespace trace {
 		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform);
 		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
 		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
-		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::mat4 _transform);
+		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
 
 
 		// Getters
@@ -90,7 +90,7 @@ namespace trace {
 		void DrawQuad();
 		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
 		void DrawString(Font* font, const std::string& text, glm::mat4 _transform);
-		void DrawString_(Font* font, const std::string& text, glm::mat4 _transform);
+		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
 
 
 		void RenderOpaqueObjects();
@@ -112,6 +112,7 @@ namespace trace {
 		std::vector<Light> lights;
 		glm::ivec4 light_data;
 		float exposure;
+		bool text_verts = false;
 		//------------------------------------
 		std::unordered_map<std::string, void*> _avaliable_passes;
 		

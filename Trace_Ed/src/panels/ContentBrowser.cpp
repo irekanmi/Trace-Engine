@@ -32,7 +32,7 @@ namespace trace {
 
 	bool ContentBrowser::Init()
 	{
-		m_currentDir = m_editor->current_project_path;
+		if(m_editor->current_project) m_currentDir = m_editor->current_project->assets_directory;
 
 		directory_icon = TextureManager::get_instance()->LoadTexture("directory.png");
 		default_icon = TextureManager::get_instance()->LoadTexture("default_file_icon.png");
@@ -40,7 +40,7 @@ namespace trace {
 
 		//Process callbacks
 		{
-			process_callbacks[".obj"] = [&](std::filesystem::path& path) 
+			process_callbacks[".obj"] = [&](std::filesystem::path& path)
 			{
 				auto it = m_editor->all_assets.meshes.find(path);
 				if (it == m_editor->all_assets.meshes.end())
@@ -88,7 +88,7 @@ namespace trace {
 			extensions_callbacks[".trmat"] = [&](std::filesystem::path& path)
 			{
 				m_editMaterialPath = path;
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); }, 
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); },
 					[&]()
 					{
 						m_editMaterialPath = path;
@@ -102,9 +102,9 @@ namespace trace {
 							m_materialDataCache.clear();
 							m_materialDataCache = m_editMaterial->m_data;
 						}
-						
+
 					},
-					[&]() 
+					[&]()
 					{
 						if (m_editMaterialPipeChanged)
 						{
@@ -179,8 +179,11 @@ namespace trace {
 
 		};
 
-		OnDirectoryChanged();
-		ProcessAllDirectory();
+		if (!m_currentDir.empty())
+		{
+			OnDirectoryChanged();
+			ProcessAllDirectory();
+		}
 		return true;
 	}
 	void ContentBrowser::Shutdown()
@@ -194,86 +197,88 @@ namespace trace {
 	{
 		ImGui::Begin("Content Browser");
 
-		if (ImGui::ArrowButton("<<", ImGuiDir_Left))
+		if (m_editor->current_project)
 		{
-			if (m_currentDir != m_editor->current_project_path)
+			if (ImGui::ArrowButton("<<", ImGuiDir_Left))
 			{
-				m_currentDir = m_currentDir.parent_path();
-				OnDirectoryChanged();
-			}
-		}
-		ImVec2 avail = ImGui::GetContentRegionAvail();
-		ImGui::SameLine(avail.x * 0.25f);
-		ImGui::SliderFloat("##Thumbnail size", &thumbnail_size, 16.0f, 256.0f);
-
-		float padding = 16.0f;
-		float cell_size = thumbnail_size + padding;
-		int column_count = (int)(avail.x / cell_size);
-		if (column_count <= 0) column_count = 1;
-
-
-
-		ImGui::Columns(column_count, nullptr, false);
-
-		ImVec4* colors = ImGui::GetStyle().Colors;
-		ImVec4 button_hov = colors[ImGuiCol_ButtonHovered];
-		ImVec4 button_act = colors[ImGuiCol_ButtonActive];
-
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f});
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { button_hov.x, button_hov.y, button_hov.z, 0.5f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { button_act.x, button_act.y, button_act.z, 0.5f });
-
-
-		for (uint32_t i = 0; i < m_dirContents.size(); i++)
-		{
-			std::filesystem::path& path = m_dirContents[i];
-
-			std::string filename = path.filename().string();
-			std::string extension = path.extension().string();
-			void* textureID = nullptr;
-			if (std::filesystem::is_directory(path))
-			{
-				UIFunc::GetDrawTextureHandle(directory_icon.get(), textureID);
-				ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 });
-				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
+				if (m_currentDir != m_editor->current_project->assets_directory)
 				{
-					m_currentDir /= filename;
+					m_currentDir = m_currentDir.parent_path();
 					OnDirectoryChanged();
 				}
 			}
-			else if (std::filesystem::is_regular_file(path))
-			{
-				UIFunc::GetDrawTextureHandle(default_icon.get(), textureID);
+			ImVec2 avail = ImGui::GetContentRegionAvail();
+			ImGui::SameLine(avail.x * 0.25f);
+			ImGui::SliderFloat("##Thumbnail size", &thumbnail_size, 16.0f, 256.0f);
 
-				ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 });
-				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
+			float padding = 16.0f;
+			float cell_size = thumbnail_size + padding;
+			int column_count = (int)(avail.x / cell_size);
+			if (column_count <= 0) column_count = 1;
+
+
+
+			ImGui::Columns(column_count, nullptr, false);
+
+			ImVec4* colors = ImGui::GetStyle().Colors;
+			ImVec4 button_hov = colors[ImGuiCol_ButtonHovered];
+			ImVec4 button_act = colors[ImGuiCol_ButtonActive];
+
+			ImGui::PushStyleColor(ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { button_hov.x, button_hov.y, button_hov.z, 0.5f });
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, { button_act.x, button_act.y, button_act.z, 0.5f });
+
+
+			for (uint32_t i = 0; i < m_dirContents.size(); i++)
+			{
+				std::filesystem::path& path = m_dirContents[i];
+
+				std::string filename = path.filename().string();
+				std::string extension = path.extension().string();
+				void* textureID = nullptr;
+				if (std::filesystem::is_directory(path))
 				{
-					if (extensions_callbacks[extension]) extensions_callbacks[extension](path);
+					UIFunc::GetDrawTextureHandle(directory_icon.get(), textureID);
+					ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 });
+					if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
+					{
+						m_currentDir /= filename;
+						OnDirectoryChanged();
+					}
 				}
+				else if (std::filesystem::is_regular_file(path))
+				{
+					UIFunc::GetDrawTextureHandle(default_icon.get(), textureID);
+
+					ImGui::ImageButton(filename.c_str(), textureID, { thumbnail_size, thumbnail_size }, { 0, 1 }, { 1, 0 });
+					if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
+					{
+						if (extensions_callbacks[extension]) extensions_callbacks[extension](path);
+					}
+				}
+
+				OnItemPopup(path);
+
+				if (ImGui::BeginDragDropSource())
+				{
+					std::string res_path = path.string();
+					res_path += "\0";
+					std::string ext = path.extension().string();
+					ImGui::SetDragDropPayload(ext.c_str(), res_path.c_str(), res_path.size() + 1);
+					ImGui::EndDragDropSource();
+				}
+
+				ImGui::TextWrapped(filename.c_str());
+
+
+				ImGui::NextColumn();
 			}
 
-			OnItemPopup(path);
+			ImGui::PopStyleColor(3);
+			ImGui::Columns(1);
 
-			if (ImGui::BeginDragDropSource())
-			{
-				std::string res_path = path.string();
-				res_path += "\0";
-				std::string ext = path.extension().string();
-				ImGui::SetDragDropPayload(ext.c_str(), res_path.c_str(), res_path.size() + 1);
-				ImGui::EndDragDropSource();
-			}
-
-			ImGui::TextWrapped(filename.c_str());
-
-
-			ImGui::NextColumn();
+			OnWindowPopup();
 		}
-
-		ImGui::PopStyleColor(3);
-		ImGui::Columns(1);
-
-		OnWindowPopup();
-
 		ImGui::End();
 
 	}
@@ -336,11 +341,11 @@ namespace trace {
 
 		//::-----::
 
-		std::filesystem::path db_path = m_editor->current_project_path / "InternalAssetsDB";
+		std::filesystem::path db_path = std::filesystem::path(m_editor->current_project->current_directory) / "InternalAssetsDB";
 		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
 		if (!std::filesystem::exists(assetsDB_path))
 		{
-			if(!std::filesystem::exists(db_path)) std::filesystem::create_directory(db_path);
+			if (!std::filesystem::exists(db_path)) std::filesystem::create_directory(db_path);
 
 			YAML::Emitter emit;
 
@@ -349,7 +354,7 @@ namespace trace {
 			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
 			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
 			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
-			for (auto p : std::filesystem::directory_iterator(m_editor->current_project_path))
+			for (auto p : std::filesystem::directory_iterator(m_editor->current_project->assets_directory))
 			{
 				std::filesystem::path path = p.path();
 				if (path == db_path) continue;
@@ -388,7 +393,7 @@ namespace trace {
 				FileSystem::writestring(out_handle, emit.c_str());
 				FileSystem::close_file(out_handle);
 			}
-			
+
 
 		}
 		if (std::filesystem::exists(assetsDB_path))
@@ -414,10 +419,10 @@ namespace trace {
 				UUID id = i["UUID"].as<uint64_t>();
 				all_files_id[filename] = id;
 			}
-			
+
 		}
 		bool dirty_ids = false;
-		for (auto p : std::filesystem::directory_iterator(m_editor->current_project_path))
+		for (auto p : std::filesystem::directory_iterator(m_editor->current_project->assets_directory))
 		{
 			std::filesystem::path path = p.path();
 			if (path == db_path) continue;
@@ -934,5 +939,11 @@ namespace trace {
 			}
 		}
 
+	}
+	void ContentBrowser::SetDirectory(const std::string& dir)
+	{
+		m_currentDir = dir;
+		OnDirectoryChanged();
+		ProcessAllDirectory();
 	}
 }

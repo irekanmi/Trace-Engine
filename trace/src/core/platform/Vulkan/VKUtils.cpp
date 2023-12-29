@@ -1894,6 +1894,7 @@ namespace vk {
 		result = vkCreateBuffer(device->m_device, &create_info, instance->m_alloc_callback, &out_buffer->m_handle);
 
 		VK_ASSERT(result);
+		out_buffer->m_info = buffer_info;
 
 		VkMemoryRequirements mem_requirements;
 		vkGetBufferMemoryRequirements(device->m_device, out_buffer->m_handle, &mem_requirements);
@@ -1928,6 +1929,25 @@ namespace vk {
 			vkDestroyBuffer(device->m_device, buffer->m_handle, instance->m_alloc_callback);
 			buffer->m_handle = VK_NULL_HANDLE;
 		}
+
+	}
+
+	void _ResizeBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer& buffer, uint32_t new_size)
+	{
+		trace::BufferInfo new_info = buffer.m_info;
+		if (new_size < new_info.m_size)
+		{
+			TRC_WARN("Can't resize a buffer to a size lower than it's current size: {}", __FUNCTION__);
+			return;
+		}
+
+		trace::VKBuffer new_buffer;
+		new_info.m_size = new_size;
+		_CreateBuffer(instance, device, &new_buffer, new_info);
+
+		_CopyBuffer(instance, device, &buffer, &new_buffer, buffer.m_info.m_size, 0);
+
+		buffer = new_buffer;
 
 	}
 

@@ -135,6 +135,8 @@ namespace trace {
 				emit << YAML::Key << "TextComponent" << YAML::Value;
 				emit << YAML::BeginMap;
 				emit << YAML::Key << "Text Data" << YAML::Value << Txt.text;
+				emit << YAML::Key << "Color" << YAML::Value << Txt.color;
+				emit << YAML::Key << "Intensity" << YAML::Value << Txt.intensity;
 				if(Txt.font)
 					emit << YAML::Key << "Font file_id" << YAML::Value << GetUUIDFromName(Txt.font->GetName());
 
@@ -270,7 +272,9 @@ namespace trace {
 		{"TextComponent", [](Entity entity, YAML::detail::iterator_value& value) {
 		auto comp = value["TextComponent"];
 		TextComponent& Txt = entity.AddComponent<TextComponent>();
-		Txt.text = comp["Text Data"].as<std::string>();
+		if(comp["Text Data"]) Txt.text = comp["Text Data"].as<std::string>();
+		if(comp["Color"]) Txt.color = comp["Color"].as<glm::vec3>();
+		if(comp["Intensity"]) Txt.intensity = comp["Intensity"].as<float>();
 		if (comp["Font file_id"])
 		{
 			Ref<Font> res;
@@ -352,130 +356,133 @@ namespace trace {
 					auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
 					auto& field_manager = fields_instances[script];
 					auto field_it = field_manager.find(uuid);
-					if (field_it == field_manager.end())
+					bool has_fields = !(field_it == field_manager.end());
+					if (!has_fields)
 					{
 						TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->script_name);
-						return;
 					}
 					emit << YAML::BeginMap;
 
 					emit << YAML::Key << "Script Name" << YAML::Value << script->script_name;
 					emit << YAML::Key << "Script Values" << YAML::Value << YAML::BeginSeq; // Script values
-					ScriptFieldInstance& ins = field_manager[uuid];
-					for (auto& [name, field] : ins.m_fields)
+					if (has_fields)
 					{
-						emit << YAML::BeginMap;
+						ScriptFieldInstance& ins = field_manager[uuid];
+						for (auto& [name, field] : ins.m_fields)
+						{
+							emit << YAML::BeginMap;
 
-						emit << YAML::Key << "Name" << YAML::Value << name;
-						//emit << YAML::Key << "Type" << YAML::Value << (int)field.type;
-						switch (field.type)
-						{
-						case ScriptFieldType::String:
-						{
-							break;
-						}
-						case ScriptFieldType::Bool:
-						{
-							bool data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Byte:
-						{
-							char data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Double:
-						{
-							double data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Char:
-						{
-							char data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Float:
-						{
-							float data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Int16:
-						{
-							int16_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Int32:
-						{
-							int32_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Int64:
-						{
-							int64_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::UInt16:
-						{
-							uint16_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::UInt32:
-						{
-							uint32_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::UInt64:
-						{
-							uint64_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Vec2:
-						{
-							glm::vec2 data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Vec3:
-						{
-							glm::vec3 data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Vec4:
-						{
-							glm::vec4 data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
+							emit << YAML::Key << "Name" << YAML::Value << name;
+							//emit << YAML::Key << "Type" << YAML::Value << (int)field.type;
+							switch (field.type)
+							{
+							case ScriptFieldType::String:
+							{
+								break;
+							}
+							case ScriptFieldType::Bool:
+							{
+								bool data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Byte:
+							{
+								char data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Double:
+							{
+								double data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Char:
+							{
+								char data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Float:
+							{
+								float data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Int16:
+							{
+								int16_t data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Int32:
+							{
+								int32_t data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Int64:
+							{
+								int64_t data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::UInt16:
+							{
+								uint16_t data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::UInt32:
+							{
+								uint32_t data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::UInt64:
+							{
+								uint64_t data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Vec2:
+							{
+								glm::vec2 data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Vec3:
+							{
+								glm::vec3 data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
+							case ScriptFieldType::Vec4:
+							{
+								glm::vec4 data;
+								ins.GetValue(name, data);
+								emit << YAML::Key << "Value" << YAML::Value << data;
+								break;
+							}
 
-						}
+							}
 
-						emit << YAML::EndMap;
+							emit << YAML::EndMap;
+						}
 					}
 					emit << YAML::EndSeq; // Script values
 

@@ -49,4 +49,20 @@ namespace Trace
         }
 
     }
+
+    public class TextComponent : Component
+    {
+
+        public string Text { 
+            get
+            {
+                return InternalCalls.TextComponent_GetString(entityId);
+            }
+            set
+            {
+                InternalCalls.TextComponent_SetString(entityId, value);
+            }
+        }
+    }
+
 }

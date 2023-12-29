@@ -123,6 +123,8 @@ namespace trace {
 	{
 		Ref<Font> font;
 		std::string text;
+		glm::vec3 color;
+		float intensity;
 		TextComponent() = default;
 		TextComponent(const TextComponent&) = default;
 		TextComponent(std::string data)

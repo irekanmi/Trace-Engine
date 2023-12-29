@@ -210,6 +210,23 @@ namespace vk {
 		};
 		// ---------------------------------------------------------------
 
+
+		// Global copy staging buffer ============================
+		trace::BufferInfo stage_info;
+		stage_info.m_data = nullptr;
+		stage_info.m_flag = trace::BindFlag::CONSTANT_BUFFER_BIT;
+		stage_info.m_size = MB * 5;
+		stage_info.m_stide = 0;
+		stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+		_CreateBuffer(
+			_instance,
+			_handle,
+			&_handle->copy_staging_buffer,
+			stage_info
+		);
+
+		// ======================================================
+
 		return result;
 	}
 
@@ -237,6 +254,13 @@ namespace vk {
 
 
 		vkDeviceWaitIdle(_handle->m_device);
+
+
+		// Global copy staging buffer ============================
+		
+		_DestoryBuffer(_instance, _handle, &_handle->copy_staging_buffer);
+
+		// ======================================================
 
 		// Destroy frame resources "RenderGraph"
 		for (uint32_t i = 0; i < _handle->frames_in_flight * 24; i++)

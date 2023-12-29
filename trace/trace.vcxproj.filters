@@ -405,6 +405,8 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\project\Project.h" />
+    <ClInclude Include="src\serialize\ProjectSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -725,5 +727,7 @@
     <ClCompile Include="src\serialize\yaml_util.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
+    <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
+    <ClCompile Include="src\core\Utils.cpp" />
   </ItemGroup>
 </Project>

@@ -30,6 +30,8 @@ Entities:
       Scale: [12.9064331, 12.9064007, 12.9064331]
     TextComponent:
       Text Data: Favour
+      Color: [0, 0.21185191, 0.577777743]
+      Intensity: 14
       Font file_id: 3567564683209163988
     Scripts:
       []
@@ -41,7 +43,7 @@ Entities:
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.931372523, 0.49160254, 0.333285332, 0]
+      Color: [0.783333302, 0, 0, 0]
       Direction: [0.400000006, -7.19999981, -0.100000001, 0]
       Position: [-27.1197147, 1.78069258, -16.3056812, 0]
       Params1: [0, 0, 0, 0.959313989]
@@ -49,6 +51,8 @@ Entities:
       Light Type: 2
     TextComponent:
       Text Data: Red Light
+      Color: [0.783333302, 0, 0]
+      Intensity: 5.5
       Font file_id: 4113681025385876608
     Scripts:
       []
@@ -104,7 +108,7 @@ Entities:
       Near: 0.100000001
       Far: 1000
       Fov: 45
-      Aspect Ratio: 1.85476196
+      Aspect Ratio: 1.90931368
       Orthographic Size: 10
     Scripts:
       []
@@ -116,7 +120,7 @@ Entities:
       Rotation: [0, 0, 0, 1]
       Scale: [1, 1, 1]
     LightComponent:
-      Color: [0.190555573, 0.816666663, 0.75405544, 0]
+      Color: [0, 0.223529413, 0.576470613, 0]
       Direction: [0, 0, 0, 0]
       Position: [-2.75561738, -19.5167618, 17.663147, 0]
       Params1: [1.01900005, 0.0170000009, 0.00200000009, 0]

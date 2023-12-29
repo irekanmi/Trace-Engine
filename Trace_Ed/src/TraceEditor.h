@@ -5,6 +5,7 @@
 #include "panels/ContentBrowser.h"
 
 #include "scene/Scene.h"
+#include "project/Project.h"
 #include <filesystem>
 
 namespace trace {
@@ -83,13 +84,25 @@ namespace trace {
 		Ref<Scene> m_currentScene;
 		Ref<Scene> m_editScene;
 		Ref<Scene> m_editScene_duplicate;
+		Ref<Project> current_project;
 		int gizmo_mode = -1;
 		EditorState current_state = EditorState::SceneEdit;
 		
 		//std::filesystem::path current_project_path = "../assets"; //Temp
 		std::filesystem::path current_project_path = "C:\\Dev\\VisualSutdio\\Cpp\\Trace\\assets"; //Temp
+
 		std::string current_scene_path;
 		static TraceEditor* s_instance;
+
+	private:
+		bool CreateProject(const std::string& dir, const std::string& name);
+		bool OpenProject();
+		bool LoadProject(const std::string& file_path);
+		bool CloseProject();
+
+		bool p_createProject = false;
+
+
 	protected:
 		friend EditorRenderComposer;
 		friend HierachyPanel;

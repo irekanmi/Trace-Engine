@@ -97,6 +97,7 @@ namespace vk {
 	// Buffers
 	VkResult _CreateBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* out_buffer, trace::BufferInfo buffer_info);
 	void _DestoryBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer);
+	void _ResizeBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer& buffer, uint32_t new_size);
 	void _BindBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer);
 	void _BindBufferMem(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkBuffer buffer, VkDeviceMemory device_mem, uint32_t offset);
 	void _MapMemory(trace::VKDeviceHandle* device,void* data, VkDeviceMemory memory, uint32_t offset, uint32_t size, uint32_t flags = 0);

@@ -5,6 +5,8 @@
 #include "vulkan/vulkan.h"
 #include "EASTL/vector.h"
 #include "glm/glm.hpp"
+#include "render/Graphics.h"
+
 #include <unordered_map>
 
 
@@ -169,7 +171,7 @@ namespace trace {
 		void* m_device = nullptr;
 		VKHandle* m_instance = nullptr;
 		void* data_point;// if the usage is of UsageFlag::UPLOAD then it will be mapped to these data point
-		void* m_next;
+		BufferInfo m_info;
 	};
 
 	struct VKFrameResoures
@@ -228,6 +230,9 @@ namespace trace {
 		VkDeviceMemory frame_memory;
 		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
 		uint32_t frame_mem_size = 0;
+		
+		VKBuffer copy_staging_buffer;
+
 		VKImage nullImage;
 		VKBuffer nullBuffer;
 		VKHandle* instance;

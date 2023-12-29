@@ -347,7 +347,8 @@ namespace trace {
 		{
 			auto [txt, transform] = text_view.get(entity);
 
-			renderer->DrawString(cmd_list, txt.font, txt.text, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+			glm::vec3 color = txt.color * txt.intensity;
+			renderer->DrawString(cmd_list, txt.font, txt.text, color, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
 
 		}
 

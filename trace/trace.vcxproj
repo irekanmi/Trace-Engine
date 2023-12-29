@@ -195,6 +195,7 @@
     <ClInclude Include="src\core\platform\Windows\Win32Window.h" />
     <ClInclude Include="src\core\platform\Windows\WinConsole.h" />
     <ClInclude Include="src\physics\Physics.h" />
+    <ClInclude Include="src\project\Project.h" />
     <ClInclude Include="src\render\Camera.h" />
     <ClInclude Include="src\render\Commands.h" />
     <ClInclude Include="src\render\Font.h" />
@@ -254,11 +255,14 @@
     <ClInclude Include="src\scripting\ScriptRegistry.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
     <ClInclude Include="src\serialize\PipelineSerializer.h" />
+    <ClInclude Include="src\serialize\ProjectSerializer.h" />
     <ClInclude Include="src\serialize\SceneSerializer.h" />
     <ClInclude Include="src\serialize\yaml_util.h" />
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\Utils.cpp" />
+    <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

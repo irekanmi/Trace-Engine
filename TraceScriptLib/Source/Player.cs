@@ -61,3 +61,17 @@ class Player : Trace.Action
 
 }
 
+class GUID : Trace.Action
+{
+    public void OnStart()
+    {
+        Debug.Trace($"Player Started Id:{Id}");
+    }
+
+    public void OnUpdate(float deltaTime)
+    {
+        TextComponent txt = GetComponent<TextComponent>();
+        txt.Text = "Happy New Year \nFrom \nTrace Game Engine";
+    }
+
+}
