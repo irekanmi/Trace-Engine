@@ -189,11 +189,23 @@ namespace trace {
 
 	void ScriptRegistry::ReloadScripts()
 	{
-
+		std::unordered_map<uintptr_t, ScriptManager> new_scripts;
 		for (auto& i : ScriptEngine::get_instance()->GetScripts())
 		{
-			m_scripts[i.second.GetID()].script = &i.second;
+			bool found = false;
+			for (auto& j : m_scripts)
+			{
+				if (j.second.script->script_name == i.second.script_name)
+				{
+					new_scripts[i.second.GetID()] = j.second;
+					found = true;
+				}
+			}
+			if(!found) new_scripts[i.second.GetID()].script = &i.second;
 		}
+
+		m_scripts = std::move(new_scripts);
+
 
 	}
 

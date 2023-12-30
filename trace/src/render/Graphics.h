@@ -638,10 +638,10 @@ namespace trace {
 	struct Light
 	{
 		glm::vec4 position;
-		glm::vec4 direction;
-		glm::vec4 color;
-		glm::vec4 params1; // x: constant, y: linear, z:quadratic, w: innerCutOff
-		glm::vec4 params2; // x: outerCutOff, y: intensity, z:null, w: null
+		glm::vec4 direction = {0.0f, -1.0f, 0.0f, 0.0f};
+		glm::vec4 color = { 0.32f, 0.55f, 0.42f, 0.0f };
+		glm::vec4 params1 = { 1.0f, 0.02f, 0.002f, 0.0f }; // x: constant, y: linear, z:quadratic, w: innerCutOff
+		glm::vec4 params2 = { 0.0f, 1.0f, 0.0f, 0.0f }; // x: outerCutOff, y: intensity, z:null, w: null
 	};
 	
 	uint32_t getFmtSize(Format format);

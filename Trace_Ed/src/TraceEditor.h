@@ -45,6 +45,7 @@ namespace trace {
 		void DrawGizmo();
 		void DrawGrid(CommandList& cmd_list);
 		void CloseCurrentScene();
+		bool CreateScene(const std::string& file_path);
 		void LoadScene(const std::string& file_path);
 		void NewScene();
 		void SaveScene();
@@ -88,8 +89,6 @@ namespace trace {
 		int gizmo_mode = -1;
 		EditorState current_state = EditorState::SceneEdit;
 		
-		//std::filesystem::path current_project_path = "../assets"; //Temp
-		std::filesystem::path current_project_path = "C:\\Dev\\VisualSutdio\\Cpp\\Trace\\assets"; //Temp
 
 		std::string current_scene_path;
 		static TraceEditor* s_instance;
@@ -99,6 +98,7 @@ namespace trace {
 		bool OpenProject();
 		bool LoadProject(const std::string& file_path);
 		bool CloseProject();
+		void ReloadProjectAssembly();
 
 		bool p_createProject = false;
 

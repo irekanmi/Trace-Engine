@@ -273,6 +273,10 @@ namespace trace {
 
 				ImGui::NextColumn();
 			}
+			if (m_dirContents.empty())
+			{
+				ImGui::Text("This Folder is empty");
+			}
 
 			ImGui::PopStyleColor(3);
 			ImGui::Columns(1);
@@ -502,7 +506,8 @@ namespace trace {
 		enum CreateItem
 		{
 			MATERIAL = 1,
-			FOLDER
+			FOLDER,
+			SCENE
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -511,10 +516,18 @@ namespace trace {
 		{
 			if (ImGui::BeginMenu("Create"))
 			{
-				if (ImGui::MenuItem("Material")) c_item = MATERIAL;
+				if (ImGui::MenuItem("Material"))
+				{
+					c_item = MATERIAL;
+					
+				}
 				if (ImGui::MenuItem("Folder"))
 				{
 					c_item = FOLDER;
+				}
+				if (ImGui::MenuItem("Scene"))
+				{
+					c_item = SCENE;
 				}
 				ImGui::EndMenu();
 			}
@@ -538,6 +551,7 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
+			ProcessAllDirectory();
 			break;
 		}
 		case MATERIAL:
@@ -567,6 +581,32 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
+			ProcessAllDirectory();
+			break;
+		}
+		case SCENE:
+		{
+			std::string res;
+			if (m_editor->InputTextPopup("Scene Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + ".trscn");
+					if (id == 0)
+					{
+						std::string scene_path = (m_currentDir / (res + ".trscn")).string();
+						m_editor->CreateScene(scene_path);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trscn");
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			ProcessAllDirectory();
 			break;
 		}
 		}

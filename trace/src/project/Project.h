@@ -16,6 +16,7 @@ namespace trace {
 		void SetName(const std::string& name) { m_name = name; }
 
 		std::string assets_directory;
+		std::string assembly_path;
 		std::string current_directory;
 	private:
 		std::string m_name;

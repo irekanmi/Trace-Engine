@@ -25,7 +25,8 @@ namespace trace {
 		result = result && FindDirectory(AppSettings::exe_path, "Data", bin_dir_path);
 		result = result && InitializeInternal(bin_dir_path);
 
-		result = result && LoadCoreAssembly(bin_dir_path + "/Assembly/TraceScriptLib.dll");
+		bin_file_path = bin_dir_path + "/Assembly/TraceScriptLib.dll";
+		result = result && LoadCoreAssembly(bin_file_path);
 
 		//Temp -----------------------------
 		LoadAllScripts(m_scripts);
@@ -47,16 +48,22 @@ namespace trace {
 		ShutdownInternal();
 	}
 
-	bool ScriptEngine::LoadAssembly(const std::string& assembly_path)
+	bool ScriptEngine::ReloadAssembly(const std::string& assembly_path)
 	{
+		ReloadAssemblies(bin_file_path, assembly_path);
 
+		//Temp -----------------------------
+		LoadAllScripts(m_scripts);
+		//----------------------------------
+
+		CreateScript("Action", Action, "Trace", true);
+		LoadComponents();
+
+		ReloadFieldInstances();
 
 		return true;
 	}
 
-	void ScriptEngine::ReloadAssembly()
-	{
-	}
 
 	void ScriptEngine::OnSceneStart(Scene* scene)
 	{
@@ -82,6 +89,17 @@ namespace trace {
 			s_instance = new ScriptEngine();
 		}
 		return s_instance;
+	}
+
+	void ScriptEngine::ReloadFieldInstances()
+	{
+		for (auto& i : m_fieldInstance)
+		{
+			for (auto& j : i.second)
+			{
+				j.second.Reload();
+			}
+		}
 	}
 
 

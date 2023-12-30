@@ -132,4 +132,24 @@ namespace trace {
 	{
 	}
 
+	bool ScriptFieldInstance::Reload()
+	{
+		ScriptInstance ins;
+		CreateScriptInstance(*m_script, ins);
+		for (auto& i : m_script->m_fields)
+		{
+			auto it = m_fields.find(i.first);
+			bool found = (it != m_fields.end());
+			if (found) continue;
+			ScriptData& data = m_fields[i.first];
+			data.type = i.second.field_type;
+			if (i.second.field_type == ScriptFieldType::String) continue;
+			ins.GetFieldValueInternal(i.first, data.data, 16);
+
+		}
+
+		DestroyScriptInstance(ins);
+		return true;
+	}
+
 }

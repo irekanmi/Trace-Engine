@@ -67,7 +67,6 @@ namespace trace {
 	{
 		Light _light;
 		LightType light_type;
-		Ref<Mesh> _mesh;
 
 		LightComponent() = default;
 		LightComponent(const LightComponent&) = default;
@@ -77,8 +76,6 @@ namespace trace {
 		LightComponent(const Light& location, LightType type)
 			: _light(location), light_type(type) {}
 
-		LightComponent(const Light& location, LightType type, Ref<Mesh> mesh)
-			: _light(location), light_type(type), _mesh(mesh) {}
 
 		LightComponent(Light& location)
 			: _light(location), light_type(LightType::UNKNOWN) {}
@@ -124,7 +121,7 @@ namespace trace {
 		Ref<Font> font;
 		std::string text;
 		glm::vec3 color;
-		float intensity;
+		float intensity = 1.0f;
 		TextComponent() = default;
 		TextComponent(const TextComponent&) = default;
 		TextComponent(std::string data)

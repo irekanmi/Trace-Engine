@@ -34,6 +34,9 @@ struct MonoData
 	MonoImage* coreImage = nullptr;
 	std::string mono_dir;
 
+	MonoAssembly* mainAssembly = nullptr;
+	MonoImage* mainImage = nullptr;
+
 
 	Scene* scene = nullptr;
 	MonoMethod* component_ctor = nullptr;
@@ -87,7 +90,7 @@ static std::unordered_map<std::string, ScriptFieldType> s_FieldTypes =
 char* ReadBytes(const std::string& filepath, uint32_t* outSize);
 MonoAssembly* LoadAssembly(const std::string& filePath);
 void PrintAssemblyTypes(MonoAssembly* assembly);
-void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, Script>& data);
+void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, Script>& data, bool core);
 
 template<typename T>
 bool RegisterComponent()
@@ -172,13 +175,51 @@ bool LoadCoreAssembly(const std::string& file_path)
 }
 bool LoadMainAssembly(const std::string& file_path)
 {
+	if (s_MonoData.mainAssembly)
+	{
+		mono_assembly_close(s_MonoData.mainAssembly);
+		s_MonoData.mainAssembly = nullptr;
+	}
+
+	s_MonoData.mainAssembly = LoadAssembly(file_path);
+	s_MonoData.mainImage = mono_assembly_get_image(s_MonoData.mainAssembly);
+
+	PrintAssemblyTypes(s_MonoData.mainAssembly);
+
 	return true;
 }
 
 bool LoadAllScripts(std::unordered_map<std::string, Script>& out_data)
 {
 
-	LoadAssemblyTypes(s_MonoData.coreAssembly, out_data);
+	LoadAssemblyTypes(s_MonoData.coreAssembly, out_data, true);
+	if(s_MonoData.mainAssembly) LoadAssemblyTypes(s_MonoData.mainAssembly, out_data, false);
+
+	return true;
+}
+
+bool ReloadAssemblies(const std::string& core_assembly, const std::string& main_assembly)
+{
+	mono_domain_set(mono_get_root_domain(), false);
+
+	mono_domain_unload(s_MonoData.appDomain);
+
+	s_MonoData.appDomain = mono_domain_create_appdomain("TraceAppDomain", nullptr);
+	mono_domain_set(s_MonoData.appDomain, true);
+
+	s_MonoData.coreAssembly = LoadAssembly(core_assembly);
+	s_MonoData.coreImage = mono_assembly_get_image(s_MonoData.coreAssembly);
+
+	MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
+	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);
+
+	PrintAssemblyTypes(s_MonoData.coreAssembly);
+
+
+	s_MonoData.mainAssembly = LoadAssembly(main_assembly);
+	s_MonoData.mainImage = mono_assembly_get_image(s_MonoData.mainAssembly);
+
+	PrintAssemblyTypes(s_MonoData.mainAssembly);
 
 	return true;
 }
@@ -203,13 +244,8 @@ bool OnSceneStopInternal(Scene* scene)
 bool CreateScript(const std::string& name, Script& script, const std::string& nameSpace, bool core)
 {
 
-	if (!core)
-	{
-		//TODO: Implement for game assembly
-		return true;
-	}
-
-	MonoClass* out_class = mono_class_from_name(s_MonoData.coreImage, nameSpace.c_str(), name.c_str());
+	MonoImage* image = core ? s_MonoData.coreImage : s_MonoData.mainImage;
+	MonoClass* out_class = mono_class_from_name(image, nameSpace.c_str(), name.c_str());
 	if (!out_class)
 	{
 		std::cout << "Failed to create script " << nameSpace << "." << name << std::endl;
@@ -267,8 +303,7 @@ bool GetScriptID(Script& script, uintptr_t& res)
 		std::cout << "Script {" << script.script_name << "} is not valid" << std::endl;
 		return false;
 	}
-	uint32_t token = mono_class_get_type_token((MonoClass*)script.m_internal);
-	res = (uintptr_t)token;
+	res = (uintptr_t)mono_class_get_type((MonoClass*)script.m_internal);
 
 
 	return true;
@@ -401,7 +436,7 @@ void PrintAssemblyTypes(MonoAssembly* assembly)
 	}
 }
 
-void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, Script>& data)
+void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, Script>& data, bool core)
 {
 	MonoImage* image = mono_assembly_get_image(assembly);
 	const MonoTableInfo* type_defs = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
@@ -430,7 +465,7 @@ void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, S
 		bool is_action = (action != k_class) && mono_class_is_subclass_of(k_class, action, false);
 		
 
-		if(is_action) CreateScript(name, data[fullName], nameSpace, true);
+		if(is_action) CreateScript(name, data[fullName], nameSpace, core);
 		
 	}
 }
@@ -561,11 +596,10 @@ MonoObject* Action_GetScript(UUID uuid, MonoReflectionType* reflect_type)
 	}
 
 	MonoType* type = mono_reflection_type_get_type(reflect_type);
-	uint32_t token = mono_class_get_type_token(mono_type_get_class(type));
 
 	Entity entity = s_MonoData.scene->GetEntity(uuid);
 
-	MonoObject* res = (MonoObject*)entity.GetScript((uintptr_t)token)->m_internal;
+	MonoObject* res = (MonoObject*)entity.GetScript((uintptr_t)type)->m_internal;
 
 	return res;
 
@@ -609,7 +643,6 @@ bool Action_HasScript(UUID uuid, MonoReflectionType* reflect_type)
 	}
 
 	MonoType* type = mono_reflection_type_get_type(reflect_type);
-	uint32_t token = mono_class_get_type_token(mono_type_get_class(type));
 
 	Entity entity = s_MonoData.scene->GetEntity(uuid);
 
@@ -619,7 +652,7 @@ bool Action_HasScript(UUID uuid, MonoReflectionType* reflect_type)
 		return false;
 	}
 
-	return entity.HasScript((uintptr_t)token);
+	return entity.HasScript((uintptr_t)type);
 }
 
 void Action_RemoveComponent(UUID uuid, MonoReflectionType* reflect_type)
@@ -661,7 +694,6 @@ void Action_RemoveScript(UUID uuid, MonoReflectionType* reflect_type)
 	}
 
 	MonoType* type = mono_reflection_type_get_type(reflect_type);
-	uint32_t token = mono_class_get_type_token(mono_type_get_class(type));
 
 	Entity entity = s_MonoData.scene->GetEntity(uuid);
 
@@ -671,7 +703,7 @@ void Action_RemoveScript(UUID uuid, MonoReflectionType* reflect_type)
 		return;
 	}
 
-	entity.RemoveScript((uintptr_t)token);
+	entity.RemoveScript((uintptr_t)type);
 }
 
 #pragma endregion

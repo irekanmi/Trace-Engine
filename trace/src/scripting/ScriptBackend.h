@@ -18,6 +18,7 @@ bool LoadCoreAssembly(const std::string& file_path);
 bool LoadMainAssembly(const std::string& file_path);
 
 bool LoadAllScripts(std::unordered_map<std::string, Script>& out_data);
+bool ReloadAssemblies(const std::string& core_assembly, const std::string& main_assembly);
 
 bool OnSceneStartInternal(Scene* scene);
 bool OnSceneStopInternal(Scene* scene);

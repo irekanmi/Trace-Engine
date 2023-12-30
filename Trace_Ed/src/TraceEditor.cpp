@@ -14,6 +14,7 @@
 #include "serialize/PipelineSerializer.h"
 #include "serialize/ProjectSerializer.h"
 #include "core/Utils.h"
+#include "scripting/ScriptEngine.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -211,19 +212,7 @@ namespace trace {
 					{
 						SaveScene();
 					}
-					if (ImGui::MenuItem("Save Scene As", "Crtl+Shift+S"))
-					{
-						SaveSceneAs();
-					}
-					if (ImGui::MenuItem("Open Scene", "Crtl+O"))
-					{
-						OpenScene();
-					}
 					ImGui::Separator();
-					if (ImGui::MenuItem("New Scene", "Crtl+N"))
-					{
-						NewScene();
-					}
 					if (ImGui::MenuItem("Close Scene"))
 					ImGui::Separator();
 					if (ImGui::MenuItem("New project"))
@@ -235,6 +224,14 @@ namespace trace {
 						OpenProject();
 					}
 
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("Project"))
+				{
+					if (ImGui::MenuItem("Reload Assembly"))
+					{
+						ReloadProjectAssembly();
+					}
 					ImGui::EndMenu();
 				}
 				if (ImGui::BeginMenu("Settings"))
@@ -796,8 +793,8 @@ namespace trace {
 	}
 	void TraceEditor::DrawGrid(CommandList& cmd_list)
 	{
-		float cell_size = 8.0f;
-		uint32_t num_line = 100;
+		float cell_size = 4.0f;
+		uint32_t num_line = 50;
 		float line_lenght = cell_size * (num_line - 1);
 
 		Renderer* renderer = Renderer::get_instance();
@@ -835,7 +832,7 @@ namespace trace {
 	}
 	void TraceEditor::NewScene()
 	{
-		if (m_currentScene) CloseCurrentScene();
+		/*if (m_currentScene) CloseCurrentScene();
 		auto result = pfd::save_file("New Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
 		if (!result.empty())
 		{
@@ -843,7 +840,7 @@ namespace trace {
 			m_currentScene = SceneManager::get_instance()->CreateScene(p.filename().string());
 			m_editScene = m_currentScene;
 			current_scene_path = result;
-		}
+		}*/
 	}
 	void TraceEditor::SaveScene()
 	{
@@ -857,9 +854,16 @@ namespace trace {
 			SceneSerializer::Serialize(m_currentScene, current_scene_path);
 		}
 	}
+	bool TraceEditor::CreateScene(const std::string& file_path)
+	{
+		std::filesystem::path p = file_path;
+		Ref<Scene> res = SceneManager::get_instance()->CreateScene(p.filename().string());
+		SceneSerializer::Serialize(res, file_path);
+		return true;
+	}
 	std::string TraceEditor::SaveSceneAs()
 	{
-		if (m_currentScene)
+		/*if (m_currentScene)
 		{
 			auto result = pfd::save_file("Save Scene As", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
 			if (!result.empty())
@@ -867,19 +871,19 @@ namespace trace {
 				SceneSerializer::Serialize(m_currentScene, result);
 			}
 			return result;
-		}
+		}*/
 		return std::string();
 	}
 	std::string TraceEditor::OpenScene()
 	{		
-		std::vector<std::string> result = pfd::open_file("Open Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }).result();
+		/*std::vector<std::string> result = pfd::open_file("Open Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }).result();
 		if (!result.empty())
 		{
 			CloseCurrentScene();
 			LoadScene(result[0]);
 			current_scene_path = result[0];
 			return result[0];
-		}
+		}*/
 		return std::string();
 	}
 	void TraceEditor::OpenScene(std::string& path)
@@ -929,7 +933,7 @@ namespace trace {
 
 			if (control && shift)
 			{
-				SaveSceneAs();
+				//SaveSceneAs();
 			}
 			else if (control)
 			{
@@ -944,7 +948,7 @@ namespace trace {
 
 			if (control)
 			{
-				OpenScene();
+				//OpenScene();
 			}
 
 			break;
@@ -955,7 +959,7 @@ namespace trace {
 
 			if (control)
 			{
-				NewScene();
+				//NewScene();
 			}
 
 			break;
@@ -1101,7 +1105,7 @@ project "{}"
 
 	bool TraceEditor::OpenProject()
 	{
-		std::vector<std::string> result = pfd::open_file("Open Project", current_project_path.string(), { "Trace Project", "*.trproj" }).result();
+		std::vector<std::string> result = pfd::open_file("Open Project", "", {"Trace Project", "*.trproj"}).result();
 		if (!result.empty())
 		{
 			CloseProject();
@@ -1116,6 +1120,7 @@ project "{}"
 		current_project = ProjectSerializer::Deserialize(file_path);
 		if (!current_project) return false;
 		m_contentBrowser.SetDirectory(current_project->assets_directory);
+		ReloadProjectAssembly();
 		return true;
 	}
 
@@ -1123,6 +1128,22 @@ project "{}"
 	{
 		current_project.free();
 		return true;
+	}
+
+	void TraceEditor::ReloadProjectAssembly()
+	{
+
+		if (current_project)
+		{
+			if (current_state != EditorState::SceneEdit) return;
+
+			bool exists = std::filesystem::exists(current_project->assembly_path);
+			if (exists)
+			{
+				ScriptEngine::get_instance()->ReloadAssembly(current_project->assembly_path);
+				if (m_currentScene) m_currentScene->m_scriptRegistry.ReloadScripts();
+			}
+		}
 	}
 
 	std::filesystem::path GetPathFromUUID(UUID uuid)

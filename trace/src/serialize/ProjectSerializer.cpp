@@ -55,6 +55,7 @@ namespace trace {
 		res->SetName(project_name);
 		res->current_directory = p.string();
 		res->assets_directory = (p / "Assets").string();
+		res->assembly_path = (p / ("Data/Assembly/" + project_name + ".dll")).string();
 
 		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ }};
 

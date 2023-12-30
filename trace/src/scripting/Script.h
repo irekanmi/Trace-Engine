@@ -75,6 +75,7 @@ namespace trace {
 
 		bool Init(Script* script);
 		void Shutdown();
+		bool Reload();
 
 		//NOTE: To be used for builtin types not for (std types and custom types)
 		template<typename T>

@@ -14,16 +14,13 @@ namespace trace {
 
 	public:
 
-		
-
 
 		ScriptEngine();
 		~ScriptEngine();
 
 		bool Init();
 		void Shutdown();
-		bool LoadAssembly(const std::string& assembly_path);
-		void ReloadAssembly();
+		bool ReloadAssembly(const std::string& assembly_path);
 
 		void OnSceneStart(Scene* scene);
 		void OnSceneStop(Scene* scene);
@@ -35,6 +32,8 @@ namespace trace {
 
 		static ScriptEngine* get_instance();
 	private:
+		void ReloadFieldInstances();
+
 		static ScriptEngine* s_instance;
 
 		Script Action;
@@ -44,6 +43,7 @@ namespace trace {
 
 
 		std::string bin_dir_path;
+		std::string bin_file_path;
 		std::unordered_map<std::string, Script> m_scripts;
 
 

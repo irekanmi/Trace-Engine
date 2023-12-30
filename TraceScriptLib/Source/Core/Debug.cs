@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Trace
 {
-    static class Debug
+    static public class Debug
     {
         public static void Log(string message)
         {
