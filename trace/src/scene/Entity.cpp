@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "Entity.h"
-#include "Componets.h"
+#include "Components.h"
 
 namespace trace {
 	UUID Entity::GetID()

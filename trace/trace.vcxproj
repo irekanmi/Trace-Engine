@@ -244,7 +244,7 @@
     <ClInclude Include="src\resource\ResourceSystem.h" />
     <ClInclude Include="src\resource\ShaderManager.h" />
     <ClInclude Include="src\resource\TextureManager.h" />
-    <ClInclude Include="src\scene\Componets.h" />
+    <ClInclude Include="src\scene\Components.h" />
     <ClInclude Include="src\scene\Entity.h" />
     <ClInclude Include="src\scene\Scene.h" />
     <ClInclude Include="src\scene\SceneManager.h" />

@@ -5,6 +5,7 @@
 #include <functional>
 
 namespace trace {
+	using FieldManager = std::unordered_map<UUID, ScriptFieldInstance>;
 
 	class ScriptRegistry
 	{
@@ -44,15 +45,18 @@ namespace trace {
 		void Iterate(std::function<void(ScriptManager&)> callback);
 
 		void ReloadScripts();
+		std::unordered_map<Script*, FieldManager> GetFieldInstances() { return m_fieldInstance; }
 
 		static void Copy(ScriptRegistry& from, ScriptRegistry& to);
 
 		
 	private:
 		std::unordered_map<uintptr_t, ScriptManager> m_scripts;
+		std::unordered_map<Script*, FieldManager> m_fieldInstance;
 
 	protected:
 		friend class Scene;
+		friend class SceneSerializer;
 
 	};
 

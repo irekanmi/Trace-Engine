@@ -2,7 +2,7 @@
 
 #include "SceneSerializer.h"
 #include "scene/Entity.h"
-#include "scene/Componets.h"
+#include "scene/Components.h"
 #include "core/FileSystem.h"
 #include "scene/SceneManager.h"
 #include "resource/MeshManager.h"
@@ -351,9 +351,12 @@ namespace trace {
 			emit << YAML::Key << "Scripts" << YAML::Value;
 			emit << YAML::BeginSeq;
 
-			scene->m_scriptRegistry.Iterate(en.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
+			ScriptRegistry& script_registry = scene->m_scriptRegistry;
+
+			script_registry.Iterate(en.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
 				{
-					auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					auto& fields_instances = script_registry.GetFieldInstances();
 					auto& field_manager = fields_instances[script];
 					auto field_it = field_manager.find(uuid);
 					bool has_fields = !(field_it == field_manager.end());
@@ -565,7 +568,10 @@ namespace trace {
 					}
 					obj.AddScript(script_name);
 
-					auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					ScriptRegistry& script_registry = scene->m_scriptRegistry;
+
+					//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					auto& fields_instances = script_registry.GetFieldInstances();
 					auto& field_manager = fields_instances[&it->second];
 					auto field_it = field_manager.find(uuid);
 					if (field_it == field_manager.end())

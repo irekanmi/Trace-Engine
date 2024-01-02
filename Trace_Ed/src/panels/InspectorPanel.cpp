@@ -1,6 +1,6 @@
 
 #include "InspectorPanel.h"
-#include "scene/Componets.h"
+#include "scene/Components.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_stdlib.h"
@@ -678,6 +678,8 @@ namespace trace {
 
 			});
 
+		ScriptRegistry& script_registry = m_editor->m_currentScene->m_scriptRegistry;
+
 		m_editor->m_currentScene->m_scriptRegistry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
 			{
 
@@ -837,7 +839,10 @@ namespace trace {
 					}
 					else
 					{
-						auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+						
+
+						//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+						auto& fields_instances = script_registry.GetFieldInstances();
 						auto& field_manager = fields_instances[script];
 						auto field_it = field_manager.find(uuid);
 						if (field_it == field_manager.end())

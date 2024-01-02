@@ -207,6 +207,15 @@ namespace trace {
 		m_scripts = std::move(new_scripts);
 
 
+		for (auto& i : m_fieldInstance)
+		{
+			for (auto& j : i.second)
+			{
+				j.second.Reload();
+			}
+		}
+
+
 	}
 
 	void ScriptRegistry::Copy(ScriptRegistry& from, ScriptRegistry& to)

@@ -2,7 +2,7 @@
 #include "HierachyPanel.h"
 #include "../TraceEditor.h"
 #include "imgui.h"
-#include "scene/Componets.h"
+#include "scene/Components.h"
 
 namespace trace {
 	HierachyPanel::HierachyPanel()

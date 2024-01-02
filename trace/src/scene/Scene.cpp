@@ -2,7 +2,7 @@
 
 #include "Entity.h"
 #include "Scene.h"
-#include "Componets.h"
+#include "Components.h"
 #include "render/Renderer.h"
 #include "backends/Physicsutils.h"
 #include "scripting/Script.h"
@@ -209,6 +209,23 @@ namespace trace {
 	}
 	void Scene::OnUpdate(float deltaTime)
 	{
+		auto process_hierachy_transforms = [](Entity entity, UUID, Scene* scene)
+		{
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			TransformComponent& transform = entity.GetComponent<TransformComponent>();
+			Entity parent = scene->GetEntity(hi.parent);
+			if (parent)
+			{
+				hi.transform = parent.GetComponent<HierachyComponent>().transform * transform._transform.GetLocalMatrix();
+			}
+			else
+			{
+				hi.transform = transform._transform.GetLocalMatrix();
+			}
+
+		};
+
+		ProcessEntitiesByHierachy(process_hierachy_transforms);
 
 	}
 
@@ -319,34 +336,34 @@ namespace trace {
 
 		}
 
-		auto group = m_registry.group<MeshComponent, TransformComponent>();
+		auto group = m_registry.group<MeshComponent, HierachyComponent>();
 
 		for (auto entity : group)
 		{
 			auto [mesh, transform] = group.get(entity);
 
-			renderer->DrawMesh(cmd_list, mesh._mesh, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+			renderer->DrawMesh(cmd_list, mesh._mesh, transform.transform); // TODO Implement Hierachies
 
 		}
 
-		auto model_view = m_registry.view<ModelComponent, ModelRendererComponent, TransformComponent>();
+		auto model_view = m_registry.view<ModelComponent, ModelRendererComponent, HierachyComponent>();
 
 		for (auto entity : model_view)
 		{
 			auto [model, model_renderer, transform] = model_view.get(entity);
 
-			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform); // TODO Implement Hierachies
 
 		}
 
-		auto text_view = m_registry.view<TextComponent, TransformComponent>();
+		auto text_view = m_registry.view<TextComponent, HierachyComponent>();
 
 		for (auto entity : text_view)
 		{
 			auto [txt, transform] = text_view.get(entity);
 
 			glm::vec3 color = txt.color * txt.intensity;
-			renderer->DrawString(cmd_list, txt.font, txt.text, color, transform._transform.GetLocalMatrix()); // TODO Implement Hierachies
+			renderer->DrawString(cmd_list, txt.font, txt.text, color, transform.transform); // TODO Implement Hierachies
 
 		}
 
@@ -376,6 +393,11 @@ namespace trace {
 
 	Entity Scene::CreateEntity_UUID(UUID id, const std::string& _tag)
 	{
+		return CreateEntity_UUIDWithParent(id, _tag, 0);
+	}
+
+	Entity Scene::CreateEntity_UUIDWithParent(UUID id, const std::string& _tag, UUID parent)
+	{
 		entt::entity handle = m_registry.create();
 		Entity entity(handle, this);
 		TagComponent& tag = entity.AddComponent<TagComponent>();
@@ -383,6 +405,9 @@ namespace trace {
 		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<IDComponent>()._id = id;
 		m_entityMap[id] = entity;
+		HierachyComponent& hi = entity.AddComponent<HierachyComponent>();
+		if(parent == 0) m_rootNode.AddChid(id);		
+		hi.parent = parent;
 
 		return entity;
 	}
@@ -418,6 +443,7 @@ namespace trace {
 		CopyComponent<RigidBodyComponent>(entity, res);
 		CopyComponent<BoxColliderComponent>(entity, res);
 		CopyComponent<SphereColliderComponent>(entity, res);
+		CopyComponent<HierachyComponent>(entity, res);
 
 		m_scriptRegistry.Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
@@ -432,6 +458,17 @@ namespace trace {
 		m_scriptRegistry.Erase(entity.GetID());
 		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
+	}
+
+	void Scene::ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback)
+	{
+		for (UUID& uuid : m_rootNode.children)
+		{
+			Entity entity = GetEntity(uuid);
+			callback(entity, uuid, this);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			ProcessEntityHierachy(hi, callback);
+		}
 	}
 
 	template<typename Component>
@@ -469,6 +506,7 @@ namespace trace {
 		}
 
 		CopyComponent<TagComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<HierachyComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<TransformComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<CameraComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<LightComponent>(f_reg, t_reg, entity_map);
@@ -482,6 +520,19 @@ namespace trace {
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 
+		to->m_rootNode = from->m_rootNode;
+
+	}
+
+	void Scene::ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback)
+	{
+		for (auto& i : hierachy.children)
+		{
+			Entity entity = GetEntity(i);
+			callback(entity, i, this);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			ProcessEntityHierachy(hi, callback);
+		}
 	}
 
 }

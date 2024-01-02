@@ -363,7 +363,7 @@
     <ClInclude Include="src\resource\TextureManager.h">
       <Filter>src\resource</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\Componets.h">
+    <ClInclude Include="src\scene\Components.h">
       <Filter>src\scene</Filter>
     </ClInclude>
     <ClInclude Include="src\scene\Entity.h">

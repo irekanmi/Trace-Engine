@@ -10,6 +10,7 @@
 
 
 #include <string>
+#include <algorithm>
 
 namespace trace {
 
@@ -19,6 +20,47 @@ namespace trace {
 
 		IDComponent() = default;
 		IDComponent(const IDComponent&) = default;
+	};
+
+	struct HierachyComponent
+	{
+		UUID parent = 0;
+		std::vector<UUID> children;
+		glm::mat4 transform = glm::identity<glm::mat4>();
+
+		HierachyComponent() = default;
+		HierachyComponent(const HierachyComponent&) = default;
+		~HierachyComponent() {};
+
+		void AddChid(UUID child)
+		{
+			auto it = std::find(children.begin(), children.end(), child);
+			if (it == children.end())
+			{
+				children.emplace_back(child);
+			}
+		}
+
+		void RemoveChild(UUID child)
+		{
+			auto it = std::find(children.begin(), children.end(), child);
+			if (it != children.end())
+			{
+				children.erase(it);
+			}
+		}
+
+		bool HasParent()
+		{
+			return (parent != 0);
+		}
+
+		bool HasChild(UUID child)
+		{
+			auto it = std::find(children.begin(), children.end(), child);
+			return (it != children.end());
+		}
+
 	};
 
 	struct TagComponent

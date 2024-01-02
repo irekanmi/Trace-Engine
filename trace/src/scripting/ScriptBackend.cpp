@@ -6,7 +6,7 @@
 #include "core/io/Logging.h"
 #include "scene/Scene.h"
 #include "scene/Entity.h"
-#include "scene/Componets.h"
+#include "scene/Components.h"
 #include "core/input/Input.h"
 
 #include "mono/jit/jit.h"

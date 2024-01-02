@@ -4,7 +4,7 @@
 #include "core/io/Logging.h"
 #include "glm/gtc/quaternion.hpp"
 #include "scene/Entity.h"
-#include "scene/Componets.h"
+#include "scene/Components.h"
 
 
 // HACK: Fix "Physx\foundation\PxPreprocessor.h(443,1): fatal error C1189: #error:  Exactly one of NDEBUG and _DEBUG needs to be defined!"

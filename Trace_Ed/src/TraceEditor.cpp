@@ -7,7 +7,7 @@
 #include "resource/PipelineManager.h"
 #include "scene/SceneManager.h"
 #include "scene/Entity.h"
-#include "scene/Componets.h"
+#include "scene/Components.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
 #include "serialize/SceneSerializer.h"
@@ -136,6 +136,7 @@ namespace trace {
 			{
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
+				m_currentScene->OnUpdate(deltaTime);
 				m_currentScene->OnRender();
 			}
 			break;
