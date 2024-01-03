@@ -33,15 +33,18 @@ namespace trace {
 		void OnRender(CommandList& cmd_list);
 		void OnViewportChange(float width, float height);
 
-		Entity CreateEntity();
-		Entity CreateEntity(const std::string& _tag);
-		Entity CreateEntity_UUID(UUID id,const std::string& _tag);
+		Entity CreateEntity(UUID parent = 0);
+		Entity CreateEntity(const std::string& _tag, UUID parent = 0);
+		Entity CreateEntity_UUID(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity CreateEntity_UUIDWithParent(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity GetEntity(UUID uuid);
 		void DuplicateEntity(Entity entity);
 		void DestroyEntity(Entity entity);
+		void SetParent(Entity child, Entity parent);
+
 
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);
+		void ResolveHierachyTransforms();
 
 		std::string& GetName() { return m_name; }
 		void SetName(const std::string& name) { m_name = name; }
@@ -57,7 +60,8 @@ namespace trace {
 		std::string m_name;
 		void* m_physics3D = nullptr;
 		std::unordered_map<UUID, Entity> m_entityMap;
-		HierachyComponent m_rootNode;
+		HierachyComponent* m_rootNode;
+		bool m_running = false;
 
 	protected:
 		friend class Entity;

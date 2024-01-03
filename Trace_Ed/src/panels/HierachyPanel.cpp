@@ -16,13 +16,15 @@ namespace trace {
 
 		if (m_editor->m_currentScene)
 		{
-			for (auto& [entity] : m_editor->m_currentScene->m_registry.storage<entt::entity>().each())
+			/*for (auto& [entity] : m_editor->m_currentScene->m_registry.storage<entt::entity>().each())
 			{
 
 				Entity current_entity(entity, m_editor->m_currentScene.get());
 				DrawEntity(current_entity);
 
-			}
+			}*/
+
+			DrawAllEntites();
 
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
 				m_selectedEntity = Entity();
@@ -80,5 +82,112 @@ namespace trace {
 
 
 		
+	}
+	void HierachyPanel::DrawAllEntites()
+	{
+		for (UUID& uuid : m_editor->m_currentScene->m_rootNode->children)
+		{
+			Entity entity = m_editor->m_currentScene->GetEntity(uuid);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+
+			bool selected = (m_selectedEntity == entity);
+			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+			TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
+			void* id = (void*)(uint64_t)(uint32_t)entity;
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+
+			if (ImGui::IsItemClicked())
+			{
+				if (selected)
+					m_selectedEntity = Entity();
+				else
+					m_selectedEntity = entity;
+
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]()
+					{
+						if (m_selectedEntity)
+							m_editor->m_inspectorPanel.DrawEntityComponent(m_selectedEntity);
+					}, []() {}, []() {});
+			}
+
+			//FIX: Rendering twice if tag is the same
+			if (ImGui::BeginPopupContextItem())
+			{
+				if (ImGui::MenuItem("Create Entity"))
+				{
+					m_editor->m_currentScene->CreateEntity(entity.GetID());
+				}
+				if (ImGui::MenuItem("Delete Entity"))
+				{
+					m_editor->m_currentScene->DestroyEntity(entity);
+					if (selected) m_selectedEntity = Entity();
+				}
+				ImGui::EndPopup();
+			}
+
+
+			if (clicked)
+			{
+				DrawEntityHierachy(hi);
+				ImGui::TreePop();
+			}
+
+
+
+		}
+	}
+	void HierachyPanel::DrawEntityHierachy(HierachyComponent& hierachy)
+	{
+		for (UUID& uuid : hierachy.children)
+		{
+			
+			Entity entity = m_editor->m_currentScene->GetEntity(uuid);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+
+			bool selected = (m_selectedEntity == entity);
+			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+			TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
+			void* id = (void*)(uint64_t)(uint32_t)entity;
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+
+			if (ImGui::IsItemClicked())
+			{
+				if (selected)
+					m_selectedEntity = Entity();
+				else
+					m_selectedEntity = entity;
+
+				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]()
+					{
+						if (m_selectedEntity)
+							m_editor->m_inspectorPanel.DrawEntityComponent(m_selectedEntity);
+					}, []() {}, []() {});
+			}
+
+			//FIX: Rendering twice if tag is the same
+			if (ImGui::BeginPopupContextItem())
+			{
+				if (ImGui::MenuItem("Create Entity"))
+				{
+					m_editor->m_currentScene->CreateEntity(entity.GetID());
+				}
+				if (ImGui::MenuItem("Delete Entity"))
+				{
+					m_editor->m_currentScene->DestroyEntity(entity);
+					if (selected) m_selectedEntity = Entity();
+				}
+				ImGui::EndPopup();
+			}
+
+
+			if (clicked)
+			{
+				DrawEntityHierachy(hi);
+				ImGui::TreePop();
+			}
+
+		}
 	}
 }

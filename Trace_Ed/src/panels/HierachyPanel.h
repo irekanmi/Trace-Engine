@@ -21,6 +21,9 @@ namespace trace {
 		TraceEditor* m_editor;
 		Entity m_selectedEntity;
 
+		void DrawAllEntites();
+		void DrawEntityHierachy(HierachyComponent& hierachy);
+
 	protected:
 		friend class TraceEditor;
 	};

@@ -75,6 +75,27 @@ namespace trace {
 		return glm::degrees(glm::eulerAngles(m_rotation));
 	}
 
+	glm::vec3 Transform::GetForward()
+	{
+		glm::mat4 rot = glm::toMat4(m_rotation);
+		glm::vec3 result = rot * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		return glm::normalize(result);
+	}
+
+	glm::vec3 Transform::GetRight()
+	{
+		glm::mat4 rot = glm::toMat4(m_rotation);
+		glm::vec3 result = rot * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		return glm::normalize(result);
+	}
+
+	glm::vec3 Transform::GetUp()
+	{
+		glm::mat4 rot = glm::toMat4(m_rotation);
+		glm::vec3 result = rot * glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		return glm::normalize(result);
+	}
+
 	void Transform::SetPosition(glm::vec3 position)
 	{
 		m_position = position;
@@ -118,9 +139,21 @@ namespace trace {
 		m_dirty = true;
 	}
 
+	void Transform::RotateBy(glm::vec3 euler)
+	{
+		glm::vec3 rot = GetRotationEuler() + euler;
+		Rotate(rot);
+	}
+
 	void Transform::Scale(float value)
 	{
 		m_scale += glm::vec3(value);
+		m_dirty = true;
+	}
+
+	void Transform::Scale(glm::vec3 value)
+	{
+		m_scale += (value);
 		m_dirty = true;
 	}
 

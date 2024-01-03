@@ -37,6 +37,14 @@ namespace trace {
 		},
 		[](Entity entity, YAML::Emitter& emit)
 		{
+			if (entity.HasComponent<HierachyComponent>())
+			{
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			emit << YAML::Key << "Parent" << YAML::Value << hi.parent;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
 			if (entity.HasComponent<TransformComponent>())
 			{
 			TransformComponent& trans = entity.GetComponent<TransformComponent>();
@@ -340,7 +348,7 @@ namespace trace {
 		emit << YAML::Key << "Scene Name" << YAML::Value << scene->GetName();
 		emit << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
-		for (auto& [entity] : scene->m_registry.storage<entt::entity>().each())
+		auto process_hierachy = [&](Entity entity, UUID, Scene*)
 		{
 			Entity en(entity, scene.get());
 			emit << YAML::BeginMap;
@@ -496,7 +504,9 @@ namespace trace {
 			// --------------------------------------------------
 
 			emit << YAML::EndMap;
-		}
+		};
+
+		scene->ProcessEntitiesByHierachy(process_hierachy);
 
 		emit << YAML::EndSeq;
 
@@ -548,7 +558,9 @@ namespace trace {
 			for (auto entity : entities)
 			{
 				UUID uuid = entity["UUID"].as<uint64_t>();
-				Entity obj = scene->CreateEntity_UUID(uuid, "");
+				UUID parent = 0;
+				if (entity["Parent"]) parent = entity["Parent"].as<uint64_t>();
+				Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
 				for (auto& i : _deserialize_components)
 				{
 					if (entity[i.first]) i.second(obj, entity);

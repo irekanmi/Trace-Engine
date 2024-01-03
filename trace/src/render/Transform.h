@@ -33,6 +33,10 @@ namespace trace {
 		// Return the rotation in euler angle
 		glm::vec3 GetRotationEuler();
 
+		glm::vec3 GetForward();
+		glm::vec3 GetRight();
+		glm::vec3 GetUp();
+
 		// Overrides current position
 		void SetPosition(glm::vec3 position);
 		// Overrides current scale
@@ -44,8 +48,10 @@ namespace trace {
 
 		void Translate(glm::vec3 value);
 		void Rotate(float value, glm::vec3 direction);
-		void Rotate(glm::vec3 euler);
+		void Rotate(glm::vec3 euler);// NOTE: Used to set the rotation
+		void RotateBy(glm::vec3 euler);// NOTE: Used to rotate by certain amount
 		void Scale(float value);
+		void Scale(glm::vec3 value);
 
 	private:
 		void recalculate_local_matrix();

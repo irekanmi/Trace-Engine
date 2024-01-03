@@ -13,9 +13,14 @@ namespace trace {
 	void Scene::Create()
 	{
 		m_scriptRegistry.Init();
+		m_rootNode = new HierachyComponent(); // TODO: Use Custom Allocator
+
+		
+
 	}
 	void Scene::Destroy()
 	{
+		delete m_rootNode; // TODO: Use Custom Allocator
 		m_registry.clear();
 		m_scriptRegistry.Clear();
 	}
@@ -92,6 +97,7 @@ namespace trace {
 
 			}
 		}
+		m_running = true;
 	}
 	void Scene::OnScriptStart()
 	{
@@ -190,6 +196,7 @@ namespace trace {
 
 			PhysicsFunc::DestroyScene3D(m_physics3D);
 		}
+		m_running = false;
 	}
 	void Scene::OnScriptStop()
 	{
@@ -209,23 +216,7 @@ namespace trace {
 	}
 	void Scene::OnUpdate(float deltaTime)
 	{
-		auto process_hierachy_transforms = [](Entity entity, UUID, Scene* scene)
-		{
-			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-			TransformComponent& transform = entity.GetComponent<TransformComponent>();
-			Entity parent = scene->GetEntity(hi.parent);
-			if (parent)
-			{
-				hi.transform = parent.GetComponent<HierachyComponent>().transform * transform._transform.GetLocalMatrix();
-			}
-			else
-			{
-				hi.transform = transform._transform.GetLocalMatrix();
-			}
-
-		};
-
-		ProcessEntitiesByHierachy(process_hierachy_transforms);
+		ResolveHierachyTransforms();
 
 	}
 
@@ -300,6 +291,11 @@ namespace trace {
 			if (camera.is_main)
 			{
 				camera._camera.SetPosition(_transform._transform.GetPosition());
+				glm::vec3 forward = _transform._transform.GetForward();
+				glm::vec3 up = _transform._transform.GetUp();
+				glm::vec3 right = _transform._transform.GetRight();
+				camera._camera.SetLookDir(forward);
+				camera._camera.SetUpDir(up);
 				main_camera = &camera._camera;
 				break;
 			}
@@ -381,19 +377,19 @@ namespace trace {
 	}
 
 
-	Entity Scene::CreateEntity()
+	Entity Scene::CreateEntity(UUID parent)
 	{
-		return CreateEntity_UUID(UUID::GenUUID(), "");
+		return CreateEntity_UUID(UUID::GenUUID(), "", parent);
 	}
 
-	Entity Scene::CreateEntity(const std::string& _tag)
+	Entity Scene::CreateEntity(const std::string& _tag, UUID parent)
 	{
-		return CreateEntity_UUID(UUID::GenUUID(), _tag);
+		return CreateEntity_UUID(UUID::GenUUID(), _tag, parent);
 	}
 
-	Entity Scene::CreateEntity_UUID(UUID id, const std::string& _tag)
+	Entity Scene::CreateEntity_UUID(UUID id, const std::string& _tag, UUID parent)
 	{
-		return CreateEntity_UUIDWithParent(id, _tag, 0);
+		return CreateEntity_UUIDWithParent(id, _tag, parent);
 	}
 
 	Entity Scene::CreateEntity_UUIDWithParent(UUID id, const std::string& _tag, UUID parent)
@@ -406,8 +402,17 @@ namespace trace {
 		entity.AddComponent<IDComponent>()._id = id;
 		m_entityMap[id] = entity;
 		HierachyComponent& hi = entity.AddComponent<HierachyComponent>();
-		if(parent == 0) m_rootNode.AddChid(id);		
-		hi.parent = parent;
+		if(parent == 0) m_rootNode->AddChild(id);
+		else
+		{
+			Entity new_parent = GetEntity(parent);
+			if (new_parent)
+			{
+				new_parent.GetComponent<HierachyComponent>().AddChild(id);
+				hi.parent = parent;
+			}
+			else m_rootNode->AddChild(id);
+		}
 
 		return entity;
 	}
@@ -460,15 +465,58 @@ namespace trace {
 		m_registry.destroy(entity);
 	}
 
+	void Scene::SetParent(Entity child, Entity parent)
+	{
+		HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+		HierachyComponent& child_hi = child.GetComponent<HierachyComponent>();
+		
+		if (child_hi.HasParent())
+		{
+			Entity old_parent = GetEntity(child_hi.parent);
+			old_parent.GetComponent<HierachyComponent>().RemoveChild(child.GetID());
+		}
+		else
+		{
+			m_rootNode->RemoveChild(child.GetID());
+		}
+
+		parent_hi.AddChild(child.GetID());
+		child_hi.parent = parent.GetID();
+
+	}
+
 	void Scene::ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback)
 	{
-		for (UUID& uuid : m_rootNode.children)
+		for (UUID& uuid : m_rootNode->children)
 		{
 			Entity entity = GetEntity(uuid);
 			callback(entity, uuid, this);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 			ProcessEntityHierachy(hi, callback);
 		}
+	}
+
+	void Scene::ResolveHierachyTransforms()
+	{
+
+		auto process_hierachy_transforms = [](Entity entity, UUID, Scene* scene)
+		{
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			TransformComponent& transform = entity.GetComponent<TransformComponent>();
+			Entity parent = scene->GetEntity(hi.parent);
+			if (parent)
+			{
+				hi.transform = parent.GetComponent<HierachyComponent>().transform * transform._transform.GetLocalMatrix();
+			}
+			else
+			{
+				hi.transform = transform._transform.GetLocalMatrix();
+			}
+
+		};
+
+		ProcessEntitiesByHierachy(process_hierachy_transforms);
+
 	}
 
 	template<typename Component>
@@ -494,6 +542,8 @@ namespace trace {
 		entt::registry& f_reg = from->m_registry;
 		entt::registry& t_reg = to->m_registry;
 		t_reg.clear();
+		to->m_rootNode->children.clear();
+		to->m_entityMap.clear();
 
 		std::unordered_map<UUID, entt::entity> entity_map;
 
@@ -520,7 +570,7 @@ namespace trace {
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 
-		to->m_rootNode = from->m_rootNode;
+		to->m_rootNode->children = from->m_rootNode->children;
 
 	}
 

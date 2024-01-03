@@ -729,5 +729,6 @@
     </ClCompile>
     <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="src\core\Utils.cpp" />
+    <ClCompile Include="src\scene\Components.cpp" />
   </ItemGroup>
 </Project>

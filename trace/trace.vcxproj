@@ -262,6 +262,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\Utils.cpp" />
+    <ClCompile Include="src\scene\Components.cpp" />
     <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

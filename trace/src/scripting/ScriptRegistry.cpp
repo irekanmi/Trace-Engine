@@ -31,6 +31,7 @@ namespace trace {
 
 	void ScriptRegistry::Clear()
 	{
+		m_fieldInstance.clear();
 		m_scripts.clear();
 	}
 
@@ -229,6 +230,8 @@ namespace trace {
 			to.m_scripts[i.first].entities = i.second.entities;
 			to.m_scripts[i.first].script = i.second.script;
 		}
+
+		to.m_fieldInstance = from.m_fieldInstance;
 	}
 
 }

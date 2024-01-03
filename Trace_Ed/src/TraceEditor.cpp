@@ -123,6 +123,7 @@ namespace trace {
 			renderer->BeginScene(cmd_list, &editor_cam);
 			if (m_currentScene)
 			{
+				m_currentScene->ResolveHierachyTransforms();
 				m_currentScene->OnRender(cmd_list);
 			}
 			DrawGrid(cmd_list);
@@ -766,8 +767,9 @@ namespace trace {
 			//TODO: Fix added due to vulkan viewport
 			proj[1][1] *= -1.0f;
 
-			TransformComponent& trans = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
-			glm::mat4 transform = trans._transform.GetLocalMatrix();
+			HierachyComponent& trans = m_hierachyPanel.m_selectedEntity.GetComponent<HierachyComponent>();
+			TransformComponent& pose = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
+			glm::mat4 transform = trans.transform;
 
 			ImGuizmo::Manipulate(
 				glm::value_ptr(cam_view),
@@ -785,10 +787,18 @@ namespace trace {
 			if (ImGuizmo::IsUsing())
 			{
 				glm::vec3 pos, rot, scale;
+				glm::vec3 old_pos;
+				glm::vec3 old_rot;
+				glm::vec3 old_scale;
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform), glm::value_ptr(pos), glm::value_ptr(rot), glm::value_ptr(scale));
-				trans._transform.SetPosition(pos);
-				trans._transform.SetRotationEuler(rot);
-				trans._transform.SetScale(scale);
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(trans.transform), glm::value_ptr(old_pos), glm::value_ptr(old_rot), glm::value_ptr(old_scale));
+				
+				old_pos = pos - old_pos;
+				old_rot = rot - old_rot;
+				old_scale = scale - old_scale;
+				pose._transform.Translate(old_pos);
+				pose._transform.RotateBy(old_rot);
+				pose._transform.Scale(old_scale);
 			}
 		}
 	}

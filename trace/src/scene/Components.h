@@ -32,7 +32,7 @@ namespace trace {
 		HierachyComponent(const HierachyComponent&) = default;
 		~HierachyComponent() {};
 
-		void AddChid(UUID child)
+		void AddChild(UUID child)
 		{
 			auto it = std::find(children.begin(), children.end(), child);
 			if (it == children.end())
@@ -60,6 +60,7 @@ namespace trace {
 			auto it = std::find(children.begin(), children.end(), child);
 			return (it != children.end());
 		}
+
 
 	};
 
