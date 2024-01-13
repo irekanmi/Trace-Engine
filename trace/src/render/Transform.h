@@ -53,6 +53,8 @@ namespace trace {
 		void Scale(float value);
 		void Scale(glm::vec3 value);
 
+		static Transform CombineTransform(Transform& parent, Transform& child);
+
 	private:
 		void recalculate_local_matrix();
 

@@ -16,15 +16,29 @@ namespace trace {
 
 		if (m_editor->m_currentScene)
 		{
-			/*for (auto& [entity] : m_editor->m_currentScene->m_registry.storage<entt::entity>().each())
+			
+			std::string& scene_name = m_editor->m_currentScene->GetName();
+			ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+			bool clicked = ImGui::TreeNode(scene_name.c_str());
+			if (ImGui::BeginDragDropTarget())
 			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity child = m_editor->m_currentScene->GetEntity(uuid);
+					m_editor->m_currentScene->AddToRoot(child);
 
-				Entity current_entity(entity, m_editor->m_currentScene.get());
-				DrawEntity(current_entity);
+				}
+				ImGui::EndDragDropTarget();
+			}
 
-			}*/
+			if (clicked)
+			{
+				DrawAllEntites();
+				ImGui::TreePop();
+			}
 
-			DrawAllEntites();
+
 
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
 				m_selectedEntity = Entity();
@@ -37,6 +51,10 @@ namespace trace {
 				}
 				ImGui::EndPopup();
 			}
+
+			
+
+			
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -97,6 +115,29 @@ namespace trace {
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
 
+
+			if (ImGui::BeginDragDropSource())
+			{
+				UUID uuid = entity.GetID();
+				ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
+				ImGui::EndDragDropSource();
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity child = m_editor->m_currentScene->GetEntity(uuid);
+					if (child && child != entity)
+					{
+						m_editor->m_currentScene->SetParent(child, entity);
+					}
+					
+				}
+				ImGui::EndDragDropTarget();
+			}
+
 			if (ImGui::IsItemClicked())
 			{
 				if (selected)
@@ -121,7 +162,7 @@ namespace trace {
 				if (ImGui::MenuItem("Delete Entity"))
 				{
 					m_editor->m_currentScene->DestroyEntity(entity);
-					if (selected) m_selectedEntity = Entity();
+					m_selectedEntity = Entity();
 				}
 				ImGui::EndPopup();
 			}
@@ -152,6 +193,29 @@ namespace trace {
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
 
+
+			if (ImGui::BeginDragDropSource())
+			{
+				UUID uuid = entity.GetID();
+				ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
+				ImGui::EndDragDropSource();
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity child = m_editor->m_currentScene->GetEntity(uuid);
+					if (child && child != entity)
+					{
+						m_editor->m_currentScene->SetParent(child, entity);
+					}
+
+				}
+				ImGui::EndDragDropTarget();
+			}
+
 			if (ImGui::IsItemClicked())
 			{
 				if (selected)
@@ -176,7 +240,7 @@ namespace trace {
 				if (ImGui::MenuItem("Delete Entity"))
 				{
 					m_editor->m_currentScene->DestroyEntity(entity);
-					if (selected) m_selectedEntity = Entity();
+					m_selectedEntity = Entity();
 				}
 				ImGui::EndPopup();
 			}

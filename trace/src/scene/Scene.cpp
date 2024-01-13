@@ -15,11 +15,14 @@ namespace trace {
 		m_scriptRegistry.Init();
 		m_rootNode = new HierachyComponent(); // TODO: Use Custom Allocator
 
-		
+		m_registry.on_construct<HierachyComponent>().connect<&Scene::OnConstructHierachyComponent>(*this);
+		m_registry.on_destroy<HierachyComponent>().connect<&Scene::OnDestroyHierachyComponent>(*this);
 
 	}
 	void Scene::Destroy()
 	{
+		m_registry.on_construct<HierachyComponent>().disconnect<&Scene::OnConstructHierachyComponent>(*this);
+		m_registry.on_destroy<HierachyComponent>().disconnect<&Scene::OnDestroyHierachyComponent>(*this);
 		delete m_rootNode; // TODO: Use Custom Allocator
 		m_registry.clear();
 		m_scriptRegistry.Clear();
@@ -461,6 +464,7 @@ namespace trace {
 	void Scene::DestroyEntity(Entity entity)
 	{
 		m_scriptRegistry.Erase(entity.GetID());
+		entity.RemoveComponent<HierachyComponent>();
 		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
 	}
@@ -483,6 +487,36 @@ namespace trace {
 		parent_hi.AddChild(child.GetID());
 		child_hi.parent = parent.GetID();
 
+	}
+
+	void Scene::AddToRoot(Entity entity)
+	{
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+		if (hi.HasParent())
+		{
+			Entity old_parent = GetEntity(hi.parent);
+			old_parent.GetComponent<HierachyComponent>().RemoveChild(entity.GetID());
+		}
+
+
+		m_rootNode->AddChild(entity.GetID());
+		hi.parent = 0;
+	}
+
+	Transform Scene::GetEntityWorldTransform(Entity entity)
+	{
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		TransformComponent& pose = entity.GetComponent<TransformComponent>();
+		Transform transform = pose._transform;
+
+		if (hi.HasParent())
+		{
+			Transform parent_transform = GetEntityWorldTransform(GetEntity(hi.parent));
+			transform = Transform::CombineTransform(parent_transform, transform);
+		}
+
+		return transform;
 	}
 
 	void Scene::ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback)
@@ -540,8 +574,11 @@ namespace trace {
 	{
 
 		entt::registry& f_reg = from->m_registry;
+
+		to->Destroy();
+		to->Create();
+
 		entt::registry& t_reg = to->m_registry;
-		t_reg.clear();
 		to->m_rootNode->children.clear();
 		to->m_entityMap.clear();
 
@@ -574,15 +611,55 @@ namespace trace {
 
 	}
 
-	void Scene::ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback)
+	void Scene::ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool child_first)
 	{
 		for (auto& i : hierachy.children)
 		{
 			Entity entity = GetEntity(i);
-			callback(entity, i, this);
+			if(!child_first) callback(entity, i, this);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 			ProcessEntityHierachy(hi, callback);
+			if (child_first) callback(entity, i, this);
 		}
+	}
+
+	void Scene::OnConstructHierachyComponent(entt::registry& reg, entt::entity ent)
+	{
+		
+	}
+
+	void Scene::OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent)
+	{
+		Entity entity(ent, this);
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (hi.HasParent())
+		{
+			Entity parent = GetEntity(hi.parent);
+			if (parent)
+			{
+				parent.GetComponent<HierachyComponent>().RemoveChild(entity.GetID());
+			}
+		}
+		else
+		{
+			m_rootNode->RemoveChild(entity.GetID());
+		}
+
+		//TODO: Allow ProcessEntityHierachy() take in lambda's
+		std::function<void(Entity, UUID, Scene*)> destroy_children = [](Entity entity,UUID, Scene* scene)
+		{
+			scene->DestroyEntity(entity);
+		};
+		ProcessEntityHierachy(hi, destroy_children, true);
+			
+	}
+
+	void Scene::OnConstructRigidBodyComponent(entt::registry& reg, entt::entity ent)
+	{
+	}
+
+	void Scene::OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent)
+	{
 	}
 
 }

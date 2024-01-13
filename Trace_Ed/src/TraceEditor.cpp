@@ -18,6 +18,7 @@
 
 
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/matrix_decompose.hpp"
 #include "imgui_internal.h"
 #include "imgui_stdlib.h"
 #include "ImGuizmo.h"
@@ -234,6 +235,7 @@ namespace trace {
 					{
 						ReloadProjectAssembly();
 					}
+					if (ImGui::MenuItem("Settings")) p_projectSettings = true;
 					ImGui::EndMenu();
 				}
 				if (ImGui::BeginMenu("Settings"))
@@ -338,6 +340,9 @@ namespace trace {
 
 			ImGui::End();
 		}
+
+		//Project settings window
+		ProjectSettings();
 
 	}
 
@@ -766,12 +771,16 @@ namespace trace {
 
 			//TODO: Fix added due to vulkan viewport
 			proj[1][1] *= -1.0f;
-
-			HierachyComponent& trans = m_hierachyPanel.m_selectedEntity.GetComponent<HierachyComponent>();
+			HierachyComponent& hi = m_hierachyPanel.m_selectedEntity.GetComponent<HierachyComponent>();
 			TransformComponent& pose = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
-			glm::mat4 transform = trans.transform;
+			bool has_parent = hi.HasParent();
 
-			ImGuizmo::Manipulate(
+			Transform world_pose = m_currentScene->GetEntityWorldTransform(m_hierachyPanel.m_selectedEntity);
+			
+			glm::mat4 transform = hi.transform;
+
+
+			bool modified = ImGuizmo::Manipulate(
 				glm::value_ptr(cam_view),
 				glm::value_ptr(proj),
 				(ImGuizmo::OPERATION)gizmo_mode,
@@ -783,23 +792,56 @@ namespace trace {
 				false //bounds snap
 			);
 
-
-			if (ImGuizmo::IsUsing())
+			if (modified)
 			{
-				glm::vec3 pos, rot, scale;
-				glm::vec3 old_pos;
-				glm::vec3 old_rot;
-				glm::vec3 old_scale;
-				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform), glm::value_ptr(pos), glm::value_ptr(rot), glm::value_ptr(scale));
-				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(trans.transform), glm::value_ptr(old_pos), glm::value_ptr(old_rot), glm::value_ptr(old_scale));
+				glm::vec3 pos, skew, scale;
+				glm::vec4 persp;
+				glm::quat rot;
+				glm::quat child_rot;
+
 				
-				old_pos = pos - old_pos;
-				old_rot = rot - old_rot;
-				old_scale = scale - old_scale;
-				pose._transform.Translate(old_pos);
-				pose._transform.RotateBy(old_rot);
-				pose._transform.Scale(old_scale);
+				if (has_parent)
+				{
+					Entity parent = m_currentScene->GetEntity(hi.parent);
+					HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+					glm::mat4 parent_transform = parent_hi.transform;
+					parent_transform = glm::inverse(parent_transform);
+
+					glm::quat parent_rot;
+					glm::quat new_rot;
+					glm::decompose(parent_transform, scale, parent_rot, pos, skew, persp);
+					glm::decompose(transform, scale, new_rot, pos, skew, persp);
+
+					transform = parent_transform * transform;
+					child_rot = new_rot * glm::inverse(parent_rot);
+
+				}
+
+				glm::decompose(transform, scale, rot, pos, skew, persp);
+
+				switch (gizmo_mode)
+				{
+				case ImGuizmo::OPERATION::TRANSLATE:
+				{
+					pose._transform.SetPosition(pos);
+					break;
+				}
+				case ImGuizmo::OPERATION::ROTATE:
+				{
+					pose._transform.SetRotation(rot);
+					break;
+				}
+				case ImGuizmo::OPERATION::SCALE:
+				{
+					pose._transform.SetScale(scale);
+					break;
+				}
+				}
+				
 			}
+
+
+
 		}
 	}
 	void TraceEditor::DrawGrid(CommandList& cmd_list)
@@ -1155,6 +1197,22 @@ project "{}"
 				if (m_currentScene) m_currentScene->m_scriptRegistry.ReloadScripts();
 			}
 		}
+	}
+
+	void TraceEditor::ProjectSettings()
+	{
+
+		if (p_projectSettings)
+		{
+
+			ImGui::Begin("Project Settings", &p_projectSettings);
+
+
+
+			ImGui::End();
+
+		}
+
 	}
 
 	std::filesystem::path GetPathFromUUID(UUID uuid)

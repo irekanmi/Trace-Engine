@@ -531,7 +531,7 @@ namespace trace {
 			return Ref<Scene>();
 		}
 		std::string file_data;
-		FileSystem::read_all_lines(in_handle, file_data);
+		FileSystem::read_all_lines(in_handle, file_data); // opening file
 		FileSystem::close_file(in_handle);
 
 		YAML::Node data = YAML::Load(file_data);

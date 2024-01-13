@@ -157,6 +157,22 @@ namespace trace {
 		m_dirty = true;
 	}
 
+	Transform Transform::CombineTransform(Transform& parent, Transform& child)
+	{
+		Transform result;
+		result.SetScale(parent.GetScale() * child.GetScale());
+		result.SetRotation(child.GetRotation() * parent.GetRotation());
+
+		glm::vec3 child_pos = child.GetPosition();
+		child_pos *= parent.GetScale();
+		child_pos = glm::rotate(parent.GetRotation(), child_pos);
+		child_pos += parent.GetPosition();
+
+		result.SetPosition(child_pos);
+
+		return result;
+	}
+
 	void Transform::recalculate_local_matrix()
 	{
 		m_model = glm::identity<glm::mat4>();

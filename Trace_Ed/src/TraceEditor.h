@@ -100,7 +100,10 @@ namespace trace {
 		bool CloseProject();
 		void ReloadProjectAssembly();
 
+		void ProjectSettings();
+
 		bool p_createProject = false;
+		bool p_projectSettings = false;
 
 
 	protected:

@@ -41,6 +41,8 @@ namespace trace {
 		void DuplicateEntity(Entity entity);
 		void DestroyEntity(Entity entity);
 		void SetParent(Entity child, Entity parent);
+		void AddToRoot(Entity entity);
+		Transform GetEntityWorldTransform(Entity entity);
 
 
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);
@@ -53,7 +55,12 @@ namespace trace {
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
 
 	private:
-		void ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback);
+		void ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool child_first = false);
+
+		void OnConstructHierachyComponent(entt::registry& reg, entt::entity ent);
+		void OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent);
+		void OnConstructRigidBodyComponent(entt::registry& reg, entt::entity ent);
+		void OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent);
 
 		entt::registry m_registry;
 		ScriptRegistry m_scriptRegistry;
