@@ -146,6 +146,10 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\animation\Animation.h" />
+    <ClInclude Include="src\animation\AnimationEngine.h" />
+    <ClInclude Include="src\animation\AnimationGraph.h" />
+    <ClInclude Include="src\animation\AnimationState.h" />
     <ClInclude Include="src\backends\Fontutils.h" />
     <ClInclude Include="src\backends\Physicsutils.h" />
     <ClInclude Include="src\backends\Renderutils.h" />
@@ -233,6 +237,7 @@
     <ClInclude Include="src\render\render_graph\SSAO.h" />
     <ClInclude Include="src\render\render_graph\ToneMapPass.h" />
     <ClInclude Include="src\render\render_graph\UIPass.h" />
+    <ClInclude Include="src\resource\AnimationsManager.h" />
     <ClInclude Include="src\resource\FontManager.h" />
     <ClInclude Include="src\resource\HashTable.h" />
     <ClInclude Include="src\resource\MaterialManager.h" />
@@ -261,7 +266,10 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\animation\AnimationEngine.cpp" />
+    <ClCompile Include="src\animation\AnimationState.cpp" />
     <ClCompile Include="src\core\Utils.cpp" />
+    <ClCompile Include="src\resource\AnimationsManager.cpp" />
     <ClCompile Include="src\scene\Components.cpp" />
     <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">

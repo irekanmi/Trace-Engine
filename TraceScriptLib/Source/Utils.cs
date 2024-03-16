@@ -147,7 +147,7 @@ namespace Trace
     public struct Collision
     {
         public Vec3 position;
-        public ulong entity;
+        public TransformComponent entity;
         public Action other;
     };
     

@@ -407,6 +407,11 @@
     </ClInclude>
     <ClInclude Include="src\project\Project.h" />
     <ClInclude Include="src\serialize\ProjectSerializer.h" />
+    <ClInclude Include="src\animation\AnimationState.h" />
+    <ClInclude Include="src\animation\Animation.h" />
+    <ClInclude Include="src\animation\AnimationGraph.h" />
+    <ClInclude Include="src\resource\AnimationsManager.h" />
+    <ClInclude Include="src\animation\AnimationEngine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -730,5 +735,8 @@
     <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="src\core\Utils.cpp" />
     <ClCompile Include="src\scene\Components.cpp" />
+    <ClCompile Include="src\animation\AnimationState.cpp" />
+    <ClCompile Include="src\resource\AnimationsManager.cpp" />
+    <ClCompile Include="src\animation\AnimationEngine.cpp" />
   </ItemGroup>
 </Project>

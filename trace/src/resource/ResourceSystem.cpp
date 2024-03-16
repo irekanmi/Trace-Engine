@@ -9,6 +9,7 @@
 #include "ShaderManager.h"
 #include "FontManager.h"
 #include "scene/SceneManager.h"
+#include "AnimationsManager.h"
 
 namespace trace {
 
@@ -42,6 +43,8 @@ namespace trace {
 		result = result && MaterialManager::get_instance()->Init(4096);
 		TRC_ASSERT(result, "Failed to initialized material manager");
 
+		result = result && AnimationsManager::get_instance()->Init(4096);
+		TRC_ASSERT(result, "Failed to initialized animations manager");
 
 
 		return result;
@@ -51,6 +54,7 @@ namespace trace {
 		//NOTE: The resource destroys the scene manager because scenes are also resources
 
 
+		AnimationsManager::get_instance()->Shutdown();
 		MeshManager::get_instance()->ShutDown();
 		ModelManager::get_instance()->ShutDown();
 		MaterialManager::get_instance()->ShutDown();
@@ -62,6 +66,7 @@ namespace trace {
 		SceneManager* sceneManager = SceneManager::get_instance();
 		sceneManager->Shutdown();
 		SAFE_DELETE(sceneManager, SceneManager);
+		SAFE_DELETE(AnimationsManager::get_instance(), AnimationsManager);
 		SAFE_DELETE(MeshManager::get_instance(), MeshManager);
 		SAFE_DELETE(ModelManager::get_instance(), ModelManager);
 		SAFE_DELETE(MaterialManager::get_instance(), MaterialManager);
@@ -90,6 +95,9 @@ namespace trace {
 
 		result = result && MeshManager::get_instance()->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default meshes");
+
+		result = result && AnimationsManager::get_instance()->LoadDefaults();
+		TRC_ASSERT(result, "Failed to load default animations");
 
 		
 

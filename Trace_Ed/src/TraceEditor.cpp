@@ -797,9 +797,7 @@ namespace trace {
 				glm::vec3 pos, skew, scale;
 				glm::vec4 persp;
 				glm::quat rot;
-				glm::quat child_rot;
 
-				
 				if (has_parent)
 				{
 					Entity parent = m_currentScene->GetEntity(hi.parent);
@@ -807,13 +805,7 @@ namespace trace {
 					glm::mat4 parent_transform = parent_hi.transform;
 					parent_transform = glm::inverse(parent_transform);
 
-					glm::quat parent_rot;
-					glm::quat new_rot;
-					glm::decompose(parent_transform, scale, parent_rot, pos, skew, persp);
-					glm::decompose(transform, scale, new_rot, pos, skew, persp);
-
 					transform = parent_transform * transform;
-					child_rot = new_rot * glm::inverse(parent_rot);
 
 				}
 

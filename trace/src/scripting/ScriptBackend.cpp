@@ -193,7 +193,7 @@ bool LoadAllScripts(std::unordered_map<std::string, Script>& out_data)
 {
 
 	LoadAssemblyTypes(s_MonoData.coreAssembly, out_data, true);
-	if(s_MonoData.mainAssembly) LoadAssemblyTypes(s_MonoData.mainAssembly, out_data, false);
+	if (s_MonoData.mainAssembly) LoadAssemblyTypes(s_MonoData.mainAssembly, out_data, false);
 
 	return true;
 }
@@ -310,6 +310,10 @@ bool GetScriptID(Script& script, uintptr_t& res)
 }
 bool DestroyScript(Script& script)
 {
+	script.m_fields.clear();
+	script.script_name = "";
+	script.m_methods.clear();
+	script.m_internal = nullptr;
 	return true;
 }
 bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)

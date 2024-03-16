@@ -34,6 +34,8 @@ namespace trace
 		virtual std::vector<Object*> GetEngineSystemsID();
 		virtual Window* GetWindow() { return m_Window; }
 
+		Clock& GetClock() { return m_clock; }
+
 		static Application* get_instance();
 		static Application* s_instance;
 

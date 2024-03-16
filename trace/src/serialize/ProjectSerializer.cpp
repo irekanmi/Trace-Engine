@@ -14,6 +14,11 @@ namespace trace {
 		emit << YAML::Key << "Project Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Project Name" << YAML::Value << project->GetName();
 
+		if (!project->GetStartScene().empty())
+		{
+			emit << YAML::Key << "Start Scene" << YAML::Value << project->GetStartScene();
+		}
+
 		emit << YAML::EndMap;
 
 		FileHandle out_handle;
@@ -53,6 +58,7 @@ namespace trace {
 
 		Project* res = new Project(); // TODO: Use custom allocator
 		res->SetName(project_name);
+		if (data["Start Scene"]) res->SetStartScene(data["Start Scene"].as<std::string>());
 		res->current_directory = p.string();
 		res->assets_directory = (p / "Assets").string();
 		res->assembly_path = (p / ("Data/Assembly/" + project_name + ".dll")).string();
