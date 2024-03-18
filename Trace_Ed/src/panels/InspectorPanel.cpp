@@ -12,8 +12,10 @@
 #include "resource/MeshManager.h"
 #include "resource/FontManager.h"
 #include "serialize/MaterialSerializer.h"
+#include "serialize/AnimationsSerializer.h"
 #include "scripting/ScriptEngine.h"
 #include "../TraceEditor.h"
+#include "resource/AnimationsManager.h"
 
 
 namespace trace {
@@ -309,6 +311,10 @@ namespace trace {
 			if (ImGui::MenuItem("Sphere Coillder"))
 			{
 				entity.AddComponent<SphereColliderComponent>();
+			}
+			if (ImGui::MenuItem("Animation"))
+			{
+				entity.AddComponent<AnimationComponent>();
 			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
@@ -674,6 +680,40 @@ namespace trace {
 				renderer->DrawDebugSphere(cmd_list, shp.sphere.radius + 0.001f, 25, pose.GetLocalMatrix());
 				renderer->EndScene(cmd_list);
 				renderer->SubmitCommandList(cmd_list);
+			}
+
+			});
+
+		DrawComponent<AnimationComponent>(entity, "Animation", [&](Entity obj, AnimationComponent& comp) {
+
+			Ref<AnimationGraph> graph = comp.anim_graph;
+			std::string graph_name = "None (Animation Graph)";
+			if (graph)
+			{
+				graph_name = graph->GetName();
+				
+			}
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+			ImGui::Text("Anim Graph: ");
+			ImGui::SameLine();
+			ImGui::Button(graph_name.c_str(), button_size);
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trcag"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::filesystem::path p = buf;
+					Ref<AnimationGraph> ag = AnimationsManager::get_instance()->GetGraph(p.filename().string());
+					if (ag) comp.anim_graph = ag;
+					ag = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+					if (ag) comp.anim_graph = ag;
+				}
+				ImGui::EndDragDropTarget();
 			}
 
 			});

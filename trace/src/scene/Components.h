@@ -7,6 +7,8 @@
 #include "render/Font.h"
 #include "scene/UUID.h"
 #include "physics/Physics.h"
+#include "animation/Animation.h"
+#include "animation/AnimationGraph.h"
 
 
 #include <string>
@@ -214,7 +216,10 @@ namespace trace {
 		}
 	};
 
-
+	struct AnimationComponent
+	{
+		Ref<AnimationGraph> anim_graph;
+	};
 
 
 

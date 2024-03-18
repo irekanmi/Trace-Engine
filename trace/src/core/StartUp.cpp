@@ -13,6 +13,7 @@
 #include "backends/Physicsutils.h"
 #include "scripting/ScriptEngine.h"
 #include "core/Coretypes.h"
+#include "animation/AnimationEngine.h"
 
 
 namespace trace {
@@ -88,6 +89,7 @@ namespace trace {
 			return false;
 		}
 
+
 		return true;
 	}
 
@@ -135,6 +137,18 @@ namespace trace {
 			}
 		};
 
+		//Animation Engine
+		if (AnimationEngine::get_instance() == nullptr)
+		{
+			TRC_ERROR("failed to create Animation Engine");
+			return false;
+		}
+
+		if (!AnimationEngine::get_instance()->Init())
+		{
+			TRC_ERROR("Animation Engine failed to initialize");
+			return false;
+		}
 
 		//Script Engine
 		if (ScriptEngine::get_instance() == nullptr)

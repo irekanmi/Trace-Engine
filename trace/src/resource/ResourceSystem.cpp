@@ -43,7 +43,7 @@ namespace trace {
 		result = result && MaterialManager::get_instance()->Init(4096);
 		TRC_ASSERT(result, "Failed to initialized material manager");
 
-		result = result && AnimationsManager::get_instance()->Init(4096);
+		result = result && AnimationsManager::get_instance()->Init(4096, 4096);
 		TRC_ASSERT(result, "Failed to initialized animations manager");
 
 

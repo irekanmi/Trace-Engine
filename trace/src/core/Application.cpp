@@ -136,6 +136,8 @@ namespace trace
 		m_clock.Begin();
 
 		m_lastTime = m_clock.GetElapsedTime();
+
+
 		while (m_isRunning)
 		{
 			float _time = m_clock.GetElapsedTime();
@@ -176,6 +178,9 @@ namespace trace
 					Platform::Sleep((value * 1000.0f));
 				}
 			}
+
+			
+			
 		}
 	}
 

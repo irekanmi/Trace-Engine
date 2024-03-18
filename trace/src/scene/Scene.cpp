@@ -8,6 +8,7 @@
 #include "scripting/Script.h"
 #include "scripting/ScriptBackend.h"
 #include "scripting/ScriptEngine.h"
+#include "animation/AnimationEngine.h"
 
 namespace trace {
 	void Scene::Create()
@@ -281,6 +282,20 @@ namespace trace {
 		}
 	}
 
+	void Scene::OnAnimationUpdate(float deltaTime)
+	{
+		auto animations = m_registry.view<AnimationComponent>();
+		for (auto i : animations)
+		{
+			auto [anim_comp] = animations.get(i);
+			if (!anim_comp.anim_graph) continue;
+			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
+			if (!current_state.GetAnimationClip()) continue;
+			AnimationEngine::get_instance()->Animate(current_state, this);
+		}
+
+	}
+
 
 	void Scene::OnRender()
 	{
@@ -452,6 +467,7 @@ namespace trace {
 		CopyComponent<BoxColliderComponent>(entity, res);
 		CopyComponent<SphereColliderComponent>(entity, res);
 		CopyComponent<HierachyComponent>(entity, res);
+		CopyComponent<AnimationComponent>(entity, res);
 
 		m_scriptRegistry.Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
@@ -604,6 +620,7 @@ namespace trace {
 		CopyComponent<RigidBodyComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<BoxColliderComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<SphereColliderComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<AnimationComponent>(f_reg, t_reg, entity_map);
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 

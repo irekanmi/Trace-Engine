@@ -258,6 +258,7 @@
     <ClInclude Include="src\scripting\ScriptBackend.h" />
     <ClInclude Include="src\scripting\ScriptEngine.h" />
     <ClInclude Include="src\scripting\ScriptRegistry.h" />
+    <ClInclude Include="src\serialize\AnimationsSerializer.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
     <ClInclude Include="src\serialize\PipelineSerializer.h" />
     <ClInclude Include="src\serialize\ProjectSerializer.h" />
@@ -271,6 +272,7 @@
     <ClCompile Include="src\core\Utils.cpp" />
     <ClCompile Include="src\resource\AnimationsManager.cpp" />
     <ClCompile Include="src\scene\Components.cpp" />
+    <ClCompile Include="src\serialize\AnimationsSerializer.cpp" />
     <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
