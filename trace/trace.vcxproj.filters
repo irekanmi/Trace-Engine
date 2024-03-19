@@ -10,8 +10,17 @@
     <Filter Include="_externals\ImGuizmo">
       <UniqueIdentifier>{1AEA89E0-864B-67EE-0FB9-ADA07B199EAD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="_externals\Im_neo_sequencer">
+      <UniqueIdentifier>{4A2C33B3-B639-6199-3F20-5D84AB2C2D50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_externals\Sequentity">
+      <UniqueIdentifier>{C4ECD567-3059-9162-F94C-29C06578B3CA}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\animation">
+      <UniqueIdentifier>{7C204971-E8E0-C4A7-B11B-0E251D9B0984}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\backends">
       <UniqueIdentifier>{F707EA36-E36A-79DB-8CF0-B1917832455E}</UniqueIdentifier>
@@ -52,6 +61,9 @@
     <Filter Include="src\physics">
       <UniqueIdentifier>{BF23DBB5-2BD9-53AB-B4CD-4D8220824AAF}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\project">
+      <UniqueIdentifier>{93C474CC-FF79-EDC1-886E-E798F422E4C5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\render">
       <UniqueIdentifier>{1CA98B76-0861-CDC3-7168-A61F5D3F68B4}</UniqueIdentifier>
     </Filter>
@@ -72,6 +84,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\animation\Animation.h">
+      <Filter>src\animation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\animation\AnimationEngine.h">
+      <Filter>src\animation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\animation\AnimationGraph.h">
+      <Filter>src\animation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\animation\AnimationState.h">
+      <Filter>src\animation</Filter>
+    </ClInclude>
     <ClInclude Include="src\backends\Fontutils.h">
       <Filter>src\backends</Filter>
     </ClInclude>
@@ -219,6 +243,9 @@
     <ClInclude Include="src\physics\Physics.h">
       <Filter>src\physics</Filter>
     </ClInclude>
+    <ClInclude Include="src\project\Project.h">
+      <Filter>src\project</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\Camera.h">
       <Filter>src\render</Filter>
     </ClInclude>
@@ -330,6 +357,9 @@
     <ClInclude Include="src\render\render_graph\UIPass.h">
       <Filter>src\render\render_graph</Filter>
     </ClInclude>
+    <ClInclude Include="src\resource\AnimationsManager.h">
+      <Filter>src\resource</Filter>
+    </ClInclude>
     <ClInclude Include="src\resource\FontManager.h">
       <Filter>src\resource</Filter>
     </ClInclude>
@@ -390,10 +420,16 @@
     <ClInclude Include="src\scripting\ScriptRegistry.h">
       <Filter>src\scripting</Filter>
     </ClInclude>
+    <ClInclude Include="src\serialize\AnimationsSerializer.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
     <ClInclude Include="src\serialize\MaterialSerializer.h">
       <Filter>src\serialize</Filter>
     </ClInclude>
     <ClInclude Include="src\serialize\PipelineSerializer.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\ProjectSerializer.h">
       <Filter>src\serialize</Filter>
     </ClInclude>
     <ClInclude Include="src\serialize\SceneSerializer.h">
@@ -405,14 +441,6 @@
     <ClInclude Include="src\trace.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\project\Project.h" />
-    <ClInclude Include="src\serialize\ProjectSerializer.h" />
-    <ClInclude Include="src\animation\AnimationState.h" />
-    <ClInclude Include="src\animation\Animation.h" />
-    <ClInclude Include="src\animation\AnimationGraph.h" />
-    <ClInclude Include="src\resource\AnimationsManager.h" />
-    <ClInclude Include="src\animation\AnimationEngine.h" />
-    <ClInclude Include="src\serialize\AnimationsSerializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
@@ -445,8 +473,23 @@
     <ClCompile Include="_externals\ImGuizmo\ImGuizmo.cpp">
       <Filter>_externals\ImGuizmo</Filter>
     </ClCompile>
+    <ClCompile Include="_externals\Im_neo_sequencer\imgui_neo_internal.cpp">
+      <Filter>_externals\Im_neo_sequencer</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\Im_neo_sequencer\imgui_neo_sequencer.cpp">
+      <Filter>_externals\Im_neo_sequencer</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\Sequentity\Sequentity.cpp">
+      <Filter>_externals\Sequentity</Filter>
+    </ClCompile>
     <ClCompile Include="_externals\spirv_reflect.cpp">
       <Filter>_externals</Filter>
+    </ClCompile>
+    <ClCompile Include="src\animation\AnimationEngine.cpp">
+      <Filter>src\animation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\animation\AnimationState.cpp">
+      <Filter>src\animation</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\Fontutils.cpp">
       <Filter>src\backends</Filter>
@@ -482,6 +525,9 @@
       <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\StartUp.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Utils.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\events\ApplicationEvents.cpp">
@@ -670,6 +716,9 @@
     <ClCompile Include="src\render\render_graph\UIPass.cpp">
       <Filter>src\render\render_graph</Filter>
     </ClCompile>
+    <ClCompile Include="src\resource\AnimationsManager.cpp">
+      <Filter>src\resource</Filter>
+    </ClCompile>
     <ClCompile Include="src\resource\FontManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
@@ -697,6 +746,9 @@
     <ClCompile Include="src\resource\TextureManager.cpp">
       <Filter>src\resource</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\Components.cpp">
+      <Filter>src\scene</Filter>
+    </ClCompile>
     <ClCompile Include="src\scene\Entity.cpp">
       <Filter>src\scene</Filter>
     </ClCompile>
@@ -721,10 +773,16 @@
     <ClCompile Include="src\scripting\ScriptRegistry.cpp">
       <Filter>src\scripting</Filter>
     </ClCompile>
+    <ClCompile Include="src\serialize\AnimationsSerializer.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
     <ClCompile Include="src\serialize\MaterialSerializer.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
     <ClCompile Include="src\serialize\PipelineSerializer.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serialize\ProjectSerializer.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
     <ClCompile Include="src\serialize\SceneSerializer.cpp">
@@ -733,12 +791,5 @@
     <ClCompile Include="src\serialize\yaml_util.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
-    <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
-    <ClCompile Include="src\core\Utils.cpp" />
-    <ClCompile Include="src\scene\Components.cpp" />
-    <ClCompile Include="src\animation\AnimationState.cpp" />
-    <ClCompile Include="src\resource\AnimationsManager.cpp" />
-    <ClCompile Include="src\animation\AnimationEngine.cpp" />
-    <ClCompile Include="src\serialize\AnimationsSerializer.cpp" />
   </ItemGroup>
 </Project>

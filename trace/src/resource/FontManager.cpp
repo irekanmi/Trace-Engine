@@ -156,6 +156,12 @@ namespace trace {
 			return result;
 		}
 		_font = &m_fonts[hash];
+		if (_font->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} font has been destroyed", name);
+			hash = INVALID_ID;
+			return result;
+		}
 		result = { _font, BIND_RENDER_COMMAND_FN(FontManager::UnloadFont) };
 		return result;
 	}

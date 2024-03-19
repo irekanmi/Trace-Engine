@@ -15,6 +15,11 @@
 #include "serialize/ProjectSerializer.h"
 #include "core/Utils.h"
 #include "scripting/ScriptEngine.h"
+#include "scene/Scene.h"
+#include "panels/HierachyPanel.h"
+#include "panels/InspectorPanel.h"
+#include "panels/ContentBrowser.h"
+#include "panels/AnimationPanel.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -48,10 +53,16 @@ namespace trace {
 		UIFuncLoader::LoadImGuiFunc();
 		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
 		embraceTheDarkness();
-		m_hierachyPanel.m_editor = this;
-		m_inspectorPanel.m_editor = this;
-		m_contentBrowser.m_editor = this;
-		m_contentBrowser.Init();
+		m_hierachyPanel = new HierachyPanel;
+		m_inspectorPanel = new InspectorPanel;
+		m_contentBrowser = new ContentBrowser;
+		m_animPanel = new AnimationPanel;
+
+		m_hierachyPanel->m_editor = this;
+		m_inspectorPanel->m_editor = this;
+		m_contentBrowser->m_editor = this;
+		m_contentBrowser->Init();
+		m_animPanel->Init();
 
 		// Register Events
 		{
@@ -101,7 +112,7 @@ namespace trace {
 
 	void TraceEditor::Shutdown()
 	{
-		m_contentBrowser.Shutdown();
+		m_contentBrowser->Shutdown();
 		m_currentScene.release();
 		m_editScene.release();
 		m_editScene_duplicate.release();
@@ -136,10 +147,10 @@ namespace trace {
 		{
 			if (m_currentScene)
 			{
+				m_currentScene->OnAnimationUpdate(deltaTime);
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
 				m_currentScene->OnUpdate(deltaTime);
-				m_currentScene->OnAnimationUpdate(deltaTime);
 				m_currentScene->OnRender();
 			}
 			break;
@@ -289,19 +300,21 @@ namespace trace {
 		elapsed += deltaTime;
 		
 		// -------------------/////////////////-----------------------------------
-		m_hierachyPanel.Render(deltaTime);
+		m_hierachyPanel->Render(deltaTime);
 
 		//Inspector
 		ImGui::Begin("Inspector");
-		if (m_inspectorPanel.m_drawCallback)
-			m_inspectorPanel.m_drawCallback();
+		if (m_inspectorPanel->m_drawCallback)
+			m_inspectorPanel->m_drawCallback();
 		ImGui::End();
 
 		// Content Browser
-		m_contentBrowser.Render(deltaTime);
+		m_contentBrowser->Render(deltaTime);
 
 		RenderSceneToolBar();
 
+		// Animation Panel
+		m_animPanel->Render(deltaTime);
 
 		//Create Project
 		if (p_createProject)
@@ -374,7 +387,7 @@ namespace trace {
 				ImGui::EndDragDropTarget();
 			}
 		}
-		if (m_hierachyPanel.m_selectedEntity)
+		if (m_hierachyPanel->m_selectedEntity)
 		{
 			DrawGizmo();
 		}
@@ -538,7 +551,7 @@ namespace trace {
 			{
 				std::string filename = i.filename().string();
 				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+				UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
 				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 				{
 					res = i.string();
@@ -573,7 +586,7 @@ namespace trace {
 			{
 				std::string filename = i.filename().string();
 				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+				UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
 				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 				{
 					res = i.string();
@@ -611,7 +624,7 @@ namespace trace {
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;
-			UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+			UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
 			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
 				result = i.string();
@@ -654,7 +667,7 @@ namespace trace {
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;
-			UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+			UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
 			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
 				result = i.string();
@@ -697,7 +710,7 @@ namespace trace {
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;
-			UIFunc::GetDrawTextureHandle(m_contentBrowser.default_icon.get(), textureID);
+			UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
 			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
 				result = i.string();
@@ -768,11 +781,11 @@ namespace trace {
 
 			//TODO: Fix added due to vulkan viewport
 			proj[1][1] *= -1.0f;
-			HierachyComponent& hi = m_hierachyPanel.m_selectedEntity.GetComponent<HierachyComponent>();
-			TransformComponent& pose = m_hierachyPanel.m_selectedEntity.GetComponent<TransformComponent>();
+			HierachyComponent& hi = m_hierachyPanel->m_selectedEntity.GetComponent<HierachyComponent>();
+			TransformComponent& pose = m_hierachyPanel->m_selectedEntity.GetComponent<TransformComponent>();
 			bool has_parent = hi.HasParent();
 
-			Transform world_pose = m_currentScene->GetEntityWorldTransform(m_hierachyPanel.m_selectedEntity);
+			Transform world_pose = m_currentScene->GetEntityWorldTransform(m_hierachyPanel->m_selectedEntity);
 			
 			glm::mat4 transform = hi.transform;
 
@@ -864,7 +877,7 @@ namespace trace {
 	{
 		m_currentScene.free();
 		m_editScene.free();
-		m_hierachyPanel.m_selectedEntity = Entity();
+		m_hierachyPanel->m_selectedEntity = Entity();
 		current_scene_path = "";
 	}
 	void TraceEditor::LoadScene(const std::string& file_path)
@@ -1010,9 +1023,9 @@ namespace trace {
 		{
 			if (current_state != SceneEdit) break;
 
-			if (control && m_hierachyPanel.m_selectedEntity)
+			if (control && m_hierachyPanel->m_selectedEntity)
 			{
-				m_currentScene->DuplicateEntity(m_hierachyPanel.m_selectedEntity);
+				m_currentScene->DuplicateEntity(m_hierachyPanel->m_selectedEntity);
 			}
 
 			break;
@@ -1031,9 +1044,9 @@ namespace trace {
 		m_currentScene = m_editScene_duplicate;
 		m_currentScene->OnStart();
 		m_currentScene->OnScriptStart();
-		if (m_hierachyPanel.m_selectedEntity)
+		if (m_hierachyPanel->m_selectedEntity)
 		{
-			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
+			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
 		}
 	}
 	void TraceEditor::OnSceneStimulate()
@@ -1043,9 +1056,9 @@ namespace trace {
 		Scene::Copy(m_editScene, m_editScene_duplicate);
 		m_currentScene = m_editScene_duplicate;
 		m_currentScene->OnStart();
-		if (m_hierachyPanel.m_selectedEntity)
+		if (m_hierachyPanel->m_selectedEntity)
 		{
-			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
+			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
 		}
 	}
 	void TraceEditor::OnSceneStop()
@@ -1055,9 +1068,9 @@ namespace trace {
 		m_currentScene->OnStop();
 		m_currentScene->OnScriptStop();
 		m_currentScene = m_editScene;
-		if (m_hierachyPanel.m_selectedEntity)
+		if (m_hierachyPanel->m_selectedEntity)
 		{
-			m_hierachyPanel.m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel.m_selectedEntity.GetID());
+			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
 		}
 	}
 
@@ -1161,7 +1174,7 @@ project "{}"
 	{
 		current_project = ProjectSerializer::Deserialize(file_path);
 		if (!current_project) return false;
-		m_contentBrowser.SetDirectory(current_project->assets_directory);
+		m_contentBrowser->SetDirectory(current_project->assets_directory);
 		ReloadProjectAssembly();
 		return true;
 	}
@@ -1208,13 +1221,13 @@ project "{}"
 	{
 		//TODO: Add Error Handling
 		TraceEditor* editor = TraceEditor::get_instance();
-		return editor->m_contentBrowser.all_id_path[uuid];
+		return editor->m_contentBrowser->all_id_path[uuid];
 	}
 	UUID GetUUIDFromName(const std::string& name)
 	{
 		//TODO: Add Error Handling
 		TraceEditor* editor = TraceEditor::get_instance();
-		return editor->m_contentBrowser.all_files_id[name];
+		return editor->m_contentBrowser->all_files_id[name];
 	}
 }
 

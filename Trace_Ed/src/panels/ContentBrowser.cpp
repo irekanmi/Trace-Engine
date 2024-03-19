@@ -12,6 +12,7 @@
 #include "scene/UUID.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/PipelineSerializer.h"
+#include "InspectorPanel.h"
 
 #include "imgui.h"
 #include "glm/glm.hpp"
@@ -88,7 +89,7 @@ namespace trace {
 			extensions_callbacks[".trmat"] = [&](std::filesystem::path& path)
 			{
 				m_editMaterialPath = path;
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditMaterial(); },
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditMaterial(); },
 					[&]()
 					{
 						m_editMaterialPath = path;
@@ -129,7 +130,7 @@ namespace trace {
 
 			extensions_callbacks[".ttf"] = [&](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditFont(); },
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditFont(); },
 					[&]()
 					{
 						m_editFont = FontManager::get_instance()->LoadFont_(path.string());
@@ -142,7 +143,7 @@ namespace trace {
 
 			extensions_callbacks[".TTF"] = [&](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditFont(); },
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditFont(); },
 					[&]()
 					{
 						m_editFont = FontManager::get_instance()->LoadFont_(path.string());
@@ -155,7 +156,7 @@ namespace trace {
 
 			extensions_callbacks[".trpip"] = [&](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]() { m_editor->m_contentBrowser.DrawEditPipeline(); },
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditPipeline(); },
 					[&]()
 					{
 						m_editPipeline = PipelineSerializer::Deserialize(path.string());

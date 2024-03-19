@@ -16,6 +16,7 @@
 #include "scripting/ScriptEngine.h"
 #include "../TraceEditor.h"
 #include "resource/AnimationsManager.h"
+#include "AnimationPanel.h"
 
 
 namespace trace {
@@ -256,6 +257,16 @@ namespace trace {
 
 	void InspectorPanel::DrawEntityComponent(Entity entity)
 	{
+		bool recording = m_editor->m_animPanel->Recording();
+		if (recording)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Border, { 0.79, 0.12, 0.15, 0.35f });
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.79, 0.12, 0.15, 0.25f });
+		}
+		char anim_data[16] = { 0 };
+		AnimationDataType type = AnimationDataType::NONE;
+		bool anim_dirty = false;
+
 		if (entity.HasComponent<TagComponent>())
 		{
 			TagComponent& val = entity.GetComponent<TagComponent>();
@@ -342,11 +353,26 @@ namespace trace {
 				glm::vec3 scale = comp._transform.GetScale();
 				glm::vec3 rotation = comp._transform.GetRotationEuler();
 				if (DrawVec3("Position", pos))
+				{
 					comp._transform.SetPosition(pos);
+					type = AnimationDataType::POSITION;
+					memcpy(anim_data, glm::value_ptr(pos), 4 * 3);
+					anim_dirty = true;
+				}
 				if (DrawVec3("Rotation", rotation))
+				{
 					comp._transform.SetRotationEuler(rotation);
+					type = AnimationDataType::ROTATION;
+					memcpy(anim_data, glm::value_ptr(rotation), 4 * 4);
+					anim_dirty = true;
+				}
 				if (DrawVec3("Scale", scale))
+				{
 					comp._transform.SetScale(scale);
+					type = AnimationDataType::SCALE;
+					memcpy(anim_data, glm::value_ptr(scale), 4 * 3);
+					anim_dirty = true;
+				}
 
 
 				ImGui::TreePop();
@@ -402,7 +428,7 @@ namespace trace {
 
 			});
 
-		DrawComponent<LightComponent>(entity, "Light", [](Entity obj, LightComponent& comp) {
+		DrawComponent<LightComponent>(entity, "Light", [&](Entity obj, LightComponent& comp) {
 
 			Light& light = comp._light;
 			LightType light_type = comp.light_type;
@@ -467,7 +493,12 @@ namespace trace {
 
 			float intensity = light.params2.y;
 			if (ImGui::DragFloat("Intensity", &intensity, 0.01f))
+			{
 				light.params2.y = intensity;
+				type = AnimationDataType::LIGHT_INTENSITY;
+				memcpy(anim_data, &intensity, 4 );
+				anim_dirty = true;
+			}
 			glm::vec4 color = light.color;
 			if (ImGui::ColorEdit4("Color", glm::value_ptr(color)))
 				light.color = color;
@@ -568,7 +599,7 @@ namespace trace {
 			}
 		);
 
-		DrawComponent<TextComponent>(entity, "Text", [](Entity obj, TextComponent& comp) {
+		DrawComponent<TextComponent>(entity, "Text", [&](Entity obj, TextComponent& comp) {
 
 			std::string font_name = "None (FONT)";
 			if (comp.font)
@@ -613,7 +644,12 @@ namespace trace {
 			ImGui::InputTextMultiline("##Text Data", &comp.text);
 
 			ImGui::ColorEdit3("Color", glm::value_ptr(comp.color));
-			ImGui::DragFloat("Intensity", &comp.intensity);
+			if (ImGui::DragFloat("Intensity", &comp.intensity))
+			{
+				type = AnimationDataType::TEXT_INTENSITY;
+				memcpy(anim_data, &comp.intensity, 4);
+				anim_dirty = true;
+			}
 			
 			});
 
@@ -719,6 +755,11 @@ namespace trace {
 			});
 
 		ScriptRegistry& script_registry = m_editor->m_currentScene->m_scriptRegistry;
+
+		if (recording && anim_dirty)
+		{
+			m_editor->m_animPanel->SetFrameData(entity.GetID(), type, anim_data, 16);
+		}
 
 		m_editor->m_currentScene->m_scriptRegistry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
 			{
@@ -982,6 +1023,11 @@ namespace trace {
 
 
 			});
+
+			if (recording)
+			{
+				ImGui::PopStyleColor(2);
+			}
 		
 	}
 

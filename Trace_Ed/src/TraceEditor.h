@@ -1,15 +1,17 @@
 #pragma once
 #include "EditorRenderComposer.h"
-#include "panels/HierachyPanel.h"
-#include "panels/InspectorPanel.h"
-#include "panels/ContentBrowser.h"
 
-#include "scene/Scene.h"
+
+
 #include "project/Project.h"
 #include <filesystem>
 
 namespace trace {
-
+	class Scene;
+	class HierachyPanel;
+	class InspectorPanel;    
+	class ContentBrowser;
+	class AnimationPanel;
 
 	enum EditorState
 	{
@@ -73,9 +75,10 @@ namespace trace {
 
 
 		EditorRenderComposer* m_renderComposer = nullptr;
-		HierachyPanel m_hierachyPanel;
-		InspectorPanel m_inspectorPanel;
-		ContentBrowser m_contentBrowser;
+		HierachyPanel* m_hierachyPanel;
+		InspectorPanel* m_inspectorPanel;
+		ContentBrowser* m_contentBrowser;
+		AnimationPanel* m_animPanel;
 
 		glm::vec2 m_viewportSize;
 		bool m_viewportFocused;

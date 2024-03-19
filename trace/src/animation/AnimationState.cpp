@@ -2,10 +2,45 @@
 
 #include "AnimationState.h"
 #include "core/Application.h"
+#include "Animation.h"
 
 namespace trace {
 
+	const char* get_animation_data_type_string(AnimationDataType type)
+	{
 
+		switch (type)
+		{
+		case AnimationDataType::NONE:
+		{
+			return "None";
+		}
+		case AnimationDataType::POSITION:
+		{
+			return "Position";
+		}
+		case AnimationDataType::ROTATION:
+		{
+			return "Rotation";
+		}
+		case AnimationDataType::SCALE:
+		{
+			return "Scale";
+		}
+		case AnimationDataType::TEXT_INTENSITY:
+		{
+			return "Text Intensity";
+		}
+		case AnimationDataType::LIGHT_INTENSITY:
+		{
+			return "Light Intensity";
+		}
+		}
+
+		return "";
+	}
+
+	
 
 	AnimationState::AnimationState()
 		:m_loop(false)

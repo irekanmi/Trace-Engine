@@ -21,25 +21,34 @@ namespace trace {
 		emit << YAML::Key << "Clip Name" << YAML::Value << clip->GetName();
 
 		emit << YAML::Key << "Duration" << YAML::Value << clip->GetDuration();
-		emit << YAML::Key << "Tracks" << YAML::Value << YAML::BeginSeq;
+		emit << YAML::Key << "Sample Rate" << YAML::Value << clip->GetSampleRate();
+		emit << YAML::Key << "Channels" << YAML::Value << YAML::BeginSeq;
 
-		std::string anim_data; // NOTE: used to serialize animation frame data
-		for (AnimationTrack& track : clip->GetTracks())
+		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
+		for (auto& uuid : clip->GetTracks())
 		{
 
 			emit << YAML::BeginMap;
-			emit << YAML::Key << "Handle" << YAML::Value << track.entity_handle;
-			emit << YAML::Key << "Type" << YAML::Value << (int)track.channel_type;
-			emit << YAML::Key << "Track Data" << YAML::Value << YAML::BeginSeq;
-			for (AnimationFrameData& fd : track.channel_data)
+			emit << YAML::Key << "Handle" << YAML::Value << uuid.first;
+			emit << YAML::Key << "Tracks" << YAML::Value << YAML::BeginSeq;
+			for (auto& track : uuid.second)
 			{
 				emit << YAML::BeginMap;
-				anim_data = fd.data;
-				emit << YAML::Key << "Data" << YAML::Value << anim_data;
-				emit << YAML::Key << "Time Point" << YAML::Value << fd.time_point;
+				emit << YAML::Key << "Type" << YAML::Value << (int)track.channel_type;
+				emit << YAML::Key << "Track Data" << YAML::Value << YAML::BeginSeq;
+				for (AnimationFrameData& fd : track.channel_data)
+				{
+					emit << YAML::BeginMap;
+					memcpy(&anim_data, fd.data, 16);
+					emit << YAML::Key << "Data" << YAML::Value << anim_data;
+					emit << YAML::Key << "Time Point" << YAML::Value << fd.time_point;
 
+					emit << YAML::EndMap;
+				}
+				emit << YAML::EndSeq;
 				emit << YAML::EndMap;
 			}
+			
 
 			emit << YAML::EndSeq;
 			emit << YAML::EndMap;
@@ -89,27 +98,31 @@ namespace trace {
 			TRC_WARN("{} has already been loaded", clip_name);
 			return clip;
 		}
-		clip = AnimationsManager::get_instance()->CreateClip(clip_name);
+		clip = AnimationsManager::get_instance()->LoadClip_(file_path);
 
 		float duration = data["Duration"].as<float>();
-		clip->SetDuration(duration);
+		int rate = data["Sample Rate"].as<int>();
+		clip->SetSampleRate(rate);
 
-		std::vector<AnimationTrack>& clip_tracks = clip->GetTracks();
-		std::string anim_data; // NOTE: used to serialize animation frame data
-		for (auto& track : data["Tracks"])
+		std::unordered_map<UUID, std::vector<AnimationTrack>>& clip_tracks = clip->GetTracks();
+		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
+		for (auto& uuid : data["Channels"])
 		{
-			AnimationTrack new_track;
-			new_track.entity_handle = track["Handle"].as<uint64_t>();
-			new_track.channel_type = (AnimationDataType)track["Type"].as<int>();
-			for (auto& frame_data : track["Track Data"])
+			UUID id = uuid["Handle"].as<uint64_t>();
+			for (auto& track : uuid["Tracks"])
 			{
-				AnimationFrameData fd;
-				anim_data = frame_data["Data"].as<std::string>();
-				memcpy(fd.data, anim_data.data(), 16);
-				fd.time_point = frame_data["Time Point"].as<float>();
-				new_track.channel_data.push_back(fd);
+				AnimationTrack new_track;
+				new_track.channel_type = (AnimationDataType)track["Type"].as<int>();
+				for (auto& frame_data : track["Track Data"])
+				{
+					AnimationFrameData fd;
+					anim_data = frame_data["Data"].as<glm::vec4>();
+					memcpy(fd.data, &anim_data, 16);
+					fd.time_point = frame_data["Time Point"].as<float>();
+					new_track.channel_data.push_back(fd);
+				}
+				clip_tracks[id].push_back(new_track);
 			}
-			clip_tracks.push_back(new_track);
 		}
 
 		result = clip;
@@ -186,7 +199,7 @@ namespace trace {
 			TRC_WARN("{} has already been loaded", graph_name);
 			return graph;
 		}
-		graph = AnimationsManager::get_instance()->CreateGraph(graph_name);
+		graph = AnimationsManager::get_instance()->LoadGraph_(graph_name);
 
 
 		std::vector<AnimationState>& graph_states = graph->GetStates();

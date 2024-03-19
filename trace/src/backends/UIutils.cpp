@@ -336,11 +336,12 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 	//io.ConfigViewportsNoAutoMerge = true;
 	//io.ConfigViewportsNoTaskBarIcon = true;
-
+	io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
+	// TODO: Get font path from AppSettings::exe_path
 	std::string font_path = trace::FontManager::get_instance()->GetFontResourcePath() + "/Ruda-Bold.ttf";
 	io.FontDefault = io.Fonts->AddFontFromFileTTF(font_path.c_str(), 13.0f);
 

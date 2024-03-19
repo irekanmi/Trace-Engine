@@ -17,7 +17,10 @@ namespace trace {
 		SCALE,
 		TEXT_INTENSITY,
 		LIGHT_INTENSITY,
+		MAX
 	};
+
+	const char* get_animation_data_type_string(AnimationDataType type);
 
 	struct AnimationFrameData
 	{
@@ -27,7 +30,6 @@ namespace trace {
 
 	struct AnimationTrack
 	{
-		UUID entity_handle;
 		AnimationDataType channel_type;
 		std::vector<AnimationFrameData> channel_data;
 	};
@@ -39,15 +41,17 @@ namespace trace {
 	public:
 		~AnimationClip(){}
 
-		std::vector<AnimationTrack>& GetTracks() { return m_tracks; }
+		std::unordered_map<UUID, std::vector<AnimationTrack>>& GetTracks() { return m_tracks; }
 		float GetDuration() { return m_duration; }
+		int GetSampleRate() { return m_sampleRate; }
 
 		void SetDuration(float duration) { m_duration = duration; }
+		void SetSampleRate(int rate) { m_sampleRate = rate; }
 
 	private:
-		float m_duration = 0.0f;
-		float m_sampleRate = 1 / 30.0f;
-		std::vector<AnimationTrack> m_tracks;
+		float m_duration = 1.0f;
+		int m_sampleRate = 30;
+		std::unordered_map<UUID,std::vector<AnimationTrack>> m_tracks;
 
 	protected:
 

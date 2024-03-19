@@ -76,7 +76,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;GLEW_STATIC;TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;..\externals\im_neo_sequencer;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -99,7 +99,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_CORE;TRC_RELEASE_BUILD;GLEW_STATIC;TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;..\externals\im_neo_sequencer;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -125,7 +125,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;..\externals\im_neo_sequencer;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -267,13 +267,6 @@
     <ClInclude Include="src\trace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\animation\AnimationEngine.cpp" />
-    <ClCompile Include="src\animation\AnimationState.cpp" />
-    <ClCompile Include="src\core\Utils.cpp" />
-    <ClCompile Include="src\resource\AnimationsManager.cpp" />
-    <ClCompile Include="src\scene\Components.cpp" />
-    <ClCompile Include="src\serialize\AnimationsSerializer.cpp" />
-    <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="_externals\ImGUI\imgui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -304,9 +297,20 @@
     <ClCompile Include="_externals\ImGuizmo\ImGuizmo.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="_externals\Im_neo_sequencer\imgui_neo_internal.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="_externals\Im_neo_sequencer\imgui_neo_sequencer.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="_externals\Sequentity\Sequentity.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="_externals\spirv_reflect.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\animation\AnimationEngine.cpp" />
+    <ClCompile Include="src\animation\AnimationState.cpp" />
     <ClCompile Include="src\backends\Fontutils.cpp" />
     <ClCompile Include="src\backends\Physicsutils.cpp" />
     <ClCompile Include="src\backends\Renderutils.cpp" />
@@ -319,6 +323,7 @@
     <ClCompile Include="src\core\Object.cpp" />
     <ClCompile Include="src\core\Platform.cpp" />
     <ClCompile Include="src\core\StartUp.cpp" />
+    <ClCompile Include="src\core\Utils.cpp" />
     <ClCompile Include="src\core\events\ApplicationEvents.cpp" />
     <ClCompile Include="src\core\events\ConsoleEvents.cpp" />
     <ClCompile Include="src\core\events\EventsSystem.cpp" />
@@ -383,6 +388,7 @@
     <ClCompile Include="src\render\render_graph\SSAO.cpp" />
     <ClCompile Include="src\render\render_graph\ToneMapPass.cpp" />
     <ClCompile Include="src\render\render_graph\UIPass.cpp" />
+    <ClCompile Include="src\resource\AnimationsManager.cpp" />
     <ClCompile Include="src\resource\FontManager.cpp" />
     <ClCompile Include="src\resource\MaterialManager.cpp" />
     <ClCompile Include="src\resource\MeshManager.cpp" />
@@ -392,6 +398,7 @@
     <ClCompile Include="src\resource\ResourceSystem.cpp" />
     <ClCompile Include="src\resource\ShaderManager.cpp" />
     <ClCompile Include="src\resource\TextureManager.cpp" />
+    <ClCompile Include="src\scene\Components.cpp" />
     <ClCompile Include="src\scene\Entity.cpp" />
     <ClCompile Include="src\scene\Scene.cpp" />
     <ClCompile Include="src\scene\SceneManager.cpp" />
@@ -400,8 +407,10 @@
     <ClCompile Include="src\scripting\ScriptBackend.cpp" />
     <ClCompile Include="src\scripting\ScriptEngine.cpp" />
     <ClCompile Include="src\scripting\ScriptRegistry.cpp" />
+    <ClCompile Include="src\serialize\AnimationsSerializer.cpp" />
     <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
     <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
+    <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="src\serialize\SceneSerializer.cpp" />
     <ClCompile Include="src\serialize\yaml_util.cpp" />
   </ItemGroup>

@@ -92,7 +92,8 @@ namespace trace {
 			if (clip.m_id == INVALID_ID)
 			{
 				clip.GetTracks().clear();
-				clip.SetDuration(0.0f);
+				clip.SetDuration(1.0f);
+				clip.SetSampleRate(30);
 				clip.m_id = i;
 				hashTable.Set(name, i);
 				_clip = &clip;
@@ -118,13 +119,13 @@ namespace trace {
 	{
 		std::filesystem::path p(path);
 		std::string name = p.filename().string();
-		Ref<AnimationClip> result;
+		Ref<AnimationClip> result = GetClip(name);
 		AnimationClip* _clip = nullptr;
 		uint32_t hash = hashTable.Get(name);
-		if (hash != INVALID_ID)
+		if (result)
 		{
 			TRC_WARN("{} animation clip has been loaded", name);
-			return GetClip(name);
+			return result;
 		}
 
 		uint32_t i = 0;
@@ -133,6 +134,8 @@ namespace trace {
 			if (clip.m_id == INVALID_ID)
 			{
 				// TODO: Implement Loading of Animation Clips
+				clip.SetDuration(1.0f);
+				clip.SetSampleRate(30);
 				clip.m_id = i;
 				hashTable.Set(name, i);
 				_clip = &clip;
@@ -158,20 +161,22 @@ namespace trace {
 			return result;
 		}
 		_clip = &m_clips[hash];
+		if (_clip->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} animation clip has been destroyed", name);
+			hash = INVALID_ID;
+			return result;
+		}
+
 		result = { _clip, BIND_RENDER_COMMAND_FN(AnimationsManager::UnloadClip) };
 		return result;
 	}
 
 	void AnimationsManager::UnloadClip(AnimationClip* clip)
 	{
-		if (clip->m_refCount > 0)
-		{
-			TRC_WARN("{} is still in use", clip->GetName());
-			return;
-		}
-
+		
 		clip->m_id = INVALID_ID;
-		clip->~AnimationClip(); // TODO: Find a better way to destroy the animation clip
+		clip->GetTracks().clear();
 	}
 
 	Ref<AnimationGraph> AnimationsManager::CreateGraph(const std::string& name)
@@ -217,13 +222,13 @@ namespace trace {
 	{
 		std::filesystem::path p(path);
 		std::string name = p.filename().string();
-		Ref<AnimationGraph> result;
+		Ref<AnimationGraph> result = GetGraph(name);
 		AnimationGraph* _graph = nullptr;
 		uint32_t hash = hashTable.Get(name);
-		if (hash != INVALID_ID)
+		if (result)
 		{
 			TRC_WARN("{} animation graph has been loaded", name);
-			return GetGraph(name);
+			return result;
 		}
 
 		uint32_t i = 0;
@@ -232,6 +237,8 @@ namespace trace {
 			if (graph.m_id == INVALID_ID)
 			{
 				// TODO: Implement Loading of Animation Graphs
+				graph.GetStates().clear();
+				graph.currrent_state_index = 0;
 				graph.m_id = i;
 				graphHashTable.Set(name, i);
 				_graph = &graph;
@@ -257,6 +264,13 @@ namespace trace {
 			return result;
 		}
 		_graph = &m_graphs[hash];
+		if (_graph->m_id == INVALID_ID)
+		{
+			TRC_WARN("{} animation graph has been destroyed", name);
+			hash = INVALID_ID;
+			return result;
+		}
+
 		result = { _graph, BIND_RENDER_COMMAND_FN(AnimationsManager::UnloadGraph) };
 		return result;
 	}
@@ -270,7 +284,7 @@ namespace trace {
 		}
 
 		graph->m_id = INVALID_ID;
-		graph->~AnimationGraph(); // TODO: Find a better way to destroy the animation graph
+		graph->GetStates().clear();
 	}
 
 	AnimationsManager* AnimationsManager::get_instance()

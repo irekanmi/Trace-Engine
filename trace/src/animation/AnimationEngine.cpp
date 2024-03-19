@@ -38,34 +38,68 @@ namespace trace {
 			else _t = fmod(_t, clip->GetDuration());
 		}
 
-
-		for (AnimationTrack& track : clip->GetTracks())
+		for (auto& channel : clip->GetTracks())
 		{
-			AnimationFrameData* _f1 = nullptr;
-			AnimationFrameData* _f2 = nullptr;
-
-			//TODO: Find a better way to find which frames to sample -----------
-			int i = 1;
-			for (AnimationFrameData& data : track.channel_data)
+			for (auto& track : channel.second)
 			{
-				if (_t >= data.time_point)
+				AnimationFrameData* _f1 = nullptr;
+				AnimationFrameData* _f2 = nullptr;
+
+				//TODO: Find a better way to find which frames to sample -----------
+				int i = 1;
+				for (AnimationFrameData& data : track.channel_data)
 				{
-					_f1 = &data;
-					if (i < track.channel_data.size()) _f2 = &track.channel_data[i];
-					if (i == track.channel_data.size() && state.GetLoop()) _f2 = &track.channel_data[0];
+					if (_t >= data.time_point)
+					{
+						_f1 = &data;
+						if (i < track.channel_data.size()) _f2 = &track.channel_data[i];
+						if (i == track.channel_data.size() && state.GetLoop()) _f2 = &track.channel_data[0];
+					}
+
+					++i;
 				}
+				// -----------------------------------------------------------------
 
-				++i;
+				if (!_f1 || !_f2) continue;
+
+				float lerp_value = (_t - _f1->time_point) / (_f2->time_point - _f1->time_point);
+
+				CalculateAndSetData(_f1, _f2, scene, channel.first, track.channel_type, lerp_value);
 			}
-			// -----------------------------------------------------------------
-			
-			if (!_f1 || !_f2) continue;
-
-			float lerp_value = (_t - _f1->time_point) / (_f2->time_point - _f1->time_point);
-
-			CalculateAndSetData(_f1, _f2, scene, track.entity_handle, track.channel_type, lerp_value);
 		}
 
+	}
+
+	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float t)
+	{
+		for (auto& channel : clip->GetTracks())
+		{
+			for (auto& track : channel.second)
+			{
+				AnimationFrameData* curr = nullptr;
+				AnimationFrameData* prev = nullptr;
+
+				//TODO: Find a better way to find which frames to sample -----------
+				int i = track.channel_data.size() - 1;
+				for (; i >= 0; i--)
+				{
+					curr = &track.channel_data[i];
+					prev = i != 0 ? &track.channel_data[i - 1] : nullptr;
+					if (t <= curr->time_point)
+					{
+						if (prev && t >= prev->time_point) break;
+					}
+
+				}
+				// -----------------------------------------------------------------
+
+				if (!prev || !curr) continue;
+
+				float lerp_value = (t - prev->time_point) / (curr->time_point - prev->time_point);
+
+				CalculateAndSetData(prev, curr, scene, channel.first, track.channel_type, lerp_value);
+			}
+		}
 	}
 
 	AnimationEngine* AnimationEngine::get_instance()

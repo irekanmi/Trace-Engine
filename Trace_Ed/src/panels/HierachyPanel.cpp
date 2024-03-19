@@ -3,6 +3,7 @@
 #include "../TraceEditor.h"
 #include "imgui.h"
 #include "scene/Components.h"
+#include "InspectorPanel.h"
 
 namespace trace {
 	HierachyPanel::HierachyPanel()
@@ -77,10 +78,10 @@ namespace trace {
 			else
 				m_selectedEntity = entity;
 
-			m_editor->m_inspectorPanel.SetDrawCallbackFn([&]()
+			m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
 				{
 					if (m_selectedEntity)
-						m_editor->m_inspectorPanel.DrawEntityComponent(m_selectedEntity);
+						m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
 				}, []() {}, []() {});
 		}
 
@@ -145,10 +146,10 @@ namespace trace {
 				else
 					m_selectedEntity = entity;
 
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]()
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
 					{
 						if (m_selectedEntity)
-							m_editor->m_inspectorPanel.DrawEntityComponent(m_selectedEntity);
+							m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
 					}, []() {}, []() {});
 			}
 
@@ -223,10 +224,10 @@ namespace trace {
 				else
 					m_selectedEntity = entity;
 
-				m_editor->m_inspectorPanel.SetDrawCallbackFn([&]()
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
 					{
 						if (m_selectedEntity)
-							m_editor->m_inspectorPanel.DrawEntityComponent(m_selectedEntity);
+							m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
 					}, []() {}, []() {});
 			}
 
