@@ -17,6 +17,7 @@
 #include "../TraceEditor.h"
 #include "resource/AnimationsManager.h"
 #include "AnimationPanel.h"
+#include "../utils/ImGui_utils.h"
 
 
 namespace trace {
@@ -32,7 +33,7 @@ namespace trace {
 		{
 			T& component = entity.GetComponent<T>();
 
-			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			float line_height = GetLineHeight();
 			ImVec2 content_region = ImGui::GetContentRegionAvail();
 			//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4.0f, 4.0f });
 
@@ -64,63 +65,7 @@ namespace trace {
 		}
 	}
 
-	bool DrawVec3(const char* label, glm::vec3& data, float column_width = 100.0f)
-	{
-		bool modified = false;
-		ImGui::PushID(label);
-
-		ImGui::Columns(2);
-
-		ImGui::SetColumnWidth(0, column_width);
-		ImGui::Text(label);
-		ImGui::NextColumn();
-
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0.0f, 0.0f });
-
-		float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-		ImVec2 button_size = { line_height + 3.0f, line_height };
-
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.15f, 0.15f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.15f, 0.15f, 1.0f });
-		ImGui::Button("X", button_size);
-		ImGui::SameLine();
-		if (ImGui::DragFloat("##X", &data.x, 0.1f)) modified = true;
-		ImGui::PopItemWidth();
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.15f, 0.8f, 0.15f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.9f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.15f, 0.8f, 0.15f, 1.0f });
-		ImGui::Button("Y", button_size);
-		ImGui::SameLine();
-		if (ImGui::DragFloat("##Y", &data.y, 0.1f)) modified = true;
-		ImGui::PopItemWidth();
-		ImGui::PopStyleColor(3);
-
-
-		ImGui::SameLine();
-
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.15f, 0.15f, 0.8f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.2f, 0.9f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.15f, 0.15f, 0.8f, 1.0f });
-		ImGui::Button("Z", button_size);
-		ImGui::SameLine();
-		if (ImGui::DragFloat("##Z", &data.z, 0.1f)) modified = true;
-		ImGui::PopItemWidth();
-		ImGui::PopStyleColor(3);
-
-
-		ImGui::PopStyleVar();
-		ImGui::Columns(1);
-
-		ImGui::PopID();
-
-		return modified;
-	}
+	
 
 	void DrawMaterial(Ref<MaterialInstance> mat)
 	{
@@ -363,7 +308,8 @@ namespace trace {
 				{
 					comp._transform.SetRotationEuler(rotation);
 					type = AnimationDataType::ROTATION;
-					memcpy(anim_data, glm::value_ptr(rotation), 4 * 4);
+					glm::quat rot = comp._transform.GetRotation();
+					memcpy(anim_data, glm::value_ptr(rot), 4 * 4);
 					anim_dirty = true;
 				}
 				if (DrawVec3("Scale", scale))

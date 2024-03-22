@@ -7,6 +7,7 @@
 #include "serialize/AnimationsSerializer.h"
 #include "resource/AnimationsManager.h"
 #include "animation/AnimationEngine.h"
+#include "../utils/ImGui_utils.h"
 
 #include "imgui.h"
 #include "imgui_neo_sequencer.h"
@@ -42,9 +43,19 @@ namespace trace {
             {
                 m_elapsed += deltaTime;
                 AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed);
-                currentFrame = ((m_elapsed / m_currentClip->GetDuration()) * (float)endFrame);
+                currentFrame = int((m_elapsed / m_currentClip->GetDuration()) * (float)endFrame);
                 currentFrame %= endFrame;
                 m_elapsed = fmod(m_elapsed, m_currentClip->GetDuration());
+                break;
+            }
+            case State::PAUSE:
+            {
+                if (lastSelectedFrame != currentFrame)
+                {
+                    float t = ((float)currentFrame / (float)endFrame) * m_currentClip->GetDuration();
+                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t);
+                    lastSelectedFrame = currentFrame;
+                }
                 break;
             }
             }
@@ -69,9 +80,18 @@ namespace trace {
                     memcpy_s(buf, 1024, payload->Data, payload->DataSize);
                     std::filesystem::path p = buf;
                     Ref<AnimationClip> ac = AnimationsManager::get_instance()->GetClip(p.filename().string());
-                    if (ac) m_currentClip = ac;
-                    ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
-                    if (ac) m_currentClip = ac;
+                    if (ac)
+                    {
+                        SetAnimationClip(ac);
+                    }
+                    else
+                    {
+                        ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
+                        if (ac)
+                        {
+                            SetAnimationClip(ac);
+                        }
+                    }
                 }
                 ImGui::EndDragDropTarget();
             }
@@ -121,10 +141,19 @@ namespace trace {
                     memcpy_s(buf, 1024, payload->Data, payload->DataSize);
                     std::filesystem::path p = buf;
                     Ref<AnimationClip> ac = AnimationsManager::get_instance()->GetClip(p.filename().string());
-                    if (ac) m_currentClip = ac;
-                    ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
-                    if (ac) m_currentClip = ac;
-                    generate_tracks();
+                    if (ac)
+                    {
+                        SetAnimationClip(ac);
+                    }
+                    else
+                    {
+                        ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
+                        if (ac)
+                        {
+                            SetAnimationClip(ac);
+                        }
+                    }
+                    
                 }
                 ImGui::EndDragDropTarget();
             }
@@ -185,14 +214,64 @@ namespace trace {
                     {
                         for (AnimationTrack& track : channel.second)
                         {
-
                             bool open = true;
+                            bool modified = false;
                             if (ImGui::BeginNeoTimelineEx(get_animation_data_type_string(track.channel_type), &open, ImGuiNeoTimelineFlags_::ImGuiNeoTimelineFlags_AllowFrameChanging))
                             {
-
-                                for (int& index : m_currentTracks[channel.first][track.channel_type])
+                                std::vector<FrameIndex>& f_idx = m_currentTracks[channel.first][track.channel_type];
+                                int frame_size = f_idx.size();
+                                for (int i = 0; i < frame_size; i++)
                                 {
-                                    ImGui::NeoKeyframe(&index);
+                                    FrameIndex& fi = m_currentTracks[channel.first][track.channel_type][i];
+                                    float prev_time_point = ((float)fi.index / (float)endFrame) * m_currentClip->GetDuration();
+                                    float one_time_point = ((float)1 / (float)endFrame) * m_currentClip->GetDuration();
+                                    ImGui::NeoKeyframe(&fi.index);
+                                    float time_point = ((float)fi.index / (float)endFrame) * m_currentClip->GetDuration();
+                                    if (ImGui::NeoIsDraggingSelection() && ImGui::IsNeoKeyframeSelected())
+                                    {
+                                        track.channel_data[fi.current_fd_index].time_point = time_point;
+                                        bool begin = fi.current_fd_index == 0;
+                                        bool end = fi.current_fd_index == (track.channel_data.size() - 1);
+                                        if (!begin && track.channel_data[fi.current_fd_index - 1].time_point > time_point)
+                                        {
+                                            AnimationFrameData temp = track.channel_data[fi.current_fd_index];
+                                            track.channel_data[fi.current_fd_index] = track.channel_data[fi.current_fd_index - 1];
+                                            track.channel_data[fi.current_fd_index - 1] = temp;
+
+                                            auto it = std::find_if(f_idx.begin(), f_idx.end(), [&fi](FrameIndex& a) {
+                                                return a.current_fd_index == (fi.current_fd_index - 1);
+                                                });
+                                            it->current_fd_index++;
+                                            fi.current_fd_index--;
+                                        }
+                                        if (!end && track.channel_data[fi.current_fd_index + 1].time_point < time_point)
+                                        {
+                                            AnimationFrameData temp = track.channel_data[fi.current_fd_index];
+                                            track.channel_data[fi.current_fd_index] = track.channel_data[fi.current_fd_index + 1];
+                                            track.channel_data[fi.current_fd_index + 1] = temp;
+
+                                            auto it = std::find_if(f_idx.begin(), f_idx.end(), [&fi](FrameIndex& a) {
+                                                return a.current_fd_index == (fi.current_fd_index + 1);
+                                                });
+                                            it->current_fd_index--;
+                                            fi.current_fd_index++;
+                                        }
+                                    }
+                                    if (ImGui::IsNeoKeyframeHovered())
+                                    {
+                                        ImGui::SetNextWindowPos(ImGui::GetNeoKeyFramePos());
+                                        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+                                        std::string str_id = "##NeoKeyFrame" + std::to_string(fi.current_fd_index);
+                                        ImGui::Begin(str_id.c_str(), &open,
+                                            ImGuiWindowFlags_NoDocking |
+                                            ImGuiWindowFlags_NoNav |
+                                            ImGuiWindowFlags_AlwaysAutoResize |
+                                            ImGuiWindowFlags_NoTitleBar
+                                        );
+                                        animation_data_ui(track.channel_type, track.channel_data[fi.current_fd_index].data);
+                                        ImGui::End();
+                                        ImGui::PopStyleVar(1);
+                                    }
                                 }
 
                                 ImGui::EndNeoTimeLine();
@@ -223,6 +302,7 @@ namespace trace {
         if (clip != m_currentClip) m_currentTracks.clear();
         m_currentClip = clip;
         generate_tracks();
+        lastSelectedFrame = -1;
     }
     bool AnimationPanel::Recording()
     {
@@ -315,10 +395,14 @@ namespace trace {
             for (AnimationTrack& track : channel.second)
             {
                 m_currentTracks[channel.first][track.channel_type].clear();
+                int i = 0;
                 for (AnimationFrameData& fd : track.channel_data)
                 {
-                    int index = int((fd.time_point / duration) * (float)endFrame);
-                    m_currentTracks[channel.first][track.channel_type].push_back(index);
+                    FrameIndex fi;
+                    fi.index = int((fd.time_point / duration) * (float)endFrame);
+                    fi.current_fd_index = i;
+                    m_currentTracks[channel.first][track.channel_type].push_back(fi);
+                    ++i;
                 }
 
             }
@@ -332,5 +416,60 @@ namespace trace {
     void AnimationPanel::pause()
     {
         m_elapsed = 0.0f;
+    }
+    void AnimationPanel::animation_data_ui(AnimationDataType type, void* data)
+    {
+
+        switch (type)
+        {
+        case AnimationDataType::NONE:
+        {
+            ImGui::Text("None");
+
+            break;
+        }
+        case AnimationDataType::POSITION:
+        {
+            glm::vec3 value;
+            memcpy(&value, data, sizeof(glm::vec3));
+            DrawVec3( value, "Position");
+
+            break;
+        }
+        case AnimationDataType::ROTATION:
+        {
+            glm::quat value;
+            memcpy(&value, data, sizeof(glm::quat));
+            glm::vec3 euler = glm::degrees(glm::eulerAngles(value));
+            DrawVec3( euler, "Rotation");
+
+            break;
+        }
+        case AnimationDataType::SCALE:
+        {
+            glm::vec3 value;
+            memcpy(&value, data, sizeof(glm::vec3));
+            DrawVec3(value, "Scale");
+
+            break;
+        }
+        case AnimationDataType::TEXT_INTENSITY:
+        {
+            float value;
+            memcpy(&value, data, sizeof(float));
+            ImGui::DragFloat("##Text Intensity", &value);
+
+            break;
+        }
+        case AnimationDataType::LIGHT_INTENSITY:
+        {
+            float value;
+            memcpy(&value, data, sizeof(float));
+            ImGui::DragFloat("##Light Intensity", &value);
+
+            break;
+        }
+        }
+
     }
 }

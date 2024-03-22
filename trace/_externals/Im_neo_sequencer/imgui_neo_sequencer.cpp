@@ -105,6 +105,10 @@ namespace ImGui
 
     static ImVector<ImGuiColorMod> sequencerColorStack;
 
+    // NOTE(Ayanfe): Added to get last key frame position ----------
+    static ImVec2 keyFramePos;
+    // -------------------------------------------------------------
+
     // Data of all sequencers, this is main c++ part and I should create C alternative or use imgui ImVector or something
     static std::unordered_map<ImGuiID, ImGuiNeoSequencerInternalData> sequencerData;
 
@@ -417,6 +421,9 @@ namespace ImGui
 
             drawList->AddCircleFilled(pos + ImVec2{0, currentTimelineHeight / 2.f}, currentTimelineHeight / 3.0f,
                                       color, 4);
+            // NOTE(Ayanfe): Added to get last key frame position ----------
+            keyFramePos = pos + ImVec2{ 0, currentTimelineHeight / 2.f }, currentTimelineHeight / 3.0f;
+            // -------------------------------------------------------------
         }
 
         context.IsLastKeyframeHovered = hovered;
@@ -429,6 +436,13 @@ namespace ImGui
 
         return true;
     }
+
+    // NOTE(Ayanfe): Added to get last key frame position ----------
+    ImVec2 GetNeoKeyFramePos()
+    {
+        return keyFramePos;
+    }
+    // -------------------------------------------------------------
 
     static uint32_t idCounter = 0;
     static char idBuffer[16];

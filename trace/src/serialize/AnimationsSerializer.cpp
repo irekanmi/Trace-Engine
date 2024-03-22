@@ -103,6 +103,7 @@ namespace trace {
 		float duration = data["Duration"].as<float>();
 		int rate = data["Sample Rate"].as<int>();
 		clip->SetSampleRate(rate);
+		clip->SetDuration(duration);
 
 		std::unordered_map<UUID, std::vector<AnimationTrack>>& clip_tracks = clip->GetTracks();
 		glm::vec4 anim_data; // NOTE: used to serialize animation frame data

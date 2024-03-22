@@ -771,6 +771,8 @@ namespace trace {
 	{
 		if (gizmo_mode != -1)
 		{
+			bool recording = m_animPanel->Recording();
+
 			ImGuizmo::SetOrthographic(false);
 			ImGuizmo::SetDrawlist();
 			float windowWidth = (float)ImGui::GetWindowWidth();
@@ -826,16 +828,34 @@ namespace trace {
 				case ImGuizmo::OPERATION::TRANSLATE:
 				{
 					pose._transform.SetPosition(pos);
+					if (recording)
+					{
+						char anim_data[16] = { 0 };
+						memcpy(anim_data, glm::value_ptr(pos), 4 * 3);
+						m_animPanel->SetFrameData(m_hierachyPanel->m_selectedEntity.GetID(), AnimationDataType::POSITION, anim_data, 16);
+					}
 					break;
 				}
 				case ImGuizmo::OPERATION::ROTATE:
 				{
 					pose._transform.SetRotation(rot);
+					if (recording)
+					{
+						char anim_data[16] = { 0 };
+						memcpy(anim_data, glm::value_ptr(rot), 4 * 4);
+						m_animPanel->SetFrameData(m_hierachyPanel->m_selectedEntity.GetID(), AnimationDataType::ROTATION, anim_data, 16);
+					}
 					break;
 				}
 				case ImGuizmo::OPERATION::SCALE:
 				{
 					pose._transform.SetScale(scale);
+					if (recording)
+					{
+						char anim_data[16] = { 0 };
+						memcpy(anim_data, glm::value_ptr(scale), 4 * 3);
+						m_animPanel->SetFrameData(m_hierachyPanel->m_selectedEntity.GetID(), AnimationDataType::SCALE, anim_data, 16);
+					}
 					break;
 				}
 				}
