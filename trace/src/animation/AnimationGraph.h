@@ -15,7 +15,8 @@ namespace trace {
 
 		std::vector<AnimationState>& GetStates() { return m_states; }
 
-		int currrent_state_index = 0;
+		int currrent_state_index = -1;
+		int start_index = 0;
 	private:
 		std::vector<AnimationState> m_states;
 

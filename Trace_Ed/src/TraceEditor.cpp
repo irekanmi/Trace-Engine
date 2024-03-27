@@ -20,6 +20,7 @@
 #include "panels/InspectorPanel.h"
 #include "panels/ContentBrowser.h"
 #include "panels/AnimationPanel.h"
+#include "panels/AnimationGraphEditor.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -57,12 +58,14 @@ namespace trace {
 		m_inspectorPanel = new InspectorPanel;
 		m_contentBrowser = new ContentBrowser;
 		m_animPanel = new AnimationPanel;
+		m_animGraphEditor = new AnimationGraphEditor;
 
 		m_hierachyPanel->m_editor = this;
 		m_inspectorPanel->m_editor = this;
 		m_contentBrowser->m_editor = this;
 		m_contentBrowser->Init();
 		m_animPanel->Init();
+		m_animGraphEditor->Init();
 
 		// Register Events
 		{
@@ -112,11 +115,19 @@ namespace trace {
 
 	void TraceEditor::Shutdown()
 	{
+		m_animGraphEditor->Shutdown();
 		m_contentBrowser->Shutdown();
 		m_currentScene.release();
 		m_editScene.release();
 		m_editScene_duplicate.release();
 		UIFunc::ShutdownUIRenderBackend();
+
+
+		delete m_hierachyPanel;
+		delete m_inspectorPanel;
+		delete m_contentBrowser;
+		delete m_animPanel;
+		delete m_animGraphEditor;
 	}
 
 	void TraceEditor::Update(float deltaTime)
@@ -141,6 +152,9 @@ namespace trace {
 			DrawGrid(cmd_list);
 			renderer->EndScene(cmd_list);
 			renderer->SubmitCommandList(cmd_list);
+
+			m_animGraphEditor->Update(deltaTime);
+
 			break;
 		}
 		case ScenePlay:
@@ -315,6 +329,9 @@ namespace trace {
 
 		// Animation Panel
 		m_animPanel->Render(deltaTime);
+
+		// Animation Graph Editor
+		m_animGraphEditor->Render(deltaTime);
 
 		//Create Project
 		if (p_createProject)

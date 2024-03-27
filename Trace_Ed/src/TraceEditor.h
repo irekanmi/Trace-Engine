@@ -12,6 +12,7 @@ namespace trace {
 	class InspectorPanel;    
 	class ContentBrowser;
 	class AnimationPanel;
+	class AnimationGraphEditor;
 
 	enum EditorState
 	{
@@ -79,6 +80,7 @@ namespace trace {
 		InspectorPanel* m_inspectorPanel;
 		ContentBrowser* m_contentBrowser;
 		AnimationPanel* m_animPanel;
+		AnimationGraphEditor* m_animGraphEditor;
 
 		glm::vec2 m_viewportSize;
 		bool m_viewportFocused;

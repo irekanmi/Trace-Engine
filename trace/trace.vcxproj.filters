@@ -16,6 +16,9 @@
     <Filter Include="_externals\Sequentity">
       <UniqueIdentifier>{C4ECD567-3059-9162-F94C-29C06578B3CA}</UniqueIdentifier>
     </Filter>
+    <Filter Include="_externals\imnodes">
+      <UniqueIdentifier>{D8D1D3A8-C4B5-94FE-2D16-8F5119197F80}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
@@ -481,6 +484,9 @@
     </ClCompile>
     <ClCompile Include="_externals\Sequentity\Sequentity.cpp">
       <Filter>_externals\Sequentity</Filter>
+    </ClCompile>
+    <ClCompile Include="_externals\imnodes\imnodes.cpp">
+      <Filter>_externals\imnodes</Filter>
     </ClCompile>
     <ClCompile Include="_externals\spirv_reflect.cpp">
       <Filter>_externals</Filter>

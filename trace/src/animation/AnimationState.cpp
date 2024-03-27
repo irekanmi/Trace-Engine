@@ -69,6 +69,7 @@ namespace trace {
 		case 2: 
 		{
 			m_playing = 1;
+			m_startTime = Application::get_instance()->GetClock().GetElapsedTime() - m_elaspedTime;
 			break;
 		}
 		}
@@ -83,6 +84,7 @@ namespace trace {
 	{
 		m_playing = 0;
 		m_startTime = 0.0f;
+		m_elaspedTime = 0.0f;
 	}
 
 	bool AnimationState::IsPlaying()

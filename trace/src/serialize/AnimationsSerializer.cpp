@@ -147,9 +147,9 @@ namespace trace {
 			emit << YAML::BeginMap;
 
 			emit << YAML::Key << "Name" << YAML::Value << state.GetName();
-			emit << YAML::Key << "Anim Clip" << YAML::Value << GetUUIDFromName(state.GetAnimationClip()->GetName());
+			if(state.GetAnimationClip()) emit << YAML::Key << "Anim Clip" << YAML::Value << GetUUIDFromName(state.GetAnimationClip()->GetName());
 			emit << YAML::Key << "Loop" << YAML::Value << state.GetLoop();
-			emit << YAML::Key << "Anim State" << YAML::Value << state.GetAnimState();
+			emit << YAML::Key << "Anim State" << YAML::Value << (int)state.GetAnimState();
 
 			emit << YAML::EndSeq;
 		}
@@ -200,19 +200,22 @@ namespace trace {
 			TRC_WARN("{} has already been loaded", graph_name);
 			return graph;
 		}
-		graph = AnimationsManager::get_instance()->LoadGraph_(graph_name);
+		graph = AnimationsManager::get_instance()->LoadGraph_(file_path);
 
 
 		std::vector<AnimationState>& graph_states = graph->GetStates();
 		for (auto& state : data["States"])
 		{
 			AnimationState new_state;
-			new_state.SetAnimState(state["Anim State"].as<uint8_t>());
+			new_state.SetAnimState((uint8_t)state["Anim State"].as<int>());
 			new_state.SetLoop(state["Loop"].as<bool>());
 			new_state.SetName(state["Name"].as<std::string>());
-			std::string clip_path = GetPathFromUUID(state["Anim Clip"].as<uint64_t>()).string();
-			Ref<AnimationClip> clip = AnimationsSerializer::DeserializeAnimationClip(clip_path);
-			new_state.SetAnimationClip(clip);
+			if (state["Anim Clip"])
+			{
+				std::string clip_path = GetPathFromUUID(state["Anim Clip"].as<uint64_t>()).string();
+				Ref<AnimationClip> clip = AnimationsSerializer::DeserializeAnimationClip(clip_path);
+				new_state.SetAnimationClip(clip);
+			}
 			graph_states.push_back(new_state);
 
 		}

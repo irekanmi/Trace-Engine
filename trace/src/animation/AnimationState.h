@@ -40,6 +40,7 @@ namespace trace {
 		void SetLoop(bool loop) { m_loop = loop; }
 		// Anim State-> Play = 1, Paused = 2, Stop = 0
 		void SetAnimState(uint8_t state) { m_playing = state; }
+		void SetElaspedTime(float value) { m_elaspedTime = value; }
 
 
 	private:
@@ -48,6 +49,7 @@ namespace trace {
 		bool m_loop;
 		float m_startTime = 0.0f;
 		uint8_t m_playing = 0; // 0 == stoped or hasn't been played, 1 == playing, 2 == paused
+		float m_elaspedTime = 0.0f;
 
 	protected:
 

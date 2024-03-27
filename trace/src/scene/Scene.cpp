@@ -289,6 +289,7 @@ namespace trace {
 		{
 			auto [anim_comp] = animations.get(i);
 			if (!anim_comp.anim_graph) continue;
+			anim_comp.anim_graph->currrent_state_index = anim_comp.anim_graph->currrent_state_index == -1 ? anim_comp.anim_graph->start_index : anim_comp.anim_graph->currrent_state_index;
 			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
 			if (!current_state.GetAnimationClip()) continue;
 			AnimationEngine::get_instance()->Animate(current_state, this);
@@ -345,6 +346,7 @@ namespace trace {
 		{
 			auto [light, transform] = light_group.get(entity);
 			light._light.position = glm::vec4(transform._transform.GetPosition(), 0.0f);
+			light._light.direction = glm::vec4(transform._transform.GetForward(), 0.0f);
 
 			renderer->AddLight(cmd_list, light._light, light.light_type);
 

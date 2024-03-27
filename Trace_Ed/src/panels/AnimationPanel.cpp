@@ -223,8 +223,6 @@ namespace trace {
                                 for (int i = 0; i < frame_size; i++)
                                 {
                                     FrameIndex& fi = m_currentTracks[channel.first][track.channel_type][i];
-                                    float prev_time_point = ((float)fi.index / (float)endFrame) * m_currentClip->GetDuration();
-                                    float one_time_point = ((float)1 / (float)endFrame) * m_currentClip->GetDuration();
                                     ImGui::NeoKeyframe(&fi.index);
                                     float time_point = ((float)fi.index / (float)endFrame) * m_currentClip->GetDuration();
                                     if (ImGui::NeoIsDraggingSelection() && ImGui::IsNeoKeyframeSelected())
@@ -257,11 +255,11 @@ namespace trace {
                                             fi.current_fd_index++;
                                         }
                                     }
-                                    if (ImGui::IsNeoKeyframeHovered())
+                                    if (ImGui::IsNeoKeyframeHovered() && !ImGui::NeoIsDraggingSelection())
                                     {
                                         ImGui::SetNextWindowPos(ImGui::GetNeoKeyFramePos());
                                         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-                                        std::string str_id = "##NeoKeyFrame" + std::to_string(fi.current_fd_index);
+                                        std::string str_id = "##NeoKeyFrame" + std::to_string(fi.current_fd_index) + name + get_animation_data_type_string(track.channel_type);
                                         ImGui::Begin(str_id.c_str(), &open,
                                             ImGuiWindowFlags_NoDocking |
                                             ImGuiWindowFlags_NoNav |
@@ -432,7 +430,7 @@ namespace trace {
         {
             glm::vec3 value;
             memcpy(&value, data, sizeof(glm::vec3));
-            DrawVec3( value, "Position");
+            DrawVec3( value, "Position", 50.0f);
 
             break;
         }
@@ -441,7 +439,7 @@ namespace trace {
             glm::quat value;
             memcpy(&value, data, sizeof(glm::quat));
             glm::vec3 euler = glm::degrees(glm::eulerAngles(value));
-            DrawVec3( euler, "Rotation");
+            DrawVec3( euler, "Rotation", 50.0f);
 
             break;
         }
@@ -449,7 +447,7 @@ namespace trace {
         {
             glm::vec3 value;
             memcpy(&value, data, sizeof(glm::vec3));
-            DrawVec3(value, "Scale");
+            DrawVec3(value, "Scale", 50.0f);
 
             break;
         }

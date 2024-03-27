@@ -95,6 +95,7 @@ namespace trace {
 
 // IMGUI ----------------------------------------------------
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -108,6 +109,7 @@ namespace trace {
 #include "render/render_graph/RenderGraph.h"
 #include "render/GTexture.h"
 #include "ImGuizmo.h"
+#include "../_externals/imnodes/imnodes.h"
 
 // NOTE: To hold set to be destoryed after textures are rendered
 static std::vector<VkDescriptorSet> frame_rendered_textures[VK_MAX_NUM_FRAMES];
@@ -371,6 +373,10 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	}
 	}
 
+
+	// external libs
+	ImNodes::CreateContext();
+
 	return true;
 }
 
@@ -464,6 +470,8 @@ bool __ImGui_UIRenderFrame(trace::Renderer* renderer)
 
 bool __ImGui_ShutdownUIRenderBackend()
 {
+
+	ImNodes::DestroyContext();
 
 	switch (trace::AppSettings::graphics_api)
 	{
