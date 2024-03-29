@@ -34,6 +34,7 @@ namespace trace {
 		float GetStartTime() { return m_startTime; }
 		// Anim State-> Play = 1, Paused = 2, Stop = 0
 		uint8_t GetAnimState() { return m_playing; }
+		float GetElaspedTime() { return m_elaspedTime; }
 
 		void SetName(const std::string& name) { m_name = name; }
 		void SetAnimationClip(Ref<AnimationClip> clip) { m_clip = clip; }

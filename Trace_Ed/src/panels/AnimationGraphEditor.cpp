@@ -4,6 +4,7 @@
 #include "resource/AnimationsManager.h"
 #include "serialize/AnimationsSerializer.h"
 #include "../utils/ImGui_utils.h"
+#include "../TraceEditor.h"
 
 #include "imgui.h"
 #include "imgui_stdlib.h"
@@ -25,6 +26,12 @@ namespace trace {
 
 	void AnimationGraphEditor::Shutdown()
 	{
+        TraceEditor* editor = TraceEditor::get_instance();
+        if (m_currentGraph)
+        {
+            std::string db_path = editor->current_project->current_directory + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
+            ImNodes::SaveCurrentEditorStateToIniFile(db_path.c_str());
+        }
 	}
 
 	void AnimationGraphEditor::Update(float deltaTime)
@@ -33,6 +40,7 @@ namespace trace {
 
 	void AnimationGraphEditor::Render(float deltaTime)
 	{
+        TraceEditor* editor = TraceEditor::get_instance();
 
 		ImGui::Begin("Animation Graph Editor");
 		ImGui::Columns(2);
@@ -202,6 +210,11 @@ namespace trace {
                 ImNodes::PopColorStyle();
                 ImNodes::PopColorStyle();
 
+                float progress = _s.GetAnimationClip() ? _s.GetElaspedTime() / _s.GetAnimationClip()->GetDuration() : 0.0f;
+                ImNodes::BeginStaticAttribute(state_id << 8);
+                ImGui::ProgressBar(progress, {200.0f, 10.0f});
+                ImNodes::EndStaticAttribute();
+
                 ImNodes::EndNode();
 
                 
@@ -248,6 +261,8 @@ namespace trace {
                 ImNodes::GetSelectedNodes(selected_nodes.data());
                 int index = selected_nodes[0] - 1;
                 m_selectedState = (start_node_id != selected_nodes[0]) ?  &m_currentGraph->GetStates()[index] : m_selectedState;
+                m_selectedState = new_graph ? nullptr : m_selectedState;
+                new_graph = false;
             }
         };
 
@@ -259,6 +274,29 @@ namespace trace {
 
 	void AnimationGraphEditor::SetAnimationGraph(Ref<AnimationGraph> graph)
 	{
+        m_selectedState = nullptr;
+        new_graph = true;
+        m_links.clear();
+        
+
+        TraceEditor* editor = TraceEditor::get_instance();
+        if (m_currentGraph)
+        {
+            std::string db_path = editor->current_project->current_directory + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
+            ImNodes::SaveCurrentEditorStateToIniFile(db_path.c_str());
+        }
+
+        ImNodes::DestroyContext();
+        ImNodesContext* new_context = ImNodes::CreateContext();
+        ImNodes::SetCurrentContext(new_context);
+
+        if (graph)
+        {
+            std::string db_path = editor->current_project->current_directory + "/InternalAssetsDB/" + graph->GetName() + ".ini";
+            if (std::filesystem::exists(db_path))
+                ImNodes::LoadCurrentEditorStateFromIniFile(db_path.c_str());
+        }
+
         m_currentGraph = graph;
         std::vector<AnimationState>& states = m_currentGraph->GetStates();
         if (states.empty()) return;

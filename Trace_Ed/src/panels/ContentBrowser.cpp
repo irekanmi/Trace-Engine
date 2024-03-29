@@ -13,6 +13,8 @@
 #include "serialize/MaterialSerializer.h"
 #include "serialize/PipelineSerializer.h"
 #include "InspectorPanel.h"
+#include "resource/AnimationsManager.h"
+#include "serialize/AnimationsSerializer.h"
 
 #include "imgui.h"
 #include "glm/glm.hpp"
@@ -229,8 +231,8 @@ namespace trace {
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { button_hov.x, button_hov.y, button_hov.z, 0.5f });
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, { button_act.x, button_act.y, button_act.z, 0.5f });
 
-
-			for (uint32_t i = 0; i < m_dirContents.size(); i++)
+			int selected = -1;
+			for (int i = 0; i < m_dirContents.size(); i++)
 			{
 				std::filesystem::path& path = m_dirContents[i];
 
@@ -245,6 +247,7 @@ namespace trace {
 					{
 						m_currentDir /= filename;
 						OnDirectoryChanged();
+						selected = -1;
 					}
 				}
 				else if (std::filesystem::is_regular_file(path))
@@ -255,8 +258,10 @@ namespace trace {
 					if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemFocused())
 					{
 						if (extensions_callbacks[extension]) extensions_callbacks[extension](path);
+						selected = -1;
 					}
 				}
+
 
 				OnItemPopup(path);
 
@@ -508,7 +513,9 @@ namespace trace {
 		{
 			MATERIAL = 1,
 			FOLDER,
-			SCENE
+			SCENE,
+			ANIMATION_CLIP,
+			ANIMATION_GRAPH,
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -529,6 +536,14 @@ namespace trace {
 				if (ImGui::MenuItem("Scene"))
 				{
 					c_item = SCENE;
+				}
+				if (ImGui::MenuItem("Animation Clip"))
+				{
+					c_item = ANIMATION_CLIP;
+				}
+				if (ImGui::MenuItem("Animation Graph"))
+				{
+					c_item = ANIMATION_GRAPH;
 				}
 				ImGui::EndMenu();
 			}
@@ -603,6 +618,58 @@ namespace trace {
 					else
 					{
 						TRC_ERROR("{} has already been created", res + ".trscn");
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			ProcessAllDirectory();
+			break;
+		}
+		case ANIMATION_CLIP:
+		{
+			std::string res;
+			if (m_editor->InputTextPopup("Animation Clip Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + ".trcac");
+					if (id == 0)
+					{
+						std::string clip_path = (m_currentDir / (res + ".trcac")).string();
+						Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
+						AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trcac");
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			ProcessAllDirectory();
+			break;
+		}
+		case ANIMATION_GRAPH:
+		{
+			std::string res;
+			if (m_editor->InputTextPopup("Animation Graph Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + ".trcag");
+					if (id == 0)
+					{
+						std::string graph_path = (m_currentDir / (res + ".trcag")).string();
+						Ref<AnimationGraph> graph = AnimationsManager::get_instance()->LoadGraph_(graph_path);
+						AnimationsSerializer::SerializeAnimationGraph(graph, graph_path);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trcag");
 					}
 				}
 			}

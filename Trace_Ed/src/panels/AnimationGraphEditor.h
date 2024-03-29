@@ -35,6 +35,7 @@ namespace trace {
 		Ref<AnimationGraph> m_currentGraph;
 		AnimationState* m_selectedState = nullptr;
 		std::vector<Link> m_links;
+		bool new_graph = true;
 
 	protected:
 
