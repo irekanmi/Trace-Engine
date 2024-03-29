@@ -110,6 +110,7 @@ namespace trace {
 		bool p_createProject = false;
 		bool p_projectSettings = false;
 
+		bool m_fullScreen = false;
 
 	protected:
 		friend EditorRenderComposer;

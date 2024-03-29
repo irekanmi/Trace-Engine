@@ -250,10 +250,6 @@ namespace trace
 			case trace::EventType::TRC_KEY_RELEASED:
 			{
 				KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
-				if (release->m_keycode == Keys::KEY_ESCAPE)
-				{
-					m_isRunning = false;
-				}
 				break;
 			}
 

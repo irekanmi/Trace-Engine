@@ -96,6 +96,8 @@ namespace trace {
 		editor_cam.SetNear(0.1f);
 		editor_cam.SetFar(15000.0f);
 
+		m_viewportSize = { 800.0f, 600.0f };
+
 		// Temp
 		all_assets.models.emplace("Cube");
 		all_assets.models.emplace("Sphere");
@@ -199,7 +201,7 @@ namespace trace {
 		static float seek_time = 1.0f;
 		static float elapsed = 0.0f;
 		static float FPS = 0.0f;
-		m_viewportSize = { 800.0f, 600.0f };
+		
 
 		// DockSpace
 		{
@@ -375,42 +377,76 @@ namespace trace {
 
 	void TraceEditor::RenderViewport(void* texture)
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("Scene Viewport",0,ImGuiWindowFlags_NoCollapse);
-		ImVec2 view_size = ImGui::GetContentRegionAvail();
-		glm::vec2 v_size = { view_size.x, view_size.y };
-		if (m_viewportSize != v_size)
+		if (m_fullScreen)
 		{
-			m_viewportSize = v_size;
-			editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
-			if(m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
-		}
-		m_viewportFocused = ImGui::IsWindowFocused();
-		m_viewportHovered = ImGui::IsWindowHovered();
-		ImGui::Image(texture, view_size);
-		if (current_state == SceneEdit)
-		{
-			if (ImGui::BeginDragDropTarget())
+			ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
+			ImGui::SetNextWindowViewport(viewport->ID);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::Begin("FullScreen", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+			ImVec2 view_size = ImGui::GetContentRegionAvail();
+			glm::vec2 v_size = { view_size.x, view_size.y };
+			if (m_viewportSize != v_size)
 			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
-				{
-					static char buf[1024] = { 0 };
-					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
-					std::string path = buf;
-					CloseCurrentScene();
-					LoadScene(path);
-					current_scene_path = path;
-				}
-				ImGui::EndDragDropTarget();
+				m_viewportSize = v_size;
+				editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 			}
+			m_viewportFocused = ImGui::IsWindowFocused();
+			m_viewportHovered = ImGui::IsWindowHovered();
+			ImGui::Image(texture, view_size);
+			if (current_state == SceneEdit)
+			{
+				
+			}
+			
+			ImGui::End();
+
+			ImGui::PopStyleVar(2);
 		}
-		if (m_hierachyPanel->m_selectedEntity)
+		else
 		{
-			DrawGizmo();
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+			ImGui::Begin("Scene Viewport", 0, ImGuiWindowFlags_NoCollapse);
+			ImVec2 view_size = ImGui::GetContentRegionAvail();
+			glm::vec2 v_size = { view_size.x, view_size.y };
+			if (m_viewportSize != v_size)
+			{
+				m_viewportSize = v_size;
+				editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
+			}
+			m_viewportFocused = ImGui::IsWindowFocused();
+			m_viewportHovered = ImGui::IsWindowHovered();
+			ImGui::Image(texture, view_size);
+			if (current_state == SceneEdit)
+			{
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
+					{
+						static char buf[1024] = { 0 };
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::string path = buf;
+						CloseCurrentScene();
+						LoadScene(path);
+						current_scene_path = path;
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+			if (m_hierachyPanel->m_selectedEntity)
+			{
+				DrawGizmo();
+			}
+			ImGui::End();
+
+			ImGui::PopStyleVar();
 		}
-		ImGui::End();
 		
-		ImGui::PopStyleVar();
 	}
 
 	void TraceEditor::RenderSceneToolBar()
@@ -490,6 +526,8 @@ namespace trace {
 		{
 			trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
 			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(release->m_keycode), false);
+			HandleKeyRelesed(release);
+
 			break;
 		}
 
@@ -1072,6 +1110,33 @@ namespace trace {
 	}
 	void TraceEditor::HandleKeyRelesed(KeyReleased* p_event)
 	{
+
+		InputSystem* input = InputSystem::get_instance();
+		bool control = input->GetKey(KEY_LCONTROL) || input->GetKey(KEY_RCONTROL);
+		bool shift = input->GetKey(KEY_LSHIFT) || input->GetKey(KEY_RSHIFT);
+
+		switch (p_event->m_keycode)
+		{
+		case KEY_L:
+		{
+			if (control && shift)
+			{
+				m_fullScreen = true;
+
+			}
+			break;
+		}
+		case KEY_ESCAPE:
+		{
+			if (m_fullScreen)
+			{
+				m_fullScreen = false;
+
+			}
+			break;
+		}
+		}
+
 	}
 	void TraceEditor::OnScenePlay()
 	{
