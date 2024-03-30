@@ -1117,7 +1117,7 @@ namespace trace {
 
 		switch (p_event->m_keycode)
 		{
-		case KEY_L:
+		case KEY_K:
 		{
 			if (control && shift)
 			{

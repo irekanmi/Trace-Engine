@@ -219,6 +219,7 @@ namespace trace {
 	struct AnimationComponent
 	{
 		Ref<AnimationGraph> anim_graph;
+		bool play_on_start = false;
 	};
 
 

@@ -81,6 +81,7 @@ namespace trace {
                 Ref<AnimationClip> clip = m_selectedState->GetAnimationClip();
                 std::string clip_name = clip ? clip->GetName() : "None(Animation Clip)";
 
+
                 ImGui::Text("Animation Clip ");
                 ImGui::SameLine();
                 ImGui::Button(clip_name.c_str());

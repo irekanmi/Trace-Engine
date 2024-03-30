@@ -34,37 +34,41 @@ namespace trace {
 
 		if (_t > clip->GetDuration())
 		{
-			if (!state.GetLoop()) return;
+			if (!state.GetLoop())
+			{
+				state.Stop();
+				return;
+			}
 			else _t = fmod(_t, clip->GetDuration());
 		}
+		state.SetElaspedTime(_t);
 
 		for (auto& channel : clip->GetTracks())
 		{
 			for (auto& track : channel.second)
 			{
-				AnimationFrameData* _f1 = nullptr;
-				AnimationFrameData* _f2 = nullptr;
+				AnimationFrameData* curr = nullptr;
+				AnimationFrameData* prev = nullptr;
 
 				//TODO: Find a better way to find which frames to sample -----------
-				int i = 1;
-				for (AnimationFrameData& data : track.channel_data)
+				int i = track.channel_data.size() - 1;
+				for (; i >= 0; i--)
 				{
-					if (_t >= data.time_point)
+					curr = &track.channel_data[i];
+					prev = i != 0 ? &track.channel_data[i - 1] : nullptr;
+					if (_t <= curr->time_point)
 					{
-						_f1 = &data;
-						if (i < track.channel_data.size()) _f2 = &track.channel_data[i];
-						if (i == track.channel_data.size() && state.GetLoop()) _f2 = &track.channel_data[0];
+						if (prev && _t >= prev->time_point) break;
 					}
 
-					++i;
 				}
 				// -----------------------------------------------------------------
 
-				if (!_f1 || !_f2) continue;
+				if (!prev || !curr) continue;
 
-				float lerp_value = (_t - _f1->time_point) / (_f2->time_point - _f1->time_point);
+				float lerp_value = (_t - prev->time_point) / (curr->time_point - prev->time_point);
 
-				CalculateAndSetData(_f1, _f2, scene, channel.first, track.channel_type, lerp_value);
+				CalculateAndSetData(prev, curr, scene, channel.first, track.channel_type, lerp_value);
 			}
 		}
 

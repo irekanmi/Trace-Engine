@@ -698,6 +698,8 @@ namespace trace {
 				ImGui::EndDragDropTarget();
 			}
 
+			ImGui::Checkbox("Play On Start", &comp.play_on_start);
+
 			});
 
 		ScriptRegistry& script_registry = m_editor->m_currentScene->m_scriptRegistry;

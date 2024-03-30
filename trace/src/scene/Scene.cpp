@@ -102,6 +102,17 @@ namespace trace {
 			}
 		}
 		m_running = true;
+		auto animations = m_registry.view<AnimationComponent>();
+		for (auto i : animations)
+		{
+			auto [anim_comp] = animations.get(i);
+			if (!anim_comp.anim_graph) continue;
+			anim_comp.anim_graph->currrent_state_index = anim_comp.anim_graph->currrent_state_index == -1 ? anim_comp.anim_graph->start_index : anim_comp.anim_graph->currrent_state_index;
+			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
+			if (!current_state.GetAnimationClip()) continue;
+			if (anim_comp.play_on_start) current_state.Play();
+		}
+
 	}
 	void Scene::OnScriptStart()
 	{
@@ -170,6 +181,17 @@ namespace trace {
 	}
 	void Scene::OnStop()
 	{
+		auto animations = m_registry.view<AnimationComponent>();
+		for (auto i : animations)
+		{
+			auto [anim_comp] = animations.get(i);
+			if (!anim_comp.anim_graph) continue;
+			anim_comp.anim_graph->currrent_state_index = anim_comp.anim_graph->currrent_state_index == -1 ? anim_comp.anim_graph->start_index : anim_comp.anim_graph->currrent_state_index;
+			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
+			if (!current_state.GetAnimationClip()) continue;
+			current_state.Stop();
+		}
+
 		if (m_physics3D)
 		{
 

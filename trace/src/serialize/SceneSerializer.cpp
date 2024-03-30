@@ -9,7 +9,9 @@
 #include "resource/FontManager.h"
 #include "resource/ModelManager.h"
 #include "resource/MaterialManager.h"
+#include "resource/AnimationsManager.h"
 #include "serialize/MaterialSerializer.h"
+#include "serialize/AnimationsSerializer.h"
 #include "scripting/ScriptEngine.h"
 
 #include <functional>
@@ -192,6 +194,19 @@ namespace trace {
 
 				emit << YAML::EndMap;
 			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<AnimationComponent>())
+			{
+				AnimationComponent& ac = entity.GetComponent<AnimationComponent>();
+				emit << YAML::Key << "AnimationComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				if(ac.anim_graph) emit << YAML::Key << "Anim Graph" << YAML::Value << GetUUIDFromName(ac.anim_graph->GetName());
+				emit << YAML::Key << "Play On Start" << YAML::Value << ac.play_on_start;
+
+				emit << YAML::EndMap;
+			}
 		}
 	};
 
@@ -318,6 +333,22 @@ namespace trace {
 		sc.is_trigger = comp["Is Trigger"].as<bool>();
 		sc.shape.SetSphere(comp["Radius"].as<float>());
 		sc.shape.offset = comp["Offset"].as<glm::vec3>();
+
+		} },
+		{ "AnimationComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["AnimationComponent"];
+		AnimationComponent& ac = entity.AddComponent<AnimationComponent>();
+		ac.play_on_start = comp["Play On Start"].as<bool>();
+		if (comp["Anim Graph"])
+		{
+			Ref<AnimationGraph> res;
+			UUID id = comp["Anim Graph"].as<uint64_t>();
+			std::filesystem::path p = GetPathFromUUID(id);
+			res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
+			if (res) {}
+			else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+			if (res) ac.anim_graph = res;
+		}
 
 		} }
 	};

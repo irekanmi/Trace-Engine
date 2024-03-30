@@ -53,9 +53,7 @@ namespace trace {
 
 	void AnimationState::Play()
 	{
-		if (m_playing) return;
 
-		m_playing = true;
 		
 
 		switch (m_playing)
