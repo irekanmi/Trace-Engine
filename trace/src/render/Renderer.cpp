@@ -995,26 +995,15 @@ namespace trace {
 	{
 
 		if (!font) return;
-		Command cmd;
-		cmd.params.ptrs[0] = font.get();
-		cmd.params.val[0] = text.size() + 1;
-		cmd.func = [&](CommandParams params) {
-			Font* font = (Font*)params.ptrs[0];
-			glm::mat4* transform = (glm::mat4*)params.data;
-			glm::vec3* _color = (glm::vec3*)(params.data + sizeof(glm::mat4));
-			std::string text = (const char*)(params.data + sizeof(glm::mat4) + sizeof(glm::vec3));
+		
+		if (text_verts) DrawString_(font.get(), text, color, _transform);
+		else DrawString(font.get(), text, _transform);
 
-			if(text_verts) DrawString_(font, text, *_color, *transform);
-			else DrawString(font, text, *transform);
-			
+	}
 
-		};
-		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4) + sizeof(glm::vec3) + cmd.params.val[0]);
-		memcpy(cmd.params.data, &_transform, sizeof(glm::mat4));
-		memcpy(cmd.params.data + sizeof(glm::mat4), &color, sizeof(glm::vec3));
-		memcpy(cmd.params.data + sizeof(glm::mat4) + sizeof(glm::vec3), text.c_str(), cmd.params.val[0]);
-		cmd_list._commands.emplace_back(cmd);
-
+	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform)
+	{
+		DrawQuad(_transform, texture);
 	}
 
 	CommandList Renderer::BeginCommandList()

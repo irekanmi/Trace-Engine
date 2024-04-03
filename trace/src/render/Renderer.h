@@ -75,6 +75,7 @@ namespace trace {
 		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
 		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
 		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
+		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform);
 
 
 		// Getters

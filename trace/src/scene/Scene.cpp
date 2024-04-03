@@ -405,6 +405,16 @@ namespace trace {
 
 		}
 
+		auto images_view = m_registry.view<ImageComponent, HierachyComponent>();
+
+		for (auto entity : images_view)
+		{
+			auto [img, transform] = images_view.get(entity);
+
+			if(img.image) renderer->DrawImage(cmd_list, img.image, transform.transform); // TODO Implement Hierachies
+
+		}
+
 	}
 
 	void Scene::OnViewportChange(float width, float height)
@@ -492,6 +502,7 @@ namespace trace {
 		CopyComponent<SphereColliderComponent>(entity, res);
 		CopyComponent<HierachyComponent>(entity, res);
 		CopyComponent<AnimationComponent>(entity, res);
+		CopyComponent<ImageComponent>(entity, res);
 
 		m_scriptRegistry.Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
@@ -645,6 +656,7 @@ namespace trace {
 		CopyComponent<BoxColliderComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<SphereColliderComponent>(f_reg, t_reg, entity_map);
 		CopyComponent<AnimationComponent>(f_reg, t_reg, entity_map);
+		CopyComponent<ImageComponent>(f_reg, t_reg, entity_map);
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 

@@ -222,6 +222,10 @@ namespace trace {
 		bool play_on_start = false;
 	};
 
+	struct ImageComponent
+	{
+		Ref<GTexture> image;
+	};
 
 
 }

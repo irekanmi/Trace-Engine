@@ -10,6 +10,7 @@
 #include "resource/ModelManager.h"
 #include "resource/MaterialManager.h"
 #include "resource/AnimationsManager.h"
+#include "resource/TextureManager.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
 #include "scripting/ScriptEngine.h"
@@ -207,6 +208,18 @@ namespace trace {
 
 				emit << YAML::EndMap;
 			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<ImageComponent>())
+			{
+				ImageComponent& img = entity.GetComponent<ImageComponent>();
+				emit << YAML::Key << "ImageComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				if (img.image) emit << YAML::Key << "Image" << YAML::Value << GetUUIDFromName(img.image->GetName());
+
+				emit << YAML::EndMap;
+			}
 		}
 	};
 
@@ -348,6 +361,21 @@ namespace trace {
 			if (res) {}
 			else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
 			if (res) ac.anim_graph = res;
+		}
+
+		} },
+		{ "ImageComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["ImageComponent"];
+		ImageComponent& img = entity.AddComponent<ImageComponent>();
+		if (comp["Image"])
+		{
+			Ref<GTexture> res;
+			UUID id = comp["Image"].as<uint64_t>();
+			std::filesystem::path p = GetPathFromUUID(id);
+			res = TextureManager::get_instance()->GetTexture(p.filename().string());
+			if (res) {}
+			else res = TextureManager::get_instance()->LoadTexture_(p.string());
+			if (res) img.image = res;
 		}
 
 		} }

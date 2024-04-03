@@ -253,6 +253,15 @@ namespace trace {
 				false
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+			ColorBlendState clr_bld;
+			clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
+			clr_bld.alpha_to_blend_coverage = true;
+			clr_bld.color_op = BlendOp::BLEND_OP_ADD;
+			clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
+			clr_bld.src_alpha = BlendFactor::BLEND_ONE;
+			clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
+			clr_bld.src_color = BlendFactor::BLEND_SRC_ALPHA;
+			_ds2.blend_state = clr_bld;
 			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
 
 			quad_pipeline = CreatePipeline(_ds2, "quad_batch_pipeline");
@@ -293,7 +302,7 @@ namespace trace {
 			clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
 			clr_bld.src_alpha = BlendFactor::BLEND_ONE;
 			clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
-			clr_bld.src_color = BlendFactor::BLEND_ONE;
+			clr_bld.src_color = BlendFactor::BLEND_SRC_ALPHA;
 			_ds2.blend_state = clr_bld;
 			_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
 

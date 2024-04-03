@@ -689,9 +689,9 @@ namespace vk {
 	{
 		bool result = true;		
 
-		if (!pipeline)
+		if (!pipeline || !texture)
 		{
-			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			TRC_ERROR("Please input valid pointer -> {}, tex ->{}, Function -> {}", (const void*)pipeline, __FUNCTION__);
 			return false;
 		}
 
@@ -720,6 +720,11 @@ namespace vk {
 
 		trace::VKImage* _tex = reinterpret_cast<trace::VKImage*>(texture->GetRenderHandle()->m_internalData);
 
+		if (!_tex)
+		{
+			TRC_WARN("Please input valid pointer, Funtion -> {}, Line ->{}", __FUNCTION__, __LINE__);
+			return false;
+		}
 
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

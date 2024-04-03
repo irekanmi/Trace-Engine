@@ -11,5 +11,6 @@ layout(set = 0, binding = 1)uniform sampler2D u_textures[MAX_QUAD_TEXTURE_SLOT];
 
 void main()
 {
-    FragColor = texture(u_textures[int(in_texIndex)], in_texCoord);
+    vec4 color = texture(u_textures[int(in_texIndex)], in_texCoord);
+    FragColor = color;
 }

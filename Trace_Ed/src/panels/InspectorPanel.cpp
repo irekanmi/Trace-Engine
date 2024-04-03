@@ -16,6 +16,7 @@
 #include "scripting/ScriptEngine.h"
 #include "../TraceEditor.h"
 #include "resource/AnimationsManager.h"
+#include "resource/TextureManager.h"
 #include "AnimationPanel.h"
 #include "../utils/ImGui_utils.h"
 
@@ -271,6 +272,10 @@ namespace trace {
 			if (ImGui::MenuItem("Animation"))
 			{
 				entity.AddComponent<AnimationComponent>();
+			}
+			if (ImGui::MenuItem("Image"))
+			{
+				entity.AddComponent<ImageComponent>();
 			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
@@ -699,6 +704,71 @@ namespace trace {
 			}
 
 			ImGui::Checkbox("Play On Start", &comp.play_on_start);
+
+			});
+
+		DrawComponent<ImageComponent>(entity, "Image Compoent", [&](Entity obj, ImageComponent& comp) {
+
+			Ref<GTexture> img = comp.image;
+			std::string image_name = "None (Texture)";
+			if (img)
+			{
+				image_name = img->GetName();
+
+			}
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+			ImGui::Text("Image: ");
+			ImGui::SameLine();
+			ImGui::Button(image_name.c_str(), button_size);
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				static char _buf[1024] = { 0 };
+				static auto load_texure = [&comp](char* buf)
+				{
+					std::filesystem::path p = buf;
+					Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+					if (tex) {}
+					else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+
+					if (tex)
+					{
+						comp.image = tex;
+					}
+				};
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".png"))
+				{
+					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+					load_texure(_buf);					
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpeg"))
+				{
+					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+					load_texure(_buf);
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpg"))
+				{
+					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+					load_texure(_buf);
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".tga"))
+				{
+					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+					load_texure(_buf);
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			if (comp.image)
+			{
+				void* a = nullptr;
+				UIFunc::GetDrawTextureHandle(comp.image.get(), a);
+				ImGui::Image(a, ImVec2(128.0f, 128.0f), { 0.0f, 1.0f }, { 1.0f, 0.0f });
+			}
+
 
 			});
 
