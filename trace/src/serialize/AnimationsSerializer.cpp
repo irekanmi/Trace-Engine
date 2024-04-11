@@ -67,6 +67,61 @@ namespace trace {
 		return true;
 	}
 
+	bool AnimationsSerializer::SerializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	{
+		if (!clip)
+		{
+			TRC_ERROR("Invalid Clip, Function -> {}", __FUNCTION__);
+			return false;
+		}
+
+		UUID id = GetUUIDFromName(clip->GetName());
+		auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+			{
+				return i.first == id;
+			});
+
+		if (it == map.end())
+		{
+			AssetHeader ast_h;
+			ast_h.offset = stream.GetPosition();
+			float duration = clip->GetDuration();
+			stream.Write(duration);// Duration
+			int sample_rate = clip->GetSampleRate();
+			stream.Write(sample_rate);// Sample Rate
+
+			std::unordered_map<UUID, std::vector<AnimationTrack>>& groups = clip->GetTracks();
+			int group_count = groups.size();
+			stream.Write(group_count);
+			for (auto& i : groups)
+			{
+				uint64_t group_id = i.first;
+				stream.Write(group_id);
+				std::vector<AnimationTrack>& tracks = i.second;
+				int track_count = tracks.size();
+				stream.Write(track_count);
+				for (auto& track : tracks)
+				{
+					int channel_type = (int)track.channel_type;
+					stream.Write(channel_type);
+					int frame_data_count = track.channel_data.size();
+					stream.Write(frame_data_count);
+					for (AnimationFrameData& fd : track.channel_data)
+					{
+						stream.Write<AnimationFrameData>(fd);
+					}
+				}
+			}
+			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+			map.push_back(std::make_pair(id, ast_h));
+
+
+		}
+
+		return true;
+	}
+
 	Ref<AnimationClip> AnimationsSerializer::DeserializeAnimationClip(const std::string& file_path)
 	{
 		Ref<AnimationClip> result;
@@ -164,6 +219,57 @@ namespace trace {
 		{
 			FileSystem::writestring(out_handle, emit.c_str());
 			FileSystem::close_file(out_handle);
+		}
+
+		return true;
+	}
+
+	bool AnimationsSerializer::SerializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	{
+		if (!graph)
+		{
+			TRC_ERROR("Invalid Animation Graph, Function -> {}", __FUNCTION__);
+			return false;
+		}
+
+		UUID id = GetUUIDFromName(graph->GetName());
+		auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+			{
+				return i.first == id;
+			});
+
+		if (it == map.end())
+		{
+			AssetHeader ast_h;
+			ast_h.offset = stream.GetPosition();
+			stream.Write(graph->start_index);
+
+			std::vector<AnimationState>& states = graph->GetStates();
+			
+			int states_count = states.size();
+			stream.Write(states_count);
+			for (auto& s : states)
+			{
+				int name_size = s.GetName().length() + 1;
+				stream.Write(name_size);
+				stream.Write(s.GetName().data(), name_size);
+				if (s.GetAnimationClip())
+				{
+					uint64_t clip_id = GetUUIDFromName(s.GetAnimationClip()->GetName());
+					stream.Write(clip_id);
+				}
+				else
+				{
+					uint64_t clip_id = 0;
+					stream.Write(clip_id);
+				}
+				bool loop = s.GetLoop();
+				stream.Write(loop);
+
+			}
+			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+			map.push_back(std::make_pair(id, ast_h));
 		}
 
 		return true;

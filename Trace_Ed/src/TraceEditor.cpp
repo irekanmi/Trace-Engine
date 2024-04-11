@@ -30,6 +30,7 @@
 #include "ImGuizmo.h"
 #include "portable-file-dialogs.h"
 #include "spdlog/fmt/fmt.h"
+#include "serialize/yaml_util.h"
 
 
 int translateKeyTrace_ImGui(trace::Keys key);
@@ -45,6 +46,9 @@ void custom_solid();
 
 
 namespace trace {
+
+	extern std::filesystem::path GetPathFromUUID(UUID uuid);
+	extern UUID GetUUIDFromName(const std::string& name);
 
 	TraceEditor* TraceEditor::s_instance = nullptr;
 
@@ -1257,6 +1261,8 @@ project "{}"
 		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ } };
 		ProjectSerializer::Serialize(result, dir + "/" + name + ".trproj");
 
+		
+
 		return true;
 	}
 
@@ -1278,6 +1284,13 @@ project "{}"
 		if (!current_project) return false;
 		m_contentBrowser->SetDirectory(current_project->assets_directory);
 		ReloadProjectAssembly();
+
+		UUID id = current_project->GetStartScene();
+		if (id != 0)
+		{
+			std::filesystem::path file_path = GetPathFromUUID(id);
+			LoadScene(file_path.string());
+		}
 		return true;
 	}
 
@@ -1305,14 +1318,86 @@ project "{}"
 
 	void TraceEditor::ProjectSettings()
 	{
+		enum class ProjectSettings
+		{
+			GENERAL,
+			SETTINGS_MAX
+		};
+		static int current_setting = -1;
+		static auto get_settings_string = [](ProjectSettings type) -> const char*
+		{
+			switch (type)
+			{
+			case ProjectSettings::GENERAL:
+			{
+				return "General";
+			}
+			}
 
-		if (p_projectSettings)
+			return "";
+		};
+
+		if (p_projectSettings && current_project)
 		{
 
 			ImGui::Begin("Project Settings", &p_projectSettings);
+			ImGui::Columns(2);
+
+			for (int i = 0; i < (int)ProjectSettings::SETTINGS_MAX; i++)
+			{
+				bool selected = (current_setting == i);
+				if (ImGui::Selectable(get_settings_string((ProjectSettings)i), selected))
+					current_setting = i;
+			}
+
+			ImGui::NextColumn();
+
+			ProjectSettings type = (ProjectSettings)current_setting;
+
+			switch (type)
+			{
+			case ProjectSettings::GENERAL:
+			{
+				// Start Scene
+				ImGui::Text("Start Scene");
+				ImGui::SameLine();
+				std::string scene_name = "None(Scene)";
+				UUID id = current_project->GetStartScene();
+				if (id != 0)
+				{
+					std::filesystem::path file_path = GetPathFromUUID(id);
+					scene_name = file_path.filename().string();
+				}
+				ImGui::Button(scene_name.c_str());
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
+					{
+						char buf[1024] = { 0 };
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::filesystem::path file_path = buf;
+						UUID id = GetUUIDFromName(file_path.filename().string());
+						current_project->SetStartScene(id);
+					}
+					ImGui::EndDragDropTarget();
+				}
+				if (ImGui::BeginItemTooltip())
+				{
+					ImGui::Text("Drag and drop the scene on the button");
+					ImGui::EndTooltip();
+				}
 
 
+				break;
+			}
+			}
 
+			ImGui::Columns(1);
+
+			if (ImGui::Button("Apply"))
+			{
+				ProjectSerializer::Serialize(current_project, current_project->m_path.string());
+			}
 			ImGui::End();
 
 		}

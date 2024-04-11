@@ -1,5 +1,8 @@
 #pragma once
 
+#define MAKE_VERSION(a, b, c, d) (a << 24) | (b << 16) | (c << 8) | d
+#define TRACE_VERSION MAKE_VERSION(0, 0, 0, 0)
+
 
 #define SAFE_DELETE(a, placeholder)	            \
 	void* x_##placeholder = a;					\

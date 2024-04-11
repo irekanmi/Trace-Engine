@@ -197,4 +197,17 @@ namespace trace {
 		TRC_ERROR("File has to be vaild to be able to read from {}", file.m_handle);
 	}
 
+	void FileSystem::set_seek_position(FileHandle& file, size_t pos)
+	{
+
+		std::fstream* _file = ((std::fstream*)file.m_handle);
+
+		if (file.m_isVaild)
+		{
+			_file->seekg(pos, std::ios::beg);
+			_file->seekp(pos, std::ios::beg);
+		}
+
+	}
+
 }

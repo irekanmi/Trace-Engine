@@ -328,4 +328,114 @@ namespace vk {
 		return result;
 	}
 
+	bool __GetTextureData(trace::GTexture* texture, void*& out_data)
+	{
+		bool result = true;
+
+		if (!texture)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)texture, __FUNCTION__);
+			return false;
+		}
+
+		if (!out_data)
+		{
+			TRC_ERROR("Please input pointer doesn't has a value for output handle -> {}, Function -> {}", (const void*)out_data, __FUNCTION__);
+			return false;
+		}
+
+		if (!texture->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)texture->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKImage* _handle = (trace::VKImage*)texture->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+		trace::TextureDesc& desc = texture->GetTextureDescription();
+
+		trace::VKBuffer staging_buffer;
+
+		trace::BufferInfo buffer_info;
+		buffer_info.m_size = desc.m_width * desc.m_height * trace::getFmtSize(desc.m_format);
+		buffer_info.m_stide = 0;
+		buffer_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+		buffer_info.m_flag = trace::BindFlag::NIL;
+		buffer_info.m_data = desc.m_data[0];
+
+		VkImageUsageFlags image_usage = 0;
+		VkImageAspectFlags aspect_flags = 0;
+		VkMemoryPropertyFlags memory_property = 0;
+		VkImageCreateFlags flags = 0;
+		if (TRC_HAS_FLAG(desc.m_flag, trace::BindFlag::SHADER_RESOURCE_BIT))
+		{
+			image_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
+		}
+		if (TRC_HAS_FLAG(desc.m_flag, trace::BindFlag::DEPTH_STENCIL_BIT))
+		{
+			image_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+			aspect_flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
+		if (desc.m_usage == trace::UsageFlag::DEFAULT)
+		{
+			memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		}
+		if (desc.m_image_type == trace::ImageType::CUBE_MAP)
+		{
+			flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+		}
+
+
+		vk::_CreateBuffer(
+			_instance,
+			_device,
+			&staging_buffer,
+			buffer_info
+		);
+
+		trace::VKCommmandBuffer cmd_buf;
+		vk::_BeginCommandBufferSingleUse(_device, _device->m_graphicsCommandPool, &cmd_buf);
+
+		VkBufferImageCopy copy = {};
+		copy.imageOffset = { 0, 0, 0 };
+		copy.imageExtent = { desc.m_width, desc.m_height, 1 };
+		copy.imageSubresource.aspectMask = aspect_flags;
+		copy.imageSubresource.baseArrayLayer = 0;
+		copy.imageSubresource.layerCount = 1;
+		copy.imageSubresource.mipLevel = 0;
+		copy.bufferOffset = 0;
+		copy.bufferRowLength = 0;
+		copy.bufferImageHeight = 0;
+
+		vkCmdCopyImageToBuffer(
+			cmd_buf.m_handle,
+			_handle->m_handle,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,//TODO: Textures should know there current layout
+			staging_buffer.m_handle,
+			1,
+			&copy
+		);
+
+
+		vk::_EndCommandBufferSingleUse(
+			_device,
+			_device->m_graphicsCommandPool,
+			_device->m_graphicsQueue,
+			&cmd_buf
+		);
+
+		void* data;
+		vkMapMemory(_device->m_device, staging_buffer.m_memory, 0, buffer_info.m_size, 0, &data);
+		memcpy(out_data, data, buffer_info.m_size);
+		vkUnmapMemory(_device->m_device,staging_buffer.m_memory);
+
+
+		vk::_DestoryBuffer(_instance, _device, &staging_buffer);
+
+		return result;
+	}
+
 }

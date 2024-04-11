@@ -44,6 +44,8 @@ namespace trace {
 		static void read_all_bytes(FileHandle& file, void* data, uint32_t& read_bytes);
 		static void read_all_lines(FileHandle& file, std::string& out);
 
+		static void set_seek_position(FileHandle& file, size_t pos);
+
 	private:
 
 	protected:

@@ -34,7 +34,6 @@ void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, cons
 }
 
 
-
 namespace trace
 {
 	extern std::vector<trace::Object*> g_SystemPtrs;
@@ -136,7 +135,6 @@ namespace trace
 		m_clock.Begin();
 
 		m_lastTime = m_clock.GetElapsedTime();
-
 
 		while (m_isRunning)
 		{

@@ -112,6 +112,7 @@ namespace trace {
 	typedef bool (*__CreateTexture)(GTexture* , TextureDesc );
 	typedef bool (*__DestroyTexture)(GTexture* );
 	typedef bool (*__GetTextureNativeHandle)(GTexture*, void*& );
+	typedef bool (*__GetTextureData)(GTexture*, void*&);
 	//----------------------------
 
 	// RenderGraph ----------------
@@ -212,6 +213,8 @@ namespace trace {
 		static bool CreateTexture(GTexture* texture, TextureDesc desc);
 		static bool DestroyTexture(GTexture* texture);
 		static bool GetTextureNativeHandle(GTexture* texture, void*& out_handle);
+		//NOTE: Ensure that the memory passed in is big enough to collect texture data
+		static bool GetTextureData(GTexture* texture, void*& out_data);
 
 		static bool BuildRenderGraph(GDevice* device, RenderGraph* render_graph);
 		static bool DestroyRenderGraph(GDevice* device, RenderGraph* render_graph);
@@ -295,6 +298,7 @@ namespace trace {
 		static __CreateTexture _createTexture;
 		static __DestroyTexture _destroyTexture;
 		static __GetTextureNativeHandle _getTextureNativeHandle;
+		static __GetTextureData _getTextureData;
 
 		static __BuildRenderGraph _buildRenderGraph;
 		static __DestroyRenderGraph _destroyRenderGraph;

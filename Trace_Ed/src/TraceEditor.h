@@ -69,6 +69,7 @@ namespace trace {
 			std::unordered_set<std::filesystem::path> materials;
 			std::unordered_set<std::filesystem::path> pipelines;
 			std::unordered_set<std::filesystem::path> shaders;
+			std::unordered_set<std::filesystem::path> scenes;
 		};
 		AllProjectAssets all_assets;
 	public:

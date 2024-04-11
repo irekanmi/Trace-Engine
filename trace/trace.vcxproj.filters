@@ -28,6 +28,9 @@
     <Filter Include="src\backends">
       <UniqueIdentifier>{F707EA36-E36A-79DB-8CF0-B1917832455E}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\builder">
+      <UniqueIdentifier>{A36D599D-0F23-D292-9817-CC6904CCC896}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\core">
       <UniqueIdentifier>{C55F2ECF-B12C-89DA-DA45-7782C671BE68}</UniqueIdentifier>
     </Filter>
@@ -110,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="src\backends\UIutils.h">
       <Filter>src\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="src\builder\ProjectBuilder.h">
+      <Filter>src\builder</Filter>
     </ClInclude>
     <ClInclude Include="src\core\Application.h">
       <Filter>src\core</Filter>
@@ -426,7 +432,16 @@
     <ClInclude Include="src\serialize\AnimationsSerializer.h">
       <Filter>src\serialize</Filter>
     </ClInclude>
+    <ClInclude Include="src\serialize\AssetsInfo.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\FileStream.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
     <ClInclude Include="src\serialize\MaterialSerializer.h">
+      <Filter>src\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serialize\MemoryStream.h">
       <Filter>src\serialize</Filter>
     </ClInclude>
     <ClInclude Include="src\serialize\PipelineSerializer.h">
@@ -508,6 +523,9 @@
     </ClCompile>
     <ClCompile Include="src\backends\UIutils.cpp">
       <Filter>src\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\builder\ProjectBuilder.cpp">
+      <Filter>src\builder</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Application.cpp">
       <Filter>src\core</Filter>
@@ -782,7 +800,13 @@
     <ClCompile Include="src\serialize\AnimationsSerializer.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
+    <ClCompile Include="src\serialize\FileStream.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
     <ClCompile Include="src\serialize\MaterialSerializer.cpp">
+      <Filter>src\serialize</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serialize\MemoryStream.cpp">
       <Filter>src\serialize</Filter>
     </ClCompile>
     <ClCompile Include="src\serialize\PipelineSerializer.cpp">

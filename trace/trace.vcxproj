@@ -154,6 +154,7 @@
     <ClInclude Include="src\backends\Physicsutils.h" />
     <ClInclude Include="src\backends\Renderutils.h" />
     <ClInclude Include="src\backends\UIutils.h" />
+    <ClInclude Include="src\builder\ProjectBuilder.h" />
     <ClInclude Include="src\core\Application.h" />
     <ClInclude Include="src\core\Clock.h" />
     <ClInclude Include="src\core\Core.h" />
@@ -259,7 +260,10 @@
     <ClInclude Include="src\scripting\ScriptEngine.h" />
     <ClInclude Include="src\scripting\ScriptRegistry.h" />
     <ClInclude Include="src\serialize\AnimationsSerializer.h" />
+    <ClInclude Include="src\serialize\AssetsInfo.h" />
+    <ClInclude Include="src\serialize\FileStream.h" />
     <ClInclude Include="src\serialize\MaterialSerializer.h" />
+    <ClInclude Include="src\serialize\MemoryStream.h" />
     <ClInclude Include="src\serialize\PipelineSerializer.h" />
     <ClInclude Include="src\serialize\ProjectSerializer.h" />
     <ClInclude Include="src\serialize\SceneSerializer.h" />
@@ -318,6 +322,7 @@
     <ClCompile Include="src\backends\Physicsutils.cpp" />
     <ClCompile Include="src\backends\Renderutils.cpp" />
     <ClCompile Include="src\backends\UIutils.cpp" />
+    <ClCompile Include="src\builder\ProjectBuilder.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Clock.cpp" />
     <ClCompile Include="src\core\Coretypes.cpp" />
@@ -411,7 +416,9 @@
     <ClCompile Include="src\scripting\ScriptEngine.cpp" />
     <ClCompile Include="src\scripting\ScriptRegistry.cpp" />
     <ClCompile Include="src\serialize\AnimationsSerializer.cpp" />
+    <ClCompile Include="src\serialize\FileStream.cpp" />
     <ClCompile Include="src\serialize\MaterialSerializer.cpp" />
+    <ClCompile Include="src\serialize\MemoryStream.cpp" />
     <ClCompile Include="src\serialize\PipelineSerializer.cpp" />
     <ClCompile Include="src\serialize\ProjectSerializer.cpp" />
     <ClCompile Include="src\serialize\SceneSerializer.cpp" />

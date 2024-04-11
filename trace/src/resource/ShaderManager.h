@@ -39,7 +39,7 @@ namespace trace {
 		std::filesystem::path shader_resource_path;
 
 		static ShaderManager* s_instance;
-		
+		friend class ProjectBuilder;
 
 	protected:
 

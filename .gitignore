@@ -21,6 +21,7 @@ logs.txt
 **.vcxproj
 *.exe
 *.sln
+**.pdb
 
 
 #Project Config Files

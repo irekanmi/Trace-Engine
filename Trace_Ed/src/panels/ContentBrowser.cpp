@@ -1028,9 +1028,9 @@ namespace trace {
 				if (!shad_res.empty())
 				{
 					Ref<GShader> res = ShaderManager::get_instance()->CreateShader_(shad_res, shad_stage);
-					if (shad_stage == ShaderStage::VERTEX_SHADER)
+					if (TRC_HAS_FLAG(shad_stage, ShaderStage::VERTEX_SHADER))
 						m_editPipeDesc.vertex_shader = res.get();
-					if (shad_stage == ShaderStage::PIXEL_SHADER)
+					if (TRC_HAS_FLAG(shad_stage, ShaderStage::PIXEL_SHADER))
 						m_editPipeDesc.pixel_shader = res.get();
 					
 					shad_pop = false;

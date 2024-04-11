@@ -3,8 +3,11 @@
 #include "core/Core.h"
 #include "HashTable.h"
 #include "render/GTexture.h"
-#include <string>
 #include "Ref.h"
+#include "scene/UUID.h"
+
+
+#include <string>
 #include <filesystem>
 
 using Texture_Ref = Ref<trace::GTexture>;
@@ -49,6 +52,7 @@ namespace trace {
 
 	private:
 		HashTable<TextureHash> m_hashTable;
+		std::unordered_map<UUID, uint32_t> m_uuidMap; // NOTE: Used to hold resource runtime handle, which allow resources to be queried using there UUID
 		std::vector<GTexture> m_textures;
 		uint32_t m_textureUnits;
 		uint32_t m_textureTypeSize;

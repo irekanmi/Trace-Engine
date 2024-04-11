@@ -264,7 +264,8 @@ namespace trace {
 		GTexture* _tex = nullptr;
 		std::filesystem::path p(path);
 		std::string name = p.filename().string();
-		result = GetTexture(name);
+		result = GetDefault(name);
+		if(!result) result = GetTexture(name);
 		if (result)
 		{
 			TRC_WARN("Texture has already being loaded {}", name);

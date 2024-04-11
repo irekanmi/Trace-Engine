@@ -14,6 +14,7 @@
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
 #include "scripting/ScriptEngine.h"
+#include "backends/Renderutils.h"
 
 #include <functional>
 #include <unordered_map>
@@ -759,6 +760,222 @@ namespace trace {
 		}
 		
 		return scene;
+	}
+
+	bool SceneSerializer::SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			char* data = nullptr;// TODO: Use custom allocator
+			int data_size = 0;
+			for (auto entity : entities)
+			{
+				if (entity["ImageComponent"])
+				{
+					auto comp = entity["ImageComponent"];
+					if (comp["Image"])
+					{
+						Ref<GTexture> res;
+						UUID id = comp["Image"].as<uint64_t>();
+						auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+							{
+								return i.first == id;
+							});
+
+						if (it == map.end())
+						{
+							std::filesystem::path p = GetPathFromUUID(id);
+							res = TextureManager::get_instance()->LoadTexture_(p.string());
+							if (res)
+							{
+								TextureDesc tex_desc = res->GetTextureDescription();
+								uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+								if (data_size < tex_size)
+								{
+									if (data) delete[] data;// TODO: Use custom allocator
+									data = new char[tex_size];
+									data_size = tex_size;
+								}
+								RenderFunc::GetTextureData(res.get(),(void*&) data);
+								AssetHeader ast_h;
+								ast_h.offset = stream.GetPosition();
+								ast_h.data_size = sizeof(TextureDesc) + tex_size;
+								stream.Write<TextureDesc>(tex_desc);
+								stream.Write(data, tex_size);
+								map.push_back(std::make_pair(id, ast_h));
+							}
+							else
+							{
+								TRC_ERROR("Unable to able to load image, path -> {}", p.string());
+							}
+						}
+					}
+				}
+				if (entity["ModelRendererComponent"])
+				{
+					auto comp = entity["ModelRendererComponent"];
+					UUID id = comp["file id"].as<uint64_t>();
+					auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+						{
+							return i.first == id;
+						});
+
+					if (it == map.end())
+					{
+
+						std::filesystem::path p = GetPathFromUUID(id);
+						Ref<MaterialInstance> res;
+						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+						if (res) {}
+						else res = MaterialSerializer::Deserialize(p.string());
+						if (res)
+						{
+							for (auto& m_data : res->m_data)
+							{
+								trace::UniformMetaData& meta_data = res->m_renderPipeline->Scene_uniforms[m_data.second.second];
+								if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
+								{
+									Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
+									TextureDesc tex_desc = tex->GetTextureDescription();
+									uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+									if (data_size < tex_size)
+									{
+										if (data) delete[] data;// TODO: Use custom allocator
+										data = new char[tex_size];
+										data_size = tex_size;
+									}
+									RenderFunc::GetTextureData(tex.get(), (void*&)data);
+									AssetHeader ast_h;
+									ast_h.offset = stream.GetPosition();
+									ast_h.data_size = sizeof(TextureDesc) + tex_size;
+									stream.Write<TextureDesc>(tex_desc);
+									stream.Write(data, tex_size);
+									map.push_back(std::make_pair(id, ast_h));
+								}
+							}
+						}
+						else
+						{
+							TRC_ERROR("Unable to load material, path -> {}", p.string());
+						}
+					}
+				}
+			}
+			if(data) delete[] data;// TODO: Use custom allocator
+		}
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeAnimationClips(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+
+			for (auto entity : entities)
+			{
+				if (entity["AnimationComponent"])
+				{
+					auto comp = entity["AnimationComponent"];
+					if (comp["Anim Graph"])
+					{
+						Ref<AnimationGraph> res;
+						UUID id = comp["Anim Graph"].as<uint64_t>();
+
+						std::filesystem::path p = GetPathFromUUID(id);
+						res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
+						if (res) {}
+						else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+						if (res)
+						{
+							std::vector<AnimationState>& states = res->GetStates();
+							for (AnimationState& state : states)
+							{
+								if (state.GetAnimationClip())
+								{
+									Ref<AnimationClip> clip = state.GetAnimationClip();
+									AnimationsSerializer::SerializeAnimationClip(clip,  stream,  map);
+								}
+							}
+						}
+						else
+						{
+							TRC_ERROR("Unable to load anim_graph, path -> {}", p.string());
+						}
+
+						
+					}
+				}
+
+			}
+
+		}
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeAnimationGraphs(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+
+			for (auto entity : entities)
+			{
+				if (entity["AnimationComponent"])
+				{
+					auto comp = entity["AnimationComponent"];
+					if (comp["Anim Graph"])
+					{
+						Ref<AnimationGraph> res;
+						UUID id = comp["Anim Graph"].as<uint64_t>();
+						auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+							{
+								return i.first == id;
+							});
+
+						if (it == map.end())
+						{
+							std::filesystem::path p = GetPathFromUUID(id);
+							res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
+							if (res) {}
+							else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+							if (res)
+							{
+								AnimationsSerializer::SerializeAnimationGraph(res, stream, map);
+							}
+							else
+							{
+								TRC_ERROR("Unable to load anim_graph, path -> {}", p.string());
+							}
+						}
+					}
+				}
+			}
+
+		}
+
+		return true;
 	}
 
 }

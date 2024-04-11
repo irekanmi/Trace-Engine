@@ -2,6 +2,8 @@
 
 #include "core/FileSystem.h"
 #include "ProjectSerializer.h"
+#include "serialize/FileStream.h"
+
 #include "yaml_util.h"
 
 namespace trace {
@@ -12,9 +14,9 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Project Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Project Name" << YAML::Value << project->GetName();
+		emit << YAML::Key << "Project Name" << YAML::Value << project->GetProjectName();
 
-		if (!project->GetStartScene().empty())
+		if (project->GetStartScene() != 0)
 		{
 			emit << YAML::Key << "Start Scene" << YAML::Value << project->GetStartScene();
 		}
@@ -58,13 +60,22 @@ namespace trace {
 
 		Project* res = new Project(); // TODO: Use custom allocator
 		res->SetName(project_name);
-		if (data["Start Scene"]) res->SetStartScene(data["Start Scene"].as<std::string>());
+		if (data["Start Scene"])
+		{
+			UUID id = data["Start Scene"].as<uint64_t>();
+			res->SetStartScene(id);
+		}
 		res->current_directory = p.string();
 		res->assets_directory = (p / "Assets").string();
 		res->assembly_path = (p / ("Data/Assembly/" + project_name + ".dll")).string();
+		res->m_path = file_path;
 
 		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ }};
 
 		return result;
 	}
+
+
+
+	
 }
