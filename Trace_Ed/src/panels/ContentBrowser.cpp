@@ -15,6 +15,7 @@
 #include "InspectorPanel.h"
 #include "resource/AnimationsManager.h"
 #include "serialize/AnimationsSerializer.h"
+#include "core/Utils.h"
 
 #include "imgui.h"
 #include "glm/glm.hpp"
@@ -325,31 +326,89 @@ namespace trace {
 		all_id_path.clear();
 
 		//TEMP: Find a better way to identify default data
+		uint64_t def_id0 = 1;
+		uint64_t def_id1 = 1;
+		all_files_id["albedo_map"] = def_id0++;
+		all_files_id["specular_map"] = def_id0++;
+		all_files_id["normal_map"] = def_id0++;
 
-		all_files_id["albedo_map"] = 1;
-		all_files_id["specular_map"] = 2;
-		all_files_id["normal_map"] = 3;
+		all_files_id["Cube"] = def_id0++;
+		all_files_id["Sphere"] = def_id0++;
 
-		all_files_id["Cube"] = 4;
-		all_files_id["Sphere"] = 5;
+		all_files_id["default"] = def_id0++;
+		all_files_id["Plane"] = def_id0++;
 
-		all_files_id["default"] = 6;
-		all_files_id["Plane"] = 7;
+		all_files_id["gbuffer_pipeline"] = def_id0++;
+		all_files_id["skybox_pipeline"] = def_id0++;
+		all_files_id["light_pipeline"] = def_id0++;
+		all_files_id["quad_batch_pipeline"] = def_id0++;
+		all_files_id["text_batch_pipeline"] = def_id0++;
+		all_files_id["text_pipeline"] = def_id0++;
+		all_files_id["debug_line_pipeline"] = def_id0++;
 
-		all_files_id["gbuffer_pipeline"] = 8;
+		all_id_path[def_id1++] = "albedo_map";
+		all_id_path[def_id1++] = "specular_map";
+		all_id_path[def_id1++] = "normal_map";
 
-		all_id_path[1] = "albedo_map";
-		all_id_path[2] = "specular_map";
-		all_id_path[3] = "normal_map";
+		all_id_path[def_id1++] = "Cube";
+		all_id_path[def_id1++] = "Sphere";
 
-		all_id_path[4] = "Cube";
-		all_id_path[5] = "Sphere";
-
-		all_id_path[6] = "default";
-		all_id_path[7] = "Plane";
-		all_id_path[8] = "gbuffer_pipeline";
+		all_id_path[def_id1++] = "default";
+		all_id_path[def_id1++] = "Plane";
+		all_id_path[def_id1++] = "gbuffer_pipeline";
+		all_id_path[def_id1++] = "skybox_pipeline";
+		all_id_path[def_id1++] = "light_pipeline";
+		all_id_path[def_id1++] = "quad_batch_pipeline";
+		all_id_path[def_id1++] = "text_batch_pipeline";
+		all_id_path[def_id1++] = "text_pipeline";
+		all_id_path[def_id1++] = "debug_line_pipeline";
 
 		//::-----::
+
+		bool dirty_ids = false;
+
+		// Adding builtin Shaders ================
+		std::string shader_dir;
+		FindDirectory(AppSettings::exe_path, "assets/shaders", shader_dir);
+		for (auto p : std::filesystem::directory_iterator(shader_dir))
+		{
+			std::filesystem::path path = p.path();
+			if (std::filesystem::is_directory(path))
+			{
+				for (auto r : std::filesystem::recursive_directory_iterator(path))
+				{
+					if (std::filesystem::is_regular_file(r.path()) && path.extension().string() != ".shcode")
+					{
+						std::string filename = r.path().filename().string();
+						auto it = all_files_id.find(filename);
+						if (it == all_files_id.end())
+						{
+							dirty_ids = true;
+							all_files_id[filename] = UUID::GenUUID();
+						}
+						UUID id = all_files_id[filename];
+						all_id_path[id] = r.path();
+					}
+				}
+			}
+			else if (std::filesystem::is_regular_file(path) && path.extension().string() != ".shcode")
+			{
+				std::string filename = path.filename().string();
+				auto it = all_files_id.find(filename);
+				if (it == all_files_id.end())
+				{
+					dirty_ids = true;
+					all_files_id[filename] = UUID::GenUUID();
+				}
+				UUID id = all_files_id[filename];
+				all_id_path[id] = path;
+			}
+
+
+		}
+
+		// =======================================
+
 
 		std::filesystem::path db_path = std::filesystem::path(m_editor->current_project->current_directory) / "InternalAssetsDB";
 		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
@@ -431,7 +490,6 @@ namespace trace {
 			}
 
 		}
-		bool dirty_ids = false;
 		for (auto p : std::filesystem::directory_iterator(m_editor->current_project->assets_directory))
 		{
 			std::filesystem::path path = p.path();

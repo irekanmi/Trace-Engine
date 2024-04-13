@@ -5,6 +5,7 @@
 #include "serialize/AssetsInfo.h"
 #include "serialize/SceneSerializer.h"
 #include "scene/Entity.h"
+#include "resource/PipelineManager.h"
 
 namespace trace {
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
@@ -25,6 +26,14 @@ namespace trace {
 		std::filesystem::create_directory(out_path / "Data");
 		int bin_id;
 
+		/*
+		* appinfo.trbin
+		*  '-> Trace_version
+		*  '-> build_version
+		*  '-> project_name_size
+		*  '-> project_name
+		*  '-> start_scene
+		*/
 		// App Info -----------------------------------------------------------------
 		FileStream app_info(output_dir + "/Meta/appinfo.trbin", FileMode::WRITE);
 		bin_id = TRC_APP_INFO_ID;
@@ -38,9 +47,15 @@ namespace trace {
 		int name_size = project_name.length() + 1;
 		app_info.Write(name_size);
 		app_info.Write(project_name.data(), name_size);
+		uint64_t start_scene = project->GetStartScene();
+		app_info.Write<uint64_t>(start_scene);
 		// ------------------------------------------------------------------------------
 
-
+		/*
+		* astdb.trbin
+		*  '-> assets db size
+		*  '-> assets db data
+		*/
 		// Assets DB -----------------------------------------------------------------
 		FileStream ast_db(output_dir + "/Meta/astdb.trbin", FileMode::WRITE);
 		bin_id = TRC_ASSETS_DB_ID;
@@ -82,11 +97,31 @@ namespace trace {
 		FileStream animg_bin(output_dir + "/Data/tranimg.trbin", FileMode::WRITE);
 		bin_id = TRC_ANIMATION_GRAPH_ID;
 		animg_bin.Write(bin_id);
+		FileStream shd_bin(output_dir + "/Data/trshd.trbin", FileMode::WRITE);
+		bin_id = TRC_SHADER_ID;
+		shd_bin.Write(bin_id);
+		FileStream fnt_bin(output_dir + "/Data/trfnt.trbin", FileMode::WRITE);
+		bin_id = TRC_FONT_ID;
+		fnt_bin.Write(bin_id);
+		FileStream mdl_bin(output_dir + "/Data/trmdl.trbin", FileMode::WRITE);
+		bin_id = TRC_MODEL_ID;
+		mdl_bin.Write(bin_id);
+		FileStream mat_bin(output_dir + "/Data/trmat.trbin", FileMode::WRITE);
+		bin_id = TRC_MATERIAL_ID;
+		mat_bin.Write(bin_id);
+		FileStream pip_bin(output_dir + "/Data/trpip.trbin", FileMode::WRITE);
+		bin_id = TRC_PIPELINE_ID;
+		pip_bin.Write(bin_id);
 
 		std::vector<std::pair<UUID, AssetHeader>> scn_map;
 		std::vector<std::pair<UUID, AssetHeader>> tex_map;
 		std::vector<std::pair<UUID, AssetHeader>> animc_map;
 		std::vector<std::pair<UUID, AssetHeader>> animg_map;
+		std::vector<std::pair<UUID, AssetHeader>> shd_map;
+		std::vector<std::pair<UUID, AssetHeader>> fnt_map;
+		std::vector<std::pair<UUID, AssetHeader>> mdl_map;
+		std::vector<std::pair<UUID, AssetHeader>> pip_map;
+		std::vector<std::pair<UUID, AssetHeader>> mat_map;
 
 		for (auto& i : scenes)
 		{
@@ -113,8 +148,93 @@ namespace trace {
 			SceneSerializer::SerializeTextures(tex_bin, tex_map, file_data);
 			SceneSerializer::SerializeAnimationClips(animc_bin, animc_map, file_data);
 			SceneSerializer::SerializeAnimationGraphs(animg_bin, animg_map, file_data);
+			SceneSerializer::SerializeFonts(fnt_bin, fnt_map, file_data);
+			SceneSerializer::SerializeMaterials(mat_bin, mat_map, file_data);
+			SceneSerializer::SerializeModels(mdl_bin, mdl_map, file_data);
+
+			SceneSerializer::SerializePipelines(pip_bin, pip_map, file_data);
+
+			SceneSerializer::SerializeShaders(shd_bin, shd_map, file_data);
+
 
 		}
+		PipelineManager::get_instance()->BuildDefaultPipelines(pip_bin, pip_map);
+		PipelineManager::get_instance()->BuildDefaultPipelineShaders(shd_bin, shd_map);
+
+		/*
+		* buildpck.trbin
+		*  '-> assets type count
+		*   for each asset type
+		*    '-> asset type
+		*    '-> asset entry size
+		*    '-> asset entry data
+		*/
+		// Build Pack -------------------------------------------------------
+		FileStream pck_db(output_dir + "/Meta/astdb.trbin", FileMode::WRITE);
+		bin_id = TRC_ASSETS_DB_ID;
+		pck_db.Write(bin_id);
+
+		int assets_type_count = 8;
+		pck_db.Write<int>(assets_type_count);
+
+		int map_size = 0;
+
+		map_size = scn_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_SCENE_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(scn_map.data(), map_size);
+
+		map_size = tex_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_TEXTURE_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(tex_map.data(), map_size);
+		
+		map_size = animc_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_ANIMATION_CLIP_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(animc_map.data(), map_size);
+
+		map_size = animg_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_ANIMATION_GRAPH_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(animg_map.data(), map_size);
+
+		map_size = shd_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_SHADER_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(shd_map.data(), map_size);
+
+		map_size = fnt_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_FONT_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(fnt_map.data(), map_size);
+
+		map_size = mdl_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_MODEL_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(mdl_map.data(), map_size);
+
+		map_size = pip_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_PIPELINE_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(pip_map.data(), map_size);
+
+		map_size = mat_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		bin_id = TRC_MATERIAL_ID;
+		pck_db.Write(bin_id);
+		pck_db.Write(map_size);
+		pck_db.Write(mat_map.data(), map_size);
+
+
+		// ------------------------------------------------------------------
 
 		return true;
 	}

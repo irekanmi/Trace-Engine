@@ -21,6 +21,11 @@ namespace trace {
 		static bool SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
 		static bool SerializeAnimationClips(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
 		static bool SerializeAnimationGraphs(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
+		static bool SerializeFonts(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
+		static bool SerializeModels(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
+		static bool SerializeMaterials(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
+		static bool SerializePipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
+		static bool SerializeShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
 
 	private:
 		

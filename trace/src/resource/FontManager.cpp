@@ -112,11 +112,11 @@ namespace trace {
 		std::string name = p.filename().string();
 		Ref<Font> result;
 		Font* _font = nullptr;
-		uint32_t hash = hashTable.Get(name);
-		if (hash != INVALID_ID)
+		result = GetFont(name);
+		if (result)
 		{
 			TRC_WARN("{} font has been loaded", name);
-			return GetFont(name);
+			return result;
 		}
 
 		uint32_t i = 0;

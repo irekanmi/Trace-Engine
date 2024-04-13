@@ -124,6 +124,84 @@ namespace trace {
 		return true;
 	}
 
+	/*
+	* Pipeline
+	*  '-> vertex_shader_id
+	*  '-> fragment_shader_id
+	*  '-> PipelineStateDesc
+	*/
+	bool PipelineSerializer::Serialize(Ref<GPipeline> pipeline, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	{
+		if (!pipeline)
+		{
+			TRC_WARN("Pass in a valid pipeline, Function -> {}", __FUNCTION__);
+			return false;
+		}
+
+
+		UUID id = GetUUIDFromName(pipeline->GetName());
+		auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+			{
+				return i.first == id;
+			});
+
+		if (it == map.end())
+		{
+			AssetHeader ast_h;
+			ast_h.offset = stream.GetPosition();
+			PipelineStateDesc ds = pipeline->GetDesc();
+			Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
+			Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
+			uint64_t vertex_shader_id = GetUUIDFromName(ds.vertex_shader->GetName());
+			uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
+			stream.Write<uint64_t>(vertex_shader_id);
+			stream.Write<uint64_t>(pixel_shader_id);
+			stream.Write<PipelineStateDesc>(ds);
+
+			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+			map.push_back(std::make_pair(id, ast_h));
+		}
+
+		return true;
+	}
+
+	/*
+	* Shader
+	*  '-> shader_size
+	*  '-> shader_code
+	*/
+	bool PipelineSerializer::SerializeShader(Ref<GShader> shader, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	{
+		if (!shader)
+		{
+			TRC_WARN("Pass in a valid shader, Function -> {}", __FUNCTION__);
+			return false;
+		}
+
+
+		UUID id = GetUUIDFromName(shader->GetName());
+		auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+			{
+				return i.first == id;
+			});
+
+		if (it == map.end())
+		{
+			AssetHeader ast_h;
+			ast_h.offset = stream.GetPosition();
+			uint32_t shader_size = shader->GetCode().size();
+			stream.Write<uint32_t>(shader_size);
+			stream.Write(shader->GetCode().data(), shader_size * sizeof(uint32_t));
+
+			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+			map.push_back(std::make_pair(id, ast_h));
+		}
+
+		return true;
+	}
+
 	Ref<GPipeline> PipelineSerializer::Deserialize(const std::string& file_path)
 	{
 		Ref<GPipeline> result;

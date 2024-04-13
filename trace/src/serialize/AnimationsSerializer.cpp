@@ -67,6 +67,20 @@ namespace trace {
 		return true;
 	}
 
+	/*
+	* Animation Clip
+	*  '-> duration
+	*  '-> sample_rate
+	*  '-> group_count
+	*   for each group
+	*    '-> UUID
+	*    '-> track_count
+	*     for each track
+	*      '-> channel_type
+	*      '-> frame_data_count
+	*       for each frame data
+	*        '-> Animation Frame data
+	*/
 	bool AnimationsSerializer::SerializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
 	{
 		if (!clip)
@@ -224,6 +238,16 @@ namespace trace {
 		return true;
 	}
 
+	/*
+	* Animation Graph
+	*  '-> start_index
+	*  '-> state_count
+	*   for each state
+	*    '-> name_size
+	*    '-> name_data
+	*    '-> clip_id
+	*    '-> loop
+	*/
 	bool AnimationsSerializer::SerializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
 	{
 		if (!graph)

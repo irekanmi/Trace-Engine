@@ -13,8 +13,10 @@
 #include "resource/TextureManager.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
+#include "serialize/PipelineSerializer.h"
 #include "scripting/ScriptEngine.h"
 #include "backends/Renderutils.h"
+#include "resource/ShaderManager.h"
 
 #include <functional>
 #include <unordered_map>
@@ -762,6 +764,11 @@ namespace trace {
 		return scene;
 	}
 
+	/*
+	* Texture
+	*  '-> TextureDesc
+	*  '-> texture_data
+	*/
 	bool SceneSerializer::SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
 	{
 		YAML::Node data = YAML::Load(scn_data);
@@ -806,9 +813,9 @@ namespace trace {
 								RenderFunc::GetTextureData(res.get(),(void*&) data);
 								AssetHeader ast_h;
 								ast_h.offset = stream.GetPosition();
-								ast_h.data_size = sizeof(TextureDesc) + tex_size;
 								stream.Write<TextureDesc>(tex_desc);
 								stream.Write(data, tex_size);
+								ast_h.data_size = stream.GetPosition() - ast_h.offset;
 								map.push_back(std::make_pair(id, ast_h));
 							}
 							else
@@ -854,9 +861,9 @@ namespace trace {
 									RenderFunc::GetTextureData(tex.get(), (void*&)data);
 									AssetHeader ast_h;
 									ast_h.offset = stream.GetPosition();
-									ast_h.data_size = sizeof(TextureDesc) + tex_size;
 									stream.Write<TextureDesc>(tex_desc);
 									stream.Write(data, tex_size);
+									ast_h.data_size = stream.GetPosition() - ast_h.offset;
 									map.push_back(std::make_pair(id, ast_h));
 								}
 							}
@@ -974,6 +981,264 @@ namespace trace {
 			}
 
 		}
+
+		return true;
+	}
+
+	/*
+	* Font
+	*  '-> file_size
+	*  '-> file_data
+	*/
+	bool SceneSerializer::SerializeFonts(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (!entities) return false;
+
+		for (auto entity : entities)
+		{
+			if (entity["TextComponent"])
+			{
+				auto comp = entity["TextComponent"];
+				if (comp["Font file_id"])
+				{
+					Ref<Font> res;
+					UUID id = comp["Font file_id"].as<uint64_t>();
+					auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+						{
+							return i.first == id;
+						});
+					if (it == map.end())
+					{
+						std::filesystem::path p = GetPathFromUUID(id);
+						FileHandle file_handle;
+						if (FileSystem::open_file(p.string(), (FileMode)(FileMode::READ | FileMode::BINARY), file_handle))
+						{
+							AssetHeader ast_h;
+							ast_h.offset = stream.GetPosition();
+							uint32_t file_size = 0;
+							FileSystem::read_all_bytes(file_handle, nullptr, file_size);
+							stream.Write<uint32_t>(file_size);
+							char* font_data = new char[file_size];// TODO: Use custom allocator
+							FileSystem::read_all_bytes(file_handle, font_data, file_size);
+							stream.Write(font_data, file_size);
+							delete[] font_data;// TODO: Use custom allocator
+							ast_h.data_size = stream.GetPosition() - ast_h.offset;
+							FileSystem::close_file(file_handle);
+
+							map.push_back(std::make_pair(id, ast_h));
+						}
+						else
+						{
+							TRC_ERROR("Failed to open font file, path -> {}", p.string());
+						}
+					}
+				}
+
+			}
+		}
+
+
+		return true;
+	}
+
+	/*
+	* Model
+	*  '-> vertex_count
+	*  '-> vertices
+	*  '-> index_count
+	*  '-> indicies
+	*/
+	bool SceneSerializer::SerializeModels(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			for (auto entity : entities)
+			{
+				if (entity["ModelComponent"])
+				{
+					auto comp = entity["ModelComponent"];
+					if (comp["file id"])
+					{
+						UUID id = comp["file id"].as<uint64_t>();
+						auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+							{
+								return i.first == id;
+							});
+						if (it == map.end())
+						{
+							Ref<Model> res = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+							AssetHeader ast_h;
+							ast_h.offset = stream.GetPosition();
+							std::vector<Vertex>& verticies = res->GetVertices();
+							std::vector<uint32_t>& indices = res->GetIndices();
+							int vertex_count = verticies.size();
+							int index_count = indices.size();
+							stream.Write<int>(vertex_count);
+							stream.Write(verticies.data(), vertex_count * sizeof(Vertex));
+							stream.Write<int>(index_count);
+							stream.Write(indices.data(), index_count * sizeof(uint32_t));
+							ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+							map.push_back(std::make_pair(id, ast_h));
+						}
+
+					}
+
+				}
+			}
+		}
+
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeMaterials(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			for (auto entity : entities)
+			{
+				if (entity["ModelRendererComponent"])
+				{
+					auto comp = entity["ModelRendererComponent"];
+					if (comp["file id"])
+					{
+						Ref<MaterialInstance> res;
+						UUID id = comp["file id"].as<uint64_t>();
+						std::filesystem::path p = GetPathFromUUID(id);
+						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+						if (res) {}
+						else
+						{
+							res = MaterialSerializer::Deserialize(p.string());
+						}
+						if (res) MaterialSerializer::Serialize(res, stream, map);
+						else
+						{
+							TRC_ERROR("Failed to load material, path -> {}", p.string());
+						}
+					}
+
+				}
+			}
+		}
+
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializePipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			for (auto entity : entities)
+			{
+				if (entity["ModelRendererComponent"])
+				{
+					auto comp = entity["ModelRendererComponent"];
+					if (comp["file id"])
+					{
+						Ref<MaterialInstance> res;
+						UUID id = comp["file id"].as<uint64_t>();
+						std::filesystem::path p = GetPathFromUUID(id);
+						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+						if (res) {}
+						else
+						{
+							res = MaterialSerializer::Deserialize(p.string());
+						}
+						if (res)
+						{
+							PipelineSerializer::Serialize(res->GetRenderPipline(), stream, map);
+						}
+						else
+						{
+							TRC_ERROR("Failed to load material, path -> {}", p.string());
+						}
+					}
+
+				}
+			}
+		}
+
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	{
+		YAML::Node data = YAML::Load(scn_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
+			return false;
+		}
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			for (auto entity : entities)
+			{
+				if (entity["ModelRendererComponent"])
+				{
+					auto comp = entity["ModelRendererComponent"];
+					if (comp["file id"])
+					{
+						Ref<MaterialInstance> res;
+						UUID id = comp["file id"].as<uint64_t>();
+						std::filesystem::path p = GetPathFromUUID(id);
+						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+						if (res) {}
+						else
+						{
+							res = MaterialSerializer::Deserialize(p.string());
+						}
+						if (res)
+						{
+							Ref<GPipeline> pipeline = res->GetRenderPipline();
+							PipelineStateDesc ds = pipeline->GetDesc();
+							Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
+							Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
+							PipelineSerializer::SerializeShader(vert, stream, map);
+							PipelineSerializer::SerializeShader(frag, stream, map);
+						}
+						else
+						{
+							TRC_ERROR("Failed to load material, path -> {}", p.string());
+						}
+					}
+
+				}
+			}
+		}
+
 
 		return true;
 	}

@@ -19,6 +19,7 @@
 #include "glm/glm.hpp"
 #include "backends/Renderutils.h"
 #include "render/ShaderParser.h"
+#include "serialize/FileStream.h"
 //======================
 
 

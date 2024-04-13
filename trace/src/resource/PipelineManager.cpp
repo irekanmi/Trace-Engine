@@ -8,8 +8,6 @@
 #include "render/ShaderParser.h"
 #include "backends/Renderutils.h"
 #include "ShaderManager.h"
-
-
 #include "serialize/PipelineSerializer.h"
 
 namespace trace {
@@ -156,6 +154,43 @@ namespace trace {
 		RenderFunc::DestroyPipeline(pipeline);
 		pipeline->~GPipeline();
 
+	}
+	bool PipelineManager::BuildDefaultPipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	{
+
+
+		for (GPipeline& _p : m_pipelines)
+		{
+			if (_p.m_id != INVALID_ID)
+			{
+				Ref<GPipeline> pipeline = { &_p, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
+				PipelineSerializer::Serialize(pipeline, stream, map);
+
+			}
+			
+		}
+
+		return true;
+	}
+	bool PipelineManager::BuildDefaultPipelineShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	{
+
+
+		for (GPipeline& _p : m_pipelines)
+		{
+			if (_p.m_id != INVALID_ID)
+			{
+				Ref<GPipeline> pipeline = { &_p, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
+				PipelineStateDesc ds = pipeline->GetDesc();
+				Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
+				Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
+				PipelineSerializer::SerializeShader(vert, stream, map);
+				PipelineSerializer::SerializeShader(frag, stream, map);
+			}
+
+		}
+
+		return false;
 	}
 	bool PipelineManager::LoadDefaults()
 	{

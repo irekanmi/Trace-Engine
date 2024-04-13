@@ -4,9 +4,14 @@
 #include "core/Enums.h"
 #include "HashTable.h"
 #include "Ref.h"
-#include <stdint.h>
 #include "render/Graphics.h"
 #include "render/GPipeline.h"
+#include "scene/UUID.h"
+#include "serialize/FileStream.h"
+#include "serialize/AssetsInfo.h"
+
+
+#include <stdint.h>
 
 namespace trace {
 
@@ -27,6 +32,8 @@ namespace trace {
 		Ref<GPipeline> GetDefault(const std::string& name);
 		bool RecreatePipeline(Ref<GPipeline> pipeline, PipelineStateDesc desc);
 		void Unload(GPipeline* pipeline);
+		bool BuildDefaultPipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
+		bool BuildDefaultPipelineShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
 
 		bool LoadDefaults();
 
