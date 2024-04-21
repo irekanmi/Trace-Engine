@@ -1,8 +1,13 @@
 #include "pch.h"
 
 #include "ModelManager.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
+#include "serialize/FileStream.h"
 
 namespace trace {
+
+	extern std::string GetNameFromUUID(UUID uuid);
 
 	ModelManager* ModelManager::s_instance = nullptr;
 
@@ -125,6 +130,60 @@ namespace trace {
 
 		model->m_id = INVALID_ID;
 		model->Release();
+	}
+	Ref<Model> ModelManager::LoadModel_Runtime(UUID id)
+	{
+		std::string name = GetNameFromUUID(id);
+		Ref<Model> result;
+		Model* _model = nullptr;
+
+		auto it = m_assetMap.find(id);
+		if (it == m_assetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		result = GetModel(name);
+		if (result)
+		{
+			TRC_WARN("{} model has already been loaded", name);
+			return result;
+		}
+		for (uint32_t i = 0; i < m_numModelUnits; i++)
+		{
+			if (m_models[i].m_id == INVALID_ID)
+			{
+				std::string bin_dir;
+				FindDirectory(AppSettings::exe_path, "Data/trmdl.trbin", bin_dir);
+				FileStream stream(bin_dir, FileMode::READ);
+
+				stream.SetPosition(it->second.offset);
+
+				int vertex_count = 0;
+				stream.Read<int>(vertex_count);
+				std::vector<Vertex> vertices;
+				vertices.resize(vertex_count);
+				stream.Read(vertices.data(), vertex_count * sizeof(Vertex));
+
+				int index_count = 0;
+				stream.Read<int>(index_count);
+				std::vector<uint32_t> indices;
+				indices.resize(index_count);
+				stream.Read(indices.data(), index_count * sizeof(uint32_t));
+				
+
+				m_models[i].Init(vertices, indices);
+				m_models[i].m_id = i;
+				m_hashtable.Set(name, i);
+				_model = &m_models[i];
+				break;
+			}
+
+		}
+
+		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
+		return result;
 	}
 	ModelManager* ModelManager::get_instance()
 	{

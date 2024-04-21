@@ -3,6 +3,7 @@
 #include "resource/Ref.h"
 #include "render/GPipeline.h"
 #include "FileStream.h"
+#include "MemoryStream.h"
 #include "AssetsInfo.h"
 #include "scene/UUID.h"
 

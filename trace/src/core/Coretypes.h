@@ -73,6 +73,7 @@ namespace trace {
 		static PlatformAPI platform_api;
 		static bool enable_vsync;
 		static bool windowed;
+		static bool is_editor;
 		static std::string exe_path;
 	};
 

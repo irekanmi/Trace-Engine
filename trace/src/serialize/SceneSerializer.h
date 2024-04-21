@@ -17,6 +17,7 @@ namespace trace {
 
 		static bool Serialize(Ref<Scene> scene, const std::string& file_path);
 		static Ref<Scene> Deserialize( const std::string& file_path);
+		static bool Deserialize(Ref<Scene> scene, FileStream& stream, AssetHeader& header);
 
 		static bool SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);
 		static bool SerializeAnimationClips(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);

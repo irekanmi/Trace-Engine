@@ -128,7 +128,18 @@ namespace trace {
 	* Pipeline
 	*  '-> vertex_shader_id
 	*  '-> fragment_shader_id
-	*  '-> PipelineStateDesc
+	*  '-> InputLayout stride
+	*  '-> InputLayout class
+	*  '-> InputLayout element_count
+	*  '-> InputLayout elements
+	*  '-> RasterizerState
+	*  '-> DepthStencilState
+	*  '-> ColorBlendState
+	*  '-> PRIMITIVETOPOLOGY
+	*  '-> Viewport
+	*  '-> uint32_t subpass_index
+	*  '-> pass_name_lenght
+	*  '-> pass_name_data
 	*/
 	bool PipelineSerializer::Serialize(Ref<GPipeline> pipeline, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
 	{
@@ -156,7 +167,31 @@ namespace trace {
 			uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
 			stream.Write<uint64_t>(vertex_shader_id);
 			stream.Write<uint64_t>(pixel_shader_id);
-			stream.Write<PipelineStateDesc>(ds);
+
+			uint32_t input_layout_stride = ds.input_layout.stride;
+			stream.Write<uint32_t>(input_layout_stride);
+			stream.Write<InputClassification>(ds.input_layout.input_class);
+			int input_layout_element_count = ds.input_layout.elements.size();
+			stream.Write<int>(input_layout_element_count);
+			stream.Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+
+			stream.Write<RasterizerState>(ds.rasteriser_state);
+
+			stream.Write<DepthStencilState>(ds.depth_sten_state);
+
+			stream.Write<ColorBlendState>(ds.blend_state);
+
+			stream.Write<PRIMITIVETOPOLOGY>(ds.topology);
+
+			stream.Write<Viewport>(ds.view_port);
+
+			stream.Write<uint32_t>(ds.subpass_index);
+
+
+			std::string pass_name = Renderer::get_instance()->GetRenderPassName(ds.render_pass);
+			int pass_name_lenght = pass_name.length() + 1;
+			stream.Write<int>(pass_name_lenght);
+			stream.Write(pass_name.data(), pass_name_lenght);
 
 			ast_h.data_size = stream.GetPosition() - ast_h.offset;
 
@@ -168,6 +203,7 @@ namespace trace {
 
 	/*
 	* Shader
+	*  '-> shader_stage
 	*  '-> shader_size
 	*  '-> shader_code
 	*/
@@ -190,6 +226,8 @@ namespace trace {
 		{
 			AssetHeader ast_h;
 			ast_h.offset = stream.GetPosition();
+			int shader_stage = shader->GetShaderStage();
+			stream.Write<int>(shader_stage);
 			uint32_t shader_size = shader->GetCode().size();
 			stream.Write<uint32_t>(shader_size);
 			stream.Write(shader->GetCode().data(), shader_size * sizeof(uint32_t));
@@ -322,5 +360,7 @@ namespace trace {
 
 		return result;
 	}
+
+
 
 }

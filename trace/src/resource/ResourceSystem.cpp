@@ -105,5 +105,15 @@ namespace trace {
 
 		return result;
 	}
+
+	bool ResourceSystem::LoadDefaults_Runtime()
+	{
+		bool result = true;
+
+		result = result && PipelineManager::get_instance()->LoadDefaults_Runtime();
+		TRC_ASSERT(result, "Failed to load default pipelines");
+
+		return result;
+	}
 	
 }

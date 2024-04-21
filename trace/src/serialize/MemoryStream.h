@@ -15,6 +15,7 @@ namespace trace {
 		void Write(void* data, uint32_t size);
 		void SetPosition(uint32_t pos);
 		uint32_t GetPosition() { return m_pos; }
+		char* GetData() { return m_data; }
 
 		template<typename T>
 		void Read(T& value)

@@ -4,10 +4,14 @@
 #include "backends/Renderutils.h"
 #include "render/ShaderParser.h"
 #include "core/FileSystem.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
+#include "serialize/FileStream.h"
 
 namespace trace {
 
 	ShaderManager* ShaderManager::s_instance = nullptr;
+	extern std::string GetNameFromUUID(UUID uuid);
 
 	bool ShaderManager::Init(uint32_t max_shader_units)
 	{
@@ -24,21 +28,12 @@ namespace trace {
 			m_shaders[i].m_id = INVALID_ID;
 		}
 
-		// Trying to determine directory where shaders are located..............
-		std::filesystem::path current_search_path("./assets");
+		if (AppSettings::is_editor)
+		{
 
-		if (std::filesystem::exists(current_search_path))
-		{
-			current_search_path /= "shaders";
-			if (std::filesystem::exists(current_search_path))
-			{
-				shader_resource_path = current_search_path;
-			}
-		}
-		else if (std::filesystem::exists(std::filesystem::path("../../assets")))
-		{
-			current_search_path.clear();
-			current_search_path = std::filesystem::path("../../assets");
+			// Trying to determine directory where shaders are located..............
+			std::filesystem::path current_search_path("./assets");
+
 			if (std::filesystem::exists(current_search_path))
 			{
 				current_search_path /= "shaders";
@@ -47,34 +42,47 @@ namespace trace {
 					shader_resource_path = current_search_path;
 				}
 			}
-		}
-		else if (std::filesystem::exists(std::filesystem::path("../../../assets")))
-		{
-			current_search_path.clear();
-			current_search_path = std::filesystem::path("../../../assets");
-			if (std::filesystem::exists(current_search_path))
+			else if (std::filesystem::exists(std::filesystem::path("../../assets")))
 			{
-				current_search_path /= "shaders";
+				current_search_path.clear();
+				current_search_path = std::filesystem::path("../../assets");
 				if (std::filesystem::exists(current_search_path))
 				{
-					shader_resource_path = current_search_path;
+					current_search_path /= "shaders";
+					if (std::filesystem::exists(current_search_path))
+					{
+						shader_resource_path = current_search_path;
+					}
 				}
 			}
-		}
-		else
-		{
-			current_search_path.clear();
-			current_search_path = std::filesystem::path("../assets");
-			if (std::filesystem::exists(current_search_path))
+			else if (std::filesystem::exists(std::filesystem::path("../../../assets")))
 			{
-				current_search_path /= "shaders";
+				current_search_path.clear();
+				current_search_path = std::filesystem::path("../../../assets");
 				if (std::filesystem::exists(current_search_path))
 				{
-					shader_resource_path = current_search_path;
+					current_search_path /= "shaders";
+					if (std::filesystem::exists(current_search_path))
+					{
+						shader_resource_path = current_search_path;
+					}
 				}
 			}
+			else
+			{
+				current_search_path.clear();
+				current_search_path = std::filesystem::path("../assets");
+				if (std::filesystem::exists(current_search_path))
+				{
+					current_search_path /= "shaders";
+					if (std::filesystem::exists(current_search_path))
+					{
+						shader_resource_path = current_search_path;
+					}
+				}
+			}
+			// .............................
 		}
-		// .............................
 
 		return true;
 	}
@@ -175,6 +183,68 @@ namespace trace {
 	void ShaderManager::UnloadShader(GShader* shader)
 	{
 		// TODO: Implement Shader Unloading
+	}
+
+	Ref<GShader> ShaderManager::LoadShader_Runtime(UUID id)
+	{
+
+
+		std::string name = GetNameFromUUID(id);
+		Ref<GShader> result;
+		GShader* _shad = nullptr;
+
+		auto it = m_assetMap.find(id);
+		if (it == m_assetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		result = GetShader(name);
+		if (result)
+		{
+			TRC_WARN("Shader {} already exists", name);
+			return result;
+		}
+
+
+
+		uint32_t i = 0;
+		for (GShader& shader : m_shaders)
+		{
+			if (shader.m_id == INVALID_ID)
+			{
+				std::string bin_dir;
+				FindDirectory(AppSettings::exe_path, "Data/trshd.trbin", bin_dir);
+				FileStream stream(bin_dir, FileMode::READ);
+
+				stream.SetPosition(it->second.offset);
+				int shader_stage = -1;
+				stream.Read<int>(shader_stage);
+
+
+				int shader_size = 0;
+				std::vector<uint32_t> code;
+				stream.Read<int>(shader_size);
+				code.resize(shader_size);
+				stream.Read(code.data(), shader_size * sizeof(uint32_t));
+
+
+				if (RenderFunc::CreateShader(&shader, code, (ShaderStage)shader_stage))
+				{
+					shader.m_id = i;
+					m_hashTable.Set(name, i);
+					_shad = &shader;
+					break;
+				}
+				TRC_ERROR("Failed to create shader => {}", name);
+				break;
+			}
+			i++;
+		}
+
+		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
+		return result;
 	}
 
 	ShaderManager* ShaderManager::get_instance()

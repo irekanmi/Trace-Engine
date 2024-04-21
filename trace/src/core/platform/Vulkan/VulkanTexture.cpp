@@ -399,6 +399,24 @@ namespace vk {
 		trace::VKCommmandBuffer cmd_buf;
 		vk::_BeginCommandBufferSingleUse(_device, _device->m_graphicsCommandPool, &cmd_buf);
 
+		VkImageSubresourceRange range = {};
+		range.aspectMask = aspect_flags;
+		range.baseArrayLayer = 0;
+		range.baseMipLevel = 0;
+		range.layerCount = 1;
+		range.levelCount = 1;
+
+		vk::_TransitionImageLayout(
+			_instance,
+			_device,
+			&cmd_buf,
+			_handle,
+			vk::convertFmt(desc.m_format),
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			range
+		);
+
 		VkBufferImageCopy copy = {};
 		copy.imageOffset = { 0, 0, 0 };
 		copy.imageExtent = { desc.m_width, desc.m_height, 1 };
@@ -413,10 +431,21 @@ namespace vk {
 		vkCmdCopyImageToBuffer(
 			cmd_buf.m_handle,
 			_handle->m_handle,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,//TODO: Textures should know there current layout
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,//TODO: Textures should know there current layout
 			staging_buffer.m_handle,
 			1,
 			&copy
+		);
+
+		vk::_TransitionImageLayout(
+			_instance,
+			_device,
+			&cmd_buf,
+			_handle,
+			vk::convertFmt(desc.m_format),
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			range
 		);
 
 

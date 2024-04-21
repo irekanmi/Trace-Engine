@@ -2,6 +2,8 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "serialize/AssetsInfo.h"
+#include "scene/UUID.h"
 
 #include "render/Font.h"
 #include "HashTable.h"
@@ -23,6 +25,11 @@ namespace trace {
 		Ref<Font> GetFont(const std::string& name);
 		std::string GetFontResourcePath() { return font_resource_path.string(); }
 		void UnloadFont(Font* font);
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
+		Ref<Font> LoadFont_Runtime(UUID id);
 
 		static FontManager* get_instance();
 
@@ -31,6 +38,7 @@ namespace trace {
 		HashTable<uint32_t> hashTable;
 		uint32_t m_numEntries;
 		std::filesystem::path font_resource_path;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
 		static FontManager* s_instance;
 

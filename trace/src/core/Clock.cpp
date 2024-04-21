@@ -12,7 +12,11 @@ namespace trace {
 	}
 	void Clock::Begin()
 	{
-		start_time = std::chrono::system_clock::now();
+		if (!started)
+		{
+			start_time = std::chrono::system_clock::now();
+			started = true;
+		}
 	}
 	void Clock::Tick()
 	{
@@ -23,6 +27,7 @@ namespace trace {
 	}
 	float Clock::GetElapsedTime()
 	{
+		if (!started) Begin();
 		auto now = std::chrono::system_clock::now();
 		return std::chrono::duration<float>(now - start_time).count();
 	}

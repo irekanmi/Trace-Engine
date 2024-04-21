@@ -5,6 +5,9 @@
 #include "render/GShader.h"
 #include "Ref.h"
 #include "HashTable.h"
+#include "serialize/AssetsInfo.h"
+#include "scene/UUID.h"
+
 #include <string>
 #include <filesystem>
 
@@ -24,6 +27,13 @@ namespace trace {
 		Ref<GShader> CreateShader(const std::string& name, ShaderStage shader_stage);
 		Ref<GShader> CreateShader_(const std::string& path, ShaderStage shader_stage);
 		void UnloadShader(GShader* shader);
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
+		Ref<GShader> LoadShader_Runtime(UUID id);
+
+
 		std::string GetShaderResourcePath() { return shader_resource_path.string(); }
 
 		static ShaderManager* get_instance();
@@ -36,6 +46,7 @@ namespace trace {
 		uint32_t m_numShaderUnits;
 		std::vector<GShader> m_shaders;
 		HashTable<uint32_t> m_hashTable;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
 		std::filesystem::path shader_resource_path;
 
 		static ShaderManager* s_instance;

@@ -4,6 +4,8 @@
 #include "Scene.h"
 #include "resource/Ref.h"
 #include "resource/HashTable.h"
+#include "UUID.h"
+#include "serialize/AssetsInfo.h"
 
 namespace trace {
 
@@ -20,12 +22,18 @@ namespace trace {
 		Ref<Scene> CreateScene_(const std::string& file_path);
 
 		void UnloadScene(Scene* scene);
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
+		Ref<Scene> LoadScene_Runtime(UUID id);
 
 		static SceneManager* get_instance();
 	private:
 		std::vector<Scene> m_scenes;
 		HashTable<uint32_t> m_hashTable;
 		uint32_t m_entries = 0;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
 		static SceneManager* s_instance;
 	protected:

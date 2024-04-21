@@ -1,16 +1,21 @@
 #include "pch.h"
 #include "TextureManager.h"
 #include "backends/Renderutils.h"
-#include <new>
 #include "core/Platform.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
+#include "serialize/FileStream.h"
 
+
+
+#include <new>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 namespace trace {
 
 	TextureManager* TextureManager::s_instance = nullptr;
-
+	extern std::string GetNameFromUUID(UUID uuid);
 
 
 	TextureManager::TextureManager()
@@ -398,6 +403,84 @@ namespace trace {
 
 		TRC_WARN("Can't release a texture that hasn't been loaded please ensure texture is loaded");
 		return;
+	}
+
+	Ref<GTexture> TextureManager::LoadTexture_Runtime(UUID id)
+	{
+		Ref<GTexture> result;
+		GTexture* _tex = nullptr;
+		
+		auto it = m_assetMap.find(id);
+		if (it == m_assetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		std::string name = GetNameFromUUID(id);
+		result = GetTexture(name);
+		if (result)
+		{
+			TRC_WARN("Texture {} already exists", name);
+			return result;
+		}
+
+		uint32_t i = 0;
+		for (GTexture& tex : m_textures)
+		{
+			if (tex.m_id == INVALID_ID)
+			{
+				std::string bin_dir;
+				FindDirectory(AppSettings::exe_path, "Data/trtex.trbin", bin_dir);
+				FileStream stream(bin_dir, FileMode::READ);
+
+				stream.SetPosition(it->second.offset);
+				TextureDesc desc;
+				stream.Read<uint32_t>(desc.m_width);
+				stream.Read<uint32_t>(desc.m_height);
+				stream.Read<uint32_t>(desc.m_mipLevels);
+
+
+				stream.Read<Format>(desc.m_format);
+
+				stream.Read<BindFlag>(desc.m_flag);
+
+				stream.Read<UsageFlag>(desc.m_usage);
+
+				stream.Read<uint32_t>(desc.m_channels);
+				stream.Read<uint32_t>(desc.m_numLayers);
+
+				stream.Read<ImageType>(desc.m_image_type);
+
+				stream.Read<AddressMode>(desc.m_addressModeU);
+				stream.Read<AddressMode>(desc.m_addressModeV);
+				stream.Read<AddressMode>(desc.m_addressModeW);
+
+				stream.Read<FilterMode>(desc.m_minFilterMode);
+				stream.Read<FilterMode>(desc.m_magFilterMode);
+
+				stream.Read<AttachmentType>(desc.m_attachmentType);
+				int tex_size = desc.m_width * desc.m_height * getFmtSize(desc.m_format);
+				unsigned char* data = new unsigned char[tex_size];// TODO: Use custom allocator
+				stream.Read(data, tex_size);
+				std::vector<unsigned char*> _d;
+				_d.push_back(data);
+				desc.m_data = std::move(_d);
+
+				RenderFunc::CreateTexture(&tex, desc);
+				delete[] desc.m_data[0];// TODO: Use custom allocator
+				tex.m_id = i;
+				TextureHash _hash;
+				_hash._id = i;
+				_tex = &m_textures[_hash._id];
+				m_hashTable.Set(name, _hash);
+				break;
+			}
+			i++;
+		}
+
+		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
+		return result;
 	}
 
 	bool TextureManager::LoadDefaultTextures()

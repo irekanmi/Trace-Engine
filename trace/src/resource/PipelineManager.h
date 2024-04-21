@@ -32,10 +32,17 @@ namespace trace {
 		Ref<GPipeline> GetDefault(const std::string& name);
 		bool RecreatePipeline(Ref<GPipeline> pipeline, PipelineStateDesc desc);
 		void Unload(GPipeline* pipeline);
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
+		Ref<GPipeline> LoadPipeline_Runtime(UUID id);
+
 		bool BuildDefaultPipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
 		bool BuildDefaultPipelineShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
 
 		bool LoadDefaults();
+		bool LoadDefaults_Runtime();
 
 		static PipelineManager* get_instance();
 	private:
@@ -47,6 +54,7 @@ namespace trace {
 		uint32_t m_numEntries;
 		uint32_t m_pipelineTypeSize;
 		HashTable<uint32_t> m_hashtable;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
 		Ref<GPipeline> skybox_pipeline;
 		Ref<GPipeline> light_pipeline;
 		Ref<GPipeline> gbuffer_pipeline;

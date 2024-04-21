@@ -2,8 +2,12 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
-#include <stdint.h>
 #include "HashTable.h"
+#include "serialize/AssetsInfo.h"
+#include "scene/UUID.h"
+
+
+#include <stdint.h>
 
 
 namespace trace {
@@ -24,6 +28,11 @@ namespace trace {
 		bool RecreateMaterial(Ref<MaterialInstance> mat, Ref<GPipeline> pipeline);
 		void Unload(MaterialInstance* material);
 		bool LoadDefaults();
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
+		Ref<MaterialInstance> LoadMaterial_Runtime(UUID id);
 
 		static MaterialManager* get_instance();
 	private:
@@ -34,6 +43,7 @@ namespace trace {
 		Ref<MaterialInstance> default_material;
 		uint32_t m_numEntries;
 		HashTable<uint32_t> m_hashtable;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
 	protected:
 	};

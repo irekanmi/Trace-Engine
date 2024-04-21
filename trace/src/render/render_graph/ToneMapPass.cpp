@@ -14,7 +14,7 @@
 
 namespace trace {
 
-
+	extern UUID GetUUIDFromName(const std::string& name);
 
 	void ToneMapPass::Init(Renderer* renderer)
 	{
@@ -51,7 +51,7 @@ namespace trace {
 			m_renderer->_avaliable_passes["TONEMAP_PASS"] = &m_renderPass;
 		};
 
-
+		if(AppSettings::is_editor)
 		{
 			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
 			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("tone_map.frag.glsl", ShaderStage::PIXEL_SHADER);
@@ -83,7 +83,12 @@ namespace trace {
 				return;
 			}
 
-		};
+		}
+		else
+		{
+			UUID id = GetUUIDFromName("tone_map_pass_pipeline");
+			m_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		}
 
 	}
 

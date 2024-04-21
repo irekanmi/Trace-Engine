@@ -13,7 +13,7 @@
 
 
 namespace trace {
-
+	extern UUID GetUUIDFromName(const std::string& name);
 
 
 	void LightingPass::Init(Renderer* renderer)
@@ -66,6 +66,7 @@ namespace trace {
 			output_desc = color;
 		}
 
+		if(AppSettings::is_editor)
 		{
 			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
 			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("lighting.frag.glsl", ShaderStage::PIXEL_SHADER);
@@ -98,7 +99,12 @@ namespace trace {
 			}
 
 
-		};
+		}
+		else
+		{
+			UUID id = GetUUIDFromName("lighting_pass_pipeline");
+			m_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		}
 
 	}
 

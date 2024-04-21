@@ -3,6 +3,7 @@
 #include "AnimationsSerializer.h"
 #include "core/FileSystem.h"
 #include "resource/AnimationsManager.h"
+#include "MemoryStream.h"
 
 #include "yaml_util.h"
 
@@ -200,6 +201,65 @@ namespace trace {
 		return result;
 	}
 
+	void AnimationsSerializer::DeserializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, AssetHeader& header)
+	{
+
+		if (!clip)
+		{
+			TRC_WARN("Invalid Clip");
+			return;
+		}
+
+		char* data = new char[header.data_size];// TODO: Use custom allocator
+
+		stream.SetPosition(header.offset);
+		stream.Read(data, header.data_size);
+
+		MemoryStream mem_stream(data, header.data_size);
+		float duration = 0.0f;
+		mem_stream.Read<float>(duration);
+		clip->SetDuration(duration);
+
+		int sample_rate = 0;
+		mem_stream.Read<int>(sample_rate);
+		clip->SetSampleRate(sample_rate);
+
+
+		int group_count = 0;
+		mem_stream.Read<int>(group_count);
+
+		std::unordered_map<UUID, std::vector<AnimationTrack>>& groups = clip->GetTracks();
+
+		for (int i = 0; i < group_count; i++)
+		{
+			UUID g_id = 0;
+			mem_stream.Read<UUID>(g_id);
+			int track_count = 0;
+			mem_stream.Read<int>(track_count);
+			std::vector<AnimationTrack> tracks;
+			for (int j = 0; j < track_count; j++)
+			{
+				AnimationTrack track;
+				int channel_type = -1;
+				mem_stream.Read<int>(channel_type);
+				track.channel_type = (AnimationDataType)channel_type;
+				int frame_data_count = 0;
+				mem_stream.Read<int>(frame_data_count);
+				track.channel_data.resize(frame_data_count);
+
+				mem_stream.Read(track.channel_data.data(), frame_data_count * sizeof(AnimationFrameData));
+				tracks.emplace_back(track);
+			}
+
+			groups[g_id] = std::move(tracks);
+
+		}
+
+		delete[] data;// TODO: Use custom allocator
+
+
+	}
+
 	bool AnimationsSerializer::SerializeAnimationGraph(Ref<AnimationGraph> graph, const std::string& file_path)
 	{
 		YAML::Emitter emit;
@@ -353,6 +413,55 @@ namespace trace {
 		result = graph;
 
 		return result;
+	}
+
+	void AnimationsSerializer::DeserializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, AssetHeader& header)
+	{
+
+		if (!graph)
+		{
+			TRC_WARN("Invalid Animation Graph");
+			return;
+		}
+
+		char* data = new char[header.data_size];// TODO: Use custom allocator
+
+		stream.SetPosition(header.offset);
+		stream.Read(data, header.data_size);
+
+		MemoryStream mem_stream(data, header.data_size);
+		int start_index = -1;
+		mem_stream.Read<int>(start_index);
+		graph->start_index = start_index;
+
+		int state_count = 0;
+		mem_stream.Read<int>(state_count);
+
+		std::vector<AnimationState>& states = graph->GetStates();
+		char buf[512] = {0};// NOTE: Assuming that name_size would not be greater than 512
+		for (int i = 0; i < state_count; i++)
+		{
+			AnimationState state;
+			int name_size = 0;
+			mem_stream.Read<int>(name_size);
+			mem_stream.Read(buf, name_size);
+			std::string& name = state.GetName();
+			name = buf;
+
+			UUID clip_id = 0;
+			mem_stream.Read<UUID>(clip_id);
+			Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_Runtime(clip_id);
+			state.SetAnimationClip(clip);
+
+			bool loop = false;
+			mem_stream.Read<bool>(loop);
+			state.SetLoop(loop);
+
+			states.emplace_back(state);
+
+		}
+
+		delete[] data;// TODO: Use custom allocator
 	}
 
 }

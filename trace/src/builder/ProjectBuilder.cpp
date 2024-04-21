@@ -6,6 +6,18 @@
 #include "serialize/SceneSerializer.h"
 #include "scene/Entity.h"
 #include "resource/PipelineManager.h"
+#include "resource/AnimationsManager.h" 
+#include "resource/FontManager.h" 
+#include "resource/MaterialManager.h" 
+#include "resource/MeshManager.h" 
+#include "resource/ModelManager.h" 
+#include "resource/ShaderManager.h" 
+#include "resource/TextureManager.h" 
+#include "core/Coretypes.h"
+#include "core/Utils.h"
+#include "scene/SceneManager.h"
+
+#include "serialize/yaml_util.h"
 
 namespace trace {
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
@@ -16,14 +28,14 @@ namespace trace {
 		bool result = true;
 
 		std::filesystem::path out_path(output_dir);
-		if (!std::filesystem::exists(out_path) || !std::filesystem::is_empty(out_path))
+		if (!std::filesystem::exists(out_path) /*|| !std::filesystem::is_empty(out_path)*/)
 		{
 			TRC_ERROR("Failed to build project, ensure path exists and empty: {}", output_dir);
 			return false;
 		}
 
-		std::filesystem::create_directory(out_path / "Meta");
-		std::filesystem::create_directory(out_path / "Data");
+		if (!std::filesystem::exists(out_path / "Meta")) std::filesystem::create_directory(out_path / "Meta");
+		if (!std::filesystem::exists(out_path / "Data")) std::filesystem::create_directory(out_path / "Data");
 		int bin_id;
 
 		/*
@@ -78,8 +90,133 @@ namespace trace {
 
 		// ----------------------------------------------------------------------------
 
+		build_project_data(project, output_dir, scenes);
 		
 		return result;
+	}
+
+	bool ProjectBuilder::LoadAssetsDB(std::unordered_map<std::string, UUID>& file_ids, std::unordered_map<UUID, std::string>& id_names)
+	{
+		std::string astdb_path;
+		FindDirectory(AppSettings::exe_path, "Meta/astdb.trbin", astdb_path);
+
+		FileStream stream(astdb_path, FileMode::READ);
+		int bin_id = 0;
+		stream.Read<int>(bin_id);
+		if (bin_id != (int)(TRC_ASSETS_DB_ID))
+		{
+			TRC_ERROR("file is not a valid app info data, path -> {}", astdb_path);
+			return false;
+		}
+
+		int db_size = 0;
+		stream.Read<int>(db_size);
+		char* data = new char[db_size];// TODO: Use custom allocator
+		stream.Read(data, db_size);
+		std::string db_data = data;
+		delete[] data;// TODO: Use custom allocator
+
+		YAML::Node _data = YAML::Load(db_data);
+
+		YAML::Node DATA = _data["DATA"];
+		for (auto i : DATA)
+		{
+			std::string filename = i["Name"].as<std::string>();
+			UUID id = i["UUID"].as<uint64_t>();
+			file_ids[filename] = id;
+			id_names[id] = filename;
+		}
+
+		return true;
+	}
+
+	bool ProjectBuilder::LoadBuildPack()
+	{
+		std::string pack_path;
+		FindDirectory(AppSettings::exe_path, "Meta/buildpck.trbin", pack_path);
+
+		FileStream stream(pack_path, FileMode::READ);
+		int bin_id = 0;
+		stream.Read<int>(bin_id);
+		if (bin_id != (int)(TRC_BUILD_PACK_ID))
+		{
+			TRC_ERROR("file is not a valid app info data, path -> {}", pack_path);
+			return false;
+		}
+
+		int asset_type_count = 0;
+		stream.Read<int>(asset_type_count);
+
+		for (int i = 0; i < asset_type_count; i++)
+		{
+			int asset_type = 0;
+			stream.Read<int>(asset_type);
+			std::unordered_map<UUID, AssetHeader> map;
+			std::vector<std::pair<UUID, AssetHeader>> arr_map;
+
+			int map_size = 0;
+			stream.Read<int>(map_size);
+			arr_map.resize(map_size / sizeof(std::pair<UUID, AssetHeader>));
+			stream.Read(arr_map.data(), map_size);
+
+			for (auto& ast_h : arr_map)
+				map.emplace(ast_h);
+
+			switch (asset_type)
+			{
+			case TRC_SCENE_ID:
+			{				
+				SceneManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_SHADER_ID:
+			{				
+				ShaderManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_TEXTURE_ID:
+			{				
+				TextureManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_FONT_ID:
+			{				
+				FontManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_MATERIAL_ID:
+			{				
+				MaterialManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_MODEL_ID:
+			{				
+				ModelManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_PIPELINE_ID:
+			{				
+				PipelineManager::get_instance()->SetAssetMap(map);
+				break;
+			}
+			case TRC_ANIMATION_CLIP_ID:
+			{				
+				AnimationsManager::get_instance()->SetClipsAssetMap(map);
+				break;
+			}
+			case TRC_ANIMATION_GRAPH_ID:
+			{				
+				AnimationsManager::get_instance()->SetGraphsAssetMap(map);
+				break;
+			}
+			}
+
+			
+		}
+
+		
+
+		return true;
 	}
 
 	bool ProjectBuilder::build_project_data(Ref<Project> project, std::string output_dir, std::unordered_set<std::filesystem::path>& scenes)
@@ -138,9 +275,9 @@ namespace trace {
 			AssetHeader scn_header;
 			scn_header.offset = scn_bin.GetPosition();
 			int scn_size = file_data.length() + 1;
-			scn_header.data_size = scn_size;
 
 			scn_bin.Write(file_data.data(), scn_size);
+			scn_header.data_size = scn_bin.GetPosition() - scn_header.offset;
 			std::pair<UUID, AssetHeader> scn_pair = std::make_pair(GetUUIDFromName(i.filename().string()), scn_header);
 			scn_map.push_back(scn_pair);
 
@@ -170,11 +307,11 @@ namespace trace {
 		*    '-> asset entry data
 		*/
 		// Build Pack -------------------------------------------------------
-		FileStream pck_db(output_dir + "/Meta/astdb.trbin", FileMode::WRITE);
-		bin_id = TRC_ASSETS_DB_ID;
+		FileStream pck_db(output_dir + "/Meta/buildpck.trbin", FileMode::WRITE);
+		bin_id = TRC_BUILD_PACK_ID;
 		pck_db.Write(bin_id);
 
-		int assets_type_count = 8;
+		int assets_type_count = 9;
 		pck_db.Write<int>(assets_type_count);
 
 		int map_size = 0;

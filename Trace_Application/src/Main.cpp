@@ -1,41 +1,41 @@
 
 #include <trace.h>
 #include <core/EntryPoint.h> // TODO: Find the reason why we can't add it in the trace header
+#include "TraceGame.h"
 #include "scene/Entity.h"
-#include "scene/Scene.h"
-#include "TraceEditor.h"
 
 using namespace trace;
 
 
 void Start()
 {
-	TraceEditor::get_instance()->Init();
+	TraceGame::get_instance()->Start();
 }
 
 void Update(float deltaTime)
 {
-	TraceEditor::get_instance()->Update(deltaTime);
+	TraceGame::get_instance()->Update(deltaTime);
 }
 
 
 void Render(float deltaTime)
 {
-	TraceEditor::get_instance()->Render(deltaTime);
-	
+	TraceGame::get_instance()->Render(deltaTime);
 }
 
 void End()
 {
-	TraceEditor::get_instance()->Shutdown();
-	TraceEditor* editor = TraceEditor::get_instance();
-	delete editor;
+	TraceGame::get_instance()->End();
+	TraceGame* game = TraceGame::get_instance();
+	delete game;
 }
 
 trace::trc_app_data trace::CreateApp()
 {
+	TraceGame::get_instance()->Init();
+
 	trace::trc_app_data app_data;
-	app_data.winprop = trace::WindowDecl("Trace Editor");
+	app_data.winprop = trace::WindowDecl(TraceGame::get_instance()->GetName());
 	app_data.wintype = trace::WindowType::WIN32_WINDOW;
 	app_data.graphics_api = trace::RenderAPI::Vulkan;
 	app_data.platform_api = trace::PlatformAPI::WINDOWS;
@@ -45,8 +45,7 @@ trace::trc_app_data trace::CreateApp()
 	app_data.client_update = Update;
 	app_data.client_render = Render;
 	app_data.client_end = End;
-	app_data.render_composer = TraceEditor::get_instance()->GetRenderComposer(); // TODO
-	AppSettings::is_editor = true;
+	app_data.render_composer = nullptr; // TODO
 
 
 	return app_data;

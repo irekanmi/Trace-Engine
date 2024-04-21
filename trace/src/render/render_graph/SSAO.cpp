@@ -16,6 +16,9 @@
 
 
 namespace trace {
+
+	extern UUID GetUUIDFromName(const std::string& name);
+
 	void SSAO::Init(Renderer* renderer)
 	{
 
@@ -73,6 +76,7 @@ namespace trace {
 
 		};
 
+		if(AppSettings::is_editor)
 		{
 			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
 			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("ssao_main.frag.glsl", ShaderStage::PIXEL_SHADER);
@@ -136,7 +140,14 @@ namespace trace {
 				return;
 			}
 
-		};
+		}
+		else
+		{
+			UUID id = GetUUIDFromName("ssao_main_pass_pipeline");
+			m_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			id = GetUUIDFromName("ssao_blur_pass_pipeline");
+			m_blurPipe = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		}
 
 		{
 			std::uniform_real_distribution<float> rand_float(0.0f, 1.0f);

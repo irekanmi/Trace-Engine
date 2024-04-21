@@ -322,3 +322,76 @@ project "TraceScriptLib"
 	objdir ("bin-int/" .. OutputDir .. "/%{prj.name}")
 
 	files "%{prj.name}/Source/**.cs"
+
+
+
+project "Trace_Application"
+	kind "ConsoleApp"
+	language "C++"
+	location "Trace_Application"
+	cppdialect "C++17"
+
+	targetdir ("Data/Build")
+	objdir ("bin-int/" .. OutputDir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/_externals/**.cpp"
+	}
+
+	includedirs
+	{
+		"trace/src",
+		"trace/_externals",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.yaml_cpp}",
+		-- please remove these includes before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
+	}
+
+	libdirs
+	{
+		"externals/libs",
+		-- please remove these lib directory before generating projects, i have issues with my visual studio
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.10150.0\\ucrt\\x64"
+	}
+
+	links
+	{
+		"trace",
+	}
+
+	defines
+	{
+		"TRC_APP",
+	}
+
+	filter "system:windows"
+	
+	defines
+	{
+		"TRC_WINDOWS",
+	}
+
+	
+
+	filter "configurations:Debug"
+		symbols "On"
+		buildoptions "/MD"
+		defines
+		{
+			"TRC_ASSERT_ENABLED",
+			"TRC_DEBUG_BUILD"
+		}
+
+	filter "configurations:Release"
+		optimize "On"
+		defines
+		{
+			"TRC_RELEASE_BUILD"
+		}
+

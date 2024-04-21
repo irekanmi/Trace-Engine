@@ -20,6 +20,7 @@ namespace trace {
 	private:
 		std::chrono::time_point<std::chrono::system_clock> start_time;
 		float elapsedTime;
+		bool started = false;
 
 	protected:
 

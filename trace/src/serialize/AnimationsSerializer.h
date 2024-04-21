@@ -22,10 +22,12 @@ namespace trace {
 		static bool SerializeAnimationClip(Ref<AnimationClip> clip, const std::string& file_path);
 		static bool SerializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
 		static Ref<AnimationClip> DeserializeAnimationClip(const std::string& file_path);
+		static void DeserializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, AssetHeader& header);
 
 		static bool SerializeAnimationGraph(Ref<AnimationGraph> graph, const std::string& file_path);
 		static bool SerializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
 		static Ref<AnimationGraph> DeserializeAnimationGraph(const std::string& file_path);
+		static void DeserializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, AssetHeader& header);
 
 	private:
 

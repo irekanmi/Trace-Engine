@@ -11,6 +11,9 @@
 #include "RenderGraph.h"
 
 namespace trace {
+
+	extern UUID GetUUIDFromName(const std::string& name);
+
 	void BloomPass::Init(Renderer* renderer)
 	{
 		m_renderer = renderer;
@@ -56,116 +59,130 @@ namespace trace {
 			m_renderer->_avaliable_passes["BLOOM_UPSAMPLE_PASS"] = &m_upSamplePass;
 		};
 
+		if (AppSettings::is_editor)
 		{
 
-			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
-
-			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
-			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
-
-			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = VertShader.get();
-			_ds2.pixel_shader = FragShader.get();
-			_ds2.resources = s_res;
-			_ds2.input_layout = {};
-
-
-			AutoFillPipelineDesc(
-				_ds2,
-				false
-			);
-			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_PREFILTER_PASS");
-			_ds2.depth_sten_state = { false, false };
-			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
-
-
-			m_prefilterPipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline");
-			if (!m_prefilterPipeline)
 			{
-				TRC_ERROR("Failed to initialize or create bloom_prefilter_pass_pipeline");
-				return;
-			}
+
+				Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+				Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+				ShaderParser::generate_shader_resources(FragShader.get(), s_res);
+
+				PipelineStateDesc _ds2 = {};
+				_ds2.vertex_shader = VertShader.get();
+				_ds2.pixel_shader = FragShader.get();
+				_ds2.resources = s_res;
+				_ds2.input_layout = {};
 
 
-		};
+				AutoFillPipelineDesc(
+					_ds2,
+					false
+				);
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_PREFILTER_PASS");
+				_ds2.depth_sten_state = { false, false };
+				_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
+
+				m_prefilterPipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline");
+				if (!m_prefilterPipeline)
+				{
+					TRC_ERROR("Failed to initialize or create bloom_prefilter_pass_pipeline");
+					return;
+				}
+
+
+			};
+
+			{
+				Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+				Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+				ShaderParser::generate_shader_resources(FragShader.get(), s_res);
+
+				PipelineStateDesc _ds2 = {};
+				_ds2.vertex_shader = VertShader.get();
+				_ds2.pixel_shader = FragShader.get();
+				_ds2.resources = s_res;
+				_ds2.input_layout = {};
+
+
+				AutoFillPipelineDesc(
+					_ds2,
+					false
+				);
+
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_DOWNSAMPLE_PASS");
+				_ds2.depth_sten_state = { false, false };
+				_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
+
+
+				m_downSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline");
+				if (!m_downSamplePipeline)
+				{
+					TRC_ERROR("Failed to initialize or create bloom_downsample_pass_pipeline");
+					return;
+				}
+
+
+			};
+
+			{
+				Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+				Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+				ShaderParser::generate_shader_resources(FragShader.get(), s_res);
+
+				PipelineStateDesc _ds2 = {};
+				_ds2.vertex_shader = VertShader.get();
+				_ds2.pixel_shader = FragShader.get();
+				_ds2.resources = s_res;
+				_ds2.input_layout = {};
+
+				AutoFillPipelineDesc(
+					_ds2,
+					false
+				);
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_UPSAMPLE_PASS");
+				_ds2.depth_sten_state = { false, false };
+				_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
+				ColorBlendState clr_bld;
+				clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
+				clr_bld.alpha_to_blend_coverage = true;
+				clr_bld.color_op = BlendOp::BLEND_OP_ADD;
+				clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
+				clr_bld.src_alpha = BlendFactor::BLEND_ONE;
+				clr_bld.dst_color = BlendFactor::BLEND_ONE;
+				clr_bld.src_color = BlendFactor::BLEND_ONE;
+				_ds2.blend_state = clr_bld;
+
+
+				m_upSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_upsample_pass_pipeline");
+				if (!m_upSamplePipeline)
+				{
+					TRC_ERROR("Failed to initialize or create bloom_upsample_pass_pipeline");
+					return;
+				}
+
+			};
+		}
+		else
 		{
-			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+		UUID id = GetUUIDFromName("bloom_prefilter_pass_pipeline");
+		m_prefilterPipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		id = GetUUIDFromName("bloom_downsample_pass_pipeline");
+		m_downSamplePipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		id = GetUUIDFromName("bloom_upsample_pass_pipeline");
+		m_upSamplePipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
 
-			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
-			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
-
-			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = VertShader.get();
-			_ds2.pixel_shader = FragShader.get();
-			_ds2.resources = s_res;
-			_ds2.input_layout = {};
-
-
-			AutoFillPipelineDesc(
-				_ds2,
-				false
-			);
-			
-			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_DOWNSAMPLE_PASS");
-			_ds2.depth_sten_state = { false, false };
-			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
-
-
-			m_downSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline");
-			if (!m_downSamplePipeline)
-			{
-				TRC_ERROR("Failed to initialize or create bloom_downsample_pass_pipeline");
-				return;
-			}
-
-
-		};
-
-		{
-			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
-
-			ShaderResources s_res = {};
-			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
-			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
-
-			PipelineStateDesc _ds2 = {};
-			_ds2.vertex_shader = VertShader.get();
-			_ds2.pixel_shader = FragShader.get();
-			_ds2.resources = s_res;
-			_ds2.input_layout = {};
-
-			AutoFillPipelineDesc(
-				_ds2,
-				false
-			);
-			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("BLOOM_UPSAMPLE_PASS");
-			_ds2.depth_sten_state = { false, false };
-			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
-			ColorBlendState clr_bld;
-			clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
-			clr_bld.alpha_to_blend_coverage = true;
-			clr_bld.color_op = BlendOp::BLEND_OP_ADD;
-			clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
-			clr_bld.src_alpha = BlendFactor::BLEND_ONE;
-			clr_bld.dst_color = BlendFactor::BLEND_ONE;
-			clr_bld.src_color = BlendFactor::BLEND_ONE;
-			_ds2.blend_state = clr_bld;
-
-
-			m_upSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_upsample_pass_pipeline");
-			if (!m_upSamplePipeline)
-			{
-				TRC_ERROR("Failed to initialize or create bloom_upsample_pass_pipeline");
-				return;
-			}
-
-		};
+		}
 
 	}
 	void BloomPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)

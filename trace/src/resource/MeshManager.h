@@ -4,6 +4,10 @@
 #include "core/Enums.h"
 #include "render/Mesh.h"
 #include "HashTable.h"
+#include "serialize/AssetsInfo.h"
+#include "scene/UUID.h"
+
+
 #include <filesystem>
 
 
@@ -28,6 +32,10 @@ namespace trace {
 		Ref<Mesh> GetDefault(const std::string& name);
 		std::vector<std::string> GetAllModels(const std::string& path);
 		bool LoadDefaults();
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
 
 		static MeshManager* get_instance();
 	private:
@@ -37,6 +45,7 @@ namespace trace {
 		HashTable<uint32_t> m_hashtable;
 		std::vector<Mesh> m_meshes;
 		uint32_t m_numEntries;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
 		Ref<Mesh> DefaultCube;
 		Ref<Mesh> DefaultSphere;
 		Ref<Mesh> DefaultPlane;

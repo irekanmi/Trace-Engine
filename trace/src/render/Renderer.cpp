@@ -201,6 +201,7 @@ namespace trace {
 		lights.resize(MAX_LIGHT_COUNT);
 		light_data = glm::ivec4(0);
 					
+		text_verts = true;
 
 		exposure = 0.9f;
 		current_sky_box = nullptr;
@@ -214,7 +215,8 @@ namespace trace {
 			m_composer->Init(this);
 		}
 
-		
+
+				
 		//---------------------------------------------------------------------------------------------
 
 		// Quad batch .........................................	
@@ -224,6 +226,14 @@ namespace trace {
 		// Text batch .........................................	
 		create_text_batch();
  		// ..................................................	
+
+
+
+		if (AppSettings::is_editor)
+		{
+			UIFuncLoader::LoadImGuiFunc();
+			UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
+		}
 
 	}
 
@@ -1004,6 +1014,21 @@ namespace trace {
 	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform)
 	{
 		DrawQuad(_transform, texture);
+	}
+
+	std::string Renderer::GetRenderPassName(GRenderPass* pass)
+	{
+		std::string result;
+
+		for (auto& i : _avaliable_passes)
+		{
+			if (i.second == pass)
+			{
+				result = i.first;
+			}
+		}
+
+		return result;
 	}
 
 	CommandList Renderer::BeginCommandList()

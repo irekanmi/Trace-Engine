@@ -111,17 +111,27 @@ namespace trace
 
 	void Application::Start()
 	{
+		m_clock.Begin();
 
 		ApplicationStart app_start;
 		EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
 
+		
+
 		Renderer* renderer = Renderer::get_instance();
 		renderer->Start();
-		ResourceSystem::LoadDefaults();
+		if (AppSettings::is_editor)
+		{
+			ResourceSystem::LoadDefaults();
+		}
+		else ResourceSystem::LoadDefaults_Runtime();
+
 
 		//----------CLIENT--------------//
 		m_client_start();
 		//______________________________//
+
+		
 	}
 	
 	void Application::Run()
@@ -131,9 +141,10 @@ namespace trace
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
 		MemoryManager* mem_manager = MemoryManager::get_instance();
-
 		
-		m_clock.Begin();
+		
+		
+		
 
 		m_lastTime = m_clock.GetElapsedTime();
 

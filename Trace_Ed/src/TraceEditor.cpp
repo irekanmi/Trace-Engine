@@ -21,6 +21,8 @@
 #include "panels/ContentBrowser.h"
 #include "panels/AnimationPanel.h"
 #include "panels/AnimationGraphEditor.h"
+#include "EditorRenderComposer.h"
+#include "builder/ProjectBuilder.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -55,8 +57,7 @@ namespace trace {
 	bool TraceEditor::Init()
 	{
 
-		UIFuncLoader::LoadImGuiFunc();
-		UIFunc::InitUIRenderBackend(Application::get_instance(), Renderer::get_instance());
+		
 		embraceTheDarkness();
 		m_hierachyPanel = new HierachyPanel;
 		m_inspectorPanel = new InspectorPanel;
@@ -264,6 +265,7 @@ namespace trace {
 						ReloadProjectAssembly();
 					}
 					if (ImGui::MenuItem("Settings")) p_projectSettings = true;
+					if (ImGui::MenuItem("Build Project")) BuildProject();
 					ImGui::EndMenu();
 				}
 				if (ImGui::BeginMenu("Settings"))
@@ -1404,6 +1406,30 @@ project "{}"
 
 	}
 
+	void TraceEditor::BuildProject()
+	{
+		if (!current_project) return;
+
+		std::string out_dir;
+		std::string result = pfd::select_folder("Select Directory").result();
+		if (!result.empty())
+		{
+			out_dir = result;
+
+			if (!ProjectBuilder::BuildProject(current_project, out_dir, all_assets.scenes))
+			{
+				TRC_ERROR("Failed to build project");
+				return;
+			}
+			else
+			{
+				TRC_INFO("Project successfully built");
+			}
+		}
+		
+
+	}
+
 	std::filesystem::path GetPathFromUUID(UUID uuid)
 	{
 		//TODO: Add Error Handling
@@ -1416,6 +1442,12 @@ project "{}"
 		TraceEditor* editor = TraceEditor::get_instance();
 		return editor->m_contentBrowser->all_files_id[name];
 	}
+
+	std::string GetNameFromUUID(UUID uuid)
+	{
+		return "";
+	}
+
 }
 
 

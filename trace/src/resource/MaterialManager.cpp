@@ -5,8 +5,16 @@
 #include "TextureManager.h"
 #include "PipelineManager.h"
 #include "backends/Renderutils.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
+#include "serialize/FileStream.h"
+#include "serialize/MemoryStream.h"
+#include "serialize/MaterialSerializer.h"
 
 namespace trace {
+
+
+	extern std::string GetNameFromUUID(UUID uuid);
 
 	MaterialManager* MaterialManager::s_instance = nullptr;
 
@@ -207,6 +215,77 @@ namespace trace {
 		default_material->m_path = "default";
 
 		return true;
+	}
+
+	Ref<MaterialInstance> MaterialManager::LoadMaterial_Runtime(UUID id)
+	{
+		Ref<MaterialInstance> result;
+		auto it = m_assetMap.find(id);
+		if (it == m_assetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		std::string name = GetNameFromUUID(id);
+		MaterialInstance* _mat = nullptr;
+		result = GetMaterial(name);
+		if (result)
+		{
+			TRC_WARN("Material {} already exists", name);
+			return result;
+		}
+
+		
+		uint32_t i = 0;
+		for (MaterialInstance& mat_instance : m_materials)
+		{
+			if (mat_instance.m_id == INVALID_ID)
+			{
+
+				std::string bin_dir;
+				FindDirectory(AppSettings::exe_path, "Data/trmat.trbin", bin_dir);
+				FileStream stream(bin_dir, FileMode::READ);
+
+				stream.SetPosition(it->second.offset);
+				char* data = new char[it->second.data_size];//TODO: Use custom allocator
+				stream.Read(data, it->second.data_size);
+				MemoryStream mem_stream(data, it->second.data_size);
+				UUID pipe_id = 0;
+				mem_stream.Read<UUID>(pipe_id);
+				Ref<GPipeline> pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(pipe_id);
+				auto res = GetPipelineMaterialData(pipeline);
+				mat_instance.m_data.clear();
+				mat_instance.m_data = std::move(res);
+
+				MaterialSerializer::Deserialize(pipeline, &mat_instance, mem_stream);
+
+				delete[] data;//TODO: Use custom allocator
+
+				
+
+				if (!RenderFunc::InitializeMaterial(
+					&mat_instance,
+					pipeline
+				))
+				{
+					TRC_WARN("Failed to initialize material {}", name);
+					return result;
+				}
+				mat_instance.m_id = i;
+				m_hashtable.Set(name, i);
+				_mat = &mat_instance;
+				break;
+			}
+			i++;
+		}
+
+
+		result = { _mat, BIND_RENDER_COMMAND_FN(MaterialManager::Unload) };
+		return result;
+
+
+		return result;
 	}
 
 	MaterialManager* MaterialManager::get_instance()

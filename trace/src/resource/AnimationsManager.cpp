@@ -1,9 +1,15 @@
 #include "pch.h"
 
 #include "AnimationsManager.h"
+#include "serialize/FileStream.h"
+#include "serialize/AnimationsSerializer.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
+
 
 namespace trace {
 
+	extern std::string GetNameFromUUID(UUID uuid);
 
 	AnimationsManager* AnimationsManager::s_instance = nullptr;
 
@@ -179,6 +185,49 @@ namespace trace {
 		clip->GetTracks().clear();
 	}
 
+	Ref<AnimationClip> AnimationsManager::LoadClip_Runtime(UUID id)
+	{
+		Ref<AnimationClip> result;
+		auto it = m_clipAssetMap.find(id);
+		if (it == m_clipAssetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		AnimationClip* _clip = nullptr;
+		std::string name = GetNameFromUUID(id);
+
+		result = GetClip(name);
+		if (result) return result;
+
+		uint32_t i = 0;
+		for (AnimationClip& clip : m_clips)
+		{
+			if (clip.m_id == INVALID_ID)
+			{
+				// TODO: Implement Loading of Animation Clips
+				clip.SetDuration(1.0f);
+				clip.SetSampleRate(30);
+				clip.m_id = i;
+				hashTable.Set(name, i);
+				_clip = &clip;
+				break;
+			}
+
+			i++;
+		}
+
+		result = { _clip, BIND_RENDER_COMMAND_FN(AnimationsManager::UnloadClip) };
+
+		std::string bin_dir;
+		FindDirectory(AppSettings::exe_path, "Data/tranimc.trbin", bin_dir);
+		FileStream stream(bin_dir, FileMode::READ);
+		AnimationsSerializer::DeserializeAnimationClip(result, stream, it->second);
+
+		return result;
+	}
+
 	Ref<AnimationGraph> AnimationsManager::CreateGraph(const std::string& name)
 	{
 		Ref<AnimationGraph> result;
@@ -238,7 +287,7 @@ namespace trace {
 			{
 				// TODO: Implement Loading of Animation Graphs
 				graph.GetStates().clear();
-				graph.currrent_state_index = 0;
+				graph.currrent_state_index = -1;
 				graph.m_id = i;
 				graphHashTable.Set(name, i);
 				_graph = &graph;
@@ -285,6 +334,49 @@ namespace trace {
 
 		graph->m_id = INVALID_ID;
 		graph->GetStates().clear();
+	}
+
+	Ref<AnimationGraph> AnimationsManager::LoadGraph_Runtime(UUID id)
+	{
+		Ref<AnimationGraph> result;
+		auto it = m_graphAssetMap.find(id);
+		if (it == m_graphAssetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		AnimationGraph* _graph = nullptr;
+		std::string name = GetNameFromUUID(id);
+
+		result = GetGraph(name);
+		if (result) return result;
+
+		uint32_t i = 0;
+		for (AnimationGraph& graph : m_graphs)
+		{
+			if (graph.m_id == INVALID_ID)
+			{
+				// TODO: Implement Loading of Animation Graphs
+				graph.GetStates().clear();
+				graph.currrent_state_index = -1;
+				graph.m_id = i;
+				graphHashTable.Set(name, i);
+				_graph = &graph;
+				break;
+			}
+
+			i++;
+		}
+
+		result = { _graph, BIND_RENDER_COMMAND_FN(AnimationsManager::UnloadGraph) };
+
+		std::string bin_dir;
+		FindDirectory(AppSettings::exe_path, "Data/tranimg.trbin", bin_dir);
+		FileStream stream(bin_dir, FileMode::READ);
+		AnimationsSerializer::DeserializeAnimationGraph(result, stream, it->second);
+
+		return result;
 	}
 
 	AnimationsManager* AnimationsManager::get_instance()

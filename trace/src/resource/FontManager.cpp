@@ -3,8 +3,14 @@
 #include "FontManager.h"
 #include "backends/Fontutils.h"
 #include "render/GTexture.h"
+#include "core/Utils.h"
+#include "serialize/AssetsInfo.h"
+#include "serialize/FileStream.h"
+#include "core/Coretypes.h"
 
 namespace trace {
+
+	extern std::string GetNameFromUUID(UUID uuid);
 
 	FontManager* FontManager::s_instance = nullptr;
 
@@ -169,6 +175,63 @@ namespace trace {
 	void FontManager::UnloadFont(Font* font)
 	{
 		// TODO: Destroy unreferenced font
+	}
+
+	Ref<Font> FontManager::LoadFont_Runtime(UUID id)
+	{
+		std::string name = GetNameFromUUID(id);
+		Ref<Font> result;
+
+		auto it = m_assetMap.find(id);
+		if (it == m_assetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		Font* _font = nullptr;
+		result = GetFont(name);
+		if (result)
+		{
+			TRC_WARN("{} font has been loaded", name);
+			return result;
+		}
+
+		uint32_t i = 0;
+		for (Font& font : m_fonts)
+		{
+			if (font.m_id == INVALID_ID)
+			{
+				std::string bin_dir;
+				FindDirectory(AppSettings::exe_path, "Data/trfnt.trbin", bin_dir);
+				FileStream stream(bin_dir, FileMode::READ);
+
+				stream.SetPosition(it->second.offset);
+				int file_size = 0;
+				stream.Read<int>(file_size);
+				char* data = new char[file_size];//TODO: Use Custom Allocator
+				stream.Read(data, file_size);
+
+				if (!FontFunc::LoadAndInitializeFont(name, &font, data, file_size))
+				{
+					TRC_ERROR("Failed to load to font, name->{}", name);
+					delete[] data;//TODO: Use Custom Allocator
+					return result;
+				}
+
+				delete[] data;//TODO: Use Custom Allocator
+				font.SetFontName(name);
+				font.m_id = i;
+				hashTable.Set(name, i);
+				_font = &font;
+				break;
+			}
+
+			i++;
+		}
+
+		result = { _font, BIND_RENDER_COMMAND_FN(FontManager::UnloadFont) };
+		return result;
 	}
 
 	FontManager* FontManager::get_instance()

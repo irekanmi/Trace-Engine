@@ -70,6 +70,12 @@ namespace trace {
 
 			};
 
+			process_callbacks[".trscn"] = [&](std::filesystem::path& path)
+			{
+				m_editor->all_assets.scenes.emplace(path);
+
+			};
+
 			process_callbacks[".glsl"] = [&](std::filesystem::path& path)
 			{
 				m_editor->all_assets.shaders.emplace(path);
@@ -345,6 +351,13 @@ namespace trace {
 		all_files_id["text_batch_pipeline"] = def_id0++;
 		all_files_id["text_pipeline"] = def_id0++;
 		all_files_id["debug_line_pipeline"] = def_id0++;
+		all_files_id["bloom_prefilter_pass_pipeline"] = def_id0++;
+		all_files_id["bloom_downsample_pass_pipeline"] = def_id0++;
+		all_files_id["bloom_upsample_pass_pipeline"] = def_id0++;
+		all_files_id["lighting_pass_pipeline"] = def_id0++;
+		all_files_id["ssao_main_pass_pipeline"] = def_id0++;
+		all_files_id["ssao_blur_pass_pipeline"] = def_id0++;
+		all_files_id["tone_map_pass_pipeline"] = def_id0++;
 
 		all_id_path[def_id1++] = "albedo_map";
 		all_id_path[def_id1++] = "specular_map";
@@ -362,6 +375,13 @@ namespace trace {
 		all_id_path[def_id1++] = "text_batch_pipeline";
 		all_id_path[def_id1++] = "text_pipeline";
 		all_id_path[def_id1++] = "debug_line_pipeline";
+		all_id_path[def_id1++] = "bloom_prefilter_pass_pipeline";
+		all_id_path[def_id1++] = "bloom_downsample_pass_pipeline";
+		all_id_path[def_id1++] = "bloom_upsample_pass_pipeline";
+		all_id_path[def_id1++] = "lighting_pass_pipeline";
+		all_id_path[def_id1++] = "ssao_main_pass_pipeline";
+		all_id_path[def_id1++] = "ssao_blur_pass_pipeline";
+		all_id_path[def_id1++] = "tone_map_pass_pipeline";
 
 		//::-----::
 

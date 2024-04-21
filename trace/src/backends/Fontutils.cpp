@@ -18,6 +18,7 @@
 
 // MSDF -----------------------------------
 bool __MSDF_LoadAndInitializeFont(const std::string & name, trace::Font * font);
+bool __MSDF_LoadAndInitializeFont_Data(const std::string & name, trace::Font * _font, char* data, uint32_t size);
 bool __MSDF_DestroyFont(trace::Font * font);
 bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, uint32_t pos_index, std::vector<glm::vec4>&tex_coords, glm::mat4 & _transform, float tex_index, uint32_t& count);
 bool __MSDF_ComputeTextVertex(trace::Font* font, const std::string & text, std::vector<trace::TextVertex>&text_vertices, glm::mat4 & _transform, glm::vec3& color);
@@ -30,6 +31,7 @@ namespace trace {
 	bool FontFuncLoader::Load_MSDF_Func()
 	{
 		FontFunc::_loadAndInitializeFont = __MSDF_LoadAndInitializeFont;
+		FontFunc::_loadAndInitializeFont_Data = __MSDF_LoadAndInitializeFont_Data;
 		FontFunc::_destroyFont = __MSDF_DestroyFont;
 		FontFunc::_computeTextString = __MSDF_ComputeTextString;
 		FontFunc::_computeTextVertex = __MSDF_ComputeTextVertex;
@@ -37,6 +39,7 @@ namespace trace {
 	}
 
 	__LoadAndInitializeFont FontFunc::_loadAndInitializeFont = nullptr;
+	__LoadAndInitializeFont_Data FontFunc::_loadAndInitializeFont_Data = nullptr;
 	__DestroyFont FontFunc::_destroyFont = nullptr;
 	__ComputeTextString FontFunc::_computeTextString = nullptr;
 	__ComputeTextVertex FontFunc::_computeTextVertex = nullptr;
@@ -45,6 +48,12 @@ namespace trace {
 	{
 		FONT_FUNC_IS_VALID(_loadAndInitializeFont);
 		return _loadAndInitializeFont(name, font);
+	}
+
+	bool FontFunc::LoadAndInitializeFont(const std::string& name, Font* font, char* data, uint32_t size)
+	{
+		FONT_FUNC_IS_VALID(_loadAndInitializeFont_Data);
+		return _loadAndInitializeFont_Data(name, font, data, size);
 	}
 
 	bool FontFunc::DestroyFont(Font* font)
@@ -127,6 +136,56 @@ bool submitAtlasBitmapAndLayout(msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3>
 	return result;
 }
 
+static void load_font_data(msdfgen::FreetypeHandle* ft, msdfgen::FontHandle* font, MSDF_Handle* _internal, bool& success, const std::string& name, trace::Font* _font)
+{
+	// Load a set of character glyphs:
+			// The second argument can be ignored unless you mix different font sizes in one atlas.
+			// In the last argument, you can specify a charset other than ASCII.
+			// To load specific glyph indices, use loadGlyphs instead.
+	int loaded = _internal->fontGeometry.loadCharset(font, 1.0, msdf_atlas::Charset::ASCII);
+	TRC_INFO("Loaded {} glyphs from {}", loaded, name);
+	// Apply MSDF edge coloring. See edge-coloring.h for other coloring strategies.
+	const double maxCornerAngle = 3.0;
+	for (msdf_atlas::GlyphGeometry& glyph : _internal->glyphs)
+		glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, maxCornerAngle, 0);
+	// TightAtlasPacker class computes the layout of the atlas.
+	msdf_atlas::TightAtlasPacker packer;
+	// Set atlas parameters:
+	// setDimensions or setDimensionsConstraint to find the best value
+	packer.setDimensionsConstraint(msdf_atlas::TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_SQUARE);
+	// setScale for a fixed size or setMinimumScale to use the largest that fits
+	//packer.setMinimumScale(24.0);
+	packer.setScale(64.0f);
+	// setPixelRange or setUnitRange
+	packer.setPixelRange(2.0);
+	packer.setMiterLimit(1.0);
+	// Compute atlas layout - pack glyphs
+	packer.pack(_internal->glyphs.data(), _internal->glyphs.size());
+	// Get final atlas dimensions
+	int width = 0, height = 0;
+	packer.getDimensions(width, height);
+	// The ImmediateAtlasGenerator class facilitates the generation of the atlas bitmap.
+	msdf_atlas::ImmediateAtlasGenerator<
+		float, // pixel type of buffer for individual glyphs depends on generator function
+		3, // number of atlas color channels
+		&msdf_atlas::msdfGenerator, // function to generate bitmaps for individual glyphs
+		msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3> // class that stores the atlas bitmap
+		// For example, a custom atlas storage class that stores it in VRAM can be used.
+	> generator(width, height);
+	// GeneratorAttributes can be modified to change the generator's default settings.
+	msdf_atlas::GeneratorAttributes attributes;
+	attributes.scanlinePass = true;
+	attributes.config.overlapSupport = true;
+
+	generator.setAttributes(attributes);
+	generator.setThreadCount(4);
+	// Generate atlas bitmap
+	generator.generate(_internal->glyphs.data(), _internal->glyphs.size());
+	// The atlas bitmap can now be retrieved via atlasStorage as a BitmapConstRef.
+	// The glyphs array (or fontGeometry) contains positioning data for typesetting text.
+	success = submitAtlasBitmapAndLayout(generator.atlasStorage(), _internal->glyphs, name, _font);
+}
+
 bool __MSDF_LoadAndInitializeFont(const std::string& name, trace::Font* _font)
 {
 	if (_font->GetInternal())
@@ -149,52 +208,41 @@ bool __MSDF_LoadAndInitializeFont(const std::string& name, trace::Font* _font)
 	{
 		if (msdfgen::FontHandle* font = msdfgen::loadFont(ft, name.c_str()))
 		{
-			// Load a set of character glyphs:
-			// The second argument can be ignored unless you mix different font sizes in one atlas.
-			// In the last argument, you can specify a charset other than ASCII.
-			// To load specific glyph indices, use loadGlyphs instead.
-			int loaded = _internal->fontGeometry.loadCharset(font, 1.0, msdf_atlas::Charset::ASCII);
-			TRC_INFO("Loaded {} glyphs from {}", loaded, name);
-			// Apply MSDF edge coloring. See edge-coloring.h for other coloring strategies.
-			const double maxCornerAngle = 3.0;
-			for (msdf_atlas::GlyphGeometry& glyph : _internal->glyphs)
-				glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, maxCornerAngle, 0);
-			// TightAtlasPacker class computes the layout of the atlas.
-			msdf_atlas::TightAtlasPacker packer;
-			// Set atlas parameters:
-			// setDimensions or setDimensionsConstraint to find the best value
-			packer.setDimensionsConstraint(msdf_atlas::TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_SQUARE);
-			// setScale for a fixed size or setMinimumScale to use the largest that fits
-			//packer.setMinimumScale(24.0);
-			packer.setScale(64.0f);
-			// setPixelRange or setUnitRange
-			packer.setPixelRange(2.0);
-			packer.setMiterLimit(1.0);
-			// Compute atlas layout - pack glyphs
-			packer.pack(_internal->glyphs.data(), _internal->glyphs.size());
-			// Get final atlas dimensions
-			int width = 0, height = 0;
-			packer.getDimensions(width, height);
-			// The ImmediateAtlasGenerator class facilitates the generation of the atlas bitmap.
-			msdf_atlas::ImmediateAtlasGenerator<
-				float, // pixel type of buffer for individual glyphs depends on generator function
-				3, // number of atlas color channels
-				&msdf_atlas::msdfGenerator, // function to generate bitmaps for individual glyphs
-				msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3> // class that stores the atlas bitmap
-				// For example, a custom atlas storage class that stores it in VRAM can be used.
-			> generator(width, height);
-			// GeneratorAttributes can be modified to change the generator's default settings.
-			msdf_atlas::GeneratorAttributes attributes;
-			attributes.scanlinePass = true;
-			attributes.config.overlapSupport = true;
+			load_font_data(ft, font, _internal, success, name, _font);
+			// Cleanup
+			msdfgen::destroyFont(font);
 
-			generator.setAttributes(attributes);
-			generator.setThreadCount(4);
-			// Generate atlas bitmap
-			generator.generate(_internal->glyphs.data(), _internal->glyphs.size());
-			// The atlas bitmap can now be retrieved via atlasStorage as a BitmapConstRef.
-			// The glyphs array (or fontGeometry) contains positioning data for typesetting text.
-			success = submitAtlasBitmapAndLayout(generator.atlasStorage(), _internal->glyphs, name, _font);
+		}
+		msdfgen::deinitializeFreetype(ft);
+	}
+
+
+	return success;
+}
+
+bool __MSDF_LoadAndInitializeFont_Data(const std::string& name, trace::Font* _font, char* data, uint32_t size)
+{
+	if (_font->GetInternal())
+	{
+		TRC_WARN("{} has already been loaded or _font passed in is invalid, _font->{}  : {}", name, _font->GetInternal(), __FUNCTION__);
+		return false;
+	}
+
+	if (name.empty())
+	{
+		TRC_ERROR("Can't process an empty string, {}", __FUNCTION__);
+		return false;
+	}
+
+	MSDF_Handle* _internal = new MSDF_Handle();
+	_font->SetInternal(_internal);
+
+	bool success = false;
+	if (msdfgen::FreetypeHandle* ft = msdfgen::initializeFreetype())
+	{
+		if (msdfgen::FontHandle* font = msdfgen::loadFontData(ft, (const msdfgen::byte*)data, size))
+		{
+			load_font_data(ft, font, _internal, success, name, _font);
 			// Cleanup
 			msdfgen::destroyFont(font);
 

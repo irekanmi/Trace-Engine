@@ -5,6 +5,7 @@
 #include "render/GTexture.h"
 #include "Ref.h"
 #include "scene/UUID.h"
+#include "serialize/AssetsInfo.h"
 
 
 #include <string>
@@ -40,6 +41,11 @@ namespace trace {
 		Ref<GTexture> LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc, const std::string& name);
 		void UnloadTexture(GTexture* texture);
 		void ReleaseTexture(const std::string& name);
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
+		{
+			m_assetMap = map;
+		}
+		Ref<GTexture> LoadTexture_Runtime(UUID id);
 
 		bool LoadDefaultTextures();
 
@@ -52,10 +58,12 @@ namespace trace {
 
 	private:
 		HashTable<TextureHash> m_hashTable;
-		std::unordered_map<UUID, uint32_t> m_uuidMap; // NOTE: Used to hold resource runtime handle, which allow resources to be queried using there UUID
+		//std::unordered_map<UUID, uint32_t> m_uuidMap; // NOTE: Used to hold resource runtime handle, which allow resources to be queried using there UUID
 		std::vector<GTexture> m_textures;
 		uint32_t m_textureUnits;
 		uint32_t m_textureTypeSize;
+		std::unordered_map<UUID, AssetHeader> m_assetMap;
+
 		Texture_Ref default_diffuse_map;
 		Texture_Ref default_specular_map;
 		Texture_Ref default_normal_map;

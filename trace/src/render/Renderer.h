@@ -80,6 +80,7 @@ namespace trace {
 
 		// Getters
 		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
+		std::string GetRenderPassName(GRenderPass* pass);
 		GDevice* GetDevice() { return &g_device; }
 		GContext* GetContext() { return &g_context; }
 		GSwapchain* GetSwapchain() { return &m_swapChain; }

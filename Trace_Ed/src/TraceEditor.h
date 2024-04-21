@@ -1,7 +1,6 @@
 #pragma once
+
 #include "EditorRenderComposer.h"
-
-
 
 #include "project/Project.h"
 #include <filesystem>
@@ -105,6 +104,7 @@ namespace trace {
 		bool LoadProject(const std::string& file_path);
 		bool CloseProject();
 		void ReloadProjectAssembly();
+		void BuildProject();
 
 		void ProjectSettings();
 

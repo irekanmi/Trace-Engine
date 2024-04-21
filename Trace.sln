@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestApp", "TestApp\TestApp.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraceScriptLib", "TraceScriptLib\TraceScriptLib.csproj", "{E02D5DF3-CCFB-50F9-B58F-C11FA1FC2C5E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Trace_Application", "Trace_Application\Trace_Application.vcxproj", "{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "trace", "trace\trace.vcxproj", "{94477210-005C-9AC1-C9DD-3D2135B196F2}"
 EndProject
 Global
@@ -34,6 +36,12 @@ Global
 		{E02D5DF3-CCFB-50F9-B58F-C11FA1FC2C5E}.Public|x64.Build.0 = Public|x64
 		{E02D5DF3-CCFB-50F9-B58F-C11FA1FC2C5E}.Release|x64.ActiveCfg = Release|x64
 		{E02D5DF3-CCFB-50F9-B58F-C11FA1FC2C5E}.Release|x64.Build.0 = Release|x64
+		{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}.Debug|x64.ActiveCfg = Debug|x64
+		{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}.Debug|x64.Build.0 = Debug|x64
+		{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}.Public|x64.ActiveCfg = Public|x64
+		{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}.Public|x64.Build.0 = Public|x64
+		{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}.Release|x64.ActiveCfg = Release|x64
+		{67C3281D-D3D9-26B3-1C51-B2D488A6F73A}.Release|x64.Build.0 = Release|x64
 		{94477210-005C-9AC1-C9DD-3D2135B196F2}.Debug|x64.ActiveCfg = Debug|x64
 		{94477210-005C-9AC1-C9DD-3D2135B196F2}.Debug|x64.Build.0 = Debug|x64
 		{94477210-005C-9AC1-C9DD-3D2135B196F2}.Public|x64.ActiveCfg = Public|x64

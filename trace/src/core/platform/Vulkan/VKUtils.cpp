@@ -1011,6 +1011,24 @@ namespace vk {
 			src_stage_flag = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dst_stage_flag = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
+		else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		{
+			image_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			image_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			//TODO Check docs for more info
+			src_stage_flag = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			dst_stage_flag = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else if (old_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+		{
+			image_barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			image_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+			//TODO Check docs for more info
+			src_stage_flag = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			dst_stage_flag = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}
 		else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
 			image_barrier.srcAccessMask = 0;
@@ -1881,7 +1899,7 @@ namespace vk {
 		if (buffer_info.m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
 			memory_property |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-			usage_flag |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			usage_flag |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		}
 
 		if (buffer_info.m_usageFlag == trace::UsageFlag::DEFAULT)

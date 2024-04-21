@@ -9,8 +9,14 @@
 #include "backends/Renderutils.h"
 #include "ShaderManager.h"
 #include "serialize/PipelineSerializer.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
 
 namespace trace {
+
+	extern std::string GetNameFromUUID(UUID uuid);
+	extern std::filesystem::path GetPathFromUUID(UUID uuid);
+	extern UUID GetUUIDFromName(const std::string& name);
 
 	PipelineManager* PipelineManager::s_instance = nullptr;
 
@@ -154,6 +160,94 @@ namespace trace {
 		RenderFunc::DestroyPipeline(pipeline);
 		pipeline->~GPipeline();
 
+	}
+	Ref<GPipeline> PipelineManager::LoadPipeline_Runtime(UUID id)
+	{
+		Ref<GPipeline> result;
+		GPipeline* _pipe = nullptr;
+
+		auto it = m_assetMap.find(id);
+		if (it == m_assetMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+		std::string name = GetNameFromUUID(id);
+		result = GetPipeline(name);
+		if (result)
+		{
+			TRC_WARN("{} name has already been created", name);
+			return result;
+		}
+		for (uint32_t i = 0; i < m_numEntries; i++)
+		{
+			if (m_pipelines[i].m_id == INVALID_ID)
+			{
+				std::string bin_dir;
+				FindDirectory(AppSettings::exe_path, "Data/trpip.trbin", bin_dir);
+				FileStream stream(bin_dir, FileMode::READ);
+
+				stream.SetPosition(it->second.offset);
+				UUID vert_id = 0;
+				stream.Read<UUID>(vert_id);
+				UUID frag_id = 0;
+				stream.Read<UUID>(frag_id);
+				PipelineStateDesc desc;
+				desc.vertex_shader = ShaderManager::get_instance()->LoadShader_Runtime(vert_id).get();
+				desc.pixel_shader = ShaderManager::get_instance()->LoadShader_Runtime(frag_id).get();
+
+				stream.Read<uint32_t>(desc.input_layout.stride);
+				stream.Read<InputClassification>(desc.input_layout.input_class);
+				int input_layout_element_count = 0;
+				stream.Read<int>(input_layout_element_count);
+				desc.input_layout.elements.resize(input_layout_element_count);
+				stream.Read(desc.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+
+				stream.Read<RasterizerState>(desc.rasteriser_state);
+
+				stream.Read<DepthStencilState>(desc.depth_sten_state);
+
+				stream.Read<ColorBlendState>(desc.blend_state);
+
+				stream.Read<PRIMITIVETOPOLOGY>(desc.topology);
+
+				stream.Read<Viewport>(desc.view_port);
+
+				stream.Read<uint32_t>(desc.subpass_index);
+
+
+				char buf[128] = { 0 };
+				int pass_name_lenght = 0;
+				stream.Read<int>(pass_name_lenght);
+				stream.Read(buf, pass_name_lenght);
+				desc.render_pass = Renderer::get_instance()->GetRenderPass(buf);
+
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(desc.vertex_shader, s_res);
+				ShaderParser::generate_shader_resources(desc.pixel_shader, s_res);
+				desc.resources = s_res;
+
+				if (!RenderFunc::CreatePipeline(&m_pipelines[i], desc))
+				{
+					TRC_ERROR("Failed to create pipeline {}", name);
+					return result;
+				}
+				if (!RenderFunc::InitializePipeline(&m_pipelines[i]))
+				{
+					TRC_ERROR("Failed to initialize pipeline {}", name);
+					RenderFunc::DestroyPipeline(&m_pipelines[i]);
+					return result;
+				}
+				m_pipelines[i].m_id = i;
+				m_hashtable.Set(name, i);
+				_pipe = &m_pipelines[i];
+				break;
+			}
+		}
+
+		result = { _pipe, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
+		return result;
 	}
 	bool PipelineManager::BuildDefaultPipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
 	{
@@ -453,6 +547,33 @@ namespace trace {
 
 
 		};
+
+		return true;
+	}
+	bool PipelineManager::LoadDefaults_Runtime()
+	{
+		UUID id = GetUUIDFromName("skybox_pipeline");
+		skybox_pipeline = LoadPipeline_Runtime(id);
+
+		id = GetUUIDFromName("light_pipeline");
+		light_pipeline = LoadPipeline_Runtime(id);
+
+		id = GetUUIDFromName("quad_batch_pipeline");
+		quad_pipeline = LoadPipeline_Runtime(id);
+
+		id = GetUUIDFromName("text_batch_pipeline");
+		text_batch_pipeline = LoadPipeline_Runtime(id);
+
+		id = GetUUIDFromName("text_pipeline");
+		text_pipeline = LoadPipeline_Runtime(id);
+
+		id = GetUUIDFromName("debug_line_pipeline");
+		debug_line_pipeline = LoadPipeline_Runtime(id);
+
+		id = GetUUIDFromName("gbuffer_pipeline");
+		gbuffer_pipeline = LoadPipeline_Runtime(id);
+
+		
 
 		return true;
 	}

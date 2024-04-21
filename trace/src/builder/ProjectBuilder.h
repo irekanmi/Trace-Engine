@@ -15,9 +15,9 @@
 #define TRC_ANIMATION_GRAPH_ID MAKE_VERSION(7, 0, 0, 0)
 #define TRC_FONT_ID MAKE_VERSION(8, 0, 0, 0)
 #define TRC_MATERIAL_ID MAKE_VERSION(9, 0, 0, 0)
-#define TRC_MODEL_ID MAKE_VERSION(9, 0, 0, 0)
-#define TRC_PIPELINE_ID MAKE_VERSION(9, 0, 0, 0)
-#define TRC_BUILD_PACK_ID MAKE_VERSION(10, 0, 0, 0)
+#define TRC_MODEL_ID MAKE_VERSION(10, 0, 0, 0)
+#define TRC_PIPELINE_ID MAKE_VERSION(11, 0, 0, 0)
+#define TRC_BUILD_PACK_ID MAKE_VERSION(12, 0, 0, 0)
 
 namespace trace {
 
@@ -27,6 +27,8 @@ namespace trace {
 	public:
 
 		static bool BuildProject(Ref<Project> project, std::string output_dir, std::unordered_set<std::filesystem::path>& scenes);
+		static bool LoadAssetsDB(std::unordered_map<std::string, UUID>& file_ids, std::unordered_map<UUID, std::string>& id_names);
+		static bool LoadBuildPack();
 
 	private:
 		static bool build_project_data(Ref<Project> project, std::string output_dir, std::unordered_set<std::filesystem::path>& scenes);

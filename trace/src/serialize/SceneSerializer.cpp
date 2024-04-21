@@ -17,6 +17,7 @@
 #include "scripting/ScriptEngine.h"
 #include "backends/Renderutils.h"
 #include "resource/ShaderManager.h"
+#include "core/Coretypes.h"
 
 #include <functional>
 #include <unordered_map>
@@ -280,32 +281,45 @@ namespace trace {
 		{"ModelComponent", [](Entity entity, YAML::detail::iterator_value& value) {
 			auto comp = value["ModelComponent"];
 			ModelComponent& model = entity.AddComponent<ModelComponent>();
-			model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
 			UUID id = comp["file id"].as<uint64_t>();
-			std::filesystem::path p = GetPathFromUUID(id);
-			Ref<Mesh> res;
-			res = MeshManager::get_instance()->GetMesh(p.filename().string());
-			if (res) {}
-			else res = MeshManager::get_instance()->LoadMeshOnly_(p.string());
-			if (res)
+			if (AppSettings::is_editor)
 			{
 				model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+				std::filesystem::path p = GetPathFromUUID(id);
+				Ref<Mesh> res;
+				res = MeshManager::get_instance()->GetMesh(p.filename().string());
+				if (res) {}
+				else res = MeshManager::get_instance()->LoadMeshOnly_(p.string());
+				if (res)
+				{
+					model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+				}
 			}
-
+			else
+			{
+				model._model = ModelManager::get_instance()->LoadModel_Runtime(id);
+			}
 		}},
 		{"ModelRendererComponent", [](Entity entity, YAML::detail::iterator_value& value) {
 		auto comp = value["ModelRendererComponent"];
 		ModelRendererComponent& model_renderer = entity.AddComponent<ModelRendererComponent>();
 		Ref<MaterialInstance> res;
 		UUID id = comp["file id"].as<uint64_t>();
-		std::filesystem::path p = GetPathFromUUID(id);
-		res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-		if (res) {}
+		if (AppSettings::is_editor)
+		{
+			std::filesystem::path p = GetPathFromUUID(id);
+			res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+			if (res) {}
+			else
+			{
+				res = MaterialSerializer::Deserialize(p.string());
+			}
+			if (res) model_renderer._material = res;
+		}
 		else
 		{
-			res = MaterialSerializer::Deserialize(p.string());
+			model_renderer._material = MaterialManager::get_instance()->LoadMaterial_Runtime(id);
 		}
-		if (res) model_renderer._material = res;
 
 		}},
 		{"TextComponent", [](Entity entity, YAML::detail::iterator_value& value) {
@@ -318,11 +332,18 @@ namespace trace {
 		{
 			Ref<Font> res;
 			UUID id = comp["Font file_id"].as<uint64_t>();
-			std::filesystem::path p = GetPathFromUUID(id);
-			res = FontManager::get_instance()->GetFont(p.filename().string());
-			if (res) {}
-			else res = FontManager::get_instance()->LoadFont_(p.string());
-			if (res) Txt.font = res;
+			if (AppSettings::is_editor)
+			{
+				std::filesystem::path p = GetPathFromUUID(id);
+				res = FontManager::get_instance()->GetFont(p.filename().string());
+				if (res) {}
+				else res = FontManager::get_instance()->LoadFont_(p.string());
+				if (res) Txt.font = res;
+			}
+			else
+			{
+				Txt.font = FontManager::get_instance()->LoadFont_Runtime(id);
+			}
 		}
 
 		}},
@@ -359,11 +380,18 @@ namespace trace {
 		{
 			Ref<AnimationGraph> res;
 			UUID id = comp["Anim Graph"].as<uint64_t>();
-			std::filesystem::path p = GetPathFromUUID(id);
-			res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
-			if (res) {}
-			else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-			if (res) ac.anim_graph = res;
+			if (AppSettings::is_editor)
+			{
+				std::filesystem::path p = GetPathFromUUID(id);
+				res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
+				if (res) {}
+				else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+				if (res) ac.anim_graph = res;
+			}
+			else
+			{
+				ac.anim_graph = AnimationsManager::get_instance()->LoadGraph_Runtime(id);
+			}
 		}
 
 		} },
@@ -374,11 +402,18 @@ namespace trace {
 		{
 			Ref<GTexture> res;
 			UUID id = comp["Image"].as<uint64_t>();
-			std::filesystem::path p = GetPathFromUUID(id);
-			res = TextureManager::get_instance()->GetTexture(p.filename().string());
-			if (res) {}
-			else res = TextureManager::get_instance()->LoadTexture_(p.string());
-			if (res) img.image = res;
+			if (AppSettings::is_editor)
+			{
+				std::filesystem::path p = GetPathFromUUID(id);
+				res = TextureManager::get_instance()->GetTexture(p.filename().string());
+				if (res) {}
+				else res = TextureManager::get_instance()->LoadTexture_(p.string());
+				if (res) img.image = res;
+			}
+			else
+			{
+				img.image = TextureManager::get_instance()->LoadTexture_Runtime(id);
+			}
 		}
 
 		} }
@@ -764,9 +799,201 @@ namespace trace {
 		return scene;
 	}
 
+	bool SceneSerializer::Deserialize(Ref<Scene> scene, FileStream& stream, AssetHeader& header)
+	{
+		if (!scene)
+		{
+			TRC_WARN("Invalid scene, function -> {}", __FUNCTION__);
+			return false;
+		}
+
+		stream.SetPosition(header.offset);
+		int file_lenght = header.data_size;
+		char* _data = new char[file_lenght];//TODO: Use custom allocator
+		stream.Read(_data, file_lenght);
+		std::string file_data = _data;
+
+
+		YAML::Node data = YAML::Load(file_data);
+		if (!data["Trace Version"] || !data["Scene Name"])
+		{
+			return Ref<Scene>();
+		}
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+		std::string scene_version = data["Scene Version"].as<std::string>(); // TODO: To be used later
+		std::string scene_name = data["Scene Name"].as<std::string>();
+
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			for (auto entity : entities)
+			{
+				UUID uuid = entity["UUID"].as<uint64_t>();
+				UUID parent = 0;
+				if (entity["Parent"]) parent = entity["Parent"].as<uint64_t>();
+				Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
+				for (auto& i : _deserialize_components)
+				{
+					if (entity[i.first]) i.second(obj, entity);
+				}
+				YAML::Node scripts = entity["Scripts"];
+				if (!scripts) continue;
+				std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
+
+				for (auto script : scripts)
+				{
+					std::string script_name = script["Script Name"].as<std::string>();
+					auto it = g_Scripts.find(script_name);
+					if (it == g_Scripts.end())
+					{
+						TRC_WARN("Script:{} does not exist in the assembly", script_name);
+						continue;
+					}
+					obj.AddScript(script_name);
+
+					ScriptRegistry& script_registry = scene->m_scriptRegistry;
+
+					//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+					auto& fields_instances = script_registry.GetFieldInstances();
+					auto& field_manager = fields_instances[&it->second];
+					auto field_it = field_manager.find(uuid);
+					if (field_it == field_manager.end())
+					{
+						ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
+						field_ins.Init(&it->second);
+					}
+					ScriptFieldInstance& ins = field_manager[obj.GetID()];
+
+					for (auto values : script["Script Values"])
+					{
+						std::string field_name = values["Name"].as<std::string>();
+						auto f_it = ins.m_fields.find(field_name);
+						if (f_it == ins.m_fields.end())
+						{
+							TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
+							continue;
+						}
+						switch (f_it->second.type)
+						{
+						case ScriptFieldType::String:
+						{
+							break;
+						}
+						case ScriptFieldType::Bool:
+						{
+							bool data = values["Value"].as<bool>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Byte:
+						{
+							char data = values["Value"].as<char>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Double:
+						{
+							double data = values["Value"].as<double>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Char:
+						{
+							char data = values["Value"].as<char>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Float:
+						{
+							float data = values["Value"].as<float>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Int16:
+						{
+							int16_t data = values["Value"].as<int16_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Int32:
+						{
+							int32_t data = values["Value"].as<int32_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Int64:
+						{
+							int64_t data = values["Value"].as<int64_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::UInt16:
+						{
+							uint16_t data = values["Value"].as<uint16_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::UInt32:
+						{
+							uint32_t data = values["Value"].as<uint32_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::UInt64:
+						{
+							uint64_t data = values["Value"].as<uint64_t>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Vec2:
+						{
+							glm::vec2 data = values["Value"].as<glm::vec2>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Vec3:
+						{
+							glm::vec3 data = values["Value"].as<glm::vec3>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						case ScriptFieldType::Vec4:
+						{
+							glm::vec4 data = values["Value"].as<glm::vec4>();
+							ins.SetValue(field_name, data);
+							break;
+						}
+						}
+					}
+
+				}
+			}
+		}
+
+		delete[] _data;//TODO: Use custom allocator
+
+		return true;
+	}
+
 	/*
 	* Texture
 	*  '-> TextureDesc
+	*  '-> uint32_t m_width = 0;
+	*  '-> uint32_t m_height = 0;
+	*  '-> uint32_t m_mipLevels = 1;
+	*  '-> Format m_format = Format::NONE;
+	*  '-> BindFlag m_flag = BindFlag::NIL;
+	*  '-> UsageFlag m_usage = UsageFlag::NONE;
+	*  '-> uint32_t m_channels = 0;
+	*  '-> uint32_t m_numLayers = 0;
+	*  '-> ImageType m_image_type = ImageType::NO_TYPE;
+	*  '-> AddressMode m_addressModeU = AddressMode::NONE;
+	*  '-> AddressMode m_addressModeV = AddressMode::NONE;
+	*  '-> AddressMode m_addressModeW = AddressMode::NONE;
+	*  '-> FilterMode m_minFilterMode = FilterMode::NONE;
+	*  '-> FilterMode m_magFilterMode = FilterMode::NONE;
+	*  '-> AttachmentType m_attachmentType = AttachmentType::NONE;
 	*  '-> texture_data
 	*/
 	bool SceneSerializer::SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
@@ -778,6 +1005,7 @@ namespace trace {
 			return false;
 		}
 		YAML::Node entities = data["Entities"];
+		float total_tex_size = 0.0f;
 		if (entities)
 		{
 			char* data = nullptr;// TODO: Use custom allocator
@@ -804,6 +1032,8 @@ namespace trace {
 							{
 								TextureDesc tex_desc = res->GetTextureDescription();
 								uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+								TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
+								total_tex_size += (float)tex_size;
 								if (data_size < tex_size)
 								{
 									if (data) delete[] data;// TODO: Use custom allocator
@@ -813,7 +1043,33 @@ namespace trace {
 								RenderFunc::GetTextureData(res.get(),(void*&) data);
 								AssetHeader ast_h;
 								ast_h.offset = stream.GetPosition();
-								stream.Write<TextureDesc>(tex_desc);
+
+								stream.Write<uint32_t>(tex_desc.m_width);
+								stream.Write<uint32_t>(tex_desc.m_height);
+								stream.Write<uint32_t>(tex_desc.m_mipLevels);
+
+
+								stream.Write<Format>(tex_desc.m_format);
+
+								stream.Write<BindFlag>(tex_desc.m_flag);
+
+								stream.Write<UsageFlag>(tex_desc.m_usage);
+
+								stream.Write<uint32_t>(tex_desc.m_channels);
+								stream.Write<uint32_t>(tex_desc.m_numLayers);
+
+								stream.Write<ImageType>(tex_desc.m_image_type);
+
+								stream.Write<AddressMode>(tex_desc.m_addressModeU);
+								stream.Write<AddressMode>(tex_desc.m_addressModeV);
+								stream.Write<AddressMode>(tex_desc.m_addressModeW);
+
+								stream.Write<FilterMode>(tex_desc.m_minFilterMode);
+								stream.Write<FilterMode>(tex_desc.m_magFilterMode);
+
+								stream.Write<AttachmentType>(tex_desc.m_attachmentType);
+
+
 								stream.Write(data, tex_size);
 								ast_h.data_size = stream.GetPosition() - ast_h.offset;
 								map.push_back(std::make_pair(id, ast_h));
@@ -828,30 +1084,35 @@ namespace trace {
 				if (entity["ModelRendererComponent"])
 				{
 					auto comp = entity["ModelRendererComponent"];
-					UUID id = comp["file id"].as<uint64_t>();
-					auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-						{
-							return i.first == id;
-						});
+					UUID m_id = comp["file id"].as<uint64_t>();
 
-					if (it == map.end())
+					std::filesystem::path p = GetPathFromUUID(m_id);
+					Ref<MaterialInstance> res;
+					res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+					if (res) {}
+					else res = MaterialSerializer::Deserialize(p.string());
+					if (res)
 					{
-
-						std::filesystem::path p = GetPathFromUUID(id);
-						Ref<MaterialInstance> res;
-						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-						if (res) {}
-						else res = MaterialSerializer::Deserialize(p.string());
-						if (res)
+						for (auto& m_data : res->m_data)
 						{
-							for (auto& m_data : res->m_data)
+							trace::UniformMetaData& meta_data = res->m_renderPipeline->Scene_uniforms[m_data.second.second];
+							if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
 							{
-								trace::UniformMetaData& meta_data = res->m_renderPipeline->Scene_uniforms[m_data.second.second];
-								if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
+								Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
+								UUID id = GetUUIDFromName(tex->GetName());
+
+								auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
+									{
+										return i.first == id;
+									});
+
+								if (it == map.end())
 								{
-									Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
+
 									TextureDesc tex_desc = tex->GetTextureDescription();
 									uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+									TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
+									total_tex_size += (float)tex_size;
 									if (data_size < tex_size)
 									{
 										if (data) delete[] data;// TODO: Use custom allocator
@@ -861,21 +1122,51 @@ namespace trace {
 									RenderFunc::GetTextureData(tex.get(), (void*&)data);
 									AssetHeader ast_h;
 									ast_h.offset = stream.GetPosition();
-									stream.Write<TextureDesc>(tex_desc);
+									stream.Write<uint32_t>(tex_desc.m_width);
+									stream.Write<uint32_t>(tex_desc.m_height);
+									stream.Write<uint32_t>(tex_desc.m_mipLevels);
+
+
+									stream.Write<Format>(tex_desc.m_format);
+
+									stream.Write<BindFlag>(tex_desc.m_flag);
+
+									stream.Write<UsageFlag>(tex_desc.m_usage);
+
+									stream.Write<uint32_t>(tex_desc.m_channels);
+									stream.Write<uint32_t>(tex_desc.m_numLayers);
+
+									stream.Write<ImageType>(tex_desc.m_image_type);
+
+									stream.Write<AddressMode>(tex_desc.m_addressModeU);
+									stream.Write<AddressMode>(tex_desc.m_addressModeV);
+									stream.Write<AddressMode>(tex_desc.m_addressModeW);
+
+									stream.Write<FilterMode>(tex_desc.m_minFilterMode);
+									stream.Write<FilterMode>(tex_desc.m_magFilterMode);
+
+									stream.Write<AttachmentType>(tex_desc.m_attachmentType);
 									stream.Write(data, tex_size);
 									ast_h.data_size = stream.GetPosition() - ast_h.offset;
 									map.push_back(std::make_pair(id, ast_h));
 								}
+								
 							}
 						}
-						else
-						{
-							TRC_ERROR("Unable to load material, path -> {}", p.string());
-						}
 					}
+					else
+					{
+						TRC_ERROR("Unable to load material, path -> {}", p.string());
+					}
+
+					
 				}
 			}
 			if(data) delete[] data;// TODO: Use custom allocator
+
+			float m_b = ((float)MB);
+			float t_size = total_tex_size / m_b;
+			TRC_INFO("Total Texture Size: {}MB", t_size);
 		}
 
 		return true;

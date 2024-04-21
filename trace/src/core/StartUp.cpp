@@ -20,6 +20,8 @@ namespace trace {
 	int initialize(int argc, char** argv)
 	{
 		AppSettings::exe_path = argv[0];
+
+
 		if (!trace::INIT())
 		{
 			TRC_CRITICAL("Engine Startup failed");
