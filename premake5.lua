@@ -6,6 +6,7 @@ workspace "Trace"
 	configurations
 	{
 		"Debug",
+		"DebugRelease",
 		"Release",
 		"Public"
 	}
@@ -123,6 +124,23 @@ project "trace"
 		"TRC_CORE",
 		"TRC_ASSERT_ENABLED",
 		"TRC_DEBUG_BUILD",
+		"GLEW_STATIC"
+	}
+	links
+	{
+		"EASTL_d.lib"
+	}
+
+	filter "configurations:DebugRelease"
+		symbols "On"
+		runtime "Debug"
+		buildoptions "/MD"
+
+	defines
+	{
+		"TRC_WINDOWS",
+		"TRC_CORE",
+		"TRC_ASSERT_ENABLED",
 		"GLEW_STATIC"
 	}
 	links
@@ -302,6 +320,14 @@ project "Trace_Ed"
 			"TRC_DEBUG_BUILD"
 		}
 
+	filter "configurations:DebugRelease"
+		symbols "On"
+		buildoptions "/MD"
+		defines
+		{
+			"TRC_ASSERT_ENABLED",
+		}
+
 	filter "configurations:Release"
 		optimize "On"
 		defines
@@ -386,6 +412,14 @@ project "Trace_Application"
 		{
 			"TRC_ASSERT_ENABLED",
 			"TRC_DEBUG_BUILD"
+		}
+
+	filter "configurations:DebugRelease"
+		symbols "On"
+		buildoptions "/MD"
+		defines
+		{
+			"TRC_ASSERT_ENABLED",
 		}
 
 	filter "configurations:Release"

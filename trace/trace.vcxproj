@@ -5,6 +5,10 @@
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugRelease|x64">
+      <Configuration>DebugRelease</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
@@ -22,6 +26,12 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
@@ -45,6 +55,9 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -55,6 +68,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\bin\Debug-windows-x86_64\trace\</OutDir>
     <IntDir>..\bin-int\Debug-windows-x86_64\trace\</IntDir>
+    <TargetName>trace</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <OutDir>..\bin\DebugRelease-windows-x86_64\trace\</OutDir>
+    <IntDir>..\bin-int\DebugRelease-windows-x86_64\trace\</IntDir>
     <TargetName>trace</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
@@ -76,6 +95,29 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>TRC_CORE;TRC_ASSERT_ENABLED;TRC_DEBUG_BUILD;GLEW_STATIC;TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;..\externals\im_neo_sequencer;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/MD %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;vulkan-1.lib;shaderc_combined.lib;spirv-cross-core.lib;spirv-cross-cpp.lib;spirv-cross-glsl.lib;PhysX_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXExtensions_static_64.lib;msdfgen.lib;msdf_atlas_gen.lib;libmono-static-sgen.lib;yaml_cpp.lib;EASTL_d.lib;Ws2_32.lib;Winmm.lib;Version.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\externals\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>TRC_CORE;TRC_ASSERT_ENABLED;GLEW_STATIC;TRC_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src\core;src;..\externals\GLFW\include;..\externals\GLEW\include;..\externals\EASTL\include;..\externals\glm;..\externals\Vulkan;..\externals\stb_image;..\externals\spdlog;..\externals\obj_loader;..\externals\tiny_obj_loader;..\externals\msdfgen;..\externals\msdf_atlas_gen;..\externals\imgui;..\externals\entt;..\externals\yaml_cpp;..\externals\ImGuizmo;..\externals\Physx;..\externals\mono-2.0;..\externals\im_neo_sequencer;C:\Program Files (x86)\Windows Kits\10\Include\10.0.10150.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>

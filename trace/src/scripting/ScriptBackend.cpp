@@ -45,6 +45,7 @@ struct MonoData
 	std::unordered_map<MonoType*, std::function<void(Entity&)>> remove_components;
 
 
+
 };
 
 struct MonoScript

@@ -49,6 +49,8 @@ void main()
     float specular = g_color_data.a;
     vec3 view_dir = normalize(-frag_pos);
 
+    vec4 final_color = vec4(0.0f);
+
 
     float ssao_res = 1.0f;
     if(_ssao_dat == 1)
@@ -58,20 +60,26 @@ void main()
 
     for(int i = 0; i < _light_data.x; i++)
     {
-        FragColor += calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);
+        vec4 dir_c = calculate_directional_light(normal, view_dir, specular, albedo, shine, i, ssao_res);
+        final_color += dir_c;
     }
 
     int num = _light_data.x + _light_data.y;
     for(int i = _light_data.x; i < num; i++)
     {
-        FragColor += calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
+        vec4 p_c = calculate_point_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
+        final_color += p_c;
     }
 
     num = _light_data.x + _light_data.y + _light_data.z;
     for(int i = _light_data.x + _light_data.y; i < num; i++)
     {
-        FragColor += calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
+        vec4 s_c = calculate_spot_light(normal, view_dir, specular, albedo, frag_pos, shine, i, ssao_res);
+        final_color += s_c;
     }
+
+    //FragColor = vec4(in_texCoord, 0.0f, 1.0f);
+    FragColor = final_color;
 
 }
 

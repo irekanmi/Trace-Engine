@@ -74,6 +74,10 @@ namespace trace {
 		void Error(Args ...args)
 		{
 			logger->error(args...);
+			if (file_logging)
+			{
+				file_logger->error(args...);
+			}
 		}
 
 		template<typename ...Args>
@@ -144,11 +148,12 @@ namespace trace {
 
 #ifdef TRC_ASSERT_ENABLED
 #ifdef _MSC_VER
-#define TRC_ASSERT(exp, ...)     \
-  if(exp){}                               \
-	else{                                 \
-TRC_CRITICAL(__VA_ARGS__);       \
-      __debugbreak();                     \
+#define TRC_ASSERT(exp, ...)                         \
+  if(exp){}                                          \
+	else{                                            \
+TRC_CRITICAL(__VA_ARGS__);                           \
+    trace::Logger::get_instance()->Shutdown();       \
+      __debugbreak();                                \
 }                                         
 
 

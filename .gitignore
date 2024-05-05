@@ -23,6 +23,7 @@ logs.txt
 *.exe
 *.sln
 **.pdb
+**.shcode
 
 
 #Project Config Files

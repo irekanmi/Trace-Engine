@@ -135,4 +135,6 @@ namespace vk {
 	//Processing
 	bool operator ==(VkDescriptorSetLayoutBinding lhs, VkDescriptorSetLayoutBinding rhs);
 
+	const char* vulkan_result_string(VkResult result, bool get_extended);
+
 }

@@ -34,6 +34,8 @@ namespace trace {
 		uint32_t total_size_local = 0;
 		_pipeline->Scene_uniforms.resize(128);// TODO: Fix Hard Coded value
 
+		uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
+
 		uint32_t z = 0;
 		for (auto& i : _pipeline->m_desc.resources.resources)
 		{
@@ -70,12 +72,13 @@ namespace trace {
 							_pipeline->Scene_uniforms[j]._offset = struct_size;
 							_pipeline->Scene_uniforms[j].data_type = mem.resource_data_type;
 							struct_size += mem.resource_size;
-							struct_size = get_alignment(struct_size, 16);
+							
+							struct_size = get_alignment(struct_size, offset_alignment);
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 							{
 								_pipeline->Scene_uniforms[j]._offset = total_size_local;
 								total_size_local += mem.resource_size;
-								total_size_local = get_alignment(total_size_local, 16);
+								total_size_local = get_alignment(total_size_local, offset_alignment);
 								break;
 							}
 							_pipeline->Scene_uniforms[j]._struct_index = z;
@@ -83,7 +86,7 @@ namespace trace {
 							{
 								_pipeline->Scene_uniforms[j]._offset = total_size_global;
 								total_size_global += mem.resource_size;
-								total_size_global = get_alignment(total_size_global, 16);
+								total_size_global = get_alignment(total_size_global, offset_alignment);
 							}
 
 							break;
@@ -120,12 +123,12 @@ namespace trace {
 							{
 								_pipeline->Scene_uniforms[j]._offset = total_size_local;
 								total_size_local += i._array.resource_size;
-								total_size_local = get_alignment(total_size_local, 16);
+								total_size_local = get_alignment(total_size_local, offset_alignment);
 								break;
 							}
 							//_pipeline->Scene_uniforms[j]._offset = total_size_global;
 							//total_size_global += i._array.resource_size;
-							//total_size_global = get_alignment(total_size_global, 16);
+							//total_size_global = get_alignment(total_size_global, offset_alignment);
 							break;
 						}
 					}
@@ -153,15 +156,22 @@ namespace trace {
 						if (i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 						{
 							_pipeline->Scene_uniforms[j]._offset = total_size_local;
+
 							total_size_local += i._array.resource_size;
-							total_size_local = get_alignment(total_size_local, 16);
+							total_size_local = get_alignment(total_size_local, offset_alignment);
 							break;
 						}
 						if (i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 						{
 							_pipeline->Scene_uniforms[j]._offset = total_size_global;
-							total_size_global += (i._array.resource_size * i._array.count);
-							total_size_global = get_alignment(total_size_global, 16);
+
+							for (uint32_t r = 0; r < i._array.count; r++)
+							{
+								total_size_global += (i._array.resource_size);
+								total_size_global = get_alignment(total_size_global, offset_alignment);
+							}
+
+							
 						}
 						break;
 					}
@@ -218,7 +228,7 @@ namespace trace {
 					for (auto& mem : _i._struct.members)
 					{
 						struct_size += mem.resource_size;
-						struct_size = get_alignment(struct_size, 16);
+						struct_size = get_alignment(struct_size, offset_alignment);
 					}
 					VkWriteDescriptorSet write = {};
 					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -238,7 +248,7 @@ namespace trace {
 						bufs[k].offset = k_off + ( t_size * i);
 						bufs[k].buffer = _handle->Scene_buffers.m_handle;
 						k_off += struct_size;
-						k_off = get_alignment(k_off, 16);
+						k_off = get_alignment(k_off, offset_alignment);
 					}
 					else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 					{
@@ -345,7 +355,7 @@ namespace trace {
 							bufs[k].offset = k_off + (t_size * i);
 							bufs[k].buffer = _handle->Scene_buffers.m_handle;
 							k_off += struct_size;
-							k_off = get_alignment(k_off, 16);
+							k_off = get_alignment(k_off, offset_alignment);
 						}
 						else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 						{

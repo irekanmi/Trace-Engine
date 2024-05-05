@@ -868,6 +868,8 @@ namespace vk {
 			return false;
 		}
 
+		vk::_FenceReset(_handle, &_handle->m_inFlightFence[_handle->m_currentFrame]);
+
 		
 
 		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT64_MAX))
@@ -886,7 +888,7 @@ namespace vk {
 	}
 	bool __EndFrame(trace::GDevice* device)
 	{
-
+		static int frame_index = 1;
 		bool result = true;
 
 		
@@ -918,14 +920,14 @@ namespace vk {
 
 		vk::_EndCommandBuffer(command_buffer);
 
-		if (_handle->m_imagesFence[_handle->m_imageIndex] != nullptr)
+		/*if (_handle->m_imagesFence[_handle->m_imageIndex] != nullptr)
 		{
 			vk::_WaitFence(_instance, _handle, _handle->m_imagesFence[_handle->m_imageIndex], UINT64_MAX);
 		}
 
-		_handle->m_imagesFence[_handle->m_imageIndex] = &_handle->m_inFlightFence[_handle->m_currentFrame];
+		_handle->m_imagesFence[_handle->m_imageIndex] = &_handle->m_inFlightFence[_handle->m_currentFrame];*/
 
-		vk::_FenceReset(_handle, &_handle->m_inFlightFence[_handle->m_currentFrame]);
+		/*vk::_FenceReset(_handle, &_handle->m_inFlightFence[_handle->m_currentFrame]);*/
 
 		VkSubmitInfo sub_info = {};
 		sub_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -941,15 +943,19 @@ namespace vk {
 
 		VkResult _result = vkQueueSubmit(_handle->m_graphicsQueue, 1, &sub_info, _handle->m_inFlightFence[_handle->m_currentFrame].m_handle);
 
-		if (_result != VK_SUCCESS)
-		{
-			TRC_ERROR("Unable to submit command buffer");
-			return false;
-		}
 
 		vk::_CommandBufferSubmitted(command_buffer);
 		// Destroy previous frame resources 
 		destroy_frame_resources(device, _handle->m_imageIndex);
+
+		if (_result != VK_SUCCESS)
+		{
+			TRC_ERROR("Unable to submit command buffer, Error String : {}, frame_index = {}", vulkan_result_string(_result, true), frame_index);
+			return false;
+		}
+
+
+		frame_index++;
 
 
 		return result;

@@ -63,7 +63,7 @@ namespace trace {
 #ifdef TRC_DEBUG_BUILD
 			Logger::get_instance()->set_log_level(LogLevel::trace);
 #else
-			Logger::get_instance()->set_log_level(LogLevel::warn);
+			Logger::get_instance()->set_log_level(LogLevel::trace);
 #endif
 		}
 
