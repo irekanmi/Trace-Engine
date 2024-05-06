@@ -654,6 +654,7 @@ namespace vk {
 
 		}
 
+		TRC_INFO("Device Name: {}; Score: {}", phy_prop.deviceName, score);
 
 		return;
 	}

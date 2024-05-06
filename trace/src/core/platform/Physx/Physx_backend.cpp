@@ -5,6 +5,8 @@
 #include "glm/gtc/quaternion.hpp"
 #include "scene/Entity.h"
 #include "scene/Components.h"
+#include "scripting/ScriptEngine.h"
+#include "scripting/ScriptBackend.h"
 
 
 // HACK: Fix "Physx\foundation\PxPreprocessor.h(443,1): fatal error C1189: #error:  Exactly one of NDEBUG and _DEBUG needs to be defined!"
@@ -80,11 +82,49 @@ namespace physx {
 		{
 			// Temp __________________
 
+			trace::ScriptEngine* s_engine = trace::ScriptEngine::get_instance();
+			trace::Scene* scene = s_engine->GetCurrentScene();
+			trace::ScriptRegistry& reg = scene->GetScriptRegistry();
+
 			for (auto& i : EnterTriggers)
 			{
 				std::string first = i.first.GetComponent<trace::TagComponent>()._tag;
 				std::string second = i.second.GetComponent<trace::TagComponent>()._tag;
 				TRC_INFO(" '{}' entered these -> {}", first, second);
+				TRC_INFO(" Trigger Entity -> {}", (uint64_t)i.first.GetID());
+				TRC_INFO(" Other Entity -> {}", (uint64_t)i.second.GetID());
+				
+				
+				
+				ScriptInstance trigger_pair;
+				CreateScriptInstance(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
+				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first.GetID())->GetBackendHandle();
+				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second.GetID())->GetBackendHandle();
+
+				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
+				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
+
+				reg.Iterate(i.first.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
+						if (!on_trigger_enter) return;
+
+						void* params[1] = { trigger_pair.GetBackendHandle() };
+
+						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+					});
+
+				reg.Iterate(i.second.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
+						if (!on_trigger_enter) return;
+
+						void* params[1] = { trigger_pair.GetBackendHandle() };
+
+						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+					});
+
+				
 			}
 
 			for (auto& i : ExitTriggers)
@@ -92,6 +132,39 @@ namespace physx {
 				std::string first = i.first.GetComponent<trace::TagComponent>()._tag;
 				std::string second = i.second.GetComponent<trace::TagComponent>()._tag;
 				TRC_INFO(" '{}' exited these -> {}", first, second);
+
+				TRC_INFO(" Trigger Entity -> {}", (uint64_t)i.first.GetID());
+				TRC_INFO(" Other Entity -> {}", (uint64_t)i.second.GetID());
+
+
+
+				ScriptInstance trigger_pair;
+				CreateScriptInstance(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
+				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first.GetID())->GetBackendHandle();
+				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second.GetID())->GetBackendHandle();
+
+				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
+				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
+
+				reg.Iterate(i.first.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
+						if (!on_trigger_enter) return;
+
+						void* params[1] = { trigger_pair.GetBackendHandle() };
+
+						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+					});
+
+				reg.Iterate(i.second.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
+						if (!on_trigger_enter) return;
+
+						void* params[1] = { trigger_pair.GetBackendHandle() };
+
+						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+					});
 			}
 
 			// _______________________

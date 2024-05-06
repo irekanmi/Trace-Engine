@@ -155,6 +155,9 @@ namespace trace {
 
 				rect.right = width;
 				rect.bottom = height;
+
+				RenderFunc::OnDrawStart(m_renderer->GetDevice(), m_pipeline.get());
+
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
@@ -209,12 +212,52 @@ namespace trace {
 				);
 
 
-				RenderFunc::SetPipelineData(
+				/*RenderFunc::SetPipelineData(
 					m_pipeline.get(),
 					"u_gLights",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					m_renderer->lights.data(),
 					sizeof(Light) * MAX_LIGHT_COUNT
+				);*/
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"light_positions",
+					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					m_renderer->light_positions.data(),
+					sizeof(glm::vec4) * m_renderer->light_positions.size()
+				);
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"light_directions",
+					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					m_renderer->light_directions.data(),
+					sizeof(glm::vec4) * m_renderer->light_directions.size()
+				);
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"light_colors",
+					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					m_renderer->light_colors.data(),
+					sizeof(glm::vec4) * m_renderer->light_colors.size()
+				);
+
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"light_params1s",
+					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					m_renderer->light_params1s.data(),
+					sizeof(glm::vec4)* m_renderer->light_params1s.size()
+				); 
+				
+				RenderFunc::SetPipelineData(
+					m_pipeline.get(),
+					"light_params2s",
+					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					m_renderer->light_params2s.data(),
+					sizeof(glm::vec4) * m_renderer->light_params2s.size()
 				);
 
 				glm::mat4 view = m_renderer->_camera->GetViewMatrix();
@@ -233,6 +276,8 @@ namespace trace {
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
+
+				RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_pipeline.get());
 
 
 			});

@@ -196,8 +196,9 @@ namespace trace {
 		m_opaqueObjects.resize(1024);
 		m_opaqueObjectsSize = 0;
 
-		m_meshedLights.resize(64);
-		m_meshLightSize = 0;
+		/*m_meshedLights.resize(64);
+		m_meshLightSize = 0;*/
+
 		lights.resize(MAX_LIGHT_COUNT);
 		light_data = glm::ivec4(0);
 					
@@ -348,9 +349,17 @@ namespace trace {
 		}
 		m_listCount = 0;
 		m_opaqueObjectsSize = 0;
-		m_meshLightSize = 0;
+
+		//m_meshLightSize = 0;
+
 		light_data = glm::ivec4(0);
 		lights.clear();
+
+		light_positions.clear();
+		light_directions.clear();
+		light_colors.clear();
+		light_params1s.clear();
+		light_params2s.clear();
 
 		
 
@@ -527,7 +536,7 @@ namespace trace {
 		Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("light_pipeline");
 		glm::mat4 view_proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
-		for (int i = 0; i < m_meshLightSize; i++)
+		/*for (int i = 0; i < m_meshLightSize; i++)
 		{
 			auto& data = m_meshedLights[i];
 			int index = data.first;
@@ -550,7 +559,7 @@ namespace trace {
 			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
 			RenderFunc::OnDrawEnd(&g_device, sp.get());
 
-		}
+		}*/
 
 
 		//TEMP: Find vaild function to render sky box
@@ -843,7 +852,7 @@ namespace trace {
 	//FIX: Find a way if fit the types light in an array {DIRECTIONAL - POINT - SPOT}
 	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& _light, LightType light_type)
 	{
-		Command cmd;
+		/*Command cmd;
 		cmd.params.ptrs[0] = _mesh.get();
 		cmd.params.val[0] = light_type;
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(Light));
@@ -885,7 +894,7 @@ namespace trace {
 			}
 		};
 
-		cmd_list._commands.push_back(cmd);
+		cmd_list._commands.push_back(cmd);*/
 	}
 
 	//FIX: Find a way if fit the types light in an array {DIRECTIONAL - POINT - SPOT}
@@ -924,6 +933,12 @@ namespace trace {
 				lights.insert(it + spot_light_count, *_light);
 				light_data.z++;
 			}
+
+			light_positions.insert(light_positions.begin() + light_index, _light->position);
+			light_directions.insert(light_directions.begin() + light_index, _light->direction);
+			light_colors.insert(light_colors.begin() + light_index, _light->color);
+			light_params1s.insert(light_params1s.begin() + light_index, _light->params1);
+			light_params2s.insert(light_params2s.begin() + light_index, _light->params2);
 		};
 
 		cmd_list._commands.push_back(cmd);

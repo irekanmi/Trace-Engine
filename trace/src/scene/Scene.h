@@ -44,6 +44,7 @@ namespace trace {
 		void SetParent(Entity child, Entity parent);
 		void AddToRoot(Entity entity);
 		Transform GetEntityWorldTransform(Entity entity);
+		ScriptRegistry& GetScriptRegistry() { return m_scriptRegistry; }
 
 
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);

@@ -19,13 +19,13 @@ layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
 
 layout(set = 0, binding = 1)uniform sampler2D g_bufferData[3];
 
-layout(set = 0, binding = 3)uniform Lights {
-    vec4 position;
-    vec4 direction;
-    vec4 color;
-    vec4 params1;
-    vec4 params2;
-} u_gLights[MAX_LIGHT_COUNT];
+layout(set = 1, binding = 1)uniform Lights {
+    vec4 light_positions[MAX_LIGHT_COUNT];
+    vec4 light_directions[MAX_LIGHT_COUNT];
+    vec4 light_colors[MAX_LIGHT_COUNT];
+    vec4 light_params1s[MAX_LIGHT_COUNT];
+    vec4 light_params2s[MAX_LIGHT_COUNT];
+};
 
 layout(set = 0, binding = 4)uniform sampler2D ssao_blur;
 
@@ -78,7 +78,6 @@ void main()
         final_color += s_c;
     }
 
-    //FragColor = vec4(in_texCoord, 0.0f, 1.0f);
     FragColor = final_color;
 
 }
@@ -86,11 +85,11 @@ void main()
 
 vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, float shine, int index, float ssao)
 {
-    vec3 light_pos =  ( _view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
+    vec3 light_pos =  ( _view * vec4(light_positions[index].xyz, 1.0f)).xyz;
     mat3 view_mat = mat3(_view);
-    vec3 light_direction = normalize(view_mat * u_gLights[index].direction.xyz);
-    float _lgt_intensity = u_gLights[index].params2.y;
-    vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
+    vec3 light_direction = normalize(view_mat * light_directions[index].xyz);
+    float _lgt_intensity = light_params2s[index].y;
+    vec4 _lgt_color = light_colors[index] * _lgt_intensity;
     
 
     vec3 half_direction = normalize(view_direction - (light_direction));   
@@ -109,13 +108,13 @@ vec4 calculate_directional_light(vec3 normal, vec3 view_direction, float spec, v
 
 vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index, float ssao)
 {
-    vec3 light_pos =  ( _view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
+    vec3 light_pos =  ( _view * vec4(light_positions[index].xyz, 1.0f)).xyz;
     vec3 light_dir;
-    float _lgt_intensity = u_gLights[index].params2.y;
-    vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
-    float _lgt_constant = u_gLights[index].params1.x;
-    float _lgt_linear = u_gLights[index].params1.y;
-    float _lgt_quadratic = u_gLights[index].params1.z;
+    float _lgt_intensity = light_params2s[index].y;
+    vec4 _lgt_color = light_colors[index] * _lgt_intensity;
+    float _lgt_constant = light_params1s[index].x;
+    float _lgt_linear = light_params1s[index].y;
+    float _lgt_quadratic = light_params1s[index].z;
 
     float distance = length(light_pos - position);
     float attenuation = 1 / ( _lgt_constant + (_lgt_linear * distance) + (_lgt_quadratic * (distance * distance)) );
@@ -138,14 +137,14 @@ vec4 calculate_point_light(vec3 normal, vec3 view_direction, float spec, vec3 al
 
 vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 albedo, vec3 position, float shine, int index, float ssao)
 {
-    vec3 light_pos =  ( _view * vec4(u_gLights[index].position.xyz, 1.0f)).xyz;
+    vec3 light_pos =  ( _view * vec4(light_positions[index].xyz, 1.0f)).xyz;
     mat3 view_mat = mat3(_view);
-    vec3 light_direction = normalize(view_mat * u_gLights[index].direction.xyz);
+    vec3 light_direction = normalize(view_mat * light_directions[index].xyz);
     vec3 light_dir = light_pos - position;
-    float _lgt_intensity = u_gLights[index].params2.y;
-    vec4 _lgt_color = u_gLights[index].color * _lgt_intensity;
-    float _lgt_innerCutOff = u_gLights[index].params1.w;
-    float _lgt_outerCutOff = u_gLights[index].params2.x;
+    float _lgt_intensity = light_params2s[index].y;
+    vec4 _lgt_color = light_colors[index] * _lgt_intensity;
+    float _lgt_innerCutOff = light_params1s[index].w;
+    float _lgt_outerCutOff = light_params2s[index].x;
     light_dir = normalize(light_dir);
     float theta = dot(light_dir, -light_direction);
     
@@ -163,9 +162,9 @@ vec4 calculate_spot_light(vec3 normal, vec3 view_direction, float spec, vec3 alb
 
         vec4 diffuse = vec4( (diffuse_strenght * albedo * intensity).rgb, 1.0f );
         vec4 specular = vec4( (specular_strenght * _lgt_color * intensity ).rgb, 1.0f );
-        float _lgt_constant = u_gLights[index].params1.x;
-        float _lgt_linear = u_gLights[index].params1.y;
-        float _lgt_quadratic = u_gLights[index].params1.z;
+        float _lgt_constant = light_params1s[index].x;
+        float _lgt_linear = light_params1s[index].y;
+        float _lgt_quadratic = light_params1s[index].z;
 
         float distance = length(light_pos - position);
         float attenuation = 1 / ( _lgt_constant + (_lgt_linear * distance) + (_lgt_quadratic * (distance * distance)) );

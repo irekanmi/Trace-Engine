@@ -52,6 +52,7 @@ namespace trace
 		Window* m_Window;
 		LayerStack* m_LayerStack;
 		bool m_isRunning = true;
+		bool m_isMinimized = false;
 		bool m_vsync = false;
 
 	};

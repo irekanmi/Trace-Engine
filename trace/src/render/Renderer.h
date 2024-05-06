@@ -111,6 +111,14 @@ namespace trace {
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera = nullptr;
+
+		// light data
+		std::vector<glm::vec4> light_positions;
+		std::vector<glm::vec4> light_directions;
+		std::vector<glm::vec4> light_colors;
+		std::vector<glm::vec4> light_params1s; // x: constant, y: linear, z:quadratic, w: innerCutOff
+		std::vector<glm::vec4> light_params2s; // x: outerCutOff, y: intensity, z:null, w: null
+
 		std::vector<Light> lights;
 		glm::ivec4 light_data;
 		float exposure;
@@ -163,9 +171,9 @@ namespace trace {
 		uint32_t m_frameHeight;
 		ClientRenderCallback m_client_render;
 		std::vector<RenderObjectData> m_opaqueObjects;
-		std::vector<std::pair<uint32_t, Model*>> m_meshedLights;
+
 		uint32_t m_opaqueObjectsSize;
-		uint32_t m_meshLightSize;
+
 		SkyBox* current_sky_box;
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;

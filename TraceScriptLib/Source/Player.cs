@@ -24,39 +24,49 @@ class Player : Trace.Action
     {
         TransformComponent pose = GetComponent<TransformComponent>();
 
-        Vec3 dir = Vec3.Zero;
-        if(Input.GetKey(Keys.KEY_W))
-        {
-            dir.y = 1.0f;
-        }
-        if (Input.GetKey(Keys.KEY_A))
-        {
-            dir.x = -1.0f;
-        }
-        if (Input.GetKey(Keys.KEY_S))
-        {
-            dir.y = -1.0f;
-        }
-        if (Input.GetKey(Keys.KEY_D))
-        {
-            dir.x = 1.0f;
-        }
-        dir *= Speed * deltaTime;
+        //Vec3 dir = Vec3.Zero;
+        //if(Input.GetKey(Keys.KEY_W))
+        //{
+        //    dir.y = 1.0f;
+        //}
+        //if (Input.GetKey(Keys.KEY_A))
+        //{
+        //    dir.x = -1.0f;
+        //}
+        //if (Input.GetKey(Keys.KEY_S))
+        //{
+        //    dir.y = -1.0f;
+        //}
+        //if (Input.GetKey(Keys.KEY_D))
+        //{
+        //    dir.x = 1.0f;
+        //}
+        //dir *= Speed * deltaTime;
 
-        Vec3 pos = pose.Position;
-        pos += dir;
-        pose.Position = pos;
+        //Vec3 pos = pose.Position;
+        //pos += dir;
+        //pose.Position = pos;
 
     }   
 
-    public void OnCollisionEnter(Trace.Collision collision)
+    public void OnTriggerEnter(Trace.TriggerPair collision)
     {
-        float z = collision.position.y;
-        ulong id = collision.other.Id;
-        Console.WriteLine($"Direction x:{collision.position.z},  {id}");
+
         Debug.Trace("Player Collision entered");
-        Debug.Log("Player Collision entered");
-        Debug.Info("Player Collision entered");
+        Debug.Trace($"Trigger Entity: {collision.triggerEntity.Id}");
+        Debug.Trace($"Other Entity: {collision.otherEntity.Id}");
+
+
+    }
+
+    public void OnTriggerExit(Trace.TriggerPair collision)
+    {
+
+        Debug.Trace("Player Collision Exit");
+        Debug.Trace($"Trigger Entity: {collision.triggerEntity.Id}");
+        Debug.Trace($"Other Entity: {collision.otherEntity.Id}");
+
+
     }
 
 }

@@ -140,6 +140,8 @@ namespace trace {
 			SetFieldValueInternal(field_name, &value, sizeof(T));
 		}
 
+		void* GetBackendHandle();
+
 		void* m_internal = nullptr;
 		Script* m_script = nullptr;
 	public:

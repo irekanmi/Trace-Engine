@@ -150,13 +150,23 @@ namespace trace
 
 		while (m_isRunning)
 		{
-			float _time = m_clock.GetElapsedTime();
+
+			m_Window->Update(0.0f);
+			
+
+
+			if (m_isMinimized) continue;// Application should pause when minimized
+
+			float _time = m_clock.GetInternalElapsedTime();
 			float deltaTime = _time - m_lastTime;
 			m_lastTime = _time;
 
-			mem_manager->BeginFrame();
+			//NOTE: Clamping deltaTime to 0.5sec, if the application is minimized or any other issues that causes stall in the application
+			if (deltaTime > 0.5f) deltaTime = 0.033f;
 
-			m_Window->Update(0.0f);
+			m_clock.Tick(deltaTime);
+
+			mem_manager->BeginFrame();
 			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
 			{
 				Layer* layer = m_LayerStack->m_Layers[i];
@@ -267,7 +277,10 @@ namespace trace
 			{
 				WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
 				if (wnd->m_width == 0 || wnd->m_height == 0)
-					break;
+				{
+					m_isMinimized = true;
+				}
+				else m_isMinimized = false;
 
 				break;
 			}

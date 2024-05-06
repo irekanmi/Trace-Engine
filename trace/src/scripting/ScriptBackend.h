@@ -26,8 +26,10 @@ bool OnSceneStopInternal(Scene* scene);
 bool CreateScript(const std::string& name, Script& script, const std::string& nameSpace = "", bool core = false);
 bool GetScriptID(Script& script, uintptr_t& res);
 bool DestroyScript(Script& script);
+
 bool CreateScriptInstance(Script& script, ScriptInstance& out_instance);
 bool DestroyScriptInstance(ScriptInstance& instance);
+bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out);
 
 bool GetScriptMethod(const std::string& method, ScriptMethod& out_method, Script& script, int param_count);
 bool InvokeScriptMethod_Instance(ScriptMethod& method, ScriptInstance& instance, void** params);

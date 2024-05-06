@@ -1,6 +1,6 @@
 #version 450
 
-#define MAX_QUAD_VERTICES 8048
+#define MAX_QUAD_VERTICES 512
 
 layout(location = 0)out vec2 out_texCoord;
 layout(location = 1)out float out_texIndex;

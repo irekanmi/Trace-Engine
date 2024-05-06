@@ -18,17 +18,21 @@ namespace trace {
 			started = true;
 		}
 	}
-	void Clock::Tick()
+	void Clock::Tick( float tick_amount)
 	{
-		auto now = std::chrono::system_clock::now();
-
-		elapsedTime = std::chrono::duration<float, std::chrono::seconds::period>(now - start_time).count();
-		//start_time = std::chrono::system_clock::now();
+		
+		elapsedTime += tick_amount;
 	}
 	float Clock::GetElapsedTime()
 	{
+		return elapsedTime;
+	}
+	float Clock::GetInternalElapsedTime()
+	{
 		if (!started) Begin();
 		auto now = std::chrono::system_clock::now();
-		return std::chrono::duration<float>(now - start_time).count();
+
+		//start_time = std::chrono::system_clock::now();
+		return std::chrono::duration<float, std::chrono::seconds::period>(now - start_time).count();
 	}
 }

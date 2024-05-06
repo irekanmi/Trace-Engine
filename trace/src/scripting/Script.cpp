@@ -41,6 +41,13 @@ namespace trace {
 
 	
 
+	void* ScriptInstance::GetBackendHandle()
+	{
+		void* result = nullptr;
+		GetScriptInstanceHandle(*this, result);
+		return result;
+	}
+
 	bool ScriptInstance::GetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size)
 	{
 		if (m_script->m_fields.find(field_name) != m_script->m_fields.end())

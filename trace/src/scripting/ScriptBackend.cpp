@@ -249,7 +249,7 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 	MonoClass* out_class = mono_class_from_name(image, nameSpace.c_str(), name.c_str());
 	if (!out_class)
 	{
-		std::cout << "Failed to create script " << nameSpace << "." << name << std::endl;
+		TRC_ERROR("Failed to create script {}.{}",nameSpace , name );
 		return false;
 	}
 	script.m_internal = out_class;
@@ -281,7 +281,7 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 		if (flags & MONO_FIELD_ATTR_PUBLIC) field_res.field_flags |= ScriptFieldFlagBit::Public;
 		if (flags & MONO_FIELD_ATTR_PRIVATE) field_res.field_flags |= ScriptFieldFlagBit::Private;
 		std::string field_type = mono_type_get_name(mono_field_get_type(field));
-		std::cout << field_name << " is of type " << field_type << std::endl;
+		TRC_INFO("{} is of type {}", field_name, field_type);
 		if (s_FieldTypes.find(field_type) != s_FieldTypes.end())
 		{
 			field_res.field_type = s_FieldTypes.at(field_type);
@@ -317,6 +317,7 @@ bool DestroyScript(Script& script)
 	script.m_internal = nullptr;
 	return true;
 }
+
 bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 {
 	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.m_internal);
@@ -346,6 +347,15 @@ bool DestroyScriptInstance(ScriptInstance& instance)
 	instance.m_internal = nullptr;
 	return true;
 }
+
+bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out)
+{
+	if (!instance.m_internal) return false;
+
+	out = instance.m_internal;
+	return true;
+}
+
 
 bool GetScriptMethod(const std::string& method_name, ScriptMethod& out_method, Script& script, int param_count)
 {
