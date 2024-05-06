@@ -150,7 +150,7 @@ namespace Trace
     /// </summary>
     public class TriggerPair
     {
-        public TriggerPair() { triggerEntity = null; otherEntity = null; }
+        public TriggerPair() { triggerEntity = null; otherEntity = null ; }
         public Action triggerEntity;
         public Action otherEntity;
     };

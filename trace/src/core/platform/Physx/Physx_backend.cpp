@@ -97,7 +97,7 @@ namespace physx {
 				
 				
 				ScriptInstance trigger_pair;
-				CreateScriptInstance(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
+				CreateScriptInstanceNoInit(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
 				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first.GetID())->GetBackendHandle();
 				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second.GetID())->GetBackendHandle();
 

@@ -28,6 +28,7 @@ bool GetScriptID(Script& script, uintptr_t& res);
 bool DestroyScript(Script& script);
 
 bool CreateScriptInstance(Script& script, ScriptInstance& out_instance);
+bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance);
 bool DestroyScriptInstance(ScriptInstance& instance);
 bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out);
 

@@ -335,6 +335,22 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 
 	return true;
 }
+bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance)
+{
+	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.m_internal);
+	if (!out_object)
+	{
+		std::cout << "Failed to create script instance " << std::endl;
+		return false;
+	}
+
+	out_instance.m_internal = out_object;
+	out_instance.m_script = &script;
+
+
+
+	return true;
+}
 bool DestroyScriptInstance(ScriptInstance& instance)
 {
 	if (!instance.m_internal)
@@ -343,7 +359,6 @@ bool DestroyScriptInstance(ScriptInstance& instance)
 		return false;
 	}
 
-	
 	instance.m_internal = nullptr;
 	return true;
 }

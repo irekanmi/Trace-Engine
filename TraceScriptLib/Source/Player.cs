@@ -51,21 +51,15 @@ class Player : Trace.Action
 
     public void OnTriggerEnter(Trace.TriggerPair collision)
     {
-
-        Debug.Trace("Player Collision entered");
-        Debug.Trace($"Trigger Entity: {collision.triggerEntity.Id}");
-        Debug.Trace($"Other Entity: {collision.otherEntity.Id}");
-
-
+        if(collision.triggerEntity.HasComponent<TextComponent>())
+        {
+            collision.triggerEntity.GetComponent<TextComponent>().Text = "Has Trigger";
+        }
     }
 
     public void OnTriggerExit(Trace.TriggerPair collision)
     {
-
-        Debug.Trace("Player Collision Exit");
-        Debug.Trace($"Trigger Entity: {collision.triggerEntity.Id}");
-        Debug.Trace($"Other Entity: {collision.otherEntity.Id}");
-
+        collision.otherEntity.GetScript<Player>().Speed = 10.5f;
 
     }
 
