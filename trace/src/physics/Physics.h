@@ -1,6 +1,9 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "scene/UUID.h"
+
+#include <xhash>
 
 namespace trace {
 	
@@ -100,6 +103,49 @@ namespace trace {
 
 	};
 
-	using CollisionPair = std::pair<Entity, Entity>;
+	using TriggerPair = std::pair<Entity, Entity>;
+	using CollisionPair = std::pair<uint64_t, uint64_t>;
 
+	
+
+	struct ContactPoint
+	{
+		glm::vec3 point;
+		glm::vec3 normal;
+		float seperation;
+	};
+
+	// The maximum amount of the contact points to be stored within a single collision data (higher amount will be skipped).
+#define COLLISION_MAX_CONTACT_POINTS 8
+
+	struct CollisionData
+	{
+		UUID entity;
+		UUID otherEntity;
+		glm::vec3 impulse;
+		uint32_t numContacts;
+		ContactPoint contacts[COLLISION_MAX_CONTACT_POINTS];
+
+		void Swap()
+		{
+			UUID temp = entity;
+			entity = otherEntity;
+			otherEntity = entity;
+		}
+	};
+
+}
+
+namespace std {
+
+	template<>
+	struct hash<trace::CollisionPair>
+	{
+
+		std::size_t operator()(const trace::CollisionPair& pair) const
+		{
+			return hash<uint64_t>()(pair.first) ^ hash<uint64_t>()(pair.second);
+		}
+
+	};
 }

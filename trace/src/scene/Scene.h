@@ -46,12 +46,15 @@ namespace trace {
 		Transform GetEntityWorldTransform(Entity entity);
 		ScriptRegistry& GetScriptRegistry() { return m_scriptRegistry; }
 
+		Transform GetEntityGlobalPose(Entity entity);
+
 
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);
 		void ResolveHierachyTransforms();
 
 		std::string& GetName() { return m_name; }
 		void SetName(const std::string& name) { m_name = name; }
+		bool IsRunning() { return m_running; }
 
 
 		static void Copy(Ref<Scene> from, Ref<Scene> to);

@@ -10,6 +10,8 @@
 #include "scripting/ScriptEngine.h"
 #include "animation/AnimationEngine.h"
 
+#include "glm/gtx/matrix_decompose.hpp"
+
 namespace trace {
 	void Scene::Create()
 	{
@@ -560,6 +562,39 @@ namespace trace {
 		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 		TransformComponent& pose = entity.GetComponent<TransformComponent>();
 		Transform transform = pose._transform;
+
+		if (hi.HasParent())
+		{
+			Transform parent_transform = GetEntityWorldTransform(GetEntity(hi.parent));
+			transform = Transform::CombineTransform(parent_transform, transform);
+		}
+
+		return transform;
+	}
+
+	Transform Scene::GetEntityGlobalPose(Entity entity)
+	{
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+		Transform transform;
+		if (m_running)
+		{
+			glm::vec3 pos, skew, scale;
+			glm::vec4 persp;
+			glm::quat rot;
+
+			glm::mat4 pose = hi.transform;
+
+			glm::decompose(pose, scale, rot, pos, skew, persp);
+			transform.SetPosition(pos);
+			transform.SetRotation(rot);
+			transform.SetScale(scale);
+
+			return transform;
+		}
+
+		TransformComponent& pose = entity.GetComponent<TransformComponent>();
+		transform = pose._transform;
 
 		if (hi.HasParent())
 		{

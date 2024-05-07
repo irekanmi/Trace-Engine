@@ -161,7 +161,7 @@ namespace trace {
 	{
 		Transform result;
 		result.SetScale(parent.GetScale() * child.GetScale());
-		result.SetRotation(child.GetRotation() * parent.GetRotation());
+		result.SetRotation(parent.GetRotation() * child.GetRotation());
 
 		glm::vec3 child_pos = child.GetPosition();
 		child_pos *= parent.GetScale();

@@ -20,7 +20,7 @@
 
 
 namespace physx {
-
+	static glm::vec3 Px3ToGlm3(PxVec3& val);
 
 	class SceneEvnetCallback : public PxSimulationEventCallback
 	{
@@ -45,6 +45,69 @@ namespace physx {
 		virtual void onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs) override
 		{
 
+			// Skip sending events to removed actors
+			if (pairHeader.flags & (PxContactPairHeaderFlag::eREMOVED_ACTOR_0 | PxContactPairHeaderFlag::eREMOVED_ACTOR_1))
+			{
+				return;
+			}
+
+			for (PxU32 i = 0; i < nbPairs; i++)
+			{
+				const PxContactPair& cp = pairs[i];
+
+				PxContactStreamIterator iter(cp.contactPatches, cp.contactPoints, cp.getInternalFaceIndices(), cp.patchCount, cp.contactCount);
+
+				const PxReal* impulses = cp.contactImpulses;
+
+				PxU32 flippedContacts = (cp.flags & PxContactPairFlag::eINTERNAL_CONTACTS_ARE_FLIPPED);
+				PxU32 hasImpulses = (cp.flags & PxContactPairFlag::eINTERNAL_HAS_IMPULSES);
+				PxU32 nbContacts = 0;
+
+				Entity entity = *(Entity*)cp.shapes[0]->userData;
+				Entity otherEntity = *(Entity*)cp.shapes[1]->userData;
+
+				trace::CollisionData col;
+				col.entity = entity.GetID();
+				col.otherEntity = otherEntity.GetID();
+
+				while (iter.hasNextPatch())
+				{
+					iter.nextPatch();
+					while (iter.hasNextContact())
+					{
+						iter.nextContact();
+						PxVec3 point = iter.getContactPoint();
+						PxVec3 normal = iter.getContactNormal();
+						PxVec3 impulse = hasImpulses ? normal * impulses[nbContacts] : PxVec3(0.f);
+
+						PxU32 internalFaceIndex0 = flippedContacts ?
+							iter.getFaceIndex1() : iter.getFaceIndex0();
+						PxU32 internalFaceIndex1 = flippedContacts ?
+							iter.getFaceIndex0() : iter.getFaceIndex1();
+						//...
+
+						trace::ContactPoint cnt_p = {};
+						cnt_p.point = Px3ToGlm3(point);
+						cnt_p.normal = Px3ToGlm3(normal);
+						cnt_p.seperation = iter.getSeparation();
+
+						col.contacts[nbContacts] = cnt_p;
+
+						nbContacts++;
+					}
+				}
+
+				col.numContacts = nbContacts;
+
+
+				trace::CollisionPair col_pair = std::make_pair(col.entity, col.otherEntity);
+				if (cp.events & PxPairFlag::eNOTIFY_TOUCH_PERSISTS)
+				{
+					StayCollisions.push_back(col_pair);
+				}
+				CollisionsMap[col_pair] = col;
+			}
+
 		}
 
 		virtual void onTrigger(PxTriggerPair* pairs, PxU32 count) override
@@ -60,7 +123,7 @@ namespace physx {
 				auto trigger = static_cast<trace::Entity*>(pair.triggerShape->userData);
 				auto otherCollider = static_cast<trace::Entity*>(pair.otherShape->userData);
 				TRC_ASSERT(trigger && otherCollider, "Invalid trigger pair");
-				trace::CollisionPair colliders_pair = std::make_pair(*trigger, *otherCollider);
+				trace::TriggerPair colliders_pair = std::make_pair(*trigger, *otherCollider);
 
 				if (pair.status & PxPairFlag::eNOTIFY_TOUCH_LOST)
 				{
@@ -78,7 +141,7 @@ namespace physx {
 
 		}
 
-		void SendEvents()
+		void SendTriggerEvents()
 		{
 			// Temp __________________
 
@@ -88,12 +151,7 @@ namespace physx {
 
 			for (auto& i : EnterTriggers)
 			{
-				std::string first = i.first.GetComponent<trace::TagComponent>()._tag;
-				std::string second = i.second.GetComponent<trace::TagComponent>()._tag;
-				TRC_INFO(" '{}' entered these -> {}", first, second);
-				TRC_INFO(" Trigger Entity -> {}", (uint64_t)i.first.GetID());
-				TRC_INFO(" Other Entity -> {}", (uint64_t)i.second.GetID());
-				
+			
 				
 				
 				ScriptInstance trigger_pair;
@@ -129,17 +187,9 @@ namespace physx {
 
 			for (auto& i : ExitTriggers)
 			{
-				std::string first = i.first.GetComponent<trace::TagComponent>()._tag;
-				std::string second = i.second.GetComponent<trace::TagComponent>()._tag;
-				TRC_INFO(" '{}' exited these -> {}", first, second);
-
-				TRC_INFO(" Trigger Entity -> {}", (uint64_t)i.first.GetID());
-				TRC_INFO(" Other Entity -> {}", (uint64_t)i.second.GetID());
-
-
 
 				ScriptInstance trigger_pair;
-				CreateScriptInstance(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
+				CreateScriptInstanceNoInit(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
 				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first.GetID())->GetBackendHandle();
 				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second.GetID())->GetBackendHandle();
 
@@ -170,15 +220,81 @@ namespace physx {
 			// _______________________
 		}
 
+		void SendCollisionEvents()
+		{
+
+			for (auto& i : NewCollisions)
+			{
+				trace::CollisionData& col = CollisionsMap[i];
+
+				TRC_INFO("Collision Enter");
+			}
+
+			for (auto& i : StayCollisions)
+			{
+				trace::CollisionData& col = CollisionsMap[i];
+
+				TRC_WARN("Collision Stay");
+			}
+
+			for (auto& i : RemovedCollisions)
+			{
+				trace::CollisionData& col = PrevCollisions[i];
+
+				TRC_INFO("Collision Exit");
+			}
+
+		}
+
+		void SendEvents()
+		{
+
+			SendTriggerEvents();
+			SendCollisionEvents();
+			
+		}
+
 		void Clear()
 		{
+			PrevCollisions = CollisionsMap;
+			CollisionsMap.clear();
+
+			NewCollisions.clear();
+			RemovedCollisions.clear();
+			StayCollisions.clear();
+
+
 			EnterTriggers.clear();
 			ExitTriggers.clear();
 		}
 
+		void CollectEvents()
+		{
+			for (auto& i : CollisionsMap)
+			{
+				auto prev = PrevCollisions.find(i.first);
+				if (prev == PrevCollisions.end())
+					NewCollisions.push_back(i.first);
+			}
+
+			for (auto& i : PrevCollisions)
+			{
+				auto it = CollisionsMap.find(i.first);
+				if (it == CollisionsMap.end())
+					RemovedCollisions.push_back(i.first);
+			}
+		}
+
 	private:
-		std::vector<trace::CollisionPair> EnterTriggers;
-		std::vector<trace::CollisionPair> ExitTriggers;
+		std::vector<trace::TriggerPair> EnterTriggers;
+		std::vector<trace::TriggerPair> ExitTriggers;
+
+		std::unordered_map<trace::CollisionPair, CollisionData> PrevCollisions;
+		std::vector<trace::CollisionPair> NewCollisions;
+		std::vector<trace::CollisionPair> RemovedCollisions;
+		std::vector<trace::CollisionPair> StayCollisions;
+		std::unordered_map<trace::CollisionPair, CollisionData> CollisionsMap;
+
 
 	protected:
 
@@ -442,6 +558,7 @@ namespace physx {
 		scn->simulate(deltaTime);
 		scn->fetchResults(true);
 
+		in_scene->event_callback.CollectEvents();
 		in_scene->event_callback.SendEvents();
 		in_scene->event_callback.Clear();
 

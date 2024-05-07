@@ -848,8 +848,6 @@ namespace trace {
 			TransformComponent& pose = m_hierachyPanel->m_selectedEntity.GetComponent<TransformComponent>();
 			bool has_parent = hi.HasParent();
 
-			Transform world_pose = m_currentScene->GetEntityWorldTransform(m_hierachyPanel->m_selectedEntity);
-			
 			glm::mat4 transform = hi.transform;
 
 
@@ -1156,6 +1154,8 @@ namespace trace {
 		{
 			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
 		}
+		editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+		if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 	}
 	void TraceEditor::OnSceneStimulate()
 	{
