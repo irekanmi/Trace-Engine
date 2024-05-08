@@ -45,7 +45,7 @@ namespace trace {
 		void Iterate(std::function<void(ScriptManager&)> callback);
 
 		void ReloadScripts();
-		std::unordered_map<Script*, FieldManager> GetFieldInstances() { return m_fieldInstance; }
+		std::unordered_map<Script*, FieldManager>& GetFieldInstances() { return m_fieldInstance; }
 
 		static void Copy(ScriptRegistry& from, ScriptRegistry& to);
 

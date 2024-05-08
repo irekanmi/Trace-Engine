@@ -227,5 +227,14 @@ namespace trace {
 		Ref<GTexture> image;
 	};
 
+	template<typename... Component>
+	struct ComponentGroup
+	{
+
+	};
+
+	using AllComponents = ComponentGroup<HierachyComponent, TagComponent, TransformComponent, CameraComponent,
+		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
+		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent>;
 
 }

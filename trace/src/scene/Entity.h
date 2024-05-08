@@ -53,6 +53,8 @@ namespace trace {
 
 		UUID GetID();
 
+		Scene* GetScene() { return m_scene; }
+
 		bool HasScript(const std::string& script_name);
 		bool HasScript(uintptr_t handle);
 

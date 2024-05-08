@@ -478,12 +478,47 @@ namespace trace {
 		return Entity();
 	}
 
-	template<typename Component>
+	template<typename... Component>
 	void CopyComponent(Entity from, Entity to)
 	{
-		if (from.HasComponent<Component>())
+
+		([&]() {
+			if (from.HasComponent<Component>())
+			{
+				to.AddOrReplaceComponent<Component>(from.GetComponent<Component>());
+			}
+			}(), ...);
+
+		
+	}
+
+	template<typename... Component>
+	void CopyComponent( ComponentGroup<Component...>, Entity from, Entity to)
+	{
+		CopyComponent<Component...>(from, to);
+	}
+
+	void duplicate_entity_hierachy(Scene* scene, Entity e, Entity parent)
+	{
+		Entity _res = scene->CreateEntity_UUID(UUID::GenUUID(), e.GetComponent<TagComponent>()._tag);
+
+		CopyComponent(AllComponents{}, e, _res);
+		_res.AddOrReplaceComponent<HierachyComponent>();
+
+		scene->SetParent(_res, parent);
+
+		scene->GetScriptRegistry().Iterate(e.GetID(), [&](UUID, Script* script, ScriptInstance* other)
+			{
+				ScriptInstance* sc_ins = _res.AddScript(script->GetID());
+				*sc_ins = *other;
+			});
+
+		HierachyComponent& hierachy = e.GetComponent<HierachyComponent>();
+		Scene* _scene = e.GetScene();
+		for (auto& i : hierachy.children)
 		{
-			to.AddOrReplaceComponent<Component>(from.GetComponent<Component>());
+			Entity entity = _scene->GetEntity(i);
+			duplicate_entity_hierachy(scene,entity, _res);
 		}
 	}
 
@@ -491,26 +526,33 @@ namespace trace {
 	{
 		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>()._tag);
 
-		CopyComponent<TagComponent>(entity, res);
-		CopyComponent<TransformComponent>(entity, res);
-		CopyComponent<CameraComponent>(entity, res);
-		CopyComponent<LightComponent>(entity, res);
-		CopyComponent<MeshComponent>(entity, res);
-		CopyComponent<ModelComponent>(entity, res);
-		CopyComponent<ModelRendererComponent>(entity, res);
-		CopyComponent<TextComponent>(entity, res);
-		CopyComponent<RigidBodyComponent>(entity, res);
-		CopyComponent<BoxColliderComponent>(entity, res);
-		CopyComponent<SphereColliderComponent>(entity, res);
-		CopyComponent<HierachyComponent>(entity, res);
-		CopyComponent<AnimationComponent>(entity, res);
-		CopyComponent<ImageComponent>(entity, res);
+		CopyComponent(AllComponents{}, entity, res);
+		
 
+		
 		m_scriptRegistry.Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
 				ScriptInstance* sc_ins = res.AddScript(script->GetID());
 				*sc_ins = *other;
-			});
+			});	
+
+
+		res.AddOrReplaceComponent<HierachyComponent>();
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+		if (GetEntity(entity.GetID()) && hi.HasParent())// The entity arguement is a member of the scene
+		{
+			Entity parent = GetEntity(entity.GetComponent<HierachyComponent>().parent);
+			SetParent(res, parent);
+		}
+
+		Scene* scene = entity.GetScene();
+		for (auto& i : hi.children)
+		{
+			Entity d_child = scene->GetEntity(i);
+			duplicate_entity_hierachy(this, d_child, res);
+		}
+
 
 	}
 
@@ -639,19 +681,28 @@ namespace trace {
 
 	}
 
-	template<typename Component>
+	template<typename... Component>
 	void CopyComponent(entt::registry& from, entt::registry& to, std::unordered_map<UUID, entt::entity>& entity_map)
 	{
-		auto view = from.view<Component>();
+		([&]()
+			{
+				auto view = from.view<Component>();
+				for (auto e : view)
+				{
+					UUID uuid = from.get<IDComponent>(e)._id;
+					auto [comp] = view.get(e);
+					entt::entity en = entity_map[uuid];
+					to.emplace_or_replace<Component>(en, comp);
+				}
 
-		for (auto e : view)
-		{
-			UUID uuid = from.get<IDComponent>(e)._id;
-			auto [comp] = view.get(e);
-			entt::entity en = entity_map[uuid];
-			to.emplace_or_replace<Component>(en, comp);
-		}
+			}(), ...);
 
+	}
+
+	template<typename... Component>
+	void CopyComponent(ComponentGroup<Component...>, entt::registry& from, entt::registry& to, std::unordered_map<UUID, entt::entity>& entity_map)
+	{
+		CopyComponent<Component...>(from, to, entity_map);
 	}
 
 
@@ -678,20 +729,8 @@ namespace trace {
 			entity_map[uuid] = en;
 		}
 
-		CopyComponent<TagComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<HierachyComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<TransformComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<CameraComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<LightComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<MeshComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<ModelComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<ModelRendererComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<TextComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<RigidBodyComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<BoxColliderComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<SphereColliderComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<AnimationComponent>(f_reg, t_reg, entity_map);
-		CopyComponent<ImageComponent>(f_reg, t_reg, entity_map);
+		CopyComponent(AllComponents{}, f_reg, t_reg, entity_map);
+
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 

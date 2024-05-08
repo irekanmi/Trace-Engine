@@ -950,8 +950,10 @@ namespace trace {
 							field_ins.Init(script);
 						}
 						ScriptFieldInstance& ins = field_manager[uuid];
-						for (auto& [name, data] : ins.m_fields)
+						for (auto& i : ins.m_fields)
 						{
+							const std::string& name = i.first;
+							ScriptFieldInstance::ScriptData& data = i.second;
 							switch (data.type)
 							{
 							case ScriptFieldType::String:
@@ -980,7 +982,10 @@ namespace trace {
 							}
 							case ScriptFieldType::Float:
 							{
-								ImGui::DragFloat(name.c_str(), (float*)data.data);
+								float _data = 0.0f;
+								memcpy(&_data, data.data, sizeof(float));
+								if(ImGui::DragFloat(name.c_str(), &_data))
+									memcpy(data.data, &_data, sizeof(float));
 								break;
 							}
 							case ScriptFieldType::Int16:

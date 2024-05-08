@@ -10,6 +10,7 @@
 #include "FontManager.h"
 #include "scene/SceneManager.h"
 #include "AnimationsManager.h"
+#include "PrefabManager.h"
 
 namespace trace {
 
@@ -46,6 +47,9 @@ namespace trace {
 		result = result && AnimationsManager::get_instance()->Init(4096, 4096);
 		TRC_ASSERT(result, "Failed to initialized animations manager");
 
+		result = result && PrefabManager::get_instance()->Init(4096);
+		TRC_ASSERT(result, "Failed to initialized Prefab manager");
+
 
 		return result;
 	}
@@ -53,7 +57,7 @@ namespace trace {
 	{
 		//NOTE: The resource destroys the scene manager because scenes are also resources
 
-
+		PrefabManager::get_instance()->Shutdown();
 		AnimationsManager::get_instance()->Shutdown();
 		MeshManager::get_instance()->ShutDown();
 		ModelManager::get_instance()->ShutDown();
@@ -66,6 +70,7 @@ namespace trace {
 		SceneManager* sceneManager = SceneManager::get_instance();
 		sceneManager->Shutdown();
 		SAFE_DELETE(sceneManager, SceneManager);
+		SAFE_DELETE(PrefabManager::get_instance(), PrefabManager);
 		SAFE_DELETE(AnimationsManager::get_instance(), AnimationsManager);
 		SAFE_DELETE(MeshManager::get_instance(), MeshManager);
 		SAFE_DELETE(ModelManager::get_instance(), ModelManager);
