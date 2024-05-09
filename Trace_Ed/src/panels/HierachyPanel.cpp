@@ -1,9 +1,14 @@
 
 #include "HierachyPanel.h"
 #include "../TraceEditor.h"
-#include "imgui.h"
 #include "scene/Components.h"
 #include "InspectorPanel.h"
+#include "../utils/ImGui_utils.h"
+#include "serialize/SceneSerializer.h"
+
+
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace trace {
 	HierachyPanel::HierachyPanel()
@@ -15,23 +20,14 @@ namespace trace {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
 		ImGui::Begin("Scene Hierachy", 0, ImGuiWindowFlags_NoCollapse);
 
+
+
 		if (m_editor->m_currentScene)
 		{
 			
-			std::string& scene_name = m_editor->m_currentScene->GetName();
-			ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
-			bool clicked = ImGui::TreeNode(scene_name.c_str());
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
-				{
-					UUID uuid = *(UUID*)payload->Data;
-					Entity child = m_editor->m_currentScene->GetEntity(uuid);
-					m_editor->m_currentScene->AddToRoot(child);
-
-				}
-				ImGui::EndDragDropTarget();
-			}
+			std::string& scene_name = m_editor->m_editScene->GetName();
+			ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen;
+			bool clicked = ImGui::TreeNodeEx(scene_name.c_str(), tree_flags);
 
 			if (clicked)
 			{
@@ -57,8 +53,40 @@ namespace trace {
 
 			
 		}
+
+		ImRect d_r = {};
+		d_r.Min = ImGui::GetWindowPos();
+		d_r.Max.x = d_r.Min.x + ImGui::GetWindowWidth();
+		d_r.Max.y = d_r.Min.y + ImGui::GetWindowHeight();
+
+		d_r.Min.x += 10.0f;
+		d_r.Min.y += GetLineHeight() + 8.0f;
+		d_r.Max.x -= 10.0f;
+		d_r.Max.y -= 10.0f;
+		if (ImGui::BeginDragDropTargetCustom(d_r, ImGui::GetID("Scene Hierachy Drag_Drop")))
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				Entity child = m_editor->m_currentScene->GetEntity(uuid);
+				m_editor->m_currentScene->AddToRoot(child);
+
+
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
+			{
+				static char buf[1024] = { 0 };
+				memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+				std::string path = buf;
+				Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
+				m_editor->m_currentScene->InstanciatePrefab(prefab);
+			}
+			ImGui::EndDragDropTarget();
+		}
 		ImGui::End();
 		ImGui::PopStyleVar();
+		
+
 
 
 	}
@@ -99,7 +127,7 @@ namespace trace {
 
 		if (clicked) ImGui::TreePop();
 
-
+		
 		
 	}
 	void HierachyPanel::DrawAllEntites()
@@ -129,10 +157,10 @@ namespace trace {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 				{
 					UUID uuid = *(UUID*)payload->Data;
-					Entity child = m_editor->m_currentScene->GetEntity(uuid);
-					if (child && child != entity)
+					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
+					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
 					{
-						m_editor->m_currentScene->SetParent(child, entity);
+						m_editor->m_currentScene->SetParent(new_child, entity);
 					}
 					
 				}
@@ -207,10 +235,10 @@ namespace trace {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 				{
 					UUID uuid = *(UUID*)payload->Data;
-					Entity child = m_editor->m_currentScene->GetEntity(uuid);
-					if (child && child != entity)
+					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
+					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
 					{
-						m_editor->m_currentScene->SetParent(child, entity);
+						m_editor->m_currentScene->SetParent(new_child, entity);
 					}
 
 				}

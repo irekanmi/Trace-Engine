@@ -9,6 +9,7 @@
 #include "scripting/ScriptBackend.h"
 #include "scripting/ScriptEngine.h"
 #include "animation/AnimationEngine.h"
+#include "resource/PrefabManager.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -120,10 +121,12 @@ namespace trace {
 	{
 		ScriptEngine::get_instance()->OnSceneStart(this);
 
-		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+		ScriptRegistry& reg = m_scriptRegistry;
+
+		m_scriptRegistry.Iterate([&reg](ScriptRegistry::ScriptManager& manager)
 			{
 				ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
-				auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+				auto& fields_instances = reg.GetFieldInstances();
 
 				uint32_t index = 0;
 				for (ScriptInstance& i : manager.instances)
@@ -522,7 +525,7 @@ namespace trace {
 		}
 	}
 
-	void Scene::DuplicateEntity(Entity entity)
+	Entity Scene::DuplicateEntity(Entity entity)
 	{
 		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>()._tag);
 
@@ -553,15 +556,50 @@ namespace trace {
 			duplicate_entity_hierachy(this, d_child, res);
 		}
 
-
+		return res;
 	}
+
+
 
 	void Scene::DestroyEntity(Entity entity)
 	{
+		if (this != entity.GetScene())
+		{
+			TRC_WARN("Can't destory an entity that is not a member of a scene, scene name: {}", GetName());
+			return;
+		}
+
+		// Checking if the entity still exists in the scene
+		if (!GetEntity(entity.GetID()))
+		{
+			TRC_WARN("Entity is not valid, Function: {} ", __FUNCTION__);
+			return;
+		}
+
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		for (UUID& i : hi.children)
+		{
+			Entity child = GetEntity(i);
+			DestroyEntity(child);
+		}
+
 		m_scriptRegistry.Erase(entity.GetID());
 		entity.RemoveComponent<HierachyComponent>();
 		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
+	}
+
+	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab)
+	{
+		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
+		return DuplicateEntity(handle);
+	}
+
+	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab, Entity parent)
+	{
+		Entity result = InstanciatePrefab(prefab);
+		SetParent(result, parent);
+		return result;
 	}
 
 	void Scene::SetParent(Entity child, Entity parent)
@@ -584,6 +622,27 @@ namespace trace {
 
 	}
 
+	bool Scene::IsParent(Entity parent, Entity child)
+	{
+		HierachyComponent& hi = child.GetComponent<HierachyComponent>();
+		UUID pId = hi.parent;
+
+		bool result = false;
+
+		while (pId != 0)
+		{
+			if (pId == parent.GetID())
+			{
+				result = true;
+				break;
+			}
+
+			pId = GetEntity(pId).GetComponent<HierachyComponent>().parent;
+		}
+
+		return result;
+	}
+
 	void Scene::AddToRoot(Entity entity)
 	{
 		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
@@ -594,6 +653,7 @@ namespace trace {
 			old_parent.GetComponent<HierachyComponent>().RemoveChild(entity.GetID());
 		}
 
+		if (m_rootNode->HasChild(entity.GetID())) return;
 
 		m_rootNode->AddChild(entity.GetID());
 		hi.parent = 0;

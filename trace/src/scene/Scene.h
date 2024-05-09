@@ -39,9 +39,13 @@ namespace trace {
 		Entity CreateEntity_UUID(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity CreateEntity_UUIDWithParent(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity GetEntity(UUID uuid);
-		void DuplicateEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity);
 		void DestroyEntity(Entity entity);
+		Entity InstanciatePrefab(Ref<Prefab> prefab);
+		Entity InstanciatePrefab(Ref<Prefab> prefab, Entity parent);
+
 		void SetParent(Entity child, Entity parent);
+		bool IsParent(Entity parent, Entity child);
 		void AddToRoot(Entity entity);
 		Transform GetEntityWorldTransform(Entity entity);
 		ScriptRegistry& GetScriptRegistry() { return m_scriptRegistry; }

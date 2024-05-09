@@ -8,6 +8,7 @@
 #include "resource/ShaderManager.h"
 #include "resource/TextureManager.h"
 #include "resource/FontManager.h"
+#include "resource/PrefabManager.h"
 #include "backends/UIutils.h"
 #include "scene/UUID.h"
 #include "serialize/MaterialSerializer.h"
@@ -15,9 +16,12 @@
 #include "InspectorPanel.h"
 #include "resource/AnimationsManager.h"
 #include "serialize/AnimationsSerializer.h"
+#include "serialize/SceneSerializer.h"
 #include "core/Utils.h"
+#include "../utils/ImGui_utils.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "serialize/yaml_util.h"
@@ -296,7 +300,56 @@ namespace trace {
 
 			OnWindowPopup();
 		}
+
+		static bool prefab_popup = false;
+		static Entity prefab_entity;
+
+		ImRect d_r = {};
+		d_r.Min = ImGui::GetWindowPos();
+		d_r.Max.x = d_r.Min.x + ImGui::GetWindowWidth();
+		d_r.Max.y = d_r.Min.y + ImGui::GetWindowHeight();
+
+		d_r.Min.x += 10.0f;
+		d_r.Min.y += GetLineHeight() + 8.0f;
+		d_r.Max.x -= 10.0f;
+		d_r.Max.y -= 10.0f;
+		if (ImGui::BeginDragDropTargetCustom(d_r, ImGui::GetID("Content Browser Drag_Drop")))
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				prefab_entity = m_editor->m_currentScene->GetEntity(uuid);
+				prefab_popup = true;
+			}
+			ImGui::EndDragDropTarget();
+		}
 		ImGui::End();
+
+		// Creation of prefabs
+		if (prefab_popup)
+		{
+			std::string res;
+			if (m_editor->InputTextPopup("Prefab Name", res))
+			{
+				if (!res.empty())
+				{
+					UUID id = GetUUIDFromName(res + ".trcac");
+					if (id == 0)
+					{
+						std::string prefab_path = (m_currentDir / (res + ".trprf")).string();
+						Ref<Prefab> prefab = PrefabManager::get_instance()->Create(res + ".trprf", prefab_entity);
+						SceneSerializer::SerializePrefab(prefab, prefab_path);
+						OnDirectoryChanged();
+						ProcessAllDirectory();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trcac");
+					}
+					prefab_popup = false;
+				}
+			}
+		}
 
 	}
 	void ContentBrowser::OnDirectoryChanged()

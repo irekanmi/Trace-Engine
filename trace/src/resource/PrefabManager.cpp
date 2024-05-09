@@ -32,7 +32,24 @@ namespace trace {
 
 		Prefab* asset = GetNextValidHandle(name);
 		Entity handle = m_prefabScene->CreateEntity();
-		asset->SetHandle(handle);
+		asset->SetHandle(handle.GetID());
+		asset->m_path = name;
+
+		result = { asset, BIND_RESOURCE_UNLOAD_FN(PrefabManager::UnLoad, this) };
+
+		return result;
+	}
+
+	Ref<Prefab> PrefabManager::Create(const std::string& name, Entity handle)
+	{
+		Ref<Prefab> result;
+		result = Get(name);
+		if (result) return result;
+
+		Prefab* asset = GetNextValidHandle(name);
+		Entity p = m_prefabScene->DuplicateEntity(handle);
+		asset->SetHandle(p.GetID());
+		asset->m_path = name;
 
 		result = { asset, BIND_RESOURCE_UNLOAD_FN(PrefabManager::UnLoad, this) };
 
@@ -44,14 +61,14 @@ namespace trace {
 		Ref<Prefab> result;
 		Prefab* asset = GetAsset(name);
 
-		result = { asset, BIND_RESOURCE_UNLOAD_FN(PrefabManager::UnLoad, this) };
+		if(asset) result = { asset, BIND_RESOURCE_UNLOAD_FN(PrefabManager::UnLoad, this) };
 		return result;
 	}
 
 	void PrefabManager::UnLoad(Prefab* asset)
 	{
 		AssetManager::UnLoad(asset);
-		m_prefabScene->DestroyEntity(asset->GetHandle());
+		m_prefabScene->DestroyEntity(m_prefabScene->GetEntity(asset->GetHandle()));
 	}
 
 	Ref<Prefab> PrefabManager::Load_Runtime(UUID id)

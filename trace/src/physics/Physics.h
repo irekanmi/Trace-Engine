@@ -7,7 +7,6 @@
 
 namespace trace {
 	
-	class Entity;
 
 	class PhyShape
 	{
@@ -103,7 +102,6 @@ namespace trace {
 
 	};
 
-	using TriggerPair = std::pair<Entity, Entity>;
 	using CollisionPair = std::pair<uint64_t, uint64_t>;
 
 	

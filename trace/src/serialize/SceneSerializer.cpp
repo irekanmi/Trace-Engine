@@ -11,6 +11,7 @@
 #include "resource/MaterialManager.h"
 #include "resource/AnimationsManager.h"
 #include "resource/TextureManager.h"
+#include "resource/PrefabManager.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
 #include "serialize/PipelineSerializer.h"
@@ -419,9 +420,8 @@ namespace trace {
 		} }
 	};
 
-	
 
-	static bool SerializeEntites(Ref<Scene> scene, Entity entity, YAML::Emitter& emit)
+	static bool SerializeEntites(Entity entity, YAML::Emitter& emit)
 	{
 		IDComponent& uuid = entity.GetComponent<IDComponent>();
 
@@ -434,6 +434,309 @@ namespace trace {
 
 		return true;
 	}
+
+	static void serialize_entity(Entity entity, YAML::Emitter& emit, Scene* scene)
+	{
+		emit << YAML::BeginMap;
+		SerializeEntites(entity, emit);
+
+
+		//Scripts ----------------------------------------
+		emit << YAML::Key << "Scripts" << YAML::Value;
+		emit << YAML::BeginSeq;
+
+		ScriptRegistry& script_registry = scene->GetScriptRegistry();
+
+		script_registry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
+			{
+				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+				auto& fields_instances = script_registry.GetFieldInstances();
+				auto& field_manager = fields_instances[script];
+				auto field_it = field_manager.find(uuid);
+				bool has_fields = !(field_it == field_manager.end());
+				if (!has_fields)
+				{
+					TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->script_name);
+				}
+				emit << YAML::BeginMap;
+
+				emit << YAML::Key << "Script Name" << YAML::Value << script->script_name;
+				emit << YAML::Key << "Script Values" << YAML::Value << YAML::BeginSeq; // Script values
+				if (has_fields)
+				{
+					ScriptFieldInstance& ins = field_manager[uuid];
+					for (auto& [name, field] : ins.m_fields)
+					{
+						emit << YAML::BeginMap;
+
+						emit << YAML::Key << "Name" << YAML::Value << name;
+						//emit << YAML::Key << "Type" << YAML::Value << (int)field.type;
+						switch (field.type)
+						{
+						case ScriptFieldType::String:
+						{
+							break;
+						}
+						case ScriptFieldType::Bool:
+						{
+							bool data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Byte:
+						{
+							char data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Double:
+						{
+							double data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Char:
+						{
+							char data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Float:
+						{
+							float data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Int16:
+						{
+							int16_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Int32:
+						{
+							int32_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Int64:
+						{
+							int64_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::UInt16:
+						{
+							uint16_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::UInt32:
+						{
+							uint32_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::UInt64:
+						{
+							uint64_t data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Vec2:
+						{
+							glm::vec2 data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Vec3:
+						{
+							glm::vec3 data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+						case ScriptFieldType::Vec4:
+						{
+							glm::vec4 data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
+
+						}
+
+						emit << YAML::EndMap;
+					}
+				}
+				emit << YAML::EndSeq; // Script values
+
+				emit << YAML::EndMap;
+			});
+
+		emit << YAML::EndSeq;
+		// --------------------------------------------------
+
+		emit << YAML::EndMap;
+	}
+	static Entity deserialize_components(Scene* scene, YAML::detail::iterator_value& entity)
+	{
+		UUID uuid = entity["UUID"].as<uint64_t>();
+		UUID parent = 0;
+		if (entity["Parent"]) parent = entity["Parent"].as<uint64_t>();
+		Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
+		for (auto& i : _deserialize_components)
+		{
+			if (entity[i.first]) i.second(obj, entity);
+		}
+		YAML::Node scripts = entity["Scripts"];
+		if (!scripts) return obj;
+		std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
+
+		for (auto script : scripts)
+		{
+			std::string script_name = script["Script Name"].as<std::string>();
+			auto it = g_Scripts.find(script_name);
+			if (it == g_Scripts.end())
+			{
+				TRC_WARN("Script:{} does not exist in the assembly", script_name);
+				continue;
+			}
+			obj.AddScript(script_name);
+
+			ScriptRegistry& script_registry = scene->GetScriptRegistry();
+
+			//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+			auto& fields_instances = script_registry.GetFieldInstances();
+			auto& field_manager = fields_instances[&it->second];
+			auto field_it = field_manager.find(uuid);
+			if (field_it == field_manager.end())
+			{
+				ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
+				field_ins.Init(&it->second);
+			}
+			ScriptFieldInstance& ins = field_manager[obj.GetID()];
+
+			for (auto values : script["Script Values"])
+			{
+				std::string field_name = values["Name"].as<std::string>();
+				auto f_it = ins.m_fields.find(field_name);
+				if (f_it == ins.m_fields.end())
+				{
+					TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
+					continue;
+				}
+				switch (f_it->second.type)
+				{
+				case ScriptFieldType::String:
+				{
+					break;
+				}
+				case ScriptFieldType::Bool:
+				{
+					bool data = values["Value"].as<bool>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Byte:
+				{
+					char data = values["Value"].as<char>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Double:
+				{
+					double data = values["Value"].as<double>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Char:
+				{
+					char data = values["Value"].as<char>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Float:
+				{
+					float data = values["Value"].as<float>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Int16:
+				{
+					int16_t data = values["Value"].as<int16_t>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Int32:
+				{
+					int32_t data = values["Value"].as<int32_t>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Int64:
+				{
+					int64_t data = values["Value"].as<int64_t>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::UInt16:
+				{
+					uint16_t data = values["Value"].as<uint16_t>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::UInt32:
+				{
+					uint32_t data = values["Value"].as<uint32_t>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::UInt64:
+				{
+					uint64_t data = values["Value"].as<uint64_t>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Vec2:
+				{
+					glm::vec2 data = values["Value"].as<glm::vec2>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Vec3:
+				{
+					glm::vec3 data = values["Value"].as<glm::vec3>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				case ScriptFieldType::Vec4:
+				{
+					glm::vec4 data = values["Value"].as<glm::vec4>();
+					ins.SetValue(field_name, data);
+					break;
+				}
+				}
+			}
+
+
+		}
+
+		return obj;
+	}
+
 
 	bool SceneSerializer::Serialize(Ref<Scene> scene, const std::string& file_path)
 	{
@@ -448,162 +751,63 @@ namespace trace {
 		auto process_hierachy = [&](Entity entity, UUID, Scene*)
 		{
 			Entity en(entity, scene.get());
-			emit << YAML::BeginMap;
-			SerializeEntites(scene, en, emit);
-
-
-			//Scripts ----------------------------------------
-			emit << YAML::Key << "Scripts" << YAML::Value;
-			emit << YAML::BeginSeq;
-
-			ScriptRegistry& script_registry = scene->m_scriptRegistry;
-
-			script_registry.Iterate(en.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
-				{
-					//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-					auto& fields_instances = script_registry.GetFieldInstances();
-					auto& field_manager = fields_instances[script];
-					auto field_it = field_manager.find(uuid);
-					bool has_fields = !(field_it == field_manager.end());
-					if (!has_fields)
-					{
-						TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->script_name);
-					}
-					emit << YAML::BeginMap;
-
-					emit << YAML::Key << "Script Name" << YAML::Value << script->script_name;
-					emit << YAML::Key << "Script Values" << YAML::Value << YAML::BeginSeq; // Script values
-					if (has_fields)
-					{
-						ScriptFieldInstance& ins = field_manager[uuid];
-						for (auto& [name, field] : ins.m_fields)
-						{
-							emit << YAML::BeginMap;
-
-							emit << YAML::Key << "Name" << YAML::Value << name;
-							//emit << YAML::Key << "Type" << YAML::Value << (int)field.type;
-							switch (field.type)
-							{
-							case ScriptFieldType::String:
-							{
-								break;
-							}
-							case ScriptFieldType::Bool:
-							{
-								bool data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Byte:
-							{
-								char data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Double:
-							{
-								double data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Char:
-							{
-								char data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Float:
-							{
-								float data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Int16:
-							{
-								int16_t data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Int32:
-							{
-								int32_t data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Int64:
-							{
-								int64_t data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::UInt16:
-							{
-								uint16_t data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::UInt32:
-							{
-								uint32_t data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::UInt64:
-							{
-								uint64_t data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Vec2:
-							{
-								glm::vec2 data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Vec3:
-							{
-								glm::vec3 data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-							case ScriptFieldType::Vec4:
-							{
-								glm::vec4 data;
-								ins.GetValue(name, data);
-								emit << YAML::Key << "Value" << YAML::Value << data;
-								break;
-							}
-
-							}
-
-							emit << YAML::EndMap;
-						}
-					}
-					emit << YAML::EndSeq; // Script values
-
-					emit << YAML::EndMap;
-				});
-
-			emit << YAML::EndSeq;
-			// --------------------------------------------------
-
-			emit << YAML::EndMap;
+			serialize_entity(en, emit, scene.get());
 		};
 
 		scene->ProcessEntitiesByHierachy(process_hierachy);
+
+		emit << YAML::EndSeq;
+
+		emit << YAML::EndMap;
+
+		FileHandle out_handle;
+		if (FileSystem::open_file(file_path, FileMode::WRITE, out_handle))
+		{
+			FileSystem::writestring(out_handle, emit.c_str());
+			FileSystem::close_file(out_handle);
+		}
+
+		return true;
+	}
+
+	//TODO: Move serialization of an entity into a funtion
+	static void SerializePrefabEntity(Entity entity, YAML::Emitter& emit)
+	{
+
+		serialize_entity(entity, emit, entity.GetScene());
+
+		for(auto& i : entity.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = entity.GetScene()->GetEntity(i);
+			SerializePrefabEntity(child, emit);
+		}
+
+	}
+
+	bool SceneSerializer::SerializePrefab(Ref<Prefab> prefab, const std::string& file_path)
+	{
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Prefab Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Prefab Name" << YAML::Value << prefab->GetName();
+
+		emit << YAML::Key << "Entity" << YAML::Value << YAML::BeginSeq;
+
+		Scene* scene = PrefabManager::get_instance()->GetScene();
+		Entity handle = scene->GetEntity(prefab->GetHandle());
+		serialize_entity(handle, emit, handle.GetScene());
+
+		emit << YAML::EndSeq;
+
+		emit << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
+
+		for (auto& i : handle.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = handle.GetScene()->GetEntity(i);
+			SerializePrefabEntity(child, emit);
+		}
 
 		emit << YAML::EndSeq;
 
@@ -654,149 +858,71 @@ namespace trace {
 		{
 			for (auto entity : entities)
 			{
-				UUID uuid = entity["UUID"].as<uint64_t>();
-				UUID parent = 0;
-				if (entity["Parent"]) parent = entity["Parent"].as<uint64_t>();
-				Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
-				for (auto& i : _deserialize_components)
-				{
-					if (entity[i.first]) i.second(obj, entity);
-				}
-				YAML::Node scripts = entity["Scripts"];
-				if (!scripts) continue;
-				std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
-				
-				for (auto script : scripts)
-				{
-					std::string script_name = script["Script Name"].as<std::string>();
-					auto it = g_Scripts.find(script_name);
-					if (it == g_Scripts.end())
-					{
-						TRC_WARN("Script:{} does not exist in the assembly", script_name);
-						continue;
-					}
-					obj.AddScript(script_name);
-
-					ScriptRegistry& script_registry = scene->m_scriptRegistry;
-
-					//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-					auto& fields_instances = script_registry.GetFieldInstances();
-					auto& field_manager = fields_instances[&it->second];
-					auto field_it = field_manager.find(uuid);
-					if (field_it == field_manager.end())
-					{
-						ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
-						field_ins.Init(&it->second);
-					}
-					ScriptFieldInstance& ins = field_manager[obj.GetID()];
-
-					for (auto values : script["Script Values"])
-					{
-						std::string field_name = values["Name"].as<std::string>();
-						auto f_it = ins.m_fields.find(field_name);
-						if (f_it == ins.m_fields.end())
-						{
-							TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
-							continue;
-						}
-						switch (f_it->second.type)
-						{
-						case ScriptFieldType::String:
-						{
-							break;
-						}
-						case ScriptFieldType::Bool:
-						{
-							bool data = values["Value"].as<bool>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Byte:
-						{
-							char data = values["Value"].as<char>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Double:
-						{
-							double data = values["Value"].as<double>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Char:
-						{
-							char data = values["Value"].as<char>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Float:
-						{
-							float data = values["Value"].as<float>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Int16:
-						{
-							int16_t data = values["Value"].as<int16_t>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Int32:
-						{
-							int32_t data = values["Value"].as<int32_t>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Int64:
-						{
-							int64_t data = values["Value"].as<int64_t>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::UInt16:
-						{
-							uint16_t data = values["Value"].as<uint16_t>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::UInt32:
-						{
-							uint32_t data = values["Value"].as<uint32_t>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::UInt64:
-						{
-							uint64_t data = values["Value"].as<uint64_t>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Vec2:
-						{
-							glm::vec2 data = values["Value"].as<glm::vec2>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Vec3:
-						{
-							glm::vec3 data = values["Value"].as<glm::vec3>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						case ScriptFieldType::Vec4:
-						{
-							glm::vec4 data = values["Value"].as<glm::vec4>();
-							ins.SetValue(field_name, data);
-							break;
-						}
-						}
-					}
-
-				}
+				deserialize_components(scene.get(), entity);
 			}
 		}
 		
 		return scene;
+	}
+
+	Ref<Prefab> SceneSerializer::DeserializePrefab(const std::string& file_path)
+	{
+		Ref<Prefab> result;
+
+		FileHandle in_handle;
+		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
+		{
+			TRC_ERROR("Unable to open file {}", file_path);
+			return result;
+		}
+		std::string file_data;
+		FileSystem::read_all_lines(in_handle, file_data); // opening file
+		FileSystem::close_file(in_handle);
+
+		YAML::Node data = YAML::Load(file_data);
+		if (!data["Trace Version"] || !data["Prefab Name"])
+		{
+			TRC_ERROR("These file is not a valid Prefab file {}", file_path);
+			return result;
+		}
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+		std::string prefab_version = data["Prefab Version"].as<std::string>(); // TODO: To be used later
+		std::string prefab_name = data["Prefab Name"].as<std::string>();
+
+		Ref<Prefab> prefab = PrefabManager::get_instance()->Get(prefab_name);
+		if (prefab) return prefab;
+
+		prefab = PrefabManager::get_instance()->Create(prefab_name);
+
+		YAML::Node handle = data["Entity"];
+
+		Scene* scene = PrefabManager::get_instance()->GetScene();
+
+		Entity obj;
+
+		if (handle)
+		{
+			for (auto entity : handle)
+			{
+				obj =  deserialize_components(scene, entity);
+			}
+		}
+
+		YAML::Node entities = data["Entities"];
+		if (entities)
+		{
+			for (auto entity : entities)
+			{
+				deserialize_components(scene, entity);
+			}
+		}
+
+		prefab->SetHandle(obj.GetID());
+
+		result = prefab;
+
+		return result;
 	}
 
 	bool SceneSerializer::Deserialize(Ref<Scene> scene, FileStream& stream, AssetHeader& header)

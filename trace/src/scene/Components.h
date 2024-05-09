@@ -9,6 +9,7 @@
 #include "physics/Physics.h"
 #include "animation/Animation.h"
 #include "animation/AnimationGraph.h"
+#include "resource/Prefab.h"
 
 
 #include <string>
@@ -90,6 +91,15 @@ namespace trace {
 			: _transform(location) {}
 	};
 
+	struct PrefabComponent
+	{
+		Ref<Prefab> handle;
+
+		PrefabComponent() = default;
+		PrefabComponent(const PrefabComponent&) = default;
+		PrefabComponent(const Ref<Prefab> data)
+			: handle(data) {}
+	};
 
 	struct CameraComponent
 	{
@@ -235,6 +245,6 @@ namespace trace {
 
 	using AllComponents = ComponentGroup<HierachyComponent, TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
-		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent>;
+		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent>;
 
 }

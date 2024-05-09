@@ -123,7 +123,7 @@ namespace physx {
 				auto trigger = static_cast<trace::Entity*>(pair.triggerShape->userData);
 				auto otherCollider = static_cast<trace::Entity*>(pair.otherShape->userData);
 				TRC_ASSERT(trigger && otherCollider, "Invalid trigger pair");
-				trace::TriggerPair colliders_pair = std::make_pair(*trigger, *otherCollider);
+				trace::CollisionPair colliders_pair = std::make_pair(trigger->GetID(), otherCollider->GetID());
 
 				if (pair.status & PxPairFlag::eNOTIFY_TOUCH_LOST)
 				{
@@ -156,13 +156,13 @@ namespace physx {
 				
 				ScriptInstance trigger_pair;
 				CreateScriptInstanceNoInit(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
-				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first.GetID())->GetBackendHandle();
-				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second.GetID())->GetBackendHandle();
+				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first)->GetBackendHandle();
+				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second)->GetBackendHandle();
 
 				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
 				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
 
-				reg.Iterate(i.first.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				reg.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
@@ -172,7 +172,7 @@ namespace physx {
 						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
 					});
 
-				reg.Iterate(i.second.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				reg.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
@@ -190,13 +190,13 @@ namespace physx {
 
 				ScriptInstance trigger_pair;
 				CreateScriptInstanceNoInit(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
-				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first.GetID())->GetBackendHandle();
-				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second.GetID())->GetBackendHandle();
+				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first)->GetBackendHandle();
+				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second)->GetBackendHandle();
 
 				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
 				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
 
-				reg.Iterate(i.first.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				reg.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
 						if (!on_trigger_enter) return;
@@ -206,7 +206,7 @@ namespace physx {
 						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
 					});
 
-				reg.Iterate(i.second.GetID(), [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				reg.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
 						if (!on_trigger_enter) return;
@@ -286,8 +286,8 @@ namespace physx {
 		}
 
 	private:
-		std::vector<trace::TriggerPair> EnterTriggers;
-		std::vector<trace::TriggerPair> ExitTriggers;
+		std::vector<trace::CollisionPair> EnterTriggers;
+		std::vector<trace::CollisionPair> ExitTriggers;
 
 		std::unordered_map<trace::CollisionPair, CollisionData> PrevCollisions;
 		std::vector<trace::CollisionPair> NewCollisions;

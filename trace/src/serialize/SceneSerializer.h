@@ -4,6 +4,7 @@
 #include "resource/Ref.h"
 #include "FileStream.h"
 #include "AssetsInfo.h"
+#include "resource/Prefab.h"
 
 #include <string>
 
@@ -16,7 +17,9 @@ namespace trace {
 	public:
 
 		static bool Serialize(Ref<Scene> scene, const std::string& file_path);
+		static bool SerializePrefab(Ref<Prefab> prefab, const std::string& file_path);
 		static Ref<Scene> Deserialize( const std::string& file_path);
+		static Ref<Prefab> DeserializePrefab( const std::string& file_path);
 		static bool Deserialize(Ref<Scene> scene, FileStream& stream, AssetHeader& header);
 
 		static bool SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data);

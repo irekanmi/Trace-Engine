@@ -4,7 +4,7 @@
 #include "scene/UUID.h"
 #include "serialize/AssetsInfo.h"
 #include "HashTable.h"
-#include "io/Logging.h"
+#include "core/io/Logging.h"
 
 #include <vector>
 
@@ -89,7 +89,7 @@ namespace trace {
 			{
 				TRC_WARN("These scene has been destroyed , \"{}\"", name);
 				_id = INVALID_ID;
-				return _asset;
+				return nullptr;
 			}
 
 			return _asset;
