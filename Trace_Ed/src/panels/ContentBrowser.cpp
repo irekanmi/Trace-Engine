@@ -19,6 +19,8 @@
 #include "serialize/SceneSerializer.h"
 #include "core/Utils.h"
 #include "../utils/ImGui_utils.h"
+#include "HierachyPanel.h"
+
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -133,6 +135,24 @@ namespace trace {
 						m_materialDataCache.clear();
 						m_editMaterialPipe.free();
 
+					});
+			};
+
+			extensions_callbacks[".trprf"] = [&](std::filesystem::path& path)
+			{
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() 
+					{ 
+						if (m_editor->m_hierachyPanel->GetSelectedEntity())
+							m_editor->m_inspectorPanel->DrawEntityComponent(m_editor->m_hierachyPanel->GetSelectedEntity());
+					},
+					[&]()
+					{
+						m_editor->m_hierachyPanel->SetPrefabEdit(SceneSerializer::DeserializePrefab(path.string()));
+					},
+					[&]()
+					{
+						Ref<Prefab> prefab = m_editor->m_hierachyPanel->GetPrefabEdit();
+						SceneSerializer::SerializePrefab(prefab,prefab->m_path.string());
 					});
 			};
 
@@ -348,6 +368,7 @@ namespace trace {
 					}
 					prefab_popup = false;
 				}
+				else prefab_popup = false;
 			}
 		}
 

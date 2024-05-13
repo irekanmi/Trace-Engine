@@ -53,6 +53,7 @@ namespace trace {
 			}
 
 			asset->m_id = INVALID_ID;
+			m_hashtable.Set(asset->GetName(), INVALID_ID);
 		}
 
 		virtual void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)

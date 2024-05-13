@@ -24,6 +24,7 @@ logs.txt
 *.sln
 **.pdb
 **.shcode
+**.hint
 
 
 #Project Config Files

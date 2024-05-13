@@ -11,6 +11,7 @@
 #include "resource/ModelManager.h"
 #include "resource/MeshManager.h"
 #include "resource/FontManager.h"
+#include "resource/PrefabManager.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
 #include "scripting/ScriptEngine.h"
@@ -19,6 +20,7 @@
 #include "resource/TextureManager.h"
 #include "AnimationPanel.h"
 #include "../utils/ImGui_utils.h"
+#include "HierachyPanel.h"
 
 
 namespace trace {
@@ -28,8 +30,9 @@ namespace trace {
 	}
 
 	template<typename T, typename DrawFunc>
-	static void DrawComponent(Entity entity, const char* placeholder, DrawFunc func)
+	static bool DrawComponent(Entity entity, const char* placeholder, DrawFunc func)
 	{
+		bool result = false;
 		if (entity.HasComponent<T>())
 		{
 			T& component = entity.GetComponent<T>();
@@ -59,11 +62,14 @@ namespace trace {
 
 			if (opened)
 			{
-				func(entity, component);
+				result = func(entity, component);
 				ImGui::TreePop();
 			}
 			if (deleted) entity.RemoveComponent<T>();
+
+			return result;
 		}
+		return false;
 	}
 
 	
@@ -203,6 +209,7 @@ namespace trace {
 
 	void InspectorPanel::DrawEntityComponent(Entity entity)
 	{
+		bool is_prefab = (entity.GetScene() == PrefabManager::get_instance()->GetScene());
 		bool recording = m_editor->m_animPanel->Recording();
 		if (recording)
 		{
@@ -212,6 +219,7 @@ namespace trace {
 		char anim_data[16] = { 0 };
 		AnimationDataType type = AnimationDataType::NONE;
 		bool anim_dirty = false;
+		bool comp_dirty = false;
 
 		if (entity.HasComponent<TagComponent>())
 		{
@@ -222,6 +230,7 @@ namespace trace {
 				if (!temp.empty())
 				{
 					val._tag = std::move(temp);
+					comp_dirty = true;
 				}
 
 			}
@@ -239,43 +248,53 @@ namespace trace {
 			if (ImGui::MenuItem("Camera"))
 			{
 				entity.AddComponent<CameraComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Light"))
 			{
 				entity.AddComponent<LightComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Model"))
 			{
 				entity.AddComponent<ModelComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Model Renderer"))
 			{
 				ModelRendererComponent& i = entity.AddComponent<ModelRendererComponent>();
 				i._material = MaterialManager::get_instance()->GetMaterial("default");
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Text"))
 			{
 				entity.AddComponent<TextComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Rigid Body"))
 			{
 				entity.AddComponent<RigidBodyComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Box Coillder"))
 			{
 				entity.AddComponent<BoxColliderComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Sphere Coillder"))
 			{
 				entity.AddComponent<SphereColliderComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Animation"))
 			{
 				entity.AddComponent<AnimationComponent>();
+				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Image"))
 			{
 				entity.AddComponent<ImageComponent>();
+				comp_dirty = true;
 			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
@@ -283,6 +302,7 @@ namespace trace {
 				if (ImGui::MenuItem(i.second.script_name.c_str()))
 				{
 					entity.AddScript(i.second.script_name);
+					comp_dirty = true;
 				}
 			}
 
@@ -308,6 +328,7 @@ namespace trace {
 					type = AnimationDataType::POSITION;
 					memcpy(anim_data, glm::value_ptr(pos), 4 * 3);
 					anim_dirty = true;
+					comp_dirty = true;
 				}
 				if (DrawVec3("Rotation", rotation))
 				{
@@ -316,6 +337,7 @@ namespace trace {
 					glm::quat rot = comp._transform.GetRotation();
 					memcpy(anim_data, glm::value_ptr(rot), 4 * 4);
 					anim_dirty = true;
+					comp_dirty = true;
 				}
 				if (DrawVec3("Scale", scale))
 				{
@@ -323,6 +345,7 @@ namespace trace {
 					type = AnimationDataType::SCALE;
 					memcpy(anim_data, glm::value_ptr(scale), 4 * 3);
 					anim_dirty = true;
+					comp_dirty = true;
 				}
 
 
@@ -330,12 +353,13 @@ namespace trace {
 			}
 		}
 
-		DrawComponent<CameraComponent>(entity, "Camera", [](Entity obj, CameraComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<CameraComponent>(entity, "Camera", [](Entity obj, CameraComponent& comp) -> bool {
+			bool dirty = false;
 
 			Camera& camera = comp._camera;
 			CameraType cam_type = camera.GetCameraType();
 
-			ImGui::Checkbox("Is Main", &comp.is_main);
+			if (ImGui::Checkbox("Is Main", &comp.is_main)) dirty = true;
 
 			const char* type_string[] = { "Perspective", "Orthographic" };
 			const char* current_type = type_string[(int)cam_type];
@@ -347,6 +371,7 @@ namespace trace {
 					if (ImGui::Selectable(type_string[i], selected))
 					{
 						camera.SetCameraType((CameraType)i);
+						dirty = true;
 					}
 
 					if (selected)
@@ -360,32 +385,47 @@ namespace trace {
 			{
 				float fov = camera.GetFov();
 				if (ImGui::DragFloat("Fov", &fov, 0.3f, 0.0f, 180.0f))
+				{
 					camera.SetFov(fov);
+					dirty = true;
+				}
 				
 			}
 			else if (cam_type == CameraType::ORTHOGRAPHIC)
 			{
 				float ortho_size = camera.GetOrthographicSize();
 				if (ImGui::DragFloat("Orthographic size", &ortho_size, 0.1f))
+				{
 					camera.SetOrthographicSize(ortho_size);
+					dirty = true;
+				}
 			}
 
 			float _near = camera.GetNear(), _far = camera.GetFar();
 			if (ImGui::DragFloat("Near", &_near, 0.1f))
+			{
 				camera.SetNear(_near);
+				dirty = true;
+			}
 			if (ImGui::DragFloat("Far", &_far, 0.1f))
+			{
 				camera.SetFar(_far);
+				dirty = true;
+			}
 
-
+			return true;
 			});
 
-		DrawComponent<LightComponent>(entity, "Light", [&](Entity obj, LightComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<LightComponent>(entity, "Light", [&](Entity obj, LightComponent& comp) -> bool {
+
+			bool dirty = false;
 
 			Light& light = comp._light;
 			LightType light_type = comp.light_type;
 			const char* type_string[] = { "Directional", "Point", "Spot"};
 			const char* current_type = type_string[(int)light_type];
-			if (ImGui::BeginCombo("Light Type", current_type))
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::BeginCombo("Light Type", current_type), Light_Type)
 			{
 				for (int i = 0; i < 3; i++)
 				{
@@ -443,7 +483,7 @@ namespace trace {
 			}
 
 			float intensity = light.params2.y;
-			if (ImGui::DragFloat("Intensity", &intensity, 0.01f))
+			IMGUI_WIDGET_MODIFIED_IF(dirty,ImGui::DragFloat("Intensity", &intensity, 0.01f), Intensity)
 			{
 				light.params2.y = intensity;
 				type = AnimationDataType::LIGHT_INTENSITY;
@@ -451,13 +491,13 @@ namespace trace {
 				anim_dirty = true;
 			}
 			glm::vec4 color = light.color;
-			if (ImGui::ColorEdit4("Color", glm::value_ptr(color)))
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit4("Color", glm::value_ptr(color)), Color)
 				light.color = color;
 
-
+			return dirty;
 			});
 
-		DrawComponent<MeshComponent>(entity, "Mesh", [](Entity obj, MeshComponent& comp) {
+		/*DrawComponent<MeshComponent>(entity, "Mesh", [](Entity obj, MeshComponent& comp) -> bool {
 
 			Ref<Mesh> mesh = comp._mesh;
 			std::string mesh_name = mesh->m_path.string();
@@ -465,9 +505,10 @@ namespace trace {
 			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 			ImVec2 button_size = { content_ava.x, line_height};
 			ImGui::Button(mesh_name.c_str(), button_size);
-			});
+			});*/
 
-		DrawComponent<ModelComponent>(entity, "Model", [&](Entity obj, ModelComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<ModelComponent>(entity, "Model", [&](Entity obj, ModelComponent& comp) -> bool {
+			bool dirty = false;
 
 			Ref<Model> model = comp._model;
 			std::string model_name = "None (Model)";
@@ -493,14 +534,20 @@ namespace trace {
 				{
 					Ref<Mesh> mesh = MeshManager::get_instance()->LoadMeshOnly_(p.parent_path().string());
 					md_res = ModelManager::get_instance()->GetModel(p.filename().string());
-					if (md_res) comp._model = md_res;
+					if (md_res)
+					{
+						comp._model = md_res;
+						dirty = true;
+					}
 				}
 			}
-
+			return dirty;
 
 			});
 
-		DrawComponent<ModelRendererComponent>(entity, "Model Renderer", [&](Entity obj, ModelRendererComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<ModelRendererComponent>(entity, "Model Renderer", [&](Entity obj, ModelRendererComponent& comp) -> bool {
+
+			bool dirty = false;
 
 			std::string mat_name = "None";
 			if (comp._material)
@@ -529,9 +576,13 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
 					Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-					if (mt_res) comp._material = mt_res;
-					mt_res = MaterialSerializer::Deserialize(p.string());
-					if (mt_res) comp._material = mt_res;
+					if (mt_res);
+					else mt_res = MaterialSerializer::Deserialize(p.string());
+					if (mt_res)
+					{
+						comp._material = mt_res;
+						dirty = true;
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -541,16 +592,21 @@ namespace trace {
 			{
 				std::filesystem::path p = mat_res;
 				Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-				if (mt_res) comp._material = mt_res;
+				if (mt_res);
 				else mt_res = MaterialSerializer::Deserialize(p.string());
-				if (mt_res) comp._material = mt_res;
+				if (mt_res)
+				{
+					comp._material = mt_res;
+					dirty = true;
+				}
 			}
 
-
+			return dirty;
 			}
 		);
 
-		DrawComponent<TextComponent>(entity, "Text", [&](Entity obj, TextComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<TextComponent>(entity, "Text", [&](Entity obj, TextComponent& comp) -> bool {
+			bool dirty = false;
 
 			std::string font_name = "None (FONT)";
 			if (comp.font)
@@ -574,9 +630,13 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
 					Ref<Font> ft = FontManager::get_instance()->GetFont(p.filename().string());
-					if (ft) comp.font = ft;
-					ft = FontManager::get_instance()->LoadFont_(p.string());
-					if (ft) comp.font = ft;
+					if (ft);
+					else ft = FontManager::get_instance()->LoadFont_(p.string());
+					if (ft)
+					{
+						comp.font = ft;
+						dirty = false;
+					}
 				}
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".TTF"))
 				{
@@ -584,29 +644,36 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
 					Ref<Font> ft = FontManager::get_instance()->GetFont(p.filename().string());
-					if (ft) comp.font = ft;
-					ft = FontManager::get_instance()->LoadFont_(p.string());
-					if (ft) comp.font = ft;
+					if (ft);
+					else ft = FontManager::get_instance()->LoadFont_(p.string());
+					if (ft)
+					{
+						comp.font = ft;
+						dirty = false;
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
 
 			ImGui::Text("Enter Text: ");
-			ImGui::InputTextMultiline("##Text Data", &comp.text);
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::InputTextMultiline("##Text Data", &comp.text), Text_Data) {}
 
-			ImGui::ColorEdit3("Color", glm::value_ptr(comp.color));
-			if (ImGui::DragFloat("Intensity", &comp.intensity))
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit3("Color", glm::value_ptr(comp.color)), Color) 
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Intensity", &comp.intensity), Intensity)
 			{
 				type = AnimationDataType::TEXT_INTENSITY;
 				memcpy(anim_data, &comp.intensity, 4);
 				anim_dirty = true;
 			}
 			
+			return dirty;
 			});
 
 
-		DrawComponent<RigidBodyComponent>(entity, "Rigid Body", [](Entity obj, RigidBodyComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<RigidBodyComponent>(entity, "Rigid Body", [](Entity obj, RigidBodyComponent& comp) -> bool {
 
+			bool dirty = false;
 			RigidBody& body = comp.body;
 			RigidBody::Type type = body.GetType();
 
@@ -620,6 +687,7 @@ namespace trace {
 					if (ImGui::Selectable(type_string[i], selected))
 					{
 						body.SetType((RigidBody::Type)i);
+						dirty = true;
 					}
 
 					if (selected)
@@ -629,31 +697,45 @@ namespace trace {
 				ImGui::EndCombo();
 			}
 
-			ImGui::DragFloat("Mass", &body.mass);
-			ImGui::DragFloat("Density", &body.density);
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Mass", &body.mass), Mass)
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Density", &body.density), Density)
+			{}
 
+			return dirty;
 			});
 
-		DrawComponent<BoxColliderComponent>(entity, "Box Coillder", [](Entity obj, BoxColliderComponent& comp) {
-			
+		comp_dirty = comp_dirty || DrawComponent<BoxColliderComponent>(entity, "Box Coillder", [](Entity obj, BoxColliderComponent& comp) -> bool {
+			bool dirty = false;
+
 			PhyShape& shp = comp.shape;
 
-			ImGui::Checkbox("Is Trigger", &comp.is_trigger);
-			ImGui::DragFloat3("Extent", glm::value_ptr(shp.box.half_extents));
-			ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset));
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Is Trigger", &comp.is_trigger), Is_Trigger)
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat3("Extent", glm::value_ptr(shp.box.half_extents)), Extent)
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset)), Offset)
+			{}
 			
+			return dirty;
 			});
 
-		DrawComponent<SphereColliderComponent>(entity, "Sphere Coillder", [&](Entity obj, SphereColliderComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<SphereColliderComponent>(entity, "Sphere Coillder", [&](Entity obj, SphereColliderComponent& comp) -> bool {
 
 			static bool show_collider = true;
+
+			bool dirty = false;
+
 			ImGui::Checkbox("Show Collider", &show_collider);
 
 			PhyShape& shp = comp.shape;
 
-			ImGui::Checkbox("Is Trigger", &comp.is_trigger);
-			ImGui::DragFloat("Radius", &shp.sphere.radius);
-			ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset));
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Is Trigger", &comp.is_trigger), Is_Trigger)
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Radius", &shp.sphere.radius), Radius)
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset)), Offset)
+			{}
 
 			if (show_collider)
 			{
@@ -669,10 +751,12 @@ namespace trace {
 				renderer->SubmitCommandList(cmd_list);
 			}
 
+			return dirty;
 			});
 
-		DrawComponent<AnimationComponent>(entity, "Animation", [&](Entity obj, AnimationComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<AnimationComponent>(entity, "Animation", [&](Entity obj, AnimationComponent& comp) -> bool {
 
+			bool dirty = false;
 			Ref<AnimationGraph> graph = comp.anim_graph;
 			std::string graph_name = "None (Animation Graph)";
 			if (graph)
@@ -696,18 +780,25 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
 					Ref<AnimationGraph> ag = AnimationsManager::get_instance()->GetGraph(p.filename().string());
-					if (ag) comp.anim_graph = ag;
-					ag = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-					if (ag) comp.anim_graph = ag;
+					if (ag);
+					else ag = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+					if (ag)
+					{
+						comp.anim_graph = ag;
+						dirty = true;
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
 
-			ImGui::Checkbox("Play On Start", &comp.play_on_start);
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Play On Start", &comp.play_on_start), Play_On_Start)
+			{}
 
+			return dirty;
 			});
 
-		DrawComponent<ImageComponent>(entity, "Image Compoent", [&](Entity obj, ImageComponent& comp) {
+		comp_dirty = comp_dirty || DrawComponent<ImageComponent>(entity, "Image Compoent", [&](Entity obj, ImageComponent& comp) -> bool {
+			bool dirty = false;
 
 			Ref<GTexture> img = comp.image;
 			std::string image_name = "None (Texture)";
@@ -727,7 +818,7 @@ namespace trace {
 			if (ImGui::BeginDragDropTarget())
 			{
 				static char _buf[1024] = { 0 };
-				static auto load_texure = [&comp](char* buf)
+				static auto load_texure = [&comp, &dirty](char* buf)
 				{
 					std::filesystem::path p = buf;
 					Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
@@ -737,6 +828,7 @@ namespace trace {
 					if (tex)
 					{
 						comp.image = tex;
+						dirty = true;
 					}
 				};
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".png"))
@@ -769,7 +861,7 @@ namespace trace {
 				ImGui::Image(a, ImVec2(128.0f, 128.0f), { 0.0f, 1.0f }, { 1.0f, 0.0f });
 			}
 
-
+			return dirty;
 			});
 
 		ScriptRegistry& script_registry = m_editor->m_currentScene->m_scriptRegistry;
@@ -779,7 +871,7 @@ namespace trace {
 			m_editor->m_animPanel->SetFrameData(entity.GetID(), type, anim_data, 16);
 		}
 
-		m_editor->m_currentScene->m_scriptRegistry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
+		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
 			{
 
 				float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
@@ -808,7 +900,7 @@ namespace trace {
 				if (opened)
 				{
 					bool isPlaying = m_editor->current_state == EditorState::ScenePlay;
-					if (isPlaying)
+					if (isPlaying && !is_prefab)
 					{
 						for (auto& [name, field] : script->m_fields)
 						{
@@ -962,75 +1054,88 @@ namespace trace {
 							}
 							case ScriptFieldType::Bool:
 							{
-								ImGui::Checkbox(name.c_str(), (bool*)data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::Checkbox(name.c_str(), (bool*)data.data), Bool)
+								{}
 								break;
 							}
 							case ScriptFieldType::Byte:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_U8, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_U8, data.data), Byte)
+								{}
 								break;
 							}
 							case ScriptFieldType::Double:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_Double, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_Double, data.data), Double)
+								{}
 								break;
 							}
 							case ScriptFieldType::Char:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_U8, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_U8, data.data), Char)
+								{}
 								break;
 							}
 							case ScriptFieldType::Float:
 							{
 								float _data = 0.0f;
 								memcpy(&_data, data.data, sizeof(float));
-								if(ImGui::DragFloat(name.c_str(), &_data))
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragFloat(name.c_str(), &_data), Float)
 									memcpy(data.data, &_data, sizeof(float));
 								break;
 							}
 							case ScriptFieldType::Int16:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_S16, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_S16, data.data), Int16)
+								{}
 								break;
 							}
 							case ScriptFieldType::Int32:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_S32, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_S32, data.data), Int32)
+								{}
 								break;
 							}
 							case ScriptFieldType::Int64:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_S64, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_S64, data.data), Int64)
+								{}
 								break;
 							}
 							case ScriptFieldType::UInt16:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_U16, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_U16, data.data), UInt16)
+								{}
 								break;
 							}
 							case ScriptFieldType::UInt32:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_U32, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_U32, data.data), UInt32)
+								{}
 								break;
 							}
 							case ScriptFieldType::UInt64:
 							{
-								ImGui::DragScalar(name.c_str(), ImGuiDataType_U64, data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_U64, data.data), UInt64)
+								{}
 								break;
 							}
 							case ScriptFieldType::Vec2:
 							{
-								ImGui::DragFloat2(name.c_str(), (float*)data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragFloat2(name.c_str(), (float*)data.data), Vec2)
+								{}
 								break;
 							}
 							case ScriptFieldType::Vec3:
 							{
-								ImGui::DragFloat3(name.c_str(), (float*)data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragFloat3(name.c_str(), (float*)data.data), Vec3)
+								{}
 								break;
 							}
 							case ScriptFieldType::Vec4:
 							{
-								ImGui::DragFloat4(name.c_str(), (float*)data.data);
+								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragFloat4(name.c_str(), (float*)data.data), Vec4)
+								{}
 								break;
 							}
 							
@@ -1050,6 +1155,12 @@ namespace trace {
 			if (recording)
 			{
 				ImGui::PopStyleColor(2);
+			}
+
+			if(comp_dirty && is_prefab)
+			{
+				Ref<Prefab> prefab = m_editor->m_hierachyPanel->GetPrefabEdit();
+				m_editor->m_currentScene->ApplyPrefabChanges(prefab);
 			}
 		
 	}

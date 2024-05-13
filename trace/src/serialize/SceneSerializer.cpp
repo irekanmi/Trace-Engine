@@ -225,6 +225,18 @@ namespace trace {
 
 				emit << YAML::EndMap;
 			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<PrefabComponent>())
+			{
+				PrefabComponent& prefab = entity.GetComponent<PrefabComponent>();
+				emit << YAML::Key << "PrefabComponent" << YAML::Value;
+				emit << YAML::BeginMap;
+				if (prefab.handle) emit << YAML::Key << "Prefab" << YAML::Value << GetUUIDFromName(prefab.handle->GetName());
+
+				emit << YAML::EndMap;
+			}
 		}
 	};
 
@@ -414,6 +426,29 @@ namespace trace {
 			else
 			{
 				img.image = TextureManager::get_instance()->LoadTexture_Runtime(id);
+			}
+		}
+
+		} },
+		{ "PrefabComponent", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["PrefabComponent"];
+		PrefabComponent& prefab = entity.AddComponent<PrefabComponent>();
+		if (comp["Prefab"])
+		{
+			Ref<Prefab> res;
+			UUID id = comp["Prefab"].as<uint64_t>();
+			if (AppSettings::is_editor)
+			{
+				std::filesystem::path p = GetPathFromUUID(id);
+				res = PrefabManager::get_instance()->Get(p.filename().string());
+				if (res) {}
+				else res = SceneSerializer::DeserializePrefab(p.string());
+				if (res) prefab.handle = res;
+			}
+			else
+			{
+				//TODO: Implement loading prefabs at runtime
+				//prefab.handle = PrefabManager::get_instance()->Load_Runtime(id);
 			}
 		}
 
@@ -862,6 +897,9 @@ namespace trace {
 			}
 		}
 		
+		if (AppSettings::is_editor)
+			scene->ApplyPrefabChangesOnSceneLoad();
+
 		return scene;
 	}
 
@@ -919,6 +957,7 @@ namespace trace {
 		}
 
 		prefab->SetHandle(obj.GetID());
+		prefab->m_path = file_path;
 
 		result = prefab;
 

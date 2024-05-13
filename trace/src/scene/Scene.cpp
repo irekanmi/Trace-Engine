@@ -501,6 +501,26 @@ namespace trace {
 		CopyComponent<Component...>(from, to);
 	}
 
+	template<typename... Component>
+	void CopyComponentifExits(Entity from, Entity to)
+	{
+
+		([&]() {
+			if (from.HasComponent<Component>())
+			{
+				to.AddOrReplaceComponent<Component>(from.GetComponent<Component>());
+			}
+			}(), ...);
+
+
+	}
+
+	template<typename... Component>
+	void CopyComponentifExits(ComponentGroup<Component...>, Entity from, Entity to)
+	{
+		CopyComponentifExits<Component...>(from, to);
+	}
+
 	void duplicate_entity_hierachy(Scene* scene, Entity e, Entity parent)
 	{
 		Entity _res = scene->CreateEntity_UUID(UUID::GenUUID(), e.GetComponent<TagComponent>()._tag);
@@ -533,7 +553,7 @@ namespace trace {
 		
 
 		
-		m_scriptRegistry.Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
+		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
 				ScriptInstance* sc_ins = res.AddScript(script->GetID());
 				*sc_ins = *other;
@@ -557,6 +577,20 @@ namespace trace {
 		}
 
 		return res;
+	}
+
+	bool Scene::CopyEntity(Entity entity, Entity src)
+	{
+		CopyComponentifExits(AllComponents{}, src, entity);
+
+
+
+		src.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
+			{
+				ScriptInstance* sc_ins = entity.AddScript(script->GetID());
+				*sc_ins = *other;
+			});
+		return true;
 	}
 
 
@@ -592,7 +626,9 @@ namespace trace {
 	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab)
 	{
 		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
-		return DuplicateEntity(handle);
+		Entity result = DuplicateEntity(handle);
+		result.AddComponent<PrefabComponent>(prefab);
+		return result;
 	}
 
 	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab, Entity parent)
@@ -602,8 +638,55 @@ namespace trace {
 		return result;
 	}
 
+	bool Scene::ApplyPrefabChanges(Ref<Prefab> prefab)
+	{
+
+		auto prefab_view = m_registry.view<PrefabComponent>();
+
+		for (auto entity : prefab_view)
+		{
+			auto [pf] = prefab_view.get(entity);
+			Entity en(entity, this);
+
+			if (!pf.handle) continue;
+
+			if (pf.handle->GetHandle() == prefab->GetHandle())
+			{
+				Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
+				ApplyPrefabChanges(handle, en);
+			}
+
+		}
+		return true;
+	}
+
+	bool Scene::ApplyPrefabChangesOnSceneLoad()
+	{
+
+		auto prefab_view = m_registry.view<PrefabComponent>();
+
+		for (auto entity : prefab_view)
+		{
+			auto [pf] = prefab_view.get(entity);
+			Entity en(entity, this);
+
+			if (!pf.handle) continue;
+
+			ApplyPrefabChanges(pf.handle);
+
+		}
+
+		return true;
+	}
+
 	void Scene::SetParent(Entity child, Entity parent)
 	{
+		if ((child.GetScene() != this) || (parent.GetScene() != this))
+		{
+			TRC_WARN("One of the entities is not part of the scene, scene name: {}, child: {}, parent: {}", m_name, child.GetComponent<TagComponent>()._tag, parent.GetComponent<TagComponent>()._tag);
+			return;
+		}
+
 		HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
 		HierachyComponent& child_hi = child.GetComponent<HierachyComponent>();
 		
@@ -700,7 +783,7 @@ namespace trace {
 
 		if (hi.HasParent())
 		{
-			Transform parent_transform = GetEntityWorldTransform(GetEntity(hi.parent));
+			Transform parent_transform = GetEntityGlobalPose(GetEntity(hi.parent));
 			transform = Transform::CombineTransform(parent_transform, transform);
 		}
 
@@ -790,6 +873,7 @@ namespace trace {
 		}
 
 		CopyComponent(AllComponents{}, f_reg, t_reg, entity_map);
+		CopyComponent(ComponentGroup<HierachyComponent>{}, f_reg, t_reg, entity_map);
 
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
@@ -808,6 +892,47 @@ namespace trace {
 			ProcessEntityHierachy(hi, callback);
 			if (child_first) callback(entity, i, this);
 		}
+	}
+
+	void apply_prefab_changes(Scene* scene, Entity e, Entity src)
+	{
+
+
+		HierachyComponent& hi = src.GetComponent<HierachyComponent>();
+		HierachyComponent& e_hi = e.GetComponent<HierachyComponent>();
+
+		int i = 0;
+		for (auto& j : hi.children)
+		{
+			Entity _next = src.GetScene()->GetEntity(hi.children[i]);
+			Entity _e = e.GetScene()->GetEntity(e_hi.children[i]);
+			apply_prefab_changes(scene, _e, _next);
+			i++;
+		}
+
+		scene->CopyEntity(e, src);
+
+	}
+
+	void Scene::ApplyPrefabChanges(Entity prefab_handle, Entity entity)
+	{
+
+
+		HierachyComponent& hi = prefab_handle.GetComponent<HierachyComponent>();
+
+		HierachyComponent& e_hi = entity.GetComponent<HierachyComponent>();
+
+		int i = 0;
+		for (auto& j : hi.children)
+		{
+			Entity _next = prefab_handle.GetScene()->GetEntity(hi.children[i]);
+			Entity _e = entity.GetScene()->GetEntity(e_hi.children[i]);
+			apply_prefab_changes(this, _e, _next);
+			i++;
+		}
+		TransformComponent pose = entity.GetComponent<TransformComponent>();
+		CopyEntity(entity, prefab_handle);
+		entity.AddOrReplaceComponent<TransformComponent>(pose);
 	}
 
 	void Scene::OnConstructHierachyComponent(entt::registry& reg, entt::entity ent)

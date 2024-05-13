@@ -40,9 +40,13 @@ namespace trace {
 		Entity CreateEntity_UUIDWithParent(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity GetEntity(UUID uuid);
 		Entity DuplicateEntity(Entity entity);
+		bool CopyEntity(Entity entity, Entity src);
 		void DestroyEntity(Entity entity);
 		Entity InstanciatePrefab(Ref<Prefab> prefab);
 		Entity InstanciatePrefab(Ref<Prefab> prefab, Entity parent);
+		bool ApplyPrefabChanges(Ref<Prefab> prefab);
+
+		bool ApplyPrefabChangesOnSceneLoad();
 
 		void SetParent(Entity child, Entity parent);
 		bool IsParent(Entity parent, Entity child);
@@ -60,11 +64,32 @@ namespace trace {
 		void SetName(const std::string& name) { m_name = name; }
 		bool IsRunning() { return m_running; }
 
+		template<typename Component>
+		Entity ParentHasComponent(Entity entity)
+		{
+			Entity result;
+
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			UUID parent = hi.parent;
+			while (parent != 0)
+			{
+				Entity en = GetEntity(parent);
+				if (en.HasComponent<Component>())
+				{
+					result = en;
+					break;
+				}
+				parent = en.GetComponent<HierachyComponent>().parent;
+			}
+
+			return result;
+		}
 
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
 
 	private:
 		void ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool child_first = false);
+		void ApplyPrefabChanges(Entity prefab_handle, Entity entity);
 
 		void OnConstructHierachyComponent(entt::registry& reg, entt::entity ent);
 		void OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent);

@@ -243,7 +243,7 @@ namespace trace {
 
 	};
 
-	using AllComponents = ComponentGroup<HierachyComponent, TagComponent, TransformComponent, CameraComponent,
+	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent>;
 

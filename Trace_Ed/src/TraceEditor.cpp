@@ -848,6 +848,8 @@ namespace trace {
 			TransformComponent& pose = m_hierachyPanel->m_selectedEntity.GetComponent<TransformComponent>();
 			bool has_parent = hi.HasParent();
 
+			Scene* scene = m_hierachyPanel->m_selectedEntity.GetScene();
+
 			glm::mat4 transform = hi.transform;
 
 
@@ -871,9 +873,9 @@ namespace trace {
 
 				if (has_parent)
 				{
-					Entity parent = m_currentScene->GetEntity(hi.parent);
+					Entity parent = scene->GetEntity(hi.parent);
 					HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
-					glm::mat4 parent_transform = parent_hi.transform;
+					glm::mat4 parent_transform = scene->GetEntityGlobalPose(parent).GetLocalMatrix();
 					parent_transform = glm::inverse(parent_transform);
 
 					transform = parent_transform * transform;

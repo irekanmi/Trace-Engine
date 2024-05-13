@@ -5,6 +5,7 @@
 #include "InspectorPanel.h"
 #include "../utils/ImGui_utils.h"
 #include "serialize/SceneSerializer.h"
+#include "resource/PrefabManager.h"
 
 
 #include "imgui.h"
@@ -70,8 +71,12 @@ namespace trace {
 				UUID uuid = *(UUID*)payload->Data;
 				Entity child = m_editor->m_currentScene->GetEntity(uuid);
 				m_editor->m_currentScene->AddToRoot(child);
-
-
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+				Entity child = m_editor->m_currentScene->GetEntity(uuid);
+				m_editor->m_currentScene->AddToRoot(child);
 			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
 			{
@@ -86,7 +91,7 @@ namespace trace {
 		ImGui::End();
 		ImGui::PopStyleVar();
 		
-
+		RenderPrefab(deltaTime);
 
 
 	}
@@ -142,13 +147,16 @@ namespace trace {
 			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 			TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
-			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
 
+			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
 
 			if (ImGui::BeginDragDropSource())
 			{
 				UUID uuid = entity.GetID();
-				ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
+				if(entity.HasComponent<PrefabComponent>()) ImGui::SetDragDropPayload("Prefab Entity", &uuid, sizeof(UUID));
+				else ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
 				ImGui::EndDragDropSource();
 			}
 
@@ -163,6 +171,24 @@ namespace trace {
 						m_editor->m_currentScene->SetParent(new_child, entity);
 					}
 					
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
+					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
+					{
+						m_editor->m_currentScene->SetParent(new_child, entity);
+					}
+
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::string path = buf;
+					Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
+					m_editor->m_currentScene->InstanciatePrefab(prefab, entity);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -220,13 +246,18 @@ namespace trace {
 			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 			TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
+
+
+			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
 
 
 			if (ImGui::BeginDragDropSource())
 			{
 				UUID uuid = entity.GetID();
-				ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
+				if (entity.HasComponent<PrefabComponent>()) ImGui::SetDragDropPayload("Prefab Entity", &uuid, sizeof(UUID));
+				else ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
 				ImGui::EndDragDropSource();
 			}
 
@@ -241,6 +272,24 @@ namespace trace {
 						m_editor->m_currentScene->SetParent(new_child, entity);
 					}
 
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
+					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
+					{
+						m_editor->m_currentScene->SetParent(new_child, entity);
+					}
+
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::string path = buf;
+					Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
+					m_editor->m_currentScene->InstanciatePrefab(prefab, entity);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -282,5 +331,264 @@ namespace trace {
 			}
 
 		}
+	}
+	void HierachyPanel::DrawPrefabEntityHierachy(HierachyComponent& hierachy)
+	{
+		Scene* prefab_scene = PrefabManager::get_instance()->GetScene();
+		for (UUID& uuid : hierachy.children)
+		{
+
+			Entity entity = prefab_scene->GetEntity(uuid);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+
+			bool selected = (m_selectedEntity == entity);
+			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+			TagComponent& tag = entity.GetComponent<TagComponent>();
+			void* id = (void*)(uint64_t)(uint32_t)entity;
+
+
+			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
+
+
+			if (ImGui::BeginDragDropSource())
+			{
+				UUID uuid = entity.GetID();
+				if (entity.HasComponent<PrefabComponent>()) ImGui::SetDragDropPayload("Prefab Entity Edit", &uuid, sizeof(UUID));
+				else ImGui::SetDragDropPayload("Entity Edit", &uuid, sizeof(UUID));
+				ImGui::EndDragDropSource();
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity new_child = prefab_scene->GetEntity(uuid);
+					if (new_child && new_child != entity && !prefab_scene->IsParent(new_child, entity))
+					{
+						prefab_scene->SetParent(new_child, entity);
+					}
+
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
+				{
+					UUID uuid = *(UUID*)payload->Data;
+					Entity new_child = prefab_scene->GetEntity(uuid);
+					if (new_child && new_child != entity && !prefab_scene->IsParent(new_child, entity))
+					{
+						prefab_scene->SetParent(new_child, entity);
+					}
+
+				}
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::string path = buf;
+					Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
+					if(prefab->GetHandle() != m_editPrefab->GetHandle())
+						prefab_scene->InstanciatePrefab(prefab, entity);
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			if (ImGui::IsItemClicked())
+			{
+				if (selected)
+					m_selectedEntity = Entity();
+				else
+					m_selectedEntity = entity;
+
+				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+					{
+						if (m_selectedEntity)
+							m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+					}, []() {}, []() {});
+			}
+
+			//FIX: Rendering twice if tag is the same
+			if (ImGui::BeginPopupContextItem())
+			{
+				if (ImGui::MenuItem("Create Entity"))
+				{
+					prefab_scene->CreateEntity(entity.GetID());
+				}
+				if (ImGui::MenuItem("Delete Entity"))
+				{
+					prefab_scene->DestroyEntity(entity);
+					m_selectedEntity = Entity();
+				}
+				ImGui::EndPopup();
+			}
+
+
+			if (clicked)
+			{
+				DrawPrefabEntityHierachy(hi);
+				ImGui::TreePop();
+			}
+
+		}
+	}
+	void HierachyPanel::RenderPrefab(float deltaTime)
+	{
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
+		ImGui::Begin("Prefab Edit", 0, ImGuiWindowFlags_NoCollapse);
+
+
+
+		if (m_editPrefab)
+		{
+			Scene* prefab_scene = PrefabManager::get_instance()->GetScene();
+
+			std::string& scene_name = prefab_scene->GetName();
+			ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen;
+			bool clicked = ImGui::TreeNodeEx(scene_name.c_str(), tree_flags);
+
+			if (clicked)
+			{
+				Entity entity = prefab_scene->GetEntity(m_editPrefab->GetHandle());
+				HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+
+				bool selected = (m_selectedEntity == entity);
+				ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+				TagComponent& tag = entity.GetComponent<TagComponent>();
+				void* id = (void*)(uint64_t)(uint32_t)entity;
+
+
+				if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
+				bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+				if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
+
+
+				if (ImGui::BeginDragDropSource())
+				{
+					UUID uuid = entity.GetID();
+					if (entity.HasComponent<PrefabComponent>()) ImGui::SetDragDropPayload("Prefab Entity Edit", &uuid, sizeof(UUID));
+					else ImGui::SetDragDropPayload("Entity Edit", &uuid, sizeof(UUID));
+					ImGui::EndDragDropSource();
+				}
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+					{
+						UUID uuid = *(UUID*)payload->Data;
+						Entity new_child = prefab_scene->GetEntity(uuid);
+						if (new_child && new_child != entity && !prefab_scene->IsParent(new_child, entity))
+						{
+							prefab_scene->SetParent(new_child, entity);
+						}
+
+					}
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
+					{
+						UUID uuid = *(UUID*)payload->Data;
+						Entity new_child = prefab_scene->GetEntity(uuid);
+						if (new_child && new_child != entity && !prefab_scene->IsParent(new_child, entity))
+						{
+							prefab_scene->SetParent(new_child, entity);
+						}
+
+					}
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
+					{
+						static char buf[1024] = { 0 };
+						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+						std::string path = buf;
+						Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
+						if (prefab->GetHandle() != m_editPrefab->GetHandle())
+							prefab_scene->InstanciatePrefab(prefab, entity);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				if (ImGui::IsItemClicked())
+				{
+					if (selected)
+						m_selectedEntity = Entity();
+					else
+						m_selectedEntity = entity;
+
+					m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+						{
+							if (m_selectedEntity)
+								m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+						}, []() {}, []() {});
+				}
+
+				//FIX: Rendering twice if tag is the same
+				if (ImGui::BeginPopupContextItem())
+				{
+					if (ImGui::MenuItem("Create Entity"))
+					{
+						prefab_scene->CreateEntity(entity.GetID());
+					}
+					ImGui::EndPopup();
+				}
+
+
+				if (clicked)
+				{
+					DrawPrefabEntityHierachy(hi);
+					ImGui::TreePop();
+				}
+				ImGui::TreePop();
+			}
+
+
+
+			if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
+				m_selectedEntity = Entity();
+
+			if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+			{
+				if (ImGui::MenuItem("Create Empty Entity"))
+				{
+					prefab_scene->CreateEntity(m_editPrefab->GetHandle());
+				}
+				ImGui::EndPopup();
+			}
+
+
+
+
+		}
+
+		ImRect d_r = {};
+		d_r.Min = ImGui::GetWindowPos();
+		d_r.Max.x = d_r.Min.x + ImGui::GetWindowWidth();
+		d_r.Max.y = d_r.Min.y + ImGui::GetWindowHeight();
+
+		d_r.Min.x += 10.0f;
+		d_r.Min.y += GetLineHeight() + 8.0f;
+		d_r.Max.x -= 10.0f;
+		d_r.Max.y -= 10.0f;
+		if (ImGui::BeginDragDropTargetCustom(d_r, ImGui::GetID("Prefab Edit Drag_Drop")))
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
+			{
+				UUID uuid = *(UUID*)payload->Data;
+
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
+			{
+				static char buf[1024] = { 0 };
+				memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+			}
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::End();
+		ImGui::PopStyleVar();
 	}
 }
