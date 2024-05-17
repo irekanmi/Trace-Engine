@@ -823,6 +823,11 @@ namespace vk {
 			_RecreateSwapchain(instance, device, swapchain, device->m_frameBufferWidth, device->m_frameBufferHeight);
 			return false;
 		}
+		else if (result == VK_SUBOPTIMAL_KHR)
+		{
+			_RecreateSwapchain(instance, device, swapchain, device->m_frameBufferWidth, device->m_frameBufferHeight);
+			return false;
+		}
 		else if (result != VK_SUCCESS /*&& result != VK_SUBOPTIMAL_KHR*/)
 		{
 			TRC_CRITICAL(" Failed to acquire swapchain image, error message: {} ", vulkan_result_string(result, true));

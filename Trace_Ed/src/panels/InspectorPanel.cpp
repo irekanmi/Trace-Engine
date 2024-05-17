@@ -529,16 +529,15 @@ namespace trace {
 			{
 				std::filesystem::path p = model_res;
 				Ref<Model> md_res = ModelManager::get_instance()->GetModel(p.filename().string());
-				if (md_res) comp._model = md_res;
-				else
+				if (!md_res)
 				{
 					Ref<Mesh> mesh = MeshManager::get_instance()->LoadMeshOnly_(p.parent_path().string());
 					md_res = ModelManager::get_instance()->GetModel(p.filename().string());
-					if (md_res)
-					{
-						comp._model = md_res;
-						dirty = true;
-					}
+				}
+				if (md_res)
+				{
+					comp._model = md_res;
+					dirty = true;
 				}
 			}
 			return dirty;
