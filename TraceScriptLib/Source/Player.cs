@@ -63,6 +63,11 @@ class Player : Trace.Action
 
     }
 
+    ~Player()
+    {
+        Debug.Log($"Player Destroyed, ID: {Id}");
+    }
+
 }
 
 class GUID : Trace.Action

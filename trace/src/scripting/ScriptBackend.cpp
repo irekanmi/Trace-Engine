@@ -57,6 +57,7 @@ struct MonoScript
 struct MonoInstance
 {
 	MonoObject* kObject;
+	uint32_t kHandle = 0;
 };
 
 struct M_Method
@@ -328,7 +329,10 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 	}
 	mono_runtime_object_init(out_object);
 
-	out_instance.m_internal = out_object;
+	MonoInstance* ins = new MonoInstance; //TODO: Use custom allocator
+	ins->kObject = out_object;
+	ins->kHandle = mono_gchandle_new(out_object, TRUE);
+	out_instance.m_internal = ins;
 	out_instance.m_script = &script;
 
 	
@@ -344,7 +348,10 @@ bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance)
 		return false;
 	}
 
-	out_instance.m_internal = out_object;
+	MonoInstance* ins = new MonoInstance; //TODO: Use custom allocator
+	ins->kObject = out_object;
+	ins->kHandle = mono_gchandle_new(out_object, TRUE);
+	out_instance.m_internal = ins;
 	out_instance.m_script = &script;
 
 
@@ -359,6 +366,12 @@ bool DestroyScriptInstance(ScriptInstance& instance)
 		return false;
 	}
 
+	MonoInstance* ins = (MonoInstance*)instance.m_internal;
+
+	mono_gchandle_free(ins->kHandle);
+
+	delete ins;//TODO: Use custom allocator
+
 	instance.m_internal = nullptr;
 	return true;
 }
@@ -367,7 +380,9 @@ bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out)
 {
 	if (!instance.m_internal) return false;
 
-	out = instance.m_internal;
+	MonoInstance* ins = (MonoInstance*)instance.m_internal;
+
+	out = ins->kObject;
 	return true;
 }
 
@@ -387,7 +402,9 @@ bool GetScriptMethod(const std::string& method_name, ScriptMethod& out_method, S
 bool InvokeScriptMethod_Instance(ScriptMethod& method, ScriptInstance& instance, void** params)
 {
 	MonoObject* exp = nullptr;
-	mono_runtime_invoke((MonoMethod*)method.m_internal, (MonoObject*)instance.m_internal, params, &exp);
+	MonoObject* obj = nullptr;
+	GetScriptInstanceHandle(instance, (void*&)obj);
+	mono_runtime_invoke((MonoMethod*)method.m_internal, obj, params, &exp);
 	if (exp) mono_print_unhandled_exception(exp);
 	return true;
 }
@@ -405,7 +422,10 @@ bool GetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* o
 		return false;
 	}
 
-	mono_field_get_value((MonoObject*)instance.m_internal, (MonoClassField*)field.m_internal, out_value);
+	MonoObject* obj = nullptr;
+	GetScriptInstanceHandle(instance, (void*&)obj);
+
+	mono_field_get_value(obj, (MonoClassField*)field.m_internal, out_value);
 
 	return true;
 }
@@ -419,7 +439,10 @@ bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* v
 		return false;
 	}
 
-	mono_field_set_value((MonoObject*)instance.m_internal, (MonoClassField*)field.m_internal, value);
+	MonoObject* obj = nullptr;
+	GetScriptInstanceHandle(instance, (void*&)obj);
+
+	mono_field_set_value(obj, (MonoClassField*)field.m_internal, value);
 
 	return true;
 }
