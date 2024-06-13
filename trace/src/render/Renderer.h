@@ -39,6 +39,7 @@ namespace trace {
 		std::vector<GTexture*> textures;
 		std::vector<glm::vec4> positions;
 		std::vector<glm::vec4> tex_coords;
+		GTexture* tex;
 	};
 
 	
@@ -91,6 +92,7 @@ namespace trace {
 		void Render(float deltaTime);
 		void DrawQuad();
 		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
+		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture);
 		void DrawString(Font* font, const std::string& text, glm::mat4 _transform);
 		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
 

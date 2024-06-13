@@ -393,6 +393,33 @@ namespace vk {
 
 		}
 
+
+
+		// Initializing Bindless descriptors --------------------------------------------
+		VkPhysicalDeviceDescriptorIndexingFeatures des_indexing_feat = {};
+		des_indexing_feat.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+		des_indexing_feat.pNext = nullptr;
+
+		VkPhysicalDeviceFeatures2 phy_feat2 = {};
+		phy_feat2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		phy_feat2.pNext = &des_indexing_feat;
+
+		// Fetch all features from physical device
+		vkGetPhysicalDeviceFeatures2(device->m_physicalDevice, &phy_feat2);
+
+		// Non-uniform indexing and update after bind
+		TRC_ASSERT(des_indexing_feat.shaderSampledImageArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for sampled image");
+		TRC_ASSERT(des_indexing_feat.descriptorBindingSampledImageUpdateAfterBind, "GPU doesn't support update after bind for sampled image");
+		TRC_ASSERT(des_indexing_feat.shaderUniformBufferArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for uniform buffer");
+		TRC_ASSERT(des_indexing_feat.descriptorBindingUniformBufferUpdateAfterBind, "GPU doesn't support update after bind for uniform buffer");
+		TRC_ASSERT(des_indexing_feat.shaderStorageBufferArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for storage buffer");
+		TRC_ASSERT(des_indexing_feat.descriptorBindingStorageBufferUpdateAfterBind, "GPU doesn't support update after bind for stroage buffer");
+		TRC_ASSERT(des_indexing_feat.runtimeDescriptorArray, "GPU doesn't support runtimeDescriptorArray");
+		TRC_ASSERT(des_indexing_feat.descriptorBindingPartiallyBound, "GPU doesn't support descriptorBindingPartiallyBound");
+
+		// ------------------------------------------------------------------------------
+
+
 		uint32_t present_count = 0;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device->m_physicalDevice, instance->m_surface, &present_count, nullptr);
 		std::vector<VkPresentModeKHR> present_modes(present_count);
@@ -428,7 +455,8 @@ namespace vk {
 		}
 
 		char* device_extensions[] = {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 		};
 
 		phy_feat = {};
@@ -440,11 +468,12 @@ namespace vk {
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_info.queueCreateInfoCount = static_cast<uint32_t>(device_queue_infos.size());
 		device_info.pQueueCreateInfos = device_queue_infos.data();
-		device_info.pEnabledFeatures = &phy_feat;
+		//device_info.pEnabledFeatures = &phy_feat;
 		device_info.enabledLayerCount = 0;
 		device_info.ppEnabledLayerNames = nullptr;
-		device_info.enabledExtensionCount = 1;
+		device_info.enabledExtensionCount = 2;
 		device_info.ppEnabledExtensionNames = device_extensions;
+		device_info.pNext = &phy_feat2;
 
 		VkResult device_created = vkCreateDevice(device->m_physicalDevice, &device_info, g_Vkhandle.m_alloc_callback, &device->m_device);
 		TRC_INFO("Vulkan device creation result: {}", vulkan_result_string(device_created, true));
@@ -491,6 +520,11 @@ namespace vk {
 				device->m_bufferData[i] = new char[MB];
 			}
 		}
+
+
+
+
+
 
 		return device_created;
 	}
@@ -1397,7 +1431,9 @@ namespace vk {
 
 		VK_ASSERT(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 
-		VK_ASSERT(vkQueueWaitIdle(queue));
+		VkResult res = vkQueueWaitIdle(queue);
+		if(res != VK_SUCCESS) TRC_INFO(vulkan_result_string(res, true));
+		VK_ASSERT(res);
 
 		_FreeCommandBuffer(device, command_pool, command_buffer);
 
@@ -1662,7 +1698,7 @@ namespace vk {
 	{
 		VkResult result = VK_ERROR_INITIALIZATION_FAILED;
 
-		eastl::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+		std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
 		if (desc.vertex_shader != nullptr)
 		{
@@ -1795,6 +1831,8 @@ namespace vk {
 			&out_pipeline->m_handle
 			);
 
+		TRC_INFO(vulkan_result_string(result, true));
+
 		VK_ASSERT(result);
 
 		return result;
@@ -1920,6 +1958,10 @@ namespace vk {
 		{
 			usage_flag |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		}
+		if (TRC_HAS_FLAG(buffer_info.m_flag, trace::BindFlag::CONSTANT_BUFFER_BIT))
+		{
+			usage_flag |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		}
 		if (buffer_info.m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
 			memory_property |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
@@ -1987,10 +2029,29 @@ namespace vk {
 		new_info.m_size = new_size;
 		_CreateBuffer(instance, device, &new_buffer, new_info);
 
-		_CopyBuffer(instance, device, &buffer, &new_buffer, buffer.m_info.m_size, 0);
+		_CopyBuffer(instance, device, &buffer, &new_buffer, buffer.m_info.m_size, 0, 0);
+
+		device->frames_resources;
+		
+		buffer = new_buffer;
+	}
+
+	void _ResizeBufferQueue(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer& buffer, uint32_t new_size)
+	{
+		trace::BufferInfo new_info = buffer.m_info;
+		if (new_size < new_info.m_size)
+		{
+			TRC_WARN("Can't resize a buffer to a size lower than it's current size: {}", __FUNCTION__);
+			return;
+		}
+
+		trace::VKBuffer new_buffer;
+		new_info.m_size = new_size;
+		_CreateBuffer(instance, device, &new_buffer, new_info);
+
+		_CopyBufferQueue(instance, device, &buffer, &new_buffer, buffer.m_info.m_size, 0, 0);
 
 		buffer = new_buffer;
-
 	}
 
 	void _BindBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer)
@@ -2015,20 +2076,35 @@ namespace vk {
 		vkUnmapMemory(device->m_device, memory);
 	}
 
-	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t offset)
+	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset)
 	{
 		trace::VKCommmandBuffer cmd_buf;
 		_BeginCommandBufferSingleUse(device, device->m_graphicsCommandPool, &cmd_buf);
 
 		VkBufferCopy copy_region = {};
 		copy_region.size = size;
-		copy_region.dstOffset = offset;
-		copy_region.srcOffset = 0;
+		copy_region.dstOffset = dst_offset;
+		copy_region.srcOffset = src_offset;
 
 		vkCmdCopyBuffer(cmd_buf.m_handle, src->m_handle, dst->m_handle, 1, &copy_region);
 
 		_EndCommandBufferSingleUse(device, device->m_graphicsCommandPool, device->m_graphicsQueue, &cmd_buf);
 
+
+
+
+	}
+
+	void _CopyBufferQueue(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset)
+	{
+		trace::VKCommmandBuffer cmd_buf = device->m_graphicsCommandBuffers[device->m_imageIndex];
+
+		VkBufferCopy copy_region = {};
+		copy_region.size = size;
+		copy_region.dstOffset = dst_offset;
+		copy_region.srcOffset = src_offset;
+
+		vkCmdCopyBuffer(cmd_buf.m_handle, src->m_handle, dst->m_handle, 1, &copy_region);
 
 
 
@@ -2187,12 +2263,12 @@ namespace vk {
 		{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8192},
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4096},
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4096}
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 12)}
 		};
 
 
 		
-
+		uint32_t bindings_count = 0;
 		for (auto& i : desc.resources.resources)
 		{
 			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
@@ -2211,6 +2287,7 @@ namespace vk {
 			case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 			{
 				VkDescriptorSetLayoutBinding bind = {};
+				
 				if (is_struct)
 				{
 					bind.binding = i._struct.slot;
@@ -2255,6 +2332,7 @@ namespace vk {
 				}
 
 				SceneGlobalData_bindings.push_back(bind);
+
 				break;
 			}
 			case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
@@ -2266,13 +2344,14 @@ namespace vk {
 					bind.descriptorCount = i._struct.count;
 					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					}
 					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{
 						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					}
 					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
+					bind.descriptorCount = 512;
 				}
 				else if (is_array)
 				{
@@ -2280,12 +2359,13 @@ namespace vk {
 					bind.descriptorCount = i._array.count;
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					}
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{
 						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					}
+					bind.descriptorCount = 512;
 					bind.stageFlags = convertShaderStage(i._array.shader_stage);
 				}
 				else if (is_sArray)
@@ -2294,7 +2374,7 @@ namespace vk {
 					bind.descriptorCount = i._array.count;
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
 					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					}
 					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
 					{
@@ -2304,6 +2384,7 @@ namespace vk {
 				}
 
 				Instance_bindings.push_back(bind);
+				bindings_count++;
 				break;
 			}
 			case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
@@ -2333,6 +2414,13 @@ namespace vk {
 		uint32_t set_layout_count = 0;
 		if (!desc.resources.resources.empty())
 		{
+			std::vector<VkDescriptorBindingFlags> binds_flags(bindings_count, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
+			VkDescriptorSetLayoutBindingFlagsCreateInfo binds_flag = {};
+			binds_flag.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+			binds_flag.pNext = nullptr;
+			binds_flag.bindingCount = bindings_count;
+			binds_flag.pBindingFlags = binds_flags.data();
+
 
 			if (SceneGlobalData_bindings.empty() == false)
 			{
@@ -2340,6 +2428,7 @@ namespace vk {
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 				_info.bindingCount = static_cast<uint32_t>(SceneGlobalData_bindings.size());
 				_info.pBindings = SceneGlobalData_bindings.data();
+				//_info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Scene_layout);
 
@@ -2351,8 +2440,8 @@ namespace vk {
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
 
-				VkDescriptorSetLayout test[VK_MAX_DESCRIPTOR_SET];
-				for (uint32_t i = 0; i < VK_MAX_DESCRIPTOR_SET; i++)
+				VkDescriptorSetLayout test[VK_MAX_NUM_FRAMES];
+				for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
 				{
 					test[i] = pipeline->Scene_layout;
 				}
@@ -2360,7 +2449,7 @@ namespace vk {
 				VkDescriptorSetAllocateInfo alloc_info = {};
 				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 				alloc_info.descriptorPool = pipeline->Scene_pool;
-				alloc_info.descriptorSetCount = VK_MAX_DESCRIPTOR_SET;
+				alloc_info.descriptorSetCount = VK_MAX_NUM_FRAMES;
 				alloc_info.pSetLayouts = test;
 
 
@@ -2372,23 +2461,27 @@ namespace vk {
 			}
 			if (Instance_bindings.empty() == false)
 			{
+				pipeline->bindless = true;
 				VkDescriptorSetLayoutCreateInfo _info = {};
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 				_info.bindingCount = static_cast<uint32_t>(Instance_bindings.size());
 				_info.pBindings = Instance_bindings.data();
+				_info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+				_info.pNext = &binds_flag;
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Instance_layout);
 
 				VkDescriptorPoolCreateInfo pool_info = {};
 				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 1000 * pool_sizes_count;
+				pool_info.maxSets = 8096;//1000 * pool_sizes_count;
 				pool_info.poolSizeCount = pool_sizes_count;
 				pool_info.pPoolSizes = pool_sizes;
+				pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Instance_pool);
 
-				VkDescriptorSetLayout test[VK_MAX_DESCRIPTOR_SET];
-				for (uint32_t i = 0; i < VK_MAX_DESCRIPTOR_SET; i++)
+				VkDescriptorSetLayout test[VK_MAX_NUM_FRAMES];
+				for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
 				{
 					test[i] = pipeline->Instance_layout;
 				}
@@ -2396,11 +2489,14 @@ namespace vk {
 				VkDescriptorSetAllocateInfo alloc_info = {};
 				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 				alloc_info.descriptorPool = pipeline->Instance_pool;
-				alloc_info.descriptorSetCount = VK_MAX_DESCRIPTOR_SET;
+				alloc_info.descriptorSetCount = VK_MAX_NUM_FRAMES;
 				alloc_info.pSetLayouts = test;
 
 
 				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Instance_sets);
+
+				TRC_TRACE(vulkan_result_string(result, true));
+				VK_ASSERT(result);
 
 				_layouts[set_layout_count++] = pipeline->Instance_layout;
 

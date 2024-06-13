@@ -50,7 +50,7 @@ namespace vk {
             return true;
         }
 
-        VkDescriptorSetLayout layouts[] = {
+        /*VkDescriptorSetLayout layouts[] = {
             sp->Instance_layout,
             sp->Instance_layout,
             sp->Instance_layout
@@ -69,7 +69,7 @@ namespace vk {
         );
 
         VK_ASSERT(_result);
-        mat_instance->m_renderPipeline = pipeline;
+        mat_instance->m_renderPipeline = pipeline;*/
 
         __PostInitializeMaterial(mat_instance, pipeline);
 
@@ -143,65 +143,65 @@ namespace vk {
 
 
 
-        for (uint32_t i = 0; i < 3; i++)
-        {
-            std::vector<VkWriteDescriptorSet> _writes;
-            std::vector<VkCopyDescriptorSet> _copies;
+        //for (uint32_t i = 0; i < 3; i++)
+        //{
+        //    std::vector<VkWriteDescriptorSet> _writes;
+        //    std::vector<VkCopyDescriptorSet> _copies;
 
-            uint32_t set_index = (i * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
+        //    uint32_t set_index = i;
 
 
-            //New Material Processing
-            {
-                uint32_t img_index = 0;
-                VkDescriptorImageInfo img_infos[16];
+        //    //New Material Processing
+        //    {
+        //        uint32_t img_index = 0;
+        //        VkDescriptorImageInfo img_infos[16];
 
-                for (auto m_data : mat_instance->m_data)
-                {
-                    trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[m_data.second.second];
-                    if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-                    {
-                        VkCopyDescriptorSet copy = {};
-                        copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
-                        copy.descriptorCount = 1;
-                        copy.dstArrayElement = meta_data._index;
-                        copy.dstBinding = meta_data._slot;
-                        copy.srcArrayElement = meta_data._index;
-                        copy.srcBinding = meta_data._slot;
-                        copy.srcSet = sp->Instance_sets[set_index];
-                        copy.dstSet = _handle->m_sets[i];
-                        _copies.push_back(copy);
-                    }
-                    if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-                    {
-                        Ref<trace::GTexture> tex = std::any_cast<Ref<trace::GTexture>>(m_data.second.first);
-                        VkWriteDescriptorSet write = {};
-                        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        write.descriptorCount = 1;
-                        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        write.dstArrayElement = meta_data._index;
-                        write.dstBinding = meta_data._slot;
-                        write.dstSet = _handle->m_sets[i];
-                        trace::VKImage* tex_handle = (trace::VKImage*)tex.get()->GetRenderHandle()->m_internalData;
-                        img_infos[img_index].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        img_infos[img_index].imageView = tex_handle->m_view;
-                        img_infos[img_index].sampler = tex_handle->m_sampler;
-                        write.pImageInfo = &img_infos[img_index];
-                        img_index++;
-                        _writes.push_back(write);
-                    }
-                }
+        //        for (auto m_data : mat_instance->m_data)
+        //        {
+        //            trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[m_data.second.second];
+        //            if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+        //            {
+        //                VkCopyDescriptorSet copy = {};
+        //                copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
+        //                copy.descriptorCount = 1;
+        //                copy.dstArrayElement = meta_data._index;
+        //                copy.dstBinding = meta_data._slot;
+        //                copy.srcArrayElement = meta_data._index;
+        //                copy.srcBinding = meta_data._slot;
+        //                copy.srcSet = sp->Instance_sets[set_index];
+        //                copy.dstSet = _handle->m_sets[i];
+        //                _copies.push_back(copy);
+        //            }
+        //            if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+        //            {
+        //                Ref<trace::GTexture> tex = std::any_cast<Ref<trace::GTexture>>(m_data.second.first);
+        //                VkWriteDescriptorSet write = {};
+        //                write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        //                write.descriptorCount = 1;
+        //                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        //                write.dstArrayElement = meta_data._index;
+        //                write.dstBinding = meta_data._slot;
+        //                write.dstSet = _handle->m_sets[i];
+        //                trace::VKImage* tex_handle = (trace::VKImage*)tex.get()->GetRenderHandle()->m_internalData;
+        //                img_infos[img_index].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        //                img_infos[img_index].imageView = tex_handle->m_view;
+        //                img_infos[img_index].sampler = tex_handle->m_sampler;
+        //                write.pImageInfo = &img_infos[img_index];
+        //                img_index++;
+        //                _writes.push_back(write);
+        //            }
+        //        }
 
-            };
+        //    };
 
-            vkUpdateDescriptorSets(
-                _device->m_device,
-                static_cast<uint32_t>(_writes.size()),
-                _writes.data(),
-                static_cast<uint32_t>(_copies.size()),
-                _copies.data()
-            );
-        }
+        //    vkUpdateDescriptorSets(
+        //        _device->m_device,
+        //        static_cast<uint32_t>(_writes.size()),
+        //        _writes.data(),
+        //        static_cast<uint32_t>(_copies.size()),
+        //        _copies.data()
+        //    );
+        //}
 
         return result;
     }
@@ -247,7 +247,12 @@ namespace vk {
                 case trace::ShaderData::CUSTOM_DATA_MAT2:    { loc = &std::any_cast<glm::mat2&>(dst); break; }
                 case trace::ShaderData::CUSTOM_DATA_MAT3:    { loc = &std::any_cast<glm::mat3&>(dst); break; }
                 case trace::ShaderData::CUSTOM_DATA_MAT4:    { loc = &std::any_cast<glm::mat4&>(dst); break; }
-                case trace::ShaderData::CUSTOM_DATA_TEXTURE: { loc = &std::any_cast<Ref<trace::GTexture>&>(dst); break; }
+                case trace::ShaderData::CUSTOM_DATA_TEXTURE: 
+                { 
+                    Ref<trace::GTexture>& tex = std::any_cast<Ref<trace::GTexture>&>(dst);
+                    loc = (trace::VKImage*)tex->GetRenderHandle()->m_internalData;
+                    break;
+                }
                 case trace::ShaderData::CUSTOM_DATA_VEC2:    { loc = &std::any_cast<glm::vec2&>(dst); break; }
                 case trace::ShaderData::CUSTOM_DATA_VEC3:    { loc = &std::any_cast<glm::vec3&>(dst); break; }
                 case trace::ShaderData::CUSTOM_DATA_VEC4:    { loc = &std::any_cast<glm::vec4&>(dst); break; }
@@ -259,20 +264,33 @@ namespace vk {
                 trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[m_data.second.second];
                 if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
                 {
-                    void* data = nullptr;
+                    /*void* data = nullptr;
                     lambda(meta_data.data_type, m_data.second.first, data);
 
                     char* data_point = _device->m_bufferData[_device->m_imageIndex];
                     uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
 
                     void* map_point = data_point + location;
-                    memcpy(map_point, data, meta_data._size);
+                    memcpy(map_point, data, meta_data._size);*/
+
+                    void* data = nullptr;
+                    lambda(meta_data.data_type, m_data.second.first, data);
+
+                    __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size);
+                }
+                if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
+                {
+                    trace::VKImage* tex = nullptr;
+                    lambda(meta_data.data_type, m_data.second.first, (void*&)tex);
+
+                    __SetPipelineTextureData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex);
                 }
                 
             }
         };
 
-        uint32_t set_count = 0;
+
+        /*uint32_t set_count = 0;
         VkDescriptorSet _sets[3];
 
         uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
@@ -308,7 +326,7 @@ namespace vk {
             _sets,
             offset_count,
             offsets
-        );
+        );*/
         
 
         return result;

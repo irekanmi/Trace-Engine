@@ -240,6 +240,77 @@ namespace trace {
 		return true;
 	}
 
+	/*
+	* Shader
+	*  '-> data_index_count
+	*    '-> name_length
+	*    '-> name_data
+	*    '-> index_data
+	*  '-> shader_stage
+	*  '-> shader_size
+	*  '-> shader_code
+	*/
+	bool PipelineSerializer::SerializeShader(GShader* shader, const std::string& file_path)
+	{
+		FileStream stream(file_path, FileMode::WRITE);
+
+		int data_index_count = shader->GetDataIndex().size();
+		stream.Write(data_index_count);
+
+		for (auto& i : shader->GetDataIndex())
+		{
+			int name_length = i.first.length() + 1;
+			stream.Write(name_length);
+			stream.Write(i.first.data(), name_length);
+
+			stream.Write(i.second);
+
+		}
+
+		int shader_stage = shader->GetShaderStage();
+		stream.Write(shader_stage);
+		int shader_size = shader->GetCode().size() * sizeof(uint32_t);
+		stream.Write(shader_size);
+
+		stream.Write(shader->GetCode().data(), shader_size);
+
+		return true;
+	}
+
+	bool PipelineSerializer::DeserializeShader(std::string& file_path, std::vector<uint32_t>& out_code, std::vector<std::pair<std::string, int>>& out_data_index)
+	{
+		FileStream stream(file_path, FileMode::READ);
+
+		int data_index_count = 0;
+		stream.Read(data_index_count);
+
+		char buf[128] = { 0 };
+		for (int i = 0; i < data_index_count; i++)
+		{
+			int name_length = 0;
+			stream.Read(name_length);
+			stream.Read(buf, name_length);
+			std::string name = buf;
+			int index_value = -1;
+			stream.Read(index_value);
+
+			out_data_index.push_back(std::make_pair(name, index_value));
+
+		}
+
+		int shader_stage = -1;
+		stream.Read(shader_stage);
+
+		int shader_size = 0;
+		stream.Read(shader_size);
+
+		out_code.resize(shader_size / sizeof(uint32_t));
+
+		stream.Read(out_code.data(), shader_size);
+
+		return true;
+	}
+
 	Ref<GPipeline> PipelineSerializer::Deserialize(const std::string& file_path)
 	{
 		Ref<GPipeline> result;

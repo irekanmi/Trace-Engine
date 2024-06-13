@@ -376,6 +376,7 @@ namespace trace {
 		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
 		uint32_t resource_size = 0;
+		std::string resource_name;
 		uint32_t slot = 0;
 		uint32_t index = 0;
 		uint32_t count = 1;

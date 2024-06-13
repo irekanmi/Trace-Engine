@@ -2,7 +2,7 @@
 
 #include "VulkanBuffer.h"
 #include "VkUtils.h"
-
+#include "VKtypes.h"
 
 extern trace::VKHandle g_Vkhandle;
 extern trace::VKDeviceHandle g_VkDevice;
@@ -65,7 +65,7 @@ namespace vk {
 			vkUnmapMemory(_device->m_device, stage_buffer.m_memory);
 
 
-			vk::_CopyBuffer(_instance, _device, &stage_buffer, internal_handle, stage_info.m_size, 0);
+			vk::_CopyBuffer(_instance, _device, &stage_buffer, internal_handle, stage_info.m_size, 0, 0);
 
 			vk::_DestoryBuffer(_instance, _device, &stage_buffer);
 		}
@@ -120,6 +120,79 @@ namespace vk {
 
 		return result;
 	}
+	bool __ResizeBuffer(trace::GBuffer* buffer, uint32_t new_size)
+	{
+
+		if (!buffer)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)buffer, __FUNCTION__);
+			return false;
+		}
+
+		if (!buffer->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKBuffer* _handle = (trace::VKBuffer*)buffer->GetRenderHandle()->m_internalData;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
+		trace::VKHandle* _instance = _handle->m_instance;
+
+		_ResizeBuffer(
+			_instance,
+			_device,
+			*_handle,
+			_handle->m_info.m_size
+		);
+
+		return true;
+	}
+	bool __CopyBuffer(trace::GBuffer* src, trace::GBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset)
+	{
+		if (!src)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)src, __FUNCTION__);
+			return false;
+		}
+
+		if (!src->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)src->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		if (!dst)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)dst, __FUNCTION__);
+			return false;
+		}
+
+		if (!dst->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)dst->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKBuffer* _handle = (trace::VKBuffer*)src->GetRenderHandle()->m_internalData;
+		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
+		trace::VKHandle* _instance = _handle->m_instance;
+
+		trace::VKBuffer* _src = (trace::VKBuffer*)src->GetRenderHandle()->m_internalData;
+		trace::VKBuffer* _dst = (trace::VKBuffer*)dst->GetRenderHandle()->m_internalData;
+
+		vk::_CopyBuffer(
+			_instance,
+			_device,
+			_src,
+			_dst,
+			size,
+			src_offset,
+			dst_offset
+		);
+
+		return true;
+	}
 	bool __SetBufferData(trace::GBuffer* buffer, void* data, uint32_t size)
 	{
 
@@ -159,7 +232,7 @@ namespace vk {
 			vkUnmapMemory(_device->m_device, _device->copy_staging_buffer.m_memory);
 
 
-			vk::_CopyBuffer(_instance, _device, &_device->copy_staging_buffer, _handle, size, 0);
+			vk::_CopyBuffer(_instance, _device, &_device->copy_staging_buffer, _handle, size, 0, 0);
 
 		}
 		return result;
@@ -209,7 +282,7 @@ namespace vk {
 			vkUnmapMemory(_device->m_device, _device->copy_staging_buffer.m_memory);
 
 
-			vk::_CopyBuffer(_instance, _device, &_device->copy_staging_buffer, _handle, size, offset);
+			vk::_CopyBuffer(_instance, _device, &_device->copy_staging_buffer, _handle, size, offset, 0);
 
 		}
 

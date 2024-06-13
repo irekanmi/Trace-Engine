@@ -25,6 +25,80 @@ namespace vk {
 
 	void destroy_frame_resources(trace::GDevice* device, uint32_t currentIndex);
 
+	void update_pipeline_descriptors(trace::VKPipeline* pipeline)
+	{
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+
+		for (auto& i : pipeline->instance_buffer_infos)
+		{
+			write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			write.descriptorCount = i.second.size();
+			write.dstArrayElement = 0;
+			write.dstBinding = i.first;
+			write.dstSet = pipeline->Instance_set;
+			static std::vector<VkDescriptorBufferInfo> buffer_info;
+			buffer_info.reserve(i.second.size());
+			for (auto& j : i.second)
+			{
+				VkDescriptorBufferInfo buf_info = {};
+				buf_info.buffer = pipeline->Instance_buffers[pipeline->m_device->m_imageIndex].m_handle;
+				buf_info.offset = j.offset;
+				buf_info.range = j.range;
+				buffer_info.push_back(buf_info);
+			}
+			write.pBufferInfo = buffer_info.data();
+
+			vkUpdateDescriptorSets(
+				pipeline->m_device->m_device,
+				1,
+				&write,
+				0,
+				nullptr
+			);
+
+			buffer_info.clear();
+		}
+
+		if (!pipeline->instance_texture_infos.empty())
+		{
+			static std::vector<VkDescriptorImageInfo> texture_info;
+			texture_info.reserve(pipeline->instance_texture_infos.size());
+			for (auto& i : pipeline->instance_texture_infos)
+			{
+				write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				write.descriptorCount = pipeline->instance_texture_infos.size();
+				write.dstArrayElement = 0;
+				write.dstBinding = VK_COMBINED_SAMPLER2D_BINDING;
+				write.dstSet = pipeline->Instance_set;
+
+
+				VkDescriptorImageInfo tex_info = {};
+				tex_info.imageView = ((trace::VKImage*)i.texture)->m_view;
+				tex_info.sampler = ((trace::VKImage*)i.texture)->m_sampler;
+				tex_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				texture_info.push_back(tex_info);
+
+
+
+			}
+			write.pImageInfo = texture_info.data();
+			vkUpdateDescriptorSets(
+				pipeline->m_device->m_device,
+				1,
+				&write,
+				0,
+				nullptr
+			);
+			texture_info.clear();
+		}
+
+		pipeline->instance_buffer_offset = 0;
+		pipeline->frame_update = 0;
+		pipeline->instance_buffer_infos.clear();
+		pipeline->instance_texture_infos.clear();
+	}
+
 	bool __CreateDevice(trace::GDevice* device)
 	{
 		bool result = true;
@@ -920,6 +994,14 @@ namespace vk {
 
 		vk::_EndCommandBuffer(command_buffer);
 
+		// Pipelines that needs modification -------------------------
+		for (auto& i : _handle->pipeline_to_reset)
+		{
+			update_pipeline_descriptors(i);
+		}
+		_handle->pipeline_to_reset.clear();
+		// -----------------------------------------------------------
+
 		/*if (_handle->m_imagesFence[_handle->m_imageIndex] != nullptr)
 		{
 			vk::_WaitFence(_instance, _handle, _handle->m_imagesFence[_handle->m_imageIndex], UINT64_MAX);
@@ -947,6 +1029,8 @@ namespace vk {
 		vk::_CommandBufferSubmitted(command_buffer);
 		// Destroy previous frame resources 
 		destroy_frame_resources(device, _handle->m_imageIndex);
+
+		
 
 		if (_result != VK_SUCCESS)
 		{
@@ -989,9 +1073,35 @@ namespace vk {
 
 		for (auto& stct : pipeline->Scence_struct)
 		{
-			stct.second = _handle->m_bufCurrentOffset;
-			_handle->m_bufCurrentOffset += stct.first;
+			stct.second = pipe_handle->instance_buffer_offset;
+
+			trace::UniformMetaData& struct_meta = pipeline->Scene_uniforms[stct.first];
+
+			trace::BufferDescriptorInfo buf_info = {};
+			buf_info.offset = stct.second;
+			buf_info.range = struct_meta._size;
+			buf_info.binding = struct_meta._slot;
+
+			pipe_handle->instance_buffer_infos[struct_meta._slot].push_back(buf_info);
+			pipe_handle->instance_buffer_offset += struct_meta._size;
 		}
+
+		for (int i = 0; i < pipe_handle->bindless_2d_tex_count; i++)
+		{
+			trace::TextureDescriptorInfo tex_info = {};
+			tex_info.binding = VK_COMBINED_SAMPLER2D_BINDING;
+			tex_info.texture = &_handle->nullImage;
+			pipe_handle->instance_texture_infos.push_back(tex_info);
+		}
+
+		_handle->pipeline_to_reset.emplace(pipe_handle);
+
+
+		uint32_t set_index = _handle->m_imageIndex;
+		pipe_handle->Scene_set = pipe_handle->Scene_sets[set_index];
+		pipe_handle->Instance_set = pipe_handle->Instance_sets[set_index];
+
+		pipe_handle->frame_update++;
 
 		return result;
 	}

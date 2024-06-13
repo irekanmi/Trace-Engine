@@ -102,6 +102,8 @@ namespace trace {
 		}
 	}
 
+
+
 	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline)
 	{
 		std::unordered_map<std::string, std::pair<std::any, uint32_t>> result;
@@ -139,7 +141,7 @@ namespace trace {
 			{
 				for (auto& mem : i._struct.members)
 				{
-					if (mem.resource_name[0] == '_') continue;
+					if (mem.resource_name[0] == '_' || mem.resource_name == "draw_instance_index") continue;
 					std::any a;
 					lambda(mem.resource_data_type, a);
 					uint32_t hash = pipeline->_hashTable.Get(mem.resource_name);
@@ -151,6 +153,7 @@ namespace trace {
 			{
 				for (auto& mem : i._array.members)
 				{
+					if (mem.resource_name[0] == '_') continue;
 					std::any a;
 					lambda(mem.data_type, a);
 					uint32_t hash = pipeline->_hashTable.Get(mem.resource_name);
@@ -158,6 +161,29 @@ namespace trace {
 				}
 
 			}
+		}
+
+		GPipeline* _pipeline = pipeline.get();
+		HashTable<uint32_t>& _hashTable = _pipeline->_hashTable;
+
+		auto func = [&](GShader* shader)
+		{
+			for (auto& i : shader->GetDataIndex())
+			{
+				std::any a;
+				lambda(ShaderData::CUSTOM_DATA_TEXTURE, a);
+				uint32_t hash = pipeline->_hashTable.Get(i.first);
+				result[i.first] = std::make_pair(a, hash);
+			}
+		};
+
+		if (desc.vertex_shader)
+		{
+			func(desc.vertex_shader);
+		}
+		if (desc.pixel_shader)
+		{
+			func(desc.pixel_shader);
 		}
 
 		return result;

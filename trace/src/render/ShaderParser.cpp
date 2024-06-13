@@ -8,6 +8,9 @@
 #include "render/GShader.h"
 #include "resource/ShaderManager.h"
 #include "scene/UUID.h"
+#include "spdlog/fmt/fmt.h"
+#include "core/Utils.h"
+
 #include <filesystem>
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
@@ -117,6 +120,8 @@ namespace trace {
 		SpvReflectResult result = spvReflectCreateShaderModule(code.size() * 4, code.data(), &shader);
 		TRC_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS, "failed to compile shader, {}", __FUNCTION__);
 
+		std::unordered_map<std::string, int> push_map;
+
 		for (uint32_t i = 0; i < shader.descriptor_set_count; i++)
 		{
 			SpvReflectDescriptorSet& set = shader.descriptor_sets[i];
@@ -157,6 +162,7 @@ namespace trace {
 					Struct.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
 					Struct.shader_stage = shader_stage;
 					Struct.slot = binding->binding;
+					Struct.resource_name = block.name;
 
 					for (uint32_t k = 0; k < block.member_count; k++)
 					{
@@ -209,14 +215,52 @@ namespace trace {
 			}
 		}
 
+		int index = 0;
+		for (auto& i : out_res.resources)
+		{
+			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
+			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
+			bool is_varible = i.def == trace::ShaderDataDef::VARIABLE;
+			bool is_sArray = i.def == trace::ShaderDataDef::STRUCT_ARRAY;
+
+			trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
+			if (is_struct)
+			{
+				res_stage = i._struct.resource_stage;
+				push_map[i._struct.resource_name] = index;
+			}
+			else if (is_array)
+			{
+				res_stage = i._array.resource_stage;
+				push_map[i._array.name] = index;
+			}
+			else if (is_sArray)
+			{
+				res_stage = i._array.resource_stage;
+				push_map[i._array.name] = index;
+			}
+
+			index++;
+		}
+
 		for (uint32_t i = 0; i < shader.push_constant_block_count; i++)
 		{
 			SpvReflectBlockVariable& block = shader.push_constant_blocks[i];
+
+			auto it = push_map.find(block.name);
+			if (it != push_map.end())
+			{
+				uint32_t _stage = out_res.resources[it->second]._struct.shader_stage | shader_stage;
+				out_res.resources[it->second]._struct.shader_stage = (ShaderStage)_stage;
+				continue;
+			}
+
 			ShaderStruct Struct;
 			Struct.resource_size = block.padded_size;
 			Struct.resource_stage = ShaderResourceStage::RESOURCE_STAGE_LOCAL;
 			Struct.resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
 			Struct.shader_stage = shader_stage;
+			Struct.resource_name = block.name;
 
 			for (uint32_t k = 0; k < block.member_count; k++)
 			{
@@ -227,10 +271,33 @@ namespace trace {
 				s_info.resource_data_type = GetDataType(*blck_var.type_description);
 				Struct.members.push_back(s_info);
 			}
+
+			push_map[Struct.resource_name] = out_res.resources.size();
 			out_res.resources.push_back({ Struct, {}, {}, ShaderDataDef::STRUCTURE });
 		}
 
 		return;
+	}
+	static void GenShaderDataIndex(const std::string& code, std::vector<std::pair<std::string, int>>& out_index, ShaderStage shader_stage)
+	{
+		
+
+		std::vector<std::string> data = SplitString(code, '\n');
+
+		for (auto& i : data)
+		{
+			if (i.find("TexIndex ") != std::string::npos)
+			{
+				std::vector<std::string> index_line = SplitString(i, ' ');
+				int value_index = index_line.size() - 2;
+				int name_index = value_index - 3;
+
+				std::string& name = index_line[name_index];
+				int value = std::stoi(index_line[value_index]);
+				out_index.push_back(std::make_pair(name, value));
+			}
+		}
+
 	}
 
 	ShaderParser::ShaderParser()
@@ -247,21 +314,29 @@ namespace trace {
 
 		return std::string();
 	}
-	std::vector<uint32_t> ShaderParser::glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage)
+	std::vector<uint32_t> ShaderParser::glsl_to_spirv(const std::string& glsl, ShaderStage shader_stage, std::vector<std::pair<std::string, int>>& out_data_index)
 	{
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions opt;
 		opt.SetIncluder(std::make_unique<IncludeInterface>());
-		opt.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_0);
+		opt.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
 
 		// TODO: Fix and check why CompileGlslToSpv() requires "const char* input file name"                                        "PlaceHolder"
+		shaderc::PreprocessedSourceCompilationResult pre_result = compiler.PreprocessGlsl(glsl, convertToShadercFmt(shader_stage, ShaderLang::GLSL), "Trace_shader", opt);
 		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glsl, convertToShadercFmt(shader_stage, ShaderLang::GLSL), "Trace_shader", opt);
 
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
 			std::string error = result.GetErrorMessage();
-			TRC_ERROR("Error compiling shader\n {}", error); ;
+			TRC_ERROR("Error compiling shader\n {}", error);
 			return std::vector<uint32_t>();
+		}
+
+		if (pre_result.GetCompilationStatus() == shaderc_compilation_status_success)
+		{
+			std::string data = pre_result.cbegin();
+			TRC_INFO("Preprocess Shader: {}", data);
+			GenShaderDataIndex(data, out_data_index, shader_stage);
 		}
 
 		return { result.cbegin(), result.cend()};
@@ -286,7 +361,8 @@ namespace trace {
 	}
 	void ShaderParser::generate_shader_resources(const std::string& shader_src, ShaderResources& out_res, ShaderStage shader_stage)
 	{
-		std::vector<uint32_t> code = glsl_to_spirv(shader_src, shader_stage);
+		std::vector<std::pair<std::string, int>> data_index;
+		std::vector<uint32_t> code = glsl_to_spirv(shader_src, shader_stage, data_index);
 
 		GenShaderRes(code, out_res, shader_stage);
 	}
@@ -294,6 +370,10 @@ namespace trace {
 	{
 		std::vector<uint32_t>& code = shader->GetCode();
 		GenShaderRes(code, out_res, shader->GetShaderStage());
+	}
+	void ShaderParser::generate_shader_data_index(GShader* shader, std::vector<std::pair<std::string, int>>& out_index)
+	{
+		std::vector<uint32_t>& code = shader->GetCode();
 	}
 }
 

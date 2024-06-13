@@ -223,7 +223,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
 					"light_positions",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					m_renderer->light_positions.data(),
 					sizeof(glm::vec4) * m_renderer->light_positions.size()
 				);
@@ -231,7 +231,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
 					"light_directions",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					m_renderer->light_directions.data(),
 					sizeof(glm::vec4) * m_renderer->light_directions.size()
 				);
@@ -239,7 +239,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
 					"light_colors",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					m_renderer->light_colors.data(),
 					sizeof(glm::vec4) * m_renderer->light_colors.size()
 				);
@@ -247,7 +247,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
 					"light_params1s",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					m_renderer->light_params1s.data(),
 					sizeof(glm::vec4)* m_renderer->light_params1s.size()
 				); 
@@ -255,7 +255,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(
 					m_pipeline.get(),
 					"light_params2s",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					m_renderer->light_params2s.data(),
 					sizeof(glm::vec4) * m_renderer->light_params2s.size()
 				);

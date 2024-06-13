@@ -393,7 +393,7 @@ namespace trace {
 		else
 		{
 			uint32_t index = 0;
-			//TODO: Find a better to find texture index
+			//TODO: Find a better way to find texture index
 			auto value = std::find_if(quadBatches[current_quad_batch].textures.begin(), quadBatches[current_quad_batch].textures.end(), [&tex_index, &index](GTexture* tex) {
 				index++;
 				return tex->m_id == *tex_index;
@@ -424,6 +424,66 @@ namespace trace {
 
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
+		current_vert++;
+
+		quadBatches[current_quad_batch].current_unit++;
+
+	}
+
+	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture)
+	{	
+		
+		if (!quadBatches[current_quad_batch].tex)
+		{
+			quadBatches[current_quad_batch].tex = texture.get();
+		}
+		else if (quadBatches[current_quad_batch].tex != texture.get())
+		{
+			int index = -1;
+			auto it = std::find_if(quadBatches.begin(), quadBatches.end(), [&texture, &index](BatchInfo& a) {
+				index++;
+				return a.tex == texture.get();
+				});
+
+
+			if (it != quadBatches.end())
+			{
+				current_quad_batch = index;
+			}
+			else
+			{
+				flush_current_quad_batch();
+			}
+		}
+
+		if (quadBatches[current_quad_batch].current_unit >= quadBatches[current_quad_batch].max_units - 1)
+		{
+			flush_current_quad_batch();
+		}
+
+		uint32_t current_vert = quadBatches[current_quad_batch].current_unit * 6;
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		current_vert++;
+
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+		current_vert++;
+
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
+		current_vert++;
+
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
+		current_vert++;
+
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+		current_vert++;
+
+		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].current_unit++;
@@ -516,12 +576,13 @@ namespace trace {
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
+			RenderFunc::ApplyMaterial(_mi);
 			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
-			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, M_model, sizeof(glm::mat4));
-			RenderFunc::ApplyMaterial(_mi);
+			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, M_model, sizeof(glm::mat4));
 			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::BindPipeline_(sp.get());
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
 			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
 
@@ -603,11 +664,12 @@ namespace trace {
 		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
 		{
 			if (quadBatches[i].current_unit == 0) continue;
-			for (uint32_t j = 0; j < quadBatches[i].current_texture_unit; j++)
+			/*for (uint32_t j = 0; j < quadBatches[i].current_texture_unit; j++)
 			{
 				RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, quadBatches[i].textures[j], j);
-			}
+			}*/
 			RenderFunc::OnDrawStart(&g_device, quadBatchPipeline.get());
+			RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].tex);
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].positions.data(), quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].tex_coords.data(), quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
@@ -655,8 +717,8 @@ namespace trace {
 			uint32_t size = count * sizeof(TextVertex);
 			RenderFunc::SetBufferDataOffset(&text_buffer, vertices.data(), offset, size);
 
-			RenderFunc::SetPipelineTextureData(text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, i);
 			RenderFunc::OnDrawStart(&g_device, text_pipeline.get());
+			RenderFunc::SetPipelineTextureData(text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, i);
 			RenderFunc::SetPipelineData(text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::BindVertexBuffer(&g_device, &text_buffer);
 			RenderFunc::BindPipeline_(text_pipeline.get());
@@ -721,7 +783,7 @@ namespace trace {
 		if (current_quad_batch >= num_avalible_quad_batch)
 		{
 			num_avalible_quad_batch++;
-			quadBatches.resize(num_avalible_quad_batch);
+			quadBatches.push_back({});
 			quadBatches[current_quad_batch].current_index = 0;
 			quadBatches[current_quad_batch].current_texture_unit = 0;
 			quadBatches[current_quad_batch].current_unit = 0;
@@ -730,6 +792,7 @@ namespace trace {
 			quadBatches[current_quad_batch].textures.resize(quadBatches[current_quad_batch].max_texture_units);
 			quadBatches[current_quad_batch].positions.resize(quadBatches[current_quad_batch].max_units * 6);
 			quadBatches[current_quad_batch].tex_coords.resize(quadBatches[current_quad_batch].max_units * 6);
+			quadBatches[current_quad_batch].tex = nullptr;
 		}
 	}
 
@@ -1028,7 +1091,7 @@ namespace trace {
 
 	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform)
 	{
-		DrawQuad(_transform, texture);
+		DrawQuad_(_transform, texture);
 	}
 
 	std::string Renderer::GetRenderPassName(GRenderPass* pass)

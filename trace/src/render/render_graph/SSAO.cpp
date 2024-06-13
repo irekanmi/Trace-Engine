@@ -313,7 +313,7 @@ namespace trace {
 
 		blur_pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
 
-
+			RenderFunc::OnDrawStart(m_renderer->GetDevice(), m_blurPipe.get());
 			RenderFunc::BindRenderGraphTexture(
 				render_graph,
 				m_blurPipe.get(),
@@ -334,6 +334,7 @@ namespace trace {
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_blurPipe.get());
 
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
+			RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_blurPipe.get());
 
 			});
 

@@ -121,7 +121,7 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-
+				RenderFunc::OnDrawStart(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::BindRenderGraphTexture(
 					render_graph,
 					m_pipeline.get(),
@@ -142,6 +142,7 @@ namespace trace {
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
+				RenderFunc::OnDrawStart(m_renderer->GetDevice(), m_pipeline.get());
 
 
 			});

@@ -7,6 +7,7 @@
 #include "core/Utils.h"
 #include "core/Coretypes.h"
 #include "serialize/FileStream.h"
+#include "serialize/PipelineSerializer.h"
 
 namespace trace {
 
@@ -144,17 +145,23 @@ namespace trace {
 			return result;
 		}
 
+		bool serialize = false;
 		std::vector<uint32_t> code;
+		std::vector<std::pair<std::string, int>> data_index;
 		if (!std::filesystem::exists(code_path))
 		{
 			std::string shader_data = ShaderParser::load_shader_file(path);
-			if (p.extension() == ".glsl") code = ShaderParser::glsl_to_spirv(shader_data, shader_stage);
-			if(!code.empty())
-				SaveShaderCode(code_path, code);
+			if (p.extension() == ".glsl") code = ShaderParser::glsl_to_spirv(shader_data, shader_stage, data_index);
+			if (!code.empty())
+			{
+				//SaveShaderCode(code_path, code);
+				serialize = true;
+			}
 		}
 		else
 		{
-			code = LoadShaderCode(code_path);
+			//code = LoadShaderCode(code_path);
+			PipelineSerializer::DeserializeShader(code_path.string(), code, data_index);
 		}
 
 		uint32_t i = 0;
@@ -175,6 +182,12 @@ namespace trace {
 			}
 			i++;
 		}
+
+		std::vector<std::pair<std::string, int>>& shader_data_index = _shad->GetDataIndex();
+		shader_data_index = data_index;
+		
+		if (serialize) PipelineSerializer::SerializeShader(_shad, code_path.string());
+
 
 		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
 		return result;

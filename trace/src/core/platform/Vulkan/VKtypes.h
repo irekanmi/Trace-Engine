@@ -8,6 +8,7 @@
 #include "render/Graphics.h"
 
 #include <unordered_map>
+#include <unordered_set>
 
 
 
@@ -23,10 +24,28 @@ namespace trace {
 #define VK_MAX_NUM_FRAMES 3
 #define VK_MAX_DESCRIPTOR_SET_PER_FRAME 12
 #define VK_MAX_DESCRIPTOR_SET (VK_MAX_DESCRIPTOR_SET_PER_FRAME * VK_MAX_NUM_FRAMES)
+#define VK_MAX_BINDLESS_DESCRIPTORS KB
+#define VK_UNIFORM_BUFFER_BINDING 6
+#define VK_COMBINED_SAMPLER2D_BINDING 7
 
 	class RenderGraphPass;
 	class RenderGraph;
 	struct RenderGraphResource;
+	struct VKDeviceHandle;
+
+	struct BufferDescriptorInfo
+	{
+		int binding = -1;
+		int offset = 0;
+		int range = 0;
+	};
+
+	struct TextureDescriptorInfo
+	{
+		int binding = -1;
+		void* texture = nullptr;
+	};
+
 	struct SwapchainInfo
 	{
 		VkSurfaceCapabilitiesKHR surface_capabilities;
@@ -186,6 +205,47 @@ namespace trace {
 		std::vector<VkDeviceMemory> _memorys;
 	};
 
+	struct VKPipeline
+	{
+		VkPipeline m_handle = VK_NULL_HANDLE;
+		VkPipelineLayout m_layout = VK_NULL_HANDLE;
+
+		VKBuffer Scene_buffers = {};
+		VkDescriptorSet Scene_sets[VK_MAX_NUM_FRAMES] = {};
+		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
+
+
+		VkDescriptorSet Instance_sets[VK_MAX_NUM_FRAMES] = {};
+		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
+
+		VkDescriptorSet Local_sets[VK_MAX_NUM_FRAMES] = {};
+		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
+		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
+		VkDescriptorSet Local_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
+
+		VKHandle* m_instance = nullptr;
+		VKDeviceHandle* m_device = nullptr;
+		uint32_t cache_size = 0;
+		char* cache_data = nullptr;
+
+
+
+		// A resizeable buffer for instance based buffers in shaders
+		VKBuffer Instance_buffers[VK_MAX_NUM_FRAMES] = {};
+		uint32_t instance_buffer_offset = 0;
+
+		int frame_update = 0;// NOTE: This variable shows the number of times the pipeline has been used in particular frame
+
+		std::unordered_map<int, std::vector<BufferDescriptorInfo>> instance_buffer_infos;
+		std::vector<TextureDescriptorInfo> instance_texture_infos;
+		int bindless_2d_tex_count = 0;
+		bool bindless = false;
+	};
+
 	struct VKDeviceHandle
 	{
 		VkPhysicalDevice m_physicalDevice;
@@ -231,8 +291,9 @@ namespace trace {
 		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
 		uint32_t frame_mem_size = 0;
 		
-		VKBuffer copy_staging_buffer;
+		std::unordered_set<VKPipeline*> pipeline_to_reset;// NOTE: These are pipelines whose internal data need to changed
 
+		VKBuffer copy_staging_buffer;
 		VKImage nullImage;
 		VKBuffer nullBuffer;
 		VKHandle* instance;
@@ -240,38 +301,7 @@ namespace trace {
 
 	
 
-	struct VKPipeline
-	{
-		VkPipeline m_handle = VK_NULL_HANDLE;
-		VkPipelineLayout m_layout = VK_NULL_HANDLE;
-
-		VKBuffer Scene_buffers = {};
-		VkDescriptorSet Scene_sets[VK_MAX_DESCRIPTOR_SET] = {};
-		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
-		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
-
-
-		VkDescriptorSet Instance_sets[VK_MAX_DESCRIPTOR_SET] = {};
-		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
-		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
-
-		VkDescriptorSet Local_sets[VK_MAX_DESCRIPTOR_SET] = {};
-		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
-		VkDescriptorSet Local_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
-
-		VKHandle* m_instance = nullptr;
-		VKDeviceHandle* m_device = nullptr;
-		uint32_t cache_size = 0;
-		char* cache_data = nullptr;
-		void* last_tex_update[3] = {};
-
-
-		
-
-	};
+	
 
 	struct VKFrameBuffer
 	{

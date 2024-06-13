@@ -98,11 +98,13 @@ namespace vk {
 	VkResult _CreateBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* out_buffer, trace::BufferInfo buffer_info);
 	void _DestoryBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer);
 	void _ResizeBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer& buffer, uint32_t new_size);
+	void _ResizeBufferQueue(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer& buffer, uint32_t new_size);
 	void _BindBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* buffer);
 	void _BindBufferMem(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkBuffer buffer, VkDeviceMemory device_mem, uint32_t offset);
 	void _MapMemory(trace::VKDeviceHandle* device,void* data, VkDeviceMemory memory, uint32_t offset, uint32_t size, uint32_t flags = 0);
 	void _UnMapMemory(trace::VKDeviceHandle* device, VkDeviceMemory memory);
-	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t offset);
+	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset);
+	void _CopyBufferQueue(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset);
 
 
 	// Utils

@@ -2,6 +2,7 @@
 
 #include "VulkanRenderGraph.h"
 #include "render/GPipeline.h"
+#include "VulkanPipeline.h"
 #include "render/render_graph/RenderGraph.h"
 #include "vulkan/vulkan.h"
 #include "VkUtils.h"
@@ -680,15 +681,9 @@ namespace vk {
 		image_info.imageView = device->nullImage.m_view;
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
-		pipe_handle->last_tex_update[device->m_imageIndex] = nullptr;
 
-		bool _updated = true;
-		if (meta_data._frame_index != device->m_imageIndex)
-		{
-			meta_data._frame_index = device->m_imageIndex;
-			meta_data._num_frame_update = 0;
-			_updated = false;
-		}
+		
+
 		if (resource)
 		{
 			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
@@ -702,64 +697,51 @@ namespace vk {
 			{
 				image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 			}
-			pipe_handle->last_tex_update[device->m_imageIndex] = (void*)res_handle->resource.texture.m_handle;
 
+			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource.texture, index);
 			
-			
 		}
 
-		uint32_t set_index = (device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
-		meta_data._num_frame_update++;
+		//write.descriptorCount = 1; //HACK: Fix
+		//write.dstBinding = meta_data._slot;
+		//write.pImageInfo = &image_info;
+		//write.dstArrayElement = index;
+		//
+		//switch (meta_data._resource_type)
+		//{
+		//case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
+		//{
+		//	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		//	break;
+		//}
+		//}
 
-		write.descriptorCount = 1; //HACK: Fix
-		write.dstBinding = meta_data._slot;
-		write.pImageInfo = &image_info;
-		write.dstArrayElement = index;
-		
-		switch (meta_data._resource_type)
-		{
-		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
-		{
-			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			break;
-		}
-		}
-
-		switch (resource_stage)
-		{
+		//switch (resource_stage)
+		//{
 
 
-		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
-		{
-			write.dstSet = pipe_handle->Scene_sets[set_index];
-			pipe_handle->Scene_set = pipe_handle->Scene_sets[set_index];
+		//case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+		//{
+		//	write.dstSet = pipe_handle->Scene_set;
 
-			break;
-		}
+		//	break;
+		//}
 
-		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
-		{
-			write.dstSet = pipe_handle->Instance_sets[set_index];
-			pipe_handle->Instance_set = pipe_handle->Instance_sets[set_index];
-			break;
-		}
+		//case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
+		//{
+		//	write.dstSet = pipe_handle->Instance_set;
+		//	break;
+		//}
 
-		case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
-		{
-			write.dstSet = pipe_handle->Local_sets[set_index];
-			break;
-		}
+		//}
 
-
-		}
-
-		vkUpdateDescriptorSets(
-			device->m_device,
-			1,
-			&write,
-			copy_count,
-			copies
-		);
+		//vkUpdateDescriptorSets(
+		//	device->m_device,
+		//	1,
+		//	&write,
+		//	copy_count,
+		//	copies
+		//);
 		
 
 		return result;

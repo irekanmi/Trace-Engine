@@ -35,7 +35,7 @@ namespace trace {
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 		HashTable<uint32_t> _hashTable;
 		std::vector<UniformMetaData> Scene_uniforms = {};
-		std::vector<std::pair<uint32_t, uint32_t>> Scence_struct = {};
+		std::vector<std::pair<uint32_t, uint32_t>> Scence_struct = {};// NOTE: first-> the location of the structure, second-> the current frame offset
 		PipelineStateDesc m_desc;
 		uint32_t pipeline_type = 0;
 	private:

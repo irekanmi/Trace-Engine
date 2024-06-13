@@ -19,7 +19,7 @@ layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
 
 layout(set = 0, binding = 1)uniform sampler2D g_bufferData[3];
 
-layout(set = 1, binding = 1)uniform Lights {
+layout(set = 0, binding = 2)uniform Lights {
     vec4 light_positions[MAX_LIGHT_COUNT];
     vec4 light_directions[MAX_LIGHT_COUNT];
     vec4 light_colors[MAX_LIGHT_COUNT];

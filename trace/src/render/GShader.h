@@ -20,11 +20,13 @@ namespace trace {
 		void SetShaderStage(ShaderStage stage) { m_stage = stage; }
 		std::vector<uint32_t>& GetCode() { return m_code; }
 		void SetCode(const std::vector<uint32_t>& code) { m_code = code; }
+		std::vector<std::pair<std::string, int>>& GetDataIndex() { return m_instanceDataIndex; }
 
 	private:
 		ShaderStage m_stage = ShaderStage::STAGE_NONE;
 		GHandle m_renderHandle;
 		std::vector<uint32_t> m_code;
+		std::vector<std::pair<std::string, int>> m_instanceDataIndex;
 	protected:
 	};
 

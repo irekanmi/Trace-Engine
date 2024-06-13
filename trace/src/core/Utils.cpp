@@ -88,4 +88,20 @@ namespace trace {
 
 	}
 
+	std::vector<std::string> SplitString(const std::string& str, char token)
+	{
+		std::stringstream ss(str);
+
+		std::vector<std::string> data;
+		std::string t;
+
+		while (std::getline(ss, t, token))
+		{
+			if (t.empty()) continue;
+			data.push_back(t);
+		}
+
+		return data;
+	}
+
 }

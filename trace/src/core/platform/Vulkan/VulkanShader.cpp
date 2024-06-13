@@ -28,8 +28,8 @@ namespace vk {
 			return false;
 		}	
 
-
-		std::vector<uint32_t> _code = trace::ShaderParser::glsl_to_spirv(src, stage);
+		std::vector<std::pair<std::string, int>> data_index;
+		std::vector<uint32_t> _code = trace::ShaderParser::glsl_to_spirv(src, stage, data_index);
 		__CreateShader_(shader, _code, stage);
 		
 

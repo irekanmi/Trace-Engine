@@ -1,5 +1,6 @@
 #version 450
 
+#include "bindless.glsl"
 
 layout(location = 0)out vec4 FragColor;
 
@@ -9,8 +10,8 @@ layout(location = 0)in TextData
     vec2 Tex_coord;
 };
 
-layout(set = 1, binding = 0)uniform sampler2D u_texture;
-
+//layout(set = 1, binding = 0)uniform sampler2D u_texture;
+BINDLESS_COMBINED_SAMPLER2D;
 
 const float pxRange = 2.0f; // set to distance field's pixel range
 
@@ -21,10 +22,12 @@ float median(float r, float g, float b) {
 
 void main()
 {
+    INSTANCE_TEXTURE_INDEX(u_texture, 0);
+
     vec4 color = vec4(0.0f);
     float sPxRange;
-    color = texture(u_texture, Tex_coord);
-    sPxRange = screenPxRange(u_texture);
+    color = texture(GET_BINDLESS_TEXTURE2D(u_texture), Tex_coord);
+    sPxRange = screenPxRange(GET_BINDLESS_TEXTURE2D(u_texture));
     
     vec4 bgColor = vec4(0.0f);
     vec4 fgColor = vec4(Color,1.0f);

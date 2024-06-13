@@ -17,5 +17,7 @@ namespace trace {
 	
 	//TODO: Move function to a math module
 	void DecomposeMatrix(glm::mat4 matrix, glm::vec3& pos, glm::vec3& rotation, glm::vec3& scale);
+
+	std::vector<std::string> SplitString(const std::string& str, char token);
 }
 
