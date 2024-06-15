@@ -701,6 +701,10 @@ namespace vk {
 			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource.texture, index);
 			
 		}
+		else
+		{
+			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &device->nullImage, index);
+		}
 
 		//write.descriptorCount = 1; //HACK: Fix
 		//write.dstBinding = meta_data._slot;

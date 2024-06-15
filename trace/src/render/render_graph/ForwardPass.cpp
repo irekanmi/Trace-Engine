@@ -83,7 +83,7 @@ namespace trace {
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-			//m_renderer->RenderQuads();
+			m_renderer->RenderQuads();
 			//m_renderer->RenderLights();
 			m_renderer->RenderDebugData(); // Temp
 			if(m_renderer->text_verts) m_renderer->RenderTextVerts();

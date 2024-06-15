@@ -42,7 +42,7 @@ namespace trace {
 			//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4.0f, 4.0f });
 
 			ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
-			void* id = (void*)(uint64_t)(typeid(T).hash_code() + (uint32_t)entity);
+			void* id = (void*)((uint64_t)(typeid(T).hash_code() + entity.GetID()));
 			ImGui::Separator();
 			bool opened = ImGui::TreeNodeEx(id, tree_flags, placeholder);
 			//ImGui::PopStyleVar();
@@ -814,11 +814,13 @@ namespace trace {
 			ImGui::SameLine();
 			ImGui::Button(image_name.c_str(), button_size);
 
+			ImGui::PushID((uint32_t)entity);
 			if (ImGui::BeginDragDropTarget())
 			{
 				static char _buf[1024] = { 0 };
-				static auto load_texure = [&comp, &dirty](char* buf)
+				static auto load_texure = [&dirty, &entity](char* buf)
 				{
+					ImageComponent& comp = entity.GetComponent<ImageComponent>();
 					std::filesystem::path p = buf;
 					Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
 					if (tex) {}
@@ -852,6 +854,7 @@ namespace trace {
 				}
 				ImGui::EndDragDropTarget();
 			}
+			ImGui::PopID();
 
 			if (comp.image)
 			{

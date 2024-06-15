@@ -2031,7 +2031,8 @@ namespace vk {
 
 		_CopyBuffer(instance, device, &buffer, &new_buffer, buffer.m_info.m_size, 0, 0);
 
-		device->frames_resources;
+		device->frames_resources[device->m_imageIndex]._buffers.push_back(buffer.m_handle);
+		device->frames_resources[device->m_imageIndex]._memorys.push_back(buffer.m_memory);
 		
 		buffer = new_buffer;
 	}

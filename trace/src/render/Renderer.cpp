@@ -153,6 +153,7 @@ namespace trace {
 			quadBatches[i].current_index = 0;
 			quadBatches[i].current_texture_unit = 0;
 			quadBatches[i].current_unit = 0;
+			quadBatches[i].tex = nullptr;
 		}
 		boundQuadTextures.clear();
 
@@ -453,12 +454,14 @@ namespace trace {
 			else
 			{
 				flush_current_quad_batch();
+				quadBatches[current_quad_batch].tex = texture.get();
 			}
 		}
 
 		if (quadBatches[current_quad_batch].current_unit >= quadBatches[current_quad_batch].max_units - 1)
 		{
 			flush_current_quad_batch();
+			quadBatches[current_quad_batch].tex = texture.get();
 		}
 
 		uint32_t current_vert = quadBatches[current_quad_batch].current_unit * 6;

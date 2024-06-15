@@ -100,19 +100,16 @@ namespace trace {
 
 	void TextureManager::ShutDown()
 	{
-
-		if (!m_textures.empty())
+		for (GTexture& tex : m_textures)
 		{
-			for (GTexture& tex : m_textures)
-			{
-				if (tex.m_id == INVALID_ID)
-					continue;
-				TRC_TRACE("Texture Was still in use, name : {}, RefCount : {}", tex.GetName(), tex.m_refCount);
-				RenderFunc::DestroyTexture(&tex);
-				tex.~GTexture();
-			}
-			m_textures.clear();
+			if (tex.m_id == INVALID_ID)
+				continue;
+			TRC_TRACE("Texture Was still in use, name : {}, RefCount : {}", tex.GetName(), tex.m_refCount);
+			RenderFunc::DestroyTexture(&tex);
+			tex.~GTexture();
 		}
+		m_textures.clear();
+
 
 	}
 
@@ -385,6 +382,9 @@ namespace trace {
 			return;
 		}
 
+		TextureHash hash;
+		hash._id = INVALID_ID;
+		m_hashTable.Set(texture->GetName(), hash);
 		RenderFunc::DestroyTexture(texture);
 		texture->~GTexture();
 		texture->m_id = INVALID_ID;
