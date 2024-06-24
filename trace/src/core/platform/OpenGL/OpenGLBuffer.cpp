@@ -19,7 +19,7 @@ namespace trace {
 
 	OpenGLBuffer::OpenGLBuffer(BufferInfo info)
 	{
-		m_info = info;
+		//m_info = info;
 		glGenBuffers(1, &m_handle);
 		GLenum buffer_usage = 0;
 		glBindBuffer(buffer_usage, m_handle);

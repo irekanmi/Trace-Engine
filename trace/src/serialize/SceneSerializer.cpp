@@ -491,16 +491,16 @@ namespace trace {
 				bool has_fields = !(field_it == field_manager.end());
 				if (!has_fields)
 				{
-					TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->script_name);
+					TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->GetScriptName());
 				}
 				emit << YAML::BeginMap;
 
-				emit << YAML::Key << "Script Name" << YAML::Value << script->script_name;
+				emit << YAML::Key << "Script Name" << YAML::Value << script->GetScriptName();
 				emit << YAML::Key << "Script Values" << YAML::Value << YAML::BeginSeq; // Script values
 				if (has_fields)
 				{
 					ScriptFieldInstance& ins = field_manager[uuid];
-					for (auto& [name, field] : ins.m_fields)
+					for (auto& [name, field] : ins.GetFields())
 					{
 						emit << YAML::BeginMap;
 
@@ -667,8 +667,8 @@ namespace trace {
 			for (auto values : script["Script Values"])
 			{
 				std::string field_name = values["Name"].as<std::string>();
-				auto f_it = ins.m_fields.find(field_name);
-				if (f_it == ins.m_fields.end())
+				auto f_it = ins.GetFields().find(field_name);
+				if (f_it == ins.GetFields().end())
 				{
 					TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
 					continue;
@@ -1033,8 +1033,8 @@ namespace trace {
 					for (auto values : script["Script Values"])
 					{
 						std::string field_name = values["Name"].as<std::string>();
-						auto f_it = ins.m_fields.find(field_name);
-						if (f_it == ins.m_fields.end())
+						auto f_it = ins.GetFields().find(field_name);
+						if (f_it == ins.GetFields().end())
 						{
 							TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
 							continue;
@@ -1258,9 +1258,9 @@ namespace trace {
 					else res = MaterialSerializer::Deserialize(p.string());
 					if (res)
 					{
-						for (auto& m_data : res->m_data)
+						for (auto& m_data : res->GetMaterialData())
 						{
-							trace::UniformMetaData& meta_data = res->m_renderPipeline->Scene_uniforms[m_data.second.second];
+							trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
 							if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
 							{
 								Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);

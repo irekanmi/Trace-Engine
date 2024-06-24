@@ -19,7 +19,6 @@ namespace trace {
 
 		static MemoryManager* get_instance();
 	private:
-		static MemoryManager* s_instance;
 
 		StackAllocator m_frameAllocator;
 

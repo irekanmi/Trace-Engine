@@ -1,8 +1,6 @@
 
 #include <trace.h>
 #include <core/EntryPoint.h> // TODO: Find the reason why we can't add it in the trace header
-#include "scene/Entity.h"
-#include "scene/Scene.h"
 #include "TraceEditor.h"
 
 using namespace trace;

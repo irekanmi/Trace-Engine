@@ -26,15 +26,17 @@ namespace trace {
 		bool Init(Ref<GPipeline> pipeline) { return false; };
 		void Apply() {};
 
-		Ref<GPipeline> GetRenderPipline() { 
-			return m_renderPipeline; 
-		}
+		Ref<GPipeline> GetRenderPipline() {	return m_renderPipeline; }
+		MaterialData& GetMaterialData() { return m_data; }
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
+		void SetRenderPipeline(Ref<GPipeline> pipeline) { m_renderPipeline = pipeline; }
+		void SetMaterialData(MaterialData& material_data) { m_data = std::move(material_data); }
+
+	private:
 		Ref<GPipeline> m_renderPipeline;
 		MaterialData m_data;
-	private:
 		GHandle m_renderHandle;
 	protected:
 	};

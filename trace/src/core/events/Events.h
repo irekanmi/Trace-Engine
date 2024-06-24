@@ -48,11 +48,17 @@ namespace trace {
 		}
 
 		virtual const char* GetName() { return _STR(Event); }
-		bool m_handled = false;
-		EventType m_type = EventType::NONE;
+		virtual bool IsHandled() { return m_handled; }
+		virtual EventType GetEventType() { return m_type; }
+		
+		virtual void SetEventHandled(bool handled) { m_handled = handled; }
+		virtual void SetEventType(EventType type) { m_type = type; }
+
 	private:
 		
 	protected:
+		bool m_handled = false;
+		EventType m_type = EventType::NONE;
 	};
 	
 	//typedef void(*EventCallbackFunc)(Event*);
@@ -123,8 +129,12 @@ namespace trace {
 		~KeyPressed();
 
 		virtual const char* GetName() override { return _STR(KeyPressed); }
-		Keys m_keycode;
+		Keys GetKeyCode() { return m_keycode; }
+
+		void SetKeyCode(Keys key_code) { m_keycode = key_code; }
+
 	private:
+		Keys m_keycode;
 	protected:
 
 	};
@@ -137,8 +147,12 @@ namespace trace {
 		~KeyReleased();
 
 		virtual const char* GetName() override { return _STR(KeyReleased); }
-		Keys m_keycode;
+		Keys GetKeyCode() { return m_keycode; }
+
+		void SetKeyCode(Keys key_code) { m_keycode = key_code; }
+
 	private:
+		Keys m_keycode;
 	protected:
 
 	};
@@ -151,8 +165,12 @@ namespace trace {
 		~KeyTyped();
 
 		virtual const char* GetName() override { return _STR(KeyTyped); }
-		Keys m_keycode;
+		Keys GetKeyCode() { return m_keycode; }
+
+		void SetKeyCode(Keys key_code) { m_keycode = key_code; }
+
 	private:
+		Keys m_keycode;
 	protected:
 
 	};
@@ -167,9 +185,15 @@ namespace trace {
 
 		virtual const char* GetName() override { return _STR(WindowResize); }
 
-		unsigned int m_width;
-		unsigned int m_height;
+		uint32_t GetWidth() { return m_width; }
+		uint32_t GetHeight() { return m_height; }
+
+		void SetWidth(uint32_t width) { m_width = width; }
+		void SetHeight(uint32_t height) { m_height = height; }
+
 	private:
+		uint32_t m_width;
+		uint32_t m_height;
 	protected:
 
 	};
@@ -182,8 +206,13 @@ namespace trace {
 		~MousePressed();
 
 		virtual const char* GetName() override { return _STR(MousePressed); }
-		Buttons m_button;
+
+		Buttons GetButton() { return m_button; }
+
+		void SetButton(Buttons button) { m_button = button; }
+
 	private:
+		Buttons m_button;
 	protected:
 
 	};
@@ -196,8 +225,13 @@ namespace trace {
 		~MouseReleased();
 
 		virtual const char* GetName() override { return _STR(MouseReleased); }
-		Buttons m_button;
+
+		Buttons GetButton() { return m_button; }
+
+		void SetButton(Buttons button) { m_button = button; }
+
 	private:
+		Buttons m_button;
 	protected:
 
 	};
@@ -213,9 +247,15 @@ namespace trace {
 
 		virtual const char* GetName() override { return _STR(MouseMove); }
 
+		float GetMouseX() { return m_x; }
+		float GetMouseY() { return m_y; }
+
+		void SetMouseX(float mouse_X) { m_x = mouse_X; }
+		void SetMouseY(float mouse_Y) { m_y = mouse_Y; }
+
+	private:
 		float m_x;
 		float m_y;
-	private:
 	protected:
 	};
 
@@ -229,10 +269,15 @@ namespace trace {
 		~MouseWheel();
 
 		virtual const char* GetName() override { return _STR(MouseWheel); }
+		float GetMouseX() { return m_x; }
+		float GetMouseY() { return m_y; }
 
+		void SetMouseX(float mouse_X) { m_x = mouse_X; }
+		void SetMouseY(float mouse_Y) { m_y = mouse_Y; }
+
+	private:
 		float m_x;
 		float m_y;
-	private:
 	protected:
 	};
 
@@ -244,8 +289,13 @@ namespace trace {
 		~MouseDBClick();
 
 		virtual const char* GetName() override { return _STR(MouseDBClick); }
-		Buttons m_button;
+
+		Buttons GetButton() { return m_button; }
+
+		void SetButton(Buttons button) { m_button = button; }
+
 	private:
+		Buttons m_button;
 	protected:
 
 	};

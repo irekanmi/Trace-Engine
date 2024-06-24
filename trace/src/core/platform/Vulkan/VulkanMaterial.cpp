@@ -38,7 +38,7 @@ namespace vk {
         _handle->m_instance = &g_Vkhandle;
         trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
         trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
-        mat_instance->m_renderPipeline = pipeline;
+        mat_instance->SetRenderPipeline(pipeline);
         mat_instance->GetRenderHandle()->m_internalData = _handle;
 
         trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
@@ -82,7 +82,7 @@ namespace vk {
         bool result = true;
 
 
-        Ref<trace::GPipeline> pipeline = mat_instance->m_renderPipeline;
+        Ref<trace::GPipeline> pipeline = mat_instance->GetRenderPipline();
         if (!mat_instance || !pipeline.get())
         {
             TRC_ERROR("Please input valid pointer -> {} || {}, Function -> {}", (const void*)mat_instance, (const void*)pipeline.get(), __FUNCTION__);
@@ -104,7 +104,7 @@ namespace vk {
         //TODO: Implement destruction of descriptor sets
         delete mat_instance->GetRenderHandle()->m_internalData;
         mat_instance->GetRenderHandle()->m_internalData = nullptr;
-        mat_instance->m_renderPipeline.free();
+        mat_instance->GetRenderPipline().free();
 
         return result;
     }
@@ -139,7 +139,7 @@ namespace vk {
 
         trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
 
-        trace::PipelineStateDesc& desc = mat_instance->m_renderPipeline->GetDesc();
+        trace::PipelineStateDesc& desc = mat_instance->GetRenderPipline()->GetDesc();
 
 
 
@@ -228,7 +228,7 @@ namespace vk {
         trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
 
-        trace::GPipeline* pipeline = mat_instance->m_renderPipeline.get();
+        trace::GPipeline* pipeline = mat_instance->GetRenderPipline().get();
         trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
 
 
@@ -259,9 +259,9 @@ namespace vk {
                 }
             };
 
-            for (auto& m_data : mat_instance->m_data)
+            for (auto& m_data : mat_instance->GetMaterialData())
             {
-                trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[m_data.second.second];
+                trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[m_data.second.second];
                 if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
                 {
                     /*void* data = nullptr;

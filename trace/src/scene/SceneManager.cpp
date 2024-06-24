@@ -10,7 +10,6 @@
 
 namespace trace {
 
-	SceneManager* SceneManager::s_instance = nullptr;
 	extern std::string GetNameFromUUID(UUID uuid);
 
 
@@ -157,10 +156,7 @@ namespace trace {
 	}
 	SceneManager* SceneManager::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new SceneManager();
-		}
+		static SceneManager* s_instance = new SceneManager;
 		return s_instance;
 	}
 }

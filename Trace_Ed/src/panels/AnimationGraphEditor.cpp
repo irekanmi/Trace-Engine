@@ -29,7 +29,7 @@ namespace trace {
         TraceEditor* editor = TraceEditor::get_instance();
         if (m_currentGraph)
         {
-            std::string db_path = editor->current_project->current_directory + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
+            std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
             ImNodes::SaveCurrentEditorStateToIniFile(db_path.c_str());
         }
 	}
@@ -283,7 +283,7 @@ namespace trace {
         TraceEditor* editor = TraceEditor::get_instance();
         if (m_currentGraph)
         {
-            std::string db_path = editor->current_project->current_directory + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
+            std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
             ImNodes::SaveCurrentEditorStateToIniFile(db_path.c_str());
         }
 
@@ -293,7 +293,7 @@ namespace trace {
 
         if (graph)
         {
-            std::string db_path = editor->current_project->current_directory + "/InternalAssetsDB/" + graph->GetName() + ".ini";
+            std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + graph->GetName() + ".ini";
             if (std::filesystem::exists(db_path))
                 ImNodes::LoadCurrentEditorStateFromIniFile(db_path.c_str());
         }
@@ -306,7 +306,7 @@ namespace trace {
         Link link;
         link.id = link_id++;
         link.from = start_output_id; 
-        link.to = (m_currentGraph->start_index + 1) << 16;
+        link.to = (m_currentGraph->GetStartIndex() + 1) << 16;
         m_links.push_back(link);
 
         /*int i = 0;

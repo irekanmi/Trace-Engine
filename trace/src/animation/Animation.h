@@ -47,6 +47,7 @@ namespace trace {
 
 		void SetDuration(float duration) { m_duration = duration; }
 		void SetSampleRate(int rate) { m_sampleRate = rate; }
+		void SetTracks(std::unordered_map<UUID, std::vector<AnimationTrack>>& new_tracks) { m_tracks = std::move(new_tracks); }
 
 	private:
 		float m_duration = 1.0f;

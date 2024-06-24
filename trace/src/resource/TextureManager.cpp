@@ -14,7 +14,6 @@
 
 namespace trace {
 
-	TextureManager* TextureManager::s_instance = nullptr;
 	extern std::string GetNameFromUUID(UUID uuid);
 
 
@@ -600,10 +599,7 @@ namespace trace {
 	TextureManager* TextureManager::get_instance()
 	{
 
-		if (!s_instance)
-		{
-			s_instance = new TextureManager();
-		}
+		static TextureManager* s_instance = new TextureManager;
 		return s_instance;
 	}
 

@@ -326,7 +326,8 @@ namespace trace {
 		{
 			AssetHeader ast_h;
 			ast_h.offset = stream.GetPosition();
-			stream.Write(graph->start_index);
+			int32_t start_index = graph->GetStartIndex();
+			stream.Write(start_index);
 
 			std::vector<AnimationState>& states = graph->GetStates();
 			
@@ -430,9 +431,9 @@ namespace trace {
 		stream.Read(data, header.data_size);
 
 		MemoryStream mem_stream(data, header.data_size);
-		int start_index = -1;
-		mem_stream.Read<int>(start_index);
-		graph->start_index = start_index;
+		int32_t start_index = -1;
+		mem_stream.Read(start_index);
+		graph->SetStartIndex(start_index);
 
 		int state_count = 0;
 		mem_stream.Read<int>(state_count);

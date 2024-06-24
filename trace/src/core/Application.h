@@ -17,9 +17,11 @@ namespace trace
 	{
 
 	public:
-		Application(trc_app_data appData);
+		Application();
 		virtual ~Application();
 
+		virtual bool Init(trc_app_data appData);
+		virtual void Shutdown();
 		virtual void Start();
 		virtual void Run();
 		virtual void End();
@@ -37,7 +39,6 @@ namespace trace
 		Clock& GetClock() { return m_clock; }
 
 		static Application* get_instance();
-		static Application* s_instance;
 
 	private:
 		ClientEndCallback     m_client_end;

@@ -80,13 +80,15 @@ namespace trace {
 
 
 		// Getters
-		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)_avaliable_passes[pass_name]; }
+		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)m_avaliablePasses[pass_name]; }
 		std::string GetRenderPassName(GRenderPass* pass);
 		GDevice* GetDevice() { return &g_device; }
 		GContext* GetContext() { return &g_context; }
 		GSwapchain* GetSwapchain() { return &m_swapChain; }
 		uint32_t GetFrameWidth() { return m_frameWidth; }
 		uint32_t GetFrameHeight() { return m_frameHeight; }
+
+		std::unordered_map<std::string, void*>& GetAvaliableRenderPasses() { return m_avaliablePasses; }
 
 
 		void Render(float deltaTime);
@@ -104,7 +106,6 @@ namespace trace {
 		void RenderTextVerts();
 		void RenderDebugData();
 
-		static Renderer* s_instance;
 		static Renderer* get_instance();
 
 
@@ -126,7 +127,7 @@ namespace trace {
 		float exposure;
 		bool text_verts = false;
 		//------------------------------------
-		std::unordered_map<std::string, void*> _avaliable_passes;
+		
 		
 	private:
 		void draw_mesh(CommandParams& params);
@@ -179,6 +180,7 @@ namespace trace {
 		SkyBox* current_sky_box;
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;
+		std::unordered_map<std::string, void*> m_avaliablePasses;
 
 		// Batch rendering quads ..............................
 		std::vector<BatchInfo> quadBatches;

@@ -11,7 +11,6 @@
 
 namespace trace {
 
-	ShaderManager* ShaderManager::s_instance = nullptr;
 	extern std::string GetNameFromUUID(UUID uuid);
 
 	bool ShaderManager::Init(uint32_t max_shader_units)
@@ -262,10 +261,7 @@ namespace trace {
 
 	ShaderManager* ShaderManager::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance =  new ShaderManager();
-		}
+		static ShaderManager* s_instance = new ShaderManager;
 		return s_instance;
 	}
 

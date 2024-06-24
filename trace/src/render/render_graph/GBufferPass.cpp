@@ -73,7 +73,7 @@ namespace trace {
 
 
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
-			m_renderer->_avaliable_passes["GBUFFER_PASS"] = &m_renderPass;
+			m_renderer->GetAvaliableRenderPasses()["GBUFFER_PASS"] = &m_renderPass;
 		};
 
 		{

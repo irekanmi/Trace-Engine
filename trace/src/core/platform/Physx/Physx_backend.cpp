@@ -53,22 +53,22 @@ namespace physx {
 
 			for (PxU32 i = 0; i < nbPairs; i++)
 			{
-				const PxContactPair& cp = pairs[i];
+				const PxContactPair& contact_pair = pairs[i];
 
-				PxContactStreamIterator iter(cp.contactPatches, cp.contactPoints, cp.getInternalFaceIndices(), cp.patchCount, cp.contactCount);
+				PxContactStreamIterator iter(contact_pair.contactPatches, contact_pair.contactPoints, contact_pair.getInternalFaceIndices(), contact_pair.patchCount, contact_pair.contactCount);
 
-				const PxReal* impulses = cp.contactImpulses;
+				const PxReal* impulses = contact_pair.contactImpulses;
 
-				PxU32 flippedContacts = (cp.flags & PxContactPairFlag::eINTERNAL_CONTACTS_ARE_FLIPPED);
-				PxU32 hasImpulses = (cp.flags & PxContactPairFlag::eINTERNAL_HAS_IMPULSES);
+				PxU32 flippedContacts = (contact_pair.flags & PxContactPairFlag::eINTERNAL_CONTACTS_ARE_FLIPPED);
+				PxU32 hasImpulses = (contact_pair.flags & PxContactPairFlag::eINTERNAL_HAS_IMPULSES);
 				PxU32 nbContacts = 0;
 
-				Entity entity = *(Entity*)cp.shapes[0]->userData;
-				Entity otherEntity = *(Entity*)cp.shapes[1]->userData;
+				Entity entity = *(Entity*)contact_pair.shapes[0]->userData;
+				Entity otherEntity = *(Entity*)contact_pair.shapes[1]->userData;
 
-				trace::CollisionData col;
-				col.entity = entity.GetID();
-				col.otherEntity = otherEntity.GetID();
+				trace::CollisionData collision;
+				collision.entity = entity.GetID();
+				collision.otherEntity = otherEntity.GetID();
 
 				while (iter.hasNextPatch())
 				{
@@ -86,26 +86,26 @@ namespace physx {
 							iter.getFaceIndex0() : iter.getFaceIndex1();
 						//...
 
-						trace::ContactPoint cnt_p = {};
-						cnt_p.point = Px3ToGlm3(point);
-						cnt_p.normal = Px3ToGlm3(normal);
-						cnt_p.seperation = iter.getSeparation();
+						trace::ContactPoint contact_point = {};
+						contact_point.point = Px3ToGlm3(point);
+						contact_point.normal = Px3ToGlm3(normal);
+						contact_point.seperation = iter.getSeparation();
 
-						col.contacts[nbContacts] = cnt_p;
+						collision.contacts[nbContacts] = contact_point;
 
 						nbContacts++;
 					}
 				}
 
-				col.numContacts = nbContacts;
+				collision.numContacts = nbContacts;
 
 
-				trace::CollisionPair col_pair = std::make_pair(col.entity, col.otherEntity);
-				if (cp.events & PxPairFlag::eNOTIFY_TOUCH_PERSISTS)
+				trace::CollisionPair collision_pair = std::make_pair(collision.entity, collision.otherEntity);
+				if (contact_pair.events & PxPairFlag::eNOTIFY_TOUCH_PERSISTS)
 				{
-					StayCollisions.push_back(col_pair);
+					StayCollisions.push_back(collision_pair);
 				}
-				CollisionsMap[col_pair] = col;
+				CollisionsMap[collision_pair] = collision;
 			}
 
 		}
@@ -145,9 +145,9 @@ namespace physx {
 		{
 			// Temp __________________
 
-			trace::ScriptEngine* s_engine = trace::ScriptEngine::get_instance();
-			trace::Scene* scene = s_engine->GetCurrentScene();
-			trace::ScriptRegistry& reg = scene->GetScriptRegistry();
+			trace::ScriptEngine* script_engine = trace::ScriptEngine::get_instance();
+			trace::Scene* scene = script_engine->GetCurrentScene();
+			trace::ScriptRegistry& scene_registry = scene->GetScriptRegistry();
 
 			for (auto& i : EnterTriggers)
 			{
@@ -155,14 +155,14 @@ namespace physx {
 				
 				
 				ScriptInstance trigger_pair;
-				CreateScriptInstanceNoInit(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
-				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first)->GetBackendHandle();
-				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second)->GetBackendHandle();
+				CreateScriptInstanceNoInit(*script_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
+				void* triggerEntity_handle = script_engine->GetEntityActionClass(i.first)->GetBackendHandle();
+				void* otherEntity_handle = script_engine->GetEntityActionClass(i.second)->GetBackendHandle();
 
 				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
 				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
 
-				reg.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
@@ -172,7 +172,7 @@ namespace physx {
 						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
 					});
 
-				reg.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
@@ -189,14 +189,14 @@ namespace physx {
 			{
 
 				ScriptInstance trigger_pair;
-				CreateScriptInstanceNoInit(*s_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
-				void* triggerEntity_handle = s_engine->GetEntityActionClass(i.first)->GetBackendHandle();
-				void* otherEntity_handle = s_engine->GetEntityActionClass(i.second)->GetBackendHandle();
+				CreateScriptInstanceNoInit(*script_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
+				void* triggerEntity_handle = script_engine->GetEntityActionClass(i.first)->GetBackendHandle();
+				void* otherEntity_handle = script_engine->GetEntityActionClass(i.second)->GetBackendHandle();
 
 				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
 				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
 
-				reg.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
 						if (!on_trigger_enter) return;
@@ -206,7 +206,7 @@ namespace physx {
 						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
 					});
 
-				reg.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
 						if (!on_trigger_enter) return;

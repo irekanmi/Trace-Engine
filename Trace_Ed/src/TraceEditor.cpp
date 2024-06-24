@@ -6,7 +6,6 @@
 #include "resource/MeshManager.h"
 #include "resource/PipelineManager.h"
 #include "scene/SceneManager.h"
-#include "scene/Entity.h"
 #include "scene/Components.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
@@ -23,6 +22,7 @@
 #include "panels/AnimationGraphEditor.h"
 #include "EditorRenderComposer.h"
 #include "builder/ProjectBuilder.h"
+#include "scene/Entity.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -52,7 +52,6 @@ namespace trace {
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
 	extern UUID GetUUIDFromName(const std::string& name);
 
-	TraceEditor* TraceEditor::s_instance = nullptr;
 
 	bool TraceEditor::Init()
 	{
@@ -65,9 +64,6 @@ namespace trace {
 		m_animPanel = new AnimationPanel;
 		m_animGraphEditor = new AnimationGraphEditor;
 
-		m_hierachyPanel->m_editor = this;
-		m_inspectorPanel->m_editor = this;
-		m_contentBrowser->m_editor = this;
 		m_contentBrowser->Init();
 		m_animPanel->Init();
 		m_animGraphEditor->Init();
@@ -91,30 +87,30 @@ namespace trace {
 
 		};
 
-		m_editScene_duplicate = SceneManager::get_instance()->CreateScene("Duplicate Edit Scene");
-		editor_cam.SetCameraType(CameraType::PERSPECTIVE);
-		editor_cam.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
-		editor_cam.SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
-		editor_cam.SetUpDir(glm::vec3(0.0f, 1.0f, 0.0f));
-		editor_cam.SetAspectRatio(((float)800.0f) / ((float)600.0f));
-		editor_cam.SetFov(60.0f);
-		editor_cam.SetNear(0.1f);
-		editor_cam.SetFar(15000.0f);
+		m_editSceneDuplicate = SceneManager::get_instance()->CreateScene("Duplicate Edit Scene");
+		m_editorCamera.SetCameraType(CameraType::PERSPECTIVE);
+		m_editorCamera.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
+		m_editorCamera.SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
+		m_editorCamera.SetUpDir(glm::vec3(0.0f, 1.0f, 0.0f));
+		m_editorCamera.SetAspectRatio(((float)800.0f) / ((float)600.0f));
+		m_editorCamera.SetFov(60.0f);
+		m_editorCamera.SetNear(0.1f);
+		m_editorCamera.SetFar(15000.0f);
 
 		m_viewportSize = { 800.0f, 600.0f };
 
 		// Temp
-		all_assets.models.emplace("Cube");
-		all_assets.models.emplace("Sphere");
-		all_assets.models.emplace("Plane");
+		m_allAssets.models.emplace("Cube");
+		m_allAssets.models.emplace("Sphere");
+		m_allAssets.models.emplace("Plane");
 
-		all_assets.textures.emplace("albedo_map");
-		all_assets.textures.emplace("specular_map");
-		all_assets.textures.emplace("normal_map");
+		m_allAssets.textures.emplace("albedo_map");
+		m_allAssets.textures.emplace("specular_map");
+		m_allAssets.textures.emplace("normal_map");
 
-		all_assets.materials.emplace("default");
+		m_allAssets.materials.emplace("default");
 
-		all_assets.pipelines.emplace("gbuffer_pipeline");
+		m_allAssets.pipelines.emplace("gbuffer_pipeline");
 
 		
 		return true;
@@ -126,7 +122,7 @@ namespace trace {
 		m_contentBrowser->Shutdown();
 		m_currentScene.release();
 		m_editScene.release();
-		m_editScene_duplicate.release();
+		m_editSceneDuplicate.release();
 		UIFunc::ShutdownUIRenderBackend();
 
 
@@ -140,17 +136,17 @@ namespace trace {
 	void TraceEditor::Update(float deltaTime)
 	{
 
-		switch (current_state)
+		switch (m_currentState)
 		{
 		case SceneEdit:
 		{
 			if (m_viewportFocused || m_viewportHovered)
-				editor_cam.Update(deltaTime);
+				m_editorCamera.Update(deltaTime);
 
 			Renderer* renderer = Renderer::get_instance();
 
 			CommandList cmd_list = renderer->BeginCommandList();
-			renderer->BeginScene(cmd_list, &editor_cam);
+			renderer->BeginScene(cmd_list, &m_editorCamera);
 			if (m_currentScene)
 			{
 				m_currentScene->ResolveHierachyTransforms();
@@ -179,12 +175,12 @@ namespace trace {
 		case SceneStimulate:
 		{
 			if (m_viewportFocused || m_viewportHovered)
-				editor_cam.Update(deltaTime);
+				m_editorCamera.Update(deltaTime);
 
 			Renderer* renderer = Renderer::get_instance();
 
 			CommandList cmd_list = renderer->BeginCommandList();
-			renderer->BeginScene(cmd_list, &editor_cam);
+			renderer->BeginScene(cmd_list, &m_editorCamera);
 			if (m_currentScene)
 			{
 				m_currentScene->OnPhysicsUpdate(deltaTime);
@@ -326,8 +322,8 @@ namespace trace {
 
 		//Inspector
 		ImGui::Begin("Inspector");
-		if (m_inspectorPanel->m_drawCallback)
-			m_inspectorPanel->m_drawCallback();
+		if (m_inspectorPanel->GetDrawCallback())
+			m_inspectorPanel->GetDrawCallback()();
 		ImGui::End();
 
 		// Content Browser
@@ -398,13 +394,13 @@ namespace trace {
 			if (m_viewportSize != v_size)
 			{
 				m_viewportSize = v_size;
-				editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+				m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
 				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 			}
 			m_viewportFocused = ImGui::IsWindowFocused();
 			m_viewportHovered = ImGui::IsWindowHovered();
 			ImGui::Image(texture, view_size);
-			if (current_state == SceneEdit)
+			if (m_currentState == SceneEdit)
 			{
 				
 			}
@@ -422,13 +418,13 @@ namespace trace {
 			if (m_viewportSize != v_size)
 			{
 				m_viewportSize = v_size;
-				editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+				m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
 				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 			}
 			m_viewportFocused = ImGui::IsWindowFocused();
 			m_viewportHovered = ImGui::IsWindowHovered();
 			ImGui::Image(texture, view_size);
-			if (current_state == SceneEdit)
+			if (m_currentState == SceneEdit)
 			{
 				if (ImGui::BeginDragDropTarget())
 				{
@@ -439,12 +435,12 @@ namespace trace {
 						std::string path = buf;
 						CloseCurrentScene();
 						LoadScene(path);
-						current_scene_path = path;
+						m_currentScenePath = path;
 					}
 					ImGui::EndDragDropTarget();
 				}
 			}
-			if (m_hierachyPanel->m_selectedEntity)
+			if (m_hierachyPanel->GetSelectedEntity())
 			{
 				DrawGizmo();
 			}
@@ -459,8 +455,8 @@ namespace trace {
 	{
 		ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-		bool playing = (current_state == EditorState::ScenePlay);
-		bool stimulating = (current_state == EditorState::SceneStimulate);
+		bool playing = (m_currentState == EditorState::ScenePlay);
+		bool stimulating = (m_currentState == EditorState::SceneStimulate);
 
 		if (ImGui::Button(playing ? "Stop" : "Play"))
 		{
@@ -469,12 +465,12 @@ namespace trace {
 				if (playing)
 				{
 					OnSceneStop();
-					current_state = EditorState::SceneEdit;
+					m_currentState = EditorState::SceneEdit;
 				}
 				else
 				{
 					OnScenePlay();
-					current_state = EditorState::ScenePlay;
+					m_currentState = EditorState::ScenePlay;
 				}
 			}
 		}
@@ -486,12 +482,12 @@ namespace trace {
 				if (stimulating)
 				{
 					OnSceneStop();
-					current_state = EditorState::SceneEdit;
+					m_currentState = EditorState::SceneEdit;
 				}
 				else
 				{
 					OnSceneStimulate();
-					current_state = EditorState::SceneStimulate;
+					m_currentState = EditorState::SceneStimulate;
 				}
 			}
 		}
@@ -512,12 +508,12 @@ namespace trace {
 
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-		switch (p_event->m_type)
+		switch (p_event->GetEventType())
 		{
 		case TRC_KEY_PRESSED:
 		{
 			trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
-			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(press->m_keycode), true);
+			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(press->GetKeyCode()), true);
 			HandleKeyPressed(press);
 			
 
@@ -531,7 +527,7 @@ namespace trace {
 		case TRC_KEY_RELEASED:
 		{
 			trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
-			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(release->m_keycode), false);
+			io.AddKeyEvent((ImGuiKey)translateKeyTrace_ImGui(release->GetKeyCode()), false);
 			HandleKeyRelesed(release);
 
 			break;
@@ -540,7 +536,7 @@ namespace trace {
 		case TRC_WND_RESIZE:
 		{
 			trace::WindowResize* wnd = reinterpret_cast<trace::WindowResize*>(p_event);
-			io.DisplaySize = ImVec2(static_cast<float>(wnd->m_width), static_cast<float>(wnd->m_height));
+			io.DisplaySize = ImVec2(static_cast<float>(wnd->GetWidth()), static_cast<float>(wnd->GetHeight()));
 			io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
 			break;
@@ -548,32 +544,32 @@ namespace trace {
 		case TRC_BUTTON_PRESSED:
 		{
 			trace::MousePressed* press = reinterpret_cast<trace::MousePressed*>(p_event);
-			io.AddMouseButtonEvent(translateButtonTrace_ImGui(press->m_button), true);
+			io.AddMouseButtonEvent(translateButtonTrace_ImGui(press->GetButton()), true);
 			break;
 		}
 		case TRC_BUTTON_RELEASED:
 		{
 			trace::MouseReleased* release = reinterpret_cast<trace::MouseReleased*>(p_event);
-			io.AddMouseButtonEvent(translateButtonTrace_ImGui(release->m_button), false);
+			io.AddMouseButtonEvent(translateButtonTrace_ImGui(release->GetButton()), false);
 			break;
 		}
 		case TRC_MOUSE_MOVE:
 		{
 			trace::MouseMove* move = reinterpret_cast<trace::MouseMove*>(p_event);
-			io.AddMousePosEvent(move->m_x, move->m_y);
+			io.AddMousePosEvent(move->GetMouseX(), move->GetMouseY());
 			break;
 		}
 		case TRC_MOUSE_DB_CLICK:
 		{
 			trace::MouseDBClick* click = reinterpret_cast<trace::MouseDBClick*>(p_event);
-			io.AddMouseButtonEvent(translateButtonTrace_ImGui(click->m_button), true);
+			io.AddMouseButtonEvent(translateButtonTrace_ImGui(click->GetButton()), true);
 			break;
 		}
 
 		case TRC_KEY_TYPED:
 		{
 			trace::KeyTyped* typed = reinterpret_cast<trace::KeyTyped*>(p_event);
-			unsigned int c = typed->m_keycode;
+			unsigned int c = typed->GetKeyCode();
 			if (c > 0 && c < 0x10000)
 				io.AddInputCharacter((unsigned short)c);
 
@@ -583,7 +579,7 @@ namespace trace {
 		case TRC_MOUSE_WHEEL:
 		{
 			MouseWheel* wheel = reinterpret_cast<MouseWheel*>(p_event);
-			io.AddMouseWheelEvent(wheel->m_x, wheel->m_y);
+			io.AddMouseWheelEvent(wheel->GetMouseX(), wheel->GetMouseY());
 			break;
 		}
 
@@ -608,11 +604,11 @@ namespace trace {
 
 			ImGui::Columns(column_count, nullptr, false);
 
-			for (auto& i : all_assets.models)
+			for (auto& i : m_allAssets.models)
 			{
 				std::string filename = i.filename().string();
 				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
+				UIFunc::GetDrawTextureHandle(m_contentBrowser->GetDefaultIcon().get(), textureID);
 				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 				{
 					res = i.string();
@@ -643,11 +639,11 @@ namespace trace {
 
 			ImGui::Columns(column_count, nullptr, false);
 
-			for (auto& i : all_assets.materials)
+			for (auto& i : m_allAssets.materials)
 			{
 				std::string filename = i.filename().string();
 				void* textureID = nullptr;
-				UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
+				UIFunc::GetDrawTextureHandle(m_contentBrowser->GetDefaultIcon().get(), textureID);
 				if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 				{
 					res = i.string();
@@ -681,11 +677,11 @@ namespace trace {
 
 		ImGui::Columns(column_count, nullptr, false);
 
-		for (auto& i : all_assets.textures)
+		for (auto& i : m_allAssets.textures)
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;
-			UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
+			UIFunc::GetDrawTextureHandle(m_contentBrowser->GetDefaultIcon().get(), textureID);
 			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
 				result = i.string();
@@ -724,11 +720,11 @@ namespace trace {
 
 		ImGui::Columns(column_count, nullptr, false);
 
-		for (auto& i : all_assets.pipelines)
+		for (auto& i : m_allAssets.pipelines)
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;
-			UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
+			UIFunc::GetDrawTextureHandle(m_contentBrowser->GetDefaultIcon().get(), textureID);
 			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
 				result = i.string();
@@ -767,11 +763,11 @@ namespace trace {
 
 		ImGui::Columns(column_count, nullptr, false);
 
-		for (auto& i : all_assets.shaders)
+		for (auto& i : m_allAssets.shaders)
 		{
 			std::string filename = i.filename().string();
 			void* textureID = nullptr;
-			UIFunc::GetDrawTextureHandle(m_contentBrowser->default_icon.get(), textureID);
+			UIFunc::GetDrawTextureHandle(m_contentBrowser->GetDefaultIcon().get(), textureID);
 			if (ImGui::ImageButton(filename.c_str(), textureID, { 64.0f, 64.0f }, { 0, 1 }, { 1, 0 }))
 			{
 				result = i.string();
@@ -822,15 +818,13 @@ namespace trace {
 
 	TraceEditor* TraceEditor::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new TraceEditor();
-		}
+		static TraceEditor* s_instance = new TraceEditor;
 		return s_instance;
 	}
 	void TraceEditor::DrawGizmo()
 	{
-		if (gizmo_mode != -1)
+		Entity selected_entity = m_hierachyPanel->GetSelectedEntity();
+		if (gizmo_mode != -1 && selected_entity)
 		{
 			bool recording = m_animPanel->Recording();
 
@@ -839,16 +833,16 @@ namespace trace {
 			float windowWidth = (float)ImGui::GetWindowWidth();
 			float windowHeight = (float)ImGui::GetWindowHeight();
 			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-			glm::mat4 cam_view = editor_cam.GetViewMatrix();
-			glm::mat4 proj = editor_cam.GetProjectionMatix();
+			glm::mat4 cam_view = m_editorCamera.GetViewMatrix();
+			glm::mat4 proj = m_editorCamera.GetProjectionMatix();
 
 			//TODO: Fix added due to vulkan viewport
 			proj[1][1] *= -1.0f;
-			HierachyComponent& hi = m_hierachyPanel->m_selectedEntity.GetComponent<HierachyComponent>();
-			TransformComponent& pose = m_hierachyPanel->m_selectedEntity.GetComponent<TransformComponent>();
+			HierachyComponent& hi = selected_entity.GetComponent<HierachyComponent>();
+			TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
 			bool has_parent = hi.HasParent();
 
-			Scene* scene = m_hierachyPanel->m_selectedEntity.GetScene();
+			Scene* scene = selected_entity.GetScene();
 
 			glm::mat4 transform = hi.transform;
 
@@ -893,7 +887,7 @@ namespace trace {
 					{
 						char anim_data[16] = { 0 };
 						memcpy(anim_data, glm::value_ptr(pos), 4 * 3);
-						m_animPanel->SetFrameData(m_hierachyPanel->m_selectedEntity.GetID(), AnimationDataType::POSITION, anim_data, 16);
+						m_animPanel->SetFrameData(m_hierachyPanel->GetSelectedEntity().GetID(), AnimationDataType::POSITION, anim_data, 16);
 					}
 					break;
 				}
@@ -904,7 +898,7 @@ namespace trace {
 					{
 						char anim_data[16] = { 0 };
 						memcpy(anim_data, glm::value_ptr(rot), 4 * 4);
-						m_animPanel->SetFrameData(m_hierachyPanel->m_selectedEntity.GetID(), AnimationDataType::ROTATION, anim_data, 16);
+						m_animPanel->SetFrameData(m_hierachyPanel->GetSelectedEntity().GetID(), AnimationDataType::ROTATION, anim_data, 16);
 					}
 					break;
 				}
@@ -915,7 +909,7 @@ namespace trace {
 					{
 						char anim_data[16] = { 0 };
 						memcpy(anim_data, glm::value_ptr(scale), 4 * 3);
-						m_animPanel->SetFrameData(m_hierachyPanel->m_selectedEntity.GetID(), AnimationDataType::SCALE, anim_data, 16);
+						m_animPanel->SetFrameData(m_hierachyPanel->GetSelectedEntity().GetID(), AnimationDataType::SCALE, anim_data, 16);
 					}
 					break;
 				}
@@ -958,8 +952,8 @@ namespace trace {
 	{
 		m_currentScene.free();
 		m_editScene.free();
-		m_hierachyPanel->m_selectedEntity = Entity();
-		current_scene_path = "";
+		m_hierachyPanel->SetSelectedEntity(Entity());
+		m_currentScenePath = "";
 	}
 	void TraceEditor::LoadScene(const std::string& file_path)
 	{
@@ -969,25 +963,25 @@ namespace trace {
 	void TraceEditor::NewScene()
 	{
 		/*if (m_currentScene) CloseCurrentScene();
-		auto result = pfd::save_file("New Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
+		auto result = pfd::save_file("New Scene", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
 		if (!result.empty())
 		{
 			std::filesystem::path p = result;
 			m_currentScene = SceneManager::get_instance()->CreateScene(p.filename().string());
 			m_editScene = m_currentScene;
-			current_scene_path = result;
+			m_currentScenePath = result;
 		}*/
 	}
 	void TraceEditor::SaveScene()
 	{
-		if (current_scene_path.empty())
+		if (m_currentScenePath.empty())
 		{
-			current_scene_path = SaveSceneAs();
+			m_currentScenePath = SaveSceneAs();
 			return;
 		}
 		if (m_currentScene)
 		{
-			SceneSerializer::Serialize(m_currentScene, current_scene_path);
+			SceneSerializer::Serialize(m_currentScene, m_currentScenePath);
 		}
 	}
 	bool TraceEditor::CreateScene(const std::string& file_path)
@@ -1001,7 +995,7 @@ namespace trace {
 	{
 		/*if (m_currentScene)
 		{
-			auto result = pfd::save_file("Save Scene As", current_project_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
+			auto result = pfd::save_file("Save Scene As", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
 			if (!result.empty())
 			{
 				SceneSerializer::Serialize(m_currentScene, result);
@@ -1012,23 +1006,30 @@ namespace trace {
 	}
 	std::string TraceEditor::OpenScene()
 	{		
-		/*std::vector<std::string> result = pfd::open_file("Open Scene", current_project_path.string(), { "Trace Scene", "*.trscn" }).result();
+		/*std::vector<std::string> result = pfd::open_file("Open Scene", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }).result();
 		if (!result.empty())
 		{
 			CloseCurrentScene();
 			LoadScene(result[0]);
-			current_scene_path = result[0];
+			m_currentScenePath = result[0];
 			return result[0];
 		}*/
 		return std::string();
 	}
 	void TraceEditor::OpenScene(std::string& path)
 	{
-		if (current_state == EditorState::ScenePlay) return;
+		if (m_currentState == EditorState::ScenePlay)
+		{
+			return;
+		}
 
-		if (m_currentScene) CloseCurrentScene();
+		if (m_currentScene)
+		{
+			CloseCurrentScene();
+		}
 		LoadScene(path);
-		current_scene_path = path;
+		m_currentScenePath = path;
+
 
 	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
@@ -1036,7 +1037,7 @@ namespace trace {
 		InputSystem* input = InputSystem::get_instance();
 		bool control = input->GetKey(KEY_LCONTROL) || input->GetKey(KEY_RCONTROL);
 		bool shift = input->GetKey(KEY_LSHIFT) || input->GetKey(KEY_RSHIFT);
-		switch (p_event->m_keycode)
+		switch (p_event->GetKeyCode())
 		{
 		case KEY_Q:
 		{
@@ -1065,7 +1066,7 @@ namespace trace {
 		}
 		case KEY_S:
 		{
-			if (current_state != SceneEdit) break;
+			if (m_currentState != SceneEdit) break;
 
 			if (control && shift)
 			{
@@ -1080,7 +1081,7 @@ namespace trace {
 		}
 		case KEY_O:
 		{
-			if (current_state != SceneEdit) break;
+			if (m_currentState != SceneEdit) break;
 
 			if (control)
 			{
@@ -1091,7 +1092,7 @@ namespace trace {
 		}
 		case KEY_N:
 		{
-			if (current_state != SceneEdit) break;
+			if (m_currentState != SceneEdit) break;
 
 			if (control)
 			{
@@ -1102,11 +1103,11 @@ namespace trace {
 		}
 		case KEY_D:
 		{
-			if (current_state != SceneEdit) break;
+			if (m_currentState != SceneEdit) break;
 
-			if (control && m_hierachyPanel->m_selectedEntity)
+			if (control && m_hierachyPanel->GetSelectedEntity())
 			{
-				m_currentScene->DuplicateEntity(m_hierachyPanel->m_selectedEntity);
+				m_currentScene->DuplicateEntity(m_hierachyPanel->GetSelectedEntity());
 			}
 
 			break;
@@ -1121,7 +1122,7 @@ namespace trace {
 		bool control = input->GetKey(KEY_LCONTROL) || input->GetKey(KEY_RCONTROL);
 		bool shift = input->GetKey(KEY_LSHIFT) || input->GetKey(KEY_RSHIFT);
 
-		switch (p_event->m_keycode)
+		switch (p_event->GetKeyCode())
 		{
 		case KEY_K:
 		{
@@ -1146,41 +1147,41 @@ namespace trace {
 	}
 	void TraceEditor::OnScenePlay()
 	{
-		if ((current_state == EditorState::ScenePlay)) return;
+		if ((m_currentState == EditorState::ScenePlay)) return;
 
-		Scene::Copy(m_editScene, m_editScene_duplicate);
-		m_currentScene = m_editScene_duplicate;
+		Scene::Copy(m_editScene, m_editSceneDuplicate);
+		m_currentScene = m_editSceneDuplicate;
 		m_currentScene->OnStart();
 		m_currentScene->OnScriptStart();
-		if (m_hierachyPanel->m_selectedEntity)
+		if (m_hierachyPanel->GetSelectedEntity())
 		{
-			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
+			m_hierachyPanel->GetSelectedEntity() = m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID());
 		}
-		editor_cam.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+		m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
 		if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 	}
 	void TraceEditor::OnSceneStimulate()
 	{
-		if ((current_state == EditorState::SceneStimulate)) return;
+		if ((m_currentState == EditorState::SceneStimulate)) return;
 
-		Scene::Copy(m_editScene, m_editScene_duplicate);
-		m_currentScene = m_editScene_duplicate;
+		Scene::Copy(m_editScene, m_editSceneDuplicate);
+		m_currentScene = m_editSceneDuplicate;
 		m_currentScene->OnStart();
-		if (m_hierachyPanel->m_selectedEntity)
+		if (m_hierachyPanel->GetSelectedEntity())
 		{
-			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
+			m_hierachyPanel->GetSelectedEntity() = m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID());
 		}
 	}
 	void TraceEditor::OnSceneStop()
 	{
-		if ((current_state == EditorState::SceneEdit)) return;
+		if ((m_currentState == EditorState::SceneEdit)) return;
 
 		m_currentScene->OnStop();
 		m_currentScene->OnScriptStop();
 		m_currentScene = m_editScene;
-		if (m_hierachyPanel->m_selectedEntity)
+		if (m_hierachyPanel->GetSelectedEntity())
 		{
-			m_hierachyPanel->m_selectedEntity = m_currentScene->GetEntity(m_hierachyPanel->m_selectedEntity.GetID());
+			m_hierachyPanel->GetSelectedEntity() = m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID());
 		}
 	}
 
@@ -1284,12 +1285,15 @@ project "{}"
 
 	bool TraceEditor::LoadProject(const std::string& file_path)
 	{
-		current_project = ProjectSerializer::Deserialize(file_path);
-		if (!current_project) return false;
-		m_contentBrowser->SetDirectory(current_project->assets_directory);
+		m_currentProject = ProjectSerializer::Deserialize(file_path);
+		if (!m_currentProject)
+		{
+			return false;
+		}
+		m_contentBrowser->SetDirectory(m_currentProject->GetAssetsDirectory());
 		ReloadProjectAssembly();
 
-		UUID id = current_project->GetStartScene();
+		UUID id = m_currentProject->GetStartScene();
 		if (id != 0)
 		{
 			std::filesystem::path file_path = GetPathFromUUID(id);
@@ -1300,21 +1304,24 @@ project "{}"
 
 	bool TraceEditor::CloseProject()
 	{
-		current_project.free();
+		m_currentProject.free();
 		return true;
 	}
 
 	void TraceEditor::ReloadProjectAssembly()
 	{
 
-		if (current_project)
+		if (m_currentProject)
 		{
-			if (current_state != EditorState::SceneEdit) return;
+			if (m_currentState != EditorState::SceneEdit)
+			{
+				return;
+			}
 
-			bool exists = std::filesystem::exists(current_project->assembly_path);
+			bool exists = std::filesystem::exists(m_currentProject->GetAssemblyPath());
 			if (exists)
 			{
-				ScriptEngine::get_instance()->ReloadAssembly(current_project->assembly_path);
+				ScriptEngine::get_instance()->ReloadAssembly(m_currentProject->GetAssemblyPath());
 				if (m_currentScene) m_currentScene->m_scriptRegistry.ReloadScripts();
 			}
 		}
@@ -1341,7 +1348,7 @@ project "{}"
 			return "";
 		};
 
-		if (p_projectSettings && current_project)
+		if (p_projectSettings && m_currentProject)
 		{
 
 			ImGui::Begin("Project Settings", &p_projectSettings);
@@ -1366,7 +1373,7 @@ project "{}"
 				ImGui::Text("Start Scene");
 				ImGui::SameLine();
 				std::string scene_name = "None(Scene)";
-				UUID id = current_project->GetStartScene();
+				UUID id = m_currentProject->GetStartScene();
 				if (id != 0)
 				{
 					std::filesystem::path file_path = GetPathFromUUID(id);
@@ -1381,7 +1388,7 @@ project "{}"
 						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 						std::filesystem::path file_path = buf;
 						UUID id = GetUUIDFromName(file_path.filename().string());
-						current_project->SetStartScene(id);
+						m_currentProject->SetStartScene(id);
 					}
 					ImGui::EndDragDropTarget();
 				}
@@ -1400,7 +1407,7 @@ project "{}"
 
 			if (ImGui::Button("Apply"))
 			{
-				ProjectSerializer::Serialize(current_project, current_project->m_path.string());
+				ProjectSerializer::Serialize(m_currentProject, m_currentProject->m_path.string());
 			}
 			ImGui::End();
 
@@ -1410,7 +1417,7 @@ project "{}"
 
 	void TraceEditor::BuildProject()
 	{
-		if (!current_project) return;
+		if (!m_currentProject) return;
 
 		std::string out_dir;
 		std::string result = pfd::select_folder("Select Directory").result();
@@ -1418,7 +1425,7 @@ project "{}"
 		{
 			out_dir = result;
 
-			if (!ProjectBuilder::BuildProject(current_project, out_dir, all_assets.scenes))
+			if (!ProjectBuilder::BuildProject(m_currentProject, out_dir, m_allAssets.scenes))
 			{
 				TRC_ERROR("Failed to build project");
 				return;
@@ -1436,13 +1443,13 @@ project "{}"
 	{
 		//TODO: Add Error Handling
 		TraceEditor* editor = TraceEditor::get_instance();
-		return editor->m_contentBrowser->all_id_path[uuid];
+		return editor->GetContentBrowser()->GetUUIDPath()[uuid];
 	}
 	UUID GetUUIDFromName(const std::string& name)
 	{
 		//TODO: Add Error Handling
 		TraceEditor* editor = TraceEditor::get_instance();
-		return editor->m_contentBrowser->all_files_id[name];
+		return editor->GetContentBrowser()->GetAllFilesID()[name];
 	}
 
 	std::string GetNameFromUUID(UUID uuid)

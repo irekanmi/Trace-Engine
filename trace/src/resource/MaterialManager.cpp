@@ -83,8 +83,8 @@ namespace trace {
 			if (mat_instance.m_id == INVALID_ID)
 			{
 				auto res = GetPipelineMaterialData(pipeline);
-				mat_instance.m_data.clear();
-				mat_instance.m_data = std::move(res);
+				mat_instance.GetMaterialData().clear();
+				mat_instance.SetMaterialData(res);
 
 				if (!RenderFunc::InitializeMaterial(
 					&mat_instance,
@@ -137,8 +137,8 @@ namespace trace {
 		RenderFunc::DestroyMaterial(mat.get());
 
 		auto res = GetPipelineMaterialData(pipeline);
-		mat->m_data.clear();
-		mat->m_data = std::move(res);
+		mat->GetMaterialData().clear();
+		mat->SetMaterialData(res);
 
 		if (!RenderFunc::InitializeMaterial(
 			mat.get(),
@@ -184,28 +184,28 @@ namespace trace {
 
 		//New Default
 		{
-			auto it1 = default_material->m_data.find("DIFFUSE_MAP");
-			if (it1 != default_material->m_data.end())
+			auto it1 = default_material->GetMaterialData().find("DIFFUSE_MAP");
+			if (it1 != default_material->GetMaterialData().end())
 			{
 				it1->second.first = texture_manager->GetDefault("albedo_map");
 			}
-			auto it2 = default_material->m_data.find("SPECULAR_MAP");
-			if (it2 != default_material->m_data.end())
+			auto it2 = default_material->GetMaterialData().find("SPECULAR_MAP");
+			if (it2 != default_material->GetMaterialData().end())
 			{
 				it2->second.first = texture_manager->GetDefault("specular_map");
 			}
-			auto it3 = default_material->m_data.find("NORMAL_MAP");
-			if (it3 != default_material->m_data.end())
+			auto it3 = default_material->GetMaterialData().find("NORMAL_MAP");
+			if (it3 != default_material->GetMaterialData().end())
 			{
 				it3->second.first = texture_manager->GetDefault("normal_map");
 			}
-			auto it4 = default_material->m_data.find("diffuse_color");
-			if (it4 != default_material->m_data.end())
+			auto it4 = default_material->GetMaterialData().find("diffuse_color");
+			if (it4 != default_material->GetMaterialData().end())
 			{
 				it4->second.first = glm::vec4(1.0f);
 			}
-			auto it5 = default_material->m_data.find("shininess");
-			if (it5 != default_material->m_data.end())
+			auto it5 = default_material->GetMaterialData().find("shininess");
+			if (it5 != default_material->GetMaterialData().end())
 			{
 				it5->second.first = 32.0f;
 			}
@@ -255,8 +255,8 @@ namespace trace {
 				mem_stream.Read<UUID>(pipe_id);
 				Ref<GPipeline> pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(pipe_id);
 				auto res = GetPipelineMaterialData(pipeline);
-				mat_instance.m_data.clear();
-				mat_instance.m_data = std::move(res);
+				mat_instance.GetMaterialData().clear();
+				mat_instance.SetMaterialData(res);
 
 				MaterialSerializer::Deserialize(pipeline, &mat_instance, mem_stream);
 

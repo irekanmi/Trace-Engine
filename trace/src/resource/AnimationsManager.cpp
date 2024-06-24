@@ -11,7 +11,6 @@ namespace trace {
 
 	extern std::string GetNameFromUUID(UUID uuid);
 
-	AnimationsManager* AnimationsManager::s_instance = nullptr;
 
 	bool AnimationsManager::Init(uint32_t num_clip_units, uint32_t num_graph_units)
 	{
@@ -246,7 +245,7 @@ namespace trace {
 			if (graph.m_id == INVALID_ID)
 			{
 				graph.GetStates().clear();
-				graph.currrent_state_index = 0;
+				graph.SetCurrentStateIndex(0);
 				graph.m_id = i;
 				graphHashTable.Set(name, i);
 				_graph = &graph;
@@ -287,7 +286,7 @@ namespace trace {
 			{
 				// TODO: Implement Loading of Animation Graphs
 				graph.GetStates().clear();
-				graph.currrent_state_index = -1;
+				graph.SetCurrentStateIndex(-1);
 				graph.m_id = i;
 				graphHashTable.Set(name, i);
 				_graph = &graph;
@@ -359,7 +358,7 @@ namespace trace {
 			{
 				// TODO: Implement Loading of Animation Graphs
 				graph.GetStates().clear();
-				graph.currrent_state_index = -1;
+				graph.SetCurrentStateIndex(-1);
 				graph.m_id = i;
 				graphHashTable.Set(name, i);
 				_graph = &graph;
@@ -381,10 +380,7 @@ namespace trace {
 
 	AnimationsManager* AnimationsManager::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new AnimationsManager;
-		}
+		static AnimationsManager* s_instance = new AnimationsManager;
 		return s_instance;
 	}
 

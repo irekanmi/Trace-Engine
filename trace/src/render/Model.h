@@ -26,7 +26,6 @@ namespace trace {
 		void Release();
 
 
-		Ref<MaterialInstance> m_matInstance;
 	private:
 		std::vector<Vertex> m_vertices;
 		std::vector<uint32_t> m_indices;

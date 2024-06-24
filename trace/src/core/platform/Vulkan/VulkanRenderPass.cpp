@@ -34,7 +34,7 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		render_pass->GetRenderHandle()->m_internalData = _handle;
 
-		render_pass->m_desc = desc;
+		render_pass->SetRenderPassDescription(desc);
 
 		VkResult _result;
 		VkSubpassDescription subpass = {};
@@ -88,10 +88,10 @@ namespace vk {
 
 		VK_ASSERT(_result);
 
-		_handle->clear_color = &render_pass->m_desc.clear_color;
-		_handle->depth_value = &render_pass->m_desc.depth_value;
-		_handle->stencil_value = &render_pass->m_desc.stencil_value;
-		_handle->render_area = &render_pass->m_desc.render_area;
+		_handle->clear_color = &render_pass->GetRenderPassDescription().clear_color;
+		_handle->depth_value = &render_pass->GetRenderPassDescription().depth_value;
+		_handle->stencil_value = &render_pass->GetRenderPassDescription().stencil_value;
+		_handle->render_area = &render_pass->GetRenderPassDescription().render_area;
 
 		if (_result != VK_SUCCESS)
 		{
@@ -100,7 +100,7 @@ namespace vk {
 			result = false;
 		}
 		
-		render_pass->color_attach_count = static_cast<uint32_t>(attachments_ref.size() - has_depth);
+		render_pass->SetColorAttachmentCount(static_cast<uint32_t>(attachments_ref.size() - has_depth));
 
 		return result;
 	}

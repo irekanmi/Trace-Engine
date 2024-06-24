@@ -57,7 +57,6 @@ namespace trace {
 		std::unordered_map<UUID, AssetHeader> m_clipAssetMap;
 		std::unordered_map<UUID, AssetHeader> m_graphAssetMap;
 
-		static AnimationsManager* s_instance;
 
 	protected:
 

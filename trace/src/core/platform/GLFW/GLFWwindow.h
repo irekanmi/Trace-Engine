@@ -11,10 +11,10 @@ namespace trace {
 	{
 
 	public:
-		GLFW_Window(const WindowDecl& win_prop);
+		GLFW_Window();
 		~GLFW_Window();
 
-		virtual void Init(const WindowDecl & win_prop) override;
+		virtual void Init(const WindowDecl& win_prop) override;
 		virtual unsigned int GetWidth() override;
 		virtual unsigned int GetHeight() override;
 		virtual void Update(float deltaTime) override;

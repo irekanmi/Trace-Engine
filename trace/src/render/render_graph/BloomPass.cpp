@@ -54,9 +54,9 @@ namespace trace {
 			RenderFunc::CreateRenderPass(&m_upSamplePass, pass_desc);
 
 
-			m_renderer->_avaliable_passes["BLOOM_PREFILTER_PASS"] = &m_renderPass;
-			m_renderer->_avaliable_passes["BLOOM_DOWNSAMPLE_PASS"] = &m_downSamplePass;
-			m_renderer->_avaliable_passes["BLOOM_UPSAMPLE_PASS"] = &m_upSamplePass;
+			m_renderer->GetAvaliableRenderPasses()["BLOOM_PREFILTER_PASS"] = &m_renderPass;
+			m_renderer->GetAvaliableRenderPasses()["BLOOM_DOWNSAMPLE_PASS"] = &m_downSamplePass;
+			m_renderer->GetAvaliableRenderPasses()["BLOOM_UPSAMPLE_PASS"] = &m_upSamplePass;
 		};
 
 		if (AppSettings::is_editor)
@@ -298,10 +298,12 @@ namespace trace {
 		for (uint32_t i = 1; i < bd.samples_count; i++)
 		{
 			sample_count++;
-			//TODO: Find A better way to generate name for each pass
+
+			//TODO: Find A better way to generate name for each pass ----------------
 			pass_name.replace(name_length - 1, 1, std::to_string(i));
 			sample_name.replace(sample_name_length - 1, 1, std::to_string(i));
 			RenderGraphPass* pass = render_graph->AddPass(pass_name, GPU_QUEUE::GRAPHICS);
+			// -----------------------------------------------------------------------
 
 			pass->AddColorAttachmentInput(bd.bloom_samples[i - 1]);
 			bd.bloom_samples[i] = pass->CreateAttachmentOutput(sample_name, color);

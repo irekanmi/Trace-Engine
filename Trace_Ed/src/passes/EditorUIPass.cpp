@@ -49,7 +49,7 @@ namespace trace {
 
 
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
-			m_renderer->_avaliable_passes["UI_PASS"] = &m_renderPass;
+			m_renderer->GetAvaliableRenderPasses()["UI_PASS"] = &m_renderPass;
 		};
 
 	}

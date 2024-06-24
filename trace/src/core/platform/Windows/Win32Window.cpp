@@ -17,9 +17,8 @@ static std::wstring to_ws(const std::string& str);
 
 namespace trace {
 
-	trace::Win32Window::Win32Window(const WindowDecl& win_prop)
+	trace::Win32Window::Win32Window()
 	{
-		Init(win_prop);
 	}
 
 	trace::Win32Window::~Win32Window()
@@ -27,7 +26,7 @@ namespace trace {
 		ShutDown();
 	}
 
-	void trace::Win32Window::Init(const WindowDecl& win_prop)
+	void trace::Win32Window::Init(const WindowDecl& window_properties)
 	{
 		std::wstring class_name = to_ws(_NAME_);
 		WNDCLASSEX wnd;
@@ -52,8 +51,8 @@ namespace trace {
 			return;
 		}
 
-		uint32_t _width = win_prop.m_width;
-		uint32_t _height = win_prop.m_height;
+		uint32_t _width = window_properties.m_width;
+		uint32_t _height = window_properties.m_height;
 		uint32_t win_style = WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION;
 		uint32_t win_ex_style = WS_EX_APPWINDOW;
 
@@ -70,7 +69,7 @@ namespace trace {
 		m_handle = CreateWindowEx(
 			win_ex_style,
 			to_ws(_NAME_).c_str(),
-			to_ws(win_prop.m_window_name).c_str(),
+			to_ws(window_properties.m_window_name).c_str(),
 			win_style,
 			100,
 			100,
@@ -88,8 +87,8 @@ namespace trace {
 			TRC_ERROR("Failed to create win32 window");
 			return;
 		}
-		m_data.width = win_prop.m_width;
-		m_data.height = win_prop.m_height;
+		m_data.width = window_properties.m_width;
+		m_data.height = window_properties.m_height;
 
 		// TODO: modify ShowWindow() Check Windows Docs
 		ShowWindow(m_handle, SW_SHOW);

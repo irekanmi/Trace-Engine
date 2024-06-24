@@ -14,10 +14,10 @@ namespace trace {
 	{
 
 	public:
-		Win32Window(const WindowDecl& win_prop);
+		Win32Window();
 		~Win32Window();
 
-		virtual void Init(const WindowDecl& win_prop) override;
+		virtual void Init(const WindowDecl& window_properties) override;
 		virtual unsigned int GetWidth() override;
 		virtual unsigned int GetHeight() override;
 		virtual void Update(float deltaTime) override;
@@ -35,7 +35,7 @@ namespace trace {
 
 	private:
 		HWND m_handle = nullptr;
-		WindowData m_data = {0};
+		WindowData m_data;
 	protected:
 
 	};

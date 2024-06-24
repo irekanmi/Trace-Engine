@@ -35,7 +35,6 @@ namespace trace {
 		uint32_t m_entries = 0;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
-		static SceneManager* s_instance;
 	protected:
 
 	};

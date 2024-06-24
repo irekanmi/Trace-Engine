@@ -42,7 +42,8 @@ namespace trace {
 
 	bool ContentBrowser::Init()
 	{
-		if(m_editor->current_project) m_currentDir = m_editor->current_project->assets_directory;
+		TraceEditor* editor = TraceEditor::get_instance();
+		if(editor->GetCurrentProject()) m_currentDir = editor->GetCurrentProject()->GetAssetsDirectory();
 
 		directory_icon = TextureManager::get_instance()->LoadTexture("directory.png");
 		default_icon = TextureManager::get_instance()->LoadTexture("default_file_icon.png");
@@ -50,47 +51,47 @@ namespace trace {
 
 		//Process callbacks
 		{
-			process_callbacks[".obj"] = [&](std::filesystem::path& path)
+			process_callbacks[".obj"] = [editor](std::filesystem::path& path)
 			{
-				auto it = m_editor->all_assets.meshes.find(path);
-				if (it == m_editor->all_assets.meshes.end())
+				auto it = editor->GetAllProjectAssets().meshes.find(path);
+				if (it == editor->GetAllProjectAssets().meshes.end())
 				{
-					m_editor->all_assets.meshes.emplace(path);
+					editor->GetAllProjectAssets().meshes.emplace(path);
 					std::vector<std::string> models;
 					ImportOBJ(path.string(), models, true);
 					for (auto& i : models)
 					{
-						m_editor->all_assets.models.emplace(path / i);
+						editor->GetAllProjectAssets().models.emplace(path / i);
 					}
 				}
 			};
-			process_callbacks[".trmat"] = [&](std::filesystem::path& path)
+			process_callbacks[".trmat"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->all_assets.materials.emplace(path);
+				editor->GetAllProjectAssets().materials.emplace(path);
 
 			};
 
-			process_callbacks[".trpip"] = [&](std::filesystem::path& path)
+			process_callbacks[".trpip"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->all_assets.pipelines.emplace(path);
+				editor->GetAllProjectAssets().pipelines.emplace(path);
 
 			};
 
-			process_callbacks[".trscn"] = [&](std::filesystem::path& path)
+			process_callbacks[".trscn"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->all_assets.scenes.emplace(path);
+				editor->GetAllProjectAssets().scenes.emplace(path);
 
 			};
 
-			process_callbacks[".glsl"] = [&](std::filesystem::path& path)
+			process_callbacks[".glsl"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->all_assets.shaders.emplace(path);
+				editor->GetAllProjectAssets().shaders.emplace(path);
 
 			};
 
-			auto tex_lambda = [&](std::filesystem::path& path)
+			auto tex_lambda = [editor](std::filesystem::path& path)
 			{
-				m_editor->all_assets.textures.emplace(path);
+				editor->GetAllProjectAssets().textures.emplace(path);
 			};
 
 			process_callbacks[".png"] = tex_lambda;
@@ -101,111 +102,122 @@ namespace trace {
 		//extensions callbacks
 		{
 
-			extensions_callbacks[".trmat"] = [&](std::filesystem::path& path)
+			extensions_callbacks[".trmat"] = [editor](std::filesystem::path& path)
 			{
-				m_editMaterialPath = path;
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditMaterial(); },
-					[&]()
+				AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+				assets_edit.editMaterialPath = path;
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditMaterial(); },
+					[editor]()
 					{
-						m_editMaterialPath = path;
-						std::string filename = m_editMaterialPath.filename().string();
-						m_editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
-						if (!m_editMaterial) m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
-						m_editMaterialPipe = m_editMaterial->m_renderPipeline;
-
-						if (m_editMaterial)
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						std::string filename = assets_edit.editMaterialPath.filename().string();
+						assets_edit.editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
+						if (!assets_edit.editMaterial)
 						{
-							m_materialDataCache.clear();
-							m_materialDataCache = m_editMaterial->m_data;
+							assets_edit.editMaterial = MaterialSerializer::Deserialize(assets_edit.editMaterialPath.string());
+						}
+						assets_edit.editMaterialPipe = assets_edit.editMaterial->GetRenderPipline();
+
+						if (assets_edit.editMaterial)
+						{
+							assets_edit.materialDataCache.clear();
+							assets_edit.materialDataCache = assets_edit.editMaterial->GetMaterialData();
 						}
 
 					},
-					[&]()
+					[editor]()
 					{
-						if (m_editMaterialPipeChanged)
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						if (assets_edit.editMaterialPipeChanged)
 						{
-							MaterialManager::get_instance()->RecreateMaterial(m_editMaterial, m_editMaterialPipe);
-							m_editMaterialPipeChanged = false;
+							MaterialManager::get_instance()->RecreateMaterial(assets_edit.editMaterial, assets_edit.editMaterialPipe);
+							assets_edit.editMaterialPipeChanged = false;
 						}
-						m_editMaterial->m_data = m_materialDataCache;
-						RenderFunc::PostInitializeMaterial(m_editMaterial.get(), m_editMaterialPipe);
+						assets_edit.editMaterial->SetMaterialData(assets_edit.materialDataCache);
+						RenderFunc::PostInitializeMaterial(assets_edit.editMaterial.get(), assets_edit.editMaterialPipe);
 
-						m_editMaterialPath = "";
-						m_editMaterial.free();
-						m_materialDataCache.clear();
-						m_editMaterialPipe.free();
+						assets_edit.editMaterialPath = "";
+						assets_edit.editMaterial.free();
+						assets_edit.materialDataCache.clear();
+						assets_edit.editMaterialPipe.free();
 
 					});
 			};
 
-			extensions_callbacks[".trprf"] = [&](std::filesystem::path& path)
+			extensions_callbacks[".trprf"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() 
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() 
 					{ 
-						if (m_editor->m_hierachyPanel->GetSelectedEntity())
-							m_editor->m_inspectorPanel->DrawEntityComponent(m_editor->m_hierachyPanel->GetSelectedEntity());
+						if (editor->GetHierachyPanel()->GetSelectedEntity())
+							editor->GetInspectorPanel()->DrawEntityComponent(editor->GetHierachyPanel()->GetSelectedEntity());
 					},
-					[&]()
+					[editor, path]()
 					{
-						m_editor->m_hierachyPanel->SetPrefabEdit(SceneSerializer::DeserializePrefab(path.string()));
+						editor->GetHierachyPanel()->SetPrefabEdit(SceneSerializer::DeserializePrefab(path.string()));
 					},
-					[&]()
+					[editor]()
 					{
-						Ref<Prefab> prefab = m_editor->m_hierachyPanel->GetPrefabEdit();
+						Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
 						SceneSerializer::SerializePrefab(prefab,prefab->m_path.string());
 					});
 			};
 
-			extensions_callbacks[".trscn"] = [&](std::filesystem::path& path)
+			extensions_callbacks[".trscn"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->OpenScene(path.string());
+				editor->OpenScene(path.string());
 			};
 
-			extensions_callbacks[".ttf"] = [&](std::filesystem::path& path)
+			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditFont(); },
-					[&]()
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
+					[editor, path]()
 					{
-						m_editFont = FontManager::get_instance()->LoadFont_(path.string());
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						assets_edit.editFont = FontManager::get_instance()->LoadFont_(path.string());
 					},
-					[&]()
+					[editor]()
 					{
-						m_editFont.free();
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						assets_edit.editFont.free();
 					});
 			};
 
-			extensions_callbacks[".TTF"] = [&](std::filesystem::path& path)
+			extensions_callbacks[".TTF"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditFont(); },
-					[&]()
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
+					[editor, path]()
 					{
-						m_editFont = FontManager::get_instance()->LoadFont_(path.string());
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						assets_edit.editFont = FontManager::get_instance()->LoadFont_(path.string());
 					},
-					[&]()
+					[editor]()
 					{
-						m_editFont.free();
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						assets_edit.editFont.free();
 					});
 			};
 
-			extensions_callbacks[".trpip"] = [&](std::filesystem::path& path)
+			extensions_callbacks[".trpip"] = [editor](std::filesystem::path& path)
 			{
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]() { m_editor->m_contentBrowser->DrawEditPipeline(); },
-					[&]()
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditPipeline(); },
+					[editor, path]()
 					{
-						m_editPipeline = PipelineSerializer::Deserialize(path.string());
-						m_editPipePath = path;
-						if (m_editPipeline)
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						assets_edit.editPipeline = PipelineSerializer::Deserialize(path.string());
+						assets_edit.editPipePath = path;
+						if (assets_edit.editPipeline)
 						{
-							m_editPipeDesc = m_editPipeline->GetDesc();
-							m_editPipeType = (PipelineType)m_editPipeline->pipeline_type;
+							assets_edit.editPipeDesc = assets_edit.editPipeline->GetDesc();
+							assets_edit.editPipeType = (PipelineType)assets_edit.editPipeline->GetPipelineType();
 						}
 					},
-					[&]()
+					[editor]()
 					{
-						m_editPipeline.free();
-						m_editPipePath = "";
-						m_editPipeDesc = {};
-						m_editPipeType = PipelineType::Unknown;
+						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
+						assets_edit.editPipeline.free();
+						assets_edit.editPipePath = "";
+						assets_edit.editPipeDesc = {};
+						assets_edit.editPipeType = PipelineType::Unknown;
 					});
 			};
 
@@ -225,17 +237,18 @@ namespace trace {
 		// TODO: Add a data structure that holds and releases all textures
 		directory_icon.free();
 		default_icon.free();
-		m_editMaterial.free();
+		m_assetsEdit.editMaterial.free();
 	}
 	void ContentBrowser::Render(float deltaTime)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		ImGui::Begin("Content Browser");
 
-		if (m_editor->current_project)
+		if (editor->GetCurrentProject())
 		{
 			if (ImGui::ArrowButton("<<", ImGuiDir_Left))
 			{
-				if (m_currentDir != m_editor->current_project->assets_directory)
+				if (m_currentDir != editor->GetCurrentProject()->GetAssetsDirectory())
 				{
 					m_currentDir = m_currentDir.parent_path();
 					OnDirectoryChanged();
@@ -338,7 +351,7 @@ namespace trace {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 			{
 				UUID uuid = *(UUID*)payload->Data;
-				prefab_entity = m_editor->m_currentScene->GetEntity(uuid);
+				prefab_entity = editor->GetCurrentScene()->GetEntity(uuid);
 				prefab_popup = true;
 			}
 			ImGui::EndDragDropTarget();
@@ -349,7 +362,7 @@ namespace trace {
 		if (prefab_popup)
 		{
 			std::string res;
-			if (m_editor->InputTextPopup("Prefab Name", res))
+			if (editor->InputTextPopup("Prefab Name", res))
 			{
 				if (!res.empty())
 				{
@@ -402,60 +415,62 @@ namespace trace {
 	}
 	void ContentBrowser::ProcessAllDirectory()
 	{
-		all_files_id.clear();
-		all_id_path.clear();
+		TraceEditor* editor = TraceEditor::get_instance();
+
+		m_allFilesID.clear();
+		m_allIDPath.clear();
 
 		//TEMP: Find a better way to identify default data
 		uint64_t def_id0 = 1;
 		uint64_t def_id1 = 1;
-		all_files_id["albedo_map"] = def_id0++;
-		all_files_id["specular_map"] = def_id0++;
-		all_files_id["normal_map"] = def_id0++;
+		m_allFilesID["albedo_map"] = def_id0++;
+		m_allFilesID["specular_map"] = def_id0++;
+		m_allFilesID["normal_map"] = def_id0++;
 
-		all_files_id["Cube"] = def_id0++;
-		all_files_id["Sphere"] = def_id0++;
+		m_allFilesID["Cube"] = def_id0++;
+		m_allFilesID["Sphere"] = def_id0++;
 
-		all_files_id["default"] = def_id0++;
-		all_files_id["Plane"] = def_id0++;
+		m_allFilesID["default"] = def_id0++;
+		m_allFilesID["Plane"] = def_id0++;
 
-		all_files_id["gbuffer_pipeline"] = def_id0++;
-		all_files_id["skybox_pipeline"] = def_id0++;
-		all_files_id["light_pipeline"] = def_id0++;
-		all_files_id["quad_batch_pipeline"] = def_id0++;
-		all_files_id["text_batch_pipeline"] = def_id0++;
-		all_files_id["text_pipeline"] = def_id0++;
-		all_files_id["debug_line_pipeline"] = def_id0++;
-		all_files_id["bloom_prefilter_pass_pipeline"] = def_id0++;
-		all_files_id["bloom_downsample_pass_pipeline"] = def_id0++;
-		all_files_id["bloom_upsample_pass_pipeline"] = def_id0++;
-		all_files_id["lighting_pass_pipeline"] = def_id0++;
-		all_files_id["ssao_main_pass_pipeline"] = def_id0++;
-		all_files_id["ssao_blur_pass_pipeline"] = def_id0++;
-		all_files_id["tone_map_pass_pipeline"] = def_id0++;
+		m_allFilesID["gbuffer_pipeline"] = def_id0++;
+		m_allFilesID["skybox_pipeline"] = def_id0++;
+		m_allFilesID["light_pipeline"] = def_id0++;
+		m_allFilesID["quad_batch_pipeline"] = def_id0++;
+		m_allFilesID["text_batch_pipeline"] = def_id0++;
+		m_allFilesID["text_pipeline"] = def_id0++;
+		m_allFilesID["debug_line_pipeline"] = def_id0++;
+		m_allFilesID["bloom_prefilter_pass_pipeline"] = def_id0++;
+		m_allFilesID["bloom_downsample_pass_pipeline"] = def_id0++;
+		m_allFilesID["bloom_upsample_pass_pipeline"] = def_id0++;
+		m_allFilesID["lighting_pass_pipeline"] = def_id0++;
+		m_allFilesID["ssao_main_pass_pipeline"] = def_id0++;
+		m_allFilesID["ssao_blur_pass_pipeline"] = def_id0++;
+		m_allFilesID["tone_map_pass_pipeline"] = def_id0++;
 
-		all_id_path[def_id1++] = "albedo_map";
-		all_id_path[def_id1++] = "specular_map";
-		all_id_path[def_id1++] = "normal_map";
+		m_allIDPath[def_id1++] = "albedo_map";
+		m_allIDPath[def_id1++] = "specular_map";
+		m_allIDPath[def_id1++] = "normal_map";
 
-		all_id_path[def_id1++] = "Cube";
-		all_id_path[def_id1++] = "Sphere";
+		m_allIDPath[def_id1++] = "Cube";
+		m_allIDPath[def_id1++] = "Sphere";
 
-		all_id_path[def_id1++] = "default";
-		all_id_path[def_id1++] = "Plane";
-		all_id_path[def_id1++] = "gbuffer_pipeline";
-		all_id_path[def_id1++] = "skybox_pipeline";
-		all_id_path[def_id1++] = "light_pipeline";
-		all_id_path[def_id1++] = "quad_batch_pipeline";
-		all_id_path[def_id1++] = "text_batch_pipeline";
-		all_id_path[def_id1++] = "text_pipeline";
-		all_id_path[def_id1++] = "debug_line_pipeline";
-		all_id_path[def_id1++] = "bloom_prefilter_pass_pipeline";
-		all_id_path[def_id1++] = "bloom_downsample_pass_pipeline";
-		all_id_path[def_id1++] = "bloom_upsample_pass_pipeline";
-		all_id_path[def_id1++] = "lighting_pass_pipeline";
-		all_id_path[def_id1++] = "ssao_main_pass_pipeline";
-		all_id_path[def_id1++] = "ssao_blur_pass_pipeline";
-		all_id_path[def_id1++] = "tone_map_pass_pipeline";
+		m_allIDPath[def_id1++] = "default";
+		m_allIDPath[def_id1++] = "Plane";
+		m_allIDPath[def_id1++] = "gbuffer_pipeline";
+		m_allIDPath[def_id1++] = "skybox_pipeline";
+		m_allIDPath[def_id1++] = "light_pipeline";
+		m_allIDPath[def_id1++] = "quad_batch_pipeline";
+		m_allIDPath[def_id1++] = "text_batch_pipeline";
+		m_allIDPath[def_id1++] = "text_pipeline";
+		m_allIDPath[def_id1++] = "debug_line_pipeline";
+		m_allIDPath[def_id1++] = "bloom_prefilter_pass_pipeline";
+		m_allIDPath[def_id1++] = "bloom_downsample_pass_pipeline";
+		m_allIDPath[def_id1++] = "bloom_upsample_pass_pipeline";
+		m_allIDPath[def_id1++] = "lighting_pass_pipeline";
+		m_allIDPath[def_id1++] = "ssao_main_pass_pipeline";
+		m_allIDPath[def_id1++] = "ssao_blur_pass_pipeline";
+		m_allIDPath[def_id1++] = "tone_map_pass_pipeline";
 
 		//::-----::
 
@@ -474,28 +489,28 @@ namespace trace {
 					if (std::filesystem::is_regular_file(r.path()) && path.extension().string() != ".shcode")
 					{
 						std::string filename = r.path().filename().string();
-						auto it = all_files_id.find(filename);
-						if (it == all_files_id.end())
+						auto it = m_allFilesID.find(filename);
+						if (it == m_allFilesID.end())
 						{
 							dirty_ids = true;
-							all_files_id[filename] = UUID::GenUUID();
+							m_allFilesID[filename] = UUID::GenUUID();
 						}
-						UUID id = all_files_id[filename];
-						all_id_path[id] = r.path();
+						UUID id = m_allFilesID[filename];
+						m_allIDPath[id] = r.path();
 					}
 				}
 			}
 			else if (std::filesystem::is_regular_file(path) && path.extension().string() != ".shcode")
 			{
 				std::string filename = path.filename().string();
-				auto it = all_files_id.find(filename);
-				if (it == all_files_id.end())
+				auto it = m_allFilesID.find(filename);
+				if (it == m_allFilesID.end())
 				{
 					dirty_ids = true;
-					all_files_id[filename] = UUID::GenUUID();
+					m_allFilesID[filename] = UUID::GenUUID();
 				}
-				UUID id = all_files_id[filename];
-				all_id_path[id] = path;
+				UUID id = m_allFilesID[filename];
+				m_allIDPath[id] = path;
 			}
 
 
@@ -504,7 +519,7 @@ namespace trace {
 		// =======================================
 
 
-		std::filesystem::path db_path = std::filesystem::path(m_editor->current_project->current_directory) / "InternalAssetsDB";
+		std::filesystem::path db_path = std::filesystem::path(editor->GetCurrentProject()->GetProjectCurrentDirectory()) / "InternalAssetsDB";
 		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
 		if (!std::filesystem::exists(assetsDB_path))
 		{
@@ -517,7 +532,7 @@ namespace trace {
 			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
 			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
 			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
-			for (auto p : std::filesystem::directory_iterator(m_editor->current_project->assets_directory))
+			for (auto p : std::filesystem::directory_iterator(editor->GetCurrentProject()->GetAssetsDirectory()))
 			{
 				std::filesystem::path path = p.path();
 				if (path == db_path) continue;
@@ -580,11 +595,11 @@ namespace trace {
 			{
 				std::string filename = i["Name"].as<std::string>();
 				UUID id = i["UUID"].as<uint64_t>();
-				all_files_id[filename] = id;
+				m_allFilesID[filename] = id;
 			}
 
 		}
-		for (auto p : std::filesystem::directory_iterator(m_editor->current_project->assets_directory))
+		for (auto p : std::filesystem::directory_iterator(editor->GetCurrentProject()->GetAssetsDirectory()))
 		{
 			std::filesystem::path path = p.path();
 			if (path == db_path) continue;
@@ -595,37 +610,37 @@ namespace trace {
 					if (std::filesystem::is_regular_file(r.path()))
 					{
 						std::string filename = r.path().filename().string();
-						auto it = all_files_id.find(filename);
-						if (it == all_files_id.end())
+						auto it = m_allFilesID.find(filename);
+						if (it == m_allFilesID.end())
 						{
 							dirty_ids = true;
-							all_files_id[filename] = UUID::GenUUID();
+							m_allFilesID[filename] = UUID::GenUUID();
 						}
-						UUID id = all_files_id[filename];
-						all_id_path[id] = r.path();
+						UUID id = m_allFilesID[filename];
+						m_allIDPath[id] = r.path();
 					}
 				}
 			}
 			else if (std::filesystem::is_regular_file(path))
 			{
 				std::string filename = path.filename().string();
-				auto it = all_files_id.find(filename);
-				if (it == all_files_id.end())
+				auto it = m_allFilesID.find(filename);
+				if (it == m_allFilesID.end())
 				{
 					dirty_ids = true;
-					all_files_id[filename] = UUID::GenUUID();
+					m_allFilesID[filename] = UUID::GenUUID();
 				}
-				UUID id = all_files_id[filename];
-				all_id_path[id] = path;
+				UUID id = m_allFilesID[filename];
+				m_allIDPath[id] = path;
 			}
 		}
 
-		/*for (auto& i : all_files_id)
+		/*for (auto& i : m_allFilesID)
 		{
-			auto it = all_id_path.find(i.second);
-			if (it == all_id_path.end())
+			auto it = m_allIDPath.find(i.second);
+			if (it == m_allIDPath.end())
 			{
-				all_files_id.erase(i.first);
+				m_allFilesID.erase(i.first);
 				dirty_ids = true;
 			}
 		}*/
@@ -640,7 +655,7 @@ namespace trace {
 			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
 			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
 
-			for (auto i : all_files_id)
+			for (auto i : m_allFilesID)
 			{
 				emit << YAML::BeginMap;
 				emit << YAML::Key << "Name" << YAML::Value << i.first;
@@ -661,6 +676,7 @@ namespace trace {
 	}
 	void ContentBrowser::OnWindowPopup()
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		enum CreateItem
 		{
 			MATERIAL = 1,
@@ -709,7 +725,7 @@ namespace trace {
 		{
 
 			std::string res;
-			if (m_editor->InputTextPopup("Folder Name", res))
+			if (editor->InputTextPopup("Folder Name", res))
 			{
 				if (!res.empty())
 				{
@@ -725,7 +741,7 @@ namespace trace {
 		case MATERIAL:
 		{
 			std::string res;
-			if (m_editor->InputTextPopup("Material Name", res))
+			if (editor->InputTextPopup("Material Name", res))
 			{
 				if (!res.empty())
 				{
@@ -755,7 +771,7 @@ namespace trace {
 		case SCENE:
 		{
 			std::string res;
-			if (m_editor->InputTextPopup("Scene Name", res))
+			if (editor->InputTextPopup("Scene Name", res))
 			{
 				if (!res.empty())
 				{
@@ -764,7 +780,7 @@ namespace trace {
 					if (id == 0)
 					{
 						std::string scene_path = (m_currentDir / (res + ".trscn")).string();
-						m_editor->CreateScene(scene_path);
+						editor->CreateScene(scene_path);
 						OnDirectoryChanged();
 					}
 					else
@@ -780,7 +796,7 @@ namespace trace {
 		case ANIMATION_CLIP:
 		{
 			std::string res;
-			if (m_editor->InputTextPopup("Animation Clip Name", res))
+			if (editor->InputTextPopup("Animation Clip Name", res))
 			{
 				if (!res.empty())
 				{
@@ -806,7 +822,7 @@ namespace trace {
 		case ANIMATION_GRAPH:
 		{
 			std::string res;
-			if (m_editor->InputTextPopup("Animation Graph Name", res))
+			if (editor->InputTextPopup("Animation Graph Name", res))
 			{
 				if (!res.empty())
 				{
@@ -842,8 +858,8 @@ namespace trace {
 	}
 	void ContentBrowser::DrawEditMaterial()
 	{
-		
-		Ref<MaterialInstance> mat = m_editMaterial;
+		TraceEditor* editor = TraceEditor::get_instance();
+		Ref<MaterialInstance> mat = m_assetsEdit.editMaterial;
 		static bool tex_modified = false;
 		static std::string tex_name;
 		bool dirty = false;
@@ -860,7 +876,7 @@ namespace trace {
 		if (popup)
 		{
 			std::string pipe_res;
-			if (popup = m_editor->DrawPipelinesPopup(pipe_res))
+			if (popup = editor->DrawPipelinesPopup(pipe_res))
 			{
 				if (!pipe_res.empty())
 				{
@@ -872,12 +888,12 @@ namespace trace {
 					{
 						if (MaterialManager::get_instance()->RecreateMaterial(mat, p_res))
 						{
-							m_editMaterialPipeChanged = true;
+							m_assetsEdit.editMaterialPipeChanged = true;
 						}
 						else
 						{
-							m_editMaterial = MaterialSerializer::Deserialize(m_editMaterialPath.string());
-							mat = m_editMaterial;
+							m_assetsEdit.editMaterial = MaterialSerializer::Deserialize(m_assetsEdit.editMaterialPath.string());
+							mat = m_assetsEdit.editMaterial;
 						}
 
 					}
@@ -1071,9 +1087,9 @@ namespace trace {
 			}
 		};
 
-		for (auto& m_data : mat->m_data)
+		for (auto& m_data : mat->GetMaterialData())
 		{
-			trace::UniformMetaData& meta_data = mat->m_renderPipeline->Scene_uniforms[m_data.second.second];
+			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
 			lambda(meta_data.data_type, m_data.second.first, m_data.first);
 		}
 
@@ -1081,7 +1097,7 @@ namespace trace {
 		if (tex_modified)
 		{
 			std::string tex_res;
-			if (m_editor->DrawTexturesPopup(tex_res))
+			if (editor->DrawTexturesPopup(tex_res))
 			{
 				if (!tex_res.empty())
 				{
@@ -1092,7 +1108,7 @@ namespace trace {
 
 					if (tex_r)
 					{
-						mat->m_data[tex_name].first = tex_r;
+						mat->GetMaterialData()[tex_name].first = tex_r;
 						dirty = true;
 					}
 					tex_modified = false;
@@ -1101,32 +1117,33 @@ namespace trace {
 			else tex_modified = false;
 		}
 
-		if(dirty) RenderFunc::PostInitializeMaterial(mat.get(), mat->m_renderPipeline);
+		if(dirty) RenderFunc::PostInitializeMaterial(mat.get(), mat->GetRenderPipline());
 
 		if (ImGui::Button("Apply"))
 		{
-			m_materialDataCache = mat->m_data;
-			m_editMaterialPipe = mat->m_renderPipeline;
-			m_editMaterialPipeChanged = false;
-			MaterialSerializer::Serialize(mat, m_editMaterialPath.string());
+			m_assetsEdit.materialDataCache = mat->GetMaterialData();
+			m_assetsEdit.editMaterialPipe = mat->GetRenderPipline();
+			m_assetsEdit.editMaterialPipeChanged = false;
+			MaterialSerializer::Serialize(mat, m_assetsEdit.editMaterialPath.string());
 		}
 
 	}
 	void ContentBrowser::DrawEditFont()
 	{
-		if (m_editFont)
+		if (m_assetsEdit.editFont)
 		{
-			ImGui::Text("Font Name: %s",m_editFont->GetName().c_str());
+			ImGui::Text("Font Name: %s", m_assetsEdit.editFont->GetName().c_str());
 			ImGui::Text("Font Atlas : ");
 			void* texture = nullptr;
-			UIFunc::GetDrawTextureHandle(m_editFont->GetAtlas().get(), texture);
+			UIFunc::GetDrawTextureHandle(m_assetsEdit.editFont->GetAtlas().get(), texture);
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
-			ImGui::Image(texture, { content_ava.x, content_ava.y * 0.65f }, {0.0f, 1.0f}, {1.0f, 0.0f});
+			ImGui::Image(texture, { content_ava.x, content_ava.y * 0.65f }, { 0.0f, 1.0f }, { 1.0f, 0.0f });
 		}
 	}
 	void ContentBrowser::DrawEditPipeline()
 	{
-		ImGui::Text("Name : %s ", m_editPipeline->GetName().c_str());
+		TraceEditor* editor = TraceEditor::get_instance();
+		ImGui::Text("Name : %s ", m_assetsEdit.editPipeline->GetName().c_str());
 
 		static ShaderStage shad_stage = ShaderStage::STAGE_NONE;
 
@@ -1134,9 +1151,9 @@ namespace trace {
 
 		//Input Layout
 		{
-			ImGui::InputInt("Stride", (int*)&m_editPipeDesc.input_layout.stride);
+			ImGui::InputInt("Stride", (int*)&m_assetsEdit.editPipeDesc.input_layout.stride);
 			const char* type_string[] = { "Vertex", "Instance" };
-			const char* current_type = type_string[(int)m_editPipeDesc.input_layout.input_class];
+			const char* current_type = type_string[(int)m_assetsEdit.editPipeDesc.input_layout.input_class];
 			if (ImGui::BeginCombo("Input Classification", current_type))
 			{
 				for (int i = 0; i < 2; i++)
@@ -1144,7 +1161,7 @@ namespace trace {
 					bool selected = (current_type == type_string[i]);
 					if (ImGui::Selectable(type_string[i], selected))
 					{
-						m_editPipeDesc.input_layout.input_class = (InputClassification)i;
+						m_assetsEdit.editPipeDesc.input_layout.input_class = (InputClassification)i;
 					}
 
 					if (selected)
@@ -1158,7 +1175,7 @@ namespace trace {
 
 		ImGui::Text("Vertex Shader : ");
 		ImGui::SameLine();
-		if (ImGui::Button(m_editPipeDesc.vertex_shader->GetName().c_str()))
+		if (ImGui::Button(m_assetsEdit.editPipeDesc.vertex_shader->GetName().c_str()))
 		{
 			shad_pop = true;
 			shad_stage = ShaderStage::VERTEX_SHADER;
@@ -1166,7 +1183,7 @@ namespace trace {
 
 		ImGui::Text("Pixel Shader : ");
 		ImGui::SameLine();
-		if (ImGui::Button(m_editPipeDesc.pixel_shader->GetName().c_str()))
+		if (ImGui::Button(m_assetsEdit.editPipeDesc.pixel_shader->GetName().c_str()))
 		{
 			shad_pop = true;
 			shad_stage = ShaderStage::PIXEL_SHADER;
@@ -1175,16 +1192,16 @@ namespace trace {
 		if (shad_pop)
 		{
 			std::string shad_res;
-			if (shad_pop = m_editor->DrawShadersPopup(shad_res))
+			if (shad_pop = editor->DrawShadersPopup(shad_res))
 			{
 				if (!shad_res.empty())
 				{
 					Ref<GShader> res = ShaderManager::get_instance()->CreateShader_(shad_res, shad_stage);
 					if (TRC_HAS_FLAG(shad_stage, ShaderStage::VERTEX_SHADER))
-						m_editPipeDesc.vertex_shader = res.get();
+						m_assetsEdit.editPipeDesc.vertex_shader = res.get();
 					if (TRC_HAS_FLAG(shad_stage, ShaderStage::PIXEL_SHADER))
-						m_editPipeDesc.pixel_shader = res.get();
-					
+						m_assetsEdit.editPipeDesc.pixel_shader = res.get();
+
 					shad_pop = false;
 				}
 			}
@@ -1192,10 +1209,10 @@ namespace trace {
 
 		if (ImGui::Button("Apply"))
 		{
-			if (PipelineManager::get_instance()->RecreatePipeline(m_editPipeline, m_editPipeDesc))
+			if (PipelineManager::get_instance()->RecreatePipeline(m_assetsEdit.editPipeline, m_assetsEdit.editPipeDesc))
 			{
-				m_editPipeline->pipeline_type = m_editPipeType;
-				PipelineSerializer::Serialize(m_editPipeline, m_editPipePath.string());
+				m_assetsEdit.editPipeline->SetPipelineType(m_assetsEdit.editPipeType);
+				PipelineSerializer::Serialize(m_assetsEdit.editPipeline, m_assetsEdit.editPipePath.string());
 			}
 		}
 

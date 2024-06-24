@@ -53,11 +53,11 @@ namespace trace {
 
 
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
-			m_renderer->_avaliable_passes["SSAO_MAIN_PASS"] = &m_renderPass;
+			m_renderer->GetAvaliableRenderPasses()["SSAO_MAIN_PASS"] = &m_renderPass;
 
 
 			RenderFunc::CreateRenderPass(&ssao_blur, pass_desc);
-			m_renderer->_avaliable_passes["SSAO_BLUR_PASS"] = &ssao_blur;
+			m_renderer->GetAvaliableRenderPasses()["SSAO_BLUR_PASS"] = &ssao_blur;
 		};
 
 		{

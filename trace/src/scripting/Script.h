@@ -98,15 +98,22 @@ namespace trace {
 			memcpy_s(it->second.data, 16, &value, sizeof(T));
 		}
 
-		Script* m_script = nullptr;
 		struct ScriptData
 		{
 			char data[16];
 			void* ptr = nullptr;
 			ScriptFieldType type;
 		};
-		std::unordered_map<std::string, ScriptData> m_fields;
+
+		std::unordered_map<std::string, ScriptData>& GetFields() { return m_fields; }
+		Script* GetScript() { return m_script; }
+
+		void GetFields(std::unordered_map<std::string, ScriptData>& fields_data) { m_fields = fields_data; }
+		void SetScript(Script* script) { m_script = script; }
+
 	private:
+		std::unordered_map<std::string, ScriptData> m_fields;
+		Script* m_script = nullptr;
 		
 	private:
 
@@ -142,13 +149,19 @@ namespace trace {
 
 		void* GetBackendHandle();
 
-		void* m_internal = nullptr;
-		Script* m_script = nullptr;
+		Script* GetScript() { return m_script; }
+		void* GetInternal() { return m_internal; }
+
+		void SetScript(Script* script) { m_script = script; }
+		void SetInternal(void* internal_data) { m_internal = internal_data; }
+
 	public:
 		bool GetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size);
 		void SetFieldValueInternal(const std::string& field_name, void* value, uint32_t val_size);
 
 	private:
+		void* m_internal = nullptr;
+		Script* m_script = nullptr;
 		std::unordered_map<std::string, ScriptField*> m_fields;
 
 	protected:
@@ -170,11 +183,22 @@ namespace trace {
 		ScriptMethod* GetMethod(const std::string& method);
 		uintptr_t GetID();
 
-		void* m_internal = nullptr;
-		std::map<std::string, ScriptMethod> m_methods;
-		std::map<std::string, ScriptField> m_fields;
-		std::string script_name;
+		void* GetInternal() { return m_internal; }
+		std::unordered_map<std::string, ScriptMethod>& GetMethods() { return m_methods; }
+		std::unordered_map<std::string, ScriptField>& GetFields() { return m_fields; }
+		std::string& GetScriptName() { return m_scriptName; }
+
+		void SetInternal(void* internal_data) { m_internal = internal_data; }
+		void SetMethods(std::unordered_map<std::string, ScriptMethod>& methods) { m_methods = methods; }
+		void SetFields(std::unordered_map<std::string, ScriptField>& fields) { m_fields = fields; }
+		void SetScriptName(const std::string& name) { m_scriptName = name; }
+
+
 	private:
+		void* m_internal = nullptr;
+		std::unordered_map<std::string, ScriptMethod> m_methods;
+		std::unordered_map<std::string, ScriptField> m_fields;
+		std::string m_scriptName;
 
 	protected:
 

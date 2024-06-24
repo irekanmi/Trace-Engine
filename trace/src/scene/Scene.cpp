@@ -110,8 +110,8 @@ namespace trace {
 		{
 			auto [anim_comp] = animations.get(i);
 			if (!anim_comp.anim_graph) continue;
-			anim_comp.anim_graph->currrent_state_index = anim_comp.anim_graph->currrent_state_index == -1 ? anim_comp.anim_graph->start_index : anim_comp.anim_graph->currrent_state_index;
-			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
+			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
+			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
 			if (!current_state.GetAnimationClip()) continue;
 			if (anim_comp.play_on_start) current_state.Play();
 		}
@@ -140,7 +140,7 @@ namespace trace {
 						auto field_it = it->second.find(manager.entities[index]);
 						if (field_it != it->second.end())
 						{
-							for (auto& [name, data] : field_it->second.m_fields)
+							for (auto& [name, data] : field_it->second.GetFields())
 							{
 								if (data.type == ScriptFieldType::String) continue;
 								i.SetFieldValueInternal(name, data.data, 16);
@@ -191,8 +191,8 @@ namespace trace {
 		{
 			auto [anim_comp] = animations.get(i);
 			if (!anim_comp.anim_graph) continue;
-			anim_comp.anim_graph->currrent_state_index = anim_comp.anim_graph->currrent_state_index == -1 ? anim_comp.anim_graph->start_index : anim_comp.anim_graph->currrent_state_index;
-			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
+			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
+			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
 			if (!current_state.GetAnimationClip()) continue;
 			current_state.Stop();
 		}
@@ -316,8 +316,8 @@ namespace trace {
 		{
 			auto [anim_comp] = animations.get(i);
 			if (!anim_comp.anim_graph) continue;
-			anim_comp.anim_graph->currrent_state_index = anim_comp.anim_graph->currrent_state_index == -1 ? anim_comp.anim_graph->start_index : anim_comp.anim_graph->currrent_state_index;
-			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->currrent_state_index];
+			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
+			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
 			if (!current_state.GetAnimationClip()) continue;
 			AnimationEngine::get_instance()->Animate(current_state, this);
 		}

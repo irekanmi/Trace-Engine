@@ -12,7 +12,6 @@
 
 namespace trace {
 
-	AnimationEngine* AnimationEngine::s_instance = nullptr;
 
 	bool AnimationEngine::Init()
 	{
@@ -30,25 +29,25 @@ namespace trace {
 
 		Ref<AnimationClip> clip = state.GetAnimationClip();
 
-		float _t = Application::get_instance()->GetClock().GetElapsedTime() - state.GetStartTime();
+		float elasped_animation_time = Application::get_instance()->GetClock().GetElapsedTime() - state.GetStartTime();
 
-		if (_t > clip->GetDuration())
+		if (elasped_animation_time > clip->GetDuration())
 		{
 			if (!state.GetLoop())
 			{
 				state.Stop();
 				return;
 			}
-			else _t = fmod(_t, clip->GetDuration());
+			else elasped_animation_time = fmod(elasped_animation_time, clip->GetDuration());
 		}
-		state.SetElaspedTime(_t);
+		state.SetElaspedTime(elasped_animation_time);
 
 		for (auto& channel : clip->GetTracks())
 		{
 			for (auto& track : channel.second)
 			{
-				AnimationFrameData* curr = nullptr;
-				AnimationFrameData* prev = nullptr;
+				const AnimationFrameData* curr = nullptr;
+				const AnimationFrameData* prev = nullptr;
 
 				//TODO: Find a better way to find which frames to sample -----------
 				int i = track.channel_data.size() - 1;
@@ -56,9 +55,9 @@ namespace trace {
 				{
 					curr = &track.channel_data[i];
 					prev = i != 0 ? &track.channel_data[i - 1] : nullptr;
-					if (_t <= curr->time_point)
+					if (elasped_animation_time <= curr->time_point)
 					{
-						if (prev && _t >= prev->time_point) break;
+						if (prev && elasped_animation_time >= prev->time_point) break;
 					}
 
 				}
@@ -66,7 +65,7 @@ namespace trace {
 
 				if (!prev || !curr) continue;
 
-				float lerp_value = (_t - prev->time_point) / (curr->time_point - prev->time_point);
+				float lerp_value = (elasped_animation_time - prev->time_point) / (curr->time_point - prev->time_point);
 
 				CalculateAndSetData(prev, curr, scene, channel.first, track.channel_type, lerp_value);
 			}
@@ -74,14 +73,14 @@ namespace trace {
 
 	}
 
-	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float t)
+	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point)
 	{
 		for (auto& channel : clip->GetTracks())
 		{
-			for (auto& track : channel.second)
+			for (const AnimationTrack& track : channel.second)
 			{
-				AnimationFrameData* curr = nullptr;
-				AnimationFrameData* prev = nullptr;
+				const AnimationFrameData* curr = nullptr;
+				const AnimationFrameData* prev = nullptr;
 
 				//TODO: Find a better way to find which frames to sample -----------
 				int i = track.channel_data.size() - 1;
@@ -89,9 +88,9 @@ namespace trace {
 				{
 					curr = &track.channel_data[i];
 					prev = i != 0 ? &track.channel_data[i - 1] : nullptr;
-					if (t <= curr->time_point)
+					if (time_point <= curr->time_point)
 					{
-						if (prev && t >= prev->time_point) break;
+						if (prev && time_point >= prev->time_point) break;
 					}
 
 				}
@@ -99,7 +98,7 @@ namespace trace {
 
 				if (!prev || !curr) continue;
 
-				float lerp_value = (t - prev->time_point) / (curr->time_point - prev->time_point);
+				float lerp_value = (time_point - prev->time_point) / (curr->time_point - prev->time_point);
 
 				CalculateAndSetData(prev, curr, scene, channel.first, track.channel_type, lerp_value);
 			}
@@ -108,14 +107,11 @@ namespace trace {
 
 	AnimationEngine* AnimationEngine::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new AnimationEngine;
-		}
+		static AnimationEngine* s_instance = new AnimationEngine();
 		return s_instance;
 	}
 
-	void AnimationEngine::CalculateAndSetData(AnimationFrameData* a, AnimationFrameData* b, Scene* scene, UUID id, AnimationDataType type, float t)
+	void AnimationEngine::CalculateAndSetData(const AnimationFrameData* frame_a, const AnimationFrameData* frame_b, Scene* scene, UUID id, AnimationDataType type, float time_point)
 	{
 
 		Entity entity = scene->GetEntity(id);
@@ -134,37 +130,37 @@ namespace trace {
 		}
 		case AnimationDataType::POSITION:
 		{
-			glm::vec3& _a = *(glm::vec3*)(&a->data);
-			glm::vec3& _b = *(glm::vec3*)(&b->data);
+			glm::vec3& _a = *(glm::vec3*)(&frame_a->data);
+			glm::vec3& _b = *(glm::vec3*)(&frame_b->data);
 
 			glm::vec3 result(0.0f);
-			result.x = lerp(_a.x, _b.x, t);
-			result.y = lerp(_a.y, _b.y, t);
-			result.z = lerp(_a.z, _b.z, t);
+			result.x = lerp(_a.x, _b.x, time_point);
+			result.y = lerp(_a.y, _b.y, time_point);
+			result.z = lerp(_a.z, _b.z, time_point);
 
 			entity.GetComponent<TransformComponent>()._transform.SetPosition(result);
 		break;
 		}
 		case AnimationDataType::ROTATION:
 		{
-			glm::quat& _a = *(glm::quat*)(&a->data);
-			glm::quat& _b = *(glm::quat*)(&b->data);
+			glm::quat& _a = *(glm::quat*)(&frame_a->data);
+			glm::quat& _b = *(glm::quat*)(&frame_b->data);
 
 			glm::quat result;
-			result = glm::slerp(_a, _b, t);
+			result = glm::slerp(_a, _b, time_point);
 
 			entity.GetComponent<TransformComponent>()._transform.SetRotation(result);
 		break;
 		}
 		case AnimationDataType::SCALE:
 		{
-			glm::vec3& _a = *(glm::vec3*)(&a->data);
-			glm::vec3& _b = *(glm::vec3*)(&b->data);
+			glm::vec3& _a = *(glm::vec3*)(&frame_a->data);
+			glm::vec3& _b = *(glm::vec3*)(&frame_b->data);
 
 			glm::vec3 result(0.0f);
-			result.x = lerp(_a.x, _b.x, t);
-			result.y = lerp(_a.y, _b.y, t);
-			result.z = lerp(_a.z, _b.z, t);
+			result.x = lerp(_a.x, _b.x, time_point);
+			result.y = lerp(_a.y, _b.y, time_point);
+			result.z = lerp(_a.z, _b.z, time_point);
 
 			entity.GetComponent<TransformComponent>()._transform.SetScale(result);
 
@@ -172,22 +168,22 @@ namespace trace {
 		}
 		case AnimationDataType::TEXT_INTENSITY:
 		{
-			float& _a = *(float*)(&a->data);
-			float& _b = *(float*)(&b->data);
+			float& _a = *(float*)(&frame_a->data);
+			float& _b = *(float*)(&frame_b->data);
 
 			float result(0.0f);
-			result = lerp(_a, _b, t);
+			result = lerp(_a, _b, time_point);
 
 			entity.GetComponent<TextComponent>().intensity = result;
 		break;
 		}
 		case AnimationDataType::LIGHT_INTENSITY:
 		{
-			float& _a = *(float*)(&a->data);
-			float& _b = *(float*)(&b->data);
+			float& _a = *(float*)(&frame_a->data);
+			float& _b = *(float*)(&frame_b->data);
 
 			float result(0.0f);
-			result = lerp(_a, _b, t);
+			result = lerp(_a, _b, time_point);
 
 			entity.GetComponent<LightComponent>()._light.params2.y = result;
 		break;

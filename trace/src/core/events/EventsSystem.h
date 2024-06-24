@@ -18,7 +18,6 @@ namespace trace {
 		static void shutdown();
 
 	private:
-		static EventsSystem* s_instance;
 
 
 	private:

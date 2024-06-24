@@ -33,12 +33,24 @@ namespace trace {
 
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
-		HashTable<uint32_t> _hashTable;
-		std::vector<UniformMetaData> Scene_uniforms = {};
-		std::vector<std::pair<uint32_t, uint32_t>> Scence_struct = {};// NOTE: first-> the location of the structure, second-> the current frame offset
-		PipelineStateDesc m_desc;
-		uint32_t pipeline_type = 0;
+
+		HashTable<uint32_t>& GetHashTable() { return m_hashTable; }
+		std::vector<UniformMetaData>& GetSceneUniforms() { return m_sceneUniforms; }
+		std::vector<std::pair<uint32_t, uint32_t>>& GetSceneStructs() { return m_scenceStruct; }
+		uint32_t GetPipelineType() { return m_pipelineType; }
+
+
+		void SetSceneUniforms(std::vector<UniformMetaData>& uniforms) { m_sceneUniforms = std::move(uniforms); }
+		void SetSceneStructs(std::vector<std::pair<uint32_t, uint32_t>>& structs) { m_scenceStruct = std::move(structs); }
+		void SetPipelineType(uint32_t pipeline_type) { m_pipelineType = pipeline_type; }
+		void SetDesc(PipelineStateDesc& desc) { m_desc = desc; }
+
 	private:
+		HashTable<uint32_t> m_hashTable;
+		std::vector<UniformMetaData> m_sceneUniforms = {};
+		std::vector<std::pair<uint32_t, uint32_t>> m_scenceStruct = {};// NOTE: first-> the location of the structure, second-> the current frame offset
+		PipelineStateDesc m_desc;
+		uint32_t m_pipelineType = 0;
 		GHandle m_renderHandle;
 
 	protected:

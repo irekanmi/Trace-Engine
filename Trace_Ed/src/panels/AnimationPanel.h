@@ -35,17 +35,17 @@ namespace trace {
 		void Shutdown();
 
 		void Render(float deltaTime);
-		void SetAnimationClip(Ref<AnimationClip> clip);
 		bool Recording();
 		void SetFrameData(UUID id, AnimationDataType type, void* data, int size);
 
-		TraceEditor* m_editor;
-		int currentFrame = 0;
-		int startFrame = -10;
-		int endFrame = 64;
-		int lastSelectedFrame = -1;
+		Ref<AnimationClip> GetAnimationClip() { return m_currentClip; }
+		int32_t GetCurrentFrame() { return m_currentFrame; }
+		int32_t GetStartFrame() { return m_startFrame; }
+		int32_t GetEndFrame() { return m_endFrame; }
+		int32_t GetLastSelectedFrame() { return m_lastSelectedFrame; }
 
-		bool doDelete = false;
+		void SetAnimationClip(Ref<AnimationClip> clip);
+
 	private:
 		void generate_tracks();
 		void play();
@@ -53,14 +53,18 @@ namespace trace {
 		void animation_data_ui(AnimationDataType type, void* data);
 
 		float m_elapsed = 0.0f;
+		int32_t m_currentFrame = 0;
+		int32_t m_startFrame = -10;
+		int32_t m_endFrame = 64;
+		int32_t m_lastSelectedFrame = -1;
 
+		bool m_doDelete = false;
 
 		Ref<AnimationClip> m_currentClip;
 		State m_state;
 		std::unordered_map<UUID, std::unordered_map<AnimationDataType,std::vector<FrameIndex>>> m_currentTracks;
 
 	protected:
-		friend class TraceEditor;
 	};
 
 }

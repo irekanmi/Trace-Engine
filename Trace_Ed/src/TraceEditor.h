@@ -1,12 +1,13 @@
 #pragma once
 
 #include "EditorRenderComposer.h"
+#include "scene/Entity.h"
+#include "scene/Scene.h"
 
 #include "project/Project.h"
 #include <filesystem>
 
 namespace trace {
-	class Scene;
 	class HierachyPanel;
 	class InspectorPanel;    
 	class ContentBrowser;
@@ -43,6 +44,17 @@ namespace trace {
 
 		static TraceEditor* get_instance();
 
+		struct AllProjectAssets
+		{
+			std::unordered_set<std::filesystem::path> models;
+			std::unordered_set<std::filesystem::path> textures;
+			std::unordered_set<std::filesystem::path> meshes;
+			std::unordered_set<std::filesystem::path> materials;
+			std::unordered_set<std::filesystem::path> pipelines;
+			std::unordered_set<std::filesystem::path> shaders;
+			std::unordered_set<std::filesystem::path> scenes;
+		};
+
 	public:
 		void DrawGizmo();
 		void DrawGrid(CommandList& cmd_list);
@@ -60,19 +72,23 @@ namespace trace {
 		void OnSceneStimulate();
 		void OnSceneStop();
 
-		struct AllProjectAssets
-		{
-			std::unordered_set<std::filesystem::path> models;
-			std::unordered_set<std::filesystem::path> textures;
-			std::unordered_set<std::filesystem::path> meshes;
-			std::unordered_set<std::filesystem::path> materials;
-			std::unordered_set<std::filesystem::path> pipelines;
-			std::unordered_set<std::filesystem::path> shaders;
-			std::unordered_set<std::filesystem::path> scenes;
-		};
-		AllProjectAssets all_assets;
-	public:
+		HierachyPanel* GetHierachyPanel() { return m_hierachyPanel; }
+		InspectorPanel* GetInspectorPanel() { return m_inspectorPanel; }
+		ContentBrowser* GetContentBrowser() { return m_contentBrowser; }
+		AnimationPanel* GetAnimationPanel() { return m_animPanel; }
+		AnimationGraphEditor* GetAnimationGraphEditor() { return m_animGraphEditor; }
+		AllProjectAssets& GetAllProjectAssets() { return m_allAssets; }
+		Ref<Project> GetCurrentProject() { return m_currentProject; }
+		Ref<Scene> GetCurrentScene() { return m_currentScene; }
+		Ref<Scene> GetEditScene() { return m_editScene; }
+		Camera& GetEditorCamera() { return m_editorCamera; }
+		EditorState GetEditorState() { return m_currentState; }
+		glm::vec2 GetViewportSize() { return m_viewportSize; }
+
+
 		
+	private:
+		AllProjectAssets m_allAssets;	
 
 
 		EditorRenderComposer* m_renderComposer = nullptr;
@@ -86,17 +102,16 @@ namespace trace {
 		bool m_viewportFocused;
 		bool m_viewportHovered;
 
-		Camera editor_cam;
+		Camera m_editorCamera;
 		Ref<Scene> m_currentScene;
 		Ref<Scene> m_editScene;
-		Ref<Scene> m_editScene_duplicate;
-		Ref<Project> current_project;
+		Ref<Scene> m_editSceneDuplicate;
+		Ref<Project> m_currentProject;
 		int gizmo_mode = -1;
-		EditorState current_state = EditorState::SceneEdit;
+		EditorState m_currentState = EditorState::SceneEdit;
 		
 
-		std::string current_scene_path;
-		static TraceEditor* s_instance;
+		std::string m_currentScenePath;
 
 	private:
 		bool CreateProject(const std::string& dir, const std::string& name);
@@ -114,10 +129,6 @@ namespace trace {
 		bool m_fullScreen = false;
 
 	protected:
-		friend EditorRenderComposer;
-		friend HierachyPanel;
-		friend InspectorPanel;
-		friend ContentBrowser;
 	};
 
 }

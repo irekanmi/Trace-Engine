@@ -4,7 +4,6 @@
 
 namespace trace {
 
-	EventsSystem* EventsSystem::s_instance = nullptr;
 
 	EventsSystem::EventsSystem()
 		:Object::Object(_STR(EventsSystem))
@@ -29,7 +28,7 @@ namespace trace {
 		for (size_t i = 0; i < m_events[event_type].size(); i++)
 		{
 			m_events[event_type][i](p_event);
-			if (p_event->m_handled)
+			if (p_event->IsHandled())
 			{
 				break;
 			}
@@ -37,13 +36,9 @@ namespace trace {
 
 	}
 
-	EventsSystem * EventsSystem::get_instance()
+	EventsSystem* EventsSystem::get_instance()
 	{
-		if (s_instance == nullptr)
-		{
-			s_instance = new EventsSystem();
-		}
-
+		static EventsSystem* s_instance = new EventsSystem;
 		return s_instance;
 	}
 

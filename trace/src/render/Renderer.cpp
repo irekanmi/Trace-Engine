@@ -31,7 +31,6 @@
 
 namespace trace {
 
-	Renderer* Renderer::s_instance = nullptr;
 
 	//Temp------------
 	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR | RENDER_BLOOM;
@@ -266,33 +265,33 @@ namespace trace {
 	void Renderer::OnEvent(Event* p_event)
 	{
 
-		switch (p_event->m_type)
+		switch (p_event->GetEventType())
 		{
 		case trace::EventType::TRC_KEY_PRESSED:
 		{
 			KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
 
-			if (press->m_keycode == KEY_O)
+			if (press->GetKeyCode() == KEY_O)
 			{
 				exposure += 0.4;
 			}
-			else if (press->m_keycode == KEY_P)
+			else if (press->GetKeyCode() == KEY_P)
 			{
 				exposure -= 0.4;
 			}
-			else if (press->m_keycode == KEY_1)
+			else if (press->GetKeyCode() == KEY_1)
 			{
 				frame_settings |= RENDER_SSAO;
 			}
-			else if (press->m_keycode == KEY_2)
+			else if (press->GetKeyCode() == KEY_2)
 			{
 				frame_settings &= ~RENDER_SSAO;
 			}
-			else if (press->m_keycode == KEY_N)
+			else if (press->GetKeyCode() == KEY_N)
 			{
 				frame_settings |= RENDER_BLOOM;
 			}
-			else if (press->m_keycode == KEY_M)
+			else if (press->GetKeyCode() == KEY_M)
 			{
 				frame_settings &= ~RENDER_BLOOM;
 			}
@@ -302,18 +301,18 @@ namespace trace {
 		case EventType::TRC_WND_RESIZE:
 		{
 			WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-			RenderFunc::ResizeSwapchain(&m_swapChain, wnd->m_width, wnd->m_height);
-			float width = static_cast<float>(wnd->m_width);
-			float height = static_cast<float>(wnd->m_height);
+			RenderFunc::ResizeSwapchain(&m_swapChain, wnd->GetWidth(), wnd->GetHeight());
+			float width = static_cast<float>(wnd->GetWidth());
+			float height = static_cast<float>(wnd->GetHeight());
 			
-			m_frameWidth = wnd->m_width;
-			m_frameHeight = wnd->m_height;
+			m_frameWidth = wnd->GetWidth();
+			m_frameHeight = wnd->GetHeight();
 
 			_viewPort.width = width;
 			_viewPort.height = height;
 
-			_rect.right = wnd->m_width;
-			_rect.bottom = wnd->m_height;
+			_rect.right = wnd->GetWidth();
+			_rect.bottom = wnd->GetHeight();
 			break;
 		}
 
@@ -875,7 +874,7 @@ namespace trace {
 			Model* model = (Model*)params.ptrs[0];
 			Renderer::RenderObjectData data;
 			data.transform = *(glm::mat4*)(params.data);
-			data.material = _model->m_matInstance.get();
+			data.material = nullptr;
 			data.object = _model.get();
 
 			m_opaqueObjects[m_opaqueObjectsSize++] = data;
@@ -1101,7 +1100,7 @@ namespace trace {
 	{
 		std::string result;
 
-		for (auto& i : _avaliable_passes)
+		for (auto& i : m_avaliablePasses)
 		{
 			if (i.second == pass)
 			{
@@ -1126,10 +1125,7 @@ namespace trace {
 
 	Renderer* Renderer::get_instance()
 	{
-		if (s_instance == nullptr)
-		{
-			s_instance = new Renderer();
-		}
+		static Renderer* s_instance = new Renderer;
 		return s_instance;
 	}
 

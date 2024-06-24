@@ -38,7 +38,6 @@ namespace trace {
 	private:
 		void ReloadFieldInstances();
 
-		static ScriptEngine* s_instance;
 
 		Script Action;
 		ScriptMethod Action_Construtor;

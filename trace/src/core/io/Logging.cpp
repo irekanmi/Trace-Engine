@@ -5,18 +5,18 @@
 
 namespace trace {
 
-	Exception::Exception(int line, std::string errdesc, std::string function, std::string file)
-		: Line(line), mErrDesc(errdesc), mFunction(function), mFile(file)
+	Exception::Exception(int line, std::string err_desc, std::string function, std::string file)
+		: m_line(line), m_errDesc(err_desc), m_function(function), m_file(file)
 	{
 
-		std::stringstream Buffer;
+		std::stringstream buffer;
 
-		Buffer << "File : " << mFile << "\n";
-		Buffer << "Function : " << mFunction << "\n";
-		Buffer << "Line : " << Line << "\n";
-		Buffer << "Error : " << mErrDesc << "\n\n";
+		buffer << "File : " << m_file << "\n";
+		buffer << "Function : " << m_function << "\n";
+		buffer << "Line : " << m_line << "\n";
+		buffer << "Error : " << m_errDesc << "\n\n";
 
-		mErrText = Buffer.str();
+		m_errText = buffer.str();
 
 
 	}
@@ -25,15 +25,14 @@ namespace trace {
 
 	const char* Exception::what() const noexcept
 	{
-		return mErrText.c_str();
+		return m_errText.c_str();
 	}
 
-	Logger* Logger::s_instance = nullptr;
 
 	
 	
 
-	void Logger::set_log_level(LogLevel logLevel)
+	void Logger::SetLogLevel(LogLevel logLevel)
 	{
 		logger->set_level((spdlog::level::level_enum)logLevel);
 		if (file_logging)
@@ -42,7 +41,7 @@ namespace trace {
 		}
 	}
 
-	void Logger::set_logger_name(const char * LogName)
+	void Logger::SetLoggerName(const char * LogName)
 	{
 		logger_name = LogName;
 	}
@@ -50,12 +49,7 @@ namespace trace {
 	Logger * Logger::get_instance()
 	{
 		
-		if (s_instance == nullptr)
-		{
-			s_instance = new Logger();
-
-		}
-
+		static Logger* s_instance = new Logger;
 		return s_instance;
 
 	}

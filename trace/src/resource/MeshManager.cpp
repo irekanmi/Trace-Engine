@@ -260,7 +260,7 @@ namespace trace {
 			generateDefaultCube(verts, _ind);
 			generateVertexTangent(verts, _ind);
 			Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
-			cube_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
+			//cube_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
 
 			for (uint32_t k = 0; k < m_numEntries; k++)
 			{
@@ -288,7 +288,7 @@ namespace trace {
 			generateSphere(verts, _ind, 1.0f, 50, 50);
 			generateVertexTangent(verts, _ind);
 			Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
-			sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
+			//sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
 
 
 			for (uint32_t k = 0; k < m_numEntries; k++)
@@ -498,7 +498,7 @@ namespace trace {
 				{
 					Ref<GPipeline> sp = pipeline_manager->GetPipeline("gbuffer_pipeline");
 					Ref<MaterialInstance> _mi = material_manager->CreateMaterial(obj_mesh.MeshMaterial.name,sp);
-					_model->m_matInstance = _mi;
+					//_model->m_matInstance = _mi;
 				}
 
 				_mesh->GetModels().push_back(_model);
@@ -620,8 +620,8 @@ namespace trace {
 					{
 						Ref<MaterialInstance> res = material_manager->CreateMaterial(material.name, sp);
 
-						auto it1 = res->m_data.find("DIFFUSE_MAP");
-						if (it1 != res->m_data.end())
+						auto it1 = res->GetMaterialData().find("DIFFUSE_MAP");
+						if (it1 != res->GetMaterialData().end())
 						{
 							if (!material.diffuse_texname.empty())
 							{
@@ -635,8 +635,8 @@ namespace trace {
 								it1->second.first = texture_manager->GetDefault("albedo_map");
 							}
 						}
-						auto it2 = res->m_data.find("SPECULAR_MAP");
-						if (it2 != res->m_data.end())
+						auto it2 = res->GetMaterialData().find("SPECULAR_MAP");
+						if (it2 != res->GetMaterialData().end())
 						{
 							if (!material.specular_texname.empty())
 							{
@@ -650,8 +650,8 @@ namespace trace {
 								it2->second.first = texture_manager->GetDefault("specular_map");
 							}
 						}
-						auto it3 = res->m_data.find("NORMAL_MAP");
-						if (it3 != res->m_data.end())
+						auto it3 = res->GetMaterialData().find("NORMAL_MAP");
+						if (it3 != res->GetMaterialData().end())
 						{
 							if (!material.bump_texname.empty())
 							{
@@ -665,8 +665,8 @@ namespace trace {
 								it3->second.first = texture_manager->GetDefault("normal_map");
 							}
 						}
-						auto it4 = res->m_data.find("diffuse_color");
-						if (it4 != res->m_data.end())
+						auto it4 = res->GetMaterialData().find("diffuse_color");
+						if (it4 != res->GetMaterialData().end())
 						{
 							it4->second.first = glm::vec4(
 								material.diffuse[0],
@@ -675,8 +675,8 @@ namespace trace {
 								1.0f
 							);
 						}
-						auto it5 = res->m_data.find("shininess");
-						if (it5 != res->m_data.end())
+						auto it5 = res->GetMaterialData().find("shininess");
+						if (it5 != res->GetMaterialData().end())
 						{
 							it5->second.first = material.shininess <= 0.0f ? 32.0f : material.shininess;
 						}
@@ -691,7 +691,7 @@ namespace trace {
 			_model = model_manager->LoadModel_(verts,_inds,(path / s.name).string());
 			if (_model.is_valid())
 			{
-				_model->m_matInstance = _mi;
+				//_model->m_matInstance = _mi;
 			}
 
 			_mesh->GetModels().emplace_back(_model);
@@ -860,8 +860,8 @@ namespace trace {
 					Ref<GTexture> specular_ref(&specular, [](GTexture*) {});
 					Ref<GTexture> normal_ref(&normal, [](GTexture*) {});
 
-					auto it1 = res->m_data.find("DIFFUSE_MAP");
-					if (it1 != res->m_data.end())
+					auto it1 = res->GetMaterialData().find("DIFFUSE_MAP");
+					if (it1 != res->GetMaterialData().end())
 					{
 						if (!material.diffuse_texname.empty())
 						{
@@ -874,8 +874,8 @@ namespace trace {
 							it1->second.first = texture_manager->GetDefault("albedo_map");
 						}
 					}
-					auto it2 = res->m_data.find("SPECULAR_MAP");
-					if (it2 != res->m_data.end())
+					auto it2 = res->GetMaterialData().find("SPECULAR_MAP");
+					if (it2 != res->GetMaterialData().end())
 					{
 						if (!material.specular_texname.empty())
 						{
@@ -888,8 +888,8 @@ namespace trace {
 							it2->second.first = texture_manager->GetDefault("specular_map");
 						}
 					}
-					auto it3 = res->m_data.find("NORMAL_MAP");
-					if (it3 != res->m_data.end())
+					auto it3 = res->GetMaterialData().find("NORMAL_MAP");
+					if (it3 != res->GetMaterialData().end())
 					{
 						if (!material.bump_texname.empty())
 						{
@@ -902,8 +902,8 @@ namespace trace {
 							it3->second.first = texture_manager->GetDefault("normal_map");
 						}
 					}
-					auto it4 = res->m_data.find("diffuse_color");
-					if (it4 != res->m_data.end())
+					auto it4 = res->GetMaterialData().find("diffuse_color");
+					if (it4 != res->GetMaterialData().end())
 					{
 						it4->second.first = glm::vec4(
 							material.diffuse[0],
@@ -912,8 +912,8 @@ namespace trace {
 							1.0f
 						);
 					}
-					auto it5 = res->m_data.find("shininess");
-					if (it5 != res->m_data.end())
+					auto it5 = res->GetMaterialData().find("shininess");
+					if (it5 != res->GetMaterialData().end())
 					{
 						it5->second.first = material.shininess <= 0.0f ? 32.0f : material.shininess;
 					}

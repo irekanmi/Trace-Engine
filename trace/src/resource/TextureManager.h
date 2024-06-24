@@ -54,7 +54,6 @@ namespace trace {
 	private:
 		void UnloadDefaults(GTexture* texture);
 
-		static TextureManager* s_instance;
 
 	private:
 		HashTable<TextureHash> m_hashTable;

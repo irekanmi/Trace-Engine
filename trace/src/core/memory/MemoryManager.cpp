@@ -5,7 +5,6 @@
 
 namespace trace {
 
-	MemoryManager* MemoryManager::s_instance = nullptr;
 
 
 	bool MemoryManager::Init()
@@ -38,10 +37,7 @@ namespace trace {
 
 	MemoryManager* MemoryManager::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new MemoryManager;
-		}
+		static MemoryManager* s_instance = new MemoryManager;
 		return s_instance;
 	}
 

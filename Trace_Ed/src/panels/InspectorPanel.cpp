@@ -76,6 +76,7 @@ namespace trace {
 
 	void DrawMaterial(Ref<MaterialInstance> mat)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		ImGui::Text("Material : %s",mat->m_path.string().c_str());
 		ImGui::Columns(2);
 		ImGui::Text("Render Pipeline");
@@ -199,9 +200,9 @@ namespace trace {
 			}
         };
 
-		for (auto& m_data : mat->m_data)
+		for (auto& m_data : mat->GetMaterialData())
 		{
-			trace::UniformMetaData& meta_data = mat->m_renderPipeline->Scene_uniforms[m_data.second.second];
+			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
 			lambda(meta_data.data_type, m_data.second.first, m_data.first);
 		}
 
@@ -209,8 +210,9 @@ namespace trace {
 
 	void InspectorPanel::DrawEntityComponent(Entity entity)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		bool is_prefab = (entity.GetScene() == PrefabManager::get_instance()->GetScene());
-		bool recording = m_editor->m_animPanel->Recording();
+		bool recording = editor->GetAnimationPanel()->Recording();
 		if (recording)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Border, { 0.79, 0.12, 0.15, 0.35f });
@@ -299,9 +301,9 @@ namespace trace {
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
-				if (ImGui::MenuItem(i.second.script_name.c_str()))
+				if (ImGui::MenuItem(i.second.GetScriptName().c_str()))
 				{
-					entity.AddScript(i.second.script_name);
+					entity.AddScript(i.second.GetScriptName());
 					comp_dirty = true;
 				}
 			}
@@ -524,7 +526,7 @@ namespace trace {
 			{
 				ImGui::OpenPopup("ALL_MODELS");
 			}
-			std::string model_res = m_editor->DrawModelsPopup();
+			std::string model_res = editor->DrawModelsPopup();
 			if (!model_res.empty())
 			{
 				std::filesystem::path p = model_res;
@@ -586,7 +588,7 @@ namespace trace {
 				ImGui::EndDragDropTarget();
 			}
 
-			std::string mat_res = m_editor->DrawMaterialsPopup();
+			std::string mat_res = editor->DrawMaterialsPopup();
 			if (!mat_res.empty())
 			{
 				std::filesystem::path p = mat_res;
@@ -744,7 +746,7 @@ namespace trace {
 				pose.SetPosition(pose.GetPosition() + shp.offset);
 
 				CommandList cmd_list = renderer->BeginCommandList();
-				renderer->BeginScene(cmd_list, &m_editor->editor_cam);
+				renderer->BeginScene(cmd_list, &editor->GetEditorCamera());
 				renderer->DrawDebugSphere(cmd_list, shp.sphere.radius + 0.001f, 25, pose.GetLocalMatrix());
 				renderer->EndScene(cmd_list);
 				renderer->SubmitCommandList(cmd_list);
@@ -866,11 +868,11 @@ namespace trace {
 			return dirty;
 			});
 
-		ScriptRegistry& script_registry = m_editor->m_currentScene->m_scriptRegistry;
+		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
 
 		if (recording && anim_dirty)
 		{
-			m_editor->m_animPanel->SetFrameData(entity.GetID(), type, anim_data, 16);
+			editor->GetAnimationPanel()->SetFrameData(entity.GetID(), type, anim_data, 16);
 		}
 
 		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
@@ -883,17 +885,17 @@ namespace trace {
 				ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth;
 				void* id = (void*)(uint64_t)(script->GetID() + (uint32_t)entity);
 				ImGui::Separator();
-				bool opened = ImGui::TreeNodeEx(id, tree_flags, script->script_name.c_str());
+				bool opened = ImGui::TreeNodeEx(id, tree_flags, script->GetScriptName().c_str());
 				//ImGui::PopStyleVar();
 				ImGui::SameLine(content_region.x - line_height * 0.5f);
 				ImVec2 button_size = { line_height + 3.0f , line_height };
 				if (ImGui::Button("!", button_size))
 				{
-					ImGui::OpenPopup(script->script_name.c_str());
+					ImGui::OpenPopup(script->GetScriptName().c_str());
 				}
 
 				bool deleted = false;
-				if (ImGui::BeginPopup(script->script_name.c_str()))
+				if (ImGui::BeginPopup(script->GetScriptName().c_str()))
 				{
 					if (ImGui::MenuItem("Remove Script")) { deleted = true; }
 					ImGui::EndPopup();
@@ -901,10 +903,10 @@ namespace trace {
 
 				if (opened)
 				{
-					bool isPlaying = m_editor->current_state == EditorState::ScenePlay;
+					bool isPlaying = editor->GetEditorState() == EditorState::ScenePlay;
 					if (isPlaying && !is_prefab)
 					{
-						for (auto& [name, field] : script->m_fields)
+						for (auto& [name, field] : script->GetFields())
 						{
 							switch (field.field_type)
 							{
@@ -1044,7 +1046,7 @@ namespace trace {
 							field_ins.Init(script);
 						}
 						ScriptFieldInstance& ins = field_manager[uuid];
-						for (auto& i : ins.m_fields)
+						for (auto& i : ins.GetFields())
 						{
 							const std::string& name = i.first;
 							ScriptFieldInstance::ScriptData& data = i.second;
@@ -1149,7 +1151,7 @@ namespace trace {
 					
 					ImGui::TreePop();
 				}
-				if (deleted) entity.RemoveScript(script->script_name);
+				if (deleted) entity.RemoveScript(script->GetScriptName());
 
 
 			});
@@ -1161,8 +1163,8 @@ namespace trace {
 
 			if(comp_dirty && is_prefab)
 			{
-				Ref<Prefab> prefab = m_editor->m_hierachyPanel->GetPrefabEdit();
-				m_editor->m_currentScene->ApplyPrefabChanges(prefab);
+				Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
+				editor->GetCurrentScene()->ApplyPrefabChanges(prefab);
 			}
 		
 	}

@@ -562,7 +562,7 @@ namespace vk {
 			VkWin32SurfaceCreateInfoKHR create_info = {};
 			create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			create_info.hinstance = (HINSTANCE)trace::Platform::GetAppHandle();
-			create_info.hwnd = (HWND)trace::Application::s_instance->GetWindow()->GetNativeHandle();
+			create_info.hwnd = (HWND)trace::Application::get_instance()->GetWindow()->GetNativeHandle();
 
 			res = vkCreateWin32SurfaceKHR(instance->m_instance, &create_info, instance->m_alloc_callback, &instance->m_surface);
 
@@ -1780,7 +1780,7 @@ namespace vk {
 		VkPipelineColorBlendAttachmentState attach_states[10] = {};
 
 
-		color_blend_info.attachmentCount = desc.render_pass->color_attach_count;
+		color_blend_info.attachmentCount = desc.render_pass->GetColorAttachmentCount();
 		for (uint32_t i = 0; i < color_blend_info.attachmentCount; i++)
 		{
 			attach_states[i] = attach_state;

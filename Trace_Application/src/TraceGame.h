@@ -20,7 +20,6 @@ namespace trace {
 
 		static TraceGame* get_instance();
 	private:
-		static TraceGame* s_instance;
 
 		void load_appinfo();
 		void load_assetdb();

@@ -46,7 +46,6 @@ namespace trace {
 
 		static PipelineManager* get_instance();
 	private:
-		static PipelineManager* s_instance;
 		void unloadDefault(GPipeline* pipeline);
 
 	private:

@@ -17,10 +17,18 @@ namespace trace {
 		void SetName(const std::string& name) { m_name = name; }
 		void SetStartScene(UUID id) { m_startScene = id; }
 
-		std::string assets_directory;
-		std::string assembly_path;
-		std::string current_directory;
+		std::string GetAssetsDirectory() { return m_assetsDirectory; }
+		std::string GetAssemblyPath() { return m_assemblyPath; }
+		std::string GetProjectCurrentDirectory() { return m_currentDirectory; }
+		
+		void SetAssetsDirectory(const std::string& file_path) { m_assetsDirectory = file_path; }
+		void SetAssemblyPath(const std::string& file_path) { m_assemblyPath = file_path; }
+		void SetProjectCurrentDirectory(const std::string& file_path) { m_currentDirectory = file_path; }
+
 	private:
+		std::string m_assetsDirectory;
+		std::string m_assemblyPath;
+		std::string m_currentDirectory;
 		std::string m_name;
 		UUID m_startScene;
 

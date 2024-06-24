@@ -144,7 +144,7 @@ namespace trace {
 					if (mem.resource_name[0] == '_' || mem.resource_name == "draw_instance_index") continue;
 					std::any a;
 					lambda(mem.resource_data_type, a);
-					uint32_t hash = pipeline->_hashTable.Get(mem.resource_name);
+					uint32_t hash = pipeline->GetHashTable().Get(mem.resource_name);
 					result[mem.resource_name] = std::make_pair(a, hash);
 				}
 
@@ -156,7 +156,7 @@ namespace trace {
 					if (mem.resource_name[0] == '_') continue;
 					std::any a;
 					lambda(mem.data_type, a);
-					uint32_t hash = pipeline->_hashTable.Get(mem.resource_name);
+					uint32_t hash = pipeline->GetHashTable().Get(mem.resource_name);
 					result[mem.resource_name] = std::make_pair(a, hash);
 				}
 
@@ -164,7 +164,7 @@ namespace trace {
 		}
 
 		GPipeline* _pipeline = pipeline.get();
-		HashTable<uint32_t>& _hashTable = _pipeline->_hashTable;
+		HashTable<uint32_t>& _hashTable = _pipeline->GetHashTable();
 
 		auto func = [&](GShader* shader)
 		{
@@ -172,7 +172,7 @@ namespace trace {
 			{
 				std::any a;
 				lambda(ShaderData::CUSTOM_DATA_TEXTURE, a);
-				uint32_t hash = pipeline->_hashTable.Get(i.first);
+				uint32_t hash = pipeline->GetHashTable().Get(i.first);
 				result[i.first] = std::make_pair(a, hash);
 			}
 		};

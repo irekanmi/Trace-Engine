@@ -13,7 +13,6 @@
 
 namespace trace {
 
-	TraceGame* TraceGame::s_instance = nullptr;
 
 	std::unordered_map<std::string, UUID> file_ids;
 	std::unordered_map<UUID, std::string> id_names;
@@ -84,7 +83,7 @@ namespace trace {
 	{
 
 
-		switch (p_event->m_type)
+		switch (p_event->GetEventType())
 		{
 		case TRC_KEY_PRESSED:
 		{
@@ -112,7 +111,7 @@ namespace trace {
 			trace::WindowResize* wnd = reinterpret_cast<trace::WindowResize*>(p_event);
 			if (m_currentScene)
 			{
-				m_currentScene->OnViewportChange(wnd->m_width, wnd->m_height);
+				m_currentScene->OnViewportChange(wnd->GetWidth(), wnd->GetHeight());
 			}
 
 			break;
@@ -158,10 +157,7 @@ namespace trace {
 
 	TraceGame* TraceGame::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new TraceGame;
-		}
+		static TraceGame* s_instance = new TraceGame;//TODO: Use custom allocator
 		return s_instance;
 	}
 

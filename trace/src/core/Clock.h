@@ -20,9 +20,9 @@ namespace trace {
 		float GetInternalElapsedTime();
 
 	private:
-		std::chrono::time_point<std::chrono::system_clock> start_time;
-		float elapsedTime = 0.0f;
-		bool started = false;
+		std::chrono::time_point<std::chrono::system_clock> m_startTime;
+		float m_elapsedTime = 0.0f;
+		bool m_started = false;
 
 	protected:
 

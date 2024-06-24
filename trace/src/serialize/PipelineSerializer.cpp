@@ -37,7 +37,7 @@ namespace trace {
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Pipeline Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Pipeline Name" << YAML::Value << pipeline->GetName();
-		emit << YAML::Key << "Pipeline Type" << YAML::Value << pipeline->pipeline_type;
+		emit << YAML::Key << "Pipeline Type" << YAML::Value << pipeline->GetPipelineType();
 
 
 		PipelineStateDesc& desc = pipeline->GetDesc();
@@ -422,7 +422,7 @@ namespace trace {
 		_ds2.topology = (PRIMITIVETOPOLOGY)data["Topology"].as<int>();
 
 		result = PipelineManager::get_instance()->CreatePipeline(_ds2, pipeline_name, false);
-		if (result) result->pipeline_type = type;
+		if (result) result->SetPipelineType(type);
 
 		if (!result)
 		{

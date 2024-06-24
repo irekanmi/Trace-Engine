@@ -40,7 +40,6 @@ namespace trace {
 		std::filesystem::path font_resource_path;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
-		static FontManager* s_instance;
 
 	protected:
 

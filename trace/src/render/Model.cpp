@@ -47,7 +47,7 @@ namespace trace {
 
 	void Model::Release()
 	{
-		m_matInstance.free();
+		//m_matInstance.free();
 		m_vertices.clear();
 		m_indices.clear();
 		RenderFunc::DestroyBuffer(&m_vertexBuffer);

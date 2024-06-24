@@ -75,7 +75,7 @@ namespace vk {
 			vkMapMemory(_device->m_device, internal_handle->m_memory, 0, _info.m_size, VK_NO_FLAGS, &internal_handle->data_point);
 		}
 
-		buffer->m_info = _info;
+		buffer->SetBufferInfo(_info);
 
 		if (buffer_create_result != VK_SUCCESS) result = false;
 		return result;
@@ -103,7 +103,7 @@ namespace vk {
 		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
 
-		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		if (buffer->GetBufferInfo().m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
 			vkUnmapMemory(_device->m_device, _handle->m_memory);
 		}
@@ -216,7 +216,7 @@ namespace vk {
 		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
 
-		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		if (buffer->GetBufferInfo().m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
 			memcpy(_handle->data_point, data, size);
 
@@ -260,9 +260,9 @@ namespace vk {
 		trace::VKDeviceHandle* _device = reinterpret_cast<trace::VKDeviceHandle*>(_handle->m_device);
 		trace::VKHandle* _instance = _handle->m_instance;
 
-		if (buffer->m_info.m_usageFlag == trace::UsageFlag::UPLOAD)
+		if (buffer->GetBufferInfo().m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
-			if (offset + size <= buffer->m_info.m_size)
+			if (offset + size <= buffer->GetBufferInfo().m_size)
 			{
 				memcpy(((unsigned char*)_handle->data_point) + offset, data, size);
 			}

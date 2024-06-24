@@ -289,7 +289,7 @@ namespace vk {
 		trace::BufferInfo stage_info;
 		stage_info.m_data = nullptr;
 		stage_info.m_flag = trace::BindFlag::CONSTANT_BUFFER_BIT;
-		stage_info.m_size = MB * 5;
+		stage_info.m_size = MB * 5; //TODO: Don't use MAGIC numbers
 		stage_info.m_stide = 0;
 		stage_info.m_usageFlag = trace::UsageFlag::UPLOAD;
 		_CreateBuffer(
@@ -606,7 +606,7 @@ namespace vk {
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 
-		device->m_pipeline = pipeline;
+		//device->m_pipeline = pipeline;
 		trace::VKPipeline* _pipeline = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		vkCmdBindPipeline(command_buffer->m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->m_handle);
@@ -1071,11 +1071,11 @@ namespace vk {
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		
 
-		for (auto& stct : pipeline->Scence_struct)
+		for (auto& stct : pipeline->GetSceneStructs())
 		{
 			stct.second = pipe_handle->instance_buffer_offset;
 
-			trace::UniformMetaData& struct_meta = pipeline->Scene_uniforms[stct.first];
+			trace::UniformMetaData& struct_meta = pipeline->GetSceneUniforms()[stct.first];
 
 			trace::BufferDescriptorInfo buf_info = {};
 			buf_info.offset = stct.second;
@@ -1129,7 +1129,7 @@ namespace vk {
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 
-		for (auto& stct : pipeline->Scence_struct)
+		for (auto& stct : pipeline->GetSceneStructs())
 		{
 			stct.second = INVALID_ID;
 		}

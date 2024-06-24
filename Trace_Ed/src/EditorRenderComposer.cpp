@@ -47,8 +47,8 @@ namespace trace {
 
 		fd.hdr_index = INVALID_ID;
 		fd.swapchain_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
-		fd.frame_width = TraceEditor::get_instance()->m_viewportSize.x;
-		fd.frame_height = TraceEditor::get_instance()->m_viewportSize.y;
+		fd.frame_width = TraceEditor::get_instance()->GetViewportSize().x;
+		fd.frame_height = TraceEditor::get_instance()->GetViewportSize().y;
 
 		TextureDesc gPos = {};
 		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;

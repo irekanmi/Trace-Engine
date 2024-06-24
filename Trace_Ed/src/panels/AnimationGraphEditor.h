@@ -19,6 +19,9 @@ namespace trace {
 		void Update(float deltaTime);
 		void Render(float deltaTime);
 
+		Ref<AnimationGraph> GetCurrentGraph() { return m_currentGraph; }
+		AnimationState* GetSelected() { return m_selectedState; }
+
 		void SetAnimationGraph(Ref<AnimationGraph> graph);
 		void SetAnimationGraph(std::string path);
 

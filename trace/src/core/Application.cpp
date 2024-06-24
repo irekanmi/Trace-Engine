@@ -40,10 +40,10 @@ namespace trace
 	extern std::vector<trace::Object*> g_SystemPtrs;
 	
 	
-	Application* Application::s_instance = nullptr;
 
 	Application* Application::get_instance()
 	{
+		static Application* s_instance = new Application;
 		return s_instance;
 	}
 
@@ -70,21 +70,36 @@ namespace trace
 		return g_SystemPtrs;
 	}
 
-	Application::Application(trc_app_data appData)
+	Application::Application()
 	{
 
 
+		
+
+	}
+
+	Application::~Application()
+	{
+
+
+
+	}
+
+	bool Application::Init(trc_app_data appData)
+	{
 		m_LayerStack = new LayerStack();
 		switch (appData.wintype)
 		{
 		case WindowType::GLFW_WINDOW:
 		{
-			this->m_Window = new GLFW_Window(appData.winprop); // TODO: Use Custom Allocator or Add Window creation tp backend
+			m_Window = new GLFW_Window(); // TODO: Use Custom Allocator or Add Window creation tp backend
+			m_Window->Init(appData.winprop);
 			break;
 		}
 		case WindowType::WIN32_WINDOW:
 		{
-			this->m_Window = new Win32Window(appData.winprop); // TODO: Use Custom Allocator or Add Window creation tp backend
+			this->m_Window = new Win32Window(); // TODO: Use Custom Allocator or Add Window creation tp backend
+			m_Window->Init(appData.winprop);
 			break;
 		}
 		}
@@ -100,13 +115,14 @@ namespace trace
 			trace::EventsSystem::get_instance()->AddEventListener((EventType)i, BIND_EVENT_FN(Application::OnEvent));
 		}
 
+		return true;
 	}
 
-	Application::~Application()
+	void Application::Shutdown()
 	{
-
-
-
+		SAFE_DELETE(m_Window, Window);
+		m_LayerStack->Shutdown();
+		SAFE_DELETE(m_LayerStack, LayerStack);
 	}
 
 	void Application::Start()
@@ -169,7 +185,7 @@ namespace trace
 			mem_manager->BeginFrame();
 			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
 			{
-				Layer* layer = m_LayerStack->m_Layers[i];
+				Layer* layer = m_LayerStack->GetLayers()[i];
 				layer->Update(deltaTime);
 			}
 
@@ -215,11 +231,7 @@ namespace trace
 		trace::ApplicationEnd app_end;
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_END, &app_end);
 		
-		Renderer::get_instance()->End();
-
-		SAFE_DELETE(m_Window, Window);
-		m_LayerStack->Shutdown();
-		SAFE_DELETE(m_LayerStack, LayerStack);
+		Renderer::get_instance()->End();		
 	}
 
 	void Application::OnEvent(Event* p_event)
@@ -230,36 +242,36 @@ namespace trace
 		int i = m_LayerStack->Size() - 1;
 		for (; i >= 0; --i)
 		{
-			Layer* layer = m_LayerStack->m_Layers[i];
-			if(!p_event->m_handled)
+			Layer* layer = m_LayerStack->GetLayers()[i];
+			if(!p_event->IsHandled())
 			{
 				layer->OnEvent(p_event);
 			}
 		}
 
-		if (!p_event->m_handled) {
+		if (!p_event->IsHandled()) {
 			//TRC_TRACE("Event: {}", p_event->GetName());
-			switch (p_event->m_type)
+			switch (p_event->GetEventType())
 			{
 			case trace::EventType::TRC_APP_START:
 			{
 				trace::ApplicationStart* app_start = reinterpret_cast<trace::ApplicationStart*>(p_event);
 				TRC_DEBUG(app_start->Log());
-				app_start->m_handled = true;
+				app_start->SetEventHandled(true);
 				break;
 			}
 			case trace::EventType::TRC_APP_END:
 			{
 				trace::ApplicationEnd* app_end = reinterpret_cast<trace::ApplicationEnd*>(p_event);
 				//TRC_WARN(app_end->Log());
-				app_end->m_handled = true;
+				app_end->SetEventHandled(true);
 				break;
 			}
 			case trace::EventType::TRC_WND_CLOSE:
 			{
 				trace::WindowClose* wnd_close = reinterpret_cast<trace::WindowClose*>(p_event);
 				m_isRunning = false;
-				wnd_close->m_handled = true;
+				wnd_close->SetEventHandled(true);
 				break;
 			}
 			case trace::EventType::TRC_KEY_PRESSED:
@@ -276,7 +288,7 @@ namespace trace
 			case EventType::TRC_WND_RESIZE:
 			{
 				WindowResize* wnd = reinterpret_cast<WindowResize*>(p_event);
-				if (wnd->m_width == 0 || wnd->m_height == 0)
+				if (wnd->GetWidth() == 0 || wnd->GetHeight() == 0)
 				{
 					m_isMinimized = true;
 				}

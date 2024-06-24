@@ -122,9 +122,9 @@ namespace trace {
 		emit << YAML::Key << "Pipeline ID" << YAML::Value << GetUUIDFromName(mat->GetRenderPipline()->GetName());
 		emit << YAML::Key << "Data" << YAML::Value << YAML::BeginSeq;
 
-		for (auto& data : mat->m_data)
+		for (auto& data : mat->GetMaterialData())
 		{
-			trace::UniformMetaData& meta_data = mat->m_renderPipeline->Scene_uniforms[data.second.second];
+			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[data.second.second];
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "Name" << YAML::Value << data.first;
 			emit << YAML::Key << "Type" << YAML::Value << (int)meta_data.data_type;
@@ -180,7 +180,7 @@ namespace trace {
 			ast_h.offset = stream.GetPosition();
 			uint64_t pipeline_id = GetUUIDFromName(material->GetRenderPipline()->GetName());
 			stream.Write<uint64_t>(pipeline_id);
-			uint32_t data_count = material->m_data.size();
+			uint32_t data_count = material->GetMaterialData().size();
 			stream.Write<uint32_t>(data_count);
 			auto lambda = [](FileStream& stream, trace::ShaderData type, std::any& dst)
 			{
@@ -278,12 +278,12 @@ namespace trace {
 				}
 				}
 			};
-			for (auto& i : material->m_data)
+			for (auto& i : material->GetMaterialData())
 			{
 				uint32_t name_length = i.first.length() + 1;
 				stream.Write<uint32_t>(name_length);
 				stream.Write((void*)i.first.data(), name_length);
-				trace::UniformMetaData& meta_data = material->m_renderPipeline->Scene_uniforms[i.second.second];
+				trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.second];
 				int type = (int)meta_data.data_type;
 				stream.Write<int>(type);
 				lambda(stream, meta_data.data_type, i.second.first);
@@ -439,9 +439,9 @@ namespace trace {
 			for (auto val : res)
 			{
 				std::string name = val["Name"].as<std::string>();
-				auto it = result->m_data.find(name);
+				auto it = result->GetMaterialData().find(name);
 				ShaderData type = (ShaderData)val["Type"].as<int>();
-				if (it != result->m_data.end())
+				if (it != result->GetMaterialData().end())
 				{
 					lambda(val, type, it->second.first);
 				}
@@ -563,7 +563,7 @@ namespace trace {
 			int type = -1;
 			stream.Read<int>(type);
 
-			auto& data = material->m_data;
+			auto& data = material->GetMaterialData();
 			auto it = data.find(name);
 			if (it != data.end())
 			{

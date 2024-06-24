@@ -278,9 +278,8 @@ namespace trace {
 	}
 
 
-	GLFW_Window::GLFW_Window(const WindowDecl & win_prop)
+	GLFW_Window::GLFW_Window()
 	{
-		Init(win_prop);
 	}
 	GLFW_Window::~GLFW_Window()
 	{

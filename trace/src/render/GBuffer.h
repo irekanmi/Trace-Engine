@@ -25,11 +25,13 @@ namespace trace {
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
+		BufferInfo GetBufferInfo() { return m_info; }
+
+		void SetBufferInfo(BufferInfo buffer_info) { m_info = buffer_info; }
+
 	public:
-		static GBuffer* Create_(const BufferInfo& buffer_info);
-		static void Create_(const BufferInfo& buffer_info, GBuffer* dst);
-		BufferInfo m_info;
 	private:
+		BufferInfo m_info;
 		GHandle m_renderHandle;
 
 	protected:

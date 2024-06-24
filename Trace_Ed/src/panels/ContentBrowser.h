@@ -15,11 +15,32 @@ namespace trace {
 
 
 	class TraceEditor;
+	struct AssetsEdit
+	{
+		// Material edit
+		Ref<MaterialInstance> editMaterial;
+		Ref<GPipeline> editMaterialPipe;
+		std::filesystem::path editMaterialPath;
+		MaterialData materialDataCache;
+		bool editMaterialPipeChanged = false;
+
+
+		// Font edit
+		Ref<Font> editFont;
+
+		//Pipeline edit
+		Ref<GPipeline> editPipeline;
+		PipelineStateDesc editPipeDesc;
+		std::filesystem::path editPipePath;
+		PipelineType editPipeType;
+	};
 
 	class ContentBrowser
 	{
 
 	public:
+
+		
 
 		bool Init();
 		void Shutdown();
@@ -34,37 +55,27 @@ namespace trace {
 		void DrawEditPipeline();
 		void SetDirectory(const std::string& dir);
 
-	public:
+		std::unordered_map<std::string, UUID>& GetAllFilesID() { return m_allFilesID; }
+		std::unordered_map<UUID, std::filesystem::path> GetUUIDPath() { return m_allIDPath; }
+		std::filesystem::path& GetCurrentDirectory() { return m_currentDir; }
+		Ref<GTexture> GetDefaultIcon() { return default_icon; }
+		AssetsEdit& GetAssetsEdit() { return m_assetsEdit; }
+		
+
+	private:
 		//TODO: Check if there is a better way to store uuid and paths
-		std::unordered_map<std::string, UUID> all_files_id;
-		std::unordered_map<UUID, std::filesystem::path> all_id_path;
+		std::unordered_map<std::string, UUID> m_allFilesID;
+		std::unordered_map<UUID, std::filesystem::path> m_allIDPath;
 
 	private:
 		std::filesystem::path m_currentDir;
 		std::vector<std::filesystem::path> m_dirContents;
 		Ref<GTexture> directory_icon;
 		Ref<GTexture> default_icon;
-
-		// Material edit
-		Ref<MaterialInstance> m_editMaterial;
-		Ref<GPipeline> m_editMaterialPipe;
-		std::filesystem::path m_editMaterialPath;
-		MaterialData m_materialDataCache;
-		bool m_editMaterialPipeChanged = false;
-
 		
-		// Font edit
-		Ref<Font> m_editFont;
+		AssetsEdit m_assetsEdit;
 
-		//Pipeline edit
-		Ref<GPipeline> m_editPipeline;
-		PipelineStateDesc m_editPipeDesc;
-		std::filesystem::path m_editPipePath;
-		PipelineType m_editPipeType;
-
-		TraceEditor* m_editor;
 	protected:
-		friend class TraceEditor;
 
 	};
 

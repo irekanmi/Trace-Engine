@@ -664,7 +664,7 @@ namespace vk {
 		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
 		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
 
-		uint32_t hash_id = pipeline->_hashTable.Get(bind_name);
+		uint32_t hash_id = pipeline->GetHashTable().Get(bind_name);
 
 		if (hash_id == INVALID_ID)
 		{
@@ -680,7 +680,7 @@ namespace vk {
 		image_info.sampler = device->nullImage.m_sampler;
 		image_info.imageView = device->nullImage.m_view;
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
+		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
 		
 

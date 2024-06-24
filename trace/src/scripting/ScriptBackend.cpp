@@ -253,10 +253,10 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 		TRC_ERROR("Failed to create script {}.{}",nameSpace , name );
 		return false;
 	}
-	script.m_internal = out_class;
+	script.SetInternal(out_class);
 	if (nameSpace.empty())
-		script.script_name = name;
-	else script.script_name = nameSpace + '.' + name;
+		script.SetScriptName(name);
+	else script.SetScriptName(nameSpace + '.' + name);
 
 
 	uint32_t method_count = mono_class_num_methods(out_class);
@@ -266,7 +266,7 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 	while (MonoMethod* method = mono_class_get_methods(out_class, &method_iter))
 	{
 		std::string method_name = mono_method_get_name(method);
-		script.m_methods[method_name].m_internal = method;
+		script.GetMethods()[method_name].m_internal = method;
 	}
 
 	uint32_t field_count = mono_class_num_fields(out_class);
@@ -291,7 +291,7 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 
 		field_res.m_internal = field;
 
-		script.m_fields[field_name] = field_res;
+		script.GetFields()[field_name] = field_res;
 		
 	}
 
@@ -300,28 +300,28 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 }
 bool GetScriptID(Script& script, uintptr_t& res)
 {
-	if (!script.m_internal)
+	if (!script.GetInternal())
 	{
-		std::cout << "Script {" << script.script_name << "} is not valid" << std::endl;
+		std::cout << "Script {" << script.GetScriptName() << "} is not valid" << std::endl;
 		return false;
 	}
-	res = (uintptr_t)mono_class_get_type((MonoClass*)script.m_internal);
+	res = (uintptr_t)mono_class_get_type((MonoClass*)script.GetInternal());
 
 
 	return true;
 }
 bool DestroyScript(Script& script)
 {
-	script.m_fields.clear();
-	script.script_name = "";
-	script.m_methods.clear();
-	script.m_internal = nullptr;
+	script.GetFields().clear();
+	script.SetScriptName("");
+	script.GetMethods().clear();
+	script.SetInternal(nullptr);
 	return true;
 }
 
 bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 {
-	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.m_internal);
+	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.GetInternal());
 	if (!out_object)
 	{
 		std::cout << "Failed to create script instance " << std::endl;
@@ -332,8 +332,8 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 	MonoInstance* ins = new MonoInstance; //TODO: Use custom allocator
 	ins->kObject = out_object;
 	ins->kHandle = mono_gchandle_new(out_object, TRUE);
-	out_instance.m_internal = ins;
-	out_instance.m_script = &script;
+	out_instance.SetInternal(ins);
+	out_instance.SetScript(&script);
 
 	
 
@@ -341,7 +341,7 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 }
 bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance)
 {
-	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.m_internal);
+	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.GetInternal());
 	if (!out_object)
 	{
 		std::cout << "Failed to create script instance " << std::endl;
@@ -351,8 +351,8 @@ bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance)
 	MonoInstance* ins = new MonoInstance; //TODO: Use custom allocator
 	ins->kObject = out_object;
 	ins->kHandle = mono_gchandle_new(out_object, TRUE);
-	out_instance.m_internal = ins;
-	out_instance.m_script = &script;
+	out_instance.SetInternal(ins);
+	out_instance.SetScript(&script);
 
 
 
@@ -360,27 +360,27 @@ bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance)
 }
 bool DestroyScriptInstance(ScriptInstance& instance)
 {
-	if (!instance.m_internal)
+	if (!instance.GetInternal())
 	{
 		TRC_ERROR("Can't destory an invalid instance");
 		return false;
 	}
 
-	MonoInstance* ins = (MonoInstance*)instance.m_internal;
+	MonoInstance* ins = (MonoInstance*)instance.GetInternal();
 
 	mono_gchandle_free(ins->kHandle);
 
 	delete ins;//TODO: Use custom allocator
 
-	instance.m_internal = nullptr;
+	instance.SetInternal(nullptr);
 	return true;
 }
 
 bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out)
 {
-	if (!instance.m_internal) return false;
+	if (!instance.GetInternal()) return false;
 
-	MonoInstance* ins = (MonoInstance*)instance.m_internal;
+	MonoInstance* ins = (MonoInstance*)instance.GetInternal();
 
 	out = ins->kObject;
 	return true;
@@ -389,7 +389,7 @@ bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out)
 
 bool GetScriptMethod(const std::string& method_name, ScriptMethod& out_method, Script& script, int param_count)
 {
-	MonoMethod* _mthd = mono_class_get_method_from_name((MonoClass*)script.m_internal, method_name.c_str(), param_count);
+	MonoMethod* _mthd = mono_class_get_method_from_name((MonoClass*)script.GetInternal(), method_name.c_str(), param_count);
 	if (!_mthd)
 	{
 		std::cout << "Failed to GetMethod " << method_name << std::endl;
@@ -415,7 +415,7 @@ bool InvokeScriptMethod_Class(ScriptMethod& method, Script& script, void** param
 
 bool GetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* out_value, uint32_t val_size)
 {
-	if (!instance.m_internal)
+	if (!instance.GetInternal())
 	{
 		std::cout << "Invalid instance " << __FUNCTION__ << std::endl;
 
@@ -432,7 +432,7 @@ bool GetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* o
 
 bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* value, uint32_t val_size)
 {
-	if (!instance.m_internal)
+	if (!instance.GetInternal())
 	{
 		std::cout << "Invalid instance " << __FUNCTION__ << std::endl;
 
@@ -652,7 +652,7 @@ MonoObject* Action_GetScript(UUID uuid, MonoReflectionType* reflect_type)
 
 	Entity entity = s_MonoData.scene->GetEntity(uuid);
 
-	MonoObject* res = (MonoObject*)entity.GetScript((uintptr_t)type)->m_internal;
+	MonoObject* res = (MonoObject*)entity.GetScript((uintptr_t)type)->GetInternal();
 
 	return res;
 

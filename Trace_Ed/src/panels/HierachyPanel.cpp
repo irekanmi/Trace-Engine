@@ -18,15 +18,16 @@ namespace trace {
 	}
 	void HierachyPanel::Render(float deltaTime)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
 		ImGui::Begin("Scene Hierachy", 0, ImGuiWindowFlags_NoCollapse);
 
 
 
-		if (m_editor->m_currentScene)
+		if (editor->GetCurrentScene())
 		{
 			
-			std::string& scene_name = m_editor->m_editScene->GetName();
+			std::string& scene_name = editor->GetEditScene()->GetName();
 			ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen;
 			bool clicked = ImGui::TreeNodeEx(scene_name.c_str(), tree_flags);
 
@@ -45,7 +46,7 @@ namespace trace {
 			{
 				if (ImGui::MenuItem("Create Empty Entity"))
 				{
-					m_editor->m_currentScene->CreateEntity();
+					editor->GetCurrentScene()->CreateEntity();
 				}
 				ImGui::EndPopup();
 			}
@@ -69,14 +70,14 @@ namespace trace {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 			{
 				UUID uuid = *(UUID*)payload->Data;
-				Entity child = m_editor->m_currentScene->GetEntity(uuid);
-				m_editor->m_currentScene->AddToRoot(child);
+				Entity child = editor->GetCurrentScene()->GetEntity(uuid);
+				editor->GetCurrentScene()->AddToRoot(child);
 			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
 			{
 				UUID uuid = *(UUID*)payload->Data;
-				Entity child = m_editor->m_currentScene->GetEntity(uuid);
-				m_editor->m_currentScene->AddToRoot(child);
+				Entity child = editor->GetCurrentScene()->GetEntity(uuid);
+				editor->GetCurrentScene()->AddToRoot(child);
 			}
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trprf"))
 			{
@@ -84,7 +85,7 @@ namespace trace {
 				memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 				std::string path = buf;
 				Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
-				m_editor->m_currentScene->InstanciatePrefab(prefab);
+				editor->GetCurrentScene()->InstanciatePrefab(prefab);
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -97,10 +98,10 @@ namespace trace {
 	}
 	void HierachyPanel::DrawEntity(Entity entity)
 	{
-		
+		TraceEditor* editor = TraceEditor::get_instance();
 		bool selected = (m_selectedEntity == entity);
 		ImGuiTreeNodeFlags tree_flags = ( selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
-		TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
+		TagComponent& tag = editor->GetCurrentScene()->m_registry.get<TagComponent>(entity);
 		void* id = (void*)(uint64_t)(uint32_t)entity;
 		bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
 
@@ -111,10 +112,10 @@ namespace trace {
 			else
 				m_selectedEntity = entity;
 
-			m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+			editor->GetInspectorPanel()->SetDrawCallbackFn([&]()
 				{
 					if (m_selectedEntity)
-						m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+						editor->GetInspectorPanel()->DrawEntityComponent(m_selectedEntity);
 				}, []() {}, []() {});
 		}
 
@@ -123,7 +124,7 @@ namespace trace {
 		{
 			if (ImGui::MenuItem("Delete Entity")) 
 			{ 
-				m_editor->m_currentScene->DestroyEntity(entity);
+				editor->GetCurrentScene()->DestroyEntity(entity);
 				if (selected) { m_selectedEntity = Entity(); }
 			}
 			ImGui::EndPopup();
@@ -137,15 +138,16 @@ namespace trace {
 	}
 	void HierachyPanel::DrawAllEntites()
 	{
-		for (UUID& uuid : m_editor->m_currentScene->m_rootNode->children)
+		TraceEditor* editor = TraceEditor::get_instance();
+		for (UUID& uuid : editor->GetCurrentScene()->m_rootNode->children)
 		{
-			Entity entity = m_editor->m_currentScene->GetEntity(uuid);
+			Entity entity = editor->GetCurrentScene()->GetEntity(uuid);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 
 
 			bool selected = (m_selectedEntity == entity);
 			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
-			TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
+			TagComponent& tag = editor->GetCurrentScene()->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
@@ -165,20 +167,20 @@ namespace trace {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 				{
 					UUID uuid = *(UUID*)payload->Data;
-					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
-					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
+					Entity new_child = editor->GetCurrentScene()->GetEntity(uuid);
+					if (new_child && new_child != entity && !editor->GetCurrentScene()->IsParent(new_child, entity))
 					{
-						m_editor->m_currentScene->SetParent(new_child, entity);
+						editor->GetCurrentScene()->SetParent(new_child, entity);
 					}
 					
 				}
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
 				{
 					UUID uuid = *(UUID*)payload->Data;
-					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
-					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
+					Entity new_child = editor->GetCurrentScene()->GetEntity(uuid);
+					if (new_child && new_child != entity && !editor->GetCurrentScene()->IsParent(new_child, entity))
 					{
-						m_editor->m_currentScene->SetParent(new_child, entity);
+						editor->GetCurrentScene()->SetParent(new_child, entity);
 					}
 
 				}
@@ -188,7 +190,7 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::string path = buf;
 					Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
-					m_editor->m_currentScene->InstanciatePrefab(prefab, entity);
+					editor->GetCurrentScene()->InstanciatePrefab(prefab, entity);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -200,10 +202,13 @@ namespace trace {
 				else
 					m_selectedEntity = entity;
 
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
 					{
-						if (m_selectedEntity)
-							m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+						Entity selected_entity = editor->GetHierachyPanel()->GetSelectedEntity();
+						if (selected_entity)
+						{
+							editor->GetInspectorPanel()->DrawEntityComponent(selected_entity);
+						}
 					}, []() {}, []() {});
 			}
 
@@ -212,11 +217,11 @@ namespace trace {
 			{
 				if (ImGui::MenuItem("Create Entity"))
 				{
-					m_editor->m_currentScene->CreateEntity(entity.GetID());
+					editor->GetCurrentScene()->CreateEntity(entity.GetID());
 				}
 				if (ImGui::MenuItem("Delete Entity"))
 				{
-					m_editor->m_currentScene->DestroyEntity(entity);
+					editor->GetCurrentScene()->DestroyEntity(entity);
 					m_selectedEntity = Entity();
 				}
 				ImGui::EndPopup();
@@ -235,16 +240,17 @@ namespace trace {
 	}
 	void HierachyPanel::DrawEntityHierachy(HierachyComponent& hierachy)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		for (UUID& uuid : hierachy.children)
 		{
 			
-			Entity entity = m_editor->m_currentScene->GetEntity(uuid);
+			Entity entity = editor->GetCurrentScene()->GetEntity(uuid);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 
 
 			bool selected = (m_selectedEntity == entity);
 			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
-			TagComponent& tag = m_editor->m_currentScene->m_registry.get<TagComponent>(entity);
+			TagComponent& tag = editor->GetCurrentScene()->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 
 
@@ -266,20 +272,20 @@ namespace trace {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 				{
 					UUID uuid = *(UUID*)payload->Data;
-					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
-					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
+					Entity new_child = editor->GetCurrentScene()->GetEntity(uuid);
+					if (new_child && new_child != entity && !editor->GetCurrentScene()->IsParent(new_child, entity))
 					{
-						m_editor->m_currentScene->SetParent(new_child, entity);
+						editor->GetCurrentScene()->SetParent(new_child, entity);
 					}
 
 				}
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Prefab Entity"))
 				{
 					UUID uuid = *(UUID*)payload->Data;
-					Entity new_child = m_editor->m_currentScene->GetEntity(uuid);
-					if (new_child && new_child != entity && !m_editor->m_currentScene->IsParent(new_child, entity))
+					Entity new_child = editor->GetCurrentScene()->GetEntity(uuid);
+					if (new_child && new_child != entity && !editor->GetCurrentScene()->IsParent(new_child, entity))
 					{
-						m_editor->m_currentScene->SetParent(new_child, entity);
+						editor->GetCurrentScene()->SetParent(new_child, entity);
 					}
 
 				}
@@ -289,7 +295,7 @@ namespace trace {
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::string path = buf;
 					Ref<Prefab> prefab = SceneSerializer::DeserializePrefab(path);
-					m_editor->m_currentScene->InstanciatePrefab(prefab, entity);
+					editor->GetCurrentScene()->InstanciatePrefab(prefab, entity);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -301,10 +307,13 @@ namespace trace {
 				else
 					m_selectedEntity = entity;
 
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
 					{
-						if (m_selectedEntity)
-							m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+						Entity selected_entity = editor->GetHierachyPanel()->GetSelectedEntity();
+						if (selected_entity)
+						{
+							editor->GetInspectorPanel()->DrawEntityComponent(selected_entity);
+						}
 					}, []() {}, []() {});
 			}
 
@@ -313,11 +322,11 @@ namespace trace {
 			{
 				if (ImGui::MenuItem("Create Entity"))
 				{
-					m_editor->m_currentScene->CreateEntity(entity.GetID());
+					editor->GetCurrentScene()->CreateEntity(entity.GetID());
 				}
 				if (ImGui::MenuItem("Delete Entity"))
 				{
-					m_editor->m_currentScene->DestroyEntity(entity);
+					editor->GetCurrentScene()->DestroyEntity(entity);
 					m_selectedEntity = Entity();
 				}
 				ImGui::EndPopup();
@@ -334,6 +343,7 @@ namespace trace {
 	}
 	void HierachyPanel::DrawPrefabEntityHierachy(HierachyComponent& hierachy)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		Scene* prefab_scene = PrefabManager::get_instance()->GetScene();
 		for (UUID& uuid : hierachy.children)
 		{
@@ -402,10 +412,11 @@ namespace trace {
 				else
 					m_selectedEntity = entity;
 
-				m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
 					{
-						if (m_selectedEntity)
-							m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+						Entity selected_entity = editor->GetHierachyPanel()->GetSelectedEntity();
+						if (selected_entity)
+							editor->GetInspectorPanel()->DrawEntityComponent(selected_entity);
 					}, []() {}, []() {});
 			}
 
@@ -435,7 +446,7 @@ namespace trace {
 	}
 	void HierachyPanel::RenderPrefab(float deltaTime)
 	{
-
+		TraceEditor* editor = TraceEditor::get_instance();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
 		ImGui::Begin("Prefab Edit", 0, ImGuiWindowFlags_NoCollapse);
 
@@ -515,10 +526,11 @@ namespace trace {
 					else
 						m_selectedEntity = entity;
 
-					m_editor->m_inspectorPanel->SetDrawCallbackFn([&]()
+					editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
 						{
-							if (m_selectedEntity)
-								m_editor->m_inspectorPanel->DrawEntityComponent(m_selectedEntity);
+							Entity selected_entity = editor->GetHierachyPanel()->GetSelectedEntity();
+							if (selected_entity)
+								editor->GetInspectorPanel()->DrawEntityComponent(selected_entity);
 						}, []() {}, []() {});
 				}
 

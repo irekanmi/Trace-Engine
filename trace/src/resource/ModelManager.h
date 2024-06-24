@@ -31,7 +31,6 @@ namespace trace {
 
 		static ModelManager* get_instance();
 	private:
-		static ModelManager* s_instance;
 
 	private:
 		std::vector<Model> m_models;

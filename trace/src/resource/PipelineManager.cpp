@@ -18,7 +18,6 @@ namespace trace {
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
 	extern UUID GetUUIDFromName(const std::string& name);
 
-	PipelineManager* PipelineManager::s_instance = nullptr;
 
 	PipelineManager::PipelineManager()
 	{
@@ -543,7 +542,7 @@ namespace trace {
 				TRC_ERROR("Failed to initialize or create default gbuffer pipeline");
 				return false;
 			}
-			gbuffer_pipeline->pipeline_type = PipelineType::Surface_Material;
+			gbuffer_pipeline->SetPipelineType(PipelineType::Surface_Material);
 
 
 		};
@@ -579,10 +578,7 @@ namespace trace {
 	}
 	PipelineManager* PipelineManager::get_instance()
 	{
-		if (s_instance == nullptr)
-		{
-			s_instance = new PipelineManager();
-		}
+		static PipelineManager* s_instance = new PipelineManager;
 
 		return s_instance;
 	}

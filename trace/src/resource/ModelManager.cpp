@@ -9,7 +9,6 @@ namespace trace {
 
 	extern std::string GetNameFromUUID(UUID uuid);
 
-	ModelManager* ModelManager::s_instance = nullptr;
 
 	ModelManager::ModelManager()
 	{
@@ -187,10 +186,7 @@ namespace trace {
 	}
 	ModelManager* ModelManager::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new ModelManager();
-		}
+		static ModelManager* s_instance = new ModelManager;
 		return s_instance;
 	}
 }

@@ -32,17 +32,17 @@ namespace trace {
 			for (auto& i : shader->GetDataIndex())
 			{
 				uint32_t& hash_id = _hashTable.Get_Ref(i.first);
-				for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+				for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 				{
-					if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+					if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 					{
 
 						hash_id = j;
-						_pipeline->Scene_uniforms[j]._id = j;
-						_pipeline->Scene_uniforms[j]._index = i.second;
-						_pipeline->Scene_uniforms[j]._count = 1;
-						_pipeline->Scene_uniforms[j].data_type = ShaderData::CUSTOM_DATA_TEXTURE;
-						_pipeline->Scene_uniforms[j]._resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+						_pipeline->GetSceneUniforms()[j]._id = j;
+						_pipeline->GetSceneUniforms()[j]._index = i.second;
+						_pipeline->GetSceneUniforms()[j]._count = 1;
+						_pipeline->GetSceneUniforms()[j].data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+						_pipeline->GetSceneUniforms()[j]._resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
 
 						break;
 					}
@@ -73,13 +73,13 @@ namespace trace {
 		uint32_t total_size_global = 0;
 		uint32_t total_size_instance = 0;
 		uint32_t total_size_local = 0;
-		_pipeline->Scene_uniforms.resize(128);// TODO: Fix Hard Coded value
+		_pipeline->GetSceneUniforms().resize(128);// TODO: Fix Hard Coded value
 
 		uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
 
 
 		uint32_t z = 0;
-		for (auto& i : _pipeline->m_desc.resources.resources)
+		for (auto& i : _pipeline->GetDesc().resources.resources)
 		{
 			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
 			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
@@ -100,35 +100,35 @@ namespace trace {
 				for (auto& mem : i._struct.members)
 				{
 					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
-					for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 					{
-						if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 						{
 
 							hash_id = j;
-							_pipeline->Scene_uniforms[j]._id = j;
-							_pipeline->Scene_uniforms[j]._size = mem.resource_size;
-							_pipeline->Scene_uniforms[j]._slot = i._struct.slot;
-							_pipeline->Scene_uniforms[j]._index = i._struct.index;
-							_pipeline->Scene_uniforms[j]._count = i._struct.count;
-							_pipeline->Scene_uniforms[j]._resource_type = i._struct.resource_type;
-							_pipeline->Scene_uniforms[j]._shader_stage = i._struct.shader_stage;
-							_pipeline->Scene_uniforms[j].data_type = mem.resource_data_type;
-							_pipeline->Scene_uniforms[j]._offset = struct_size;
+							_pipeline->GetSceneUniforms()[j]._id = j;
+							_pipeline->GetSceneUniforms()[j]._size = mem.resource_size;
+							_pipeline->GetSceneUniforms()[j]._slot = i._struct.slot;
+							_pipeline->GetSceneUniforms()[j]._index = i._struct.index;
+							_pipeline->GetSceneUniforms()[j]._count = i._struct.count;
+							_pipeline->GetSceneUniforms()[j]._resource_type = i._struct.resource_type;
+							_pipeline->GetSceneUniforms()[j]._shader_stage = i._struct.shader_stage;
+							_pipeline->GetSceneUniforms()[j].data_type = mem.resource_data_type;
+							_pipeline->GetSceneUniforms()[j]._offset = struct_size;
 							struct_size += mem.resource_size;
 							
 							struct_size = get_alignment(struct_size, offset_alignment);
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 							{
-								_pipeline->Scene_uniforms[j]._offset = total_size_local;
+								_pipeline->GetSceneUniforms()[j]._offset = total_size_local;
 								total_size_local += mem.resource_size;
 								total_size_local = get_alignment(total_size_local, offset_alignment);
 								break;
 							}
-							_pipeline->Scene_uniforms[j]._struct_index = z;
+							_pipeline->GetSceneUniforms()[j]._struct_index = z;
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 							{
-								_pipeline->Scene_uniforms[j]._offset = total_size_global;
+								_pipeline->GetSceneUniforms()[j]._offset = total_size_global;
 								total_size_global += mem.resource_size;
 								total_size_global = get_alignment(total_size_global, offset_alignment);
 							}
@@ -145,21 +145,21 @@ namespace trace {
 				}
 				if (i._struct.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 				{
-					for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 					{
-						if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 						{
 							uint32_t& hash_id = _hashTable.Get_Ref(i._struct.resource_name);
 							hash_id = j;
-							_pipeline->Scene_uniforms[j]._id = j;
-							_pipeline->Scene_uniforms[j]._size = i._struct.resource_size;
-							_pipeline->Scene_uniforms[j]._slot = i._struct.slot;
-							_pipeline->Scene_uniforms[j]._index = i._struct.index;
-							_pipeline->Scene_uniforms[j]._count = i._struct.count;
-							_pipeline->Scene_uniforms[j]._resource_type = i._struct.resource_type;
-							_pipeline->Scene_uniforms[j]._shader_stage = i._struct.shader_stage;
-							//_pipeline->Scene_uniforms[j].data_type = mem.resource_data_type;
-							//_pipeline->Scene_uniforms[j]._offset = struct_size;
+							_pipeline->GetSceneUniforms()[j]._id = j;
+							_pipeline->GetSceneUniforms()[j]._size = i._struct.resource_size;
+							_pipeline->GetSceneUniforms()[j]._slot = i._struct.slot;
+							_pipeline->GetSceneUniforms()[j]._index = i._struct.index;
+							_pipeline->GetSceneUniforms()[j]._count = i._struct.count;
+							_pipeline->GetSceneUniforms()[j]._resource_type = i._struct.resource_type;
+							_pipeline->GetSceneUniforms()[j]._shader_stage = i._struct.shader_stage;
+							//_pipeline->GetSceneUniforms()[j].data_type = mem.resource_data_type;
+							//_pipeline->GetSceneUniforms()[j]._offset = struct_size;
 
 
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
@@ -170,7 +170,7 @@ namespace trace {
 							break;
 						}
 					}
-					_pipeline->Scence_struct.push_back({ _hashTable.Get_Ref(i._struct.resource_name) ,  INVALID_ID });
+					_pipeline->GetSceneStructs().push_back({_hashTable.Get_Ref(i._struct.resource_name) ,  INVALID_ID});
 					z++;
 				}
 			}
@@ -180,28 +180,28 @@ namespace trace {
 				for (auto& mem : i._array.members)
 				{
 					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
-					for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 					{
-						if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 						{
 
 							hash_id = j;
-							_pipeline->Scene_uniforms[j]._id = j;
-							_pipeline->Scene_uniforms[j]._size = i._array.resource_size;
-							_pipeline->Scene_uniforms[j]._slot = i._array.slot;
-							_pipeline->Scene_uniforms[j]._index = mem.index;
-							_pipeline->Scene_uniforms[j]._count = i._array.count;
-							_pipeline->Scene_uniforms[j]._resource_type = i._array.resource_type;
-							_pipeline->Scene_uniforms[j]._shader_stage = i._array.shader_stage;
-							_pipeline->Scene_uniforms[j].data_type = mem.data_type;
+							_pipeline->GetSceneUniforms()[j]._id = j;
+							_pipeline->GetSceneUniforms()[j]._size = i._array.resource_size;
+							_pipeline->GetSceneUniforms()[j]._slot = i._array.slot;
+							_pipeline->GetSceneUniforms()[j]._index = mem.index;
+							_pipeline->GetSceneUniforms()[j]._count = i._array.count;
+							_pipeline->GetSceneUniforms()[j]._resource_type = i._array.resource_type;
+							_pipeline->GetSceneUniforms()[j]._shader_stage = i._array.shader_stage;
+							_pipeline->GetSceneUniforms()[j].data_type = mem.data_type;
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 							{
-								_pipeline->Scene_uniforms[j]._offset = total_size_local;
+								_pipeline->GetSceneUniforms()[j]._offset = total_size_local;
 								total_size_local += i._array.resource_size;
 								total_size_local = get_alignment(total_size_local, offset_alignment);
 								break;
 							}
-							//_pipeline->Scene_uniforms[j]._offset = total_size_global;
+							//_pipeline->GetSceneUniforms()[j]._offset = total_size_global;
 							//total_size_global += i._array.resource_size;
 							//total_size_global = get_alignment(total_size_global, offset_alignment);
 							break;
@@ -214,24 +214,24 @@ namespace trace {
 			{
 				uint32_t& hash_id = _hashTable.Get_Ref(i._array.name);
 				int struct_loc = -1;
-				for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+				for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 				{
-					if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+					if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 					{
 
 						hash_id = j;
-						_pipeline->Scene_uniforms[j]._id = j;
-						_pipeline->Scene_uniforms[j]._size = i._array.resource_size * i._array.count;
-						_pipeline->Scene_uniforms[j]._slot = i._array.slot;
-						_pipeline->Scene_uniforms[j]._index = 0;
-						_pipeline->Scene_uniforms[j]._count = i._array.count;
-						_pipeline->Scene_uniforms[j]._resource_type = i._array.resource_type;
-						_pipeline->Scene_uniforms[j]._shader_stage = i._array.shader_stage;
-						_pipeline->Scene_uniforms[j]._offset = 0;
-						_pipeline->Scene_uniforms[j]._struct_index = z;
+						_pipeline->GetSceneUniforms()[j]._id = j;
+						_pipeline->GetSceneUniforms()[j]._size = i._array.resource_size * i._array.count;
+						_pipeline->GetSceneUniforms()[j]._slot = i._array.slot;
+						_pipeline->GetSceneUniforms()[j]._index = 0;
+						_pipeline->GetSceneUniforms()[j]._count = i._array.count;
+						_pipeline->GetSceneUniforms()[j]._resource_type = i._array.resource_type;
+						_pipeline->GetSceneUniforms()[j]._shader_stage = i._array.shader_stage;
+						_pipeline->GetSceneUniforms()[j]._offset = 0;
+						_pipeline->GetSceneUniforms()[j]._struct_index = z;
 						if (i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 						{
-							_pipeline->Scene_uniforms[j]._offset = total_size_global;
+							_pipeline->GetSceneUniforms()[j]._offset = total_size_global;
 
 							for (uint32_t r = 0; r < i._array.count; r++)
 							{
@@ -259,28 +259,28 @@ namespace trace {
 				for (auto& mem : i._array.members)
 				{
 					uint32_t& hash_ = _hashTable.Get_Ref(mem.resource_name);
-					for (uint32_t j = 0; j < _pipeline->Scene_uniforms.size(); j++)
+					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 					{
-						if (_pipeline->Scene_uniforms[j]._id == INVALID_ID)
+						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 						{
 
 							hash_ = j;
-							_pipeline->Scene_uniforms[j]._id = j;
-							_pipeline->Scene_uniforms[j]._size = i._array.resource_size;
-							_pipeline->Scene_uniforms[j]._slot = i._array.slot;
-							_pipeline->Scene_uniforms[j]._index = mem.index;
-							_pipeline->Scene_uniforms[j]._count = i._array.count;
-							_pipeline->Scene_uniforms[j]._resource_type = i._array.resource_type;
-							_pipeline->Scene_uniforms[j]._shader_stage = i._array.shader_stage;
-							_pipeline->Scene_uniforms[j].data_type = mem.data_type;
-							_pipeline->Scene_uniforms[j]._struct_index = hash_id;
+							_pipeline->GetSceneUniforms()[j]._id = j;
+							_pipeline->GetSceneUniforms()[j]._size = i._array.resource_size;
+							_pipeline->GetSceneUniforms()[j]._slot = i._array.slot;
+							_pipeline->GetSceneUniforms()[j]._index = mem.index;
+							_pipeline->GetSceneUniforms()[j]._count = i._array.count;
+							_pipeline->GetSceneUniforms()[j]._resource_type = i._array.resource_type;
+							_pipeline->GetSceneUniforms()[j]._shader_stage = i._array.shader_stage;
+							_pipeline->GetSceneUniforms()[j].data_type = mem.data_type;
+							_pipeline->GetSceneUniforms()[j]._struct_index = hash_id;
 							break;
 						}
 					}
 				}
 				if (i._array.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 				{
-					_pipeline->Scence_struct.push_back({ hash_id,  INVALID_ID });
+					_pipeline->GetSceneStructs().push_back({hash_id,  INVALID_ID});
 					z++;
 				}
 			}
@@ -333,7 +333,7 @@ namespace trace {
 
 			uint32_t k = 0;
 			uint32_t k_off = 0;
-			for (auto& _i : _pipeline->m_desc.resources.resources)
+			for (auto& _i : _pipeline->GetDesc().resources.resources)
 			{
 				bool is_struct = _i.def == trace::ShaderDataDef::STRUCTURE;
 				bool is_array = _i.def == trace::ShaderDataDef::ARRAY;
@@ -557,13 +557,13 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		pipeline->GetRenderHandle()->m_internalData = _handle;
 
-		pipeline->m_desc = desc;
+		pipeline->SetDesc(desc);
 
 
-		pipeline->_hashTable.Init(512);// TODO: let number be configurable or more dynamic
+		pipeline->GetHashTable().Init(512);// TODO: let number be configurable or more dynamic
 
 		uint32_t _ids = INVALID_ID;
-		pipeline->_hashTable.Fill(_ids);
+		pipeline->GetHashTable().Fill(_ids);
 
 		VkViewport viewport = {};
 		viewport.x = 0;
@@ -687,7 +687,7 @@ namespace vk {
 			map_data_size,
 			nullptr,
 			pipeline,
-			pipeline->_hashTable,
+			pipeline->GetHashTable(),
 			_instance,
 			_device,
 			map_data_size
@@ -770,7 +770,7 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
-		uint32_t hash_id = pipeline->_hashTable.Get(resource_name);
+		uint32_t hash_id = pipeline->GetHashTable().Get(resource_name);
 
 		if (hash_id == INVALID_ID)
 		{
@@ -779,7 +779,7 @@ namespace vk {
 		}
 
 
-		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
+		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
 		return __SetPipelineData_Meta(pipeline, meta_data, resource_scope, data, size);
 	}
@@ -803,7 +803,7 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
-		uint32_t hash_id = pipeline->_hashTable.Get(resource_name);
+		uint32_t hash_id = pipeline->GetHashTable().Get(resource_name);
 
 		if (hash_id == INVALID_ID)
 		{
@@ -811,7 +811,7 @@ namespace vk {
 			return false;
 		}
 
-		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
+		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
 		//if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 		//{
@@ -977,7 +977,7 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		trace::VKImage* _tex = reinterpret_cast<trace::VKImage*>(texture->GetRenderHandle()->m_internalData);
 
-		uint32_t hash_id = pipeline->_hashTable.Get(resource_name.c_str());
+		uint32_t hash_id = pipeline->GetHashTable().Get(resource_name.c_str());
 
 		if (hash_id == INVALID_ID)
 		{
@@ -987,7 +987,7 @@ namespace vk {
 
 
 
-		trace::UniformMetaData& meta_data = pipeline->Scene_uniforms[hash_id];
+		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
 		return __SetPipelineTextureData_Meta(pipeline, meta_data, resource_scope, _tex, index);
 	}
@@ -1129,7 +1129,7 @@ namespace vk {
 		uint32_t offset_count = 0;
 		uint32_t offsets[12] = {};
 
-		for (auto& stct : pipeline->Scence_struct)
+		for (auto& stct : pipeline->GetSceneStructs())
 		{
 			offsets[offset_count++] = stct.second;
 		}

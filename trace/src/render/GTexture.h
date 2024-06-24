@@ -21,6 +21,7 @@ namespace trace {
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
+
 	private:
 		GHandle m_renderHandle;
 		TextureDesc m_desc;

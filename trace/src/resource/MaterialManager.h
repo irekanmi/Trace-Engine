@@ -5,6 +5,7 @@
 #include "HashTable.h"
 #include "serialize/AssetsInfo.h"
 #include "scene/UUID.h"
+#include "render/Material.h"
 
 
 #include <stdint.h>

@@ -48,7 +48,7 @@ namespace trace {
 
 
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
-			m_renderer->_avaliable_passes["TONEMAP_PASS"] = &m_renderPass;
+			m_renderer->GetAvaliableRenderPasses()["TONEMAP_PASS"] = &m_renderPass;
 		};
 
 		if(AppSettings::is_editor)

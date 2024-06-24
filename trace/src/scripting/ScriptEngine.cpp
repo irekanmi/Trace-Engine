@@ -8,7 +8,6 @@
 
 namespace trace {
 
-	ScriptEngine* ScriptEngine::s_instance = nullptr;
 
 	ScriptEngine::ScriptEngine()
 	{
@@ -119,10 +118,7 @@ namespace trace {
 
 	ScriptEngine* ScriptEngine::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new ScriptEngine();
-		}
+		static ScriptEngine* s_instance = new ScriptEngine;
 		return s_instance;
 	}
 

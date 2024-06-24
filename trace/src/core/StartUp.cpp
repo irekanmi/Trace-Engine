@@ -31,18 +31,21 @@ namespace trace {
 		trace::trc_app_data app_data = trace::CreateApp();
 		trace::init(app_data);
 
-		trace::Application::s_instance = new trace::Application(app_data); //TODO: Use custom allocator
+		trace::Application* application_instance = trace::Application::get_instance(); //TODO: Use custom allocator
+		application_instance->Init(app_data);
 		if (!trace::_INIT(app_data))
 		{
 			TRC_CRITICAL("Engine / Application Startup failed");
 			return -1;
 		}
 
-		trace::Application::s_instance->Start();
-		trace::Application::s_instance->Run();
-		trace::Application::s_instance->End();
+		application_instance->Start();
+		application_instance->Run();
+		application_instance->End();
 
-		delete trace::Application::s_instance; //TODO: Use custom allocator
+		application_instance->Shutdown();
+
+		delete application_instance; //TODO: Use custom allocator
 
 		trace::_SHUTDOWN(app_data);
 
@@ -61,9 +64,9 @@ namespace trace {
 		{
 			Logger::get_instance()->EnableFileLogging();
 #ifdef TRC_DEBUG_BUILD
-			Logger::get_instance()->set_log_level(LogLevel::trace);
+			Logger::get_instance()->SetLogLevel(LogLevel::trace);
 #else
-			Logger::get_instance()->set_log_level(LogLevel::trace);
+			Logger::get_instance()->SetLogLevel(LogLevel::trace);
 #endif
 		}
 

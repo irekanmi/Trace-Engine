@@ -54,7 +54,7 @@ namespace trace {
 
 
 			RenderFunc::CreateRenderPass(&m_renderPass, pass_desc);
-			m_renderer->_avaliable_passes["MAIN_PASS"] = &m_renderPass;
+			m_renderer->GetAvaliableRenderPasses()["MAIN_PASS"] = &m_renderPass;
 		}
 	}
 

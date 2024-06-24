@@ -49,7 +49,6 @@ namespace trace {
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
 		std::filesystem::path shader_resource_path;
 
-		static ShaderManager* s_instance;
 		friend class ProjectBuilder;
 
 	protected:

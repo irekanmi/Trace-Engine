@@ -73,7 +73,7 @@ namespace trace {
 		bin_id = TRC_ASSETS_DB_ID;
 		ast_db.Write(bin_id);
 
-		std::string assetsDB_path = project->current_directory + "/InternalAssetsDB/assets.trdb";
+		std::string assetsDB_path = project->GetProjectCurrentDirectory() + "/InternalAssetsDB/assets.trdb";
 		FileHandle in_handle;
 		if (!FileSystem::open_file(assetsDB_path, FileMode::READ, in_handle))
 		{

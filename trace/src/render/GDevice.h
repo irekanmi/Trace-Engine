@@ -44,7 +44,6 @@ namespace trace {
 
 		GHandle* GetRenderHandle() { return &m_renderhandle; }
 
-		GPipeline* m_pipeline = nullptr;
 	private:
 		GHandle m_renderhandle;
 

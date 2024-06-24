@@ -4,7 +4,6 @@
 
 namespace trace {
 	Clock::Clock()
-		:elapsedTime(0.0f)
 	{
 	}
 	Clock::~Clock()
@@ -12,27 +11,27 @@ namespace trace {
 	}
 	void Clock::Begin()
 	{
-		if (!started)
+		if (!m_started)
 		{
-			start_time = std::chrono::system_clock::now();
-			started = true;
+			m_startTime = std::chrono::system_clock::now();
+			m_started = true;
 		}
 	}
 	void Clock::Tick( float tick_amount)
 	{
 		
-		elapsedTime += tick_amount;
+		m_elapsedTime += tick_amount;
 	}
 	float Clock::GetElapsedTime()
 	{
-		return elapsedTime;
+		return m_elapsedTime;
 	}
 	float Clock::GetInternalElapsedTime()
 	{
-		if (!started) Begin();
+		if (!m_started) Begin();
 		auto now = std::chrono::system_clock::now();
 
 		//start_time = std::chrono::system_clock::now();
-		return std::chrono::duration<float, std::chrono::seconds::period>(now - start_time).count();
+		return std::chrono::duration<float, std::chrono::seconds::period>(now - m_startTime).count();
 	}
 }

@@ -32,8 +32,8 @@ namespace trace {
 
 	public:
 
-		void set_log_level(LogLevel logLevel);
-		void set_logger_name(const char* LogName);
+		void SetLogLevel(LogLevel logLevel);
+		void SetLoggerName(const char* LogName);
 		void EnableFileLogging();
 		void EnableFileLogging(const char* file_path);
 		
@@ -111,7 +111,6 @@ namespace trace {
 		const char* filepath;
 		const char* logger_name;
 		bool file_logging;
-		static Logger* s_instance;
 		
 		//spdlog
 		std::shared_ptr<spdlog::logger> logger;
@@ -123,13 +122,14 @@ namespace trace {
 	{
 
 	public:
-		Exception(int line, std::string errdesc, std::string function, std::string file);
+		Exception(int line, std::string err_desc, std::string function, std::string file);
 		~Exception();
 
 		const char* what() const noexcept override ;
 
-		int Line;
-		std::string mErrDesc, mFunction, mFile, mErrText;
+	private:
+		int m_line;
+		std::string m_errDesc, m_function, m_file, m_errText;
 
 
 

@@ -99,22 +99,22 @@ namespace trace {
 
 	void InputSystem::SetMouseX(float x)
 	{
-		mouse_curr.m_x = x;
+		mouse_curr.x = x;
 	}
 
 	void InputSystem::SetMouseY(float y)
 	{
-		mouse_curr.m_y = y;
+		mouse_curr.y = y;
 	}
 
 	float InputSystem::GetMouseX()
 	{
-		return mouse_curr.m_x;
+		return mouse_curr.x;
 	}
 
 	float InputSystem::GetMouseY()
 	{
-		return mouse_curr.m_y;
+		return mouse_curr.y;
 	}
 
 	InputSystem * InputSystem::get_instance()

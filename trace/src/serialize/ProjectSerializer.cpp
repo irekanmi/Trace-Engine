@@ -65,9 +65,9 @@ namespace trace {
 			UUID id = data["Start Scene"].as<uint64_t>();
 			res->SetStartScene(id);
 		}
-		res->current_directory = p.string();
-		res->assets_directory = (p / "Assets").string();
-		res->assembly_path = (p / ("Data/Assembly/" + project_name + ".dll")).string();
+		res->SetProjectCurrentDirectory(p.string());
+		res->SetAssetsDirectory((p / "Assets").string());
+		res->SetAssemblyPath((p / ("Data/Assembly/" + project_name + ".dll")).string());
 		res->m_path = file_path;
 
 		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ }};

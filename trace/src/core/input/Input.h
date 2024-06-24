@@ -21,8 +21,8 @@ namespace trace {
 	struct Mouse
 	{
 		bool buttons[Buttons::BUTTON_MAX_BUTTONS + 1];
-		float m_x;
-		float m_y;
+		float x;
+		float y;
 	};
 
 	class TRACE_API InputSystem : public Object
@@ -40,8 +40,8 @@ namespace trace {
 		bool GetKey(Keys key);
 		bool GetButton(Buttons button);
 
-		void SetKey(Keys key, bool val);
-		void SetButton(Buttons button, bool val);
+		void SetKey(Keys key, bool value);
+		void SetButton(Buttons button, bool value);
 
 		void SetMouseX(float x);
 		void SetMouseY(float y);

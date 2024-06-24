@@ -21,7 +21,6 @@ namespace trace {
 	}
 	bool AnimationPanel::Init()
 	{
-		m_editor = TraceEditor::get_instance();
         m_state = State::PAUSE;
 
 		return true;
@@ -31,30 +30,33 @@ namespace trace {
 	}
 	void AnimationPanel::Render(float deltaTime)
 	{
-        Ref<Scene> scene = m_editor->m_currentScene;
+        TraceEditor* editor = TraceEditor::get_instance();
+        Ref<Scene> scene = editor->GetCurrentScene();
+        float clip_duration = 0.0f;
 
         //TODO: Move to Update Function ===============
 
         if (m_currentClip && scene)
         {
+            clip_duration = m_currentClip->GetDuration();
             switch (m_state)
             {
             case State::PLAY:
             {
                 m_elapsed += deltaTime;
                 AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed);
-                currentFrame = int((m_elapsed / m_currentClip->GetDuration()) * (float)endFrame);
-                currentFrame %= endFrame;
-                m_elapsed = fmod(m_elapsed, m_currentClip->GetDuration());
+                m_currentFrame = int((m_elapsed / clip_duration) * (float)m_endFrame);
+                m_currentFrame %= m_endFrame;
+                m_elapsed = fmod(m_elapsed, clip_duration);
                 break;
             }
             case State::PAUSE:
             {
-                if (lastSelectedFrame != currentFrame)
+                if (m_lastSelectedFrame != m_currentFrame)
                 {
-                    float t = ((float)currentFrame / (float)endFrame) * m_currentClip->GetDuration();
+                    float t = ((float)m_currentFrame / (float)m_endFrame) * clip_duration;
                     AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t);
-                    lastSelectedFrame = currentFrame;
+                    m_lastSelectedFrame = m_currentFrame;
                 }
                 break;
             }
@@ -67,9 +69,10 @@ namespace trace {
         ImGui::Columns(2);
         if (m_currentClip)
         {
+            clip_duration = m_currentClip->GetDuration();
             std::string clip_name = m_currentClip->GetName();
             int sample_rate = m_currentClip->GetSampleRate();
-            float duration = m_currentClip->GetDuration();
+            float duration = clip_duration;
 
             ImGui::Button(clip_name.c_str());
             if (ImGui::BeginDragDropTarget())
@@ -95,8 +98,14 @@ namespace trace {
                 }
                 ImGui::EndDragDropTarget();
             }
-            if (ImGui::InputInt("Sample Rate", &sample_rate)) m_currentClip->SetSampleRate(sample_rate);
-            if (ImGui::InputFloat("Duration(Seconds)", &duration)) m_currentClip->SetDuration(duration);
+            if (ImGui::InputInt("Sample Rate", &sample_rate))
+            {
+                m_currentClip->SetSampleRate(sample_rate);
+            }
+            if (ImGui::InputFloat("Duration(Seconds)", &duration))
+            {
+                m_currentClip->SetDuration(duration);
+            }
 
             if (ImGui::Button("Play"))
             {
@@ -116,7 +125,10 @@ namespace trace {
                 {
                     m_state = State::PAUSE;
                 }
-                else m_state = State::RECORD;
+                else
+                {
+                    m_state = State::RECORD;
+                }
             }
 
             if (ImGui::Button("Save"))
@@ -171,7 +183,10 @@ namespace trace {
                     }
                     else
                     {
-                        if (path.extension() != ".trcac") path = std::filesystem::path(result += ".trcac");
+                        if (path.extension() != ".trcac")
+                        {
+                            path = std::filesystem::path(result += ".trcac");
+                        }
                         Ref<AnimationClip> clip = AnimationsManager::get_instance()->CreateClip(path.filename().string());
                         AnimationsSerializer::SerializeAnimationClip(clip, path.string());
                         clip.free();
@@ -187,13 +202,13 @@ namespace trace {
         if (m_currentClip)
         {
             int sample_rate = m_currentClip->GetSampleRate();
-            float duration = m_currentClip->GetDuration();
+            float duration = clip_duration;
 
-            startFrame = 0;
-            endFrame = int((float)sample_rate * duration);
+            m_startFrame = 0;
+            m_endFrame = int((float)sample_rate * duration);
         }
 
-        if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, { 0, 0 },
+        if (ImGui::BeginNeoSequencer("Sequencer", &m_currentFrame, &m_startFrame, &m_endFrame, { 0, 0 },
             ImGuiNeoSequencerFlags_EnableSelection |
             ImGuiNeoSequencerFlags_Selection_EnableDragging |
             ImGuiNeoSequencerFlags_AlwaysShowHeader|
@@ -202,8 +217,8 @@ namespace trace {
             
             if (m_currentClip && scene)
             {
-                Ref<Scene> scene = m_editor->m_currentScene;
-                float duration = m_currentClip->GetDuration();
+                Ref<Scene> scene = editor->GetCurrentScene();
+                float duration = clip_duration;
 
 
                 for (auto& channel : m_currentClip->GetTracks())
@@ -224,7 +239,7 @@ namespace trace {
                                 {
                                     FrameIndex& fi = m_currentTracks[channel.first][track.channel_type][i];
                                     ImGui::NeoKeyframe(&fi.index);
-                                    float time_point = ((float)fi.index / (float)endFrame) * m_currentClip->GetDuration();
+                                    float time_point = ((float)fi.index / (float)m_endFrame) * clip_duration;
                                     if (ImGui::NeoIsDraggingSelection() && ImGui::IsNeoKeyframeSelected())
                                     {
                                         track.channel_data[fi.current_fd_index].time_point = time_point;
@@ -300,7 +315,7 @@ namespace trace {
         if (clip != m_currentClip) m_currentTracks.clear();
         m_currentClip = clip;
         generate_tracks();
-        lastSelectedFrame = -1;
+        m_lastSelectedFrame = -1;
     }
     bool AnimationPanel::Recording()
     {
@@ -316,7 +331,7 @@ namespace trace {
 
         int sample_rate = m_currentClip->GetSampleRate();
         float duration = m_currentClip->GetDuration();
-        float current_time = ((float)currentFrame / (float)endFrame) * duration;
+        float current_time = ((float)m_currentFrame / (float)m_endFrame) * duration;
 
         if (it != tracks.end())
         {
@@ -386,7 +401,7 @@ namespace trace {
         int sample_rate = m_currentClip->GetSampleRate();
         float duration = m_currentClip->GetDuration();
 
-        endFrame = int((float)sample_rate * duration);
+        m_endFrame = int((float)sample_rate * duration);
 
         for (auto& channel : m_currentClip->GetTracks())
         {
@@ -397,7 +412,7 @@ namespace trace {
                 for (AnimationFrameData& fd : track.channel_data)
                 {
                     FrameIndex fi;
-                    fi.index = int((fd.time_point / duration) * (float)endFrame);
+                    fi.index = int((fd.time_point / duration) * (float)m_endFrame);
                     fi.current_fd_index = i;
                     m_currentTracks[channel.first][track.channel_type].push_back(fi);
                     ++i;
@@ -409,7 +424,7 @@ namespace trace {
     }
     void AnimationPanel::play()
     {
-        m_elapsed = ((float)currentFrame / (float)endFrame) * m_currentClip->GetDuration();
+        m_elapsed = ((float)m_currentFrame / (float)m_endFrame) * m_currentClip->GetDuration();
     }
     void AnimationPanel::pause()
     {

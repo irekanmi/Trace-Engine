@@ -5,7 +5,6 @@
 
 namespace trace {
 
-	class TraceEditor;
 
 	class HierachyPanel
 	{
@@ -22,8 +21,10 @@ namespace trace {
 		Ref<Prefab> GetPrefabEdit() { return m_editPrefab; }
 		Entity GetSelectedEntity() { return m_selectedEntity; }
 
+
+		void SetSelectedEntity(Entity entity) { m_selectedEntity = entity; }
+
 	private:
-		TraceEditor* m_editor;
 		Entity m_selectedEntity;
 		Entity m_selectedPrefabEntity;
 		Ref<Prefab> m_editPrefab;
@@ -35,7 +36,6 @@ namespace trace {
 		void RenderPrefab(float deltaTime);
 
 	protected:
-		friend class TraceEditor;
 	};
 
 }

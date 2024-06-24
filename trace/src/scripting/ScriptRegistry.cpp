@@ -196,7 +196,7 @@ namespace trace {
 			bool found = false;
 			for (auto& j : m_scripts)
 			{
-				if (j.second.script->script_name == i.second.script_name)
+				if (j.second.script->GetScriptName() == i.second.GetScriptName())
 				{
 					new_scripts[i.second.GetID()] = j.second;
 					found = true;

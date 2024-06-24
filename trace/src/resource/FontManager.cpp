@@ -12,7 +12,6 @@ namespace trace {
 
 	extern std::string GetNameFromUUID(UUID uuid);
 
-	FontManager* FontManager::s_instance = nullptr;
 
 	bool FontManager::Init(uint32_t num_font_units)
 	{
@@ -236,10 +235,7 @@ namespace trace {
 
 	FontManager* FontManager::get_instance()
 	{
-		if (!s_instance)
-		{
-			s_instance = new FontManager;
-		}
+		static FontManager* s_instance = new FontManager;
 		return s_instance;
 	}
 
