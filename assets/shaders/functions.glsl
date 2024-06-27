@@ -111,3 +111,20 @@ vec4 sampleTent_3x3(sampler2D tex, vec2 inUV, float radius)
     return result;
 }
 
+vec4 colorFromUint32(uint color)
+{
+    vec4 result;
+
+    float a = float(color >> 24) / 255.0f;
+    float b = float( (color >> 16) & 0x000000FF) / 255.0f;
+    float g = float( (color >> 8) & 0x000000FF) / 255.0f;
+    float r = float( (color >> 0) & 0x000000FF) / 255.0f;
+
+    result.r = r;
+    result.g = g;
+    result.b = b;
+    result.a = a;
+
+    return result;
+}
+

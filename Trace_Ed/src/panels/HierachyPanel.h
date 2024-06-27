@@ -17,7 +17,7 @@ namespace trace {
 
 		void DrawEntity(Entity entity);
 
-		void SetPrefabEdit(Ref<Prefab> prefab) { m_editPrefab = prefab; }
+		void SetPrefabEdit(Ref<Prefab> prefab);
 		Ref<Prefab> GetPrefabEdit() { return m_editPrefab; }
 		Entity GetSelectedEntity() { return m_selectedEntity; }
 

@@ -17,6 +17,7 @@
 #include "resource/MaterialManager.h"
 #include "resource/PipelineManager.h"
 #include "core/memory/MemoryManager.h"
+#include "debug/Debugger.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -108,8 +109,6 @@ namespace trace {
 			m_composer = (RenderComposer*)app_data.render_composer;
 		}
 
-		m_debug = nullptr;
-		m_debug = new DebugData();
 
 		// Text rendering initializaton ----------------------------
 
@@ -165,11 +164,20 @@ namespace trace {
 		}
 		boundTextTextures.clear();
 
-		if (m_debug)
+		/*if (m_debug)
 		{
 			m_debug->positions.clear();
 			m_debug->vert_count = 0;
+		}*/
+
+		Debugger* debugger = Debugger::get_instance();
+		if (debugger->IsInitialized())
+		{
+			Debugger::DebugRenderData& render_data = debugger->GetRenderData();
+			render_data.positions.clear();
+			render_data.vert_count = 0;
 		}
+
 
 		UIFunc::UIEndFrame();
 		RenderFunc::EndFrame(&g_device);
@@ -247,8 +255,6 @@ namespace trace {
 		// ---------------------------------------
 
 		m_composer->Shutdowm();
-		delete m_debug;
-		m_debug = nullptr;
 		delete m_composer;
 		m_composer = nullptr;
 		_camera = nullptr;
@@ -433,6 +439,12 @@ namespace trace {
 	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture)
 	{	
 		
+		DrawQuad_(_transform, texture, TRC_COL32_BLACK);
+
+	}
+
+	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color)
+	{
 		if (!quadBatches[current_quad_batch].tex)
 		{
 			quadBatches[current_quad_batch].tex = texture.get();
@@ -463,33 +475,41 @@ namespace trace {
 			quadBatches[current_quad_batch].tex = texture.get();
 		}
 
+		float new_color = 0.0f;
+		memcpy(&new_color, &color, sizeof(uint32_t));
+
 		uint32_t current_vert = quadBatches[current_quad_batch].current_unit * 6;
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert].a =  new_color;
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
 		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
 		quadBatches[current_quad_batch].current_unit++;
-
 	}
 
 	void Renderer::DrawString(Font* font, const std::string& text, glm::mat4 _transform)
@@ -737,21 +757,22 @@ namespace trace {
 
 	void Renderer::RenderDebugData()
 	{
-		if (m_debug)
+		Debugger* debugger = Debugger::get_instance();
+		if (debugger->IsInitialized())
 		{
-			if (m_debug->vert_count <= 0) return;
-			if(!m_debug->m_linePipeline) m_debug->m_linePipeline = PipelineManager::get_instance()->GetPipeline("debug_line_pipeline");
+			Debugger::DebugRenderData& render_data = debugger->GetRenderData();
+			if (render_data.vert_count <= 0) return;
+			Ref<GPipeline> render_pipeline = PipelineManager::get_instance()->GetPipeline("debug_line_pipeline");
 
 			glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
-			Ref<GPipeline> sp = m_debug->m_linePipeline;
-			RenderFunc::OnDrawStart(&g_device, sp.get());
+			RenderFunc::OnDrawStart(&g_device, render_pipeline.get());
 			RenderFunc::BindLineWidth(&g_device, 1.5f);
-			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, m_debug->positions.data(), m_debug->vert_count * sizeof(glm::vec4));
-			RenderFunc::BindPipeline_(sp.get());
-			RenderFunc::BindPipeline(&g_device, sp.get());
-			RenderFunc::Draw(&g_device, 0, m_debug->vert_count);
-			RenderFunc::OnDrawEnd(&g_device, sp.get());
+			RenderFunc::SetPipelineData(render_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(render_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, render_data.positions.data(), render_data.vert_count * sizeof(glm::vec4));
+			RenderFunc::BindPipeline_(render_pipeline.get());
+			RenderFunc::BindPipeline(&g_device, render_pipeline.get());
+			RenderFunc::Draw(&g_device, 0, render_data.vert_count);
+			RenderFunc::OnDrawEnd(&g_device, render_pipeline.get());
 		}
 	}
 
@@ -1016,14 +1037,22 @@ namespace trace {
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(data_size);
 		memcpy(cmd.params.data, &from, sizeof(glm::vec3));
 		memcpy((cmd.params.data + sizeof(glm::vec3)), &to, sizeof(glm::vec3));
-		cmd.func = [&](CommandParams params) {
-			if (!m_debug) return;
+		cmd.func = [](CommandParams params) {
+
+			//if (!m_debug) return;
+			Debugger* debugger = Debugger::get_instance();
+			if (!debugger->IsInitialized())
+			{
+				return;
+			}
 			glm::vec3& from = *(glm::vec3*)(params.data);
 			glm::vec3& to = *(glm::vec3*)(params.data + sizeof(glm::vec3));
 
-			m_debug->positions.emplace_back(glm::vec4(from, 0.0f));
+			/*m_debug->positions.emplace_back(glm::vec4(from, 0.0f));
 			m_debug->positions.emplace_back(glm::vec4(to, 0.0f));
-			m_debug->vert_count += 2;
+			m_debug->vert_count += 2;*/
+			debugger->AddDebugLine(from, to);
+
 
 		};
 		cmd_list._commands.emplace_back(cmd);
@@ -1037,15 +1066,21 @@ namespace trace {
 		memcpy(cmd.params.data, &p0, sizeof(glm::vec3));
 		memcpy((cmd.params.data + sizeof(glm::vec3)), &p1, sizeof(glm::vec3));
 		memcpy((cmd.params.data + (sizeof(glm::vec3) * 2)), &transform, sizeof(glm::mat4));
-		cmd.func = [&](CommandParams params) {
-			if (!m_debug) return;
+		cmd.func = [](CommandParams params) {
+			//if (!m_debug) return;
+			Debugger* debugger = Debugger::get_instance();
+			if (!debugger->IsInitialized())
+			{
+				return;
+			}
 			glm::vec3& p0 = *(glm::vec3*)(params.data);
 			glm::vec3& p1 = *(glm::vec3*)(params.data + sizeof(glm::vec3));
 			glm::mat4& transform = *(glm::mat4*)(params.data + (sizeof(glm::vec3) * 2));
 
-			m_debug->positions.emplace_back(transform * glm::vec4(p0, 1.0f));
+			/*m_debug->positions.emplace_back(transform * glm::vec4(p0, 1.0f));
 			m_debug->positions.emplace_back(transform * glm::vec4(p1, 1.0f));
-			m_debug->vert_count += 2;
+			m_debug->vert_count += 2;*/
+			debugger->AddDebugLine(p0, p1, transform);
 
 		};
 	}
@@ -1057,16 +1092,16 @@ namespace trace {
 		float x = radius * glm::cos(theta);
 		float y = radius * glm::sin(theta);
 
-		glm::vec4 prev_p = glm::vec4(x, y, 0.0f, 1.0f);
+		glm::vec4 previous_point = glm::vec4(x, y, 0.0f, 1.0f);
 		for (uint32_t i = 1; i <= steps; i++)
 		{
 			float theta = ar * (float)i;
 			float x = radius * glm::cos(theta);
 			float y = radius * glm::sin(theta);
 
-			glm::vec4 p = glm::vec4(x, y, 0.0f, 1.0f);
-			DrawDebugLine(cmd_list, glm::vec3(transform * prev_p), glm::vec3(transform * p));
-			prev_p = p;
+			glm::vec4 point = glm::vec4(x, y, 0.0f, 1.0f);
+			DrawDebugLine(cmd_list, glm::vec3(transform * previous_point), glm::vec3(transform * point));
+			previous_point = point;
 		}
 	}
 
@@ -1094,6 +1129,11 @@ namespace trace {
 	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform)
 	{
 		DrawQuad_(_transform, texture);
+	}
+
+	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color)
+	{
+		DrawQuad_(_transform, texture, color);
 	}
 
 	std::string Renderer::GetRenderPassName(GRenderPass* pass)

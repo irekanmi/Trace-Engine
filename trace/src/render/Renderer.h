@@ -77,6 +77,7 @@ namespace trace {
 		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
 		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
 		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform);
+		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color);
 
 
 		// Getters
@@ -95,6 +96,7 @@ namespace trace {
 		void DrawQuad();
 		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
 		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture);
+		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color);
 		void DrawString(Font* font, const std::string& text, glm::mat4 _transform);
 		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
 
@@ -153,17 +155,6 @@ namespace trace {
 		};
 
 	private:
-		// Debug Renderering
-		struct DebugData
-		{
-			DebugData() {};
-			~DebugData() {};
-
-			std::vector<glm::vec4> positions;
-			uint32_t vert_count = 0;
-			Ref<GPipeline> m_linePipeline;
-		};
-		DebugData* m_debug;		
 
 	private:
 		GSwapchain m_swapChain;

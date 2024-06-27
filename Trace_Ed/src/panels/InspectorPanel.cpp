@@ -865,6 +865,12 @@ namespace trace {
 				ImGui::Image(a, ImVec2(128.0f, 128.0f), { 0.0f, 1.0f }, { 1.0f, 0.0f });
 			}
 
+			ImVec4 color = ImGui::ColorConvertU32ToFloat4(comp.color);
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit4("Base Color", &color.x, ImGuiColorEditFlags_Uint8), BaseColor)
+			{
+				comp.color = (uint32_t)ImGui::ColorConvertFloat4ToU32(color);
+			}
+
 			return dirty;
 			});
 

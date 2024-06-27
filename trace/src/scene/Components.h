@@ -10,6 +10,7 @@
 #include "animation/Animation.h"
 #include "animation/AnimationGraph.h"
 #include "resource/Prefab.h"
+#include "core/Enums.h"
 
 
 #include <string>
@@ -235,6 +236,7 @@ namespace trace {
 	struct ImageComponent
 	{
 		Ref<GTexture> image;
+		uint32_t color = TRC_COL32_WHITE;
 	};
 
 	template<typename... Component>

@@ -131,10 +131,18 @@ namespace trace {
 		}
 
 
-		if (clicked) ImGui::TreePop();
+		if (clicked)
+		{
+			ImGui::TreePop();
+		}
 
 		
 		
+	}
+	void HierachyPanel::SetPrefabEdit(Ref<Prefab> prefab)
+	{
+		m_editPrefab = prefab;
+		m_selectedEntity = Entity();
 	}
 	void HierachyPanel::DrawAllEntites()
 	{

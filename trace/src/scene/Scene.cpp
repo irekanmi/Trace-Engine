@@ -416,7 +416,12 @@ namespace trace {
 		{
 			auto [img, transform] = images_view.get(entity);
 
-			if(img.image) renderer->DrawImage(cmd_list, img.image, transform.transform); // TODO Implement Hierachies
+			if (img.image)
+			{
+				renderer->DrawImage(cmd_list, img.image, transform.transform, img.color); // TODO Implement Hierachies
+			}
+
+
 
 		}
 

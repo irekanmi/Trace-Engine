@@ -14,6 +14,7 @@
 #include "scripting/ScriptEngine.h"
 #include "core/Coretypes.h"
 #include "animation/AnimationEngine.h"
+#include "debug/Debugger.h"
 
 
 namespace trace {
@@ -168,11 +169,26 @@ namespace trace {
 			return false;
 		}
 
+		//Debugger
+		if (AppSettings::is_editor)
+		{
+			if (!Debugger::get_instance()->Init())
+			{
+				TRC_ERROR("Debugger failed to initialize");
+				return false;
+			}
+		}
+
 		return true;
 	}
 
 	void TRACE_API _SHUTDOWN(trc_app_data app_data)
 	{
+		if (AppSettings::is_editor)
+		{
+			Debugger::get_instance()->Shutdown();
+		}
+
 		ScriptEngine::get_instance()->Shutdown();
 
 		PhysicsFunc::ShutdownPhysics3D();
