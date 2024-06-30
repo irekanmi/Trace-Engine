@@ -104,4 +104,34 @@ namespace trace {
 		return data;
 	}
 
+	glm::vec4 colorFromUint32(uint32_t color)
+	{
+		glm::vec4 result;
+
+		float a = float(color >> 24) / 255.0f;
+		float b = float((color >> 16) & 0x000000FF) / 255.0f;
+		float g = float((color >> 8) & 0x000000FF) / 255.0f;
+		float r = float((color >> 0) & 0x000000FF) / 255.0f;
+
+		result.r = r;
+		result.g = g;
+		result.b = b;
+		result.a = a;
+
+		return result;
+	}
+
+	uint32_t colorVec4ToUint(glm::vec4 color)
+	{
+		uint32_t result = TRC_COL32_WHITE;
+
+		uint32_t r = (uint32_t)(color.r * 255.0f);
+		uint32_t g = (uint32_t)(color.g * 255.0f);
+		uint32_t b = (uint32_t)(color.b * 255.0f);
+		uint32_t a = (uint32_t)(color.a * 255.0f);
+
+		result = TRC_COL32(r, g, b, a);
+		return result;
+	}
+
 }

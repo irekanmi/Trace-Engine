@@ -188,6 +188,27 @@ namespace trace {
 			entity.GetComponent<LightComponent>()._light.params2.y = result;
 		break;
 		}
+		case AnimationDataType::IMAGE_COLOR:
+		{
+			uint32_t& _a = *(uint32_t*)(&frame_a->data);
+			uint32_t& _b = *(uint32_t*)(&frame_b->data);
+
+			uint32_t result = TRC_COL32_WHITE;
+
+			glm::vec4 color_a = colorFromUint32(_a);
+			glm::vec4 color_b = colorFromUint32(_b);
+
+			glm::vec4 color_result(0.0f);
+			color_result.r = lerp(color_a.r, color_b.r, time_point);
+			color_result.g = lerp(color_a.g, color_b.g, time_point);
+			color_result.b = lerp(color_a.b, color_b.b, time_point);
+			color_result.a = lerp(color_a.a, color_b.a, time_point);
+
+			result = colorVec4ToUint(color_result);
+
+			entity.GetComponent<ImageComponent>().color = result;
+			break;
+		}
 		}
 		
 

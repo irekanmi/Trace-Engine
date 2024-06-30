@@ -6,6 +6,7 @@
 
 namespace trace {
 
+	//TODO: Find a better location(file) for function definition
 	const char* get_animation_data_type_string(AnimationDataType type)
 	{
 
@@ -34,6 +35,10 @@ namespace trace {
 		case AnimationDataType::LIGHT_INTENSITY:
 		{
 			return "Light Intensity";
+		}
+		case AnimationDataType::IMAGE_COLOR:
+		{
+			return "Image Color";
 		}
 		}
 

@@ -17,6 +17,7 @@ namespace trace {
 		SCALE,
 		TEXT_INTENSITY,
 		LIGHT_INTENSITY,
+		IMAGE_COLOR,
 		MAX
 	};
 

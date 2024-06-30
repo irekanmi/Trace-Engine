@@ -215,8 +215,8 @@ namespace trace {
 		bool recording = editor->GetAnimationPanel()->Recording();
 		if (recording)
 		{
-			ImGui::PushStyleColor(ImGuiCol_Border, { 0.79, 0.12, 0.15, 0.35f });
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.79, 0.12, 0.15, 0.25f });
+			ImGui::PushStyleColor(ImGuiCol_Border, { 0.79f, 0.12f, 0.15f, 0.35f });
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.79f, 0.12f, 0.15f, 0.25f });
 		}
 		char anim_data[16] = { 0 };
 		AnimationDataType type = AnimationDataType::NONE;
@@ -664,7 +664,7 @@ namespace trace {
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Intensity", &comp.intensity), Intensity)
 			{
 				type = AnimationDataType::TEXT_INTENSITY;
-				memcpy(anim_data, &comp.intensity, 4);
+				memcpy(anim_data, &comp.intensity, sizeof(float));
 				anim_dirty = true;
 			}
 			
@@ -747,7 +747,7 @@ namespace trace {
 
 				CommandList cmd_list = renderer->BeginCommandList();
 				renderer->BeginScene(cmd_list, &editor->GetEditorCamera());
-				renderer->DrawDebugSphere(cmd_list, shp.sphere.radius + 0.001f, 25, pose.GetLocalMatrix());
+				renderer->DrawDebugSphere(cmd_list, shp.sphere.radius + 0.055f, 25, pose.GetLocalMatrix(), TRC_COL32(125, 205, 105, 175));
 				renderer->EndScene(cmd_list);
 				renderer->SubmitCommandList(cmd_list);
 			}
@@ -869,6 +869,10 @@ namespace trace {
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit4("Base Color", &color.x, ImGuiColorEditFlags_Uint8), BaseColor)
 			{
 				comp.color = (uint32_t)ImGui::ColorConvertFloat4ToU32(color);
+
+				type = AnimationDataType::IMAGE_COLOR;
+				memcpy(anim_data, &comp.color, sizeof(uint32_t));
+				anim_dirty = true;
 			}
 
 			return dirty;

@@ -766,7 +766,7 @@ namespace trace {
 
 			glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 			RenderFunc::OnDrawStart(&g_device, render_pipeline.get());
-			RenderFunc::BindLineWidth(&g_device, 1.5f);
+			RenderFunc::BindLineWidth(&g_device, 1.0f);
 			RenderFunc::SetPipelineData(render_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(render_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, render_data.positions.data(), render_data.vert_count * sizeof(glm::vec4));
 			RenderFunc::BindPipeline_(render_pipeline.get());
@@ -1030,16 +1030,16 @@ namespace trace {
 		cmd_list._commands.push_back(cmd);
 	}
 
-	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to)
+	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to, uint32_t color)
 	{
 		Command cmd;
-		uint32_t data_size = sizeof(glm::vec3) * 2;
+		uint32_t data_size = (sizeof(glm::vec3) * 2) + sizeof(uint32_t);
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(data_size);
 		memcpy(cmd.params.data, &from, sizeof(glm::vec3));
 		memcpy((cmd.params.data + sizeof(glm::vec3)), &to, sizeof(glm::vec3));
+		memcpy((cmd.params.data + (data_size - sizeof(uint32_t))), &color, sizeof(uint32_t));
 		cmd.func = [](CommandParams params) {
 
-			//if (!m_debug) return;
 			Debugger* debugger = Debugger::get_instance();
 			if (!debugger->IsInitialized())
 			{
@@ -1047,27 +1047,25 @@ namespace trace {
 			}
 			glm::vec3& from = *(glm::vec3*)(params.data);
 			glm::vec3& to = *(glm::vec3*)(params.data + sizeof(glm::vec3));
+			uint32_t& color = *(uint32_t*)(params.data + sizeof(glm::vec3) + sizeof(glm::vec3));
 
-			/*m_debug->positions.emplace_back(glm::vec4(from, 0.0f));
-			m_debug->positions.emplace_back(glm::vec4(to, 0.0f));
-			m_debug->vert_count += 2;*/
-			debugger->AddDebugLine(from, to);
+			debugger->AddDebugLine(from, to, color);
 
 
 		};
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform)
+	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform, uint32_t color)
 	{
 		Command cmd;
-		uint32_t data_size = (sizeof(glm::vec3) * 2) + sizeof(glm::mat4);
+		uint32_t data_size = (sizeof(glm::vec3) * 2) + sizeof(glm::mat4) + sizeof(uint32_t);
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(data_size);
 		memcpy(cmd.params.data, &p0, sizeof(glm::vec3));
 		memcpy((cmd.params.data + sizeof(glm::vec3)), &p1, sizeof(glm::vec3));
 		memcpy((cmd.params.data + (sizeof(glm::vec3) * 2)), &transform, sizeof(glm::mat4));
+		memcpy((cmd.params.data + (data_size - sizeof(uint32_t))), &color, sizeof(uint32_t));
 		cmd.func = [](CommandParams params) {
-			//if (!m_debug) return;
 			Debugger* debugger = Debugger::get_instance();
 			if (!debugger->IsInitialized())
 			{
@@ -1076,16 +1074,13 @@ namespace trace {
 			glm::vec3& p0 = *(glm::vec3*)(params.data);
 			glm::vec3& p1 = *(glm::vec3*)(params.data + sizeof(glm::vec3));
 			glm::mat4& transform = *(glm::mat4*)(params.data + (sizeof(glm::vec3) * 2));
-
-			/*m_debug->positions.emplace_back(transform * glm::vec4(p0, 1.0f));
-			m_debug->positions.emplace_back(transform * glm::vec4(p1, 1.0f));
-			m_debug->vert_count += 2;*/
-			debugger->AddDebugLine(p0, p1, transform);
+			uint32_t& color = *(uint32_t*)(params.data + sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::mat4));
+			debugger->AddDebugLine(p0, p1, transform, color);
 
 		};
 	}
 
-	void Renderer::DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform)
+	void Renderer::DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color)
 	{
 		float ar = (glm::pi<float>() * 2.0f) / (float)steps;
 		float theta = ar * (float)0;
@@ -1100,20 +1095,20 @@ namespace trace {
 			float y = radius * glm::sin(theta);
 
 			glm::vec4 point = glm::vec4(x, y, 0.0f, 1.0f);
-			DrawDebugLine(cmd_list, glm::vec3(transform * previous_point), glm::vec3(transform * point));
+			DrawDebugLine(cmd_list, glm::vec3(transform * previous_point), glm::vec3(transform * point), color);
 			previous_point = point;
 		}
 	}
 
-	void Renderer::DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform)
+	void Renderer::DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color)
 	{
-		DrawDebugCircle(cmd_list, radius, steps, transform);
-		glm::mat4 tr = glm::rotate(transform, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		DrawDebugCircle(cmd_list, radius, steps, tr);
-		tr = glm::rotate(transform, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		DrawDebugCircle(cmd_list, radius, steps, tr);
-		tr = glm::rotate(transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		DrawDebugCircle(cmd_list, radius, steps, tr);
+		DrawDebugCircle(cmd_list, radius, steps, transform, color);
+		glm::mat4 new_transform = glm::rotate(transform, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		DrawDebugCircle(cmd_list, radius, steps, new_transform, color);
+		new_transform = glm::rotate(transform, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		DrawDebugCircle(cmd_list, radius, steps, new_transform, color);
+		new_transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		DrawDebugCircle(cmd_list, radius, steps, new_transform, color);
 	}
 
 	void Renderer::DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform)

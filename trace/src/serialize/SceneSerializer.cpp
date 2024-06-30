@@ -221,7 +221,11 @@ namespace trace {
 				ImageComponent& img = entity.GetComponent<ImageComponent>();
 				emit << YAML::Key << "ImageComponent" << YAML::Value;
 				emit << YAML::BeginMap;
-				if (img.image) emit << YAML::Key << "Image" << YAML::Value << GetUUIDFromName(img.image->GetName());
+				if (img.image)
+				{
+					emit << YAML::Key << "Image" << YAML::Value << GetUUIDFromName(img.image->GetName());
+				}
+				emit << YAML::Key << "Color" << img.color;
 
 				emit << YAML::EndMap;
 			}
@@ -426,6 +430,11 @@ namespace trace {
 			else
 			{
 				img.image = TextureManager::get_instance()->LoadTexture_Runtime(id);
+			}
+
+			if (comp["Color"])
+			{
+				img.color = comp["Color"].as<uint32_t>();
 			}
 		}
 

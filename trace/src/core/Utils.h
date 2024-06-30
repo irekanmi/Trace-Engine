@@ -19,5 +19,9 @@ namespace trace {
 	void DecomposeMatrix(glm::mat4 matrix, glm::vec3& pos, glm::vec3& rotation, glm::vec3& scale);
 
 	std::vector<std::string> SplitString(const std::string& str, char token);
+
+	glm::vec4 colorFromUint32(uint32_t color);
+	uint32_t colorVec4ToUint(glm::vec4 color);
+
 }
 

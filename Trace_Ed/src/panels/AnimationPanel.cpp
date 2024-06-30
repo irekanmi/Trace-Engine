@@ -8,6 +8,8 @@
 #include "resource/AnimationsManager.h"
 #include "animation/AnimationEngine.h"
 #include "../utils/ImGui_utils.h"
+#include "core/events/EventsSystem.h"
+#include "core/input/Input.h"
 
 #include "imgui.h"
 #include "imgui_neo_sequencer.h"
@@ -23,16 +25,64 @@ namespace trace {
 	{
         m_state = State::PAUSE;
 
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_PRESSED, BIND_EVENT_FN(AnimationPanel::OnEvent));
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(AnimationPanel::OnEvent));
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(AnimationPanel::OnEvent));
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(AnimationPanel::OnEvent));
+
 		return true;
 	}
 	void AnimationPanel::Shutdown()
 	{
 	}
+    void AnimationPanel::OnEvent(Event* p_event)
+    {
+        switch (p_event->GetEventType())
+        {
+        case TRC_KEY_PRESSED:
+        {
+            trace::KeyPressed* press = reinterpret_cast<trace::KeyPressed*>(p_event);
+
+
+            break;
+        }
+        case TRC_KEY_RELEASED:
+        {
+            trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
+
+
+            break;
+        }
+        case TRC_BUTTON_PRESSED:
+        {
+            trace::MousePressed* press = reinterpret_cast<trace::MousePressed*>(p_event);
+            break;
+        }
+        case TRC_BUTTON_RELEASED:
+        {
+            trace::MouseReleased* release = reinterpret_cast<trace::MouseReleased*>(p_event);
+            break;
+        }
+        case TRC_MOUSE_MOVE:
+        {
+            trace::MouseMove* move = reinterpret_cast<trace::MouseMove*>(p_event);
+            break;
+        }
+        case TRC_MOUSE_DB_CLICK:
+        {
+            trace::MouseDBClick* click = reinterpret_cast<trace::MouseDBClick*>(p_event);
+            break;
+        }
+
+        }
+
+    }
 	void AnimationPanel::Render(float deltaTime)
 	{
+        bool delete_pressed = InputSystem::get_instance()->GetKeyState(Keys::KEY_DELETE) == KeyState::KEY_RELEASE;
         TraceEditor* editor = TraceEditor::get_instance();
         Ref<Scene> scene = editor->GetCurrentScene();
-        float clip_duration = 0.0f;
+        float clip_duration = m_currentClip ? m_currentClip->GetDuration() : 0.0f;
 
         //TODO: Move to Update Function ===============
 
@@ -202,7 +252,7 @@ namespace trace {
         if (m_currentClip)
         {
             int sample_rate = m_currentClip->GetSampleRate();
-            float duration = clip_duration;
+            float duration = m_currentClip->GetDuration();
 
             m_startFrame = 0;
             m_endFrame = int((float)sample_rate * duration);
@@ -218,12 +268,18 @@ namespace trace {
             if (m_currentClip && scene)
             {
                 Ref<Scene> scene = editor->GetCurrentScene();
-                float duration = clip_duration;
+                float duration = m_currentClip->GetDuration();
 
 
                 for (auto& channel : m_currentClip->GetTracks())
                 {
-                    std::string& name = scene->GetEntity(channel.first).GetComponent<TagComponent>()._tag;
+
+                    Entity entity = scene->GetEntity(channel.first);
+                    if (!entity)
+                    {
+                        continue;
+                    }
+                    std::string& name = entity.GetComponent<TagComponent>()._tag;
                     static bool do_open = false;
                     if (ImGui::BeginNeoGroup(name.c_str(), &do_open))
                     {
@@ -233,11 +289,19 @@ namespace trace {
                             bool modified = false;
                             if (ImGui::BeginNeoTimelineEx(get_animation_data_type_string(track.channel_type), &open, ImGuiNeoTimelineFlags_::ImGuiNeoTimelineFlags_AllowFrameChanging))
                             {
+                                if (ImGui::IsNeoTimelineSelected())
+                                {
+                                    if (delete_pressed)
+                                    {
+                                        TRC_TRACE("Track: {} has been deleted", get_animation_data_type_string(track.channel_type));
+                                    }
+                                }
                                 std::vector<FrameIndex>& f_idx = m_currentTracks[channel.first][track.channel_type];
                                 int frame_size = f_idx.size();
+                                static std::vector<int> frame_to_delete{}; //TODO: Create a temp small vector
                                 for (int i = 0; i < frame_size; i++)
                                 {
-                                    FrameIndex& fi = m_currentTracks[channel.first][track.channel_type][i];
+                                    FrameIndex& fi = f_idx[i];
                                     ImGui::NeoKeyframe(&fi.index);
                                     float time_point = ((float)fi.index / (float)m_endFrame) * clip_duration;
                                     if (ImGui::NeoIsDraggingSelection() && ImGui::IsNeoKeyframeSelected())
@@ -285,7 +349,30 @@ namespace trace {
                                         ImGui::End();
                                         ImGui::PopStyleVar(1);
                                     }
+
+                                    if (delete_pressed && ImGui::IsNeoKeyframeSelected())
+                                    {
+                                        frame_to_delete.push_back(i);
+                                    }
                                 }
+                                int delete_count = 0;//NOTE: Used to know the number of deleted frames
+                                for (int i = 0; i < frame_to_delete.size(); i++)
+                                {
+                                    int& delete_index = frame_to_delete[i];
+                                    delete_index -= delete_count;
+                                    FrameIndex& fi = f_idx[delete_index];
+                                   
+                                    for (int j = delete_index + 1; j < f_idx.size(); j++)
+                                    {
+                                        f_idx[j].current_fd_index--;
+                                    }
+
+                                    track.channel_data.erase(track.channel_data.begin() + fi.current_fd_index);
+                                    f_idx.erase(f_idx.begin() + delete_index);
+                                    delete_count++;
+                                }
+
+                                frame_to_delete.clear();
 
                                 ImGui::EndNeoTimeLine();
                             }
@@ -396,7 +483,10 @@ namespace trace {
     }
     void AnimationPanel::generate_tracks()
     {
-        if (!m_currentClip) return;
+        if (!m_currentClip)
+        {
+            return;
+        }
 
         int sample_rate = m_currentClip->GetSampleRate();
         float duration = m_currentClip->GetDuration();
@@ -480,6 +570,15 @@ namespace trace {
             memcpy(&value, data, sizeof(float));
             ImGui::DragFloat("##Light Intensity", &value);
 
+            break;
+        }
+        case AnimationDataType::IMAGE_COLOR:
+        {
+            uint32_t value;
+            memcpy(&value, data, sizeof(uint32_t));
+            ImVec4 color = ImGui::ColorConvertU32ToFloat4(value); 
+
+            ImGui::ColorEdit4("##Base Color", &color.x, ImGuiColorEditFlags_Uint8);
             break;
         }
         }

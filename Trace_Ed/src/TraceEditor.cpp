@@ -70,8 +70,8 @@ namespace trace {
 
 		// Register Events
 		{
-			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_RESIZE, BIND_EVENT_FN(TraceEditor::OnEvent));
+			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_WND_CLOSE, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_PRESSED, BIND_EVENT_FN(TraceEditor::OnEvent));
@@ -923,8 +923,8 @@ namespace trace {
 	}
 	void TraceEditor::DrawGrid(CommandList& cmd_list)
 	{
-		float cell_size = 4.0f;
-		uint32_t num_line = 50;
+		float cell_size = 15.0f;
+		uint32_t num_line = 75;
 		float line_lenght = cell_size * (num_line - 1);
 
 		Renderer* renderer = Renderer::get_instance();
@@ -932,20 +932,38 @@ namespace trace {
 		//Horizontal
 		for (uint32_t i = 0; i < num_line; i++)
 		{
-			glm::vec3 from(line_lenght, 0.0f, line_lenght - (cell_size * 2.0f * (float)i));
-			glm::vec3 to(-line_lenght, 0.0f, line_lenght - (cell_size * 2.0f * (float)i));
+			float line_offset = line_lenght - (cell_size * 2.0f * (float)i);
+			glm::vec3 from(line_lenght, 0.0f, line_offset);
+			glm::vec3 to(-line_lenght, 0.0f, line_offset);
 
-			renderer->DrawDebugLine(cmd_list, from, to);
+			if (!(line_offset == 0.0f))
+			{
+				renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(125, 125, 125, 15));
+			}
 		}
 
 		//Vertical
 		for (uint32_t i = 0; i < num_line; i++)
 		{
-			glm::vec3 from(line_lenght - (cell_size * 2.0f * (float)i), 0.0f, line_lenght);
-			glm::vec3 to(line_lenght - (cell_size * 2.0f * (float)i), 0.0f, -line_lenght);
+			float line_offset = line_lenght - (cell_size * 2.0f * (float)i);
+			glm::vec3 from( line_offset, 0.0f, line_lenght);
+			glm::vec3 to(line_offset, 0.0f, -line_lenght);
 
-			renderer->DrawDebugLine(cmd_list, from, to);
+			if (!(line_offset == 0.0f))
+			{
+				renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(125, 125, 125, 15));
+			}
 		}
+
+		// Global X-Coordinate
+		renderer->DrawDebugLine(cmd_list, glm::vec3(line_lenght * 10.0f, 0.0f, 0.0f), glm::vec3(-line_lenght * 10.0f, 0.0f, 0.0f), TRC_COL32(255, 55, 55, 255));
+
+		// Global Y-Coordinate
+		renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, line_lenght * 10.0f, 0.0f), glm::vec3(0.0f, -line_lenght * 10.0f, 0.0f), TRC_COL32(55, 255, 55, 255));
+
+		// Global Z-Coordinate
+		renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, 0.0f, line_lenght * 10.0f), glm::vec3(0.0f, 0.0f, -line_lenght * 10.0f), TRC_COL32(55, 55, 255, 255));
+
 
 	}
 	void TraceEditor::CloseCurrentScene()
@@ -1155,10 +1173,13 @@ namespace trace {
 		m_currentScene->OnScriptStart();
 		if (m_hierachyPanel->GetSelectedEntity())
 		{
-			m_hierachyPanel->GetSelectedEntity() = m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID());
+			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
 		}
 		m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
-		if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
+		if (m_currentScene)
+		{
+			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
+		}
 	}
 	void TraceEditor::OnSceneStimulate()
 	{
@@ -1181,7 +1202,7 @@ namespace trace {
 		m_currentScene = m_editScene;
 		if (m_hierachyPanel->GetSelectedEntity())
 		{
-			m_hierachyPanel->GetSelectedEntity() = m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID());
+			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
 		}
 	}
 

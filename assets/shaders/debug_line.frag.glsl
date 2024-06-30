@@ -1,9 +1,16 @@
 #version 450
 
+#include "functions.glsl"
+
 layout(location = 0)out vec4 FragColor;
+
+layout(location = 0) in Data{
+    uint color;
+};
 
 
 void main()
 {
-    FragColor = vec4(0.02f, 0.0f, 1.8f, 1.0f);
+    vec4 out_color = colorFromUint32(color);
+    FragColor = out_color;
 }

@@ -3,6 +3,7 @@
 
 #include "animation/Animation.h"
 #include "resource/Ref.h"
+#include "core/events/Events.h"
 
 #include <vector>
 #include <unordered_map>
@@ -33,6 +34,8 @@ namespace trace {
 
 		bool Init();
 		void Shutdown();
+		void OnEvent(Event* p_event);
+		
 
 		void Render(float deltaTime);
 		bool Recording();
@@ -52,13 +55,14 @@ namespace trace {
 		void pause();
 		void animation_data_ui(AnimationDataType type, void* data);
 
+
 		float m_elapsed = 0.0f;
 		int32_t m_currentFrame = 0;
 		int32_t m_startFrame = -10;
 		int32_t m_endFrame = 64;
 		int32_t m_lastSelectedFrame = -1;
 
-		bool m_doDelete = false;
+		bool m_doDeleteTrack = false;
 
 		Ref<AnimationClip> m_currentClip;
 		State m_state;

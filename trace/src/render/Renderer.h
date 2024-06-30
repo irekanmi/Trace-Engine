@@ -71,10 +71,10 @@ namespace trace {
 		void DrawSky(CommandList& cmd_list, SkyBox* sky);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
 		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type);
-		void DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to);
-		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform);
-		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
-		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform);
+		void DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to, uint32_t color = 1);
+		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform, uint32_t color = 1);
+		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1);
+		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1);
 		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
 		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform);
 		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color);
