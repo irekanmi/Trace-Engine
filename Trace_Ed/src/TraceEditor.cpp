@@ -521,7 +521,7 @@ namespace trace {
 		}
 		case TRC_WND_CLOSE:
 		{
-
+			CloseProject();
 			break;
 		}
 		case TRC_KEY_RELEASED:
@@ -938,7 +938,7 @@ namespace trace {
 
 			if (!(line_offset == 0.0f))
 			{
-				renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(125, 125, 125, 15));
+				renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(225, 225, 225, 105));
 			}
 		}
 
@@ -951,7 +951,7 @@ namespace trace {
 
 			if (!(line_offset == 0.0f))
 			{
-				renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(125, 125, 125, 15));
+				renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(225, 225, 225, 105));
 			}
 		}
 
@@ -1325,7 +1325,15 @@ project "{}"
 
 	bool TraceEditor::CloseProject()
 	{
+		if (!m_currentProject)
+		{
+			return false;
+		}
+		m_currentScene.free();
+		m_currentScenePath = "";
+		m_contentBrowser->ProcessAllDirectory();
 		m_currentProject.free();
+
 		return true;
 	}
 

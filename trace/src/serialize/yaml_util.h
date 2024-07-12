@@ -71,4 +71,6 @@ namespace YAML {
 
 	Emitter& operator <<(Emitter& emit, const glm::quat& value);
 
+	bool save_emitter_data(Emitter& emit, const std::string& file_path);
+	bool load_yaml_data(const std::string& file_path, Node& out_data);
 }

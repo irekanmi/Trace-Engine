@@ -80,6 +80,8 @@ namespace trace {
 	void AnimationPanel::Render(float deltaTime)
 	{
         bool delete_pressed = InputSystem::get_instance()->GetKeyState(Keys::KEY_DELETE) == KeyState::KEY_RELEASE;
+        bool control = InputSystem::get_instance()->GetKey(Keys::KEY_LCONTROL);
+        bool key_D = InputSystem::get_instance()->GetKeyState(Keys::KEY_D) == KeyState::KEY_RELEASE;
         TraceEditor* editor = TraceEditor::get_instance();
         Ref<Scene> scene = editor->GetCurrentScene();
         float clip_duration = m_currentClip ? m_currentClip->GetDuration() : 0.0f;
@@ -283,10 +285,15 @@ namespace trace {
                     static bool do_open = false;
                     if (ImGui::BeginNeoGroup(name.c_str(), &do_open))
                     {
+                        int track_index = 0;
+                        static std::vector<int> tracks_to_delete{}; //TODO: Create a temp small vector
                         for (AnimationTrack& track : channel.second)
                         {
                             bool open = true;
                             bool modified = false;
+
+                            ImGuiID timeline_ID = ImGui::GetID(name.c_str());
+                            ImGui::PushID(timeline_ID);
                             if (ImGui::BeginNeoTimelineEx(get_animation_data_type_string(track.channel_type), &open, ImGuiNeoTimelineFlags_::ImGuiNeoTimelineFlags_AllowFrameChanging))
                             {
                                 if (ImGui::IsNeoTimelineSelected())
@@ -294,11 +301,13 @@ namespace trace {
                                     if (delete_pressed)
                                     {
                                         TRC_TRACE("Track: {} has been deleted", get_animation_data_type_string(track.channel_type));
+                                        tracks_to_delete.push_back(track_index);
                                     }
                                 }
                                 std::vector<FrameIndex>& f_idx = m_currentTracks[channel.first][track.channel_type];
                                 int frame_size = f_idx.size();
                                 static std::vector<int> frame_to_delete{}; //TODO: Create a temp small vector
+                                static std::vector<int> frame_to_duplicate{}; //TODO: Create a temp small vector
                                 for (int i = 0; i < frame_size; i++)
                                 {
                                     FrameIndex& fi = f_idx[i];
@@ -354,6 +363,10 @@ namespace trace {
                                     {
                                         frame_to_delete.push_back(i);
                                     }
+                                    if (control && key_D && ImGui::IsNeoKeyframeSelected())
+                                    {
+                                        frame_to_duplicate.push_back(i);
+                                    }
                                 }
                                 int delete_count = 0;//NOTE: Used to know the number of deleted frames
                                 for (int i = 0; i < frame_to_delete.size(); i++)
@@ -372,11 +385,46 @@ namespace trace {
                                     delete_count++;
                                 }
 
+                                int duplicate_count = 0;//NOTE: Used to know the number of duplicated frames
+                                for (int i = 0; i < frame_to_duplicate.size(); i++)
+                                {
+                                    int& duplicate_index = frame_to_duplicate[i];
+                                    duplicate_index += duplicate_count;
+                                    FrameIndex& fi = f_idx[duplicate_index];
+                                    FrameIndex fi_temp = fi;
+                                    fi_temp.current_fd_index++;
+
+                                    for (int j = duplicate_index + 1; j < f_idx.size(); j++)
+                                    {
+                                        f_idx[j].current_fd_index++;
+                                    }
+
+                                    AnimationFrameData anim_data = track.channel_data[fi.current_fd_index];
+
+                                    track.channel_data.insert(track.channel_data.begin() + fi.current_fd_index, anim_data);
+                                    f_idx.insert(f_idx.begin() + duplicate_index, fi_temp);
+                                    duplicate_count++;
+                                }
+
                                 frame_to_delete.clear();
+                                frame_to_duplicate.clear();
 
                                 ImGui::EndNeoTimeLine();
                             }
+                            ImGui::PopID();
+                            track_index++;
 
+                            int delete_count = 0;//NOTE: Used to know the number of deleted frames
+                            for (int i = 0; i < tracks_to_delete.size(); i++)
+                            {
+                                int& delete_index = tracks_to_delete[i];
+                                delete_index -= delete_count;
+
+                                channel.second.erase(channel.second.begin() + delete_index);
+
+                            }
+
+                            tracks_to_delete.clear();
                         }
                         ImGui::EndNeoGroup();
                     }

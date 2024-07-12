@@ -33,6 +33,7 @@ IncludeDir["portable_file_dialogs"] = "externals/portable_file_dialogs"
 IncludeDir["Physx"] = "externals/Physx"
 IncludeDir["mono"] = "externals/mono-2.0"
 IncludeDir["im_neo_sequencer"] = "externals/im_neo_sequencer"
+IncludeDir["assimp"] = "externals/assimp/include"
 
 
 project "trace"
@@ -280,6 +281,7 @@ project "Trace_Ed"
 		"%{IncludeDir.portable_file_dialogs}",
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.im_neo_sequencer}",
+		"%{IncludeDir.assimp}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}
@@ -294,6 +296,8 @@ project "Trace_Ed"
 	links
 	{
 		"trace",
+		"zlibstatic.lib",
+		"assimp-vc143-mt.lib",
 	}
 
 	defines

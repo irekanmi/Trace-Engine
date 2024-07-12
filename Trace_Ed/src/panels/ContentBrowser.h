@@ -54,18 +54,24 @@ namespace trace {
 		void DrawEditFont();
 		void DrawEditPipeline();
 		void SetDirectory(const std::string& dir);
+		void SerializeImportedAssets();
+		void LoadImportedAssets();
 
 		std::unordered_map<std::string, UUID>& GetAllFilesID() { return m_allFilesID; }
 		std::unordered_map<UUID, std::filesystem::path> GetUUIDPath() { return m_allIDPath; }
 		std::filesystem::path& GetCurrentDirectory() { return m_currentDir; }
 		Ref<GTexture> GetDefaultIcon() { return default_icon; }
 		AssetsEdit& GetAssetsEdit() { return m_assetsEdit; }
+		std::unordered_set<std::string>& GetImportedAssets() { return m_importedAssets; }
 		
+	private:
 
 	private:
 		//TODO: Check if there is a better way to store uuid and paths
 		std::unordered_map<std::string, UUID> m_allFilesID;
 		std::unordered_map<UUID, std::filesystem::path> m_allIDPath;
+
+		std::unordered_set<std::string> m_importedAssets;
 
 	private:
 		std::filesystem::path m_currentDir;

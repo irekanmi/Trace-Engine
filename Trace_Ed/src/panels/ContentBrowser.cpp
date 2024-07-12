@@ -234,6 +234,7 @@ namespace trace {
 	}
 	void ContentBrowser::Shutdown()
 	{
+
 		// TODO: Add a data structure that holds and releases all textures
 		directory_icon.free();
 		default_icon.free();
@@ -576,7 +577,7 @@ namespace trace {
 		}
 		if (std::filesystem::exists(assetsDB_path))
 		{
-			FileHandle in_handle;
+			/*FileHandle in_handle;
 			if (!FileSystem::open_file(assetsDB_path.string(), FileMode::READ, in_handle))
 			{
 				TRC_ERROR("Unable to open file {}", assetsDB_path.string());
@@ -584,9 +585,11 @@ namespace trace {
 			}
 			std::string file_data;
 			FileSystem::read_all_lines(in_handle, file_data);
-			FileSystem::close_file(in_handle);
+			FileSystem::close_file(in_handle);*/
 
-			YAML::Node data = YAML::Load(file_data);
+			YAML::Node data;
+			YAML::load_yaml_data(assetsDB_path.string(), data);
+
 			std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 			std::string db_version = data["DataBase Version"].as<std::string>(); // TODO: To be used later
 			std::string db_type = data["DataBase Type"].as<std::string>(); // TODO: To be used later
@@ -666,12 +669,8 @@ namespace trace {
 			emit << YAML::EndSeq;
 			emit << YAML::EndMap;
 
-			FileHandle out_handle;
-			if (FileSystem::open_file(assetsDB_path.string(), FileMode::WRITE, out_handle))
-			{
-				FileSystem::writestring(out_handle, emit.c_str());
-				FileSystem::close_file(out_handle);
-			}
+			
+			YAML::save_emitter_data(emit, assetsDB_path.string());
 		}
 	}
 	void ContentBrowser::OnWindowPopup()
@@ -1222,5 +1221,54 @@ namespace trace {
 		m_currentDir = dir;
 		OnDirectoryChanged();
 		ProcessAllDirectory();
+	}
+	void ContentBrowser::LoadImportedAssets()
+	{
+		TraceEditor* editor = TraceEditor::get_instance();
+		std::filesystem::path import_path = std::filesystem::path(editor->GetCurrentProject()->GetProjectCurrentDirectory()) / "InternalAssetsDB";
+		std::filesystem::path importDB_path = import_path / "imports.trdb";
+
+		if (!std::filesystem::exists(importDB_path))
+		{
+			return;
+		}
+
+		YAML::Node data;
+		YAML::load_yaml_data(importDB_path.string(), data);
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+
+		YAML::Node DATA = data["DATA"];
+		for (auto i : DATA)
+		{
+			std::string filename = i["Name"].as<std::string>();
+			m_importedAssets.insert(filename);
+		}
+
+	}
+	void ContentBrowser::SerializeImportedAssets()
+	{
+		TraceEditor* editor = TraceEditor::get_instance();
+
+		std::filesystem::path import_path = std::filesystem::path(editor->GetCurrentProject()->GetProjectCurrentDirectory()) / "InternalAssetsDB";
+		std::filesystem::path importDB_path = import_path / "imports.trdb";
+
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
+		for (const std::string& imported_asset : m_importedAssets)
+		{
+			emit << YAML::BeginMap;
+			emit << YAML::Key << "Name" << YAML::Value << imported_asset;
+			emit << YAML::EndMap;
+		}
+
+		emit << YAML::EndSeq;
+
+		emit << YAML::EndMap;
+
+		YAML::save_emitter_data(emit, importDB_path.string());
 	}
 }

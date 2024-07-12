@@ -23,12 +23,7 @@ namespace trace {
 
 		emit << YAML::EndMap;
 
-		FileHandle out_handle;
-		if (FileSystem::open_file(file_path, FileMode::WRITE, out_handle))
-		{
-			FileSystem::writestring(out_handle, emit.c_str());
-			FileSystem::close_file(out_handle);
-		}
+		YAML::save_emitter_data(emit, file_path);
 
 		return true;
 	}
@@ -36,17 +31,10 @@ namespace trace {
 	{
 		Ref<Project> result;
 
-		FileHandle in_handle;
-		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
-		{
-			TRC_ERROR("Unable to open file {}", file_path);
-			return result;
-		}
-		std::string file_data;
-		FileSystem::read_all_lines(in_handle, file_data);
-		FileSystem::close_file(in_handle);
 
-		YAML::Node data = YAML::Load(file_data);
+		YAML::Node data;
+		YAML::load_yaml_data(file_path, data);
+
 		if (!data["Trace Version"] || !data["Project Version"] || !data["Project Name"])
 		{
 			TRC_ERROR("These file is not a valid material file {}", file_path);

@@ -1,6 +1,8 @@
 #include "pch.h"
 
 #include "yaml_util.h"
+#include "core/FileSystem.h"
+#include "core/io/Logging.h"
 
 
 namespace YAML {
@@ -205,6 +207,37 @@ namespace YAML {
 		emit << Flow;
 		emit << BeginSeq << value.x << value.y << value.z << value.w << EndSeq;
 		return emit;
+	}
+
+	bool save_emitter_data(Emitter& emit, const std::string& file_path)
+	{
+		trace::FileHandle out_handle;
+		if (trace::FileSystem::open_file(file_path, trace::FileMode::WRITE, out_handle))
+		{
+			trace::FileSystem::writestring(out_handle, emit.c_str());
+			trace::FileSystem::close_file(out_handle);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bool load_yaml_data(const std::string& file_path, Node& out_data)
+	{
+		trace::FileHandle in_handle;
+		if (!trace::FileSystem::open_file(file_path, trace::FileMode::READ, in_handle))
+		{
+			TRC_ERROR("Unable to open file {}", file_path);
+			return false;
+		}
+		std::string file_data;
+		trace::FileSystem::read_all_lines(in_handle, file_data);
+		trace::FileSystem::close_file(in_handle);
+
+		out_data = YAML::Load(file_data);
+
+		return true;
 	}
 
 }
