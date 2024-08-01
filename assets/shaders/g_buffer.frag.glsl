@@ -36,9 +36,13 @@ void main()
     vec3 normal;
     SAMPLE_NORMAL_MAP(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), _texCoord, _normal_, _tangent_, normal );
 
+    vec4 color = texture(GET_BINDLESS_TEXTURE2D(DIFFUSE_MAP), _texCoord);
+    vec4 diff_color = GET_INSTANCE_PARAM(diffuse_color, InstanceBufferObject);
+    vec3 final_color = mix(color, diff_color, diff_color.a).rgb;
+
     FRAG_POS = _fragPos;
     FRAG_NORMAL = normal;
     FRAG_SHININESS = GET_INSTANCE_PARAM(shininess, InstanceBufferObject);
-    FRAG_COLOR = SampleTextureMap_RGB(GET_BINDLESS_TEXTURE2D(DIFFUSE_MAP), _texCoord);
+    FRAG_COLOR = final_color;
     FRAG_SPECULAR = SampleTextureMap_R(GET_BINDLESS_TEXTURE2D(SPECULAR_MAP), _texCoord);
 }

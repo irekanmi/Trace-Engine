@@ -20,6 +20,8 @@
 #include "core/Utils.h"
 #include "../utils/ImGui_utils.h"
 #include "HierachyPanel.h"
+#include "../import/Importer.h"
+#include "external_utils.h"
 
 
 #include "imgui.h"
@@ -53,7 +55,7 @@ namespace trace {
 		{
 			process_callbacks[".obj"] = [editor](std::filesystem::path& path)
 			{
-				auto it = editor->GetAllProjectAssets().meshes.find(path);
+				/*auto it = editor->GetAllProjectAssets().meshes.find(path);
 				if (it == editor->GetAllProjectAssets().meshes.end())
 				{
 					editor->GetAllProjectAssets().meshes.emplace(path);
@@ -63,7 +65,7 @@ namespace trace {
 					{
 						editor->GetAllProjectAssets().models.emplace(path / i);
 					}
-				}
+				}*/
 			};
 			process_callbacks[".trmat"] = [editor](std::filesystem::path& path)
 			{
@@ -89,10 +91,12 @@ namespace trace {
 
 			};
 
+			
 			auto tex_lambda = [editor](std::filesystem::path& path)
 			{
 				editor->GetAllProjectAssets().textures.emplace(path);
 			};
+			
 
 			process_callbacks[".png"] = tex_lambda;
 			process_callbacks[".jpg"] = tex_lambda;
@@ -136,7 +140,7 @@ namespace trace {
 						assets_edit.editMaterial->SetMaterialData(assets_edit.materialDataCache);
 						RenderFunc::PostInitializeMaterial(assets_edit.editMaterial.get(), assets_edit.editMaterialPipe);
 
-						assets_edit.editMaterialPath = "";
+						
 						assets_edit.editMaterial.free();
 						assets_edit.materialDataCache.clear();
 						assets_edit.editMaterialPipe.free();
@@ -220,8 +224,23 @@ namespace trace {
 						assets_edit.editPipeType = PipelineType::Unknown;
 					});
 			};
+			auto mesh_lambda = [editor](std::filesystem::path& path)
+			{
+				ContentBrowser* content_broswer = editor->GetContentBrowser();
+				auto it = content_broswer->GetImportedAssets().find(path.filename().string());
+				if (it == content_broswer->GetImportedAssets().end())
+				{
+					Importer* importer = editor->GetImporter();
+					if (importer->ImportMeshFile(path.string()))
+					{
+						content_broswer->GetImportedAssets().emplace(path.filename().string());
+					}
+				}
+			};
 
-
+			extensions_callbacks[".fbx"] = mesh_lambda;
+			extensions_callbacks[".blend"] = mesh_lambda;
+			extensions_callbacks[".obj"] = mesh_lambda;
 
 		};
 
@@ -367,7 +386,7 @@ namespace trace {
 			{
 				if (!res.empty())
 				{
-					UUID id = GetUUIDFromName(res + ".trcac");
+					UUID id = GetUUIDFromName(res + ".trprf");
 					if (id == 0)
 					{
 						std::string prefab_path = (m_currentDir / (res + ".trprf")).string();
@@ -378,7 +397,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trcac");
+						TRC_ERROR("{} has already been created", res + ".trprf");
 					}
 					prefab_popup = false;
 				}
@@ -414,12 +433,14 @@ namespace trace {
 		}
 
 	}
-	void ContentBrowser::ProcessAllDirectory()
+	void ContentBrowser::ProcessAllDirectory(bool update_assets_db)
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
 
-		m_allFilesID.clear();
-		m_allIDPath.clear();
+		LoadImportedAssets();
+
+		/*m_allFilesID.clear();
+		m_allIDPath.clear();*/
 
 		//TEMP: Find a better way to identify default data
 		uint64_t def_id0 = 1;
@@ -577,15 +598,7 @@ namespace trace {
 		}
 		if (std::filesystem::exists(assetsDB_path))
 		{
-			/*FileHandle in_handle;
-			if (!FileSystem::open_file(assetsDB_path.string(), FileMode::READ, in_handle))
-			{
-				TRC_ERROR("Unable to open file {}", assetsDB_path.string());
-				return;
-			}
-			std::string file_data;
-			FileSystem::read_all_lines(in_handle, file_data);
-			FileSystem::close_file(in_handle);*/
+			
 
 			YAML::Node data;
 			YAML::load_yaml_data(assetsDB_path.string(), data);
@@ -638,17 +651,8 @@ namespace trace {
 			}
 		}
 
-		/*for (auto& i : m_allFilesID)
-		{
-			auto it = m_allIDPath.find(i.second);
-			if (it == m_allIDPath.end())
-			{
-				m_allFilesID.erase(i.first);
-				dirty_ids = true;
-			}
-		}*/
 
-		if (dirty_ids)
+		if (dirty_ids || update_assets_db)
 		{
 			YAML::Emitter emit;
 
@@ -672,6 +676,12 @@ namespace trace {
 			
 			YAML::save_emitter_data(emit, assetsDB_path.string());
 		}
+
+		for (auto i : m_allFilesID)
+		{
+			m_allIDNames[i.second] = i.first;
+		}
+
 	}
 	void ContentBrowser::OnWindowPopup()
 	{
@@ -1101,10 +1111,8 @@ namespace trace {
 				if (!tex_res.empty())
 				{
 					std::filesystem::path p = tex_res;
-					Ref<GTexture> tex_r = TextureManager::get_instance()->GetTexture(p.filename().string());
-					if (tex_r) {}
-					else tex_r = TextureManager::get_instance()->LoadTexture_(p.string());
-
+					UUID id = m_allFilesID[p.filename().string()];
+					Ref<GTexture> tex_r = LoadTexture(id);
 					if (tex_r)
 					{
 						mat->GetMaterialData()[tex_name].first = tex_r;

@@ -60,6 +60,7 @@ project "trace"
 	{
 		"trace/src/core",
 		"trace/src",
+		"trace/_externals",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLEW}",
 		"%{IncludeDir.EASTL}",
@@ -282,6 +283,7 @@ project "Trace_Ed"
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.im_neo_sequencer}",
 		"%{IncludeDir.assimp}",
+		"%{IncludeDir.stb_image}",
 		-- please remove these includes before generating projects, i have issues with my visual studio
 		"C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.10150.0\\ucrt"
 	}

@@ -7,6 +7,7 @@
 #include "core/FileSystem.h"
 #include "backends/Renderutils.h"
 #include "scene/UUID.h"
+#include "external_utils.h"
 
 
 #include "glm/glm.hpp"
@@ -388,12 +389,12 @@ namespace trace {
 			{
 				auto info = value["Value"];
 				UUID id = info["file_id"].as<uint64_t>();
-				Ref<GTexture> tex;
-				std::filesystem::path p = GetPathFromUUID(id);
-				tex = TextureManager::get_instance()->GetTexture(p.filename().string());
-				if(!tex) tex = TextureManager::get_instance()->LoadTexture_(p.string());
+				Ref<GTexture> tex = LoadTexture(id);
+
 				if (tex)
+				{
 					dst = tex;
+				}
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC2:

@@ -47,7 +47,7 @@ namespace trace {
 		void Render(float deltaTime);
 		void OnDirectoryChanged();
 		void ProcessDirectory();
-		void ProcessAllDirectory();
+		void ProcessAllDirectory(bool update_assets_db = false);
 		void OnWindowPopup();
 		void OnItemPopup(std::filesystem::path& path);
 		void DrawEditMaterial();
@@ -59,6 +59,7 @@ namespace trace {
 
 		std::unordered_map<std::string, UUID>& GetAllFilesID() { return m_allFilesID; }
 		std::unordered_map<UUID, std::filesystem::path> GetUUIDPath() { return m_allIDPath; }
+		std::unordered_map<UUID, std::string> GetUUIDName() { return m_allIDNames; }
 		std::filesystem::path& GetCurrentDirectory() { return m_currentDir; }
 		Ref<GTexture> GetDefaultIcon() { return default_icon; }
 		AssetsEdit& GetAssetsEdit() { return m_assetsEdit; }
@@ -69,6 +70,7 @@ namespace trace {
 	private:
 		//TODO: Check if there is a better way to store uuid and paths
 		std::unordered_map<std::string, UUID> m_allFilesID;
+		std::unordered_map<UUID, std::string> m_allIDNames;
 		std::unordered_map<UUID, std::filesystem::path> m_allIDPath;
 
 		std::unordered_set<std::string> m_importedAssets;

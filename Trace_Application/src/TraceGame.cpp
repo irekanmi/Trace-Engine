@@ -202,18 +202,6 @@ namespace trace {
 
 	}
 
-	std::filesystem::path GetPathFromUUID(UUID uuid)
-	{
-		return "";
-	}
-	UUID GetUUIDFromName(const std::string& name)
-	{
-		return file_ids[name];
-	}
-
-	std::string GetNameFromUUID(UUID uuid)
-	{
-		return id_names[uuid];
-	}
+	
 
 }

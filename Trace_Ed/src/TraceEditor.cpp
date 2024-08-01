@@ -23,6 +23,7 @@
 #include "EditorRenderComposer.h"
 #include "builder/ProjectBuilder.h"
 #include "scene/Entity.h"
+#include "import/Importer.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -63,6 +64,7 @@ namespace trace {
 		m_contentBrowser = new ContentBrowser;
 		m_animPanel = new AnimationPanel;
 		m_animGraphEditor = new AnimationGraphEditor;
+		m_importer = new Importer;
 
 		m_contentBrowser->Init();
 		m_animPanel->Init();
@@ -126,6 +128,7 @@ namespace trace {
 		UIFunc::ShutdownUIRenderBackend();
 
 
+		delete m_importer;
 		delete m_hierachyPanel;
 		delete m_inspectorPanel;
 		delete m_contentBrowser;
@@ -977,6 +980,7 @@ namespace trace {
 	{
 		m_currentScene = SceneSerializer::Deserialize(file_path);
 		m_editScene = m_currentScene;
+		m_currentScenePath = file_path;
 	}
 	void TraceEditor::NewScene()
 	{
@@ -1332,6 +1336,10 @@ project "{}"
 		m_currentScene.free();
 		m_currentScenePath = "";
 		m_contentBrowser->ProcessAllDirectory();
+		m_contentBrowser->SerializeImportedAssets();
+		m_contentBrowser->GetAllFilesID().clear();
+		m_contentBrowser->GetUUIDName().clear();
+		m_contentBrowser->GetUUIDPath().clear();
 		m_currentProject.free();
 
 		return true;
@@ -1468,23 +1476,7 @@ project "{}"
 
 	}
 
-	std::filesystem::path GetPathFromUUID(UUID uuid)
-	{
-		//TODO: Add Error Handling
-		TraceEditor* editor = TraceEditor::get_instance();
-		return editor->GetContentBrowser()->GetUUIDPath()[uuid];
-	}
-	UUID GetUUIDFromName(const std::string& name)
-	{
-		//TODO: Add Error Handling
-		TraceEditor* editor = TraceEditor::get_instance();
-		return editor->GetContentBrowser()->GetAllFilesID()[name];
-	}
-
-	std::string GetNameFromUUID(UUID uuid)
-	{
-		return "";
-	}
+	
 
 }
 

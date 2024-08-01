@@ -19,6 +19,7 @@
 #include "backends/Renderutils.h"
 #include "resource/ShaderManager.h"
 #include "core/Coretypes.h"
+#include "external_utils.h"
 
 #include <functional>
 #include <unordered_map>
@@ -27,8 +28,6 @@
 
 namespace trace {
 
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
 
 	static std::function<void(Entity entity, YAML::Emitter& emit)> _serialize_components[] = {
 		[](Entity entity, YAML::Emitter& emit)
@@ -301,16 +300,7 @@ namespace trace {
 			UUID id = comp["file id"].as<uint64_t>();
 			if (AppSettings::is_editor)
 			{
-				model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
-				std::filesystem::path p = GetPathFromUUID(id);
-				Ref<Mesh> res;
-				res = MeshManager::get_instance()->GetMesh(p.filename().string());
-				if (res) {}
-				else res = MeshManager::get_instance()->LoadMeshOnly_(p.string());
-				if (res)
-				{
-					model._model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
-				}
+				LoadModel(id, model, comp);
 			}
 			else
 			{
@@ -322,16 +312,24 @@ namespace trace {
 		ModelRendererComponent& model_renderer = entity.AddComponent<ModelRendererComponent>();
 		Ref<MaterialInstance> res;
 		UUID id = comp["file id"].as<uint64_t>();
+		if (id == 0)
+		{
+			TRC_TRACE("These entity model renderer doesn't have a material, Name: {}", entity.GetComponent<TagComponent>()._tag);
+			return;
+		}
 		if (AppSettings::is_editor)
 		{
+		
 			std::filesystem::path p = GetPathFromUUID(id);
 			res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-			if (res) {}
-			else
+			if (!res)
 			{
 				res = MaterialSerializer::Deserialize(p.string());
 			}
-			if (res) model_renderer._material = res;
+			if (res)
+			{
+				model_renderer._material = res;
+			}
 		}
 		else
 		{
@@ -421,11 +419,7 @@ namespace trace {
 			UUID id = comp["Image"].as<uint64_t>();
 			if (AppSettings::is_editor)
 			{
-				std::filesystem::path p = GetPathFromUUID(id);
-				res = TextureManager::get_instance()->GetTexture(p.filename().string());
-				if (res) {}
-				else res = TextureManager::get_instance()->LoadTexture_(p.string());
-				if (res) img.image = res;
+				img.image = LoadTexture(id);
 			}
 			else
 			{

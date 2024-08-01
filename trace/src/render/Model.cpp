@@ -219,12 +219,19 @@ namespace trace {
 		positions.resize(num_horizontal + 1);
 		std::vector<std::vector<glm::vec2>> tex_coords;
 		tex_coords.resize(num_horizontal + 1);
+		std::vector<std::vector<glm::vec3>> normals;
+		normals.resize(num_horizontal + 1);
+
+		std::vector<Vertex> vertices;
+		vertices.resize((num_horizontal + 1) * (num_vertical + 1));
+		positions.resize(num_horizontal + 1);
 		for (uint32_t lon = 0; lon <= num_horizontal; lon++)
 		{
 			float theta = glm::pi<float>() * (float)(lon) / (float)(num_horizontal);
 			float v = (float)(lon) / (float)(num_horizontal);
 			positions[lon].resize(num_vertical + 1);
 			tex_coords[lon].resize(num_vertical + 1);
+			normals[lon].resize(num_vertical + 1);
 			for (uint32_t lat = 0; lat <= num_vertical; lat++)
 			{
 				float phi = glm::two_pi<float>() * (float)(lat) / (float)(num_vertical);
@@ -233,10 +240,20 @@ namespace trace {
 				float y = radius * glm::sin(theta) * glm::sin(phi);
 				float z = radius * glm::cos(theta);
 
+				glm::vec3 location = glm::vec3(x, y, z);
+				glm::vec3 normal = glm::normalize(location - glm::vec3(0.0f));
+				glm::vec2 tex_coord = glm::vec2(u, v);
 				
-				positions[lon][lat] = glm::vec3(x, y, z);
-				tex_coords[lon][lat] = glm::vec2(u, v);
+				positions[lon][lat] = location;
+				tex_coords[lon][lat] = tex_coord;
+				normals[lon][lat] = normal;
 
+				Vertex vert;
+				vert.pos = location;
+				vert.texCoord = tex_coord;
+				vert.normal = normal;
+
+				vertices[(lon * (num_horizontal)) + lat] = vert;
 			}
 		}
 
@@ -244,30 +261,14 @@ namespace trace {
 		{
 			for (uint32_t lat = 0; lat < num_vertical; lat++)
 			{
-				Vertex vert0 = {};
-				vert0.pos = positions[lon][lat];
-				vert0.texCoord = tex_coords[lon][lat];
+				
+				uint32_t index0 = (lon * num_horizontal) + lat;
+				uint32_t index1 = ((lon + 1) * num_horizontal) + lat;
+				uint32_t index2 = (lon * num_horizontal) + (lat + 1);
 
-				Vertex vert1 = {};
-				vert1.pos = positions[lon + 1][lat];
-				vert1.texCoord = tex_coords[lon + 1][lat];
-
-				Vertex vert2 = {};
-				vert2.pos = positions[lon][lat + 1];
-				vert2.texCoord = tex_coords[lon][lat + 1];
-
-				glm::vec3 edge1 = vert1.pos - vert0.pos;
-				glm::vec3 edge2 = vert2.pos - vert0.pos;
-
-				glm::vec3 normal = glm::cross(edge1, edge2);
-				normal = glm::normalize(normal);
-				vert0.normal = normal;
-				vert1.normal = normal;
-				vert2.normal = normal;
-
-				data.push_back(vert0);
-				data.push_back(vert1);
-				data.push_back(vert2);
+				indices.push_back(index0);
+				indices.push_back(index1);
+				indices.push_back(index2);
 			}
 		}
 
@@ -275,35 +276,20 @@ namespace trace {
 		{
 			for (uint32_t lat = 1; lat < num_vertical + 1; lat++)
 			{
-				Vertex vert0 = {};
-				vert0.pos = positions[lon][lat];
-				vert0.texCoord = tex_coords[lon][lat];
+				
 
-				Vertex vert1 = {};
-				vert1.pos = positions[lon + 1][lat - 1];
-				vert1.texCoord = tex_coords[lon + 1][lat - 1];
+				uint32_t index0 = (lon * num_horizontal) + lat;
+				uint32_t index1 = ((lon + 1) * num_horizontal) + (lat - 1);
+				uint32_t index2 = ((lon + 1) * num_horizontal) + (lat);
 
-				Vertex vert2 = {};
-				vert2.pos = positions[lon + 1][lat];
-				vert2.texCoord = tex_coords[lon + 1][lat];
-
-				glm::vec3 edge1 = vert1.pos - vert0.pos;
-				glm::vec3 edge2 = vert2.pos - vert0.pos;
-
-				glm::vec3 normal = glm::cross(edge1, edge2);
-				normal = glm::normalize(normal);
-				vert0.normal = normal;
-				vert1.normal = normal;
-				vert2.normal = normal;
-
-				data.push_back(vert0);
-				data.push_back(vert1);
-				data.push_back(vert2);
+				indices.push_back(index0);
+				indices.push_back(index1);
+				indices.push_back(index2);
 			}
 		}
 
-		indices.reserve(data.size());
-		for (uint32_t i = 0; i < static_cast<uint32_t>(data.size()); i++) indices.push_back(i);
+		data = std::move(vertices);
+
 
 	}
 	void generateVertexTangent(std::vector<Vertex>& data, std::vector<uint32_t>& indices)

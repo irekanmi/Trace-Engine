@@ -285,7 +285,7 @@ namespace trace {
 			verts.clear();
 			_ind.clear();
 
-			generateSphere(verts, _ind, 1.0f, 50, 50);
+			generateSphere(verts, _ind, 1.0f, 45, 45);
 			generateVertexTangent(verts, _ind);
 			Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
 			//sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");

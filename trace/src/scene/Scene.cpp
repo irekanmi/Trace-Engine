@@ -482,7 +482,11 @@ namespace trace {
 	Entity Scene::GetEntity(UUID uuid)
 	{
 		auto it = m_entityMap.find(uuid);
-		if (it != m_entityMap.end()) return it->second;
+		if (it != m_entityMap.end())
+		{
+			return it->second;
+		}
+
 		return Entity();
 	}
 
@@ -616,14 +620,25 @@ namespace trace {
 		}
 
 		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-		for (UUID& i : hi.children)
+		while(hi.children.size() > 0)
 		{
-			Entity child = GetEntity(i);
+			UUID& id = hi.children.front();
+			Entity child = GetEntity(id);
 			DestroyEntity(child);
 		}
 
+		if (hi.HasParent())
+		{
+			Entity parent = GetEntity(hi.parent);
+			HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+			parent_hi.RemoveChild(entity.GetID());
+		}
+		else
+		{
+			m_rootNode->RemoveChild(entity.GetID());
+		}
+
 		m_scriptRegistry.Erase(entity.GetID());
-		entity.RemoveComponent<HierachyComponent>();
 		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
 		m_registry.destroy(entity);
 	}
@@ -947,27 +962,27 @@ namespace trace {
 
 	void Scene::OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent)
 	{
-		Entity entity(ent, this);
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-		if (hi.HasParent())
-		{
-			Entity parent = GetEntity(hi.parent);
-			if (parent)
-			{
-				parent.GetComponent<HierachyComponent>().RemoveChild(entity.GetID());
-			}
-		}
-		else
-		{
-			m_rootNode->RemoveChild(entity.GetID());
-		}
+		//Entity entity(ent, this);
+		//HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		//if (hi.HasParent())
+		//{
+		//	Entity parent = GetEntity(hi.parent);
+		//	if (parent)
+		//	{
+		//		parent.GetComponent<HierachyComponent>().RemoveChild(entity.GetID());
+		//	}
+		//}
+		//else
+		//{
+		//	m_rootNode->RemoveChild(entity.GetID());
+		//}
 
-		//TODO: Allow ProcessEntityHierachy() take in lambda's
-		std::function<void(Entity, UUID, Scene*)> destroy_children = [](Entity entity,UUID, Scene* scene)
-		{
-			scene->DestroyEntity(entity);
-		};
-		ProcessEntityHierachy(hi, destroy_children, true);
+		////TODO: Allow ProcessEntityHierachy() take in lambda's
+		//std::function<void(Entity, UUID, Scene*)> destroy_children = [](Entity entity,UUID, Scene* scene)
+		//{
+		//	scene->DestroyEntity(entity);
+		//};
+		//ProcessEntityHierachy(hi, destroy_children, true);
 			
 	}
 

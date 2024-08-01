@@ -13,6 +13,7 @@ namespace trace {
 	class ContentBrowser;
 	class AnimationPanel;
 	class AnimationGraphEditor;
+	class Importer;
 
 	enum EditorState
 	{
@@ -77,6 +78,7 @@ namespace trace {
 		ContentBrowser* GetContentBrowser() { return m_contentBrowser; }
 		AnimationPanel* GetAnimationPanel() { return m_animPanel; }
 		AnimationGraphEditor* GetAnimationGraphEditor() { return m_animGraphEditor; }
+		Importer* GetImporter() { return m_importer; }
 		AllProjectAssets& GetAllProjectAssets() { return m_allAssets; }
 		Ref<Project> GetCurrentProject() { return m_currentProject; }
 		Ref<Scene> GetCurrentScene() { return m_currentScene; }
@@ -97,6 +99,7 @@ namespace trace {
 		ContentBrowser* m_contentBrowser;
 		AnimationPanel* m_animPanel;
 		AnimationGraphEditor* m_animGraphEditor;
+		Importer* m_importer;
 
 		glm::vec2 m_viewportSize;
 		bool m_viewportFocused;
