@@ -593,6 +593,20 @@ namespace trace {
 		default_normal_map = CreateTexture("normal_map", texture_desc);
 		default_normal_map->m_path = "normal_map";
 
+		unsigned char* black_texture_data = new unsigned char[16];
+		black_texture_data[0] = 0;
+		black_texture_data[1] = 0;
+		black_texture_data[2] = 0;
+		black_texture_data[3] = 255;
+		texture_desc.m_width = 1;
+		texture_desc.m_height = 1;
+		texture_desc.m_data[0] = black_texture_data;
+		texture_desc.m_format = Format::R8G8B8A8_UNORM;
+		texture_desc.m_mipLevels = 1;
+
+		black_texture = CreateTexture("black_texture", texture_desc);
+		black_texture->m_path = "black_texture";
+
 		return true;
 	}
 

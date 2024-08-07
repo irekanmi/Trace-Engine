@@ -150,7 +150,10 @@ namespace trace {
 		if (!std::filesystem::exists(code_path))
 		{
 			std::string shader_data = ShaderParser::load_shader_file(path);
-			if (p.extension() == ".glsl") code = ShaderParser::glsl_to_spirv(shader_data, shader_stage, data_index);
+			if (p.extension() == ".glsl")
+			{
+				code = ShaderParser::glsl_to_spirv(shader_data, shader_stage, data_index);
+			}
 			if (!code.empty())
 			{
 				//SaveShaderCode(code_path, code);
@@ -185,7 +188,10 @@ namespace trace {
 		std::vector<std::pair<std::string, int>>& shader_data_index = _shad->GetDataIndex();
 		shader_data_index = data_index;
 		
-		if (serialize) PipelineSerializer::SerializeShader(_shad, code_path.string());
+		if (serialize)
+		{
+			PipelineSerializer::SerializeShader(_shad, code_path.string());
+		}
 
 
 		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };

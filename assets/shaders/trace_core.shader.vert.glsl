@@ -31,7 +31,9 @@ void main()
     mat3 norm_mat3 = transpose(inverse(model_mat3));
     _normal_ = normalize(norm_mat3  * in_normal);
     _tangent_ = vec4( normalize(model_mat3 * in_tangent.xyz), in_tangent.w );
-    _fragPos = (_view * GET_INSTANCE_PARAM(_model, LocalBufferObject) * vec4(in_pos, 1.0f)).xyz;
+    world_position = (GET_INSTANCE_PARAM(_model, LocalBufferObject) * vec4(in_pos, 1.0f)).xyz;
+    _fragPos = (_view * vec4(world_position, 1.0f)).xyz;
     
-    gl_Position = _projection * _view * GET_INSTANCE_PARAM(_model, LocalBufferObject) * vec4(in_pos, 1.0f);
+
+    gl_Position = _projection * vec4(_fragPos, 1.0f);
 }

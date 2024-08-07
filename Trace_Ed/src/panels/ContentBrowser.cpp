@@ -469,6 +469,8 @@ namespace trace {
 		m_allFilesID["ssao_main_pass_pipeline"] = def_id0++;
 		m_allFilesID["ssao_blur_pass_pipeline"] = def_id0++;
 		m_allFilesID["tone_map_pass_pipeline"] = def_id0++;
+		m_allFilesID["black_texture"] = def_id0++;
+
 
 		m_allIDPath[def_id1++] = "albedo_map";
 		m_allIDPath[def_id1++] = "specular_map";
@@ -493,14 +495,42 @@ namespace trace {
 		m_allIDPath[def_id1++] = "ssao_main_pass_pipeline";
 		m_allIDPath[def_id1++] = "ssao_blur_pass_pipeline";
 		m_allIDPath[def_id1++] = "tone_map_pass_pipeline";
+		m_allIDPath[def_id1++] = "black_texture";
 
 		//::-----::
+
+
+		std::filesystem::path db_path = std::filesystem::path(editor->GetCurrentProject()->GetProjectCurrentDirectory()) / "InternalAssetsDB";
+		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
+
+		if (std::filesystem::exists(assetsDB_path))
+		{
+
+
+			YAML::Node data;
+			YAML::load_yaml_data(assetsDB_path.string(), data);
+
+			std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+			std::string db_version = data["DataBase Version"].as<std::string>(); // TODO: To be used later
+			std::string db_type = data["DataBase Type"].as<std::string>(); // TODO: To be used later
+			YAML::Node DATA = data["DATA"];
+			for (auto i : DATA)
+			{
+				std::string filename = i["Name"].as<std::string>();
+				UUID id = i["UUID"].as<uint64_t>();
+				m_allFilesID[filename] = id;
+			}
+
+		}
+
+
 
 		bool dirty_ids = false;
 
 		// Adding builtin Shaders ================
 		std::string shader_dir;
 		FindDirectory(AppSettings::exe_path, "assets/shaders", shader_dir);
+		TraceEditor::AllProjectAssets& all_assets = TraceEditor::get_instance()->GetAllProjectAssets();
 		for (auto p : std::filesystem::directory_iterator(shader_dir))
 		{
 			std::filesystem::path path = p.path();
@@ -510,6 +540,7 @@ namespace trace {
 				{
 					if (std::filesystem::is_regular_file(r.path()) && path.extension().string() != ".shcode")
 					{
+						all_assets.shaders.emplace(r.path());
 						std::string filename = r.path().filename().string();
 						auto it = m_allFilesID.find(filename);
 						if (it == m_allFilesID.end())
@@ -524,6 +555,7 @@ namespace trace {
 			}
 			else if (std::filesystem::is_regular_file(path) && path.extension().string() != ".shcode")
 			{
+				all_assets.shaders.emplace(p.path());
 				std::string filename = path.filename().string();
 				auto it = m_allFilesID.find(filename);
 				if (it == m_allFilesID.end())
@@ -541,8 +573,7 @@ namespace trace {
 		// =======================================
 
 
-		std::filesystem::path db_path = std::filesystem::path(editor->GetCurrentProject()->GetProjectCurrentDirectory()) / "InternalAssetsDB";
-		std::filesystem::path assetsDB_path = db_path / "assets.trdb";
+		
 		if (!std::filesystem::exists(assetsDB_path))
 		{
 			if (!std::filesystem::exists(db_path)) std::filesystem::create_directory(db_path);
@@ -594,25 +625,6 @@ namespace trace {
 				FileSystem::close_file(out_handle);
 			}
 
-
-		}
-		if (std::filesystem::exists(assetsDB_path))
-		{
-			
-
-			YAML::Node data;
-			YAML::load_yaml_data(assetsDB_path.string(), data);
-
-			std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
-			std::string db_version = data["DataBase Version"].as<std::string>(); // TODO: To be used later
-			std::string db_type = data["DataBase Type"].as<std::string>(); // TODO: To be used later
-			YAML::Node DATA = data["DATA"];
-			for (auto i : DATA)
-			{
-				std::string filename = i["Name"].as<std::string>();
-				UUID id = i["UUID"].as<uint64_t>();
-				m_allFilesID[filename] = id;
-			}
 
 		}
 		for (auto p : std::filesystem::directory_iterator(editor->GetCurrentProject()->GetAssetsDirectory()))
@@ -689,6 +701,7 @@ namespace trace {
 		enum CreateItem
 		{
 			MATERIAL = 1,
+			PIPELINE,
 			FOLDER,
 			SCENE,
 			ANIMATION_CLIP,
@@ -705,6 +718,11 @@ namespace trace {
 				{
 					c_item = MATERIAL;
 					
+				}
+				if (ImGui::MenuItem("Pipeline"))
+				{
+					c_item = PIPELINE;
+
 				}
 				if (ImGui::MenuItem("Folder"))
 				{
@@ -770,6 +788,34 @@ namespace trace {
 					else
 					{
 						TRC_ERROR("{} has already been created", res + ".trmat");
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			ProcessAllDirectory();
+			break;
+		}
+		case PIPELINE:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Pipeline Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + ".trpip");
+					if (id == 0)
+					{
+						Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline");
+						Ref<GPipeline> new_pipeline = PipelineManager::get_instance()->CreatePipeline(sp->GetDesc(), res + ".trpip", false);
+						new_pipeline->SetPipelineType(PipelineType::Surface_Material);
+						std::string path = (m_currentDir / (res + ".trpip")).string();
+						PipelineSerializer::Serialize(new_pipeline, path);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trpip");
 					}
 				}
 			}
@@ -1075,21 +1121,21 @@ namespace trace {
 			case trace::ShaderData::CUSTOM_DATA_VEC2:
 			{
 				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
-				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data));
+				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data), 0.15f);
 				dst = data;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC3:
 			{
 				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
-				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data));
+				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data), 0.15f);
 				dst = data;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC4:
 			{
 				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
-				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data));
+				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data), 0.15f);
 				dst = data;
 				break;
 			}

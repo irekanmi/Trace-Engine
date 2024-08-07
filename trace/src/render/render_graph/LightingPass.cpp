@@ -183,10 +183,9 @@ namespace trace {
 				RenderFunc::BindRenderGraphTexture(
 					render_graph,
 					m_pipeline.get(),
-					"g_bufferData2",
+					"g_bufferColor",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					render_graph->GetResource_ptr(gColor_index),
-					2
+					render_graph->GetResource_ptr(gColor_index)
 				);
 				uint32_t res = 0;
 				uint32_t ssao_index = INVALID_ID;

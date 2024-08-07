@@ -36,7 +36,7 @@ namespace trace {
 
 			AttachmentInfo color_attach;
 			color_attach.attachmant_index = 2;
-			color_attach.attachment_format = Format::R16G16B16A16_FLOAT;
+			color_attach.attachment_format = Format::R32G32B32A32_UINT;
 			color_attach.initial_format = TextureFormat::UNKNOWN;
 			color_attach.final_format = TextureFormat::COLOR_ATTACHMENT;
 			color_attach.is_depth = false;
@@ -161,9 +161,12 @@ namespace trace {
 		position_desc.m_height = fd.frame_height;
 		depth_desc.m_width = fd.frame_width;
 		depth_desc.m_height = fd.frame_height;
+
+		TextureDesc color_desc = position_desc;
+		color_desc.m_format = Format::R32G32B32A32_UINT;
 		position_index = pass->CreateAttachmentOutput("gPosition", position_desc);
 		normal_index = pass->CreateAttachmentOutput("gNormal", position_desc);
-		color_index = pass->CreateAttachmentOutput("gColor", position_desc);
+		color_index = pass->CreateAttachmentOutput("gColor", color_desc);
 		depth_index = pass->CreateDepthAttachmentOutput("depth", depth_desc);
 		
 		gbuffer_data.position_index = position_index;

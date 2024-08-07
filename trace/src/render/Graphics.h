@@ -84,6 +84,7 @@ namespace trace {
 		R16_FLOAT,
 		R32G32B32A32_FLOAT,
 		R32G32B32_FLOAT,
+		R32G32B32A32_UINT,
 		R32G32B32_UINT,
 		R32G32_FLOAT,
 		R32_FLOAT,
@@ -386,6 +387,7 @@ namespace trace {
 			std::string resource_name = "";
 			uint32_t resource_size = 0;
 			ShaderData resource_data_type = ShaderData::NONE;
+			uint32_t offset = 0;
 		};
 		std::vector<StructInfo> members;
 		void* data = nullptr;

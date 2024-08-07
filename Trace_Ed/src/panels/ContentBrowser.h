@@ -58,8 +58,8 @@ namespace trace {
 		void LoadImportedAssets();
 
 		std::unordered_map<std::string, UUID>& GetAllFilesID() { return m_allFilesID; }
-		std::unordered_map<UUID, std::filesystem::path> GetUUIDPath() { return m_allIDPath; }
-		std::unordered_map<UUID, std::string> GetUUIDName() { return m_allIDNames; }
+		std::unordered_map<UUID, std::filesystem::path>& GetUUIDPath() { return m_allIDPath; }
+		std::unordered_map<UUID, std::string>& GetUUIDName() { return m_allIDNames; }
 		std::filesystem::path& GetCurrentDirectory() { return m_currentDir; }
 		Ref<GTexture> GetDefaultIcon() { return default_icon; }
 		AssetsEdit& GetAssetsEdit() { return m_assetsEdit; }

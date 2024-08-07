@@ -17,7 +17,7 @@ namespace YAML {
 
 	bool convert<glm::vec2>::decode(const Node& node, glm::vec2& value)
 	{
-		if (!node.IsSequence() || node.size() != 3)
+		if (!node.IsSequence() || node.size() != 2)
 			return false;
 
 		value.x = node[0].as<float>();
@@ -37,7 +37,7 @@ namespace YAML {
 
 	bool convert<glm::ivec2>::decode(const Node& node, glm::ivec2& value)
 	{
-		if (!node.IsSequence() || node.size() != 3)
+		if (!node.IsSequence() || node.size() != 2)
 			return false;
 
 		value.x = node[0].as<int>();

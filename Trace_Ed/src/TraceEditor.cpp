@@ -109,6 +109,7 @@ namespace trace {
 		m_allAssets.textures.emplace("albedo_map");
 		m_allAssets.textures.emplace("specular_map");
 		m_allAssets.textures.emplace("normal_map");
+		m_allAssets.textures.emplace("black_texture");
 
 		m_allAssets.materials.emplace("default");
 

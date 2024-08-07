@@ -114,7 +114,7 @@ namespace trace {
 							_pipeline->GetSceneUniforms()[j]._resource_type = i._struct.resource_type;
 							_pipeline->GetSceneUniforms()[j]._shader_stage = i._struct.shader_stage;
 							_pipeline->GetSceneUniforms()[j].data_type = mem.resource_data_type;
-							_pipeline->GetSceneUniforms()[j]._offset = struct_size;
+							_pipeline->GetSceneUniforms()[j]._offset = mem.offset;
 							struct_size += mem.resource_size;
 							
 							struct_size = get_alignment(struct_size, offset_alignment);

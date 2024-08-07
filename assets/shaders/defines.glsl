@@ -8,3 +8,5 @@
 #define COL32_WHITE       COL32(255,255,255,255)  // Opaque white = 0xFFFFFFFF
 #define COL32_BLACK       COL32(0,0,0,255)        // Opaque black
 #define COL32_BLACK_TRANS COL32(0,0,0,0)          // Transparent black = 0x00000000
+
+const float PI = 3.14159265359;

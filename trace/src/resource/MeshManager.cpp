@@ -260,7 +260,6 @@ namespace trace {
 			generateDefaultCube(verts, _ind);
 			generateVertexTangent(verts, _ind);
 			Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
-			//cube_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
 
 			for (uint32_t k = 0; k < m_numEntries; k++)
 			{
@@ -288,7 +287,7 @@ namespace trace {
 			generateSphere(verts, _ind, 1.0f, 45, 45);
 			generateVertexTangent(verts, _ind);
 			Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
-			//sphere_ref->m_matInstance = MaterialManager::get_instance()->GetMaterial("default");
+			
 
 
 			for (uint32_t k = 0; k < m_numEntries; k++)

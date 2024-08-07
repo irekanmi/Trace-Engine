@@ -186,6 +186,55 @@ namespace trace {
 		return result;
 	}
 
+	bool load_assimp_node_meshes(const aiScene* ass_scene, aiNode* node, Ref<Scene> scene, Entity parent, const std::string& filename)
+	{
+		TraceEditor* editor = TraceEditor::get_instance();
+		ContentBrowser* content_browser = editor->GetContentBrowser();
+		
+		for (uint32_t i = 0; i < node->mNumMeshes; i++)
+		{
+
+			uint32_t mesh_index = node->mMeshes[0];
+			aiMesh* mesh = ass_scene->mMeshes[mesh_index];
+
+			std::string mesh_name = mesh->mName.C_Str();
+
+			UUID parent_id = 0;
+			if (parent)
+			{
+				parent_id = parent.GetID();
+			}
+
+			Entity object = scene->CreateEntity(mesh_name, parent_id);
+			
+			std::string model_name = filename + "`" + mesh->mName.C_Str();
+			object.AddComponent<ModelComponent>()._model = load_assimp_mesh(ass_scene, mesh, model_name);
+
+			content_browser->GetAllFilesID()[model_name] = UUID::GenUUID();
+
+			if (mesh->mMaterialIndex != -1)
+			{
+				aiMaterial* ass_mat = ass_scene->mMaterials[mesh->mMaterialIndex];
+				aiString ass_name;
+				if (aiGetMaterialString(ass_mat, AI_MATKEY_NAME, &ass_name) == AI_SUCCESS)
+				{
+					std::string mat_name = ass_name.C_Str();
+					mat_name += ".trmat";
+
+					UUID id = content_browser->GetAllFilesID()[mat_name];
+					std::filesystem::path material_path = content_browser->GetUUIDPath()[id];
+
+					Ref<MaterialInstance> material = MaterialSerializer::Deserialize(material_path.string());
+
+					object.AddComponent<ModelRendererComponent>()._material = material;
+				}
+
+			}
+		}
+
+		return true;
+	}
+
 	void process_assimp_node(const aiScene* ass_scene, aiNode* node, Ref<Scene> scene, Entity parent,const std::string& filename)
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
@@ -217,7 +266,7 @@ namespace trace {
 		object.GetComponent<TransformComponent>()._transform.SetRotation(rotation);
 
 		// NOTE: For now we load only one mesh
-		if (node->mNumMeshes > 0)
+		/*if (node->mNumMeshes > 0)
 		{
 			uint32_t mesh_index = node->mMeshes[0];
 			aiMesh* mesh = ass_scene->mMeshes[mesh_index];			
@@ -246,7 +295,8 @@ namespace trace {
 
 			}
 
-		}
+		}*/
+		load_assimp_node_meshes(ass_scene, node, scene, object, filename);
 
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{

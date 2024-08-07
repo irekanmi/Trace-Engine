@@ -364,16 +364,19 @@ namespace trace {
 
 	void Scene::OnRender(CommandList& cmd_list)
 	{
+		//TODO: Optimize resolve hierachy transform by only calculating it when needed and save it for later use during that frame
 
 		Renderer* renderer = Renderer::get_instance();
 
-		auto light_group = m_registry.view<LightComponent, TransformComponent>();
+		auto light_group = m_registry.view<LightComponent, HierachyComponent>();
 
 		for (auto entity : light_group)
 		{
+			Entity object(entity, this);
 			auto [light, transform] = light_group.get(entity);
-			light._light.position = glm::vec4(transform._transform.GetPosition(), 0.0f);
-			light._light.direction = glm::vec4(transform._transform.GetForward(), 0.0f);
+			Transform final_transform = GetEntityWorldTransform(object);
+			light._light.position = glm::vec4(final_transform.GetPosition(), 0.0f);
+			light._light.direction = glm::vec4(final_transform.GetForward(), 0.0f);
 
 			renderer->AddLight(cmd_list, light._light, light.light_type);
 

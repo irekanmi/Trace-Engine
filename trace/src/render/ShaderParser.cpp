@@ -90,6 +90,8 @@ namespace trace {
 				result = ShaderData::CUSTOM_DATA_VEC4;
 			if (desc.traits.numeric.vector.component_count == 3)
 				result = ShaderData::CUSTOM_DATA_VEC3;
+			if (desc.traits.numeric.vector.component_count == 2)
+				result = ShaderData::CUSTOM_DATA_VEC2;
 		}
 
 		if (_int && _vec && !_mat)
@@ -98,6 +100,8 @@ namespace trace {
 				result = ShaderData::CUSTOM_DATA_IVEC4;
 			if (desc.traits.numeric.vector.component_count == 3)
 				result = ShaderData::CUSTOM_DATA_IVEC3;
+			if (desc.traits.numeric.vector.component_count == 2)
+				result = ShaderData::CUSTOM_DATA_IVEC2;
 		}
 
 		if (_float && _mat)
@@ -132,6 +136,43 @@ namespace trace {
 			for (uint32_t j = 0; j < set.binding_count; j++)
 			{
 				SpvReflectDescriptorBinding*& binding = set.bindings[j];
+
+
+				// Checking if a particular binding is already in the resoures
+				bool skip = false;
+				for (auto& res : out_res.resources)
+				{
+					bool is_struct = res.def == trace::ShaderDataDef::STRUCTURE;
+					bool is_array = res.def == trace::ShaderDataDef::ARRAY;
+
+					if (is_struct)
+					{
+						skip = (res._struct.resource_stage == res_stage) && (res._struct.slot == binding->binding);
+						if (skip)
+						{
+							uint32_t _stage = res._struct.shader_stage | shader_stage;
+							res._struct.shader_stage = (ShaderStage)_stage;
+							break;
+						}
+					}
+					if (is_array)
+					{
+						skip = (res._array.resource_stage == res_stage) && (res._array.slot == binding->binding);
+						if (skip)
+						{
+							uint32_t _stage = res._array.shader_stage | shader_stage;
+							res._array.shader_stage = (ShaderStage)_stage;
+							break;
+						}
+					}
+					
+				}
+
+				if (skip)
+				{
+					continue;
+				}
+
 				ShaderArray shArray;
 				ShaderArray::ArrayInfo arr_info;
 				ShaderStruct shStruct;
@@ -139,6 +180,7 @@ namespace trace {
 				bool isArray = (binding->count > 1);
 				bool u_buffer = (binding->descriptor_type == SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 				bool u_cSampler = (binding->descriptor_type == SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
 
 				if (u_buffer && isArray)
 				{
@@ -170,6 +212,7 @@ namespace trace {
 						ShaderStruct::StructInfo s_info;
 						s_info.resource_name = blck_var.name;
 						s_info.resource_size = blck_var.size;
+						s_info.offset = blck_var.offset;
 						s_info.resource_data_type = GetDataType(*blck_var.type_description);
 						Struct.members.push_back(s_info);
 					}

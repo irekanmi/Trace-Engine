@@ -1,5 +1,5 @@
 
-
+#include "defines.glsl"
 
 vec4 prefilter_color(vec4 color, float falloff)
 {
@@ -128,8 +128,139 @@ vec4 colorFromUint32(uint color)
     return result;
 }
 
+uint vec4ToUint32(vec4 value)
+{
+    uint result = 0;
+    
+    int a = int(value.a * 255.0f);
+    int b = int(value.b * 255.0f);
+    int g = int(value.g * 255.0f);
+    int r = int(value.r * 255.0f);
+
+    result |= (a << 24);
+    result |= (b << 16);
+    result |= (g << 8);
+    result |= (r << 0);
+
+    return result;
+}
+
 float map(float value, float in_min, float in_max, float out_min, float out_max)
 {
     return out_min + ( (out_max - out_min) * ( (value - in_min) / (in_max - in_min) ));
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+float DistributionGGX(float NdotH, float roughness)
+{
+    float a      = roughness*roughness;
+    float a2     = a*a;
+    float NdotH2 = NdotH*NdotH;
+	
+    float num   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+	
+    return num / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float num   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+	
+    return num / denom;
+}
+
+float GeometrySmith(float NdotV, float NdotL, float roughness)
+{
+    float ggx2  = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1  = GeometrySchlickGGX(NdotL, roughness);
+	
+    return ggx1 * ggx2;
+}
+
+vec3 CookTorrance_BRDF(vec3 normal, vec3 light_direction, vec3 view_direction, vec3 radiance, vec3 albedo, float metallic, float roughness)
+{
+    vec3 final_color = vec3(0.0f);
+
+    vec3 half_direction = normalize(light_direction + view_direction);
+
+    float NdotV = max(dot(normal, view_direction), 0.0f);
+    float NdotL = max(dot(normal, light_direction), 0.0f);
+    float NdotH = max(dot(normal, half_direction), 0.0f);
+
+    float cosTheta = max(dot(half_direction, view_direction), 0.0f);
+
+    vec3 F0 = vec3(0.04f);
+    F0 = mix(F0, albedo, metallic);
+
+    vec3 Fresnel = fresnelSchlick(cosTheta, F0);
+    float NDF = DistributionGGX(NdotH, roughness);
+    float G = GeometrySmith(NdotV, NdotL, roughness);
+
+    vec3 numerator    = NDF * G * Fresnel;
+    float denominator = (4.0 * NdotV * NdotL)  + 0.0001;
+    vec3 specular     = numerator / denominator; 
+
+    vec3 kS = Fresnel;
+    vec3 kD = vec3(1.0f) - kS;
+
+    vec3 diffuse = kD * (albedo / PI);
+
+    final_color = ( diffuse + specular ) * (radiance * NdotL);
+
+    return final_color;
+}
+
+vec2 ParallaxMapping(sampler2D height_map, float height_scale ,vec2 tex_coords, vec3 tangent_view_dir)
+{
+    vec2 result;
+
+    float min_layers = 8.0f;
+    float max_layers = 24.0f;
+    float num_layers = mix(min_layers, max_layers, max(dot(vec3(0.0f, 0.0f, 1.0f), tangent_view_dir), 0.0f) );
+
+    float layer_depth = 1.0f / num_layers;
+
+    vec2 P = (tangent_view_dir.xy /*/ tangent_view_dir.z*/) * height_scale;
+    vec2 delta_tex_coords = ( P / num_layers);
+
+    float current_layer_depth = 0.0f;
+    vec2 current_tex_coords = tex_coords;
+    float current_depth_value = ( 1.0f - texture(height_map, current_tex_coords).r);
+
+    while(current_layer_depth < current_depth_value)
+    {
+        current_tex_coords -= delta_tex_coords;
+        current_depth_value = ( 1.0f - texture(height_map, current_tex_coords).r);
+        current_layer_depth += layer_depth;
+    }
+
+    vec2 previous_tex_coord = current_tex_coords + delta_tex_coords;
+
+    // get depth after and before collision for linear interpolation
+    float after_depth  = current_depth_value - current_layer_depth;
+    float before_depth = (1.0f - texture(height_map, previous_tex_coord).r) - current_layer_depth + layer_depth;
+
+    // interpolation of texture coordinates
+    float weight = after_depth / (after_depth - before_depth);
+    result = previous_tex_coord * weight + current_tex_coords * (1.0 - weight);
+
+    return result;
+}
+
+vec2 SimpleParallaxMapping(sampler2D height_map, float height_scale ,vec2 tex_coords, vec3 tangent_view_dir)
+{
+    float height =  1.0f - texture(height_map, tex_coords).r;    
+    vec2 p = tangent_view_dir.xy* (height * height_scale);
+    return tex_coords - p;
 }
 

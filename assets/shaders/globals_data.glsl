@@ -16,15 +16,27 @@
 
 #endif
 
-#define OUT_VERTEX_DATA layout(location = 0)out data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; };
-#define IN_VERTEX_DATA layout(location = 0)in data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; };
+#define OUT_VERTEX_DATA layout(location = 0)out data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; vec3 _view_position_; vec3 world_position; };
+#define IN_VERTEX_DATA layout(location = 0)in data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; vec3 _view_position_; vec3 world_position; };
 
 
 
-#define OUT_FRAG_DATA layout(location = 0)out vec4 g_Position; layout(location = 1)out vec4 g_Normal; layout(location = 2)out vec4 g_ColorSpecular;
+#define OUT_FRAG_DATA layout(location = 0)out vec4 g_Position; layout(location = 1)out vec4 g_Normal; layout(location = 2)out uvec4 g_ColorSpecular;
 #define FRAG_POS g_Position.xyz
+#define FRAG_POS_X g_Position.x
+#define FRAG_POS_Y g_Position.y
+#define FRAG_POS_Z g_Position.z
+#define FRAG_POS_W g_Position.w
 #define FRAG_NORMAL g_Normal.xyz
-#define FRAG_SPECULAR g_ColorSpecular.a
+#define FRAG_NORMAL_X g_Normal.x
+#define FRAG_NORMAL_Y g_Normal.y
+#define FRAG_NORMAL_Z g_Normal.z
+#define FRAG_NORMAL_W g_Normal.w
 #define FRAG_COLOR g_ColorSpecular.rgb
+#define FRAG_COLOR_R g_ColorSpecular.r
+#define FRAG_COLOR_G g_ColorSpecular.g
+#define FRAG_COLOR_B g_ColorSpecular.b
+#define FRAG_COLOR_A g_ColorSpecular.a
+#define FRAG_SPECULAR g_ColorSpecular.a
 #define FRAG_SHININESS g_Normal.a
 

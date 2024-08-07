@@ -275,15 +275,21 @@ namespace vk {
 
                     void* data = nullptr;
                     lambda(meta_data.data_type, m_data.second.first, data);
-
-                    __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size);
+                    
+                    if (data)
+                    {
+                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size);
+                    }
                 }
                 if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
                 {
                     trace::VKImage* tex = nullptr;
                     lambda(meta_data.data_type, m_data.second.first, (void*&)tex);
 
-                    __SetPipelineTextureData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex);
+                    if (tex)
+                    {
+                        __SetPipelineTextureData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex);
+                    }
                 }
                 
             }

@@ -2531,6 +2531,11 @@ namespace vk {
 			result = VK_FORMAT_R32G32B32A32_SFLOAT;
 			break;
 		}
+		case trace::Format::R32G32B32A32_UINT:
+		{
+			result = VK_FORMAT_R32G32B32A32_UINT;
+			break;
+		}
 		case trace::Format::R32G32B32_UINT:
 		{
 			result = VK_FORMAT_R32G32B32_UINT;

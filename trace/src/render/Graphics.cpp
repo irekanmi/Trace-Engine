@@ -31,6 +31,10 @@ namespace trace {
 		{
 			return 12;
 		}
+		case Format::R32G32B32A32_UINT:
+		{
+			return 16;
+		}
 		case Format::R32G32B32_UINT:
 		{
 			return 12;
