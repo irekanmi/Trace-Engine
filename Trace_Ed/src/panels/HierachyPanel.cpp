@@ -229,8 +229,8 @@ namespace trace {
 				}
 				if (ImGui::MenuItem("Delete Entity"))
 				{
-					editor->GetCurrentScene()->DestroyEntity(entity);
 					m_selectedEntity = Entity();
+					editor->GetCurrentScene()->DestroyEntity(entity);
 				}
 				ImGui::EndPopup();
 			}

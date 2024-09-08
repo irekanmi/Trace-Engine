@@ -1,20 +1,22 @@
 #pragma once
 
+
 #include "core/Core.h"
 #include "core/Enums.h"
 
 #include "RenderPass.h"
+#include "resource/Ref.h"
 
 namespace trace {
 
+	class GPipeline;
 
-
-	class TRACE_API GBufferPass : public RenderPass
+	class TRACE_API ShadowPass : public RenderPass
 	{
 
 	public:
-		GBufferPass(){}
-		~GBufferPass(){}
+		ShadowPass() {}
+		~ShadowPass() {}
 
 		virtual void Init(Renderer* renderer) override;
 		virtual void Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs) override;
@@ -22,13 +24,9 @@ namespace trace {
 		virtual void ShutDown() override;
 
 	private:
-		uint32_t position_index;
-		uint32_t normal_index;
-		uint32_t color_index;
-		uint32_t depth_index;
-
-		TextureDesc position_desc;
-		TextureDesc depth_desc;
+		Ref<GPipeline> m_sun_pipeline;
+		Ref<GPipeline> m_spot_pipeline;
+		Ref<GPipeline> m_point_pipeline;
 
 	protected:
 

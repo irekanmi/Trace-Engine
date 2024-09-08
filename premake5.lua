@@ -11,6 +11,9 @@ workspace "Trace"
 		"Public"
 	}
 
+	filter "system:windows"
+		buildoptions "/MP"
+
 OutputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
@@ -132,6 +135,9 @@ project "trace"
 	{
 		"EASTL_d.lib"
 	}
+
+	filter "system:windows"
+		buildoptions "/MP"
 
 	filter "configurations:DebugRelease"
 		symbols "On"
@@ -309,7 +315,8 @@ project "Trace_Ed"
 	}
 
 	filter "system:windows"
-	
+		buildoptions "/MP"
+
 	defines
 	{
 		"TRC_WINDOWS",

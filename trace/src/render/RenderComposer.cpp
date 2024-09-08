@@ -40,7 +40,7 @@ namespace trace {
 		gbuffer_pass.ShutDown();
 	}
 
-	bool RenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings)
+	bool RenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 	{
 		bool result = true;
 
@@ -53,18 +53,18 @@ namespace trace {
 		fd.frame_height = m_renderer->GetFrameHeight();
 
 		frame_graph.SetRenderer(m_renderer);
-		gbuffer_pass.Setup(&frame_graph, black_board);
+		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
 		{
-			ssao_pass.Setup(&frame_graph, black_board);
+			ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
 		}
-		lighting_pass.Setup(&frame_graph, black_board);
-		forward_pass.Setup(&frame_graph, black_board);
+		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
+		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
 		{
-			bloom_pass.Setup(&frame_graph, black_board);
+			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
 		}
-		toneMap_pass.Setup(&frame_graph, black_board);
+		toneMap_pass.Setup(&frame_graph, black_board, render_graph_index);
 		frame_graph.SetFinalResourceOutput("swapchain");
 
 
@@ -74,7 +74,7 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderComposer::PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board)
+	bool RenderComposer::PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 		bool result = true;
 

@@ -13,6 +13,8 @@ IN_VERTEX_DATA
 
 INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
     vec4 diffuse_color;
+    vec4 emissive_color;
+    vec2 tilling;
     vec2 metallic;
     vec2 roughness;
     float height_scale;
@@ -44,16 +46,19 @@ void main()
     vec3 _tangent = normalize( _tangent_.xyz - (dot(_tangent_.xyz, obj_norm) * obj_norm) ); 
     vec3 _bitangent = cross(obj_norm, _tangent) * _tangent_.w; 
     mat3 TBN = mat3(_tangent, _bitangent, obj_norm); 
-    mat3 inv_TBN = transpose(TBN);
+    mat3 world_TBN = mat3(transpose(_view)) * TBN;
+    mat3 inv_TBN = transpose(world_TBN);
 
     vec3 actual_world_position = world_position;
     vec3 actual_world_view_dir = _view_position - world_position;
 
-    //vec3 tangent_space_pos = inv_TBN * world_frag_pos;
-    //vec3 tangent_space_view_pos = inv_TBN * _view_position;
-    vec3 tangent_space_view_dir = normalize(inv_TBN * actual_world_view_dir);
+    vec3 tangent_space_pos = inv_TBN * actual_world_position;
+    vec3 tangent_space_view_pos = inv_TBN * _view_position;
+    vec3 tangent_space_view_dir = normalize( (tangent_space_view_pos - tangent_space_pos));
 
-    vec2 parallax_tex_coord = ParallaxMapping(GET_BINDLESS_TEXTURE2D(HEIGHT_MAP), GET_INSTANCE_PARAM(height_scale, InstanceBufferObject), _texCoord, tangent_space_view_dir);
+    
+    vec2 parallax_tex_coord = _texCoord * GET_INSTANCE_PARAM(tilling, InstanceBufferObject);
+    parallax_tex_coord = ParallaxMapping(GET_BINDLESS_TEXTURE2D(HEIGHT_MAP), GET_INSTANCE_PARAM(height_scale, InstanceBufferObject), parallax_tex_coord, tangent_space_view_dir);
 
     vec3 normal;
     vec3 _n = texture(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), parallax_tex_coord).rgb;  
@@ -63,7 +68,7 @@ void main()
 
     vec4 color = texture(GET_BINDLESS_TEXTURE2D(DIFFUSE_MAP), parallax_tex_coord);
     vec4 diff_color = GET_INSTANCE_PARAM(diffuse_color, InstanceBufferObject);
-    diff_color.rgb = pow(diff_color.rgb, vec3(2.2f));
+    //diff_color.rgb = pow(diff_color.rgb, vec3(2.2f));
     vec4 final_color = mix(color, diff_color, diff_color.a);
 
     FRAG_POS = _fragPos;

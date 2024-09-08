@@ -60,6 +60,7 @@ namespace vk {
 			{
 				has_depth = true;
 				depth_attach_ref.attachment = desc.subpass.attachments[j].attachmant_index;
+				depth_attach_ref.layout = desc.subpass.attachments[j].attachment_format == trace::Format::D32_SFLOAT ? VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 				continue;
 
 			}
@@ -100,6 +101,8 @@ namespace vk {
 			result = false;
 		}
 		
+		uint32_t color_attachment_count = has_depth && (attachments_ref.size() > 0) ? attachments_ref.size() - has_depth : 0;
+
 		render_pass->SetColorAttachmentCount(static_cast<uint32_t>(attachments_ref.size() - has_depth));
 
 		return result;

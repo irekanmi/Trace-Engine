@@ -132,7 +132,7 @@ namespace trace {
 			{}
 		);
 
-		pass->SetRunCB([&](std::vector<uint32_t>& inputs)
+		pass->SetRunCB([&](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 			{
 				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
@@ -152,7 +152,7 @@ namespace trace {
 				graph->ModifyTextureResource(graph->GetResource(depth_index).resource_name, desc);
 			});
 	}
-	void GBufferPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board)
+	void GBufferPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 		GBufferData& gbuffer_data = black_board.add<GBufferData>();
 		FrameData& fd = black_board.get<FrameData>();
@@ -176,8 +176,9 @@ namespace trace {
 
 		uint32_t width = render_graph->GetResource(position_index).resource_data.texture.width;
 		uint32_t height = render_graph->GetResource(position_index).resource_data.texture.height;
-		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
+		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 			{
+
 				Viewport view_port = m_renderer->_viewPort;
 				Rect2D rect = m_renderer->_rect;
 				view_port.width = width;
@@ -189,7 +190,7 @@ namespace trace {
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
 
-				m_renderer->RenderOpaqueObjects();
+				m_renderer->RenderOpaqueObjects(render_graph_index);
 			});
 
 	}

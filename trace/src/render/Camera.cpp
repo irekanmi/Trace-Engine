@@ -53,10 +53,10 @@ namespace trace {
 			}
 			else if (m_type == CameraType::ORTHOGRAPHIC)
 			{
-				float left = m_orthographicSize * m_aspectRatio * 0.5f;
-				float right = -m_orthographicSize * m_aspectRatio * 0.5f;
-				float top = m_orthographicSize * 0.5f;
-				float bottom = -m_orthographicSize * 0.5f;
+				float left = -m_orthographicSize * m_aspectRatio;
+				float right = m_orthographicSize * m_aspectRatio;
+				float top = m_orthographicSize;
+				float bottom = -m_orthographicSize;
 
 				m_projection = glm::ortho(left, right, bottom, top, m_zNear, m_zFar);
 				m_projection[1][1] *= -1.0f; //FIX: Added due to vulkan viewport issuses

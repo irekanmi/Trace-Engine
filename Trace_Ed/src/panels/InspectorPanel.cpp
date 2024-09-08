@@ -298,6 +298,21 @@ namespace trace {
 				entity.AddComponent<ImageComponent>();
 				comp_dirty = true;
 			}
+			if (ImGui::MenuItem("SunLight"))
+			{
+				entity.AddComponent<SunLight>();
+				comp_dirty = true;
+			}
+			if (ImGui::MenuItem("PointLight"))
+			{
+				entity.AddComponent<PointLight>();
+				comp_dirty = true;
+			}
+			if (ImGui::MenuItem("SpotLight"))
+			{
+				entity.AddComponent<SpotLight>();
+				comp_dirty = true;
+			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
@@ -546,7 +561,7 @@ namespace trace {
 
 			});
 
-		comp_dirty = comp_dirty || DrawComponent<ModelRendererComponent>(entity, "Model Renderer", [&](Entity obj, ModelRendererComponent& comp) -> bool {
+		comp_dirty = comp_dirty || DrawComponent<ModelRendererComponent>(entity, "Model Renderer", [editor](Entity obj, ModelRendererComponent& comp) -> bool {
 
 			bool dirty = false;
 
@@ -601,6 +616,9 @@ namespace trace {
 					dirty = true;
 				}
 			}
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Cast Shadows", &comp.cast_shadow), Cast_Shadows) {}
 
 			return dirty;
 			}
@@ -874,6 +892,80 @@ namespace trace {
 				memcpy(anim_data, &comp.color, sizeof(uint32_t));
 				anim_dirty = true;
 			}
+
+			return dirty;
+			});
+
+		comp_dirty = comp_dirty || DrawComponent<SunLight>(entity, "SunLight", [&](Entity obj, SunLight& comp) -> bool {
+			bool dirty = false;
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit3("Color", glm::value_ptr(comp.color)), Light_Color) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Intensity", &comp.intensity), Light_Intensity) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Cast Shadows", &comp.cast_shadows), Cast_Shadows) {}
+
+			return dirty;
+			});
+
+		comp_dirty = comp_dirty || DrawComponent<PointLight>(entity, "PointLight", [&](Entity obj, PointLight& comp) -> bool {
+			bool dirty = false;
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit3("Color", glm::value_ptr(comp.color)), Light_Color) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Intensity", &comp.intensity), Light_Intensity) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Radius", &comp.radius), Light_Radius) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Constant", &comp.constant, 0.005f), Light_Constant) {}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Linear", &comp.linear, 0.002f), Light_Linear) {}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Quadratic", &comp.quadratic, 0.002f), Light_Quadratic) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Cast Shadows", &comp.cast_shadows), Cast_Shadows) {}
+
+
+			return dirty;
+			});
+
+		comp_dirty = comp_dirty || DrawComponent<SpotLight>(entity, "SpotLight", [&](Entity obj, SpotLight& comp) -> bool {
+			bool dirty = false;
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::ColorEdit3("Color", glm::value_ptr(comp.color)), Light_Color) {}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Intensity", &comp.intensity), Light_Intensity) {}
+
+			float inner_cutoff = glm::degrees(glm::acos(comp.innerCutOff));
+			float outer_cutoff = glm::degrees(glm::acos(comp.outerCutOff));
+			
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Inner CutOff", &inner_cutoff), Light_Inner_CutOff) 
+			{
+				comp.innerCutOff = glm::cos(glm::radians(inner_cutoff));
+			}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Outer CutOff", &outer_cutoff), Light_Outer_CutOff)
+			{
+				comp.outerCutOff = glm::cos(glm::radians(outer_cutoff));
+			}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Cast Shadows", &comp.cast_shadows), Cast_Shadows) {}
+
 
 			return dirty;
 			});

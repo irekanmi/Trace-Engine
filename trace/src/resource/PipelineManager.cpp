@@ -529,7 +529,7 @@ namespace trace {
 		{
 
 			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("trace_core.shader.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("g_buffer.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("parallelex_brdf.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);

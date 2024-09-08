@@ -96,7 +96,7 @@ namespace trace {
 	{
 	}
 
-	void ToneMapPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board)
+	void ToneMapPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 
 		FrameData& frame_data = black_board.get<FrameData>();
@@ -109,8 +109,9 @@ namespace trace {
 		uint32_t width = render_graph->GetResource(frame_data.ldr_index).resource_data.texture.width;
 		uint32_t height = render_graph->GetResource(frame_data.ldr_index).resource_data.texture.height;
 
-		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
+		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 			{
+				RenderGraphFrameData* graph_data = renderer->GetRenderGraphData(render_graph_index);
 				Viewport view_port = m_renderer->_viewPort;
 				Rect2D rect = m_renderer->_rect;
 				view_port.width = width;
@@ -142,7 +143,7 @@ namespace trace {
 				RenderFunc::BindPipeline_(m_pipeline.get());
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
-				RenderFunc::OnDrawStart(m_renderer->GetDevice(), m_pipeline.get());
+				RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_pipeline.get());
 
 
 			});

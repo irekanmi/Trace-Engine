@@ -1,4 +1,7 @@
 
+#ifndef DEFINES_HEADER_
+#define DEFINES_HEADER_
+
 #define COL32_R_SHIFT    0
 #define COL32_G_SHIFT    8
 #define COL32_B_SHIFT    16
@@ -10,3 +13,10 @@
 #define COL32_BLACK_TRANS COL32(0,0,0,0)          // Transparent black = 0x00000000
 
 const float PI = 3.14159265359;
+
+#define MAX_SHADOW_SUN_LIGHTS 2
+#define MAX_SHADOW_SPOT_LIGHTS 8
+#define MAX_SHADOW_POINT_LIGHTS 5
+#define SHADOW_BIAS 0.0005f
+
+#endif

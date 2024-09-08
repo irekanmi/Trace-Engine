@@ -188,7 +188,7 @@ namespace trace {
 	void BloomPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)
 	{
 	}
-	void BloomPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board)
+	void BloomPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 		prefilter(render_graph, black_board);
 		downsample(render_graph, black_board);
@@ -233,7 +233,7 @@ namespace trace {
 		pass->AddColorAttachmentInput(fd.hdr_index);
 		bd.bloom_samples[0] = pass->CreateAttachmentOutput("Bloom_sample_0", color);
 
-		pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
+		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs) {
 
 			
 
@@ -309,7 +309,7 @@ namespace trace {
 			bd.bloom_samples[i] = pass->CreateAttachmentOutput(sample_name, color);
 
 
-			pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
+			pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs) {
 
 
 				Viewport view_port = m_renderer->_viewPort;
@@ -367,7 +367,7 @@ namespace trace {
 
 			
 
-			pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
+			pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs) {
 
 				RenderGraphResource& res = render_graph->GetResource(bd.bloom_samples[i]);
 
@@ -415,7 +415,7 @@ namespace trace {
 
 
 
-		pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
+		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs) {
 
 			RenderGraphResource& res = render_graph->GetResource(fd.hdr_index);
 

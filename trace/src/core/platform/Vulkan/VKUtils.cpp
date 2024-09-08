@@ -396,9 +396,14 @@ namespace vk {
 
 
 		// Initializing Bindless descriptors --------------------------------------------
+		VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures depth_stencil_layout_features = {};
+		depth_stencil_layout_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES;
+		depth_stencil_layout_features.separateDepthStencilLayouts = VK_TRUE;
+		depth_stencil_layout_features.pNext = nullptr;
+
 		VkPhysicalDeviceDescriptorIndexingFeatures des_indexing_feat = {};
 		des_indexing_feat.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-		des_indexing_feat.pNext = nullptr;
+		des_indexing_feat.pNext = &depth_stencil_layout_features;
 
 		VkPhysicalDeviceFeatures2 phy_feat2 = {};
 		phy_feat2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -459,7 +464,7 @@ namespace vk {
 			VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 		};
 
-		phy_feat = {};
+		//phy_feat = {};
 		phy_feat.samplerAnisotropy = VK_TRUE;
 		phy_feat.geometryShader = VK_TRUE;
 		phy_feat.wideLines = VK_TRUE;
@@ -468,7 +473,7 @@ namespace vk {
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_info.queueCreateInfoCount = static_cast<uint32_t>(device_queue_infos.size());
 		device_info.pQueueCreateInfos = device_queue_infos.data();
-		//device_info.pEnabledFeatures = &phy_feat;
+		device_info.pEnabledFeatures = &phy_feat;
 		device_info.enabledLayerCount = 0;
 		device_info.ppEnabledLayerNames = nullptr;
 		device_info.enabledExtensionCount = 2;
@@ -2366,7 +2371,7 @@ namespace vk {
 					{
 						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					}
-					bind.descriptorCount = 512;
+					bind.descriptorCount = 2048;
 					bind.stageFlags = convertShaderStage(i._array.shader_stage);
 				}
 				else if (is_sArray)
@@ -2607,6 +2612,11 @@ namespace vk {
 			result = VK_FORMAT_D32_SFLOAT_S8_UINT;
 			break;
 		}
+		case trace::Format::D32_SFLOAT:
+		{
+			result = VK_FORMAT_D32_SFLOAT;
+			break;
+		}
 		case trace::Format::R16G16B16A16_FLOAT:
 		{
 			result = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -2773,6 +2783,11 @@ namespace vk {
 			mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			break;
 		}
+		case trace::AddressMode::CLAMP_TO_BORDER:
+		{
+			mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			break;
+		}
 		}
 
 		return mode;
@@ -2814,6 +2829,12 @@ namespace vk {
 		{
 
 			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			break;
+		}
+		case trace::TextureFormat::DEPTH:
+		{
+
+			return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 			break;
 		}
 		case trace::TextureFormat::PRESENT:

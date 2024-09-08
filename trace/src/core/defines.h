@@ -1,0 +1,5 @@
+#pragma once
+
+#define MAX_SHADOW_SUN_LIGHTS 2
+#define MAX_SHADOW_SPOT_LIGHTS 8
+#define MAX_SHADOW_POINT_LIGHTS 5

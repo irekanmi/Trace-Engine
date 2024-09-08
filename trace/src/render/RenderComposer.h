@@ -10,6 +10,7 @@
 #include "render_graph/ForwardPass.h"
 #include "render_graph/BloomPass.h"
 #include "render_graph/UIPass.h"
+#include "render_graph/ShadowPass.h"
 
 
 namespace trace {
@@ -29,8 +30,8 @@ namespace trace {
 		virtual bool Init(Renderer* renderer);
 		virtual void Shutdowm();
 
-		virtual bool PreFrame(RenderGraph& frame_graph,RGBlackBoard& black_board, FrameSettings frame_settings);
-		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board);
+		virtual bool PreFrame(RenderGraph& frame_graph,RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0);
+		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0);
 
 	private:
 		GBufferPass gbuffer_pass;

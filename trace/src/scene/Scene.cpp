@@ -368,7 +368,7 @@ namespace trace {
 
 		Renderer* renderer = Renderer::get_instance();
 
-		auto light_group = m_registry.view<LightComponent, HierachyComponent>();
+		/*auto light_group = m_registry.view<LightComponent, HierachyComponent>();
 
 		for (auto entity : light_group)
 		{
@@ -377,10 +377,72 @@ namespace trace {
 			Transform final_transform = GetEntityWorldTransform(object);
 			light._light.position = glm::vec4(final_transform.GetPosition(), 0.0f);
 			light._light.direction = glm::vec4(final_transform.GetForward(), 0.0f);
+			
 
 			renderer->AddLight(cmd_list, light._light, light.light_type);
 
+		}*/
+
+		auto sun_light_group = m_registry.view<SunLight, HierachyComponent>();
+
+		for (auto entity : sun_light_group)
+		{
+			Entity object(entity, this);
+			auto [light, transform] = sun_light_group.get(entity);
+			Transform final_transform = GetEntityWorldTransform(object);
+
+			Light light_data = {};
+			light_data.position = glm::vec4(final_transform.GetPosition(), 0.0f);
+			light_data.direction = glm::vec4(final_transform.GetForward(), 0.0f);
+			light_data.color = glm::vec4(light.color, 0.0f);
+			light_data.params1 = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+			light_data.params2 = glm::vec4(0.0f, light.intensity, light.cast_shadows ? 1.0f : 0.0f, 0.0f);
+
+
+			renderer->AddLight(cmd_list, light_data, LightType::DIRECTIONAL);
 		}
+
+		auto spot_light_group = m_registry.view<SpotLight, HierachyComponent>();
+
+		for (auto entity : spot_light_group)
+		{
+			Entity object(entity, this);
+			auto [light, transform] = spot_light_group.get(entity);
+			Transform final_transform = GetEntityWorldTransform(object);
+
+			Light light_data = {};
+			light_data.position = glm::vec4(final_transform.GetPosition(), 0.0f);
+			light_data.direction = glm::vec4(final_transform.GetForward(), 0.0f);
+			light_data.color = glm::vec4(light.color, 0.0f);
+			light_data.params1 = glm::vec4(0.0f, 0.0f, 0.0f, light.innerCutOff);
+			light_data.params2 = glm::vec4(light.outerCutOff, light.intensity, light.cast_shadows ? 1.0f : 0.0f, 0.0f);
+
+
+			renderer->AddLight(cmd_list, light_data, LightType::SPOT);
+		}
+
+
+
+		auto point_light_group = m_registry.view<PointLight, HierachyComponent>();
+
+		for (auto entity : point_light_group)
+		{
+			Entity object(entity, this);
+			auto [light, transform] = point_light_group.get(entity);
+			Transform final_transform = GetEntityWorldTransform(object);
+			
+			Light light_data = {};
+			light_data.position = glm::vec4(final_transform.GetPosition(), 0.0f);
+			light_data.direction = glm::vec4(final_transform.GetForward(), 0.0f);
+			light_data.color = glm::vec4(light.color, 0.0f);
+			light_data.params1 = glm::vec4( light.constant, light.linear, light.quadratic, 0.0f);
+			light_data.params2 = glm::vec4(0.0f, light.intensity, light.cast_shadows ? 1.0f : 0.0f, 0.0f);
+
+
+			renderer->AddLight(cmd_list, light_data, LightType::POINT);
+		}
+
+
 
 		auto group = m_registry.group<MeshComponent, HierachyComponent>();
 
@@ -398,7 +460,7 @@ namespace trace {
 		{
 			auto [model, model_renderer, transform] = model_view.get(entity);
 
-			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform); // TODO Implement Hierachies
+			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform, model_renderer.cast_shadow); // TODO Implement Hierachies
 
 		}
 
@@ -642,7 +704,7 @@ namespace trace {
 		}
 
 		m_scriptRegistry.Erase(entity.GetID());
-		m_entityMap.erase(entity.GetComponent<IDComponent>()._id);
+		m_entityMap.erase(entity.GetID());
 		m_registry.destroy(entity);
 	}
 

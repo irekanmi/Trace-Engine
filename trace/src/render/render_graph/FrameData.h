@@ -2,7 +2,11 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "core/defines.h"
+
+#include "glm/glm.hpp"
 #include <stdint.h>
+#include <array>
 
 namespace trace {
 
@@ -39,6 +43,14 @@ namespace trace {
 	{
 		uint32_t bloom_samples[10];
 		uint8_t samples_count;
+	};
+
+	struct ShadowMapData
+	{
+		int32_t start_texture_index = -1; // NOTE: Used to link shadow pass with lighting pass
+		uint32_t total_shadowed_lights = 0;
+		std::array<glm::mat4, MAX_SHADOW_SUN_LIGHTS> sun_view_proj_matrices;
+		std::array<glm::mat4, MAX_SHADOW_SPOT_LIGHTS> spot_view_proj_matrices;
 	};
 
 }

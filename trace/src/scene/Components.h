@@ -162,6 +162,7 @@ namespace trace {
 	struct ModelRendererComponent
 	{
 		Ref<MaterialInstance> _material;
+		bool cast_shadow = true;
 		ModelRendererComponent() = default;
 		ModelRendererComponent(const ModelRendererComponent&) = default;
 		ModelRendererComponent(Ref<MaterialInstance> data)
@@ -239,6 +240,33 @@ namespace trace {
 		uint32_t color = TRC_COL32_WHITE;
 	};
 
+	struct SunLight
+	{
+		glm::vec3 color;
+		float intensity = 1.0f;
+		bool cast_shadows = false;
+	};
+
+	struct PointLight
+	{
+		glm::vec3 color;
+		float intensity = 1.0f;
+		float radius = 2.0f;
+		float constant = 1.0f;
+		float linear = 0.02f;
+		float quadratic = 0.0001f;
+		bool cast_shadows = false;
+	};
+
+	struct SpotLight
+	{
+		glm::vec3 color;
+		float intensity = 1.0f;
+		float innerCutOff = 0.8660f;
+		float outerCutOff = 0.7071f;
+		bool cast_shadows = false;
+	};
+
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -247,6 +275,7 @@ namespace trace {
 
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
-		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent>;
+		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
+		PointLight, SpotLight>;
 
 }

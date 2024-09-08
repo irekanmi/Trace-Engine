@@ -18,6 +18,7 @@
 #include "resource/PipelineManager.h"
 #include "core/memory/MemoryManager.h"
 #include "debug/Debugger.h"
+#include "core/defines.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -109,24 +110,7 @@ namespace trace {
 			m_composer = (RenderComposer*)app_data.render_composer;
 		}
 
-
-		// Text rendering initializaton ----------------------------
-
-		//TODO: allow it to automatically grow when needed
-		text_vertices.resize(16);
-
-		BufferInfo text_buffer_info;
-		text_buffer_info.m_data = nullptr;
-		text_buffer_info.m_flag = BindFlag::VERTEX_BIT;
-		text_buffer_info.m_size = sizeof(TextVertex) * KB * 2;
-		text_buffer_info.m_stide = sizeof(TextVertex);
-		text_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
-
-		RenderFunc::CreateBuffer(&text_buffer, text_buffer_info);
-
-
-		// --------------------------------------------------------
-
+			
 		return result;
 	}
 
@@ -145,30 +129,30 @@ namespace trace {
 
 	void Renderer::EndFrame()
 	{
-		current_quad_batch = 0;
-		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
+		for (uint32_t i = 0; i < num_render_graphs; i++)
 		{
-			quadBatches[i].current_index = 0;
-			quadBatches[i].current_texture_unit = 0;
-			quadBatches[i].current_unit = 0;
-			quadBatches[i].tex = nullptr;
-		}
-		boundQuadTextures.clear();
+			RenderGraphFrameData& graph_data = m_renderGraphsData[i];			
 
-		current_text_batch = 0;
-		for (uint32_t i = 0; i < num_avalible_text_batch; i++)
-		{
-			textBatches[i].current_index = 0;
-			textBatches[i].current_texture_unit = 0;
-			textBatches[i].current_unit = 0;
-		}
-		boundTextTextures.clear();
+			graph_data.current_quad_batch = 0;
+			for (uint32_t j = 0; j < graph_data.num_avalible_quad_batch; j++)
+			{
+				graph_data.quadBatches[j].current_index = 0;
+				graph_data.quadBatches[j].current_texture_unit = 0;
+				graph_data.quadBatches[j].current_unit = 0;
+				graph_data.quadBatches[j].tex = nullptr;
+			}
+			graph_data.boundQuadTextures.clear();
 
-		/*if (m_debug)
-		{
-			m_debug->positions.clear();
-			m_debug->vert_count = 0;
-		}*/
+
+
+			for (auto& j : graph_data.text_vertices)
+			{
+				j.clear();
+			}
+			graph_data.bound_text_atlases.clear();
+			graph_data.text_atlases.clear();
+		}
+
 
 		Debugger* debugger = Debugger::get_instance();
 		if (debugger->IsInitialized())
@@ -181,14 +165,8 @@ namespace trace {
 
 		UIFunc::UIEndFrame();
 		RenderFunc::EndFrame(&g_device);
-		current_sky_box = nullptr;
 
-		for (auto& i : text_vertices)
-		{
-			i.clear();
-		}
-		bound_text_atlases.clear();
-		text_atlases.clear();
+		
 	}
 
 
@@ -201,19 +179,13 @@ namespace trace {
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
 
-		m_opaqueObjects.resize(1024);
-		m_opaqueObjectsSize = 0;
-
-		/*m_meshedLights.resize(64);
-		m_meshLightSize = 0;*/
-
-		lights.resize(MAX_LIGHT_COUNT);
-		light_data = glm::ivec4(0);
 					
 		text_verts = true;
 
 		exposure = 0.9f;
-		current_sky_box = nullptr;
+
+		m_renderGraphsData.resize(num_render_graphs);
+
 		if (m_composer)
 		{
 			m_composer->Init(this);
@@ -224,19 +196,68 @@ namespace trace {
 			m_composer->Init(this);
 		}
 
+		// Text rendering initializaton ----------------------------
 
+		//TODO: allow it to automatically grow when needed
+		/*text_vertices.resize(16);
+
+		BufferInfo text_buffer_info;
+		text_buffer_info.m_data = nullptr;
+		text_buffer_info.m_flag = BindFlag::VERTEX_BIT;
+		text_buffer_info.m_size = sizeof(TextVertex) * KB * 2;
+		text_buffer_info.m_stide = sizeof(TextVertex);
+		text_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
+
+		RenderFunc::CreateBuffer(&text_buffer, text_buffer_info);*/
+
+
+		for (uint32_t i = 0; i < num_render_graphs; i++)
+		{
+			RenderGraphFrameData& graph_data = m_renderGraphsData[i];
+
+			std::vector<RenderObjectData>& m_opaqueObjects = graph_data.m_opaqueObjects;
+			uint32_t& m_opaqueObjectsSize = graph_data.m_opaqueObjectsSize;
+
+			m_opaqueObjects.reserve(1024);
+
+			std::vector<std::vector<TextVertex>>& text_vertices = graph_data.text_vertices;
+
+			//TODO: allow it to automatically grow when needed
+			text_vertices.resize(16);
+			GBuffer& text_buffer = graph_data.text_buffer;
+
+			BufferInfo text_buffer_info;
+			text_buffer_info.m_data = nullptr;
+			text_buffer_info.m_flag = BindFlag::VERTEX_BIT;
+			text_buffer_info.m_size = sizeof(TextVertex) * KB * 2;
+			text_buffer_info.m_stide = sizeof(TextVertex);
+			text_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
+
+			RenderFunc::CreateBuffer(&text_buffer, text_buffer_info);
+		}
+
+		// --------------------------------------------------------
 				
 		//---------------------------------------------------------------------------------------------
 
-		// Quad batch .........................................	
-		create_quad_batch();
- 		// ..................................................
-		
-		// Text batch .........................................	
-		create_text_batch();
- 		// ..................................................	
+		//// Quad batch .........................................	
+		//create_quad_batch();
+ 	//	// ..................................................
+		//
+		//// Text batch .........................................	
+		//create_text_batch();
+ 	//	// ..................................................	
 
+		for (uint32_t i = 0; i < num_render_graphs; i++)
+		{
+			// Quad batch .........................................	
+			create_quad_batch(i);
+			// ..................................................
 
+			// Text batch .........................................	
+			create_text_batch(i);
+			// ..................................................	
+		}
 
 		if (AppSettings::is_editor)
 		{
@@ -249,15 +270,17 @@ namespace trace {
 	void Renderer::End()
 	{
 		//Text Rendering -------------------------
-
-		RenderFunc::DestroyBuffer(&text_buffer);
+		for (uint32_t i = 0; i < num_render_graphs; i++)
+		{
+			RenderGraphFrameData& graph_data = m_renderGraphsData[i];
+			RenderFunc::DestroyBuffer(&graph_data.text_buffer);
+		}
 
 		// ---------------------------------------
 
 		m_composer->Shutdowm();
 		delete m_composer;
 		m_composer = nullptr;
-		_camera = nullptr;
 		RenderFunc::DestroySwapchain(&m_swapChain);
 
 	}
@@ -342,232 +365,263 @@ namespace trace {
 				}
 			}
 
+			for (uint32_t i = 0; i < num_render_graphs; i++)
+			{
+				RenderGraphFrameData& graph_data = m_renderGraphsData[i];
 
-			RGBlackBoard frame_blck_bd;
-			RenderGraph frame_graph;			
-			m_composer->PreFrame(frame_graph, frame_blck_bd, frame_settings);
-			frame_graph.Execute();
-			m_composer->PostFrame(frame_graph, frame_blck_bd);
+				RGBlackBoard frame_blck_bd;
+				RenderGraph& frame_graph = graph_data.frame_graph;
+				m_composer->PreFrame(frame_graph, frame_blck_bd, frame_settings, i);
+				frame_graph.Execute(i);
+				m_composer->PostFrame(frame_graph, frame_blck_bd, i);
+			}
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
-			frame_graph.Destroy();
+
+			for (uint32_t i = 0; i < num_render_graphs; i++)
+			{
+				RenderGraphFrameData& graph_data = m_renderGraphsData[i];
+
+				RenderGraph& frame_graph = graph_data.frame_graph;
+				frame_graph.Destroy();
+
+				graph_data.num_non_shadowed_point_lights = 0;
+				graph_data.num_non_shadowed_sun_lights = 0;
+				graph_data.num_non_shadowed_spot_lights = 0;
+
+				graph_data.num_shadowed_sun_lights = 0;
+				graph_data.num_shadowed_spot_lights = 0;
+				graph_data.num_shadowed_point_lights = 0;
+
+				graph_data.sun_lights.clear();
+				graph_data.spot_lights.clear();
+				graph_data.point_lights.clear();
+
+				graph_data.shadow_casters.clear();
+			}
 		}
 		m_listCount = 0;
-		m_opaqueObjectsSize = 0;
 
-		//m_meshLightSize = 0;
-
-		light_data = glm::ivec4(0);
-		lights.clear();
-
-		light_positions.clear();
-		light_directions.clear();
-		light_colors.clear();
-		light_params1s.clear();
-		light_params2s.clear();
+		for (uint32_t i = 0; i < num_render_graphs; i++)
+		{
+			RenderGraphFrameData& graph_data = m_renderGraphsData[i];
+			graph_data.m_opaqueObjects.clear();
+		}
 
 		
 
 	}
 
-	void Renderer::DrawQuad()
+	void Renderer::DrawQuad(int32_t render_graph_index)
 	{
 		TRC_ASSERT(false, "Funtion {} has not been implemented", __FUNCTION__);
 	}
 
-	void Renderer::DrawQuad(glm::mat4 _transform, Ref<GTexture> texture)
+	void Renderer::DrawQuad(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index)
 	{
-		if (quadBatches[current_quad_batch].current_texture_unit >= quadBatches[current_quad_batch].max_texture_units - 1)
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+		
+
+		if (graph_data.quadBatches[graph_data.current_quad_batch].current_texture_unit >= graph_data.quadBatches[graph_data.current_quad_batch].max_texture_units - 1)
 		{
-			flush_current_quad_batch();
+			flush_current_quad_batch(render_graph_index);
 		}
-		if (quadBatches[current_quad_batch].current_unit >= quadBatches[current_quad_batch].max_units - 1)
+		if (graph_data.quadBatches[graph_data.current_quad_batch].current_unit >= graph_data.quadBatches[graph_data.current_quad_batch].max_units - 1)
 		{
-			flush_current_quad_batch();
+			flush_current_quad_batch(render_graph_index);
 		}
 
 		float current_tex_index = 0.0f;
-		auto tex_index = boundQuadTextures.find(texture->m_id);
-		if (tex_index == boundQuadTextures.end())
+		auto tex_index = graph_data.boundQuadTextures.find(texture->m_id);
+		if (tex_index == graph_data.boundQuadTextures.end())
 		{
-			quadBatches[current_quad_batch].textures[quadBatches[current_quad_batch].current_texture_unit] = texture.get();
-			current_tex_index = (float)(quadBatches[current_quad_batch].current_texture_unit);
-			quadBatches[current_quad_batch].current_texture_unit++;
-			boundQuadTextures.emplace(texture->m_id);
+			graph_data.quadBatches[graph_data.current_quad_batch].textures[graph_data.quadBatches[graph_data.current_quad_batch].current_texture_unit] = texture.get();
+			current_tex_index = (float)(graph_data.quadBatches[graph_data.current_quad_batch].current_texture_unit);
+			graph_data.quadBatches[graph_data.current_quad_batch].current_texture_unit++;
+			graph_data.boundQuadTextures.emplace(texture->m_id);
 		}
 		else
 		{
 			uint32_t index = 0;
 			//TODO: Find a better way to find texture index
-			auto value = std::find_if(quadBatches[current_quad_batch].textures.begin(), quadBatches[current_quad_batch].textures.end(), [&tex_index, &index](GTexture* tex) {
+			auto value = std::find_if(graph_data.quadBatches[graph_data.current_quad_batch].textures.begin(), graph_data.quadBatches[graph_data.current_quad_batch].textures.end(), [&tex_index, &index](GTexture* tex) {
 				index++;
 				return tex->m_id == *tex_index;
 				});
 			current_tex_index = (float)(index - 1);
 		}
 
-		uint32_t current_vert = quadBatches[current_quad_batch].current_unit * 6;
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
+		uint32_t current_vert = graph_data.quadBatches[graph_data.current_quad_batch].current_unit * 6;
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, current_tex_index, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, current_tex_index, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, current_tex_index, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, current_tex_index, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, current_tex_index, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].current_unit++;
+		graph_data.quadBatches[graph_data.current_quad_batch].current_unit++;
 
 	}
 
-	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture)
+	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index)
 	{	
 		
-		DrawQuad_(_transform, texture, TRC_COL32_BLACK);
+		DrawQuad_(_transform, texture, TRC_COL32_BLACK, render_graph_index);
 
 	}
 
-	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color)
+	void Renderer::DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color, int32_t render_graph_index)
 	{
-		if (!quadBatches[current_quad_batch].tex)
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+		
+
+		if (!graph_data.quadBatches[graph_data.current_quad_batch].tex)
 		{
-			quadBatches[current_quad_batch].tex = texture.get();
+			graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
 		}
-		else if (quadBatches[current_quad_batch].tex != texture.get())
+		else if (graph_data.quadBatches[graph_data.current_quad_batch].tex != texture.get())
 		{
 			int index = -1;
-			auto it = std::find_if(quadBatches.begin(), quadBatches.end(), [&texture, &index](BatchInfo& a) {
+			auto it = std::find_if(graph_data.quadBatches.begin(), graph_data.quadBatches.end(), [&texture, &index](BatchInfo& a) {
 				index++;
 				return a.tex == texture.get();
 				});
 
 
-			if (it != quadBatches.end())
+			if (it != graph_data.quadBatches.end())
 			{
-				current_quad_batch = index;
+				graph_data.current_quad_batch = index;
 			}
 			else
 			{
-				flush_current_quad_batch();
-				quadBatches[current_quad_batch].tex = texture.get();
+				flush_current_quad_batch(render_graph_index);
+				graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
 			}
 		}
 
-		if (quadBatches[current_quad_batch].current_unit >= quadBatches[current_quad_batch].max_units - 1)
+		if (graph_data.quadBatches[graph_data.current_quad_batch].current_unit >= graph_data.quadBatches[graph_data.current_quad_batch].max_units - 1)
 		{
-			flush_current_quad_batch();
-			quadBatches[current_quad_batch].tex = texture.get();
+			flush_current_quad_batch(render_graph_index);
+			graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
 		}
 
 		float new_color = 0.0f;
 		memcpy(&new_color, &color, sizeof(uint32_t));
 
-		uint32_t current_vert = quadBatches[current_quad_batch].current_unit * 6;
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].positions[current_vert].a =  new_color;
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		uint32_t current_vert = graph_data.quadBatches[graph_data.current_quad_batch].current_unit * 6;
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-		quadBatches[current_quad_batch].positions[current_vert].a = new_color;
-		quadBatches[current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
+		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
+		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		current_vert++;
 
-		quadBatches[current_quad_batch].current_unit++;
+		graph_data.quadBatches[graph_data.current_quad_batch].current_unit++;
 	}
 
-	void Renderer::DrawString(Font* font, const std::string& text, glm::mat4 _transform)
+	void Renderer::DrawString(Font* font, const std::string& text, glm::mat4 _transform, int32_t render_graph_index)
 	{
-		Ref<GTexture> texture = font->GetAtlas();
-		if (textBatches[current_text_batch].current_texture_unit >= textBatches[current_text_batch].max_texture_units - 1)
-		{
-			flush_current_text_batch();
-		}
-		if (textBatches[current_text_batch].current_unit >= textBatches[current_text_batch].max_units - 1)
-		{
-			flush_current_text_batch();
-		}
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
 
-		float current_tex_index = 0.0f;
-		auto tex_index = boundTextTextures.find(texture->m_id);
-		if (tex_index == boundTextTextures.end())
-		{
-			textBatches[current_text_batch].textures[textBatches[current_text_batch].current_texture_unit] = texture.get();
-			current_tex_index = (float)(textBatches[current_text_batch].current_texture_unit);
-			textBatches[current_text_batch].current_texture_unit++;
-			boundTextTextures.emplace(texture->m_id);
-		}
-		else
-		{
-			uint32_t index = 0;
-			//TODO: Find a better to find texture index
-			auto value = std::find_if(textBatches[current_text_batch].textures.begin(), textBatches[current_text_batch].textures.end(), [&tex_index, &index](GTexture* tex) {
-				index++;
-				return tex->m_id == *tex_index;
-				});
-			current_tex_index = (float)(index - 1);
-		}
 
-		uint32_t current_vert = textBatches[current_text_batch].current_unit;
-		uint32_t count = 0;
-		FontFunc::ComputeTextString(font, text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, _transform, current_tex_index, count);
-		textBatches[current_text_batch].current_unit += count;
+		//Ref<GTexture> texture = font->GetAtlas();
+		//if (textBatches[current_text_batch].current_texture_unit >= textBatches[current_text_batch].max_texture_units - 1)
+		//{
+		//	flush_current_text_batch();
+		//}
+		//if (textBatches[current_text_batch].current_unit >= textBatches[current_text_batch].max_units - 1)
+		//{
+		//	flush_current_text_batch();
+		//}
+
+		//float current_tex_index = 0.0f;
+		//auto tex_index = boundTextTextures.find(texture->m_id);
+		//if (tex_index == boundTextTextures.end())
+		//{
+		//	textBatches[current_text_batch].textures[textBatches[current_text_batch].current_texture_unit] = texture.get();
+		//	current_tex_index = (float)(textBatches[current_text_batch].current_texture_unit);
+		//	textBatches[current_text_batch].current_texture_unit++;
+		//	boundTextTextures.emplace(texture->m_id);
+		//}
+		//else
+		//{
+		//	uint32_t index = 0;
+		//	//TODO: Find a better to find texture index
+		//	auto value = std::find_if(textBatches[current_text_batch].textures.begin(), textBatches[current_text_batch].textures.end(), [&tex_index, &index](GTexture* tex) {
+		//		index++;
+		//		return tex->m_id == *tex_index;
+		//		});
+		//	current_tex_index = (float)(index - 1);
+		//}
+
+		//uint32_t current_vert = textBatches[current_text_batch].current_unit;
+		//uint32_t count = 0;
+		//FontFunc::ComputeTextString(font, text, textBatches[current_text_batch].positions, current_vert, textBatches[current_text_batch].tex_coords, _transform, current_tex_index, count);
+		//textBatches[current_text_batch].current_unit += count;
 	}
 
-	void Renderer::DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform)
+	void Renderer::DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index)
 	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+		
+
 		Ref<GTexture> texture = font->GetAtlas();
 
 		// Finding texture index ===========================================
 		uint32_t current_tex_index;
-		auto tex_index = bound_text_atlases.find(texture->m_id);
-		if (tex_index == bound_text_atlases.end())
+		auto tex_index = graph_data.bound_text_atlases.find(texture->m_id);
+		if (tex_index == graph_data.bound_text_atlases.end())
 		{
-			current_tex_index = text_atlases.size();
-			text_atlases.emplace_back(texture.get());
-			bound_text_atlases.emplace(texture->m_id);
+			current_tex_index = graph_data.text_atlases.size();
+			graph_data.text_atlases.emplace_back(texture.get());
+			graph_data.bound_text_atlases.emplace(texture->m_id);
 		}
 		else
 		{
 			uint32_t index = 0;
 			//TODO: Find a better to find texture index
-			auto value = std::find_if(text_atlases.begin(), text_atlases.end(), [&tex_index, &index](GTexture* tex) {
+			auto value = std::find_if(graph_data.text_atlases.begin(), graph_data.text_atlases.end(), [&tex_index, &index](GTexture* tex) {
 				index++;
 				return tex->m_id == *tex_index;
 				});
@@ -576,22 +630,27 @@ namespace trace {
 		// ==================================================================
 
 
-		std::vector<TextVertex>& vertices = text_vertices[current_tex_index];
+		std::vector<TextVertex>& vertices = graph_data.text_vertices[current_tex_index];
 		FontFunc::ComputeTextVertex(font, text, vertices, _transform, color);
 
 	}
 
-	void Renderer::RenderOpaqueObjects()
+	void Renderer::RenderOpaqueObjects(int32_t render_graph_index)
 	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+
+		std::vector<RenderObjectData>& m_opaqueObjects = graph_data.m_opaqueObjects;
+		uint32_t& m_opaqueObjectsSize = graph_data.m_opaqueObjectsSize;
+		Camera* _camera = graph_data._camera;
 
 		glm::mat4 proj = _camera->GetProjectionMatix();
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
 		glm::mat4 view_proj = proj * view;
 
-		for (uint32_t i = 0; i < m_opaqueObjectsSize; i++)
+		for (RenderObjectData& data : m_opaqueObjects)
 		{
-			auto& data = m_opaqueObjects[i];
+
 			glm::mat4* M_model = &data.transform;
 			Model* _model = data.object;
 			MaterialInstance* _mi = data.material? data.material : MaterialManager::get_instance()->GetMaterial("default").get();
@@ -617,7 +676,7 @@ namespace trace {
 	void Renderer::RenderLights()
 	{
 		Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("light_pipeline");
-		glm::mat4 view_proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+		//glm::mat4 view_proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
 		/*for (int i = 0; i < m_meshLightSize; i++)
 		{
@@ -646,7 +705,7 @@ namespace trace {
 
 
 		//TEMP: Find vaild function to render sky box
-		if (current_sky_box)
+		/*if (current_sky_box)
 		{
 			SkyBox* sky_box = current_sky_box;
 
@@ -675,29 +734,37 @@ namespace trace {
 
 			RenderFunc::DrawIndexed(&g_device, 0, mod->GetIndexCount());
 			RenderFunc::OnDrawEnd(&g_device, sp.get());
-		}
+		}*/
 
 	}
 
-	void Renderer::RenderQuads()
+	void Renderer::RenderQuads(int32_t render_graph_index)
 	{
 		quadBatchPipeline = PipelineManager::get_instance()->GetPipeline("quad_batch_pipeline");
+
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+
+		Camera* _camera = graph_data._camera;
+
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
-		for (uint32_t i = 0; i < num_avalible_quad_batch; i++)
+		for (uint32_t i = 0; i < graph_data.num_avalible_quad_batch; i++)
 		{
-			if (quadBatches[i].current_unit == 0) continue;
+			if (graph_data.quadBatches[i].current_unit == 0)
+			{
+				continue;
+			}
 			/*for (uint32_t j = 0; j < quadBatches[i].current_texture_unit; j++)
 			{
 				RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, quadBatches[i].textures[j], j);
 			}*/
 			RenderFunc::OnDrawStart(&g_device, quadBatchPipeline.get());
-			RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].tex);
+			RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, graph_data.quadBatches[i].tex);
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].positions.data(), quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
-			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, quadBatches[i].tex_coords.data(), quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
+			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, graph_data.quadBatches[i].positions.data(), graph_data.quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
+			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, graph_data.quadBatches[i].tex_coords.data(), graph_data.quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
 			RenderFunc::BindPipeline_(quadBatchPipeline.get());
 			RenderFunc::BindPipeline(&g_device, quadBatchPipeline.get());
-			RenderFunc::Draw(&g_device, 0, quadBatches[i].current_unit * 6);
+			RenderFunc::Draw(&g_device, 0, graph_data.quadBatches[i].current_unit * 6);
 			RenderFunc::OnDrawEnd(&g_device, quadBatchPipeline.get());
 		}
 	}
@@ -705,7 +772,7 @@ namespace trace {
 	void Renderer::RenderTexts()
 	{
 		textBatchPipeline = PipelineManager::get_instance()->GetPipeline("text_batch_pipeline");
-		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+		/*glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (uint32_t i = 0; i < num_avalible_text_batch; i++)
 		{
 			if (textBatches[i].current_unit == 0) continue;
@@ -721,28 +788,33 @@ namespace trace {
 			RenderFunc::BindPipeline(&g_device, textBatchPipeline.get());
 			RenderFunc::Draw(&g_device, 0, textBatches[i].current_unit * 6);
 			RenderFunc::OnDrawEnd(&g_device, textBatchPipeline.get());
-		}
+		}*/
 	}
 
-	void Renderer::RenderTextVerts()
+	void Renderer::RenderTextVerts(int32_t render_graph_index)
 	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+
+		Camera* _camera = graph_data._camera;
+
 		uint32_t index = 0;
 		uint32_t offset = 0;
 		uint32_t start_vertex = 0;
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		text_pipeline = PipelineManager::get_instance()->GetPipeline("text_pipeline");
-		for (GTexture*& i : text_atlases)
+
+		for (GTexture*& i : graph_data.text_atlases)
 		{
-			std::vector<TextVertex>& vertices = text_vertices[index];
+			std::vector<TextVertex>& vertices = graph_data.text_vertices[index];
 			uint32_t count = vertices.size();
 			if (count == 0) continue;
 			uint32_t size = count * sizeof(TextVertex);
-			RenderFunc::SetBufferDataOffset(&text_buffer, vertices.data(), offset, size);
+			RenderFunc::SetBufferDataOffset(&graph_data.text_buffer, vertices.data(), offset, size);
 
 			RenderFunc::OnDrawStart(&g_device, text_pipeline.get());
 			RenderFunc::SetPipelineTextureData(text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, i);
 			RenderFunc::SetPipelineData(text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::BindVertexBuffer(&g_device, &text_buffer);
+			RenderFunc::BindVertexBuffer(&g_device, &graph_data.text_buffer);
 			RenderFunc::BindPipeline_(text_pipeline.get());
 			RenderFunc::BindPipeline(&g_device, text_pipeline.get());
 			RenderFunc::Draw(&g_device, start_vertex, count);
@@ -755,8 +827,9 @@ namespace trace {
 
 	}
 
-	void Renderer::RenderDebugData()
+	void Renderer::RenderDebugData(int32_t render_graph_index)
 	{
+		RenderGraphFrameData* graph_data = GetRenderGraphData(render_graph_index);
 		Debugger* debugger = Debugger::get_instance();
 		if (debugger->IsInitialized())
 		{
@@ -764,7 +837,7 @@ namespace trace {
 			if (render_data.vert_count <= 0) return;
 			Ref<GPipeline> render_pipeline = PipelineManager::get_instance()->GetPipeline("debug_line_pipeline");
 
-			glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
+			glm::mat4 proj = graph_data->_camera->GetProjectionMatix() * graph_data->_camera->GetViewMatrix();
 			RenderFunc::OnDrawStart(&g_device, render_pipeline.get());
 			RenderFunc::BindLineWidth(&g_device, 1.0f);
 			RenderFunc::SetPipelineData(render_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
@@ -777,14 +850,14 @@ namespace trace {
 	}
 
 
-	void Renderer::draw_mesh(CommandParams& params)
+	void Renderer::draw_mesh(CommandParams& params, int32_t render_graph_index)
 	{
 		Mesh* _mesh = (Mesh*)params.ptrs[0];
 
 		glm::mat4* M_model = (glm::mat4*)(params.data);
-		glm::mat4 proj = _camera->GetProjectionMatix();
-		glm::mat4 view = _camera->GetViewMatrix();
-		glm::vec3 view_position = _camera->GetPosition();
+		//glm::mat4 proj = _camera->GetProjectionMatix();
+		//glm::mat4 view = _camera->GetViewMatrix();
+		//glm::vec3 view_position = _camera->GetPosition();
 
 		//TODO: Implement draw mesh
 
@@ -792,17 +865,24 @@ namespace trace {
 
 	void Renderer::draw_skybox(CommandParams& params)
 	{
-		if (current_sky_box)
+		/*if (current_sky_box)
 		{
 			TRC_WARN("Only sky can be drawn per frame {}", __FUNCTION__);
 			return;
 		}
-		current_sky_box = (SkyBox*)params.ptrs[0];
+		current_sky_box = (SkyBox*)params.ptrs[0];*/
 
 	}
 
-	void Renderer::create_quad_batch()
+	void Renderer::create_quad_batch(int32_t render_graph_index)
 	{
+
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+		uint32_t& current_quad_batch = graph_data.current_quad_batch;
+		uint32_t& num_avalible_quad_batch = graph_data.num_avalible_quad_batch;
+
+		std::vector<BatchInfo>& quadBatches = graph_data.quadBatches;
+
 		if (current_quad_batch >= num_avalible_quad_batch)
 		{
 			num_avalible_quad_batch++;
@@ -817,23 +897,31 @@ namespace trace {
 			quadBatches[current_quad_batch].tex_coords.resize(quadBatches[current_quad_batch].max_units * 6);
 			quadBatches[current_quad_batch].tex = nullptr;
 		}
+
+		
 	}
 
-	void Renderer::flush_current_quad_batch()
+	void Renderer::flush_current_quad_batch(int32_t render_graph_index)
 	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+		uint32_t& current_quad_batch = graph_data.current_quad_batch;
+		uint32_t& num_avalible_quad_batch = graph_data.num_avalible_quad_batch;
+		std::unordered_set<uint32_t>& boundQuadTextures = graph_data.boundQuadTextures;
+
+
 		current_quad_batch++;
-		create_quad_batch();
+		create_quad_batch(render_graph_index);
 		boundQuadTextures.clear();
 	}
 
-	void Renderer::destroy_quad_batchs()
+	void Renderer::destroy_quad_batchs(int32_t render_graph_index)
 	{
 		// TODO: implement batch destruction
 	}
 
-	void Renderer::create_text_batch()
+	void Renderer::create_text_batch(int32_t render_graph_index)
 	{
-		if (current_text_batch >= num_avalible_text_batch)
+		/*if (current_text_batch >= num_avalible_text_batch)
 		{
 			num_avalible_text_batch++;
 			textBatches.resize(num_avalible_text_batch);
@@ -845,88 +933,112 @@ namespace trace {
 			textBatches[current_text_batch].textures.resize(textBatches[current_text_batch].max_texture_units);
 			textBatches[current_text_batch].positions.resize(textBatches[current_text_batch].max_units * 6);
 			textBatches[current_text_batch].tex_coords.resize(textBatches[current_text_batch].max_units * 6);
-		}
+		}*/
 	}
 
-	void Renderer::flush_current_text_batch()
+	void Renderer::flush_current_text_batch(int32_t render_graph_index)
 	{
-		current_text_batch++;
+		/*current_text_batch++;
 		create_text_batch();
-		boundTextTextures.clear();
+		boundTextTextures.clear();*/
 	}
 
-	void Renderer::destroy_text_batchs()
+	void Renderer::destroy_text_batchs(int32_t render_graph_index)
 	{
 		// TODO: implement batch destruction
 	}
 
-	void Renderer::BeginScene(CommandList& cmd_list, Camera* camera)
+	void Renderer::BeginScene(CommandList& cmd_list, Camera* camera, int32_t render_graph_index)
 	{
 		Command cmd;
 		cmd.params.ptrs[0] = camera;
-		cmd.func = [&](CommandParams& params) { _camera = (Camera*)params.ptrs[0]; };
+		cmd.params.val[0] = render_graph_index;
+		cmd.func = [&](CommandParams& params) 
+		{
+			RenderGraphFrameData& graph_data = m_renderGraphsData[params.val[0]];
+			graph_data._camera = (Camera*)params.ptrs[0]; 
+		};
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::EndScene(CommandList& cmd_list)
+	void Renderer::EndScene(CommandList& cmd_list, int32_t render_graph_index)
 	{
 		Command cmd;
 		cmd.func = [&](CommandParams& params) { return; }; //TODO: Add Logic to End Scene
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model)
+	void Renderer::DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model, int32_t render_graph_index)
 	{
 		if (!_mesh) return;
 		Command cmd;
 		cmd.params.ptrs[0] = _mesh.get();
 		cmd.func = BIND_RENDER_COMMAND_FN(Renderer::draw_mesh);
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
+		cmd.params.val[0] = render_graph_index;
 		memcpy(cmd.params.data, &model, sizeof(glm::mat4));
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform)
+	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform, int32_t render_graph_index)
 	{
 		if (!_model) return;
 		Command cmd;
 		cmd.params.ptrs[0] = _model.get();
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
+		cmd.params.val[0] = render_graph_index;
+
 		cmd.func = [&](CommandParams params) {
+			RenderGraphFrameData& graph_data = m_renderGraphsData[params.val[0]];
+
 			Model* model = (Model*)params.ptrs[0];
-			Renderer::RenderObjectData data;
+			RenderObjectData data;
 			data.transform = *(glm::mat4*)(params.data);
 			data.material = nullptr;
 			data.object = _model.get();
 
-			m_opaqueObjects[m_opaqueObjectsSize++] = data;
+			graph_data.m_opaqueObjects.push_back(data);
 		};
-		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
 		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform)
+	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index)
 	{
-		if (!_model || !material) return;
+		if (!_model || !material)
+		{
+			return;
+		}
 		Command cmd;
 		cmd.params.ptrs[0] = _model.get();
 		cmd.params.ptrs[1] = material.get();
+		cmd.params.val[0] = render_graph_index;
+		cmd.params.val[1] = cast_shadow ? 1 : 0;
 		cmd.func = [&](CommandParams params) {
+			RenderGraphFrameData& graph_data = m_renderGraphsData[params.val[0]];
+
 			Model* model = (Model*)params.ptrs[0];
 			MaterialInstance* mat = (MaterialInstance*)params.ptrs[1];
-			Renderer::RenderObjectData data;
+			RenderObjectData data;
 			data.transform = *(glm::mat4*)(params.data);
 			data.material = mat;
 			data.object = model;
 
-			m_opaqueObjects[m_opaqueObjectsSize++] = data;
+			graph_data.m_opaqueObjects.push_back(data);
+
+			bool cast_shadow = (params.val[1] == 1);
+
+			if (cast_shadow)
+			{
+				graph_data.shadow_casters.push_back(data);
+			}
 		};
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
 		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawSky(CommandList& cmd_list, SkyBox* sky)
+	void Renderer::DrawSky(CommandList& cmd_list, SkyBox* sky, int32_t render_graph_index)
 	{
 
 		Command cmd;
@@ -936,7 +1048,7 @@ namespace trace {
 	}
 
 	//FIX: Find a way if fit the types light in an array {DIRECTIONAL - POINT - SPOT}
-	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& _light, LightType light_type)
+	void Renderer::DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& _light, LightType light_type, int32_t render_graph_index)
 	{
 		/*Command cmd;
 		cmd.params.ptrs[0] = _mesh.get();
@@ -984,53 +1096,77 @@ namespace trace {
 	}
 
 	//FIX: Find a way if fit the types light in an array {DIRECTIONAL - POINT - SPOT}
-	void Renderer::AddLight(CommandList& cmd_list, Light& _light, LightType light_type)
+	void Renderer::AddLight(CommandList& cmd_list, Light& _light, LightType light_type, int32_t render_graph_index)
 	{
 		Command cmd;
 		cmd.params.val[0] = light_type;
+		cmd.params.val[1] = render_graph_index;
+		cmd.params.val[2] = static_cast<uint32_t>(_light.params2.z);
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(Light));
 		memcpy(cmd.params.data, &_light, sizeof(Light));
 
 		cmd.func = [&](CommandParams& params) {
+			RenderGraphFrameData& graph_data = m_renderGraphsData[params.val[1]];
+
+			bool cast_shadows = (params.val[2] == 1);
+
 			uint32_t light_type_ = params.val[0];
 			Light* _light = (Light*)params.data;
-			uint32_t light_index = 0;
 			if (light_type_ == LightType::DIRECTIONAL)
 			{
-				auto it = lights.begin();
-				uint32_t dir_light_count = light_data.x;
-				light_index = dir_light_count;
-				lights.insert(it + dir_light_count, *_light);
-				light_data.x++;
+				
+				if (cast_shadows && graph_data.num_shadowed_sun_lights < MAX_SHADOW_SUN_LIGHTS)
+				{
+					auto it = graph_data.sun_lights.begin();
+					graph_data.sun_lights.insert(it + graph_data.num_shadowed_sun_lights, *_light);
+
+					graph_data.num_shadowed_sun_lights++;
+				}
+				else
+				{
+					graph_data.sun_lights.push_back(*_light);
+					graph_data.num_non_shadowed_sun_lights++;
+				}
 			}
 			else if (light_type_ == LightType::POINT)
 			{
-				auto it = lights.begin();
-				uint32_t point_light_count = light_data.x + light_data.y;
-				light_index = point_light_count;
-				lights.insert(it + point_light_count, *_light);
-				light_data.y++;
+
+				if (cast_shadows && graph_data.num_shadowed_point_lights < MAX_SHADOW_POINT_LIGHTS)
+				{
+					auto it = graph_data.point_lights.begin();
+					graph_data.point_lights.insert(it + graph_data.num_shadowed_point_lights, *_light);
+
+					graph_data.num_shadowed_point_lights++;
+				}
+				else
+				{
+					graph_data.point_lights.push_back(*_light);
+					graph_data.num_non_shadowed_point_lights++;
+				}
 			}
 			else if (light_type_ == LightType::SPOT)
 			{
-				auto it = lights.begin();
-				uint32_t spot_light_count = light_data.x + light_data.y + light_data.z;
-				light_index = spot_light_count;
-				lights.insert(it + spot_light_count, *_light);
-				light_data.z++;
+
+				if (cast_shadows && graph_data.num_shadowed_spot_lights < MAX_SHADOW_SPOT_LIGHTS)
+				{
+					auto it = graph_data.spot_lights.begin();
+					graph_data.spot_lights.insert(it + graph_data.num_shadowed_spot_lights, *_light);
+
+					graph_data.num_shadowed_spot_lights++;
+				}
+				else
+				{
+					graph_data.spot_lights.push_back(*_light);
+					graph_data.num_non_shadowed_spot_lights++;
+				}
 			}
 
-			light_positions.insert(light_positions.begin() + light_index, _light->position);
-			light_directions.insert(light_directions.begin() + light_index, _light->direction);
-			light_colors.insert(light_colors.begin() + light_index, _light->color);
-			light_params1s.insert(light_params1s.begin() + light_index, _light->params1);
-			light_params2s.insert(light_params2s.begin() + light_index, _light->params2);
 		};
 
 		cmd_list._commands.push_back(cmd);
 	}
 
-	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to, uint32_t color)
+	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to, uint32_t color, int32_t render_graph_index)
 	{
 		Command cmd;
 		uint32_t data_size = (sizeof(glm::vec3) * 2) + sizeof(uint32_t);
@@ -1056,7 +1192,7 @@ namespace trace {
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform, uint32_t color)
+	void Renderer::DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
 	{
 		Command cmd;
 		uint32_t data_size = (sizeof(glm::vec3) * 2) + sizeof(glm::mat4) + sizeof(uint32_t);
@@ -1080,7 +1216,7 @@ namespace trace {
 		};
 	}
 
-	void Renderer::DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color)
+	void Renderer::DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
 	{
 		float ar = (glm::pi<float>() * 2.0f) / (float)steps;
 		float theta = ar * (float)0;
@@ -1100,33 +1236,33 @@ namespace trace {
 		}
 	}
 
-	void Renderer::DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color)
+	void Renderer::DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
 	{
-		DrawDebugCircle(cmd_list, radius, steps, transform, color);
+		DrawDebugCircle(cmd_list, radius, steps, transform, color, render_graph_index);
 		glm::mat4 new_transform = glm::rotate(transform, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		DrawDebugCircle(cmd_list, radius, steps, new_transform, color);
+		DrawDebugCircle(cmd_list, radius, steps, new_transform, color, render_graph_index);
 		new_transform = glm::rotate(transform, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		DrawDebugCircle(cmd_list, radius, steps, new_transform, color);
+		DrawDebugCircle(cmd_list, radius, steps, new_transform, color, render_graph_index);
 		new_transform = glm::rotate(transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		DrawDebugCircle(cmd_list, radius, steps, new_transform, color);
+		DrawDebugCircle(cmd_list, radius, steps, new_transform, color, render_graph_index);
 	}
 
-	void Renderer::DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform)
+	void Renderer::DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index)
 	{
 
 		if (!font) return;
 		
-		if (text_verts) DrawString_(font.get(), text, color, _transform);
-		else DrawString(font.get(), text, _transform);
+		if (text_verts) DrawString_(font.get(), text, color, _transform, render_graph_index);
+		else DrawString(font.get(), text, _transform, render_graph_index);
 
 	}
 
-	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform)
+	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, int32_t render_graph_index)
 	{
-		DrawQuad_(_transform, texture);
+		DrawQuad_(_transform, texture, render_graph_index);
 	}
 
-	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color)
+	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color, int32_t render_graph_index)
 	{
 		DrawQuad_(_transform, texture, color);
 	}
@@ -1146,12 +1282,12 @@ namespace trace {
 		return result;
 	}
 
-	CommandList Renderer::BeginCommandList()
+	CommandList Renderer::BeginCommandList(int32_t render_graph_index)
 	{
 		return {};
 	}
 
-	void Renderer::SubmitCommandList(CommandList& list)
+	void Renderer::SubmitCommandList(CommandList& list, int32_t render_graph_index)
 	{
 		if (m_listCount >= m_cmdList.size())
 			m_cmdList.resize(m_listCount * 2);

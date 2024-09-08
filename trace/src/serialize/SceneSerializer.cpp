@@ -137,7 +137,11 @@ namespace trace {
 				ModelRendererComponent& model_renderer = entity.GetComponent<ModelRendererComponent>();
 				emit << YAML::Key << "ModelRendererComponent" << YAML::Value;
 				emit << YAML::BeginMap;
-				emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(model_renderer._material->GetName());
+				if (model_renderer._material)
+				{
+					emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(model_renderer._material->GetName());
+				}
+				emit << YAML::Key << "Cast Shadow" << YAML::Value << model_renderer.cast_shadow;
 
 				emit << YAML::EndMap;
 			}
@@ -240,6 +244,57 @@ namespace trace {
 
 				emit << YAML::EndMap;
 			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<SunLight>())
+			{
+				SunLight& light = entity.GetComponent<SunLight>();
+				emit << YAML::Key << "SunLight" << YAML::Value;
+				emit << YAML::BeginMap;
+				
+				emit << YAML::Key << "Color" << YAML::Value << light.color;
+				emit << YAML::Key << "Intensity" << YAML::Value << light.intensity;
+				emit << YAML::Key << "Cast Shadows" << YAML::Value << light.cast_shadows;
+
+
+				emit << YAML::EndMap;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<PointLight>())
+			{
+				PointLight& light = entity.GetComponent<PointLight>();
+				emit << YAML::Key << "PointLight" << YAML::Value;
+				emit << YAML::BeginMap;
+
+				emit << YAML::Key << "Color" << YAML::Value << light.color;
+				emit << YAML::Key << "Intensity" << YAML::Value << light.intensity;
+				emit << YAML::Key << "Radius" << YAML::Value << light.radius;
+				emit << YAML::Key << "Cast Shadows" << YAML::Value << light.cast_shadows;
+
+
+				emit << YAML::EndMap;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<SpotLight>())
+			{
+				SpotLight& light = entity.GetComponent<SpotLight>();
+				emit << YAML::Key << "SpotLight" << YAML::Value;
+				emit << YAML::BeginMap;
+
+				emit << YAML::Key << "Color" << YAML::Value << light.color;
+				emit << YAML::Key << "Intensity" << YAML::Value << light.intensity;
+				emit << YAML::Key << "innerCutOff" << YAML::Value << light.innerCutOff;
+				emit << YAML::Key << "outerCutOff" << YAML::Value << light.outerCutOff;
+				emit << YAML::Key << "Cast Shadows" << YAML::Value << light.cast_shadows;
+
+
+				emit << YAML::EndMap;
+			}
 		}
 	};
 
@@ -311,7 +366,15 @@ namespace trace {
 		auto comp = value["ModelRendererComponent"];
 		ModelRendererComponent& model_renderer = entity.AddComponent<ModelRendererComponent>();
 		Ref<MaterialInstance> res;
-		UUID id = comp["file id"].as<uint64_t>();
+		UUID id = 0;
+		if (comp["file id"])
+		{
+			id = comp["file id"].as<uint64_t>();
+		}
+		if (comp["Cast Shadow"])
+		{
+			model_renderer.cast_shadow = comp["Cast Shadow"].as<bool>();
+		}
 		if (id == 0)
 		{
 			TRC_TRACE("These entity model renderer doesn't have a material, Name: {}", entity.GetComponent<TagComponent>()._tag);
@@ -454,6 +517,42 @@ namespace trace {
 				//prefab.handle = PrefabManager::get_instance()->Load_Runtime(id);
 			}
 		}
+
+		} },
+		{ "SunLight", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["SunLight"];
+		SunLight& light = entity.AddComponent<SunLight>();
+		
+		light.color = comp["Color"].as<glm::vec3>();
+		light.intensity = comp["Intensity"].as<float>();
+		light.cast_shadows = comp["Cast Shadows"].as<bool>();
+
+
+		} },
+		{ "PointLight", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["PointLight"];
+		PointLight& light = entity.AddComponent<PointLight>();
+
+		light.color = comp["Color"].as<glm::vec3>();
+		light.intensity = comp["Intensity"].as<float>();
+		light.radius = comp["Radius"].as<float>();
+		light.cast_shadows = comp["Cast Shadows"].as<bool>();
+
+
+		} },
+		{ "SpotLight", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["SpotLight"];
+		SpotLight& light = entity.AddComponent<SpotLight>();
+
+		light.color = comp["Color"].as<glm::vec3>();
+		light.intensity = comp["Intensity"].as<float>();
+		light.innerCutOff = comp["innerCutOff"].as<float>();
+		light.outerCutOff = comp["outerCutOff"].as<float>();
+		if (comp["Cast Shadows"])
+		{
+			light.cast_shadows = comp["Cast Shadows"].as<bool>();
+		}
+
 
 		} }
 	};

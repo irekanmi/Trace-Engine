@@ -59,7 +59,7 @@ namespace trace {
 	void ForwardPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)
 	{
 	}
-	void ForwardPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board)
+	void ForwardPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 		FrameData& fd = black_board.get<FrameData>();
 		GBufferData& gbuffer_data = black_board.get<GBufferData>();
@@ -71,7 +71,7 @@ namespace trace {
 		uint32_t width = render_graph->GetResource(fd.hdr_index).resource_data.texture.width;
 		uint32_t height = render_graph->GetResource(fd.hdr_index).resource_data.texture.height;
 
-		pass->SetRunCB([=](std::vector<uint32_t>& inputs) {
+		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs) {
 
 			Viewport view_port = m_renderer->_viewPort;
 			Rect2D rect = m_renderer->_rect;
@@ -83,10 +83,10 @@ namespace trace {
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-			m_renderer->RenderQuads();
+			m_renderer->RenderQuads(render_graph_index);
 			//m_renderer->RenderLights();
-			m_renderer->RenderDebugData(); // Temp
-			if(m_renderer->text_verts) m_renderer->RenderTextVerts();
+			m_renderer->RenderDebugData(render_graph_index); // Temp
+			if(m_renderer->text_verts) m_renderer->RenderTextVerts(render_graph_index);
 			//else m_renderer->RenderTexts();
 			
 

@@ -241,8 +241,8 @@ namespace trace {
 		int frame_update = 0;// NOTE: This variable shows the number of times the pipeline has been used in particular frame
 
 		std::unordered_map<int, std::vector<BufferDescriptorInfo>> instance_buffer_infos;
-		std::vector<TextureDescriptorInfo> instance_texture_infos;
-		int bindless_2d_tex_count = 0;
+		std::unordered_map<int, std::vector<TextureDescriptorInfo>> instance_texture_infos;
+		std::unordered_map<int, int> bindless_2d_tex_count;
 		bool bindless = false;
 	};
 

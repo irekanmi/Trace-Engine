@@ -27,10 +27,10 @@ void main()
 {
     _texCoord = in_texCoord;
 
-    mat3 model_mat3 = mat3(_view * GET_INSTANCE_PARAM(_model, LocalBufferObject));
-    mat3 norm_mat3 = transpose(inverse(model_mat3));
-    _normal_ = normalize(norm_mat3  * in_normal);
-    _tangent_ = vec4( normalize(model_mat3 * in_tangent.xyz), in_tangent.w );
+    mat3 model_view_mat3 = mat3(_view * GET_INSTANCE_PARAM(_model, LocalBufferObject));
+    //mat3 norm_mat3 = transpose(inverse(model_view_mat3));
+    _normal_ = normalize(model_view_mat3  * in_normal);
+    _tangent_ = vec4( normalize(model_view_mat3 * in_tangent.xyz), in_tangent.w );
     world_position = (GET_INSTANCE_PARAM(_model, LocalBufferObject) * vec4(in_pos, 1.0f)).xyz;
     _fragPos = (_view * vec4(world_position, 1.0f)).xyz;
     

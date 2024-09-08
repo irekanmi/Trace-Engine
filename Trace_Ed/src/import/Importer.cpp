@@ -28,7 +28,7 @@
 #include <filesystem>
 
 
-#define ASSIMP_LOAD_FLAGS aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace
+#define ASSIMP_LOAD_FLAGS aiProcess_Triangulate
 
 namespace trace {
 
@@ -190,11 +190,11 @@ namespace trace {
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
 		ContentBrowser* content_browser = editor->GetContentBrowser();
-		
+
 		for (uint32_t i = 0; i < node->mNumMeshes; i++)
 		{
 
-			uint32_t mesh_index = node->mMeshes[0];
+			uint32_t mesh_index = node->mMeshes[i];
 			aiMesh* mesh = ass_scene->mMeshes[mesh_index];
 
 			std::string mesh_name = mesh->mName.C_Str();
@@ -215,12 +215,23 @@ namespace trace {
 			if (mesh->mMaterialIndex != -1)
 			{
 				aiMaterial* ass_mat = ass_scene->mMaterials[mesh->mMaterialIndex];
+				std::string mat_name;
 				aiString ass_name;
 				if (aiGetMaterialString(ass_mat, AI_MATKEY_NAME, &ass_name) == AI_SUCCESS)
 				{
-					std::string mat_name = ass_name.C_Str();
+					mat_name = ass_name.C_Str();
 					mat_name += ".trmat";
 
+					
+				}
+				else
+				{
+					mat_name = filename + "Unnamed_material" + std::to_string(mesh->mMaterialIndex);
+					mat_name += ".trmat";
+				}
+
+				if (!mat_name.empty())
+				{
 					UUID id = content_browser->GetAllFilesID()[mat_name];
 					std::filesystem::path material_path = content_browser->GetUUIDPath()[id];
 
@@ -328,7 +339,7 @@ namespace trace {
 		m_loadedFiles[path.filename().string()] = result;
 		content_browser->ProcessAllDirectory();// Refresh file id's
 
-		// Import materials
+		// Import materials ---------------------------------------------------------
 		TextureManager* texture_manager = TextureManager::get_instance();
 				
 
@@ -336,73 +347,159 @@ namespace trace {
 		{
 			aiMaterial* imp_material = result->mMaterials[i];
 			aiString mat_name;
-			if (imp_material->Get(AI_MATKEY_NAME, mat_name) != AI_SUCCESS)
+			std::string material_name;
+			if (imp_material->Get(AI_MATKEY_NAME, mat_name) == AI_SUCCESS)
 			{
-				TRC_ERROR("Failed to import material, file: {}, index: {}", file_path, i);
-				continue;
+				material_name = mat_name.C_Str();
 			}
-			std::string material_name = mat_name.C_Str();
+			else
+			{
+				material_name = filename + "Unnamed_material" + std::to_string(i);
+			}
 			material_name += ".trmat";
 			std::string material_path = (directory / material_name).string();
 			Ref<MaterialInstance> material = MaterialManager::get_instance()->CreateMaterial(material_name, PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline"));
 
+			
+
 			{
-				auto it = material->GetMaterialData().find("diffuse_color");
+				auto it = material->GetMaterialData().find("emissive_color");
 				if (it != material->GetMaterialData().end())
 				{
-					it->second.first = glm::vec4(1.0f);
+					it->second.first = glm::vec4(0.0f);
 					aiColor4D color;
-					if (imp_material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+					if (imp_material->Get(AI_MATKEY_COLOR_EMISSIVE, color) == AI_SUCCESS)
 					{
-						glm::vec4 diffuse_color;
-						diffuse_color.r = color.r;
-						diffuse_color.g = color.g;
-						diffuse_color.b = color.b;
-						diffuse_color.a = color.a;
+						glm::vec4 emissive_color;
+						emissive_color.r = color.r;
+						emissive_color.g = color.g;
+						emissive_color.b = color.b;
+						emissive_color.a = color.a;
 
-						it->second.first = diffuse_color;
+						it->second.first = emissive_color;
 					}
 				}
 			};
 
 			{
-				auto it = material->GetMaterialData().find("shininess");
+				auto it = material->GetMaterialData().find("tilling");
 				if (it != material->GetMaterialData().end())
 				{
-					it->second.first = 32.0f;
-					float shininess;
-					if (aiGetMaterialFloat(imp_material, AI_MATKEY_SPECULAR_FACTOR, &shininess) == AI_SUCCESS)
+					it->second.first = glm::vec2(1.0f);
+					
+				}
+			};
+
+			
+
+			{
+				auto roughness_map_it = material->GetMaterialData().find("ROUGHNESS_MAP");
+				if (roughness_map_it != material->GetMaterialData().end())
+				{
+					roughness_map_it->second.first = texture_manager->GetTexture("black_texture");
+
+					Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_DIFFUSE_ROUGHNESS, directory, filename);
+					if (texture)
 					{
-						it->second.first = shininess;
+						roughness_map_it->second.first = texture;
 					}
+					else
+					{
+						auto it = material->GetMaterialData().find("roughness");
+						if (it != material->GetMaterialData().end())
+						{
+							float roughness = 0.05f;
+							aiGetMaterialFloat(imp_material, AI_MATKEY_ROUGHNESS_FACTOR, &roughness);
+
+							float factor = 1.0f;
+
+
+							it->second.first = glm::vec2(roughness, factor);
+						}
+					};
+				}
+			};
+
+			
+
+			{
+				auto metallic_it = material->GetMaterialData().find("METALLIC_MAP");
+				if (metallic_it != material->GetMaterialData().end())
+				{
+					metallic_it->second.first = texture_manager->GetTexture("black_texture");
+
+					Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_METALNESS, directory, filename);
+					if (texture)
+					{
+						metallic_it->second.first = texture;
+					}
+					else
+					{
+						auto it = material->GetMaterialData().find("metallic");
+						if (it != material->GetMaterialData().end())
+						{
+							float metallic = 0.1f;
+							aiGetMaterialFloat(imp_material, AI_MATKEY_METALLIC_FACTOR, &metallic);
+							float factor = 1.0f;
+
+
+							it->second.first = glm::vec2(metallic, factor);
+						}
+					};
 				}
 			};
 
 			{
-				auto it = material->GetMaterialData().find("DIFFUSE_MAP");
-				if (it != material->GetMaterialData().end())
+				auto diffuse_map_it = material->GetMaterialData().find("DIFFUSE_MAP");
+				if (diffuse_map_it != material->GetMaterialData().end())
 				{
-					it->second.first = texture_manager->GetDefault("albedo_map");
+					diffuse_map_it->second.first = texture_manager->GetDefault("albedo_map");
 					
 					Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_DIFFUSE, directory, filename);
 					if (texture)
 					{
-						it->second.first = texture;
+						diffuse_map_it->second.first = texture;
 					}
-				}
-			};
-			{
-				auto it = material->GetMaterialData().find("SPECULAR_MAP");
-				if (it != material->GetMaterialData().end())
-				{
-					it->second.first = texture_manager->GetDefault("specular_map");
-
-					Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_SPECULAR, directory, filename);
-					if (texture)
+					else
 					{
-						it->second.first = texture;
+						auto it = material->GetMaterialData().find("diffuse_color");
+						if (it != material->GetMaterialData().end())
+						{
+							it->second.first = glm::vec4(0.0f);
+							aiColor4D color;
+							if (imp_material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+							{
+								glm::vec4 diffuse_color;
+								diffuse_color.r = color.r;
+								diffuse_color.g = color.g;
+								diffuse_color.b = color.b;
+								diffuse_color.a = color.a;
+
+								it->second.first = diffuse_color;
+							}
+						}
+					};
+				}
+				else
+				{
+					auto it = material->GetMaterialData().find("diffuse_color");
+					if (it != material->GetMaterialData().end())
+					{
+						it->second.first = glm::vec4(0.0f);
+						aiColor4D color;
+						if (imp_material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+						{
+							glm::vec4 diffuse_color;
+							diffuse_color.r = color.r;
+							diffuse_color.g = color.g;
+							diffuse_color.b = color.b;
+							diffuse_color.a = color.a;
+
+							it->second.first = diffuse_color;
+						}
 					}
 				}
+				
 			};
 
 			{
@@ -419,8 +516,57 @@ namespace trace {
 				}
 			};
 
+			{
+				auto it = material->GetMaterialData().find("height_scale");
+				if (it != material->GetMaterialData().end())
+				{
+					float height_scale = 0.0f;
+					if (aiGetMaterialFloat(imp_material, AI_MATKEY_BUMPSCALING, &height_scale) == AI_SUCCESS)
+					{
+						it->second.first = height_scale < 0.08f ? height_scale : 0.05f;
+
+					}
+					else
+					{
+						it->second.first = height_scale;
+					}
+
+				}
+			};
+
+			{
+				auto it = material->GetMaterialData().find("HEIGHT_MAP");
+				if (it != material->GetMaterialData().end())
+				{
+					it->second.first = texture_manager->GetTexture("black_texture");
+
+					Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_HEIGHT, directory, filename);
+					if (texture)
+					{
+						it->second.first = texture;
+					}
+				}
+			};
+
+
+			{
+				auto it = material->GetMaterialData().find("OCCLUSION_MAP");
+				if (it != material->GetMaterialData().end())
+				{
+					it->second.first = texture_manager->GetDefault("albedo_map");
+
+					Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_AMBIENT_OCCLUSION, directory, filename);
+					if (texture)
+					{
+						it->second.first = texture;
+					}
+				}
+			};
+
 			MaterialSerializer::Serialize(material, material_path);
 		}
+
+	// -----------------------------------------------------------
 
 		content_browser->ProcessAllDirectory(true);// Refresh file id's
 

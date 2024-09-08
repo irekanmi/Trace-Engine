@@ -26,7 +26,7 @@ namespace trace {
 
 		virtual void Init(Renderer* renderer){}
 		virtual void Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs){}
-		virtual void Setup(RenderGraph* render_graph, RGBlackBoard& black_board){}
+		virtual void Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index){}
 		virtual void ShutDown(){}
 
 	private:

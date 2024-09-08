@@ -330,7 +330,7 @@ namespace trace {
 			float handeness = glm::dot( glm::cross(tangent, bitangent), data[indices[i + 0]].normal) > 0.0f ? 1.0f : -1.0f;
 			
 			//HACK: fix
-			glm::vec4 _tangent = glm::vec4(glm::normalize(tangent), hand);
+			glm::vec4 _tangent = glm::vec4(glm::normalize(tangent), handeness);
 
 			data[indices[i + 0]].tangent = _tangent;
 			data[indices[i + 1]].tangent = _tangent;

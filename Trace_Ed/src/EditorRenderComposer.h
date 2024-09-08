@@ -15,8 +15,8 @@ namespace trace {
 		virtual bool Init(Renderer* renderer) override;
 		virtual void Shutdowm() override;
 
-		virtual bool PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings) override;
-		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board) override;
+		virtual bool PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0) override;
+		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0) override;
 
 	private:
 		GBufferPass gbuffer_pass;
@@ -27,6 +27,7 @@ namespace trace {
 		BloomPass bloom_pass;
 		UIPass ui_pass;
 		EditorUIPass editor_ui_pass;
+		ShadowPass shadow_pass;
 
 	protected:
 

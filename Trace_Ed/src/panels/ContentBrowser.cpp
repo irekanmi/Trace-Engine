@@ -241,6 +241,7 @@ namespace trace {
 			extensions_callbacks[".fbx"] = mesh_lambda;
 			extensions_callbacks[".blend"] = mesh_lambda;
 			extensions_callbacks[".obj"] = mesh_lambda;
+			extensions_callbacks[".gltf"] = mesh_lambda;
 
 		};
 

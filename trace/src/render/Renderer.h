@@ -10,6 +10,7 @@
 #include "GDevice.h"
 #include "GSwapchain.h"
 #include "GContext.h"
+#include "render/render_graph/RenderGraph.h"
 
 
 // Temp--------------------------------
@@ -28,6 +29,7 @@ namespace trace {
 	class MaterialInstance;
 	class Event;
 	class Font;
+	
 
 	struct BatchInfo
 	{
@@ -42,7 +44,58 @@ namespace trace {
 		GTexture* tex;
 	};
 
-	
+	struct RenderObjectData
+	{
+		glm::mat4 transform = glm::mat4(1.0f);
+		Model* object = nullptr;
+		MaterialInstance* material = nullptr;
+	};
+
+	struct RenderGraphFrameData
+	{
+		RenderGraph frame_graph;
+
+		Viewport _viewPort;
+		Rect2D _rect;
+		Camera* _camera = nullptr;
+
+		std::vector<RenderObjectData> m_opaqueObjects;
+		uint32_t m_opaqueObjectsSize = 0;
+
+		//Text Renderering ..............................
+		std::vector<std::vector<TextVertex>> text_vertices;
+		std::vector<GTexture*> text_atlases;
+		std::unordered_set<uint32_t> bound_text_atlases;
+		GBuffer text_buffer;
+		// ..............................................
+
+		// Batch rendering quads ..............................
+		std::vector<BatchInfo> quadBatches;
+		Ref<GPipeline> quadBatchPipeline;
+		std::unordered_set<uint32_t> boundQuadTextures;
+		uint32_t current_quad_batch = 0;
+		uint32_t num_avalible_quad_batch = 0;
+		// ....................................................
+
+
+		//SunLights 
+		// NOTE: SunLight should not be more than one per scene for optimization reasons
+		// NOTE: The light vector stores lights from those that has shadows to does that not
+		uint32_t num_shadowed_sun_lights;
+		uint32_t num_non_shadowed_sun_lights;
+		std::vector<Light> sun_lights;
+
+		uint32_t num_shadowed_point_lights;
+		uint32_t num_non_shadowed_point_lights;
+		std::vector<Light> point_lights;
+
+		uint32_t num_shadowed_spot_lights;
+		uint32_t num_non_shadowed_spot_lights;
+		std::vector<Light> spot_lights;
+
+		//Shadow Casters
+		std::vector<RenderObjectData> shadow_casters;
+	};
 
 	class TRACE_API Renderer : public Object
 	{
@@ -61,27 +114,28 @@ namespace trace {
 
 
 		// Command List
-		CommandList BeginCommandList();
-		void SubmitCommandList(CommandList& list);
-		void BeginScene(CommandList& cmd_list, Camera* _camera);
-		void EndScene(CommandList& cmd_list);
-		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model);
-		void DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform);
-		void DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform);
-		void DrawSky(CommandList& cmd_list, SkyBox* sky);
-		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type);
-		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type);
-		void DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to, uint32_t color = 1);
-		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform, uint32_t color = 1);
-		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1);
-		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1);
-		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
-		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform);
-		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color);
+		CommandList BeginCommandList(int32_t render_graph_index = 0);
+		void SubmitCommandList(CommandList& list, int32_t render_graph_index = 0);
+		void BeginScene(CommandList& cmd_list, Camera* _camera, int32_t render_graph_index = 0);
+		void EndScene(CommandList& cmd_list, int32_t render_graph_index = 0);
+		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model, int32_t render_graph_index = 0);
+		void DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform, int32_t render_graph_index = 0);
+		void DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index = 0);
+		void DrawSky(CommandList& cmd_list, SkyBox* sky, int32_t render_graph_index = 0);
+		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type, int32_t render_graph_index = 0);
+		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type, int32_t render_graph_index = 0);
+		void DrawDebugLine(CommandList& cmd_list, glm::vec3 from, glm::vec3 to, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugLine(CommandList& cmd_list, glm::vec3 p0, glm::vec3 p1, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugCircle(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugSphere(CommandList& cmd_list, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index = 0);
+		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, int32_t render_graph_index = 0);
+		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color, int32_t render_graph_index = 0);
 
 
 		// Getters
 		GRenderPass* GetRenderPass(const std::string& pass_name) { return (GRenderPass*)m_avaliablePasses[pass_name]; }
+		RenderGraphFrameData* GetRenderGraphData(int32_t render_graph_index) { return &m_renderGraphsData[render_graph_index]; }
 		std::string GetRenderPassName(GRenderPass* pass);
 		GDevice* GetDevice() { return &g_device; }
 		GContext* GetContext() { return &g_context; }
@@ -93,20 +147,20 @@ namespace trace {
 
 
 		void Render(float deltaTime);
-		void DrawQuad();
-		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture);
-		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture);
-		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color);
-		void DrawString(Font* font, const std::string& text, glm::mat4 _transform);
-		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform);
+		void DrawQuad(int32_t render_graph_index = 0);
+		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index = 0);
+		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index = 0);
+		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color, int32_t render_graph_index = 0);
+		void DrawString(Font* font, const std::string& text, glm::mat4 _transform, int32_t render_graph_index = 0);
+		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index = 0);
 
 
-		void RenderOpaqueObjects();
 		void RenderLights();
-		void RenderQuads();
 		void RenderTexts();
-		void RenderTextVerts();
-		void RenderDebugData();
+		void RenderOpaqueObjects(int32_t render_graph_index = 0);
+		void RenderQuads(int32_t render_graph_index = 0);
+		void RenderTextVerts(int32_t render_graph_index = 0);
+		void RenderDebugData(int32_t render_graph_index = 0);
 
 		static Renderer* get_instance();
 
@@ -115,44 +169,29 @@ namespace trace {
 		// Per CmdList Objects----------------------------- Temp ---
 		Viewport _viewPort;
 		Rect2D _rect;
-		Camera* _camera = nullptr;
 
-		// light data
-		std::vector<glm::vec4> light_positions;
-		std::vector<glm::vec4> light_directions;
-		std::vector<glm::vec4> light_colors;
-		std::vector<glm::vec4> light_params1s; // x: constant, y: linear, z:quadratic, w: innerCutOff
-		std::vector<glm::vec4> light_params2s; // x: outerCutOff, y: intensity, z:null, w: null
-
-		std::vector<Light> lights;
-		glm::ivec4 light_data;
 		float exposure;
 		bool text_verts = false;
 		//------------------------------------
 		
 		
 	private:
-		void draw_mesh(CommandParams& params);
+		void draw_mesh(CommandParams& params, int32_t render_graph_index = 0);
 		void draw_skybox(CommandParams& params);
 		// Batch rendering quads ..............................
-		void create_quad_batch();
-		void flush_current_quad_batch();
-		void destroy_quad_batchs();
+		void create_quad_batch(int32_t render_graph_index = 0);
+		void flush_current_quad_batch(int32_t render_graph_index = 0);
+		void destroy_quad_batchs(int32_t render_graph_index = 0);
 		// ....................................................
 
 		// Batch rendering text ..............................
-		void create_text_batch();
-		void flush_current_text_batch();
-		void destroy_text_batchs();
+		void create_text_batch(int32_t render_graph_index = 0);
+		void flush_current_text_batch(int32_t render_graph_index = 0);
+		void destroy_text_batchs(int32_t render_graph_index = 0);
 		// ....................................................
 
 
-		struct RenderObjectData
-		{
-			glm::mat4 transform = glm::mat4(1.0f);
-			Model* object = nullptr;
-			MaterialInstance* material = nullptr;
-		};
+		
 
 	private:
 
@@ -164,37 +203,39 @@ namespace trace {
 		uint32_t m_frameWidth;
 		uint32_t m_frameHeight;
 		ClientRenderCallback m_client_render;
-		std::vector<RenderObjectData> m_opaqueObjects;
+		
+		uint32_t num_render_graphs = 1;// NOTE: Should be modified at render composer initialiazation
+		std::vector<RenderGraphFrameData> m_renderGraphsData;
 
-		uint32_t m_opaqueObjectsSize;
+		/*std::vector<RenderObjectData> m_opaqueObjects;
+		uint32_t m_opaqueObjectsSize;*/
 
-		SkyBox* current_sky_box;
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;
 		std::unordered_map<std::string, void*> m_avaliablePasses;
 
 		// Batch rendering quads ..............................
-		std::vector<BatchInfo> quadBatches;
 		Ref<GPipeline> quadBatchPipeline;
+		/*std::vector<BatchInfo> quadBatches;
 		std::unordered_set<uint32_t> boundQuadTextures;
 		uint32_t current_quad_batch = 0;
-		uint32_t num_avalible_quad_batch = 0;
+		uint32_t num_avalible_quad_batch = 0;*/
 		// ....................................................
 
 		// Batch rendering text ..............................
-		std::vector<BatchInfo> textBatches;
 		Ref<GPipeline> textBatchPipeline;
+		std::vector<BatchInfo> textBatches;
 		std::unordered_set<uint32_t> boundTextTextures;
 		uint32_t current_text_batch = 0;
 		uint32_t num_avalible_text_batch = 0;
 		// ....................................................
 
 		//Text Renderering ..............................
-		std::vector<std::vector<TextVertex>> text_vertices;
+		/*std::vector<std::vector<TextVertex>> text_vertices;
 		std::vector<GTexture*> text_atlases;
-		Ref<GPipeline> text_pipeline;
 		std::unordered_set<uint32_t> bound_text_atlases;
-		GBuffer text_buffer;
+		GBuffer text_buffer;*/
+		Ref<GPipeline> text_pipeline;
 		// ..............................................
 
 		friend class RenderGraph;

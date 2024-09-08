@@ -319,11 +319,11 @@ namespace vk {
 
 			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
 			trace::VKImage& img_handle = res_internal->resource.texture;
-			if (res_internal->image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) continue;
+			//if (res_internal->image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) continue;
 
 			if (isTexture)
 			{
-				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH && res_internal->image_layout == VK_IMAGE_LAYOUT_UNDEFINED)
+				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 				{
 					VkImageMemoryBarrier img_bar = {};
 					img_bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -331,11 +331,14 @@ namespace vk {
 					img_bar.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 					img_bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 					img_bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-					img_bar.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					img_bar.oldLayout = (res.resource_data.texture.format == trace::Format::D32_SFLOAT) ? VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 					img_bar.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 					img_bar.pNext = nullptr;
 					img_bar.image = img_handle.m_handle;
-					img_bar.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
+					uint32_t aspect_flags = (res.resource_data.texture.format == trace::Format::D32_SFLOAT) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
+					img_bar.subresourceRange.aspectMask = aspect_flags;
 					img_bar.subresourceRange.baseArrayLayer = 0;
 					img_bar.subresourceRange.baseMipLevel = 0;
 					img_bar.subresourceRange.layerCount = 1;
@@ -951,7 +954,7 @@ namespace vk {
 				samp_create_info.addressModeW = convertAddressMode(res.resource_data.texture.addressModeW);
 				samp_create_info.anisotropyEnable = VK_TRUE;
 				samp_create_info.maxAnisotropy = 16;
-				samp_create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+				samp_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 				samp_create_info.unnormalizedCoordinates = VK_FALSE;
 				samp_create_info.minFilter = convertFilter(res.resource_data.texture.min);
 				samp_create_info.magFilter = convertFilter(res.resource_data.texture.mag);
@@ -1154,8 +1157,8 @@ namespace vk {
 				create_info.subresourceRange.aspectMask = aspect_flags;
 				create_info.subresourceRange.baseArrayLayer = 0; // TODO: Configurable array layer
 				create_info.subresourceRange.baseMipLevel = 0; // TODO: Configurable
-				create_info.subresourceRange.layerCount = 1;
-				create_info.subresourceRange.levelCount = 1; // TODO: Configurable
+				create_info.subresourceRange.layerCount = res.resource_data.texture.num_layers;
+				create_info.subresourceRange.levelCount = res.resource_data.texture.num_mip_levels; // TODO: Configurable
 
 				create_info.image = res_handle->resource.texture.m_handle;
 				VkResult _result = (vkCreateImageView(_device->m_device, &create_info, instance->m_alloc_callback, &res_handle->resource.texture.m_view));

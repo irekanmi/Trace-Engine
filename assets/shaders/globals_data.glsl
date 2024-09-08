@@ -1,4 +1,6 @@
 
+#ifndef GLOBALS_DATA_H_
+#define GLOBALS_DATA_H_
 
 #define IN_POSITION(index) layout(location = index)in vec3 in_pos;
 #define IN_NORMAL(index) layout(location = index)in vec3 in_normal;
@@ -40,3 +42,4 @@
 #define FRAG_SPECULAR g_ColorSpecular.a
 #define FRAG_SHININESS g_Normal.a
 
+#endif

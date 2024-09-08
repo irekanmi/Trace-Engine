@@ -405,7 +405,10 @@ namespace trace {
 
 	RenderGraphResource* RenderGraph::GetResource_ptr(uint32_t index)
 	{
-		if (index > m_resources.size()) return nullptr;
+		if (index > m_resources.size())
+		{
+			return nullptr;
+		}
 
 		return &GetResource(index);
 	}
@@ -437,7 +440,7 @@ namespace trace {
 		return true;
 	}
 
-	bool RenderGraph::Execute()
+	bool RenderGraph::Execute(int32_t render_graph_index)
 	{
 		bool result = RenderFunc::BeginRenderGraph(this);
 
@@ -450,7 +453,7 @@ namespace trace {
 				RenderGraphPass* pass = &GetPass(pass_index);
 				RenderFunc::BeginRenderGraphPass(this, pass);
 
-				pass->m_run_cb(pass->m_attachmentInputs);
+				pass->m_run_cb(m_renderer, this, pass, render_graph_index, pass->m_attachmentInputs);
 
 				RenderFunc::EndRenderGraphPass(this, pass);
 			}
@@ -583,6 +586,33 @@ namespace trace {
 					else
 					{
 						TRC_ASSERT(height == res->resource_data.texture.height, "height of out not equal, {}", res->resource_name);
+					}
+				}
+
+				if (curr_pass->GetDepthStencilOutput() != INVALID_ID)
+				{
+					RenderGraphResource* res = &GetResource(curr_pass->GetDepthStencilOutput());
+					if (width == 0)
+					{
+						width = res->resource_data.texture.width;
+					}
+
+					if (height == 0)
+					{
+						height = res->resource_data.texture.height;
+					}
+				}
+				if (curr_pass->GetDepthStencilInput() != INVALID_ID)
+				{
+					RenderGraphResource* res = &GetResource(curr_pass->GetDepthStencilInput());
+					if (width == 0)
+					{
+						width = res->resource_data.texture.width;
+					}
+
+					if (height == 0)
+					{
+						height = res->resource_data.texture.height;
 					}
 				}
 

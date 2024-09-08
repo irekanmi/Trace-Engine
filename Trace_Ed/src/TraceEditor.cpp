@@ -1135,6 +1135,27 @@ namespace trace {
 
 			break;
 		}
+
+		case KEY_Z:
+		{
+			m_editorCamera.SetCameraType(CameraType::PERSPECTIVE);
+			m_editorCamera.SetFov(60.0f);
+			m_editorCamera.SetNear(0.1f);
+			m_editorCamera.SetFar(15000.0f);
+
+			break;
+		}
+
+		case KEY_X:
+		{
+			m_editorCamera.SetCameraType(CameraType::ORTHOGRAPHIC);
+			m_editorCamera.SetFov(60.0f);
+			m_editorCamera.SetNear(-200.0f);
+			m_editorCamera.SetFar(200.0f);
+			m_editorCamera.SetOrthographicSize(55.0f);
+			break;
+		}
+
 		}
 
 	}

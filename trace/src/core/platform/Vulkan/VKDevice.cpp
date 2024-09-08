@@ -60,7 +60,39 @@ namespace vk {
 			buffer_info.clear();
 		}
 
-		if (!pipeline->instance_texture_infos.empty())
+		for (auto& i : pipeline->instance_texture_infos)
+		{
+			static std::vector<VkDescriptorImageInfo> texture_info;
+
+
+			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			write.descriptorCount = i.second.size();
+			write.dstArrayElement = 0;
+			write.dstBinding = i.first;
+			write.dstSet = pipeline->Instance_set;
+			texture_info.reserve(i.second.size());
+			for (auto& j : i.second)
+			{
+				VkDescriptorImageInfo tex_info = {};
+				tex_info.imageView = ((trace::VKImage*)j.texture)->m_view;
+				tex_info.sampler = ((trace::VKImage*)j.texture)->m_sampler;
+				tex_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				texture_info.push_back(tex_info);
+				
+			}
+			write.pImageInfo = texture_info.data();
+			vkUpdateDescriptorSets(
+				pipeline->m_device->m_device,
+				1,
+				&write,
+				0,
+				nullptr
+			);
+			texture_info.clear();
+
+		}
+
+		/*if (!pipeline->instance_texture_infos.empty())
 		{
 			static std::vector<VkDescriptorImageInfo> texture_info;
 			texture_info.reserve(pipeline->instance_texture_infos.size());
@@ -91,12 +123,18 @@ namespace vk {
 				nullptr
 			);
 			texture_info.clear();
-		}
+		}*/
 
 		pipeline->instance_buffer_offset = 0;
 		pipeline->frame_update = 0;
-		pipeline->instance_buffer_infos.clear();
-		pipeline->instance_texture_infos.clear();
+		for (auto& i : pipeline->instance_buffer_infos)
+		{
+			i.second.clear();
+		}
+		for (auto& i : pipeline->instance_texture_infos)
+		{
+			i.second.clear();
+		}
 	}
 
 	bool __CreateDevice(trace::GDevice* device)
@@ -1086,12 +1124,15 @@ namespace vk {
 			pipe_handle->instance_buffer_offset += struct_meta._size;
 		}
 
-		for (int i = 0; i < pipe_handle->bindless_2d_tex_count; i++)
+		for (auto& i : pipe_handle->bindless_2d_tex_count)
 		{
-			trace::TextureDescriptorInfo tex_info = {};
-			tex_info.binding = VK_COMBINED_SAMPLER2D_BINDING;
-			tex_info.texture = &_handle->nullImage;
-			pipe_handle->instance_texture_infos.push_back(tex_info);
+			for (int j = 0; j < i.second; j++)
+			{
+				trace::TextureDescriptorInfo tex_info = {};
+				tex_info.binding = i.first;
+				tex_info.texture = &_handle->nullImage;
+				pipe_handle->instance_texture_infos[i.first].push_back(tex_info);
+			}
 		}
 
 		_handle->pipeline_to_reset.emplace(pipe_handle);

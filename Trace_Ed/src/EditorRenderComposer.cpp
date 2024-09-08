@@ -23,11 +23,13 @@ namespace trace {
 		bloom_pass.Init(m_renderer);
 		ui_pass.Init(m_renderer);
 		editor_ui_pass.Init(m_renderer);
+		shadow_pass.Init(m_renderer);
 
 		return result;
 	}
 	void EditorRenderComposer::Shutdowm()
 	{
+		shadow_pass.ShutDown();
 		editor_ui_pass.ShutDown();
 		ui_pass.ShutDown();
 		bloom_pass.ShutDown();
@@ -37,7 +39,7 @@ namespace trace {
 		lighting_pass.ShutDown();
 		gbuffer_pass.ShutDown();
 	}
-	bool EditorRenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings)
+	bool EditorRenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 	{
 		bool result = true;
 
@@ -64,19 +66,21 @@ namespace trace {
 		fd.ldr_index = frame_graph.AddTextureResource("Ldr_Target", gPos);
 
 		frame_graph.SetRenderer(m_renderer);
-		gbuffer_pass.Setup(&frame_graph, black_board);
+
+		shadow_pass.Setup(&frame_graph, black_board, render_graph_index);
+		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
 		{
-			ssao_pass.Setup(&frame_graph, black_board);
+			ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
 		}
-		lighting_pass.Setup(&frame_graph, black_board);
-		forward_pass.Setup(&frame_graph, black_board);
+		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
+		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
 		{
-			bloom_pass.Setup(&frame_graph, black_board);
+			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
 		}
-		toneMap_pass.Setup(&frame_graph, black_board);
-		editor_ui_pass.Setup(&frame_graph, black_board);
+		toneMap_pass.Setup(&frame_graph, black_board, render_graph_index);
+		editor_ui_pass.Setup(&frame_graph, black_board, render_graph_index);
 		frame_graph.SetFinalResourceOutput("swapchain");
 
 
@@ -85,7 +89,7 @@ namespace trace {
 
 		return result;
 	}
-	bool EditorRenderComposer::PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board)
+	bool EditorRenderComposer::PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 		bool result = true;
 

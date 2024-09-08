@@ -31,6 +31,8 @@ namespace trace {
 		{
 			for (auto& i : shader->GetDataIndex())
 			{
+				int slot = i.second >> 16;
+				int index = ((0x0000FFFF) & i.second);
 				uint32_t& hash_id = _hashTable.Get_Ref(i.first);
 				for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 				{
@@ -39,7 +41,8 @@ namespace trace {
 
 						hash_id = j;
 						_pipeline->GetSceneUniforms()[j]._id = j;
-						_pipeline->GetSceneUniforms()[j]._index = i.second;
+						_pipeline->GetSceneUniforms()[j]._slot = slot;
+						_pipeline->GetSceneUniforms()[j]._index = index;
 						_pipeline->GetSceneUniforms()[j]._count = 1;
 						_pipeline->GetSceneUniforms()[j].data_type = ShaderData::CUSTOM_DATA_TEXTURE;
 						_pipeline->GetSceneUniforms()[j]._resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
@@ -47,7 +50,8 @@ namespace trace {
 						break;
 					}
 				}
-				count++;
+				//count++;
+				pipe->bindless_2d_tex_count[slot]++;
 			}
 		};
 
@@ -61,7 +65,7 @@ namespace trace {
 			lambda(desc.pixel_shader);
 		}
 
-		pipe->bindless_2d_tex_count = count;
+		//pipe->bindless_2d_tex_count = count;
 	}
 
 	bool processShaderResources(uint32_t& resource_bindings_count, ShaderResourceBinding* resource_bindings, GPipeline* _pipeline, HashTable<uint32_t>& _hashTable, VKHandle* instance, VKDeviceHandle* device, uint32_t& out_size)
@@ -73,7 +77,7 @@ namespace trace {
 		uint32_t total_size_global = 0;
 		uint32_t total_size_instance = 0;
 		uint32_t total_size_local = 0;
-		_pipeline->GetSceneUniforms().resize(128);// TODO: Fix Hard Coded value
+		_pipeline->GetSceneUniforms().resize(64);// TODO: Fix Hard Coded value
 
 		uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
 
@@ -97,6 +101,7 @@ namespace trace {
 				
 
 				uint32_t struct_size = 0;
+				uint32_t temp_globals_size = total_size_global;
 				for (auto& mem : i._struct.members)
 				{
 					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
@@ -128,8 +133,11 @@ namespace trace {
 							_pipeline->GetSceneUniforms()[j]._struct_index = z;
 							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 							{
-								_pipeline->GetSceneUniforms()[j]._offset = total_size_global;
+								uint32_t actual_offset = temp_globals_size + mem.offset;
+								_pipeline->GetSceneUniforms()[j]._offset = actual_offset;
+								{
 								total_size_global += mem.resource_size;
+								}
 								total_size_global = get_alignment(total_size_global, offset_alignment);
 							}
 
@@ -160,13 +168,6 @@ namespace trace {
 							_pipeline->GetSceneUniforms()[j]._shader_stage = i._struct.shader_stage;
 							//_pipeline->GetSceneUniforms()[j].data_type = mem.resource_data_type;
 							//_pipeline->GetSceneUniforms()[j]._offset = struct_size;
-
-
-							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-							{
-
-							}
-
 							break;
 						}
 					}
@@ -177,37 +178,24 @@ namespace trace {
 
 			if (is_array)
 			{
-				for (auto& mem : i._array.members)
+				for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
 				{
-					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
-					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
+					uint32_t& hash_id = _hashTable.Get_Ref(i._array.name);
+					if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
 					{
-						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
-						{
 
-							hash_id = j;
-							_pipeline->GetSceneUniforms()[j]._id = j;
-							_pipeline->GetSceneUniforms()[j]._size = i._array.resource_size;
-							_pipeline->GetSceneUniforms()[j]._slot = i._array.slot;
-							_pipeline->GetSceneUniforms()[j]._index = mem.index;
-							_pipeline->GetSceneUniforms()[j]._count = i._array.count;
-							_pipeline->GetSceneUniforms()[j]._resource_type = i._array.resource_type;
-							_pipeline->GetSceneUniforms()[j]._shader_stage = i._array.shader_stage;
-							_pipeline->GetSceneUniforms()[j].data_type = mem.data_type;
-							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-							{
-								_pipeline->GetSceneUniforms()[j]._offset = total_size_local;
-								total_size_local += i._array.resource_size;
-								total_size_local = get_alignment(total_size_local, offset_alignment);
-								break;
-							}
-							//_pipeline->GetSceneUniforms()[j]._offset = total_size_global;
-							//total_size_global += i._array.resource_size;
-							//total_size_global = get_alignment(total_size_global, offset_alignment);
-							break;
-						}
+						hash_id = j;
+						_pipeline->GetSceneUniforms()[j]._id = j;
+						_pipeline->GetSceneUniforms()[j]._size = i._array.resource_size;
+						_pipeline->GetSceneUniforms()[j]._slot = i._array.slot;
+						_pipeline->GetSceneUniforms()[j]._index = 0;
+						_pipeline->GetSceneUniforms()[j]._count = i._array.count;
+						_pipeline->GetSceneUniforms()[j]._resource_type = i._array.resource_type;
+						_pipeline->GetSceneUniforms()[j]._shader_stage = i._array.shader_stage;
+						break;
 					}
 				}
+				
 			}
 
 			if (is_sArray)
@@ -560,7 +548,7 @@ namespace vk {
 		pipeline->SetDesc(desc);
 
 
-		pipeline->GetHashTable().Init(512);// TODO: let number be configurable or more dynamic
+		pipeline->GetHashTable().Init(1063);// TODO: let number be configurable or more dynamic
 
 		uint32_t _ids = INVALID_ID;
 		pipeline->GetHashTable().Fill(_ids);
@@ -975,7 +963,7 @@ namespace vk {
 		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
-		trace::VKImage* _tex = reinterpret_cast<trace::VKImage*>(texture->GetRenderHandle()->m_internalData);
+		trace::VKImage* _tex = texture ? reinterpret_cast<trace::VKImage*>(texture->GetRenderHandle()->m_internalData) : &_device->nullImage;
 
 		uint32_t hash_id = pipeline->GetHashTable().Get(resource_name.c_str());
 
@@ -995,7 +983,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		if (!pipeline || !texture)
+		if (!pipeline)
 		{
 			TRC_ERROR("Please input valid pointer -> {}, tex ->{}, Function -> {}", (const void*)pipeline, __FUNCTION__);
 			return false;
@@ -1046,26 +1034,7 @@ namespace vk {
 
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 		{
-
-
-			switch (resource_scope)
-			{
-
-
-			case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
-			{
-				write.dstSet = _handle->Scene_set;
-				break;
-			}
-
-			case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
-			{
-				write.dstSet = _handle->Instance_set;
-				break;
-			}
-
-
-			}
+			write.dstSet = _handle->Scene_set;
 
 			vkUpdateDescriptorSets(
 				_device->m_device,
@@ -1078,8 +1047,9 @@ namespace vk {
 
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 		{
-			int index = (_handle->instance_texture_infos.size() - _handle->bindless_2d_tex_count) + meta_data._index;
-			_handle->instance_texture_infos[index].texture = _tex;
+			std::vector<trace::TextureDescriptorInfo>& tex_infos = _handle->instance_texture_infos[meta_data._slot];
+			int index = (tex_infos.size() - _handle->bindless_2d_tex_count[meta_data._slot]) + meta_data._index;
+			tex_infos[index].texture = _tex;
 		}
 
 
@@ -1137,7 +1107,7 @@ namespace vk {
 
 		offset_count = 0;
 
-		glm::ivec4 draw_inst(_handle->frame_update - 1, _handle->instance_texture_infos.size() - _handle->bindless_2d_tex_count, 0, 0);
+		glm::ivec4 draw_inst(_handle->frame_update - 1, _handle->frame_update - 1/*_handle->instance_texture_infos.size() - _handle->bindless_2d_tex_count*/, 0, 0);
 		if (_handle->bindless)
 		{
 			__SetPipelineData(pipeline, "draw_instance_index", trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL, &draw_inst, sizeof(glm::ivec4));

@@ -136,8 +136,12 @@ namespace trace {
 		{
 			ScriptManager& sm = it->second;
 
-			sm.instances[sm.handle_map[id]] = std::move(sm.instances.back());
-			sm.entities[sm.handle_map[id]] = std::move(sm.entities.back());
+
+			size_t index = sm.handle_map[id];
+			sm.instances[index] = std::move(sm.instances.back());
+			sm.entities[index] = std::move(sm.entities.back());
+
+			sm.handle_map[sm.entities[index]] = index;
 
 			sm.instances.pop_back();
 			sm.entities.pop_back();

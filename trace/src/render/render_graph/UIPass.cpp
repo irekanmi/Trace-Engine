@@ -91,7 +91,7 @@ namespace trace {
 	{
 	}
 
-	void UIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board)
+	void UIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 
 		FrameData& frame_data = black_board.get<FrameData>();
@@ -103,7 +103,7 @@ namespace trace {
 
 
 
-		pass->SetRunCB([=](std::vector<uint32_t>& inputs)
+		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 			{
 				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
 				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);

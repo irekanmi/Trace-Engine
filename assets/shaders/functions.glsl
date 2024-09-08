@@ -1,4 +1,7 @@
 
+#ifndef FUNCTIONS_HEADER_
+#define FUNCTIONS_HEADER_
+
 #include "defines.glsl"
 
 vec4 prefilter_color(vec4 color, float falloff)
@@ -226,7 +229,7 @@ vec2 ParallaxMapping(sampler2D height_map, float height_scale ,vec2 tex_coords, 
 
     float min_layers = 8.0f;
     float max_layers = 24.0f;
-    float num_layers = mix(min_layers, max_layers, max(dot(vec3(0.0f, 0.0f, 1.0f), tangent_view_dir), 0.0f) );
+    float num_layers = mix(max_layers, min_layers, max(dot(vec3(0.0f, 0.0f, 1.0f), tangent_view_dir), 0.0f) );
 
     float layer_depth = 1.0f / num_layers;
 
@@ -235,12 +238,12 @@ vec2 ParallaxMapping(sampler2D height_map, float height_scale ,vec2 tex_coords, 
 
     float current_layer_depth = 0.0f;
     vec2 current_tex_coords = tex_coords;
-    float current_depth_value = ( 1.0f - texture(height_map, current_tex_coords).r);
+    float current_depth_value = (1.0f - texture(height_map, current_tex_coords).r);
 
     while(current_layer_depth < current_depth_value)
     {
         current_tex_coords -= delta_tex_coords;
-        current_depth_value = ( 1.0f - texture(height_map, current_tex_coords).r);
+        current_depth_value = (1.0f - texture(height_map, current_tex_coords).r);
         current_layer_depth += layer_depth;
     }
 
@@ -260,7 +263,34 @@ vec2 ParallaxMapping(sampler2D height_map, float height_scale ,vec2 tex_coords, 
 vec2 SimpleParallaxMapping(sampler2D height_map, float height_scale ,vec2 tex_coords, vec3 tangent_view_dir)
 {
     float height =  1.0f - texture(height_map, tex_coords).r;    
-    vec2 p = tangent_view_dir.xy* (height * height_scale);
+    vec2 p = tangent_view_dir.xy * (height * height_scale);
     return tex_coords - p;
 }
 
+float ShadowPCF(sampler2D shadow_map, vec2 tex_coords, int num_samples, float frag_depth, float bias)
+{
+    vec2 map_size = 1.0f / textureSize(shadow_map, 0);
+    float total_samples_depth = 0.0f;
+    float samples_count = 0.0f;
+
+    float pixel_depth = clamp(frag_depth, 0.0f, 1.0f);
+    for(int x = -num_samples; x <= num_samples; x++)
+    {
+        for(int y = -num_samples; y <= num_samples; y++)
+        {
+            vec2 offset = vec2(x, y) * map_size;
+            vec2 actual_tex_coord = tex_coords + offset;
+            float depth = texture(shadow_map, actual_tex_coord).r;
+            if((depth + bias)< pixel_depth)
+            {
+                total_samples_depth += 1.0f;
+            }
+            samples_count++;
+        }
+    }
+
+    return 1.0f - ( total_samples_depth / samples_count /*pow(num_samples * 2 + 1, 2)*/ );
+}
+
+
+#endif

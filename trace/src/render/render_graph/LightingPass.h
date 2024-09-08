@@ -21,7 +21,7 @@ namespace trace {
 
 		virtual void Init(Renderer* renderer) override;
 		virtual void Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs) override;
-		virtual void Setup(RenderGraph* render_graph, RGBlackBoard& black_board) override;
+		virtual void Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index) override;
 
 		virtual void ShutDown() override;
 

@@ -16,7 +16,8 @@ namespace trace {
 		NONE,
 		REPEAT,
 		MIRRORED_REPEAT,
-		CLAMP_TO_EDGE
+		CLAMP_TO_EDGE,
+		CLAMP_TO_BORDER
 	};
 
 	enum class FilterMode
@@ -101,7 +102,8 @@ namespace trace {
 		R8G8B8A8_UNORM,
 		R8G8B8_UNORM,
 		R8_UNORM,
-		D32_SFLOAT_S8_SUINT
+		D32_SFLOAT_S8_SUINT,
+		D32_SFLOAT
 	};
 
 	enum class InputClassification
@@ -115,6 +117,7 @@ namespace trace {
 		UNKNOWN,
 		SHADER_READ,
 		COLOR_ATTACHMENT,
+		DEPTH,
 		DEPTH_STENCIL,
 		PRESENT
 	};
@@ -644,7 +647,7 @@ namespace trace {
 		glm::vec4 direction = {0.0f, -1.0f, 0.0f, 0.0f};
 		glm::vec4 color = { 0.32f, 0.55f, 0.42f, 0.0f };
 		glm::vec4 params1 = { 1.0f, 0.02f, 0.002f, 0.0f }; // x: constant, y: linear, z:quadratic, w: innerCutOff
-		glm::vec4 params2 = { 0.0f, 1.0f, 0.0f, 0.0f }; // x: outerCutOff, y: intensity, z:null, w: null
+		glm::vec4 params2 = { 0.0f, 1.0f, 0.0f, 0.0f }; // x: outerCutOff, y: intensity, z:cast_shadow, w: null
 	};
 	
 	uint32_t getFmtSize(Format format);

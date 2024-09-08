@@ -43,6 +43,8 @@ namespace trace {
 			AddressMode addressModeW;
 			FilterMode min;
 			FilterMode mag;
+			uint32_t num_layers = 1;
+			uint32_t num_mip_levels = 1;
 		} texture;
 
 	};
@@ -88,7 +90,7 @@ namespace trace {
 		void SetDepthStencilInput(uint32_t index);
 		void SetDepthStencilOutput(const std::string& name);
 		void SetDepthStencilOutput(uint32_t index);
-		void SetRunCB(std::function<void(std::vector<uint32_t>&)> run_cb) { m_run_cb = run_cb; }
+		void SetRunCB(std::function<void(Renderer*, RenderGraph*, RenderGraphPass*, int32_t, std::vector<uint32_t>&)> run_cb) { m_run_cb = run_cb; }
 		void SetResizeCB(std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> resize_cb) { m_resize_cb = resize_cb; }
 		uint32_t GetDepthStencilInput() { return m_depthStencilInput; }
 		uint32_t GetDepthStencilOutput() { return m_depthStencilOutput; }
@@ -124,7 +126,7 @@ namespace trace {
 		uint32_t m_depthStencilOutput = INVALID_ID;
 		GHandle m_renderHandle;
 		GPU_QUEUE m_queue;
-		std::function<void(std::vector<uint32_t>&)> m_run_cb;
+		std::function<void(Renderer* , RenderGraph*, RenderGraphPass*,int32_t, std::vector<uint32_t>&)> m_run_cb;
 		std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> m_resize_cb;
 
 
@@ -157,7 +159,7 @@ namespace trace {
 		void SetFinalResourceOutput(const std::string& resource_name);
 		void SetRenderer(Renderer* renderer) { m_renderer = renderer; }
 		bool Compile();
-		bool Execute();
+		bool Execute(int32_t render_graph_index = 0);
 		void Destroy();
 		void Rebuild();
 		bool ReConstruct();

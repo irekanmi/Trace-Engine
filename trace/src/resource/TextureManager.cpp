@@ -487,32 +487,36 @@ namespace trace {
 		uint32_t dimension = 256;
 		uint32_t channels = 4;
 			
-		unsigned char* pixel = new unsigned char[dimension * dimension * channels];
-		memset(pixel, 255, dimension * dimension * channels);
-		for (uint32_t row = 0; row < dimension; row++)
-		{
-			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
-			{
-				uint32_t index = (row * dimension) + coloumn;
-				uint32_t _idx = index * channels;
-				if (row % 2)
-				{
-					if (coloumn % 2)
-					{
-						pixel[_idx + 0] = 255;//0;
-						pixel[_idx + 1] = 255;//0;
-					}
-				}
-				else
-				{
-					if (!(coloumn % 2))
-					{
-						pixel[_idx + 0] = 255;//0;
-						pixel[_idx + 1] = 255;//0;
-					}
-				}
-			}
-		}
+		unsigned char* pixel = new unsigned char[16];
+		pixel[0] = 255;
+		pixel[1] = 255;
+		pixel[2] = 255;
+		pixel[3] = 255;
+		//memset(pixel, 255, dimension * dimension * channels);
+		//for (uint32_t row = 0; row < dimension; row++)
+		//{
+		//	for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
+		//	{
+		//		uint32_t index = (row * dimension) + coloumn;
+		//		uint32_t _idx = index * channels;
+		//		if (row % 2)
+		//		{
+		//			if (coloumn % 2)
+		//			{
+		//				pixel[_idx + 0] = 255;//0;
+		//				pixel[_idx + 1] = 255;//0;
+		//			}
+		//		}
+		//		else
+		//		{
+		//			if (!(coloumn % 2))
+		//			{
+		//				pixel[_idx + 0] = 255;//0;
+		//				pixel[_idx + 1] = 255;//0;
+		//			}
+		//		}
+		//	}
+		//}
 
 		TextureDesc texture_desc;
 		texture_desc.m_addressModeU = texture_desc.m_addressModeW = texture_desc.m_addressModeV = AddressMode::REPEAT;
@@ -521,12 +525,12 @@ namespace trace {
 		texture_desc.m_minFilterMode = texture_desc.m_magFilterMode = FilterMode::LINEAR;
 		texture_desc.m_flag = BindFlag::SHADER_RESOURCE_BIT;
 		texture_desc.m_usage = UsageFlag::DEFAULT;
-		texture_desc.m_width = (uint32_t)dimension;
-		texture_desc.m_height = (uint32_t)dimension;
+		texture_desc.m_width = (uint32_t)1;
+		texture_desc.m_height = (uint32_t)1;
 		texture_desc.m_image_type = ImageType::IMAGE_2D;
 		texture_desc.m_data.push_back(pixel);
 		texture_desc.m_numLayers = 1;
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
+		texture_desc.m_mipLevels = 1;
 
 		default_diffuse_map = CreateTexture("albedo_map", texture_desc);
 		default_diffuse_map->m_path = "albedo_map";
@@ -536,16 +540,20 @@ namespace trace {
 
 		
 
-		pixel = new unsigned char[dimension * dimension * channels];
-		memset(pixel, 0, dimension * dimension * channels);
-		texture_desc.m_width = (uint32_t)dimension;
-		texture_desc.m_height = (uint32_t)dimension;
+		pixel = new unsigned char[16];
+		pixel[0] = 255;
+		pixel[1] = 255;
+		pixel[2] = 255;
+		pixel[3] = 255;
+		//memset(pixel, 0, dimension * dimension * channels);
+		texture_desc.m_width = (uint32_t)1;
+		texture_desc.m_height = (uint32_t)1;
 		texture_desc.m_channels = 4;
 		texture_desc.m_data[0] = (pixel);
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
+		texture_desc.m_mipLevels = 1;
 
 
-		for (uint32_t row = 0; row < dimension; row++)
+		/*for (uint32_t row = 0; row < dimension; row++)
 		{
 			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
 			{
@@ -556,7 +564,7 @@ namespace trace {
 				pixel[_idx + 2] = 255;
 				pixel[_idx + 3] = 255;
 			}
-		}
+		}*/
 		
 		default_specular_map = CreateTexture("specular_map", texture_desc);
 		default_specular_map->m_path = "specular_map";
@@ -567,17 +575,21 @@ namespace trace {
 
 
 
-		pixel = new unsigned char[dimension * dimension * channels];
-		memset(pixel, 0, dimension * dimension * channels);
-		texture_desc.m_width = (uint32_t)dimension;
-		texture_desc.m_height = (uint32_t)dimension;
+		pixel = new unsigned char[16];
+		pixel[0] = 128;
+		pixel[1] = 128;
+		pixel[2] = 255;
+		pixel[3] = 255;
+		//memset(pixel, 0, dimension * dimension * channels);
+		texture_desc.m_width = (uint32_t)1;
+		texture_desc.m_height = (uint32_t)1;
 		texture_desc.m_channels = 4;
 		texture_desc.m_data[0] = pixel;
 		texture_desc.m_format = Format::R8G8B8A8_UNORM;
-		texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimension, dimension))) / 2) + 1;
+		texture_desc.m_mipLevels = 1;
 
 
-		for (uint32_t row = 0; row < dimension; row++)
+		/*for (uint32_t row = 0; row < dimension; row++)
 		{
 			for (uint32_t coloumn = 0; coloumn < dimension; coloumn++)
 			{
@@ -588,7 +600,7 @@ namespace trace {
 				pixel[_idx + 2] = 255;
 				pixel[_idx + 3] = 255;
 			}
-		}
+		}*/
 
 		default_normal_map = CreateTexture("normal_map", texture_desc);
 		default_normal_map->m_path = "normal_map";
