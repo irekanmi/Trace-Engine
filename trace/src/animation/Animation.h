@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <string>
 
 namespace trace {
 
@@ -18,6 +19,13 @@ namespace trace {
 		TEXT_INTENSITY,
 		LIGHT_INTENSITY,
 		IMAGE_COLOR,
+		MAX
+	};
+
+	enum class AnimationClipType
+	{
+		SEQUENCE,
+		SKELETAL_ANIMATIOM,
 		MAX
 	};
 
@@ -42,18 +50,23 @@ namespace trace {
 	public:
 		~AnimationClip(){}
 
-		std::unordered_map<UUID, std::vector<AnimationTrack>>& GetTracks() { return m_tracks; }
+		std::unordered_map<std::string, std::vector<AnimationTrack>>& GetTracks() { return m_tracks; }
 		float GetDuration() { return m_duration; }
 		int GetSampleRate() { return m_sampleRate; }
+		AnimationClipType GetType() { return m_type; }
 
 		void SetDuration(float duration) { m_duration = duration; }
 		void SetSampleRate(int rate) { m_sampleRate = rate; }
-		void SetTracks(std::unordered_map<UUID, std::vector<AnimationTrack>>& new_tracks) { m_tracks = std::move(new_tracks); }
+		void SetTracks(std::unordered_map<std::string, std::vector<AnimationTrack>>& new_tracks) { m_tracks = std::move(new_tracks); }
+		void SetType(AnimationClipType type) { m_type = type; }
+
+		bool Compare(AnimationClip* other);
 
 	private:
 		float m_duration = 1.0f;
 		int m_sampleRate = 30;
-		std::unordered_map<UUID,std::vector<AnimationTrack>> m_tracks;
+		std::unordered_map<std::string,std::vector<AnimationTrack>> m_tracks;
+		AnimationClipType m_type = AnimationClipType::SKELETAL_ANIMATIOM;
 
 	protected:
 

@@ -18,6 +18,8 @@
 
 namespace trace {
 
+	class Scene;
+
 	struct IDComponent
 	{
 		UUID _id;
@@ -232,6 +234,9 @@ namespace trace {
 	{
 		Ref<AnimationGraph> anim_graph;
 		bool play_on_start = false;
+		std::unordered_map<std::string, UUID> entities;
+		bool InitializeEntities(Scene* scene, UUID parent = 0, bool refresh = false);
+
 	};
 
 	struct ImageComponent

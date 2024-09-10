@@ -22,7 +22,7 @@ namespace trace {
 	{
 	}
 
-	void AnimationEngine::Animate(AnimationState& state, Scene* scene)
+	void AnimationEngine::Animate(AnimationState& state, Scene* scene, std::unordered_map<std::string, UUID>& data_map)
 	{
 
 		if (!state.IsPlaying()) return;
@@ -42,8 +42,16 @@ namespace trace {
 		}
 		state.SetElaspedTime(elasped_animation_time);
 
+
+
 		for (auto& channel : clip->GetTracks())
 		{
+			auto it = data_map.find(channel.first);
+			if (it == data_map.end())
+			{
+				continue;
+			}
+			UUID object = it->second;
 			for (auto& track : channel.second)
 			{
 				const AnimationFrameData* curr = nullptr;
@@ -63,20 +71,29 @@ namespace trace {
 				}
 				// -----------------------------------------------------------------
 
-				if (!prev || !curr) continue;
+				if (!prev || !curr)
+				{
+					continue;
+				}
 
 				float lerp_value = (elasped_animation_time - prev->time_point) / (curr->time_point - prev->time_point);
 
-				CalculateAndSetData(prev, curr, scene, channel.first, track.channel_type, lerp_value);
+				CalculateAndSetData(prev, curr, scene, object, track.channel_type, lerp_value);
 			}
 		}
 
 	}
 
-	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point)
+	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, std::unordered_map<std::string, UUID>& data_map)
 	{
 		for (auto& channel : clip->GetTracks())
 		{
+			auto it = data_map.find(channel.first);
+			if (it == data_map.end())
+			{
+				continue;
+			}
+			UUID object = it->second;
 			for (const AnimationTrack& track : channel.second)
 			{
 				const AnimationFrameData* curr = nullptr;
@@ -96,11 +113,14 @@ namespace trace {
 				}
 				// -----------------------------------------------------------------
 
-				if (!prev || !curr) continue;
+				if (!prev || !curr)
+				{
+					continue;
+				}
 
 				float lerp_value = (time_point - prev->time_point) / (curr->time_point - prev->time_point);
 
-				CalculateAndSetData(prev, curr, scene, channel.first, track.channel_type, lerp_value);
+				CalculateAndSetData(prev, curr, scene, object, track.channel_type, lerp_value);
 			}
 		}
 	}

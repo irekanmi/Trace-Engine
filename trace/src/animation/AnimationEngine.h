@@ -13,8 +13,8 @@ namespace trace {
 		bool Init();
 		void Shutdown();
 
-		void Animate(AnimationState& state, Scene* scene);
-		void Animate(Ref<AnimationClip> clip, Scene* scene, float time_point);
+		void Animate(AnimationState& state, Scene* scene, std::unordered_map<std::string, UUID>& data_map);
+		void Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, std::unordered_map<std::string, UUID>& data_map);
 
 		static AnimationEngine* get_instance();
 	private:

@@ -858,12 +858,24 @@ namespace trace {
 				{
 					c_item = (CreateItem)0;
 					UUID id = GetUUIDFromName(res + ".trcac");
+					
 					if (id == 0)
 					{
 						std::string clip_path = (m_currentDir / (res + ".trcac")).string();
 						Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
 						AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
 						OnDirectoryChanged();
+					}
+					else if (id != 0)
+					{
+						auto ac_path = m_allIDPath.find(id);
+						if (ac_path == m_allIDPath.end())
+						{
+							std::string clip_path = (m_currentDir / (res + ".trcac")).string();
+							Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
+							AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
+							OnDirectoryChanged();
+						}
 					}
 					else
 					{

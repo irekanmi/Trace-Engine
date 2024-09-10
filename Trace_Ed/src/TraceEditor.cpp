@@ -982,6 +982,8 @@ namespace trace {
 		m_currentScene = SceneSerializer::Deserialize(file_path);
 		m_editScene = m_currentScene;
 		m_currentScenePath = file_path;
+
+		m_animPanel->OnSceneLoad();
 	}
 	void TraceEditor::NewScene()
 	{

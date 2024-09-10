@@ -15,6 +15,8 @@ namespace trace {
 		Resource();
 		virtual ~Resource();
 
+		virtual void Destroy() {}
+
 		//NOTE: To be used only for the editor
 		std::string GetName() { return m_path.filename().string(); }
 

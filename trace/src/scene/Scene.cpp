@@ -109,11 +109,22 @@ namespace trace {
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.anim_graph) continue;
+			if (!anim_comp.anim_graph)
+			{
+				continue;
+			}
+			Entity entity(i, this);
+			anim_comp.InitializeEntities(this, entity.GetID());
 			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
 			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
-			if (!current_state.GetAnimationClip()) continue;
-			if (anim_comp.play_on_start) current_state.Play();
+			if (!current_state.GetAnimationClip())
+			{
+				continue;
+			}
+			if (anim_comp.play_on_start)
+			{
+				current_state.Play();
+			}
 		}
 
 	}
@@ -315,11 +326,17 @@ namespace trace {
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.anim_graph) continue;
+			if (!anim_comp.anim_graph)
+			{
+				continue;
+			}
 			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
 			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
-			if (!current_state.GetAnimationClip()) continue;
-			AnimationEngine::get_instance()->Animate(current_state, this);
+			if (!current_state.GetAnimationClip())
+			{
+				continue;
+			}
+			AnimationEngine::get_instance()->Animate(current_state, this, anim_comp.entities);
 		}
 
 	}
@@ -550,6 +567,49 @@ namespace trace {
 		if (it != m_entityMap.end())
 		{
 			return it->second;
+		}
+
+		return Entity();
+	}
+
+	Entity Scene::GetEntityByName(const std::string& name)
+	{
+		auto tag_view = m_registry.view<TagComponent>();
+
+		for (auto entity : tag_view)
+		{
+			auto [tag] = tag_view.get(entity);
+
+			if (tag._tag == name)
+			{
+				Entity en(entity, this);
+				return en;
+			}
+
+		}
+
+		return Entity();
+	}
+
+	Entity Scene::GetChildEntityByName(Entity parent, const std::string& name)
+	{
+
+		for (UUID& child_id : parent.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = GetEntity(child_id);
+			TagComponent& tag = child.GetComponent<TagComponent>();
+
+			if (tag._tag == name)
+			{
+				return child;
+			}
+
+			Entity result = GetChildEntityByName(child, name);
+
+			if (result)
+			{
+				return result;
+			}
 		}
 
 		return Entity();

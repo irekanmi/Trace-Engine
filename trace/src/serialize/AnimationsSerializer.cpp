@@ -23,6 +23,7 @@ namespace trace {
 
 		emit << YAML::Key << "Duration" << YAML::Value << clip->GetDuration();
 		emit << YAML::Key << "Sample Rate" << YAML::Value << clip->GetSampleRate();
+		emit << YAML::Key << "Clip Type" << YAML::Value << (int)clip->GetType();
 		emit << YAML::Key << "Channels" << YAML::Value << YAML::BeginSeq;
 
 		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
@@ -96,43 +97,43 @@ namespace trace {
 				return i.first == id;
 			});
 
-		if (it == map.end())
-		{
-			AssetHeader ast_h;
-			ast_h.offset = stream.GetPosition();
-			float duration = clip->GetDuration();
-			stream.Write(duration);// Duration
-			int sample_rate = clip->GetSampleRate();
-			stream.Write(sample_rate);// Sample Rate
+		//if (it == map.end())
+		//{
+		//	AssetHeader ast_h;
+		//	ast_h.offset = stream.GetPosition();
+		//	float duration = clip->GetDuration();
+		//	stream.Write(duration);// Duration
+		//	int sample_rate = clip->GetSampleRate();
+		//	stream.Write(sample_rate);// Sample Rate
 
-			std::unordered_map<UUID, std::vector<AnimationTrack>>& groups = clip->GetTracks();
-			int group_count = groups.size();
-			stream.Write(group_count);
-			for (auto& i : groups)
-			{
-				uint64_t group_id = i.first;
-				stream.Write(group_id);
-				std::vector<AnimationTrack>& tracks = i.second;
-				int track_count = tracks.size();
-				stream.Write(track_count);
-				for (auto& track : tracks)
-				{
-					int channel_type = (int)track.channel_type;
-					stream.Write(channel_type);
-					int frame_data_count = track.channel_data.size();
-					stream.Write(frame_data_count);
-					for (AnimationFrameData& fd : track.channel_data)
-					{
-						stream.Write<AnimationFrameData>(fd);
-					}
-				}
-			}
-			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+		//	std::unordered_map<UUID, std::vector<AnimationTrack>>& groups = clip->GetTracks();
+		//	int group_count = groups.size();
+		//	stream.Write(group_count);
+		//	for (auto& i : groups)
+		//	{
+		//		uint64_t group_id = i.first;
+		//		stream.Write(group_id);
+		//		std::vector<AnimationTrack>& tracks = i.second;
+		//		int track_count = tracks.size();
+		//		stream.Write(track_count);
+		//		for (auto& track : tracks)
+		//		{
+		//			int channel_type = (int)track.channel_type;
+		//			stream.Write(channel_type);
+		//			int frame_data_count = track.channel_data.size();
+		//			stream.Write(frame_data_count);
+		//			for (AnimationFrameData& fd : track.channel_data)
+		//			{
+		//				stream.Write<AnimationFrameData>(fd);
+		//			}
+		//		}
+		//	}
+		//	ast_h.data_size = stream.GetPosition() - ast_h.offset;
 
-			map.push_back(std::make_pair(id, ast_h));
+		//	map.push_back(std::make_pair(id, ast_h));
 
 
-		}
+		//}
 
 		return true;
 	}
@@ -172,14 +173,16 @@ namespace trace {
 
 		float duration = data["Duration"].as<float>();
 		int rate = data["Sample Rate"].as<int>();
+		AnimationClipType type = static_cast<AnimationClipType>(data["Clip Type"].as<int>());
 		clip->SetSampleRate(rate);
 		clip->SetDuration(duration);
+		clip->SetType(type);
 
-		std::unordered_map<UUID, std::vector<AnimationTrack>>& clip_tracks = clip->GetTracks();
+		std::unordered_map<std::string, std::vector<AnimationTrack>>& clip_tracks = clip->GetTracks();
 		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
 		for (auto& uuid : data["Channels"])
 		{
-			UUID id = uuid["Handle"].as<uint64_t>();
+			std::string id = uuid["Handle"].as<std::string>();
 			for (auto& track : uuid["Tracks"])
 			{
 				AnimationTrack new_track;
@@ -228,34 +231,34 @@ namespace trace {
 		int group_count = 0;
 		mem_stream.Read<int>(group_count);
 
-		std::unordered_map<UUID, std::vector<AnimationTrack>>& groups = clip->GetTracks();
+		//std::unordered_map<UUID, std::vector<AnimationTrack>>& groups = clip->GetTracks();
 
-		for (int i = 0; i < group_count; i++)
-		{
-			UUID g_id = 0;
-			mem_stream.Read<UUID>(g_id);
-			int track_count = 0;
-			mem_stream.Read<int>(track_count);
-			std::vector<AnimationTrack> tracks;
-			for (int j = 0; j < track_count; j++)
-			{
-				AnimationTrack track;
-				int channel_type = -1;
-				mem_stream.Read<int>(channel_type);
-				track.channel_type = (AnimationDataType)channel_type;
-				int frame_data_count = 0;
-				mem_stream.Read<int>(frame_data_count);
-				track.channel_data.resize(frame_data_count);
+		//for (int i = 0; i < group_count; i++)
+		//{
+		//	UUID g_id = 0;
+		//	mem_stream.Read<UUID>(g_id);
+		//	int track_count = 0;
+		//	mem_stream.Read<int>(track_count);
+		//	std::vector<AnimationTrack> tracks;
+		//	for (int j = 0; j < track_count; j++)
+		//	{
+		//		AnimationTrack track;
+		//		int channel_type = -1;
+		//		mem_stream.Read<int>(channel_type);
+		//		track.channel_type = (AnimationDataType)channel_type;
+		//		int frame_data_count = 0;
+		//		mem_stream.Read<int>(frame_data_count);
+		//		track.channel_data.resize(frame_data_count);
 
-				mem_stream.Read(track.channel_data.data(), frame_data_count * sizeof(AnimationFrameData));
-				tracks.emplace_back(track);
-			}
+		//		mem_stream.Read(track.channel_data.data(), frame_data_count * sizeof(AnimationFrameData));
+		//		tracks.emplace_back(track);
+		//	}
 
-			groups[g_id] = std::move(tracks);
+		//	groups[g_id] = std::move(tracks);
 
-		}
+		//}
 
-		delete[] data;// TODO: Use custom allocator
+		//delete[] data;// TODO: Use custom allocator
 
 
 	}

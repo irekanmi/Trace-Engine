@@ -1,6 +1,5 @@
 
 
-
 #include "AnimationPanel.h"
 #include "../TraceEditor.h"
 #include "scene/Entity.h"
@@ -10,6 +9,7 @@
 #include "../utils/ImGui_utils.h"
 #include "core/events/EventsSystem.h"
 #include "core/input/Input.h"
+#include "HierachyPanel.h"
 
 #include "imgui.h"
 #include "imgui_neo_sequencer.h"
@@ -83,12 +83,21 @@ namespace trace {
         bool control = InputSystem::get_instance()->GetKey(Keys::KEY_LCONTROL);
         bool key_D = InputSystem::get_instance()->GetKeyState(Keys::KEY_D) == KeyState::KEY_RELEASE;
         TraceEditor* editor = TraceEditor::get_instance();
-        Ref<Scene> scene = editor->GetCurrentScene();
+        HierachyPanel* hierachy_panel = editor->GetHierachyPanel();
+        Ref<Scene> scene = editor->GetEditScene();
         float clip_duration = m_currentClip ? m_currentClip->GetDuration() : 0.0f;
+        bool has_entity = (current_entity_id != 0);
+
+        AnimationComponent* anim_comp = nullptr;
+        if (has_entity)
+        {
+            Entity current_entity = scene->GetEntity(current_entity_id);
+            anim_comp = &current_entity.GetComponent<AnimationComponent>();
+        }
 
         //TODO: Move to Update Function ===============
 
-        if (m_currentClip && scene)
+        if (m_currentClip)
         {
             clip_duration = m_currentClip->GetDuration();
             switch (m_state)
@@ -96,7 +105,10 @@ namespace trace {
             case State::PLAY:
             {
                 m_elapsed += deltaTime;
-                AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed);
+                if (has_entity)
+                {
+                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed, anim_comp->entities);
+                }
                 m_currentFrame = int((m_elapsed / clip_duration) * (float)m_endFrame);
                 m_currentFrame %= m_endFrame;
                 m_elapsed = fmod(m_elapsed, clip_duration);
@@ -107,7 +119,10 @@ namespace trace {
                 if (m_lastSelectedFrame != m_currentFrame)
                 {
                     float t = ((float)m_currentFrame / (float)m_endFrame) * clip_duration;
-                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t);
+                    if (has_entity)
+                    {
+                        AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t, anim_comp->entities);
+                    }
                     m_lastSelectedFrame = m_currentFrame;
                 }
                 break;
@@ -135,16 +150,20 @@ namespace trace {
                     memcpy_s(buf, 1024, payload->Data, payload->DataSize);
                     std::filesystem::path p = buf;
                     Ref<AnimationClip> ac = AnimationsManager::get_instance()->GetClip(p.filename().string());
-                    if (ac)
-                    {
-                        SetAnimationClip(ac);
-                    }
-                    else
+                    if (!ac)
                     {
                         ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
-                        if (ac)
+                    }
+                    if(ac)
+                    {
+                        
+                        if (hierachy_panel->GetSelectedEntity())
                         {
-                            SetAnimationClip(ac);
+                            SetAnimationClip(ac, hierachy_panel->GetSelectedEntity().GetID());
+                        }
+                        else
+                        {
+                            SetAnimationClip(ac, 0);
                         }
                     }
                 }
@@ -154,9 +173,33 @@ namespace trace {
             {
                 m_currentClip->SetSampleRate(sample_rate);
             }
-            if (ImGui::InputFloat("Duration(Seconds)", &duration))
+            if (ImGui::DragFloat("Duration(Seconds)", &duration, 0.25f, 0.005f))
             {
+                float min = 1.0f / (float)m_currentClip->GetSampleRate();
+                min += 0.005f;
+                duration = glm::max(min, duration);
                 m_currentClip->SetDuration(duration);
+            }
+
+            const char* type_string[] = { "Sequence", "Skeletal Animation" };
+            const char* current_type = type_string[(int)m_currentClip->GetType()];
+            if (ImGui::BeginCombo("Animation Clip Type", current_type))
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    bool selected = (current_type == type_string[i]);
+                    if (ImGui::Selectable(type_string[i], selected))
+                    {
+                        m_currentClip->SetType((AnimationClipType)i);
+                    }
+
+                    if (selected)
+                    {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+
+                ImGui::EndCombo();
             }
 
             if (ImGui::Button("Play"))
@@ -205,16 +248,20 @@ namespace trace {
                     memcpy_s(buf, 1024, payload->Data, payload->DataSize);
                     std::filesystem::path p = buf;
                     Ref<AnimationClip> ac = AnimationsManager::get_instance()->GetClip(p.filename().string());
-                    if (ac)
-                    {
-                        SetAnimationClip(ac);
-                    }
-                    else
+                    if (!ac)
                     {
                         ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
-                        if (ac)
+                    }
+                    if (ac)
+                    {
+
+                        if (hierachy_panel->GetSelectedEntity())
                         {
-                            SetAnimationClip(ac);
+                            SetAnimationClip(ac, hierachy_panel->GetSelectedEntity().GetID());
+                        }
+                        else
+                        {
+                            SetAnimationClip(ac, 0);
                         }
                     }
                     
@@ -276,13 +323,14 @@ namespace trace {
                 for (auto& channel : m_currentClip->GetTracks())
                 {
 
-                    Entity entity = scene->GetEntity(channel.first);
-                    if (!entity)
-                    {
-                        continue;
-                    }
-                    std::string& name = entity.GetComponent<TagComponent>()._tag;
+
+                    const std::string& name = channel.first;
                     static bool do_open = false;
+
+                    if (!has_entity)
+                    {
+                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.22f, 0.19f, 0.58f));
+                    }
                     if (ImGui::BeginNeoGroup(name.c_str(), &do_open))
                     {
                         int track_index = 0;
@@ -428,7 +476,10 @@ namespace trace {
                         }
                         ImGui::EndNeoGroup();
                     }
-
+                    if (!has_entity)
+                    {
+                        ImGui::PopStyleColor();
+                    }
                     
                     
                 }
@@ -445,12 +496,38 @@ namespace trace {
 		ImGui::End();
 
 	}
-    void AnimationPanel::SetAnimationClip(Ref<AnimationClip> clip)
+    void AnimationPanel::SetAnimationClip(Ref<AnimationClip> clip, UUID entity)
     {
-        if (clip != m_currentClip) m_currentTracks.clear();
+        TraceEditor* editor = TraceEditor::get_instance();
+        Ref<Scene> edit_scene = editor->GetEditScene();
+        Entity object = edit_scene->GetEntity(entity);
+
+        if (object && object.HasComponent<AnimationComponent>())
+        {
+            AnimationComponent& anim_comp = object.GetComponent<AnimationComponent>();
+
+            if (anim_comp.anim_graph && anim_comp.anim_graph->HasAnimationClip(clip))
+            {
+                anim_comp.InitializeEntities(edit_scene.get(), object.GetID(), true);
+                current_entity_id = object.GetID();
+            }
+        }
+
+        if (m_currentClip && !clip->Compare(m_currentClip.get()))
+        {
+            m_currentTracks.clear();
+        }
         m_currentClip = clip;
         generate_tracks();
         m_lastSelectedFrame = -1;
+
+        m_startFrame = 0;
+        int sample_rate = m_currentClip->GetSampleRate();
+        float duration = m_currentClip->GetDuration();
+
+        m_endFrame = int((float)sample_rate * duration);
+
+        
     }
     bool AnimationPanel::Recording()
     {
@@ -458,8 +535,47 @@ namespace trace {
     }
     void AnimationPanel::SetFrameData(UUID id, AnimationDataType type, void* data, int size)
     {
-        if (!m_currentClip) return;
-        std::vector<AnimationTrack>& tracks = m_currentClip->GetTracks()[id];
+        if (!m_currentClip)
+        {
+            return;
+        }
+        TraceEditor* editor = TraceEditor::get_instance();
+
+        Ref<Scene> scene = editor->GetEditScene();
+        if (!scene)
+        {
+            return;
+        }
+
+        if (current_entity_id == 0)
+        {
+            return;
+        }
+
+        Entity entity = scene->GetEntity(id);
+        Entity current_entity = scene->GetEntity(current_entity_id);
+
+        switch (m_currentClip->GetType())
+        {
+        case AnimationClipType::SEQUENCE:
+        {
+            break;
+        }
+        case AnimationClipType::SKELETAL_ANIMATIOM:
+        {
+            if (entity == current_entity)
+            {
+
+            }
+            else if (!scene->IsParent(current_entity, entity))
+            {
+                return;
+            }
+            break;
+        }
+        }
+
+        std::vector<AnimationTrack>& tracks = m_currentClip->GetTracks()[entity.GetComponent<TagComponent>()._tag];
         auto it = std::find_if(tracks.begin(), tracks.end(), [&](AnimationTrack& t) {
             return t.channel_type == type;
             });
@@ -529,6 +645,12 @@ namespace trace {
         generate_tracks();
 
     }
+    void AnimationPanel::OnSceneLoad()
+    {
+        m_currentClip = Ref<AnimationClip>();
+        current_entity_id = 0;
+        m_currentTracks.clear();
+    }
     void AnimationPanel::generate_tracks()
     {
         if (!m_currentClip)
@@ -557,6 +679,7 @@ namespace trace {
                 }
 
             }
+            
         }
 
     }

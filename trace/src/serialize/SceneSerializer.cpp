@@ -463,8 +463,14 @@ namespace trace {
 				std::filesystem::path p = GetPathFromUUID(id);
 				res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
 				if (res) {}
-				else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-				if (res) ac.anim_graph = res;
+				else
+				{
+					res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
+				}
+				if (res)
+				{
+					ac.anim_graph = res;
+				}
 			}
 			else
 			{

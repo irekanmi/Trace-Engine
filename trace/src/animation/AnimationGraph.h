@@ -13,6 +13,8 @@ namespace trace {
 
 	public:
 
+		bool HasAnimationClip(Ref<AnimationClip> clip);
+
 		std::vector<AnimationState>& GetStates() { return m_states; }
 		int32_t GetCurrentStateIndex() { return m_currrentStateIndex; }
 		int32_t GetStartIndex() { return m_startIndex; }

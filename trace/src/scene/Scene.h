@@ -39,6 +39,8 @@ namespace trace {
 		Entity CreateEntity_UUID(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity CreateEntity_UUIDWithParent(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity GetEntity(UUID uuid);
+		Entity GetEntityByName(const std::string& name);
+		Entity GetChildEntityByName(Entity parent, const std::string& name);
 		Entity DuplicateEntity(Entity entity);
 		bool CopyEntity(Entity entity, Entity src);
 		void DestroyEntity(Entity entity);
