@@ -302,6 +302,14 @@ namespace trace {
 	{
 		Ref<MaterialInstance> result;
 
+		std::filesystem::path p = file_path;
+		result = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+		if (result)
+		{
+			TRC_WARN("{} has already been loaded", p.filename().string());
+			return result;
+		}
+
 		FileHandle in_handle;
 		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
 		{
@@ -323,12 +331,7 @@ namespace trace {
 		std::string material_version = data["Material Version"].as<std::string>(); // TODO: To be used later
 		std::string material_name = data["Material Name"].as<std::string>();
 
-		result = MaterialManager::get_instance()->GetMaterial(material_name);
-		if (result)
-		{
-			TRC_WARN("{} has already been loaded", material_name);
-			return result;
-		}
+		
 
 		auto lambda = [](YAML::detail::iterator_value& value, trace::ShaderData type, std::any& dst)
 		{

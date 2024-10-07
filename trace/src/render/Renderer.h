@@ -11,6 +11,7 @@
 #include "GSwapchain.h"
 #include "GContext.h"
 #include "render/render_graph/RenderGraph.h"
+#include "core/defines.h"
 
 
 // Temp--------------------------------
@@ -26,6 +27,7 @@ namespace trace {
 	class GRenderPass;
 	class Mesh;
 	class Model;
+	class SkinnedModel;
 	class MaterialInstance;
 	class Event;
 	class Font;
@@ -50,6 +52,14 @@ namespace trace {
 		Model* object = nullptr;
 		MaterialInstance* material = nullptr;
 	};
+	struct RenderSkinnedObjectData
+	{
+		glm::mat4 transform = glm::mat4(1.0f);
+		SkinnedModel* object = nullptr;
+		MaterialInstance* material = nullptr;
+		glm::mat4* bone_transforms;
+		uint32_t bone_count = 0;
+	};
 
 	struct RenderGraphFrameData
 	{
@@ -60,6 +70,7 @@ namespace trace {
 		Camera* _camera = nullptr;
 
 		std::vector<RenderObjectData> m_opaqueObjects;
+		std::vector<RenderSkinnedObjectData> m_opaqueSkinnedObjects;
 		uint32_t m_opaqueObjectsSize = 0;
 
 		//Text Renderering ..............................
@@ -95,6 +106,7 @@ namespace trace {
 
 		//Shadow Casters
 		std::vector<RenderObjectData> shadow_casters;
+		std::vector<RenderSkinnedObjectData> skinned_shadow_casters;
 	};
 
 	class TRACE_API Renderer : public Object
@@ -121,6 +133,7 @@ namespace trace {
 		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model, int32_t render_graph_index = 0);
 		void DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform, int32_t render_graph_index = 0);
 		void DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index = 0);
+		void DrawSkinnedModel(CommandList& cmd_list, Ref<SkinnedModel> _model, Ref<MaterialInstance> material, glm::mat4 transform, glm::mat4* bone_transforms, uint32_t bone_count, bool cast_shadow, int32_t render_graph_index = 0);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky, int32_t render_graph_index = 0);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type, int32_t render_graph_index = 0);
 		void AddLight(CommandList& cmd_list, Light& light_data, LightType light_type, int32_t render_graph_index = 0);

@@ -37,7 +37,7 @@ namespace trace {
 			return;
 		}
 
-		TRC_ASSERT(m_assets.size() < asset->m_id, "Assets id is greater than avaliable size");
+		TRC_ASSERT(asset->m_id < m_assets.size(), "Assets id is greater than avaliable size");
 
 		m_assets[asset->m_id] = nullptr;
 		asset->m_id = INVALID_ID;
@@ -45,5 +45,12 @@ namespace trace {
 		asset->Destroy();
 
 		delete asset;//TODO: Use custom memory allocator
+	}
+
+	GenericAssetManager* GenericAssetManager::get_instance()
+	{
+		static GenericAssetManager* s_instance = new GenericAssetManager;
+
+		return s_instance;
 	}
 }

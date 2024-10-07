@@ -28,7 +28,7 @@ namespace trace {
 		Ref<Mesh> LoadMesh(const std::string& name);
 		Ref<Mesh> LoadMesh_(const std::string& path);
 		Ref<Mesh> LoadMeshOnly_(const std::string& path);
-		void Unload(Mesh* _mesh);
+		void Unload(Resource* res);
 		Ref<Mesh> GetDefault(const std::string& name);
 		std::vector<std::string> GetAllModels(const std::string& path);
 		bool LoadDefaults();

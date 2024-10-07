@@ -18,5 +18,15 @@ The goal is simple, it is a project that is used as learning tool, it is a softw
 * SSAO (Screen Space Ambient Occlusion)
 * MSDF Text Renderering
 
+## Getting Started
+Follow the instructions to compile and run the engine from source
+### Windows
+* Install Visual Studio 2022 or newer
+* Install Python and ensure it's added to PATH
+* Download the [external dependencies]() and extract it to the engine root
+* Run __windows_setup.bat__
+* If successful open __Trace.sln__ and set __Trace_Ed__ as the startup project
+
+
 ## Contact Information
 For any inquiries or questions, please contact at <cokerayanfe@gmail.com>. Would love to hear your opinions and any help/contribution would be really appreciated

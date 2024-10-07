@@ -11,9 +11,13 @@
 #include "animation/AnimationGraph.h"
 #include "resource/Prefab.h"
 #include "core/Enums.h"
+#include "render/SkinnedModel.h"
+#include "animation/Skeleton.h"
+#include "core/Coretypes.h"
 
 
 #include <string>
+#include <unordered_map>
 #include <algorithm>
 
 namespace trace {
@@ -72,12 +76,19 @@ namespace trace {
 
 	struct TagComponent
 	{
-		std::string _tag;
 
 		TagComponent() = default;
 		TagComponent(const TagComponent&) = default;
-		TagComponent(const std::string& name) { _tag = name; }
-		TagComponent(std::string& name) { _tag = name; }
+		TagComponent(const std::string& name) { m_tag = name; }
+		TagComponent(std::string& name) { m_tag = name; }
+
+		std::string& GetTag() { return m_tag; }
+		StringID GetStringID() { return m_id; }
+		void SetTag(const std::string& name);
+
+	private:
+		std::string m_tag;
+		StringID m_id;
 
 	};
 
@@ -175,6 +186,22 @@ namespace trace {
 		}
 	};
 
+	struct SkinnedModelRenderer
+	{
+		Ref<MaterialInstance> _material;
+		Ref<SkinnedModel> _model;
+		bool cast_shadow = true;
+		std::vector<glm::mat4> bone_transforms;
+		Skeleton runtime_skeleton;
+
+		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
+		void SetSkeleton(Ref<Skeleton> skeleton, Scene* scene, UUID parent);
+
+	private:
+		Ref<Skeleton> m_skeleton;
+
+	};
+
 	struct TextComponent
 	{
 		Ref<Font> font;
@@ -232,11 +259,17 @@ namespace trace {
 
 	struct AnimationComponent
 	{
-		Ref<AnimationGraph> anim_graph;
+		AnimationGraph runtime_graph;
 		bool play_on_start = false;
 		std::unordered_map<std::string, UUID> entities;
-		bool InitializeEntities(Scene* scene, UUID parent = 0, bool refresh = false);
 
+
+		bool InitializeEntities(Scene* scene, UUID parent = 0, bool refresh = false);
+		Ref<AnimationGraph> GetAnimationGraph() { return m_animGraph; }
+		void SetAnimationGraph(Ref<AnimationGraph> animation_graph);
+
+	private:
+		Ref<AnimationGraph> m_animGraph;
 	};
 
 	struct ImageComponent
@@ -281,6 +314,6 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight>;
+		PointLight, SpotLight, SkinnedModelRenderer>;
 
 }

@@ -19,4 +19,7 @@ const float PI = 3.14159265359;
 #define MAX_SHADOW_POINT_LIGHTS 5
 #define SHADOW_BIAS 0.0005f
 
+#define MAX_BONE_PER_VERTEX 4
+#define MAX_BONES_PER_MESH 256
+
 #endif

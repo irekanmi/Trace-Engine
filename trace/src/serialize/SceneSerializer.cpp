@@ -10,6 +10,7 @@
 #include "resource/ModelManager.h"
 #include "resource/MaterialManager.h"
 #include "resource/AnimationsManager.h"
+#include "resource/GenericAssetManager.h"
 #include "resource/TextureManager.h"
 #include "resource/PrefabManager.h"
 #include "serialize/MaterialSerializer.h"
@@ -37,7 +38,7 @@ namespace trace {
 			TagComponent& tag = entity.GetComponent<TagComponent>();
 			emit << YAML::Key << "TagComponent" << YAML::Value;
 			emit << YAML::BeginMap;
-			emit << YAML::Key << "Tag" << YAML::Value << tag._tag;
+			emit << YAML::Key << "Tag" << YAML::Value << tag.GetTag();
 
 			emit << YAML::EndMap;
 			}
@@ -124,7 +125,10 @@ namespace trace {
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "Name" << model._model->GetName();
 			std::string filename = model._model->m_path.parent_path().filename().string();
-			if (filename.empty()) filename = model._model->m_path.filename().string();
+			if (filename.empty())
+			{
+				filename = model._model->m_path.filename().string();
+			}
 			emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(filename);
 
 			emit << YAML::EndMap;
@@ -141,6 +145,32 @@ namespace trace {
 				{
 					emit << YAML::Key << "file id" << YAML::Value << GetUUIDFromName(model_renderer._material->GetName());
 				}
+				emit << YAML::Key << "Cast Shadow" << YAML::Value << model_renderer.cast_shadow;
+
+				emit << YAML::EndMap;
+			}
+		},
+		[](Entity entity, YAML::Emitter& emit)
+		{
+			if (entity.HasComponent<SkinnedModelRenderer>())
+			{
+				SkinnedModelRenderer& model_renderer = entity.GetComponent<SkinnedModelRenderer>();
+				emit << YAML::Key << "SkinnedModelRenderer" << YAML::Value;
+				emit << YAML::BeginMap;
+				if (model_renderer._material)
+				{
+					emit << YAML::Key << "file id - material" << YAML::Value << GetUUIDFromName(model_renderer._material->GetName());
+				}
+				if (model_renderer._model)
+				{
+					emit << YAML::Key << "file id - model" << YAML::Value << GetUUIDFromName(model_renderer._model->GetName());
+					emit << YAML::Key << "Model Name" << YAML::Value << model_renderer._model->GetName();
+				}
+				if (model_renderer.GetSkeleton())
+				{
+					emit << YAML::Key << "file id - skeleton" << YAML::Value << GetUUIDFromName(model_renderer.GetSkeleton()->GetName());
+				}
+
 				emit << YAML::Key << "Cast Shadow" << YAML::Value << model_renderer.cast_shadow;
 
 				emit << YAML::EndMap;
@@ -211,7 +241,10 @@ namespace trace {
 				AnimationComponent& ac = entity.GetComponent<AnimationComponent>();
 				emit << YAML::Key << "AnimationComponent" << YAML::Value;
 				emit << YAML::BeginMap;
-				if(ac.anim_graph) emit << YAML::Key << "Anim Graph" << YAML::Value << GetUUIDFromName(ac.anim_graph->GetName());
+				if (ac.GetAnimationGraph())
+				{
+					emit << YAML::Key << "Anim Graph" << YAML::Value << GetUUIDFromName(ac.GetAnimationGraph()->GetName());
+				}
 				emit << YAML::Key << "Play On Start" << YAML::Value << ac.play_on_start;
 
 				emit << YAML::EndMap;
@@ -303,7 +336,7 @@ namespace trace {
 			auto comp = value["TagComponent"];
 			auto data = comp["Tag"];
 			TagComponent& tag = entity.GetComponent<TagComponent>();
-			tag._tag = data.as<std::string>();
+			tag.SetTag(data.as<std::string>());
 		}},
 		{"TransformComponent", [](Entity entity, YAML::detail::iterator_value& value) {
 			auto comp = value["TransformComponent"];
@@ -353,9 +386,10 @@ namespace trace {
 			auto comp = value["ModelComponent"];
 			ModelComponent& model = entity.AddComponent<ModelComponent>();
 			UUID id = comp["file id"].as<uint64_t>();
+			std::string filename = comp["Name"].as<std::string>();
 			if (AppSettings::is_editor)
 			{
-				LoadModel(id, model, comp);
+				LoadModel(id, filename, model, comp);
 			}
 			else
 			{
@@ -377,7 +411,7 @@ namespace trace {
 		}
 		if (id == 0)
 		{
-			TRC_TRACE("These entity model renderer doesn't have a material, Name: {}", entity.GetComponent<TagComponent>()._tag);
+			TRC_TRACE("These entity model renderer doesn't have a material, Name: {}", entity.GetComponent<TagComponent>().GetTag());
 			return;
 		}
 		if (AppSettings::is_editor)
@@ -400,6 +434,98 @@ namespace trace {
 		}
 
 		}},
+		{ "SkinnedModelRenderer", [](Entity entity, YAML::detail::iterator_value& value) {
+		auto comp = value["SkinnedModelRenderer"];
+		SkinnedModelRenderer& model_renderer = entity.AddComponent<SkinnedModelRenderer>();
+		Ref<MaterialInstance> res;
+
+		// Material ---------------------------
+		UUID material_id = 0;
+		if (comp["file id - material"])
+		{
+			material_id = comp["file id - material"].as<uint64_t>();
+		}
+		
+		if (material_id != 0)
+		{
+
+			if (AppSettings::is_editor)
+			{
+
+				std::filesystem::path p = GetPathFromUUID(material_id);
+				res = MaterialSerializer::Deserialize(p.string());
+				model_renderer._material = res;	
+			}
+			else
+			{
+				model_renderer._material = MaterialManager::get_instance()->LoadMaterial_Runtime(material_id);
+			}
+		}
+		else
+		{
+			TRC_TRACE("These entity skinned model renderer doesn't have a material, Name: {}", entity.GetComponent<TagComponent>().GetTag());
+		}
+
+		// ----------------------------------
+
+
+		// Model ------------------
+
+		if (comp["file id - model"])
+		{
+
+			UUID model_id = comp["file id - model"].as<uint64_t>();
+			std::string model_name = comp["Model Name"].as<std::string>();
+			if (model_id != 0 || !model_name.empty())
+			{
+				if (AppSettings::is_editor)
+				{
+					LoadSkinnedModel(model_id, model_name, model_renderer, comp);
+				}
+				else
+				{
+					//model_renderer._model = ModelManager::get_instance()->LoadModel_Runtime(id);
+				}
+			}
+		}
+
+		// --------------------------
+
+
+		// Skeleton ------------------
+
+		if (comp["file id - skeleton"])
+		{
+
+			UUID skeleton_id = comp["file id - skeleton"].as<uint64_t>();
+			if (skeleton_id != 0)
+			{
+				if (AppSettings::is_editor)
+				{
+					Ref<Skeleton> skeleton = AnimationsSerializer::DeserializeSkeleton(GetPathFromUUID(skeleton_id).string());
+					if (skeleton)
+					{
+						model_renderer.SetSkeleton(skeleton, entity.GetScene(), entity.GetID());
+					}
+				}
+				else
+				{
+				}
+			}
+
+		}
+
+		// --------------------------
+
+
+		if (comp["Cast Shadow"])
+		{
+			model_renderer.cast_shadow = comp["Cast Shadow"].as<bool>();
+		}
+
+		
+
+		} },
 		{"TextComponent", [](Entity entity, YAML::detail::iterator_value& value) {
 		auto comp = value["TextComponent"];
 		TextComponent& Txt = entity.AddComponent<TextComponent>();
@@ -469,12 +595,12 @@ namespace trace {
 				}
 				if (res)
 				{
-					ac.anim_graph = res;
+					ac.SetAnimationGraph(res);
 				}
 			}
 			else
 			{
-				ac.anim_graph = AnimationsManager::get_instance()->LoadGraph_Runtime(id);
+				ac.SetAnimationGraph(AnimationsManager::get_instance()->LoadGraph_Runtime(id));
 			}
 		}
 

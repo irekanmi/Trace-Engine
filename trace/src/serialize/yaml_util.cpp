@@ -7,6 +7,21 @@
 
 namespace YAML {
 
+	static void encode_vec4(Node& node, const glm::vec4& value)
+	{
+		node.push_back(value.x);
+		node.push_back(value.y);
+		node.push_back(value.z);
+		node.push_back(value.w);
+	}
+	static void decode_vec4(const Node& node, glm::vec4& value, int start_index)
+	{
+		value.x = node[0 + start_index].as<float>();
+		value.y = node[1 + start_index].as<float>();
+		value.z = node[2 + start_index].as<float>();
+		value.w = node[3 + start_index].as<float>();
+	}
+
 	Node convert<glm::vec2>::encode(const glm::vec2& value)
 	{
 		Node node;
@@ -92,10 +107,7 @@ namespace YAML {
 	Node convert<glm::vec4>::encode(const glm::vec4& value)
 	{
 		Node node;
-		node.push_back(value.x);
-		node.push_back(value.y);
-		node.push_back(value.z);
-		node.push_back(value.w);
+		encode_vec4(node, value);
 		return node;
 	}
 
@@ -104,10 +116,7 @@ namespace YAML {
 		if (!node.IsSequence() || node.size() != 4)
 			return false;
 
-		value.x = node[0].as<float>();
-		value.y = node[1].as<float>();
-		value.z = node[2].as<float>();
-		value.w = node[3].as<float>();
+		decode_vec4(node, value, 0);
 		return true;
 	}
 
@@ -135,6 +144,28 @@ namespace YAML {
 		return true;
 	}
 
+
+	Node convert<glm::mat4>::encode(const glm::mat4& value)
+	{
+		Node node;
+		encode_vec4(node, value[0]);
+		encode_vec4(node, value[1]);
+		encode_vec4(node, value[2]);
+		encode_vec4(node, value[3]);
+		return node;
+	}
+
+	bool convert<glm::mat4>::decode(const Node& node, glm::mat4& value)
+	{
+		if (!node.IsSequence() || node.size() != 16)
+			return false;
+
+		decode_vec4(node, value[0], 0);
+		decode_vec4(node, value[1], 4);
+		decode_vec4(node, value[2], 8);
+		decode_vec4(node, value[3], 12);
+		return true;
+	}
 
 
 	Node convert<glm::quat>::encode(const glm::quat& value)
@@ -199,6 +230,16 @@ namespace YAML {
 	{
 		emit << Flow;
 		emit << BeginSeq << value.x << value.y << value.z << value.w << EndSeq;
+		return emit;
+	}
+
+	Emitter& operator <<(Emitter& emit, const glm::mat4& value)
+	{
+		emit << Flow;
+		emit << BeginSeq << value[0].x << value[0].y << value[0].z << value[0].w <<
+			value[1].x << value[1].y << value[1].z << value[1].w <<
+			value[2].x << value[2].y << value[2].z << value[2].w <<
+			value[3].x << value[3].y << value[3].z << value[3].w << EndSeq;
 		return emit;
 	}
 

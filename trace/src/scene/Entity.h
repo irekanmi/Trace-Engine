@@ -67,6 +67,9 @@ namespace trace {
 		bool RemoveScript(const std::string& script_name);
 		bool RemoveScript(uintptr_t handle);
 
+		bool HasParent();
+		Entity GetParent();
+
 		operator entt::entity() { return m_handle; }
 		operator uint32_t() { return (uint32_t)m_handle; }
 		operator bool() { return m_handle != entt::null; }

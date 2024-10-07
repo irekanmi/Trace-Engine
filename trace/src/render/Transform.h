@@ -53,6 +53,9 @@ namespace trace {
 		void Scale(float value);
 		void Scale(glm::vec3 value);
 
+		bool IsDirty() { return m_dirty; }
+		void SetDirty(bool dirty) { m_dirty = dirty; }
+
 		static Transform CombineTransform(Transform& parent, Transform& child);
 
 	private:
@@ -63,7 +66,7 @@ namespace trace {
 		glm::quat m_rotation = glm::identity<glm::quat>();
 		glm::vec3 m_position = glm::vec3(0.0f);
 		glm::vec3 m_scale = glm::vec3(0.0f);
-		bool m_dirty;
+		bool m_dirty = true;
 
 	protected:
 

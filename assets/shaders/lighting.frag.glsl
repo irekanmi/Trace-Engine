@@ -1,11 +1,10 @@
 #version 450
 
-#include "functions.glsl"
 
 
 #define G_POSITION 0
 #define G_NORMAL 1
-#define G_COLOR 2
+#define G_EMISSION 2
 #define MAX_LIGHT_COUNT 15
 #define MAX_SPECULAR_VALUE 256.0f
 
@@ -20,12 +19,13 @@ layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
     int _ssao_dat;
 };
 
-layout(set = 0, binding = 1)uniform sampler2D g_bufferData[2];
+layout(set = 0, binding = 1)uniform sampler2D g_bufferData[3];
 layout(set = 0, binding = 2)uniform usampler2D g_bufferColor;
-
-
-
 layout(set = 0, binding = 3)uniform sampler2D ssao_blur;
+
+
+#include "functions.glsl"
+
 
 struct LightData
 {
@@ -60,7 +60,7 @@ layout(set = 0, binding = 7)uniform LightViewProj {
 };
 
 
-const float ambeint_factor = 0.03f;
+const float ambeint_factor = 0.05f;
 
 vec4 calculate_directional_light(vec3 normal, vec3 view_direction, vec3 albedo, LightData light_data, float metallic, float roughness,float ssao);
 vec4 calculate_point_light(vec3 normal, vec3 view_direction, vec3 albedo, vec3 position,LightData light_data, float metallic, float roughness, float ssao);
@@ -71,7 +71,8 @@ void main()
     vec4 pData = texture(g_bufferData[G_POSITION], in_texCoord);
     vec3 frag_pos = pData.xyz;
     vec4 nData = texture(g_bufferData[G_NORMAL], in_texCoord);
-    //vec3 normal = (_view * vec4(nData.xyz, 0.0f)).xyz;
+    vec4 emission_Data = texture(g_bufferData[G_EMISSION], in_texCoord);
+
     vec3 normal = nData.xyz;
     uvec4 cData = texture(g_bufferColor, in_texCoord);
 
@@ -85,6 +86,7 @@ void main()
     vec3 albedo = real_color.rgb;
     vec4 final_color = vec4(0.0f);
     float ambeint_occlusion = nData.w;
+    emission_Data.w = 0.0f;
 
     vec4 world_position = _inv_view * vec4(frag_pos, 1.0f);
 
@@ -166,8 +168,7 @@ void main()
     vec4 ambient = (vec4( (ambeint_factor * albedo).rgb, 1.0f ) * ambeint_occlusion) * ssao_res;
     final_color += ambient;
 
-    //final_color.rgb = pow(final_color.rgb, vec3(1.0/2.2));
-    FragColor = final_color;
+    FragColor = emission_Data + final_color;
 
 }
 

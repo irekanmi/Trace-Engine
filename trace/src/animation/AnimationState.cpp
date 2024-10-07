@@ -3,6 +3,8 @@
 #include "AnimationState.h"
 #include "core/Application.h"
 #include "Animation.h"
+#include "scene/Entity.h"
+#include "scene/Scene.h"
 
 namespace trace {
 
@@ -94,5 +96,27 @@ namespace trace {
 	{
 		return m_playing == 1;
 	}
+
+	void AnimationState::SetAnimationClip(Ref<AnimationClip> clip)
+	{
+		if (!clip)
+		{
+			return;
+		}
+
+		m_clip = clip;
+	}
+
+	void AnimationState::SetAsRuntime()
+	{
+		if (!m_clip)
+		{
+			return;
+		}
+
+		m_runtimeClip = *(m_clip.get());
+		m_runtimeClip.SetAsRuntimeClip();
+	}
+
 
 }

@@ -22,7 +22,7 @@ namespace trace {
 		virtual Ref<Prefab> Get(const std::string& name) override;
 		Scene* GetScene() { return m_prefabScene; }
 
-		virtual void UnLoad(Prefab* asset) override;
+		virtual void UnLoad(Resource* res) override;
 		virtual Ref<Prefab> Load_Runtime(UUID id) override;
 
 		static PrefabManager* get_instance();

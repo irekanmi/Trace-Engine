@@ -39,7 +39,7 @@ namespace trace {
 		Ref<GTexture> LoadTexture(const std::string& name, TextureDesc desc);
 		Ref<GTexture> LoadTexture_(const std::string& path, TextureDesc desc);
 		Ref<GTexture> LoadTexture(const std::vector<std::string>& filenames, TextureDesc desc, const std::string& name);
-		void UnloadTexture(GTexture* texture);
+		void UnloadTexture(Resource* res);
 		void ReleaseTexture(const std::string& name);
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{

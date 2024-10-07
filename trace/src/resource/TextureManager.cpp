@@ -5,6 +5,7 @@
 #include "core/Utils.h"
 #include "core/Coretypes.h"
 #include "serialize/FileStream.h"
+#include "backends/UIutils.h"
 
 
 
@@ -184,6 +185,7 @@ namespace trace {
 			i++;
 		}
 
+		UIFunc::CreateTextureHandle(_tex);
 		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
 		return result;
 	}
@@ -250,6 +252,8 @@ namespace trace {
 
 			i++;
 		}
+
+		UIFunc::CreateTextureHandle(_tex);
 		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
 		return result;
 	}
@@ -311,6 +315,7 @@ namespace trace {
 			i++;
 		}
 
+		UIFunc::CreateTextureHandle(_tex);
 		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
 		return result;
 	}
@@ -369,18 +374,23 @@ namespace trace {
 			}
 			i++;
 		}
+
+		UIFunc::CreateTextureHandle(_tex);
 		result = { _tex, BIND_RENDER_COMMAND_FN(TextureManager::UnloadTexture) };
 		return result;
 	}
 
-	void TextureManager::UnloadTexture(GTexture* texture)
+	void TextureManager::UnloadTexture(Resource* res)
 	{
+		GTexture* texture = (GTexture*)res;
+
 		if (texture->m_refCount > 0)
 		{
 			TRC_WARN("Can't release a texture that is in use");
 			return;
 		}
 
+		UIFunc::DestroyTextureHandle(texture);
 		TextureHash hash;
 		hash._id = INVALID_ID;
 		m_hashTable.Set(texture->GetName(), hash);

@@ -92,4 +92,5 @@ void main()
     uint surface_data_compressed = vec4ToUint32(surface_data);
     FRAG_COLOR_G = surface_data_compressed;
 
+    g_Emission.xyz = GET_INSTANCE_PARAM(emissive_color, InstanceBufferObject).xyz;
 }

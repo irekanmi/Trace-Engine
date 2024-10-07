@@ -22,7 +22,7 @@ namespace trace {
 		Ref<Model> GetModel(const std::string& name);
 		Ref<Model> LoadModel(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& name);
 		Ref<Model> LoadModel_(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& path);
-		void UnLoadModel(Model* model);
+		void UnLoadModel(Resource* res);
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{
 			m_assetMap = map;

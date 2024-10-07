@@ -5,6 +5,7 @@
 #include "serialize/AssetsInfo.h"
 #include "HashTable.h"
 #include "core/io/Logging.h"
+#include "resource/Resource.h"
 
 #include <vector>
 
@@ -44,7 +45,7 @@ namespace trace {
 			return result;
 		}
 
-		virtual void UnLoad(T* asset)
+		virtual void UnLoad(Resource* asset)
 		{
 			if (asset->m_refCount > 0)
 			{

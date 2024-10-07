@@ -471,6 +471,7 @@ namespace trace {
 		m_allFilesID["ssao_blur_pass_pipeline"] = def_id0++;
 		m_allFilesID["tone_map_pass_pipeline"] = def_id0++;
 		m_allFilesID["black_texture"] = def_id0++;
+		m_allFilesID["skinned_gbuffer_pipeline"] = def_id0++;
 
 
 		m_allIDPath[def_id1++] = "albedo_map";
@@ -497,6 +498,7 @@ namespace trace {
 		m_allIDPath[def_id1++] = "ssao_blur_pass_pipeline";
 		m_allIDPath[def_id1++] = "tone_map_pass_pipeline";
 		m_allIDPath[def_id1++] = "black_texture";
+		m_allIDPath[def_id1++] = "skinned_gbuffer_pipeline";
 
 		//::-----::
 
@@ -665,7 +667,7 @@ namespace trace {
 		}
 
 
-		if (dirty_ids || update_assets_db)
+		if (dirty_ids || true)
 		{
 			YAML::Emitter emit;
 

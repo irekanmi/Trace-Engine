@@ -4,12 +4,12 @@
 #include "globals_data.glsl"
 #include "utils.glsl"
 #include "bindless.glsl"
-#include "functions.glsl"
 
 OUT_FRAG_DATA
 IN_VERTEX_DATA
 
 
+#include "functions.glsl"
 
 INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
     vec4 diffuse_color;

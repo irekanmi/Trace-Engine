@@ -2,9 +2,10 @@
 #include <functional>
 #include "core/io/Logging.h"
 #include "core/Enums.h"
+#include "resource/Resource.h"
 
 template<typename T>
-using _action = std::function<void(T*)>;
+using _action = std::function<void(trace::Resource*)>;
 
 
 template<typename T>

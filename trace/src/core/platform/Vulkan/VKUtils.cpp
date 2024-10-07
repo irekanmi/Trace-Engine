@@ -2357,7 +2357,7 @@ namespace vk {
 						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					}
 					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
-					bind.descriptorCount = 512;
+					bind.descriptorCount = 2048;
 				}
 				else if (is_array)
 				{
@@ -2539,6 +2539,11 @@ namespace vk {
 		case trace::Format::R32G32B32A32_UINT:
 		{
 			result = VK_FORMAT_R32G32B32A32_UINT;
+			break;
+		}
+		case trace::Format::R32G32B32A32_SINT:
+		{
+			result = VK_FORMAT_R32G32B32A32_SINT;
 			break;
 		}
 		case trace::Format::R32G32B32_UINT:

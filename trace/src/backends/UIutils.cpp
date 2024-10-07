@@ -18,6 +18,8 @@ bool __ImGui_UINewFrame();
 bool __ImGui_UIEndFrame();
 bool __ImGui_UIRenderFrame(trace::Renderer* renderer);
 bool __ImGui_ShutdownUIRenderBackend();
+bool __ImGui_CreateTextureHandle(trace::GTexture* texture);
+bool __ImGui_DestroyTextureHandle(trace::GTexture* texture);
 bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle);
 bool __ImGui_GetDrawRenderGraphTextureHandle(trace::RenderGraphResource* texture, void*& out_handle);
 // ----------------------------------------------------
@@ -29,6 +31,8 @@ namespace trace {
 	__UINewFrame UIFunc::_uiNewFrame = nullptr;
 	__UIEndFrame UIFunc::_uiEndFrame = nullptr;
 	__UIRenderFrame UIFunc::_uiRenderFrame = nullptr;
+	__CreateTextureHandle UIFunc::_createTextureHandle = nullptr;
+	__DestroyTextureHandle UIFunc::_destroyTextureHandle = nullptr;
 	__GetDrawTextureHandle UIFunc::_getDrawTextureHandle = nullptr;
 	__GetDrawRenderGraphTextureHandle UIFunc::_getDrawRenderGraphTextureHandle = nullptr;
 
@@ -39,6 +43,8 @@ namespace trace {
 		UIFunc::_uiNewFrame = __ImGui_UINewFrame;
 		UIFunc::_uiEndFrame = __ImGui_UIEndFrame;
 		UIFunc::_uiRenderFrame = __ImGui_UIRenderFrame;
+		UIFunc::_createTextureHandle = __ImGui_CreateTextureHandle;
+		UIFunc::_destroyTextureHandle = __ImGui_DestroyTextureHandle;
 		UIFunc::_getDrawTextureHandle = __ImGui_GetDrawTextureHandle;
 		UIFunc::_getDrawRenderGraphTextureHandle = __ImGui_GetDrawRenderGraphTextureHandle;
 		return true;
@@ -81,6 +87,18 @@ namespace trace {
 		return _getDrawTextureHandle(texture, out_handle);
 	}
 
+	bool UIFunc::CreateTextureHandle(GTexture* texture)
+	{
+		UI_FUNC_IS_VALID(_createTextureHandle);
+		return _createTextureHandle(texture);
+	}
+
+	bool UIFunc::DestroyTextureHandle(GTexture* texture)
+	{
+		UI_FUNC_IS_VALID(_destroyTextureHandle);
+		return _destroyTextureHandle(texture);
+	}
+
 	bool UIFunc::GetDrawRenderGraphTextureHandle(RenderGraphResource* texture, void*& out_handle)
 	{
 		UI_FUNC_IS_VALID(_getDrawTextureHandle);
@@ -114,6 +132,7 @@ namespace trace {
 // NOTE: To hold set to be destoryed after textures are rendered
 static std::vector<VkDescriptorSet> frame_rendered_textures[VK_MAX_NUM_FRAMES];
 static VkDescriptorPool g_pool;
+static std::unordered_map<std::string, VkDescriptorSet> g_texture_handles;
 
 static void check_result_vk_fn(VkResult result)
 {
@@ -510,8 +529,23 @@ bool __ImGui_ShutdownUIRenderBackend()
 	return true;
 }
 
-bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle)
+bool __ImGui_CreateTextureHandle(trace::GTexture* texture)
 {
+
+	if (!texture)
+	{
+		TRC_ERROR("Invalid Texture Handle; File:{}  Line:{}", __FILE__, __LINE__);
+		return false;
+	}
+
+
+	if (!texture->GetRenderHandle())
+	{
+		TRC_ERROR("Invalid Render Handle; File:{}  Line:{}", __FILE__, __LINE__);
+		return false;
+	}
+
+
 	switch (trace::AppSettings::graphics_api)
 	{
 	case trace::RenderAPI::Vulkan:
@@ -519,8 +553,62 @@ bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle)
 		trace::VKImage* _handle = (trace::VKImage*)texture->GetRenderHandle()->m_internalData;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		VkDescriptorSet tex_set = ImGui_ImplVulkan_AddTexture(_handle->m_sampler, _handle->m_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		frame_rendered_textures[_device->m_imageIndex].push_back(tex_set);
-		out_handle = tex_set;
+
+		g_texture_handles[texture->GetName()] = tex_set;
+
+		break;
+	}
+	}
+	return true;
+
+}
+
+bool __ImGui_DestroyTextureHandle(trace::GTexture* texture)
+{
+
+	if (!texture)
+	{
+		TRC_ERROR("Invalid Texture Handle; File:{}  Line:{}", __FILE__, __LINE__);
+		return false;
+	}
+
+
+	if (!texture->GetRenderHandle())
+	{
+		TRC_ERROR("Invalid Render Handle; File:{}  Line:{}", __FILE__, __LINE__);
+		return false;
+	}
+
+
+	switch (trace::AppSettings::graphics_api)
+	{
+	case trace::RenderAPI::Vulkan:
+	{
+		auto it = g_texture_handles.find(texture->GetName());
+		if (it != g_texture_handles.end())
+		{
+			ImGui_ImplVulkan_RemoveTexture(it->second);
+			g_texture_handles.erase(texture->GetName());
+		}
+
+		break;
+	}
+	}
+	return true;
+
+}
+
+bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle)
+{
+	switch (trace::AppSettings::graphics_api)
+	{
+	case trace::RenderAPI::Vulkan:
+	{
+		auto it = g_texture_handles.find(texture->GetName());
+		if (it != g_texture_handles.end())
+		{
+			out_handle = it->second;
+		}
 
 		break;
 	}

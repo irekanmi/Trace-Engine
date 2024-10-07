@@ -206,9 +206,9 @@ namespace trace {
 		return result;
 	}
 
-	void MeshManager::Unload(Mesh* _mesh)
+	void MeshManager::Unload(Resource* res)
 	{
-
+		Mesh* _mesh = (Mesh*)res;
 		if (_mesh->m_refCount > 0)
 		{
 			TRC_WARN("Current mesh is still in use can't unload");
@@ -855,9 +855,9 @@ namespace trace {
 					GTexture specular;
 					GTexture normal;
 
-					Ref<GTexture> diffuse_ref(&diffuse, [](GTexture*) {});
-					Ref<GTexture> specular_ref(&specular, [](GTexture*) {});
-					Ref<GTexture> normal_ref(&normal, [](GTexture*) {});
+					Ref<GTexture> diffuse_ref(&diffuse, [](Resource*) {});
+					Ref<GTexture> specular_ref(&specular, [](Resource*) {});
+					Ref<GTexture> normal_ref(&normal, [](Resource*) {});
 
 					auto it1 = res->GetMaterialData().find("DIFFUSE_MAP");
 					if (it1 != res->GetMaterialData().end())

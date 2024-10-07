@@ -3,10 +3,12 @@
 #include "Bone.h"
 #include "core/io/Logging.h"
 
+#include <unordered_map>
+
 namespace trace {
-	bool Bone::Create(const std::string& name, glm::mat4 bind_pose)
+	bool Bone::Create(const std::string& name, glm::mat4 bind_pose, glm::mat4 bone_offset)
 	{
-		if (!name.empty())
+		if (!m_name.empty())
 		{
 			TRC_WARN("Bone has already been created. Actual name: {}, New name: {}", m_name, name);
 			return false;
@@ -14,6 +16,8 @@ namespace trace {
 
 		m_name = name;
 		m_bindPose = bind_pose;
+		m_boneOffset = bone_offset;
+		m_id = std::hash<std::string>{}(name);
 
 		return true;
 	}

@@ -51,6 +51,13 @@ namespace YAML {
 	};
 
 	template<>
+	struct convert<glm::mat4>
+	{
+		static Node encode(const glm::mat4& value);
+		static bool decode(const Node& node, glm::mat4& value);
+	};
+
+	template<>
 	struct convert<glm::quat>
 	{
 		static Node encode(const glm::quat& value);
@@ -68,6 +75,8 @@ namespace YAML {
 	Emitter& operator <<(Emitter& emit, const glm::vec4& value);
 
 	Emitter& operator <<(Emitter& emit, const glm::ivec4& value);
+
+	Emitter& operator <<(Emitter& emit, const glm::mat4& value);
 
 	Emitter& operator <<(Emitter& emit, const glm::quat& value);
 

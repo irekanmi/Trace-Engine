@@ -43,9 +43,12 @@ namespace trace {
 			color_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
 			color_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
 
+			AttachmentInfo emissive_attach;
+			emissive_attach = normal_attach;
+			emissive_attach.attachmant_index = 3;
 
 			AttachmentInfo depth_attach;
-			depth_attach.attachmant_index = 3;
+			depth_attach.attachmant_index = 4;
 			depth_attach.attachment_format = Format::D32_SFLOAT_S8_SUINT;
 			depth_attach.initial_format = TextureFormat::UNKNOWN;
 			depth_attach.final_format = TextureFormat::DEPTH_STENCIL;
@@ -57,11 +60,12 @@ namespace trace {
 				position_attach,
 				normal_attach,
 				color_attach,
+				emissive_attach,
 				depth_attach
 			};
 
 			SubPassDescription subpass_desc;
-			subpass_desc.attachment_count = 4;
+			subpass_desc.attachment_count = 5;
 			subpass_desc.attachments = att_infos;
 
 			RenderPassDescription pass_desc;
@@ -167,7 +171,10 @@ namespace trace {
 		position_index = pass->CreateAttachmentOutput("gPosition", position_desc);
 		normal_index = pass->CreateAttachmentOutput("gNormal", position_desc);
 		color_index = pass->CreateAttachmentOutput("gColor", color_desc);
+		gbuffer_data.emissive_index = pass->CreateAttachmentOutput("gEmission", position_desc);
 		depth_index = pass->CreateDepthAttachmentOutput("depth", depth_desc);
+
+		pass->clearColor = glm::vec4(0.0f);
 		
 		gbuffer_data.position_index = position_index;
 		gbuffer_data.normal_index = normal_index;

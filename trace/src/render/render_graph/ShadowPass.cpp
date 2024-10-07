@@ -13,6 +13,7 @@
 #include "glm/glm.hpp"
 #include "render/Model.h"
 #include "render/Camera.h"
+#include "render/SkinnedModel.h"
 
 
 namespace trace {
@@ -85,6 +86,37 @@ namespace trace {
 				return;
 			}
 
+			// Skinned Models -------------------
+
+			VertShader = ShaderManager::get_instance()->CreateShader("sun_shadow_skinned.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+			ShaderResources sun_skinned_res = {};
+			ShaderParser::generate_shader_resources(VertShader.get(), sun_skinned_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), sun_skinned_res);
+
+			_ds2.resources = sun_skinned_res;
+			_ds2.vertex_shader = VertShader.get();
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
+			_ds2.input_layout = SkinnedVertex::get_input_layout();
+
+			m_sun_skinned_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "sun_shadow_skinned_map_pass_pipeline");
+			if (!m_sun_skinned_pipeline)
+			{
+				TRC_ERROR("Failed to initialize or create sun_shadow_skinned_map_pass_pipeline");
+				return;
+			}
+
+			_ds2.rasteriser_state = { CullMode::BACK, FillMode::SOLID };
+
+			m_spot_skinned_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "spot_shadow_skinned_map_pass_pipeline");
+			if (!m_spot_skinned_pipeline)
+			{
+				TRC_ERROR("Failed to initialize or create spot_shadow_skinned_map_pass_pipeline");
+				return;
+			}
+
+			// -----------------------------------
+
 			VertShader = ShaderManager::get_instance()->CreateShader("spot_shadow.vert.glsl", ShaderStage::VERTEX_SHADER);
 
 			ShaderResources spot_res = {};
@@ -94,6 +126,7 @@ namespace trace {
 			_ds2.resources = spot_res;
 			_ds2.vertex_shader = VertShader.get();
 			_ds2.rasteriser_state = { CullMode::BACK, FillMode::SOLID };
+			_ds2.input_layout = Vertex::get_input_layout();
 
 			m_spot_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "spot_shadow_map_pass_pipeline");
 			if (!m_spot_pipeline)
@@ -122,6 +155,8 @@ namespace trace {
 	{
 		Renderer* renderer = m_renderer;
 		GPipeline* sun_shadow_map_pipeline = m_sun_pipeline.get();
+		GPipeline* sun_skinned_pipeline = m_sun_skinned_pipeline.get();
+		GPipeline* spot_skinned_pipeline = m_spot_skinned_pipeline.get();
 		GPipeline* spot_shadow_map_pipeline = m_spot_pipeline.get();
 
 		RenderGraphFrameData* graph_data = renderer->GetRenderGraphData(render_graph_index);
@@ -155,7 +190,7 @@ namespace trace {
 			
 			sun_pass->CreateDepthAttachmentOutput(pass_name, depth);
 			
-			sun_pass->SetRunCB([sun_map_width, sun_map_height, sun_shadow_map_pipeline, current_light_index, &shadow_map_data](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
+			sun_pass->SetRunCB([sun_map_width, sun_map_height, sun_shadow_map_pipeline, current_light_index, &shadow_map_data, sun_skinned_pipeline](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 				{
 					RenderGraphFrameData* graph_data = renderer->GetRenderGraphData(render_graph_index);
 					Light& current_light = graph_data->sun_lights[current_light_index];
@@ -209,6 +244,32 @@ namespace trace {
 						RenderFunc::OnDrawEnd(renderer->GetDevice(), sun_shadow_map_pipeline);
 					}
 
+
+					for (RenderSkinnedObjectData& data : graph_data->skinned_shadow_casters)
+					{
+
+						glm::mat4* M_model = &data.transform;
+						SkinnedModel* _model = data.object;
+						if (!data.material)
+						{
+							continue;
+						}
+
+						RenderFunc::BindViewport(renderer->GetDevice(), view_port);
+						RenderFunc::BindRect(renderer->GetDevice(), rect);
+
+						RenderFunc::OnDrawStart(renderer->GetDevice(), sun_skinned_pipeline);
+						RenderFunc::SetPipelineData(sun_skinned_pipeline, "_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj[0].x, sizeof(glm::mat4));
+						RenderFunc::SetPipelineData(sun_skinned_pipeline, "_bone_matrices", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data.bone_transforms, sizeof(glm::mat4) * data.bone_count);
+						RenderFunc::BindPipeline(renderer->GetDevice(), sun_skinned_pipeline);
+						RenderFunc::BindPipeline_(sun_skinned_pipeline);
+						RenderFunc::BindVertexBuffer(renderer->GetDevice(), _model->GetVertexBuffer());
+						RenderFunc::BindIndexBuffer(renderer->GetDevice(), _model->GetIndexBuffer());
+
+						RenderFunc::DrawIndexed(renderer->GetDevice(), 0, _model->GetIndexCount());
+						RenderFunc::OnDrawEnd(renderer->GetDevice(), sun_skinned_pipeline);
+					}
+
 					
 
 
@@ -235,7 +296,7 @@ namespace trace {
 
 			spot_pass->CreateDepthAttachmentOutput(spot_pass_name, depth);
 
-			spot_pass->SetRunCB([spot_map_width, spot_map_height, spot_shadow_map_pipeline, current_light_index, &shadow_map_data](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
+			spot_pass->SetRunCB([spot_map_width, spot_map_height, spot_shadow_map_pipeline, current_light_index, &shadow_map_data, spot_skinned_pipeline](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 				{
 					RenderGraphFrameData* graph_data = renderer->GetRenderGraphData(render_graph_index);
 					Light& current_light = graph_data->spot_lights[current_light_index];
@@ -250,7 +311,7 @@ namespace trace {
 					rect.bottom = spot_map_height;
 
 					Camera cam;
-					cam.SetNear(0.1);
+					cam.SetNear(1.0f);
 					cam.SetFar(250.0f);
 					cam.SetCameraType(CameraType::PERSPECTIVE);
 					cam.SetPosition(glm::vec3(current_light.position));
@@ -287,6 +348,31 @@ namespace trace {
 
 						RenderFunc::DrawIndexed(renderer->GetDevice(), 0, _model->GetIndexCount());
 						RenderFunc::OnDrawEnd(renderer->GetDevice(), spot_shadow_map_pipeline);
+					}
+
+					for (RenderSkinnedObjectData& data : graph_data->skinned_shadow_casters)
+					{
+
+						glm::mat4* M_model = &data.transform;
+						SkinnedModel* _model = data.object;
+						if (!data.material)
+						{
+							continue;
+						}
+
+						RenderFunc::BindViewport(renderer->GetDevice(), view_port);
+						RenderFunc::BindRect(renderer->GetDevice(), rect);
+
+						RenderFunc::OnDrawStart(renderer->GetDevice(), spot_skinned_pipeline);
+						RenderFunc::SetPipelineData(spot_skinned_pipeline, "_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj[0].x, sizeof(glm::mat4));
+						RenderFunc::SetPipelineData(spot_skinned_pipeline, "_bone_matrices", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data.bone_transforms, sizeof(glm::mat4) * data.bone_count);
+						RenderFunc::BindPipeline(renderer->GetDevice(), spot_skinned_pipeline);
+						RenderFunc::BindPipeline_(spot_skinned_pipeline);
+						RenderFunc::BindVertexBuffer(renderer->GetDevice(), _model->GetVertexBuffer());
+						RenderFunc::BindIndexBuffer(renderer->GetDevice(), _model->GetIndexBuffer());
+
+						RenderFunc::DrawIndexed(renderer->GetDevice(), 0, _model->GetIndexCount());
+						RenderFunc::OnDrawEnd(renderer->GetDevice(), spot_skinned_pipeline);
 					}
 
 				});

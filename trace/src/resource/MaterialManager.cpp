@@ -151,14 +151,14 @@ namespace trace {
 			return false;
 		}
 
-		RenderFunc::PostInitializeMaterial(mat.get(), pipeline);
+		//RenderFunc::PostInitializeMaterial(mat.get(), pipeline);
 
 		return true;
 	}
 
-	void MaterialManager::Unload(MaterialInstance* material)
+	void MaterialManager::Unload(Resource* res)
 	{
-
+		MaterialInstance* material = (MaterialInstance*)res;
 		if (material->m_refCount > 0)
 		{
 			TRC_WARN("Can't unload a material that is still in use");

@@ -19,6 +19,7 @@
 #include "core/memory/MemoryManager.h"
 #include "debug/Debugger.h"
 #include "core/defines.h"
+#include "render/SkinnedModel.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -196,21 +197,6 @@ namespace trace {
 			m_composer->Init(this);
 		}
 
-		// Text rendering initializaton ----------------------------
-
-		//TODO: allow it to automatically grow when needed
-		/*text_vertices.resize(16);
-
-		BufferInfo text_buffer_info;
-		text_buffer_info.m_data = nullptr;
-		text_buffer_info.m_flag = BindFlag::VERTEX_BIT;
-		text_buffer_info.m_size = sizeof(TextVertex) * KB * 2;
-		text_buffer_info.m_stide = sizeof(TextVertex);
-		text_buffer_info.m_usageFlag = UsageFlag::DEFAULT;
-
-		RenderFunc::CreateBuffer(&text_buffer, text_buffer_info);*/
-
-
 		for (uint32_t i = 0; i < num_render_graphs; i++)
 		{
 			RenderGraphFrameData& graph_data = m_renderGraphsData[i];
@@ -240,13 +226,7 @@ namespace trace {
 				
 		//---------------------------------------------------------------------------------------------
 
-		//// Quad batch .........................................	
-		//create_quad_batch();
- 	//	// ..................................................
-		//
-		//// Text batch .........................................	
-		//create_text_batch();
- 	//	// ..................................................	
+
 
 		for (uint32_t i = 0; i < num_render_graphs; i++)
 		{
@@ -278,6 +258,8 @@ namespace trace {
 
 		// ---------------------------------------
 
+		
+
 		m_composer->Shutdowm();
 		delete m_composer;
 		m_composer = nullptr;
@@ -287,6 +269,11 @@ namespace trace {
 
 	void Renderer::ShutDown()
 	{
+		if (AppSettings::is_editor)
+		{
+			UIFunc::ShutdownUIRenderBackend();
+		}
+
 		RenderFunc::DestroyDevice(&g_device);
 		RenderFunc::DestroyContext(&g_context);
 	}
@@ -407,6 +394,10 @@ namespace trace {
 		{
 			RenderGraphFrameData& graph_data = m_renderGraphsData[i];
 			graph_data.m_opaqueObjects.clear();
+			graph_data.m_opaqueSkinnedObjects.clear();
+			graph_data.shadow_casters.clear();
+			graph_data.skinned_shadow_casters.clear();
+
 		}
 
 		
@@ -662,6 +653,46 @@ namespace trace {
 			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
 			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
 			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, M_model, sizeof(glm::mat4));
+			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::BindPipeline_(sp.get());
+			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
+			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
+
+			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
+			RenderFunc::OnDrawEnd(&g_device, sp.get());
+		}
+
+
+		for (RenderSkinnedObjectData& data : graph_data.m_opaqueSkinnedObjects)
+		{
+
+			glm::mat4* M_model = &data.transform;
+			SkinnedModel* _model = data.object;
+			if (!data.material)
+			{
+				continue;
+			}
+
+			if (!_model)
+			{
+				continue;
+			}
+
+			// TODO: Find out why an invalid model will be a sent as a valid draw call
+			if (_model->GetVertices().size() == 0 || _model->GetIndices().size() == 0)
+			{
+				continue;
+			}
+
+			MaterialInstance* _mi = data.material;
+			Ref<GPipeline> sp = _mi->GetRenderPipline();
+
+			RenderFunc::OnDrawStart(&g_device, sp.get());
+			RenderFunc::ApplyMaterial(_mi);
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
+			RenderFunc::SetPipelineData(sp.get(), "_bone_matrices", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data.bone_transforms, sizeof(glm::mat4) * data.bone_count);
 			RenderFunc::BindPipeline(&g_device, sp.get());
 			RenderFunc::BindPipeline_(sp.get());
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
@@ -1031,6 +1062,45 @@ namespace trace {
 			if (cast_shadow)
 			{
 				graph_data.shadow_casters.push_back(data);
+			}
+		};
+		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));
+		memcpy(cmd.params.data, &transform, sizeof(glm::mat4));
+		cmd_list._commands.emplace_back(cmd);
+	}
+
+	void Renderer::DrawSkinnedModel(CommandList& cmd_list, Ref<SkinnedModel> _model, Ref<MaterialInstance> material, glm::mat4 transform, glm::mat4* bone_transforms, uint32_t bone_count, bool cast_shadow, int32_t render_graph_index)
+	{
+		if (!_model || !material)
+		{
+			return;
+		}
+		Command cmd;
+		cmd.params.ptrs[0] = _model.get();
+		cmd.params.ptrs[1] = material.get();
+		cmd.params.ptrs[2] = bone_transforms;
+		cmd.params.val[0] = render_graph_index;
+		cmd.params.val[1] = cast_shadow ? 1 : 0;
+		cmd.params.val[2] = bone_count;
+		cmd.func = [&](CommandParams params) {
+			RenderGraphFrameData& graph_data = m_renderGraphsData[params.val[0]];
+
+			SkinnedModel* model = (SkinnedModel*)params.ptrs[0];
+			MaterialInstance* mat = (MaterialInstance*)params.ptrs[1];
+			RenderSkinnedObjectData data;
+			data.transform = *(glm::mat4*)(params.data);
+			data.material = mat;
+			data.object = model;
+			data.bone_count = params.val[2];
+			data.bone_transforms = (glm::mat4*)params.ptrs[2];
+
+			graph_data.m_opaqueSkinnedObjects.push_back(data);
+
+			bool cast_shadow = (params.val[1] == 1);
+
+			if (cast_shadow)
+			{
+				graph_data.skinned_shadow_casters.push_back(data);
 			}
 		};
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(glm::mat4));

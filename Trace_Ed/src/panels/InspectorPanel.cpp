@@ -226,12 +226,12 @@ namespace trace {
 		if (entity.HasComponent<TagComponent>())
 		{
 			TagComponent& val = entity.GetComponent<TagComponent>();
-			std::string temp = val._tag;
+			std::string temp = val.GetTag();
 			if (ImGui::InputText("Tag", &temp))
 			{
 				if (!temp.empty())
 				{
-					val._tag = std::move(temp);
+					val.SetTag(std::move(temp));
 					comp_dirty = true;
 				}
 
@@ -266,6 +266,11 @@ namespace trace {
 			{
 				ModelRendererComponent& i = entity.AddComponent<ModelRendererComponent>();
 				i._material = MaterialManager::get_instance()->GetMaterial("default");
+				comp_dirty = true;
+			}
+			if (ImGui::MenuItem("Skinned Model Renderer"))
+			{
+				SkinnedModelRenderer& i = entity.AddComponent<SkinnedModelRenderer>();
 				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Text"))
@@ -607,6 +612,76 @@ namespace trace {
 			if (!mat_res.empty())
 			{
 				std::filesystem::path p = mat_res;
+				Ref<MaterialInstance> mt_res = MaterialSerializer::Deserialize(p.string());;
+				if (mt_res)
+				{
+					comp._material = mt_res;
+					dirty = true;
+				}
+			}
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Cast Shadows", &comp.cast_shadow), Cast_Shadows) {}
+
+			return dirty;
+			}
+		);
+		comp_dirty = comp_dirty || DrawComponent<SkinnedModelRenderer>(entity, "Skinned Model Renderer", [editor](Entity obj, SkinnedModelRenderer& comp) -> bool {
+
+			bool dirty = false;
+
+
+			Ref<SkinnedModel> model = comp._model;
+			std::string model_name = "None (Model)";
+			if (model)
+			{
+				model_name = model->GetName();
+			}
+
+			ImVec2 content_ava = ImGui::GetContentRegionAvail();
+			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 button_size = { content_ava.x, line_height };
+			if (ImGui::Button(model_name.c_str(), button_size))
+			{
+				
+			}
+			
+			std::string mat_name = "None";
+			if (comp._material)
+			{
+				mat_name = comp._material->GetName();
+			}
+
+			ImGui::Text("Material :");
+			ImGui::SameLine();
+			ImGui::Button(mat_name.c_str(), button_size);
+
+			if (ImGui::IsItemClicked())
+			{
+				ImGui::OpenPopup("ALL_MATERIALS");
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trmat"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::filesystem::path p = buf;
+					Ref<MaterialInstance> mt_res = MaterialSerializer::Deserialize(p.string());;
+					if (mt_res)
+					{
+						comp._material = mt_res;
+						dirty = true;
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			std::string mat_res = editor->DrawMaterialsPopup();
+			if (!mat_res.empty())
+			{
+				std::filesystem::path p = mat_res;
 				Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
 				if (mt_res);
 				else mt_res = MaterialSerializer::Deserialize(p.string());
@@ -619,6 +694,33 @@ namespace trace {
 
 
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Cast Shadows", &comp.cast_shadow), Cast_Shadows) {}
+
+			std::string skeleton_name = "None";
+			if (comp.GetSkeleton())
+			{
+				skeleton_name = comp.GetSkeleton()->GetName();
+			}
+
+			ImGui::Text("Skeletion :");
+			ImGui::SameLine();
+			ImGui::Button(skeleton_name.c_str(), button_size);
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trcsk"))
+				{
+					static char buf[1024] = { 0 };
+					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+					std::filesystem::path p = buf;
+					Ref<Skeleton> _res = AnimationsSerializer::DeserializeSkeleton(p.filename().string());
+					if (_res)
+					{
+						comp.SetSkeleton(_res, obj.GetScene(), obj.GetID());
+						dirty = true;
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
 
 			return dirty;
 			}
@@ -776,7 +878,7 @@ namespace trace {
 		comp_dirty = comp_dirty || DrawComponent<AnimationComponent>(entity, "Animation", [&](Entity obj, AnimationComponent& comp) -> bool {
 
 			bool dirty = false;
-			Ref<AnimationGraph> graph = comp.anim_graph;
+			Ref<AnimationGraph> graph = comp.GetAnimationGraph();
 			std::string graph_name = "None (Animation Graph)";
 			if (graph)
 			{
@@ -803,7 +905,7 @@ namespace trace {
 					else ag = AnimationsSerializer::DeserializeAnimationGraph(p.string());
 					if (ag)
 					{
-						comp.anim_graph = ag;
+						comp.SetAnimationGraph(ag);
 						dirty = true;
 					}
 				}
@@ -969,6 +1071,7 @@ namespace trace {
 
 			return dirty;
 			});
+
 
 		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
 

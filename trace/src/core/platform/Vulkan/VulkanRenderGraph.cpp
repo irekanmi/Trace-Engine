@@ -414,7 +414,7 @@ namespace vk {
 		clear_color.depthStencil.depth = *pass_handle->physical_pass.depth_value;
 		clear_color.depthStencil.stencil = *pass_handle->physical_pass.stencil_value;
 
-		VkClearValue clear_colors[10] = {};
+		VkClearValue clear_colors[20] = {};
 
 		uint32_t clear_count = 0;
 		for (auto& tex : pass->GetAttachmentOutputs())

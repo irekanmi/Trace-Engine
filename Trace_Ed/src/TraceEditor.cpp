@@ -126,7 +126,7 @@ namespace trace {
 		m_currentScene.release();
 		m_editScene.release();
 		m_editSceneDuplicate.release();
-		UIFunc::ShutdownUIRenderBackend();
+		
 
 
 		delete m_importer;
@@ -145,7 +145,9 @@ namespace trace {
 		case SceneEdit:
 		{
 			if (m_viewportFocused || m_viewportHovered)
+			{
 				m_editorCamera.Update(deltaTime);
+			}
 
 			Renderer* renderer = Renderer::get_instance();
 
@@ -416,6 +418,7 @@ namespace trace {
 		else
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f,0.0f, 0.0f, 1.0f));
 			ImGui::Begin("Scene Viewport", 0, ImGuiWindowFlags_NoCollapse);
 			ImVec2 view_size = ImGui::GetContentRegionAvail();
 			glm::vec2 v_size = { view_size.x, view_size.y };
@@ -451,6 +454,7 @@ namespace trace {
 			ImGui::End();
 
 			ImGui::PopStyleVar();
+			ImGui::PopStyleColor();
 		}
 		
 	}
@@ -855,7 +859,7 @@ namespace trace {
 				glm::value_ptr(cam_view),
 				glm::value_ptr(proj),
 				(ImGuizmo::OPERATION)gizmo_mode,
-				ImGuizmo::MODE::LOCAL,
+				ImGuizmo::MODE::WORLD,
 				glm::value_ptr(transform),
 				nullptr,// TODO: Check Docs {deltaMatrix}
 				false,// snap
@@ -1312,7 +1316,7 @@ project "{}"
 		Project* res = new Project(); // TODO: Use custom allocator
 		res->SetName(name);
 
-		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ } };
+		result = { res, [](Resource* res) { delete res;/*TODO: Use custom allocator*/ } };
 		ProjectSerializer::Serialize(result, dir + "/" + name + ".trproj");
 
 		

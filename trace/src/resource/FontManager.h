@@ -24,7 +24,7 @@ namespace trace {
 		Ref<Font> LoadFont_(const std::string& path);
 		Ref<Font> GetFont(const std::string& name);
 		std::string GetFontResourcePath() { return font_resource_path.string(); }
-		void UnloadFont(Font* font);
+		void UnloadFont(Resource* res);
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{
 			m_assetMap = map;

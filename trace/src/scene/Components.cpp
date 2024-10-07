@@ -1,9 +1,10 @@
 #include "pch.h"
 
-#include "Components.h"
 #include "Entity.h"
 #include "scene/Scene.h"
+#include "Components.h"
 #include "animation/AnimationGraph.h"
+
 
 namespace trace {
 
@@ -16,7 +17,7 @@ namespace trace {
             return false;
         }
 
-        if (!anim_graph)
+        if (!m_animGraph)
         {
             return false;
         }
@@ -26,7 +27,7 @@ namespace trace {
             entities.clear();
         }
 
-        std::vector<AnimationState>& states = anim_graph->GetStates();
+        std::vector<AnimationState>& states = m_animGraph->GetStates();
 
         for (AnimationState& state : states)
         {
@@ -45,7 +46,7 @@ namespace trace {
 
                 if (parent_entity)
                 {
-                    entities[parent_entity.GetComponent<TagComponent>()._tag] = parent_entity.GetID();
+                    entities[parent_entity.GetComponent<TagComponent>().GetTag()] = parent_entity.GetID();
                 }
                 break;
             }
@@ -83,6 +84,37 @@ namespace trace {
         }
 
         return true;
+    }
+
+    void AnimationComponent::SetAnimationGraph(Ref<AnimationGraph> animation_graph)
+    {
+        if (!animation_graph)
+        {
+            return;
+        }
+
+        m_animGraph = animation_graph;
+        runtime_graph = *(m_animGraph.get());
+        
+        runtime_graph.SetAsRuntime();
+    }
+
+    void TagComponent::SetTag(const std::string& name)
+    {
+        m_tag = name;
+        m_id = std::hash<std::string>{}(name);
+    }
+
+    void SkinnedModelRenderer::SetSkeleton(Ref<Skeleton> skeleton, Scene* scene, UUID id)
+    {
+        if (!skeleton)
+        {
+            return;
+        }
+
+        m_skeleton = skeleton;
+        runtime_skeleton = *(skeleton.get());
+        runtime_skeleton.SetAsRuntime(scene, id);
     }
 
 }

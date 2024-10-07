@@ -39,9 +39,43 @@ namespace trace {
 		}
 
 		template<typename T>
+		Ref<T> CreateAssetHandle_(const std::string& path)
+		{
+			std::filesystem::path p(path);
+			std::string name = p.filename().string();
+			Ref<T> result;
+			result = Get<T>(name);
+
+			if (result)
+			{
+				return result;
+			}
+
+			result = Ref(GetNextValidHandle<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			Resource* asset = (Resource*)result.get();
+			asset->m_path = path;
+			return result;
+		}
+
+		template<typename T>
 		Ref<T> Get(const std::string& name)
 		{
-			Ref<T> result = Ref(GetAsset<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			Ref<T> result;
+			T* _asset = nullptr;
+			uint32_t& _id = m_hashtable.Get_Ref(name);
+			if (_id == INVALID_ID)
+			{
+				TRC_WARN("These asset has not been created , \"{}\"", name);
+				return result;
+			}
+			_asset = (T*)m_assets[_id];
+			if (_asset->m_id == INVALID_ID)
+			{
+				TRC_WARN("These asset has been destroyed , \"{}\"", name);
+				_id = INVALID_ID;
+				return result;
+			}
+			result = Ref{ _asset , BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad) };
 			return result;
 		}
 
@@ -59,6 +93,22 @@ namespace trace {
 			return Ref<T>();
 		}
 
+		template<typename T>
+		void InvalidateHandle(Ref<T> handle)
+		{
+			if (!handle)
+			{
+				return;
+			}
+			const std::string& name = handle->GetName();
+			m_hashtable.Set(name, INVALID_ID);
+
+			m_assets[handle->m_id] = nullptr;
+			handle->m_id = INVALID_ID;
+			delete handle;//TODO: Use custom allocator
+		}
+
+		static GenericAssetManager* get_instance();
 	private:
 	protected:
 		std::vector<Resource*> m_assets;
@@ -76,13 +126,13 @@ namespace trace {
 			uint32_t& _id = m_hashtable.Get_Ref(name);
 			if (_id == INVALID_ID)
 			{
-				TRC_WARN("These scene has not been created , \"{}\"", name);
+				TRC_WARN("These asset has not been created , \"{}\"", name);
 				return _asset;
 			}
 			_asset = m_assets[_id];
 			if (_asset->m_id == INVALID_ID)
 			{
-				TRC_WARN("These scene has been destroyed , \"{}\"", name);
+				TRC_WARN("These asset has been destroyed , \"{}\"", name);
 				_id = INVALID_ID;
 				return nullptr;
 			}
@@ -103,7 +153,7 @@ namespace trace {
 					asset = new T; //TODO: Use custom memory allocator
 					m_assets[i] = asset;
 					m_hashtable.Set(name, i);
-					_asset = asset;
+					_asset = (T*)asset;
 					_asset->m_id = i;
 					break;
 				}

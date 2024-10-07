@@ -11,6 +11,7 @@
 namespace trace {
 
 	class Entity;
+	using StringID = size_t;
 
 	class Scene : public Resource
 	{
@@ -40,7 +41,12 @@ namespace trace {
 		Entity CreateEntity_UUIDWithParent(UUID id,const std::string& _tag, UUID parent = 0);
 		Entity GetEntity(UUID uuid);
 		Entity GetEntityByName(const std::string& name);
+		Entity GetEntityByName(StringID name);
 		Entity GetChildEntityByName(Entity parent, const std::string& name);
+		Entity GetChildEntityByName(Entity parent, StringID name);
+		Entity GetParentByName(Entity entity, std::string parent_name);
+		Entity GetParentByName(Entity entity, StringID parent_name);
+		Entity GetParentWithAnimation(Entity entity);
 		Entity DuplicateEntity(Entity entity);
 		bool CopyEntity(Entity entity, Entity src);
 		void DestroyEntity(Entity entity);
@@ -56,7 +62,7 @@ namespace trace {
 		Transform GetEntityWorldTransform(Entity entity);
 		ScriptRegistry& GetScriptRegistry() { return m_scriptRegistry; }
 
-		Transform GetEntityGlobalPose(Entity entity);
+		Transform GetEntityGlobalPose(Entity entity, bool recompute = false);
 
 
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);
@@ -97,6 +103,10 @@ namespace trace {
 		void OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent);
 		void OnConstructRigidBodyComponent(entt::registry& reg, entt::entity ent);
 		void OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent);
+
+
+		void OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);
+		void OnDestroySkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);
 
 		entt::registry m_registry;
 		ScriptRegistry m_scriptRegistry;

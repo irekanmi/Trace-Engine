@@ -177,9 +177,10 @@ namespace trace {
 		return result;
 	}
 
-	void AnimationsManager::UnloadClip(AnimationClip* clip)
+	void AnimationsManager::UnloadClip(Resource* res)
 	{
-		
+		AnimationClip* clip = (AnimationClip*)res;
+
 		clip->m_id = INVALID_ID;
 		clip->GetTracks().clear();
 	}
@@ -323,8 +324,10 @@ namespace trace {
 		return result;
 	}
 
-	void AnimationsManager::UnloadGraph(AnimationGraph* graph)
+	void AnimationsManager::UnloadGraph(Resource* res)
 	{
+		AnimationGraph* graph = (AnimationGraph*)res;
+
 		if (graph->m_refCount > 0)
 		{
 			TRC_WARN("{} Graph is still in use", graph->GetName());

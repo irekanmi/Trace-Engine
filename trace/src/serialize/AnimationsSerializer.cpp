@@ -4,6 +4,7 @@
 #include "core/FileSystem.h"
 #include "resource/AnimationsManager.h"
 #include "MemoryStream.h"
+#include "resource/GenericAssetManager.h"
 
 #include "yaml_util.h"
 
@@ -25,6 +26,8 @@ namespace trace {
 		emit << YAML::Key << "Sample Rate" << YAML::Value << clip->GetSampleRate();
 		emit << YAML::Key << "Clip Type" << YAML::Value << (int)clip->GetType();
 		emit << YAML::Key << "Channels" << YAML::Value << YAML::BeginSeq;
+
+
 
 		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
 		for (auto& uuid : clip->GetTracks())
@@ -142,6 +145,14 @@ namespace trace {
 	{
 		Ref<AnimationClip> result;
 
+		std::filesystem::path p = file_path;
+		Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(p.filename().string());
+		if (clip)
+		{
+			TRC_WARN("{} has already been loaded", p.filename().string());
+			return clip;
+		}
+
 		FileHandle in_handle;
 		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
 		{
@@ -163,12 +174,7 @@ namespace trace {
 		std::string clip_version = data["Clip Version"].as<std::string>(); // TODO: To be used later
 		std::string clip_name = data["Clip Name"].as<std::string>();
 		
-		Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(clip_name);
-		if (clip)
-		{
-			TRC_WARN("{} has already been loaded", clip_name);
-			return clip;
-		}
+		
 		clip = AnimationsManager::get_instance()->LoadClip_(file_path);
 
 		float duration = data["Duration"].as<float>();
@@ -177,6 +183,7 @@ namespace trace {
 		clip->SetSampleRate(rate);
 		clip->SetDuration(duration);
 		clip->SetType(type);
+
 
 		std::unordered_map<std::string, std::vector<AnimationTrack>>& clip_tracks = clip->GetTracks();
 		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
@@ -466,6 +473,100 @@ namespace trace {
 		}
 
 		delete[] data;// TODO: Use custom allocator
+	}
+
+	bool AnimationsSerializer::SerializeSkeleton(Ref<Skeleton> skeleton, const std::string& file_path)
+	{
+		if (!skeleton)
+		{
+			return false;
+		}
+
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Skeleton Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Skeleton Name" << YAML::Value << skeleton->GetName();
+		emit << YAML::Key << "Root Node" << YAML::Value << skeleton->GetRootNode();
+
+		emit << YAML::Key << "Bones" << YAML::Value << YAML::BeginSeq;
+
+
+		for (Bone& bone : skeleton->GetBones())
+		{
+
+			emit << YAML::BeginMap;
+			emit << YAML::Key << "Bone Name" << YAML::Value << bone.GetBoneName();
+			emit << YAML::Key << "Bind Pose" << YAML::Value << bone.GetBindPose();
+			emit << YAML::Key << "Bone Offset" << YAML::Value << bone.GetBoneOffset();
+			emit << YAML::EndMap;
+		}
+
+		emit << YAML::EndSeq;
+		emit << YAML::EndMap;
+
+		FileHandle out_handle;
+		if (FileSystem::open_file(file_path, FileMode::WRITE, out_handle))
+		{
+			FileSystem::writestring(out_handle, emit.c_str());
+			FileSystem::close_file(out_handle);
+		}
+
+		return true;
+	}
+
+	Ref<Skeleton> AnimationsSerializer::DeserializeSkeleton(const std::string& file_path)
+	{
+		Ref<Skeleton> result;
+
+		std::filesystem::path p = file_path;
+		Ref<Skeleton> skeleton = GenericAssetManager::get_instance()->Get<Skeleton>(p.filename().string());
+		if (skeleton)
+		{
+			TRC_WARN("{} has already been loaded", p.filename().string());
+			return skeleton;
+		}
+
+		FileHandle in_handle;
+		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
+		{
+			TRC_ERROR("Unable to open file {}", file_path);
+			return result;
+		}
+		std::string file_data;
+		FileSystem::read_all_lines(in_handle, file_data);
+		FileSystem::close_file(in_handle);
+
+		YAML::Node data = YAML::Load(file_data);
+		if (!data["Trace Version"] || !data["Skeleton Version"] || !data["Skeleton Name"])
+		{
+			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
+			return result;
+		}
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+		std::string skeleton_version = data["Skeleton Version"].as<std::string>(); // TODO: To be used later
+		std::string skeleton_name = data["Skeleton Name"].as<std::string>();
+		std::string root_node = data["Root Node"].as<std::string>();
+
+		std::vector<Bone> bones;
+		for (auto& bone : data["Bones"])
+		{
+			std::string bone_name = bone["Bone Name"].as<std::string>();
+			glm::mat4 bind_pose = bone["Bind Pose"].as<glm::mat4>();
+			glm::mat4 bone_offset = bone["Bone Offset"].as<glm::mat4>();
+
+			Bone bone_ins;
+			bone_ins.Create(bone_name, bind_pose, bone_offset);
+
+			bones.push_back(bone_ins);
+		}
+
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Skeleton>(file_path);
+		result->Create(skeleton_name, root_node,bones);
+
+		return result;
 	}
 
 }

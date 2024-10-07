@@ -198,8 +198,9 @@ namespace trace {
 		return result;
 	}
 
-	void ShaderManager::UnloadShader(GShader* shader)
+	void ShaderManager::UnloadShader(Resource* res)
 	{
+		GShader* shader = (GShader*)res;
 		// TODO: Implement Shader Unloading
 	}
 

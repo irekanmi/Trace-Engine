@@ -40,4 +40,17 @@ namespace trace {
 	{
 		return m_scene->m_scriptRegistry.RemoveScript(GetID(), handle);
 	}
+	bool Entity::HasParent()
+	{
+		return GetComponent<HierachyComponent>().HasParent();
+	}
+	Entity Entity::GetParent()
+	{
+		if (m_scene && HasParent())
+		{
+			return m_scene->GetEntity(GetComponent<HierachyComponent>().parent);
+		}
+
+		return Entity();
+	}
 }

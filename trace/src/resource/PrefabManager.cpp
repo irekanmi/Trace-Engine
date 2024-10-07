@@ -65,8 +65,9 @@ namespace trace {
 		return result;
 	}
 
-	void PrefabManager::UnLoad(Prefab* asset)
+	void PrefabManager::UnLoad(Resource* res)
 	{
+		Prefab* asset = (Prefab*)res;
 		AssetManager::UnLoad(asset);
 		m_prefabScene->DestroyEntity(m_prefabScene->GetEntity(asset->GetHandle()));
 	}

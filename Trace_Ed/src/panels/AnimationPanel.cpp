@@ -506,7 +506,7 @@ namespace trace {
         {
             AnimationComponent& anim_comp = object.GetComponent<AnimationComponent>();
 
-            if (anim_comp.anim_graph && anim_comp.anim_graph->HasAnimationClip(clip))
+            if (anim_comp.GetAnimationGraph() && anim_comp.GetAnimationGraph()->HasAnimationClip(clip))
             {
                 anim_comp.InitializeEntities(edit_scene.get(), object.GetID(), true);
                 current_entity_id = object.GetID();
@@ -575,7 +575,7 @@ namespace trace {
         }
         }
 
-        std::vector<AnimationTrack>& tracks = m_currentClip->GetTracks()[entity.GetComponent<TagComponent>()._tag];
+        std::vector<AnimationTrack>& tracks = m_currentClip->GetTracks()[entity.GetComponent<TagComponent>().GetTag()];
         auto it = std::find_if(tracks.begin(), tracks.end(), [&](AnimationTrack& t) {
             return t.channel_type == type;
             });

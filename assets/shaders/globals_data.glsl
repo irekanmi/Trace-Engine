@@ -23,7 +23,7 @@
 
 
 
-#define OUT_FRAG_DATA layout(location = 0)out vec4 g_Position; layout(location = 1)out vec4 g_Normal; layout(location = 2)out uvec4 g_ColorSpecular;
+#define OUT_FRAG_DATA layout(location = 0)out vec4 g_Position; layout(location = 1)out vec4 g_Normal; layout(location = 2)out uvec4 g_ColorSpecular; layout(location = 3)out vec4 g_Emission;
 #define FRAG_POS g_Position.xyz
 #define FRAG_POS_X g_Position.x
 #define FRAG_POS_Y g_Position.y

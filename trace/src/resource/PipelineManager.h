@@ -31,7 +31,7 @@ namespace trace {
 		Ref<GPipeline> GetPipeline(const std::string& name);
 		Ref<GPipeline> GetDefault(const std::string& name);
 		bool RecreatePipeline(Ref<GPipeline> pipeline, PipelineStateDesc desc);
-		void Unload(GPipeline* pipeline);
+		void Unload(Resource* res);
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{
 			m_assetMap = map;
@@ -57,6 +57,7 @@ namespace trace {
 		Ref<GPipeline> skybox_pipeline;
 		Ref<GPipeline> light_pipeline;
 		Ref<GPipeline> gbuffer_pipeline;
+		Ref<GPipeline> skinned_gbuffer_pipeline;
 		Ref<GPipeline> text_batch_pipeline;
 		Ref<GPipeline> text_pipeline;
 		Ref<GPipeline> quad_pipeline;

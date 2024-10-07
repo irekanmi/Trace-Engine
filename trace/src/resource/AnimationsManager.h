@@ -25,14 +25,14 @@ namespace trace {
 		Ref<AnimationClip> LoadClip(const std::string& name);
 		Ref<AnimationClip> LoadClip_(const std::string& path);
 		Ref<AnimationClip> GetClip(const std::string& name);
-		void UnloadClip(AnimationClip* clip);
+		void UnloadClip(Resource* clip);
 		Ref<AnimationClip> LoadClip_Runtime(UUID id);
 
 		Ref<AnimationGraph> CreateGraph(const std::string& name);
 		Ref<AnimationGraph> LoadGraph(const std::string& name);
 		Ref<AnimationGraph> LoadGraph_(const std::string& path);
 		Ref<AnimationGraph> GetGraph(const std::string& name);
-		void UnloadGraph(AnimationGraph* graph);
+		void UnloadGraph(Resource* graph);
 		Ref<AnimationGraph> LoadGraph_Runtime(UUID id);
 
 		void SetClipsAssetMap(std::unordered_map<UUID, AssetHeader> map)

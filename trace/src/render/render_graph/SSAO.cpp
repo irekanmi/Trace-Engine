@@ -209,8 +209,8 @@ namespace trace {
 		GBufferData& gbuffer_data = black_board.get<GBufferData>();
 		SSAOData& ssao_data = black_board.add<SSAOData>();
 
-		ssao_main_desc.m_width = fd.frame_width;
-		ssao_main_desc.m_height = fd.frame_height;
+		ssao_main_desc.m_width = fd.frame_width / 2;
+		ssao_main_desc.m_height = fd.frame_height / 2;
 		
 
 		main_pass->AddColorAttachmentInput(

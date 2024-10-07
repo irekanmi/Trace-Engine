@@ -16,9 +16,10 @@ namespace trace {
 		uint32_t normal_index = INVALID_ID;
 		uint32_t color_index = INVALID_ID;
 		uint32_t depth_index = INVALID_ID;
+		uint32_t emissive_index = INVALID_ID;
 	};
 
-	struct LightningData
+	struct LightingData
 	{
 		uint32_t light_output = INVALID_ID;
 	};

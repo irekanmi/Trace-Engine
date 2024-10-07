@@ -17,6 +17,8 @@ namespace trace {
 	typedef bool (*__UINewFrame)();
 	typedef bool (*__UIEndFrame)();
 	typedef bool (*__GetDrawTextureHandle)(GTexture*, void*&);
+	typedef bool (*__CreateTextureHandle)(GTexture*);
+	typedef bool (*__DestroyTextureHandle)(GTexture*);
 	typedef bool (*__GetDrawRenderGraphTextureHandle)(RenderGraphResource*, void*&);
 	typedef bool (*__UIRenderFrame)(Renderer*);
 	typedef bool (*__ShutdownUIRenderBackend)();
@@ -40,6 +42,8 @@ namespace trace {
 		static bool UIRenderFrame(Renderer* renderer);
 		static bool ShutdownUIRenderBackend();
 		static bool GetDrawTextureHandle(GTexture* texture, void*& out_handle);
+		static bool CreateTextureHandle(GTexture* texture);
+		static bool DestroyTextureHandle(GTexture* texture);
 		static bool GetDrawRenderGraphTextureHandle(RenderGraphResource* texture, void*& out_handle);
 
 	private:
@@ -48,6 +52,8 @@ namespace trace {
 		static __UIEndFrame _uiEndFrame;
 		static __UIRenderFrame _uiRenderFrame;
 		static __ShutdownUIRenderBackend _shutdownUIRenderBackend;
+		static __CreateTextureHandle _createTextureHandle;
+		static __DestroyTextureHandle _destroyTextureHandle;
 		static __GetDrawTextureHandle _getDrawTextureHandle;
 		static __GetDrawRenderGraphTextureHandle _getDrawRenderGraphTextureHandle;
 

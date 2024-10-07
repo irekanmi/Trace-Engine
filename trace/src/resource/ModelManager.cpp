@@ -115,8 +115,9 @@ namespace trace {
 		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
 		return result;
 	}
-	void ModelManager::UnLoadModel(Model* model)
+	void ModelManager::UnLoadModel(Resource* res)
 	{
+		Model* model = (Model*)res;
 
 		if (!model)
 			return;

@@ -208,7 +208,7 @@ namespace trace {
 		FrameData& fd = black_board.get<FrameData>();
 		BloomData& bd = black_board.add<BloomData>();
 
-		bd.samples_count = 5;
+		bd.samples_count = 4;
 		for (uint32_t i = 0; i < bd.samples_count; i++)
 		{
 			bd.bloom_samples[i] = INVALID_ID;

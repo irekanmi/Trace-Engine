@@ -99,8 +99,10 @@ namespace trace {
 		TRC_ASSERT(false, "Implement Funtion {}", __FUNCTION__);
 		return { nullptr, BIND_RESOURCE_UNLOAD_FN(SceneManager::UnloadScene, this) };
 	}
-	void SceneManager::UnloadScene(Scene* scene)
+	void SceneManager::UnloadScene(Resource* res)
 	{
+		Scene* scene = (Scene*)res;
+
 		if (scene->m_refCount > 0)
 		{
 			TRC_WARN("{} scene is still in use", __FUNCTION__);//TODO: Replace __FUNCION__ with scene name

@@ -77,6 +77,6 @@ namespace trace {
 		static std::string exe_path;
 	};
 
-	
+	using StringID = size_t;
 
 }

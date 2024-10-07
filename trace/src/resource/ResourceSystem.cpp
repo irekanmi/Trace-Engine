@@ -11,6 +11,7 @@
 #include "scene/SceneManager.h"
 #include "AnimationsManager.h"
 #include "PrefabManager.h"
+#include "GenericAssetManager.h"
 
 namespace trace {
 
@@ -50,6 +51,9 @@ namespace trace {
 		result = result && PrefabManager::get_instance()->Init(4096);
 		TRC_ASSERT(result, "Failed to initialized Prefab manager");
 
+		result = result && GenericAssetManager::get_instance()->Init(8192);
+		TRC_ASSERT(result, "Failed to initialized GenericAssetManager manager");
+
 
 		return result;
 	}
@@ -57,6 +61,7 @@ namespace trace {
 	{
 		//NOTE: The resource destroys the scene manager because scenes are also resources
 
+		GenericAssetManager::get_instance()->Shutdown();
 		PrefabManager::get_instance()->Shutdown();
 		AnimationsManager::get_instance()->Shutdown();
 		MeshManager::get_instance()->ShutDown();

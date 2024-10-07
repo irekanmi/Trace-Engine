@@ -171,8 +171,9 @@ namespace trace {
 		return result;
 	}
 
-	void FontManager::UnloadFont(Font* font)
+	void FontManager::UnloadFont(Resource* res)
 	{
+		Font* font = (Font*)res;
 		// TODO: Destroy unreferenced font
 	}
 

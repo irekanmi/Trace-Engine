@@ -21,7 +21,7 @@ namespace trace {
 		Ref<Scene> GetScene(const std::string& name);
 		Ref<Scene> CreateScene_(const std::string& file_path);
 
-		void UnloadScene(Scene* scene);
+		void UnloadScene(Resource* res);
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{
 			m_assetMap = map;

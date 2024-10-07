@@ -147,8 +147,10 @@ namespace trace {
 
 		return true;
 	}
-	void PipelineManager::Unload(GPipeline* pipeline)
+	void PipelineManager::Unload(Resource* res)
 	{
+		GPipeline* pipeline = (GPipeline*)res;
+
 		if (pipeline->m_refCount > 0)
 		{
 			TRC_WARN("Can't unload a pipeline that is still in use");
@@ -553,6 +555,38 @@ namespace trace {
 				return false;
 			}
 			gbuffer_pipeline->SetPipelineType(PipelineType::Surface_Material);
+
+
+		};
+
+		{
+
+			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("skinned_model.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("parallelex_brdf.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
+			ShaderParser::generate_shader_resources(FragShader.get(), s_res);
+
+			PipelineStateDesc _ds;
+			_ds.vertex_shader = VertShader.get();
+			_ds.pixel_shader = FragShader.get();
+			_ds.resources = s_res;
+
+			AutoFillPipelineDesc(
+				_ds,false
+			);
+			_ds.input_layout = SkinnedVertex::get_input_layout();
+			_ds.render_pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
+			_ds.blend_state.alpha_to_blend_coverage = false;
+
+			skinned_gbuffer_pipeline = CreatePipeline(_ds, "skinned_gbuffer_pipeline");
+			if (!skinned_gbuffer_pipeline)
+			{
+				TRC_ERROR("Failed to initialize or create default skinned gbuffer pipeline");
+				return false;
+			}
+			skinned_gbuffer_pipeline->SetPipelineType(PipelineType::Surface_Material);
 
 
 		};

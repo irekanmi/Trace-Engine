@@ -25,7 +25,9 @@ namespace trace {
 
 	private:
 		Ref<GPipeline> m_sun_pipeline;
+		Ref<GPipeline> m_sun_skinned_pipeline;
 		Ref<GPipeline> m_spot_pipeline;
+		Ref<GPipeline> m_spot_skinned_pipeline;
 		Ref<GPipeline> m_point_pipeline;
 
 	protected:

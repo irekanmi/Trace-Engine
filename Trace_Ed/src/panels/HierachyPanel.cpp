@@ -103,7 +103,7 @@ namespace trace {
 		ImGuiTreeNodeFlags tree_flags = ( selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 		TagComponent& tag = editor->GetCurrentScene()->m_registry.get<TagComponent>(entity);
 		void* id = (void*)(uint64_t)(uint32_t)entity;
-		bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+		bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 
 		if (ImGui::IsItemClicked())
 		{
@@ -159,7 +159,7 @@ namespace trace {
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
-			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
 
 			if (ImGui::BeginDragDropSource())
@@ -263,7 +263,7 @@ namespace trace {
 
 
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
-			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
 
 
@@ -367,7 +367,7 @@ namespace trace {
 
 
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
-			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
 
 
@@ -481,7 +481,7 @@ namespace trace {
 
 
 				if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
-				bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag._tag.c_str());
+				bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 				if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
 
 

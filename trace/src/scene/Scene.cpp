@@ -109,21 +109,15 @@ namespace trace {
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.anim_graph)
+			if (!anim_comp.GetAnimationGraph())
 			{
 				continue;
 			}
 			Entity entity(i, this);
 			anim_comp.InitializeEntities(this, entity.GetID());
-			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
-			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
-			if (!current_state.GetAnimationClip())
-			{
-				continue;
-			}
 			if (anim_comp.play_on_start)
 			{
-				current_state.Play();
+				anim_comp.runtime_graph.Start();
 			}
 		}
 
@@ -201,11 +195,11 @@ namespace trace {
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.anim_graph) continue;
-			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
-			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
-			if (!current_state.GetAnimationClip()) continue;
-			current_state.Stop();
+			//if (!anim_comp.anim_graph) continue;
+			//anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
+			//AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
+			//if (!current_state.GetAnimationClip()) continue;
+			//current_state.Stop();
 		}
 
 		if (m_physics3D)
@@ -325,18 +319,18 @@ namespace trace {
 		auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
+			Entity entity(i, this);
 			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.anim_graph)
+			if (!anim_comp.GetAnimationGraph())
 			{
 				continue;
 			}
-			anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
-			AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
-			if (!current_state.GetAnimationClip())
+
+			if (!anim_comp.runtime_graph.HasStarted())
 			{
 				continue;
 			}
-			AnimationEngine::get_instance()->Animate(current_state, this, anim_comp.entities);
+			AnimationEngine::get_instance()->Animate(&anim_comp, entity.GetID(), this);
 		}
 
 	}
@@ -481,6 +475,23 @@ namespace trace {
 
 		}
 
+		auto skinned_model_view = m_registry.view<SkinnedModelRenderer, HierachyComponent>();
+
+		for (auto entity : skinned_model_view)
+		{
+			Entity obj(entity, this);
+			auto [model_renderer, transform] = skinned_model_view.get(entity);
+
+			if (!model_renderer._material || !model_renderer._model || !model_renderer.GetSkeleton())
+			{
+				continue;
+			}
+			model_renderer.runtime_skeleton.GetGlobalPose(this, model_renderer.bone_transforms, obj.GetID());
+			renderer->DrawSkinnedModel(cmd_list, model_renderer._model, model_renderer._material, transform.transform, model_renderer.bone_transforms.data(), model_renderer.bone_transforms.size(), model_renderer.cast_shadow);
+
+
+		}
+
 		auto text_view = m_registry.view<TextComponent, HierachyComponent>();
 
 		for (auto entity : text_view)
@@ -541,7 +552,7 @@ namespace trace {
 		entt::entity handle = m_registry.create();
 		Entity entity(handle, this);
 		TagComponent& tag = entity.AddComponent<TagComponent>();
-		tag._tag = _tag.empty() ? "New Entity" : _tag;
+		tag.SetTag(_tag.empty() ? "New Entity" : _tag);
 		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<IDComponent>()._id = id;
 		m_entityMap[id] = entity;
@@ -574,13 +585,33 @@ namespace trace {
 
 	Entity Scene::GetEntityByName(const std::string& name)
 	{
+
 		auto tag_view = m_registry.view<TagComponent>();
 
 		for (auto entity : tag_view)
 		{
 			auto [tag] = tag_view.get(entity);
 
-			if (tag._tag == name)
+			if (tag.GetStringID() == std::hash<std::string>{}(name))
+			{
+				Entity en(entity, this);
+				return en;
+			}
+
+		}
+
+		return Entity();
+	}
+
+	Entity Scene::GetEntityByName(StringID name)
+	{
+		auto tag_view = m_registry.view<TagComponent>();
+
+		for (auto entity : tag_view)
+		{
+			auto [tag] = tag_view.get(entity);
+
+			if (tag.GetStringID() == name)
 			{
 				Entity en(entity, this);
 				return en;
@@ -599,7 +630,7 @@ namespace trace {
 			Entity child = GetEntity(child_id);
 			TagComponent& tag = child.GetComponent<TagComponent>();
 
-			if (tag._tag == name)
+			if (tag.GetStringID() == std::hash<std::string>{}(name))
 			{
 				return child;
 			}
@@ -613,6 +644,70 @@ namespace trace {
 		}
 
 		return Entity();
+	}
+
+	Entity Scene::GetChildEntityByName(Entity parent, StringID name)
+	{
+		for (UUID& child_id : parent.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = GetEntity(child_id);
+			TagComponent& tag = child.GetComponent<TagComponent>();
+
+			if (tag.GetStringID() == name)
+			{
+				return child;
+			}
+
+			Entity result = GetChildEntityByName(child, name);
+
+			if (result)
+			{
+				return result;
+			}
+		}
+
+		return Entity();
+	}
+
+	Entity Scene::GetParentByName(Entity entity, std::string parent_name)
+	{
+		return GetParentByName(entity, std::hash<std::string>{}(parent_name));
+	}
+
+	Entity Scene::GetParentByName(Entity entity, StringID parent_name)
+	{
+		Entity parent = entity.GetParent();
+
+		Entity result;
+		while (parent)
+		{
+			if (parent.GetComponent<TagComponent>().GetStringID() == parent_name)
+			{
+				result = parent;
+				break;
+			}
+
+			parent = parent.GetParent();
+		}
+		return result;
+	}
+
+	Entity Scene::GetParentWithAnimation(Entity entity)
+	{
+		Entity parent = entity.GetParent();
+
+		Entity anim_obj;
+		while (parent)
+		{
+			if (parent.HasComponent<AnimationComponent>())
+			{
+				anim_obj = parent;
+				break;
+			}
+
+			parent = parent.GetParent();
+		}
+		return anim_obj;
 	}
 
 	template<typename... Component>
@@ -657,12 +752,23 @@ namespace trace {
 
 	void duplicate_entity_hierachy(Scene* scene, Entity e, Entity parent)
 	{
-		Entity _res = scene->CreateEntity_UUID(UUID::GenUUID(), e.GetComponent<TagComponent>()._tag);
+		Entity _res = scene->CreateEntity_UUID(UUID::GenUUID(), e.GetComponent<TagComponent>().GetTag());
 
 		CopyComponent(AllComponents{}, e, _res);
 		_res.AddOrReplaceComponent<HierachyComponent>();
-
 		scene->SetParent(_res, parent);
+
+		if (e.HasComponent<SkinnedModelRenderer>())
+		{
+			SkinnedModelRenderer& obj_renderer = _res.AddOrReplaceComponent<SkinnedModelRenderer>();
+			SkinnedModelRenderer& skinned_renderer = e.GetComponent<SkinnedModelRenderer>();
+
+			obj_renderer._model = skinned_renderer._model;
+			obj_renderer._material = skinned_renderer._material;
+			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
+			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), scene, _res.GetID());
+		}
+
 
 		scene->GetScriptRegistry().Iterate(e.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
@@ -681,10 +787,17 @@ namespace trace {
 
 	Entity Scene::DuplicateEntity(Entity entity)
 	{
-		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>()._tag);
+		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>().GetTag());		
+
 
 		CopyComponent(AllComponents{}, entity, res);
-		
+		res.AddOrReplaceComponent<HierachyComponent>();
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (GetEntity(entity.GetID()) && hi.HasParent())// The entity arguement is a member of the scene
+		{
+			Entity parent = GetEntity(entity.GetComponent<HierachyComponent>().parent);
+			SetParent(res, parent);
+		}
 
 		
 		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
@@ -694,15 +807,21 @@ namespace trace {
 			});	
 
 
-		res.AddOrReplaceComponent<HierachyComponent>();
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		
 
-		if (GetEntity(entity.GetID()) && hi.HasParent())// The entity arguement is a member of the scene
+		if (entity.HasComponent<SkinnedModelRenderer>())
 		{
-			Entity parent = GetEntity(entity.GetComponent<HierachyComponent>().parent);
-			SetParent(res, parent);
+			SkinnedModelRenderer& obj_renderer = res.AddOrReplaceComponent<SkinnedModelRenderer>();
+			SkinnedModelRenderer& skinned_renderer = entity.GetComponent<SkinnedModelRenderer>();
+
+			obj_renderer._model = skinned_renderer._model;
+			obj_renderer._material = skinned_renderer._material;
+			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
+			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), this, res.GetID());
 		}
 
+
+		
 		Scene* scene = entity.GetScene();
 		for (auto& i : hi.children)
 		{
@@ -717,13 +836,25 @@ namespace trace {
 	{
 		CopyComponentifExits(AllComponents{}, src, entity);
 
+		if (src.HasComponent<SkinnedModelRenderer>())
+		{
+			SkinnedModelRenderer& obj_renderer = entity.AddOrReplaceComponent<SkinnedModelRenderer>();
+			SkinnedModelRenderer& skinned_renderer = src.GetComponent<SkinnedModelRenderer>();
 
+			obj_renderer._model = skinned_renderer._model;
+			obj_renderer._material = skinned_renderer._material;
+			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
+			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), this, entity.GetID());
+		}
 
 		src.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
 				ScriptInstance* sc_ins = entity.AddScript(script->GetID());
 				*sc_ins = *other;
 			});
+
+
+
 		return true;
 	}
 
@@ -828,7 +959,7 @@ namespace trace {
 	{
 		if ((child.GetScene() != this) || (parent.GetScene() != this))
 		{
-			TRC_WARN("One of the entities is not part of the scene, scene name: {}, child: {}, parent: {}", m_name, child.GetComponent<TagComponent>()._tag, parent.GetComponent<TagComponent>()._tag);
+			TRC_WARN("One of the entities is not part of the scene, scene name: {}, child: {}, parent: {}", m_name, child.GetComponent<TagComponent>().GetTag(), parent.GetComponent<TagComponent>().GetTag());
 			return;
 		}
 
@@ -902,12 +1033,12 @@ namespace trace {
 		return transform;
 	}
 
-	Transform Scene::GetEntityGlobalPose(Entity entity)
+	Transform Scene::GetEntityGlobalPose(Entity entity, bool recompute)
 	{
 		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 
 		Transform transform;
-		if (m_running)
+		if (m_running && !recompute)
 		{
 			glm::vec3 pos, skew, scale;
 			glm::vec4 persp;
@@ -1116,6 +1247,14 @@ namespace trace {
 	}
 
 	void Scene::OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent)
+	{
+	}
+
+	void Scene::OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent)
+	{
+	}
+
+	void Scene::OnDestroySkinnedModelRendererComponent(entt::registry& reg, entt::entity ent)
 	{
 	}
 

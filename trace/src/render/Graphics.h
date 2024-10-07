@@ -1,6 +1,10 @@
 #pragma once
 #include "core/Enums.h"
 #include "core/Core.h"
+#include "core/defines.h"
+
+#include <vector>
+#include <string>
 #include "glm/glm.hpp"
 
 #define MAX_LIGHT_COUNT 15
@@ -103,7 +107,8 @@ namespace trace {
 		R8G8B8_UNORM,
 		R8_UNORM,
 		D32_SFLOAT_S8_SUINT,
-		D32_SFLOAT
+		D32_SFLOAT,
+		R32G32B32A32_SINT
 	};
 
 	enum class InputClassification
@@ -529,6 +534,80 @@ namespace trace {
 		}
 
 		bool operator==(const Vertex& other) const {
+			return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
+		}
+
+	};
+
+	struct SkinnedVertex
+	{
+		glm::vec3 pos;
+		glm::vec3 normal;
+		glm::vec2 texCoord;
+		glm::vec4 tangent;
+		int32_t bones_id[MAX_BONE_PER_VERTEX] = {0};
+		float bone_weights[MAX_BONE_PER_VERTEX] = {0.0f};
+
+
+		static InputLayout get_input_layout()
+		{
+			InputLayout layout;
+			layout.stride = sizeof(SkinnedVertex);
+			layout.input_class = InputClassification::PER_VERTEX_DATA;
+
+			InputLayout::Element _pos;
+			_pos.format = Format::R32G32B32_FLOAT;
+			_pos.index = 0;
+			_pos.offset = offsetof(SkinnedVertex, pos);
+			_pos.stride = sizeof(glm::vec3);
+
+			layout.elements.push_back(_pos);
+
+			InputLayout::Element _normal;
+			_normal.format = Format::R32G32B32_FLOAT;
+			_normal.index = 1;
+			_normal.offset = offsetof(SkinnedVertex, normal);
+			_normal.stride = sizeof(glm::vec3);
+
+			layout.elements.push_back(_normal);
+
+			InputLayout::Element _texCoord;
+			_texCoord.format = Format::R32G32_FLOAT;
+			_texCoord.index = 2;
+			_texCoord.offset = offsetof(SkinnedVertex, texCoord);
+			_texCoord.stride = sizeof(glm::vec2);
+
+			layout.elements.push_back(_texCoord);
+
+			InputLayout::Element _tangent;
+			_tangent.format = Format::R32G32B32A32_FLOAT;
+			_tangent.index = 3;
+			_tangent.offset = offsetof(SkinnedVertex, tangent);
+			_tangent.stride = sizeof(glm::vec4);
+
+			layout.elements.push_back(_tangent);
+
+			InputLayout::Element _bones_id;
+			_bones_id.format = Format::R32G32B32A32_SINT;
+			_bones_id.index = 4;
+			_bones_id.offset = offsetof(SkinnedVertex, bones_id);
+			_bones_id.stride = sizeof(int[MAX_BONE_PER_VERTEX]);
+
+			layout.elements.push_back(_bones_id);
+
+
+			InputLayout::Element _bone_weights;
+			_bone_weights.format = Format::R32G32B32A32_FLOAT;
+			_bone_weights.index = 5;
+			_bone_weights.offset = offsetof(SkinnedVertex, bone_weights);
+			_bone_weights.stride = sizeof(float[MAX_BONE_PER_VERTEX]);
+
+			layout.elements.push_back(_bone_weights);
+
+			return layout;
+		}
+
+		bool operator==(const SkinnedVertex& other) const {
 			return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
 		}
 

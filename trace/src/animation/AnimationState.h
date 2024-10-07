@@ -13,6 +13,7 @@ namespace trace {
 
 	};
 
+	class Scene;
 
 	class AnimationState
 	{
@@ -35,18 +36,21 @@ namespace trace {
 		// Anim State-> Play = 1, Paused = 2, Stop = 0
 		uint8_t GetAnimState() { return m_playing; }
 		float GetElaspedTime() { return m_elaspedTime; }
+		AnimationClip& GetRuntimeClip() { return m_runtimeClip; }
 
 		void SetName(const std::string& name) { m_name = name; }
-		void SetAnimationClip(Ref<AnimationClip> clip) { m_clip = clip; }
+		void SetAnimationClip(Ref<AnimationClip> clip);
 		void SetLoop(bool loop) { m_loop = loop; }
 		// Anim State-> Play = 1, Paused = 2, Stop = 0
 		void SetAnimState(uint8_t state) { m_playing = state; }
 		void SetElaspedTime(float value) { m_elaspedTime = value; }
+		void SetAsRuntime();
 
 
 	private:
 		std::string m_name;
 		Ref<AnimationClip> m_clip;
+		AnimationClip m_runtimeClip;
 		bool m_loop;
 		float m_startTime = 0.0f;
 		uint8_t m_playing = 0; // 0 == stoped or hasn't been played, 1 == playing, 2 == paused

@@ -58,7 +58,7 @@ namespace trace {
 		res->SetAssemblyPath((p / ("Data/Assembly/" + project_name + ".dll")).string());
 		res->m_path = file_path;
 
-		result = { res, [](Project* proj) { delete proj;/*TODO: Use custom allocator*/ }};
+		result = { res, [](Resource* proj) { delete proj;/*TODO: Use custom allocator*/ }};
 
 		return result;
 	}
