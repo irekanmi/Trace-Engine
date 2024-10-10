@@ -12,7 +12,9 @@
 
 namespace trace
 {
-
+	/// It represent an instance of the running application.
+	/// 
+	/// 
 	class TRACE_API Application
 	{
 
@@ -22,6 +24,10 @@ namespace trace
 
 		virtual bool Init(trc_app_data appData);
 		virtual void Shutdown();
+
+		/// It gets called after the object has been created
+		/// 
+		/// 
 		virtual void Start();
 		virtual void Run();
 		virtual void End();

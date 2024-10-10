@@ -127,7 +127,7 @@ namespace trace
 
 	void Application::Start()
 	{
-		m_clock.Begin();
+		
 
 		ApplicationStart app_start;
 		EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_APP_START, &app_start);
@@ -161,24 +161,28 @@ namespace trace
 		
 		
 		
-
+		m_clock.Begin();
 		m_lastTime = m_clock.GetElapsedTime();
+		float _time = m_clock.GetInternalElapsedTime();
 
 		while (m_isRunning)
 		{
 
-			m_Window->Update(0.0f);
-			
+			if (m_isMinimized)
+			{
+				continue;// Application should pause when minimized
+			}
 
-
-			if (m_isMinimized) continue;// Application should pause when minimized
-
-			float _time = m_clock.GetInternalElapsedTime();
+			_time = m_clock.GetInternalElapsedTime();
 			float deltaTime = _time - m_lastTime;
 			m_lastTime = _time;
 
+			m_Window->Update(0.0f);
 			//NOTE: Clamping deltaTime to 0.5sec, if the application is minimized or any other issues that causes stall in the application
-			if (deltaTime > 0.5f) deltaTime = 0.033f;
+			if (deltaTime > 0.5f)
+			{
+				deltaTime = 0.033f;
+			}
 
 			m_clock.Tick(deltaTime);
 
@@ -201,9 +205,9 @@ namespace trace
 
 			mem_manager->EndFrame();
 
-			float end_time = m_clock.GetElapsedTime();
+			float end_time = m_clock.GetInternalElapsedTime();
 			float total_frame_time = end_time - _time;
-			float frame_per_sec = 1.0f / 55;
+			float frame_per_sec = 1.0f / 30;
 
 			//TODO fix, Application is lock to 60 FPS and not found the reason
 			if (m_vsync)
