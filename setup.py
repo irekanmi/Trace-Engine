@@ -20,8 +20,18 @@ def detect_os():
 
 def download_file(url, output_path):
     print(f"Downloading {url} ...")
-    urllib.request.urlretrieve(url, output_path)
-    print(f"Downloaded to {output_path}")
+    headers = {'User-Agent': 'Mozilla/5.0'}  # Mimic a browser request
+    req = urllib.request.Request(url, headers=headers)
+    
+    try:
+        with urllib.request.urlopen(req) as response, open(output_path, 'wb') as out_file:
+            data = response.read()  # a `bytes` object
+            out_file.write(data)
+        print(f"Downloaded to {output_path}")
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error: {e.code} - {e.reason}")
+    except urllib.error.URLError as e:
+        print(f"URL Error: {e.reason}")
 
 def install_vulkan_sdk():
     os_type = detect_os()
@@ -32,11 +42,17 @@ def install_vulkan_sdk():
         sdk_installer = "VulkanSDK-1.3.224.1-Installer.exe"
         download_file(sdk_url, sdk_installer)
 
-        # Run the installer
-        print("Running the installer...")
-        subprocess.run([sdk_installer, "/S"], check=True)  # /S for silent install
-        print("Vulkan SDK installed successfully on Windows.")
-        return True
+        # Try running the installer in silent mode
+        try:
+            print("Attempting to install Vulkan SDK silently...")
+            subprocess.run([sdk_installer, "/quiet"], check=True)  # Try /quiet flag
+            print("Vulkan SDK installed silently.")
+            return True
+        except subprocess.CalledProcessError:
+            print("Silent installation failed, running installer normally...")
+            subprocess.run([sdk_installer], check=True)  # Run installer normally
+            print("Vulkan SDK installed with user interaction.")
+            return True
     else:
         raise SystemExit("Unsupported OS")
         return False
