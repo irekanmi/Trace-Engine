@@ -26,7 +26,6 @@ namespace trace {
 
 	void AutoFillPipelineDesc(PipelineStateDesc& desc, bool input_layout = true, bool raterizer_state = true, bool depth_sten_state = true, bool color_blend_state = true, bool view_port = true, bool scissor = true, bool render_pass = true, bool primitive_topology = true);
 	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline);
-	bool operator ==(ShaderResourceBinding lhs, ShaderResourceBinding rhs);
 
 
 	typedef bool (*__CreateContext)(GContext*);

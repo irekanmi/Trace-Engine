@@ -321,23 +321,41 @@ namespace vk {
 
 
 		TRC_INFO(" Graphics | Compute | Transfer | Present ");
+		bool used_queues[4] = { false };
 		int n = 0;
+		uint32_t index_count = 0;
 		for (auto& i : queue_props)
 		{
 
 			if (i.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 			{
 				device->m_queues.graphics_queue = n;
+				if (!used_queues[n])
+				{
+					used_queues[n] = true;
+					index_count++;
+				}
+				
 			}
 
 			if (i.queueFlags & VK_QUEUE_TRANSFER_BIT)
 			{
 				device->m_queues.transfer_queue = n;
+				if (!used_queues[n])
+				{
+					used_queues[n] = true;
+					index_count++;
+				}
 			}
 
 			if (i.queueFlags & VK_QUEUE_COMPUTE_BIT)
 			{
 				device->m_queues.compute_queue = n;
+				if (!used_queues[n])
+				{
+					used_queues[n] = true;
+					index_count++;
+				}
 			}
 
 			VkBool32 present_avaliable = 0;
@@ -345,6 +363,11 @@ namespace vk {
 			if (present_avaliable)
 			{
 				device->m_queues.present_queue = n;
+				if (!used_queues[n])
+				{
+					used_queues[n] = true;
+					index_count++;
+				}
 			}
 
 			n++;
@@ -353,46 +376,15 @@ namespace vk {
 		TRC_TRACE(" {} | {} | {} | {} ", device->m_queues.graphics_queue, device->m_queues.compute_queue, device->m_queues.transfer_queue, device->m_queues.present_queue);
 
 
-		bool present_share_graphics = device->m_queues.present_queue == device->m_queues.graphics_queue;
-		bool transfer_share_graphics = device->m_queues.graphics_queue == device->m_queues.transfer_queue;
-		bool present_share_transfer = device->m_queues.present_queue == device->m_queues.present_queue;
-
-		uint32_t index_count = 1;
-		if (!present_share_graphics)
-		{
-			index_count++;
-		}
-		if (!transfer_share_graphics)
-		{
-			index_count++;
-		}
-
-		/*if (present_share_transfer)
-		{
-			index_count--;
-		}*/
+				
 
 		eastl::vector<uint32_t> indices(index_count);
-		int8_t index = 0;
-		indices[index++] = device->m_queues.graphics_queue;
-
-		if (present_share_transfer)
+		for (uint32_t i = 0; i < index_count; i++)
 		{
-			if(!transfer_share_graphics) indices[index++] = device->m_queues.transfer_queue;
-		}
-		else
-		{
-			if (!present_share_graphics)
-			{
-				indices[index++] = device->m_queues.present_queue;
-			}
-			if (!transfer_share_graphics)
-			{
-				indices[index++] = device->m_queues.transfer_queue;
-			}
-
+			indices[i] = i;
 		}
 
+		
 
 
 		// Initializing Bindless descriptors --------------------------------------------
@@ -473,7 +465,7 @@ namespace vk {
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		device_info.queueCreateInfoCount = static_cast<uint32_t>(device_queue_infos.size());
 		device_info.pQueueCreateInfos = device_queue_infos.data();
-		device_info.pEnabledFeatures = &phy_feat;
+		device_info.pEnabledFeatures = nullptr;//&phy_feat;
 		device_info.enabledLayerCount = 0;
 		device_info.ppEnabledLayerNames = nullptr;
 		device_info.enabledExtensionCount = 2;
@@ -1967,6 +1959,10 @@ namespace vk {
 		{
 			usage_flag |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		}
+		if (TRC_HAS_FLAG(buffer_info.m_flag, trace::BindFlag::UNORDERED_RESOURCE_BIT))
+		{
+			usage_flag |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		}
 		if (buffer_info.m_usageFlag == trace::UsageFlag::UPLOAD)
 		{
 			memory_property |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
@@ -2264,11 +2260,12 @@ namespace vk {
 
 		//std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
 
-		const uint32_t pool_sizes_count = 3;
+		const uint32_t pool_sizes_count = 4;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8192},
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4096},
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2048},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2048},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 12)}
 		};
 
@@ -2277,65 +2274,21 @@ namespace vk {
 		uint32_t bindings_count = 0;
 		for (auto& i : desc.resources.resources)
 		{
-			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
-			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
-			bool is_varible = i.def == trace::ShaderDataDef::VARIABLE;
-			bool is_sArray = i.def == trace::ShaderDataDef::STRUCT_ARRAY;
+			bool is_structure = i.def == trace::ShaderDataDef::STRUCTURE;
+			bool is_image = i.def == trace::ShaderDataDef::IMAGE;
 
-			trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
-			if (is_struct) res_stage = i._struct.resource_stage;
-			else if (is_array) res_stage = i._array.resource_stage;
-			else if (is_varible) res_stage = i._variable.resource_stage;
-			else if (is_sArray) res_stage = i._array.resource_stage;
+			trace::ShaderResourceStage res_stage = i.resource_stage;
+
 
 			switch (res_stage)
 			{
 			case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 			{
 				VkDescriptorSetLayoutBinding bind = {};
-				
-				if (is_struct)
-				{
-					bind.binding = i._struct.slot;
-					bind.descriptorCount = i._struct.count;
-					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
-				}
-				else if (is_array)
-				{
-					bind.binding = i._array.slot;
-					bind.descriptorCount = i._array.count;
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.stageFlags = convertShaderStage(i._array.shader_stage);
-				}
-				else if (is_sArray)
-				{
-					bind.binding = i._array.slot;
-					bind.descriptorCount = i._array.count;
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.stageFlags = convertShaderStage(i._array.shader_stage);
-				}
+				bind.binding = i.slot;
+				bind.descriptorCount = i.count;
+				bind.descriptorType = convertDescriptorType(i.resource_type);
+				bind.stageFlags = convertShaderStage(i.shader_stage);
 
 				SceneGlobalData_bindings.push_back(bind);
 
@@ -2344,66 +2297,26 @@ namespace vk {
 			case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
 			{
 				VkDescriptorSetLayoutBinding bind = {};
-				if (is_struct)
-				{
-					bind.binding = i._struct.slot;
-					bind.descriptorCount = i._struct.count;
-					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-					if (i._struct.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.stageFlags = convertShaderStage(i._struct.shader_stage);
-					bind.descriptorCount = 2048;
-				}
-				else if (is_array)
-				{
-					bind.binding = i._array.slot;
-					bind.descriptorCount = i._array.count;
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.descriptorCount = 2048;
-					bind.stageFlags = convertShaderStage(i._array.shader_stage);
-				}
-				else if (is_sArray)
-				{
-					bind.binding = i._array.slot;
-					bind.descriptorCount = i._array.count;
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-					if (i._array.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-					{
-						bind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-					bind.stageFlags = convertShaderStage(i._array.shader_stage);
-				}
-
+				bind.binding = i.slot;
+				bind.descriptorCount = i.count;
+				bind.descriptorType = convertDescriptorType(i.resource_type);
+				bind.stageFlags = convertShaderStage(i.shader_stage);
+				bind.descriptorCount = 2048;
 				Instance_bindings.push_back(bind);
 				bindings_count++;
 				break;
 			}
 			case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
 			{
-				if (is_struct)
+				if (is_structure)
 				{
 					uint32_t offset = 0;
 					VkPushConstantRange rag = {};
-					for (auto& mem : i._struct.members)
+					for (auto& mem : i.members)
 					{
 						rag.offset = offset;
 						rag.size = mem.resource_size;
-						rag.stageFlags = convertShaderStage(i._struct.shader_stage);
+						rag.stageFlags = convertShaderStage(i.shader_stage);
 						ranges.push_back(rag);
 						offset += mem.resource_size;
 						offset = get_alignment(offset, 16);
@@ -2479,7 +2392,7 @@ namespace vk {
 
 				VkDescriptorPoolCreateInfo pool_info = {};
 				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 8096;//1000 * pool_sizes_count;
+				pool_info.maxSets = 1000 * pool_sizes_count;
 				pool_info.poolSizeCount = pool_sizes_count;
 				pool_info.pPoolSizes = pool_sizes;
 				pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
@@ -3010,30 +2923,27 @@ namespace vk {
 		return VK_BLEND_OP_MAX_ENUM;
 	}
 
-	std::vector<VkPushConstantRange> processShaderLocalData(std::vector<trace::ShaderResourceBinding>& bindings)
+	VkDescriptorType convertDescriptorType(trace::ShaderResourceType type)
 	{
-		std::vector<VkPushConstantRange> value;
-
-		uint32_t total_size = 0;
-
-		for (size_t i = 0; i < bindings.size(); i++)
+		switch (type)
 		{
-			trace::ShaderResourceBinding& resource = bindings[i];
-			VkPushConstantRange range = {};
-			range.offset = total_size;
-			range.size = resource.resource_size;
-			range.stageFlags = convertShaderStage(resource.shader_stage);
-			value.push_back(range);
-			total_size += range.size;
-			total_size = get_alignment(total_size, 16);
+		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
+		{
+			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		}
+		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER:
+		{
+			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		}
+		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER:
+		{
+			return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		}
 		}
 
-		return value;
+		return VkDescriptorType();
 	}
 
-	
-
-	
 
 	bool _ResultIsSuccess(VkResult result)
 	{

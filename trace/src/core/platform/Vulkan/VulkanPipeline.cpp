@@ -11,18 +11,13 @@
 
 	extern trace::VKHandle g_Vkhandle;
 	extern trace::VKDeviceHandle g_VkDevice;
+
+	bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline* pipeline, trace::VKPipeline* handle);
+
 namespace trace {
 
 	
-	bool processShaderResources(
-		uint32_t& resource_bindings_count,
-		ShaderResourceBinding* resource_bindings,
-		GPipeline*_pipeline,
-		HashTable<uint32_t>& _hashTable,
-		VKHandle* instance,
-		VKDeviceHandle* device,
-		uint32_t& out_size
-		);
+	
 
 	void update_data_indices(GPipeline* _pipeline, HashTable<uint32_t>& _hashTable, VKPipeline* pipe)
 	{
@@ -34,22 +29,16 @@ namespace trace {
 				int slot = i.second >> 16;
 				int index = ((0x0000FFFF) & i.second);
 				uint32_t& hash_id = _hashTable.Get_Ref(i.first);
-				for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
-				{
-					if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
-					{
-
-						hash_id = j;
-						_pipeline->GetSceneUniforms()[j]._id = j;
-						_pipeline->GetSceneUniforms()[j]._slot = slot;
-						_pipeline->GetSceneUniforms()[j]._index = index;
-						_pipeline->GetSceneUniforms()[j]._count = 1;
-						_pipeline->GetSceneUniforms()[j].data_type = ShaderData::CUSTOM_DATA_TEXTURE;
-						_pipeline->GetSceneUniforms()[j]._resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
-
-						break;
-					}
-				}
+				uint32_t current_id = _pipeline->GetSceneUniforms().size();
+				_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
+				hash_id = current_id;
+				_pipeline->GetSceneUniforms()[current_id]._id = current_id;
+				_pipeline->GetSceneUniforms()[current_id]._slot = slot;
+				_pipeline->GetSceneUniforms()[current_id]._index = index;
+				_pipeline->GetSceneUniforms()[current_id]._count = 1;
+				_pipeline->GetSceneUniforms()[current_id].data_type = ShaderData::CUSTOM_DATA_TEXTURE;
+				_pipeline->GetSceneUniforms()[current_id]._resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER;
+				
 				//count++;
 				pipe->bindless_2d_tex_count[slot]++;
 			}
@@ -68,7 +57,7 @@ namespace trace {
 		//pipe->bindless_2d_tex_count = count;
 	}
 
-	bool processShaderResources(uint32_t& resource_bindings_count, ShaderResourceBinding* resource_bindings, GPipeline* _pipeline, HashTable<uint32_t>& _hashTable, VKHandle* instance, VKDeviceHandle* device, uint32_t& out_size)
+	bool processShaderResources(uint32_t& resource_bindings_count, GPipeline* _pipeline, HashTable<uint32_t>& _hashTable, VKHandle* instance, VKDeviceHandle* device, uint32_t& out_size)
 	{
 		bool result = false;
 
@@ -77,7 +66,6 @@ namespace trace {
 		uint32_t total_size_global = 0;
 		uint32_t total_size_instance = 0;
 		uint32_t total_size_local = 0;
-		_pipeline->GetSceneUniforms().resize(64);// TODO: Fix Hard Coded value
 
 		uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
 
@@ -85,120 +73,91 @@ namespace trace {
 		uint32_t z = 0;
 		for (auto& i : _pipeline->GetDesc().resources.resources)
 		{
-			bool is_struct = i.def == trace::ShaderDataDef::STRUCTURE;
-			bool is_array = i.def == trace::ShaderDataDef::ARRAY;
-			bool is_varible = i.def == trace::ShaderDataDef::VARIABLE;
-			bool is_sArray = i.def == trace::ShaderDataDef::STRUCT_ARRAY;
+			bool is_structure = i.def == trace::ShaderDataDef::STRUCTURE;
+			bool is_image = i.def == trace::ShaderDataDef::IMAGE;
+			
+			trace::ShaderResourceStage res_stage = i.resource_stage;
 
-			trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
-			if (is_struct) res_stage = i._struct.resource_stage;
-			else if (is_array) res_stage = i._array.resource_stage;
-			else if (is_varible) res_stage = i._variable.resource_stage;
-			else if (is_sArray) res_stage = i._array.resource_stage;
 
-			if (is_struct)
+			if (is_structure)
 			{
 				
-
 				uint32_t struct_size = 0;
 				uint32_t temp_globals_size = total_size_global;
-				for (auto& mem : i._struct.members)
+				for (auto& mem : i.members)
 				{
 					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
-					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
+					uint32_t current_id = _pipeline->GetSceneUniforms().size();
+					_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
+					hash_id = current_id;
+					_pipeline->GetSceneUniforms()[current_id]._id = current_id;
+					_pipeline->GetSceneUniforms()[current_id]._size = mem.resource_size;
+					_pipeline->GetSceneUniforms()[current_id]._slot = i.slot;
+					_pipeline->GetSceneUniforms()[current_id].meta_id = ( (int)res_stage << 16 ) | i.slot;
+					_pipeline->GetSceneUniforms()[current_id]._index = i.index;
+					_pipeline->GetSceneUniforms()[current_id]._count = i.count;
+					_pipeline->GetSceneUniforms()[current_id]._resource_type = i.resource_type;
+					_pipeline->GetSceneUniforms()[current_id]._shader_stage = i.shader_stage;
+					_pipeline->GetSceneUniforms()[current_id].data_type = mem.resource_data_type;
+					_pipeline->GetSceneUniforms()[current_id]._offset = mem.offset;
+					struct_size += mem.resource_size;
+
+					struct_size = get_alignment(struct_size, offset_alignment);
+					if (i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 					{
-						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
-						{
-
-							hash_id = j;
-							_pipeline->GetSceneUniforms()[j]._id = j;
-							_pipeline->GetSceneUniforms()[j]._size = mem.resource_size;
-							_pipeline->GetSceneUniforms()[j]._slot = i._struct.slot;
-							_pipeline->GetSceneUniforms()[j]._index = i._struct.index;
-							_pipeline->GetSceneUniforms()[j]._count = i._struct.count;
-							_pipeline->GetSceneUniforms()[j]._resource_type = i._struct.resource_type;
-							_pipeline->GetSceneUniforms()[j]._shader_stage = i._struct.shader_stage;
-							_pipeline->GetSceneUniforms()[j].data_type = mem.resource_data_type;
-							_pipeline->GetSceneUniforms()[j]._offset = mem.offset;
-							struct_size += mem.resource_size;
-							
-							struct_size = get_alignment(struct_size, offset_alignment);
-							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-							{
-								_pipeline->GetSceneUniforms()[j]._offset = total_size_local;
-								total_size_local += mem.resource_size;
-								total_size_local = get_alignment(total_size_local, offset_alignment);
-								break;
-							}
-							_pipeline->GetSceneUniforms()[j]._struct_index = z;
-							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-							{
-								uint32_t actual_offset = temp_globals_size + mem.offset;
-								_pipeline->GetSceneUniforms()[j]._offset = actual_offset;
-								{
-								total_size_global += mem.resource_size;
-								}
-								total_size_global = get_alignment(total_size_global, offset_alignment);
-							}
-
-							if (i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-							{
-								total_size_instance += mem.resource_size;
-								total_size_instance = get_alignment(total_size_instance, offset_alignment);
-							}
-
-							break;
-						}
+						_pipeline->GetSceneUniforms()[current_id]._offset = total_size_local;
+						total_size_local += mem.resource_size;
+						total_size_local = get_alignment(total_size_local, offset_alignment);
+						break;
 					}
+					_pipeline->GetSceneUniforms()[current_id]._index = z;
+
+
+					if (i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+					{
+						total_size_instance += mem.resource_size;
+						total_size_instance = get_alignment(total_size_instance, offset_alignment);
+					}
+
 				}
-				if (i._struct.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+				if (i.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 				{
-					for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
-					{
-						if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
-						{
-							uint32_t& hash_id = _hashTable.Get_Ref(i._struct.resource_name);
-							hash_id = j;
-							_pipeline->GetSceneUniforms()[j]._id = j;
-							_pipeline->GetSceneUniforms()[j]._size = i._struct.resource_size;
-							_pipeline->GetSceneUniforms()[j]._slot = i._struct.slot;
-							_pipeline->GetSceneUniforms()[j]._index = i._struct.index;
-							_pipeline->GetSceneUniforms()[j]._count = i._struct.count;
-							_pipeline->GetSceneUniforms()[j]._resource_type = i._struct.resource_type;
-							_pipeline->GetSceneUniforms()[j]._shader_stage = i._struct.shader_stage;
-							//_pipeline->GetSceneUniforms()[j].data_type = mem.resource_data_type;
-							//_pipeline->GetSceneUniforms()[j]._offset = struct_size;
-							break;
-						}
-					}
-					_pipeline->GetSceneStructs().push_back({_hashTable.Get_Ref(i._struct.resource_name) ,  INVALID_ID});
+					uint32_t& hash_id = _hashTable.Get_Ref(i.resource_name);
+					uint32_t current_id = _pipeline->GetSceneUniforms().size();
+					_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
+					hash_id = current_id;
+					_pipeline->GetSceneUniforms()[current_id]._id = current_id;
+					_pipeline->GetSceneUniforms()[current_id]._size = i.resource_size;
+					_pipeline->GetSceneUniforms()[current_id]._slot = i.slot;
+					_pipeline->GetSceneUniforms()[current_id].meta_id = ((int)res_stage << 16) | i.slot;
+					_pipeline->GetSceneUniforms()[current_id]._index = i.index;
+					_pipeline->GetSceneUniforms()[current_id]._count = i.count;
+					_pipeline->GetSceneUniforms()[current_id]._resource_type = i.resource_type;
+					_pipeline->GetSceneUniforms()[current_id]._shader_stage = i.shader_stage;
+
+					_pipeline->GetSceneStructs().push_back({_hashTable.Get_Ref(i.resource_name) ,  INVALID_ID});
 					z++;
 				}
 			}
 
-			if (is_array)
+			if (is_image)
 			{
-				for (uint32_t j = 0; j < _pipeline->GetSceneUniforms().size(); j++)
-				{
-					uint32_t& hash_id = _hashTable.Get_Ref(i._array.name);
-					if (_pipeline->GetSceneUniforms()[j]._id == INVALID_ID)
-					{
-
-						hash_id = j;
-						_pipeline->GetSceneUniforms()[j]._id = j;
-						_pipeline->GetSceneUniforms()[j]._size = i._array.resource_size;
-						_pipeline->GetSceneUniforms()[j]._slot = i._array.slot;
-						_pipeline->GetSceneUniforms()[j]._index = 0;
-						_pipeline->GetSceneUniforms()[j]._count = i._array.count;
-						_pipeline->GetSceneUniforms()[j]._resource_type = i._array.resource_type;
-						_pipeline->GetSceneUniforms()[j]._shader_stage = i._array.shader_stage;
-						break;
-					}
-				}
+				uint32_t& hash_id = _hashTable.Get_Ref(i.resource_name);
+				uint32_t current_id = _pipeline->GetSceneUniforms().size();
+				_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
+				hash_id = current_id;
+				_pipeline->GetSceneUniforms()[current_id]._id = current_id;
+				_pipeline->GetSceneUniforms()[current_id]._size = i.resource_size;
+				_pipeline->GetSceneUniforms()[current_id]._slot = i.slot;
+				_pipeline->GetSceneUniforms()[current_id].meta_id = ((int)res_stage << 16) | i.slot;
+				_pipeline->GetSceneUniforms()[current_id]._index = 0;
+				_pipeline->GetSceneUniforms()[current_id]._count = i.count;
+				_pipeline->GetSceneUniforms()[current_id]._resource_type = i.resource_type;
+				_pipeline->GetSceneUniforms()[current_id]._shader_stage = i.shader_stage;
 				
 			}
 
-			if (is_sArray)
+			/*if (is_sArray)
 			{
 				uint32_t& hash_id = _hashTable.Get_Ref(i._array.name);
 				int struct_loc = -1;
@@ -271,12 +230,12 @@ namespace trace {
 					_pipeline->GetSceneStructs().push_back({hash_id,  INVALID_ID});
 					z++;
 				}
-			}
+			}*/
 		}
 		
 		update_data_indices(_pipeline, _hashTable, _handle);
 
-		if (total_size_global > 0)
+		/*if (total_size_global > 0)
 		{
 			vk::createBuffer(
 				instance,
@@ -307,8 +266,8 @@ namespace trace {
 				);
 				_handle->Instance_buffers[i].m_info.m_size = total_size_instance;
 			}
-		}
-
+		}*/
+		generate_pipeline_resources(device, _pipeline, _handle);
 
 		VkDescriptorBufferInfo* bufs = new VkDescriptorBufferInfo[2048];// TODO: Use custom allocator and find a better way to update buffers
 		uint32_t t_size = 0;
@@ -323,21 +282,16 @@ namespace trace {
 			uint32_t k_off = 0;
 			for (auto& _i : _pipeline->GetDesc().resources.resources)
 			{
-				bool is_struct = _i.def == trace::ShaderDataDef::STRUCTURE;
-				bool is_array = _i.def == trace::ShaderDataDef::ARRAY;
-				bool is_varible = _i.def == trace::ShaderDataDef::VARIABLE;
-				bool is_sArray = _i.def == trace::ShaderDataDef::STRUCT_ARRAY;
+				bool is_structure = _i.def == trace::ShaderDataDef::STRUCTURE;
+				bool is_image = _i.def == trace::ShaderDataDef::IMAGE;
 
-				trace::ShaderResourceStage res_stage = trace::ShaderResourceStage::RESOURCE_STAGE_NONE;
-				if (is_struct) res_stage = _i._struct.resource_stage;
-				else if (is_array) res_stage = _i._array.resource_stage;
-				else if (is_varible) res_stage = _i._variable.resource_stage;
-				else if (is_sArray) res_stage = _i._array.resource_stage;
+				trace::ShaderResourceStage res_stage = _i.resource_stage;
+				uint32_t meta_id = ((int)res_stage << 16) | _i.slot;
 
-				if (is_struct)
+				if (is_structure)
 				{
 					uint32_t struct_size = 0;
-					for (auto& mem : _i._struct.members)
+					for (auto& mem : _i.members)
 					{
 						struct_size += mem.resource_size;
 						struct_size = get_alignment(struct_size, offset_alignment);
@@ -345,31 +299,34 @@ namespace trace {
 					VkWriteDescriptorSet write = {};
 					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					write.descriptorCount = 1;
-					write.dstArrayElement = _i._struct.index;
-					write.dstBinding = _i._struct.slot;
+					write.dstArrayElement = _i.index;
+					write.dstBinding = _i.slot;
 					write.pBufferInfo = nullptr;
 					write.pImageInfo = nullptr;
 					write.pNext = nullptr;
 					write.pTexelBufferView = nullptr;
 					bufs[k] = {};
-					if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+					if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 					{
 
 						write.dstSet = _handle->Scene_sets[i];
 						write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-						bufs[k].offset = k_off + ( t_size * i);
-						bufs[k].buffer = _handle->Scene_buffers.m_handle;
+						//bufs[k].offset = k_off + ( t_size * i);
+						bufs[k].offset = 0;
+						//bufs[k].buffer = _handle->Scene_buffers.m_handle;
+						bufs[k].buffer = _handle->buffer_resources[meta_id].resource[i].m_handle;
 						k_off += struct_size;
 						k_off = get_alignment(k_off, offset_alignment);
 					}
-					else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+					else if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 					{
 						bufs[k].offset = 0;
 						write.dstSet = _handle->Instance_sets[i];
 						write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-						bufs[k].buffer = _handle->Instance_buffers[i].m_handle;
+						//bufs[k].buffer = _handle->Instance_buffers[i].m_handle;
+						bufs[k].buffer = _handle->buffer_resources[meta_id].resource[i].m_handle;
 					}
-					else if (_i._struct.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+					else if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 					{
 						continue;
 					}
@@ -378,105 +335,37 @@ namespace trace {
 					_writes.push_back(write);
 
 				}
-				if (is_array)
+				if (is_image)
 				{
 					VkWriteDescriptorSet write = {};
 					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					write.descriptorCount = 1;
-					write.dstBinding = _i._array.slot;
+					write.dstBinding = _i.slot;
 					write.pBufferInfo = nullptr;
 					write.pImageInfo = nullptr;
 					write.pNext = nullptr;
 					write.pTexelBufferView = nullptr;
-					if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+					if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 					{
 
 						write.dstSet = _handle->Scene_sets[i];
 					}
-					else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+					else if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 					{
 						write.dstSet = _handle->Instance_sets[i];
 					}
-					for (auto& mem : _i._array.members)
+					for (uint32_t index = 0; index < _i.count; index++)
 					{
-						write.dstArrayElement = mem.index;
-						if (_i._array.resource_type == ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
-						{
-							VkDescriptorImageInfo img_info = {};
-							img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-							img_info.imageView = device->nullImage.m_view;
-							img_info.sampler = device->nullImage.m_sampler;
-							write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-							write.pImageInfo = &img_info;
-							_writes.push_back(write);
-							/*for (uint32_t j = 0; j < VK_MAX_DESCRIPTOR_SET_PER_FRAME; j++)
-							{
-								if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-								{
-									write.dstSet = _handle->Scene_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
-								}
-								else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-								{
-									write.dstSet = _handle->Instance_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
-								}
-								_writes.push_back(write);
-							}
-							*/
-						}
-					}
-				}
-				if (is_sArray)
-				{
-					uint32_t struct_size = _i._array.resource_size;
-					VkWriteDescriptorSet write = {};
-					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					write.descriptorCount = 1;
-					write.dstBinding = _i._array.slot;
-					write.pBufferInfo = nullptr;
-					write.pImageInfo = nullptr;
-					write.pNext = nullptr;
-					write.pTexelBufferView = nullptr;
-					for (uint32_t r = 0; r < _i._array.count; r++)
-					{
-						write.dstArrayElement = r;
-						if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-						{
-							write.dstSet = _handle->Scene_sets[i];
-							write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-							bufs[k].offset = k_off + (t_size * i);
-							bufs[k].buffer = _handle->Scene_buffers.m_handle;
-							k_off += struct_size;
-							k_off = get_alignment(k_off, offset_alignment);
-						}
-						else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-						{
-							bufs[k].offset = 0;
-							write.dstSet = _handle->Instance_sets[i];
-							write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-							bufs[k].buffer = _handle->Instance_buffers[i].m_handle;
-						}
-						else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
-						{
-							continue;
-						}
-						bufs[k].range = VK_WHOLE_SIZE;
-						write.pBufferInfo = &bufs[k];
+						write.dstArrayElement = index;
+						VkDescriptorImageInfo img_info = {};
+						img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+						img_info.imageView = device->nullImage.m_view;
+						img_info.sampler = device->nullImage.m_sampler;
+						write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						write.pImageInfo = &img_info;
 						_writes.push_back(write);
-						/*for (uint32_t j = 0; j < VK_MAX_DESCRIPTOR_SET_PER_FRAME; j++)
-						{
-							if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-							{
-								write.dstSet = _handle->Scene_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
-							}
-							else if (_i._array.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-							{
-								write.dstSet = _handle->Instance_sets[(i * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + j];
-							}
-							_writes.push_back(write);
-						}*/
-						k++;
+						
 					}
-					
 				}
 				k++;
 
@@ -502,19 +391,84 @@ namespace trace {
 
 }
 
+bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline* pipeline, trace::VKPipeline* handle)
+{
+	uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
+
+	for (trace::ShaderResource& resource : pipeline->GetDesc().resources.resources)
+	{
+		if (resource.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+		{
+			continue;
+		}
+
+		bool is_structure = resource.def == trace::ShaderDataDef::STRUCTURE;
+		bool is_image = resource.def == trace::ShaderDataDef::IMAGE;
+
+		uint32_t id = 0;
+		uint32_t stage = (uint32_t)resource.resource_stage;
+		id = (stage << 16) | (resource.slot);
+
+
+		if (is_structure)
+		{
+			uint32_t total_size = 0;
+			for (trace::ShaderResource::Member& member : resource.members)
+			{
+				total_size += member.resource_size;
+				total_size = get_alignment(total_size, offset_alignment);
+			}
+
+			trace::BufferBindingInfo& info = handle->buffer_resources[id];
+			info.current_frame_offset = 0;
+			
+			uint32_t buffer_size = total_size;
+			VkBufferUsageFlags usage_flag;
+			uint32_t bind_flag = 0;
+			if (resource.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+			{
+				usage_flag = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+				bind_flag |= trace::BindFlag::CONSTANT_BUFFER_BIT;
+			}
+			if (resource.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER)
+			{
+				usage_flag = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+				bind_flag |= trace::BindFlag::UNORDERED_RESOURCE_BIT;
+			}
+
+			if (resource.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+			{
+				buffer_size = total_size + (2 * KB);
+			}
+
+			for (uint32_t i = 0; i < device->frames_in_flight; i++)
+			{
+
+				trace::BufferInfo create_info;
+				create_info.m_flag = (trace::BindFlag)bind_flag;
+				create_info.m_size = buffer_size;
+				create_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+
+				vk::_CreateBuffer(device->instance, device, &info.resource[i], create_info);
+			}
+		}
+	}
+
+	return true;
+}
+
 namespace vk {
 
-	void update_pipeline_instance_sets(trace::GPipeline* pipeline, trace::VKPipeline* _handle,uint32_t new_size)
+	void update_pipeline_instance_sets(trace::GPipeline* pipeline, trace::VKPipeline* _handle, trace::VKBuffer& buffer,uint32_t new_size)
 	{
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
-		trace::VKBuffer& instance_buffer = _handle->Instance_buffers[_device->m_imageIndex];
 
 
 		_ResizeBuffer(
 			_instance,
 			_device,
-			instance_buffer,
+			buffer,
 			new_size
 			);
 
@@ -632,6 +586,16 @@ namespace vk {
 			_DestoryBuffer(_instance, _device, &_handle->Instance_buffers[i]);
 		}
 
+		for (auto& i : _handle->buffer_resources)
+		{
+			for (uint32_t j = 0; j < _device->frames_in_flight; j++)
+			{
+				_DestoryBuffer(_instance, _device, &i.second.resource[j]);
+			}
+		}
+
+		
+
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
@@ -673,7 +637,6 @@ namespace vk {
 
 		result = trace::processShaderResources(
 			map_data_size,
-			nullptr,
 			pipeline,
 			pipeline->GetHashTable(),
 			_instance,
@@ -683,7 +646,7 @@ namespace vk {
 
 		//_mapped_data = (char*)AllocAligned(map_data_size, m_device->m_properties.limits.minMemoryMapAlignment);
 
-		if (_handle->Scene_buffers.m_memory)
+		/*if (_handle->Scene_buffers.m_memory)
 		{
 			vkMapMemory(
 				_device->m_device,
@@ -693,7 +656,7 @@ namespace vk {
 				0,
 				(void**)&_handle->cache_data
 			);
-		}
+		}*/
 
 
 		return result;
@@ -897,18 +860,28 @@ namespace vk {
 
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 		{
-			char* data_point = (char*)_handle->cache_data;
+			/*char* data_point = (char*)_handle->cache_data;
 			uint32_t location = meta_data._offset + (_handle->cache_size * _device->m_imageIndex);
 
 			void* map_point = data_point + location;
+			memcpy(map_point, data, size);*/
+
+			void* data_point;
+			trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
+			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
+
+			uint32_t location = meta_data._offset;
+
+			void* map_point = (char*)data_point + location;
 			memcpy(map_point, data, size);
+			vkUnmapMemory(_device->m_device, buffer.m_memory);
 
 			return true;
 		}
 
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 		{
-			trace::VKBuffer& instance_buffer = _handle->Instance_buffers[_device->m_imageIndex];
+			/*trace::VKBuffer& instance_buffer = _handle->Instance_buffers[_device->m_imageIndex];
 
 			uint32_t buffer_index = (_handle->instance_buffer_infos[meta_data._slot].size() - 1);
 			trace::BufferDescriptorInfo& buf_info = _handle->instance_buffer_infos[meta_data._slot][buffer_index];
@@ -937,7 +910,38 @@ namespace vk {
 			void* map_point = (char*)data_point + location;
 			memcpy(map_point, data, size);
 
-			vkUnmapMemory(_device->m_device, instance_buffer.m_memory);
+			vkUnmapMemory(_device->m_device, instance_buffer.m_memory);*/
+
+			trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
+
+			uint32_t buffer_index = (_handle->instance_buffer_infos[meta_data._slot].size() - 1);
+			trace::BufferDescriptorInfo& buf_info = _handle->instance_buffer_infos[meta_data._slot][buffer_index];
+
+			uint32_t buf_offset = buf_info.offset + meta_data._offset;
+
+			if (buf_offset + meta_data._size >= buffer.m_info.m_size)
+			{
+				update_pipeline_instance_sets(pipeline, _handle, buffer, buffer.m_info.m_size * 4);
+
+			}
+
+			void* data_point;
+
+			vkMapMemory(
+				_device->m_device,
+				buffer.m_memory,
+				0,
+				VK_WHOLE_SIZE,
+				VK_NO_FLAGS,
+				&data_point
+			);
+
+			uint32_t location = buf_offset;
+
+			void* map_point = (char*)data_point + location;
+			memcpy(map_point, data, size);
+
+			vkUnmapMemory(_device->m_device, buffer.m_memory);
 		}
 		
 
@@ -956,14 +960,19 @@ namespace vk {
 
 		if (!pipeline->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			TRC_ERROR("Invalid pipeline handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
 			return false;
+		}
+
+		if (!texture->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid texture handle, {}, Function -> {}", texture->GetName(), __FUNCTION__);
 		}
 
 		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
-		trace::VKImage* _tex = texture ? reinterpret_cast<trace::VKImage*>(texture->GetRenderHandle()->m_internalData) : &_device->nullImage;
+		trace::VKImage* _tex = texture->GetRenderHandle()->m_internalData ? reinterpret_cast<trace::VKImage*>(texture->GetRenderHandle()->m_internalData) : &_device->nullImage;
 
 		uint32_t hash_id = pipeline->GetHashTable().Get(resource_name.c_str());
 
@@ -1048,7 +1057,7 @@ namespace vk {
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 		{
 			std::vector<trace::TextureDescriptorInfo>& tex_infos = _handle->instance_texture_infos[meta_data._slot];
-			int index = (tex_infos.size() - _handle->bindless_2d_tex_count[meta_data._slot]) + meta_data._index;
+			int index = ((int)tex_infos.size() - _handle->bindless_2d_tex_count[meta_data._slot]) + (int)meta_data._index;
 			tex_infos[index].texture = _tex;
 		}
 

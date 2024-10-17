@@ -41,8 +41,10 @@ namespace vk {
 			buffer_info.reserve(i.second.size());
 			for (auto& j : i.second)
 			{
+				trace::BufferBindingInfo& info = pipeline->buffer_resources[j.buffer_id];
+
 				VkDescriptorBufferInfo buf_info = {};
-				buf_info.buffer = pipeline->Instance_buffers[pipeline->m_device->m_imageIndex].m_handle;
+				buf_info.buffer = info.resource[pipeline->m_device->m_imageIndex].m_handle;
 				buf_info.offset = j.offset;
 				buf_info.range = j.range;
 				buffer_info.push_back(buf_info);
@@ -92,38 +94,7 @@ namespace vk {
 
 		}
 
-		/*if (!pipeline->instance_texture_infos.empty())
-		{
-			static std::vector<VkDescriptorImageInfo> texture_info;
-			texture_info.reserve(pipeline->instance_texture_infos.size());
-			for (auto& i : pipeline->instance_texture_infos)
-			{
-				write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				write.descriptorCount = pipeline->instance_texture_infos.size();
-				write.dstArrayElement = 0;
-				write.dstBinding = VK_COMBINED_SAMPLER2D_BINDING;
-				write.dstSet = pipeline->Instance_set;
 
-
-				VkDescriptorImageInfo tex_info = {};
-				tex_info.imageView = ((trace::VKImage*)i.texture)->m_view;
-				tex_info.sampler = ((trace::VKImage*)i.texture)->m_sampler;
-				tex_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				texture_info.push_back(tex_info);
-
-
-
-			}
-			write.pImageInfo = texture_info.data();
-			vkUpdateDescriptorSets(
-				pipeline->m_device->m_device,
-				1,
-				&write,
-				0,
-				nullptr
-			);
-			texture_info.clear();
-		}*/
 
 		pipeline->instance_buffer_offset = 0;
 		pipeline->frame_update = 0;
@@ -134,6 +105,11 @@ namespace vk {
 		for (auto& i : pipeline->instance_texture_infos)
 		{
 			i.second.clear();
+		}
+
+		for (auto& i : pipeline->buffer_resources)
+		{
+			i.second.current_frame_offset = 0;
 		}
 	}
 
@@ -1108,20 +1084,27 @@ namespace vk {
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		
-
+		
 		for (auto& stct : pipeline->GetSceneStructs())
 		{
-			stct.second = pipe_handle->instance_buffer_offset;
-
 			trace::UniformMetaData& struct_meta = pipeline->GetSceneUniforms()[stct.first];
+
+			trace::BufferBindingInfo& info = pipe_handle->buffer_resources[struct_meta.meta_id];
+
+			uint32_t& buffer_offset = info.current_frame_offset;
+
+			//stct.second = pipe_handle->instance_buffer_offset;
+			stct.second = buffer_offset;
+
 
 			trace::BufferDescriptorInfo buf_info = {};
 			buf_info.offset = stct.second;
 			buf_info.range = struct_meta._size;
+			buf_info.buffer_id = struct_meta.meta_id;
 			buf_info.binding = struct_meta._slot;
 
 			pipe_handle->instance_buffer_infos[struct_meta._slot].push_back(buf_info);
-			pipe_handle->instance_buffer_offset += struct_meta._size;
+			buffer_offset += struct_meta._size;
 		}
 
 		for (auto& i : pipe_handle->bindless_2d_tex_count)

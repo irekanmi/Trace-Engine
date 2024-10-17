@@ -49,7 +49,8 @@ namespace trace {
 		CONSTANT_BUFFER_BIT = BIT(3),
 		RENDER_TARGET_BIT = BIT(4),
 		DEPTH_STENCIL_BIT = BIT(5),
-		SHADER_RESOURCE_BIT = BIT(6)
+		SHADER_RESOURCE_BIT = BIT(6),
+		UNORDERED_RESOURCE_BIT = BIT(7)
 	};
 
 
@@ -198,12 +199,13 @@ namespace trace {
 	{
 		SHADER_RESOURCE_TYPE_NOUSE,
 		SHADER_RESOURCE_TYPE_UNIFORM_BUFFER,
+		SHADER_RESOURCE_TYPE_STORAGE_BUFFER,
 		SHADER_RESOURCE_TYPE_COMBINED_SAMPLER
 	};
 
 	enum class ShaderResourceStage
 	{
-		RESOURCE_STAGE_NONE = -1,
+		RESOURCE_STAGE_NONE = 0,
 		RESOURCE_STAGE_GLOBAL,
 		RESOURCE_STAGE_INSTANCE,
 		RESOURCE_STAGE_LOCAL
@@ -226,10 +228,9 @@ namespace trace {
 
 	enum ShaderDataDef
 	{
-		VARIABLE,
+		NO_DEFINITION,
 		STRUCTURE,
-		ARRAY,
-		STRUCT_ARRAY
+		IMAGE
 	};
 
 	enum BlendFactor
@@ -371,6 +372,7 @@ namespace trace {
 		uint32_t _slot = 0;
 		uint32_t _index = 0;
 		uint32_t _count = 0;
+		uint32_t meta_id = 0;// NOTE: It is the combination of the resource stage and the slot
 		uint32_t _struct_index = INVALID_ID;
 		uint16_t _frame_index = uint16_t(-1); // TODO: Create enum for maximum 16bit integer
 		uint16_t _num_frame_update = 0;
@@ -379,89 +381,34 @@ namespace trace {
 		ShaderData data_type = ShaderData::NONE;
 	};
 
-	struct ShaderStruct
+	
+	struct ShaderResource
 	{
+
 		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
+		std::string resource_name = "";
 		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
 		uint32_t resource_size = 0;
-		std::string resource_name;
 		uint32_t slot = 0;
 		uint32_t index = 0;
 		uint32_t count = 1;
-		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
-		struct StructInfo
+
+		struct Member
 		{
-			std::string resource_name = "";
+			std::string resource_name = "";// Used for bindings that of structure types
 			uint32_t resource_size = 0;
 			ShaderData resource_data_type = ShaderData::NONE;
 			uint32_t offset = 0;
 		};
-		std::vector<StructInfo> members;
-		void* data = nullptr;
-	};
 
-	struct ShaderArray
-	{
-		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
-		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
-		uint32_t resource_size = 0;
-		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
-		uint32_t slot = 0;
-		uint32_t count = 1;
-		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
-		std::string name;
-		struct ArrayInfo
-		{
-			std::string resource_name = "";
-			uint32_t index = 0;
-			ShaderData resource_data_type = ShaderData::NONE;
-			void* data = nullptr;
-			ShaderData data_type = ShaderData::NONE;
-		};
-		std::vector<ArrayInfo> members;
-	};
-
-	struct ShaderVariable
-	{
-		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
-		std::string resource_name = "";
-		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
-		uint32_t resource_size = 0;
-		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
-		uint32_t slot = 0;
-		uint32_t index = 0;
-		uint32_t count = 1;
-		ShaderData resource_data_type = ShaderData::NONE;
-		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
-		void* data = nullptr;
-	};
-
-	struct ShaderResourceBinding
-	{
-		ShaderStage shader_stage = ShaderStage::STAGE_NONE;
-		std::string resource_name = "";
-		ShaderResourceType resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
-		uint32_t resource_size = 0;
-		ShaderResourceStage resource_stage = ShaderResourceStage::RESOURCE_STAGE_NONE;
-		uint32_t slot = 0;
-		uint32_t index = 0;
-		uint32_t count = 1;
-		ShaderData resource_data_type = ShaderData::NONE;
-		ShaderDataDef data_def = ShaderDataDef::VARIABLE;
-		void* data = nullptr;
+		std::vector<Member> members;
+		ShaderDataDef def;
 	};
 
 	struct ShaderResources
-	{
-		struct Resource
-		{
-			ShaderStruct _struct;
-			ShaderArray _array;
-			ShaderVariable _variable;
-			ShaderDataDef def;
-		};
-		std::vector<Resource> resources;
+	{		
+		std::vector<ShaderResource> resources;
 	};
 
 	

@@ -38,7 +38,7 @@ trace::trc_app_data trace::CreateApp()
 	app_data.graphics_api = trace::RenderAPI::Vulkan;
 	app_data.platform_api = trace::PlatformAPI::WINDOWS;
 	app_data.windowed = true;
-	app_data.enable_vsync = true;
+	app_data.enable_vsync = false;
 	app_data.client_start = Start;
 	app_data.client_update = Update;
 	app_data.client_render = Render;

@@ -132,16 +132,17 @@ namespace trace {
 
 		for (auto i : desc.resources.resources)
 		{
-			bool is_struct = i.def == ShaderDataDef::STRUCTURE;
-			bool is_array = i.def == ShaderDataDef::ARRAY;
-			bool is_varible = i.def == ShaderDataDef::VARIABLE;
-			bool is_sArray = i.def == ShaderDataDef::STRUCT_ARRAY;
+			bool is_structure = i.def == ShaderDataDef::STRUCTURE;
+			bool is_image = i.def == ShaderDataDef::IMAGE;
 
-			if (is_struct)
+			if (is_structure)
 			{
-				for (auto& mem : i._struct.members)
+				for (auto& mem : i.members)
 				{
-					if (mem.resource_name[0] == '_' || mem.resource_name == "draw_instance_index") continue;
+					if (mem.resource_name[0] == '_' || mem.resource_name == "draw_instance_index")
+					{
+						continue;
+					}
 					std::any a;
 					lambda(mem.resource_data_type, a);
 					uint32_t hash = pipeline->GetHashTable().Get(mem.resource_name);
@@ -149,17 +150,17 @@ namespace trace {
 				}
 
 			}
-			if (is_array)
+			if (is_image)
 			{
-				for (auto& mem : i._array.members)
+				bool is_valid = !(i.resource_name[0] == '_' || i.resource_name == "draw_instance_index");
+				if (is_valid)
 				{
-					if (mem.resource_name[0] == '_') continue;
 					std::any a;
-					lambda(mem.data_type, a);
-					uint32_t hash = pipeline->GetHashTable().Get(mem.resource_name);
-					result[mem.resource_name] = std::make_pair(a, hash);
+					lambda(ShaderData::CUSTOM_DATA_TEXTURE, a);
+					uint32_t hash = pipeline->GetHashTable().Get(i.resource_name);
+					result[i.resource_name] = std::make_pair(a, hash);
 				}
-
+				
 			}
 		}
 
@@ -189,14 +190,14 @@ namespace trace {
 		return result;
 	}
 
-	bool operator==(ShaderResourceBinding lhs, ShaderResourceBinding rhs)
+	/*bool operator==(ShaderResourceBinding lhs, ShaderResourceBinding rhs)
 	{
 		bool result = (lhs.count == rhs.count) &&
 			(lhs.resource_stage == rhs.resource_stage) &&
 			(lhs.resource_type == rhs.resource_type) &&
 			(lhs.slot == rhs.slot);
 		return result;
-	}
+	}*/
 
 	bool RenderFuncLoader::LoadVulkanRenderFunctions()
 	{

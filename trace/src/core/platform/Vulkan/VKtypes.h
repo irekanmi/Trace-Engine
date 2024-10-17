@@ -38,6 +38,7 @@ namespace trace {
 		int binding = -1;
 		int offset = 0;
 		int range = 0;
+		uint32_t buffer_id = 0;
 	};
 
 	struct TextureDescriptorInfo
@@ -57,10 +58,10 @@ namespace trace {
 
 	struct QueueFamilyIndices
 	{
-		uint32_t graphics_queue = -1;
-		uint32_t present_queue = -1;
-		uint32_t transfer_queue = -1;
-		uint32_t compute_queue = -1;
+		uint32_t graphics_queue = INVALID_ID;
+		uint32_t present_queue = INVALID_ID;
+		uint32_t transfer_queue = INVALID_ID;
+		uint32_t compute_queue = INVALID_ID;
 	};
 
 	enum CommandBufferUsage
@@ -205,6 +206,12 @@ namespace trace {
 		std::vector<VkDeviceMemory> _memorys;
 	};
 
+	struct BufferBindingInfo
+	{
+		uint32_t current_frame_offset = 0;
+		VKBuffer resource[VK_MAX_NUM_FRAMES];
+	};
+
 	struct VKPipeline
 	{
 		VkPipeline m_handle = VK_NULL_HANDLE;
@@ -244,6 +251,9 @@ namespace trace {
 		std::unordered_map<int, std::vector<TextureDescriptorInfo>> instance_texture_infos;
 		std::unordered_map<int, int> bindless_2d_tex_count;
 		bool bindless = false;
+
+		// Each binding should have their own resources
+		std::unordered_map<uint32_t, BufferBindingInfo> buffer_resources;//NOTE: first is the set and binding combined
 	};
 
 	struct VKDeviceHandle
