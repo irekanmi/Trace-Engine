@@ -36,7 +36,7 @@ struct LightData
     vec4 params2;
 };
 
-layout(set = 0, binding = 4)uniform ShadowdedLights {
+layout(std140, set = 0, binding = 4)uniform ShadowdedLights {
 
     uint num_shadowed_sun_lights;
 	uint num_non_shadowed_sun_lights;

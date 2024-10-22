@@ -39,6 +39,7 @@ namespace trace {
 		int offset = 0;
 		int range = 0;
 		uint32_t buffer_id = 0;
+		bool is_bindless = false;
 	};
 
 	struct TextureDescriptorInfo
@@ -217,7 +218,6 @@ namespace trace {
 		VkPipeline m_handle = VK_NULL_HANDLE;
 		VkPipelineLayout m_layout = VK_NULL_HANDLE;
 
-		VKBuffer Scene_buffers = {};
 		VkDescriptorSet Scene_sets[VK_MAX_NUM_FRAMES] = {};
 		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
@@ -229,21 +229,8 @@ namespace trace {
 		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
 		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
-		VkDescriptorSet Local_sets[VK_MAX_NUM_FRAMES] = {};
-		VkDescriptorSetLayout Local_layout = VK_NULL_HANDLE;
-		VkDescriptorPool Local_pool = VK_NULL_HANDLE;
-		VkDescriptorSet Local_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
-
 		VKHandle* m_instance = nullptr;
 		VKDeviceHandle* m_device = nullptr;
-		uint32_t cache_size = 0;
-		char* cache_data = nullptr;
-
-
-
-		// A resizeable buffer for instance based buffers in shaders
-		VKBuffer Instance_buffers[VK_MAX_NUM_FRAMES] = {};
-		uint32_t instance_buffer_offset = 0;
 
 		int frame_update = 0;// NOTE: This variable shows the number of times the pipeline has been used in particular frame
 

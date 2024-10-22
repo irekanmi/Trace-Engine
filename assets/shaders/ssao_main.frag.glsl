@@ -8,8 +8,8 @@ layout(location = 0)in vec2 in_texCoord;
 
 layout(set = 0, binding = 1)uniform sampler2D u_noiseTexture;
 layout(set = 0, binding = 2)uniform Kernel{
-    vec4 rand_vec;
-} u_kernel[MAX_NUM_KERNEL];
+    vec4 u_kernel[MAX_NUM_KERNEL];
+};
 layout(set = 0, binding = 3)uniform sampler2D g_bufferData[2];
 layout(set = 0, binding = 4)uniform FrameData{
     mat4 _projection;
@@ -36,7 +36,7 @@ void main()
     for(int i = 0; i < MAX_NUM_KERNEL; i++)
     {
 
-        vec3 samp_pos = TBN * u_kernel[i].rand_vec.xyz;
+        vec3 samp_pos = TBN * u_kernel[i].xyz;
         samp_pos = frag_pos + (samp_pos * radius);
         
         vec4 offset = vec4(samp_pos, 1.0f);

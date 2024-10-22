@@ -39,8 +39,14 @@ namespace vk {
 			write.dstSet = pipeline->Instance_set;
 			static std::vector<VkDescriptorBufferInfo> buffer_info;
 			buffer_info.reserve(i.second.size());
+			bool skip = false;
 			for (auto& j : i.second)
 			{
+				if (!j.is_bindless)
+				{
+					skip = true;
+					break;
+				}
 				trace::BufferBindingInfo& info = pipeline->buffer_resources[j.buffer_id];
 
 				VkDescriptorBufferInfo buf_info = {};
@@ -49,6 +55,11 @@ namespace vk {
 				buf_info.range = j.range;
 				buffer_info.push_back(buf_info);
 			}
+			if (skip)
+			{
+				continue;
+			}
+
 			write.pBufferInfo = buffer_info.data();
 
 			vkUpdateDescriptorSets(
@@ -96,7 +107,6 @@ namespace vk {
 
 
 
-		pipeline->instance_buffer_offset = 0;
 		pipeline->frame_update = 0;
 		for (auto& i : pipeline->instance_buffer_infos)
 		{

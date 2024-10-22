@@ -262,17 +262,10 @@ namespace vk {
             for (auto& m_data : mat_instance->GetMaterialData())
             {
                 trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[m_data.second.second];
-                if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER)
+
+                bool is_buffer = meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER || meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
+                if (is_buffer)
                 {
-                    /*void* data = nullptr;
-                    lambda(meta_data.data_type, m_data.second.first, data);
-
-                    char* data_point = _device->m_bufferData[_device->m_imageIndex];
-                    uint32_t location = pipeline->Scence_struct[meta_data._struct_index].second + meta_data._offset;
-
-                    void* map_point = data_point + location;
-                    memcpy(map_point, data, meta_data._size);*/
-
                     void* data = nullptr;
                     lambda(meta_data.data_type, m_data.second.first, data);
                     

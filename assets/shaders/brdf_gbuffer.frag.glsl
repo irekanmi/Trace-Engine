@@ -11,11 +11,22 @@ IN_VERTEX_DATA
 
 #include "functions.glsl"
 
-INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
+// INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
+//     vec4 diffuse_color;
+//     float metallic;
+//     float roughness;
+// });
+
+struct InstanceBufferObject
+{
     vec4 diffuse_color;
     float metallic;
     float roughness;
-});
+};
+
+layout(std140, set = 1, binding = 3) readonly buffer MaterialData{
+    InstanceBufferObject objects[];
+};
 
 BINDLESS_COMBINED_SAMPLER2D;
 
@@ -35,7 +46,8 @@ void main()
     SAMPLE_NORMAL_MAP(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), _texCoord, _normal_, _tangent_, normal );
 
     vec4 color = texture(GET_BINDLESS_TEXTURE2D(DIFFUSE_MAP), _texCoord);
-    vec4 diff_color = GET_INSTANCE_PARAM(diffuse_color, InstanceBufferObject);
+    //vec4 diff_color = GET_INSTANCE_PARAM(diffuse_color, InstanceBufferObject);
+    vec4 diff_color = objects[binding_index.draw_instance_index.x].diffuse_color;
     diff_color.rgb = pow(diff_color.rgb, vec3(2.2f));
     vec4 final_color = mix(color, diff_color, diff_color.a);
 

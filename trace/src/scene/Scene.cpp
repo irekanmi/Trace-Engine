@@ -347,10 +347,12 @@ namespace trace {
 			auto [camera, _transform] = view.get<CameraComponent, TransformComponent>(entity);
 			if (camera.is_main)
 			{
-				camera._camera.SetPosition(_transform._transform.GetPosition());
-				glm::vec3 forward = _transform._transform.GetForward();
-				glm::vec3 up = _transform._transform.GetUp();
-				glm::vec3 right = _transform._transform.GetRight();
+				Entity obj(entity, this);
+				Transform final_transform = GetEntityGlobalPose(obj, true);
+				camera._camera.SetPosition(final_transform.GetPosition());
+				glm::vec3 forward = final_transform.GetForward();
+				glm::vec3 up = final_transform.GetUp();
+				glm::vec3 right = final_transform.GetRight();
 				camera._camera.SetLookDir(forward);
 				camera._camera.SetUpDir(up);
 				main_camera = &camera._camera;

@@ -113,7 +113,14 @@ namespace trace {
 		}
 
 		if (_tex)
+		{
 			result = ShaderData::CUSTOM_DATA_TEXTURE;
+		}
+
+		if (TRC_HAS_FLAG(desc.type_flags, SpvReflectTypeFlagBits::SPV_REFLECT_TYPE_FLAG_INT))
+		{
+			result = ShaderData::CUSTOM_DATA_BOOL;
+		}
 
 		return result;
 	}
@@ -140,6 +147,20 @@ namespace trace {
 		return ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;
 	}
 
+	static void GetBlockVariables(SpvReflectBlockVariable& block, ShaderResource& resource)
+	{
+		for (uint32_t k = 0; k < block.member_count; k++)
+		{
+			SpvReflectBlockVariable& blck_var = block.members[k];
+			ShaderResource::Member member_info;
+			member_info.resource_name = blck_var.name;
+			member_info.resource_size = blck_var.size;
+			member_info.offset = blck_var.offset;
+			member_info.resource_data_type = GetDataType(*blck_var.type_description);
+			resource.members.push_back(member_info);
+		}
+	}
+
 	static void GenShaderRes(const std::vector<uint32_t>& code, ShaderResources& out_res, ShaderStage shader_stage)
 	{
 		SpvReflectShaderModule shader;
@@ -161,10 +182,13 @@ namespace trace {
 				res_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
 			}
 
+			bool is_instance = (set.set == 1);
+
 			for (uint32_t j = 0; j < set.binding_count; j++)
 			{
-				SpvReflectDescriptorBinding*& binding = set.bindings[j];
+				SpvReflectDescriptorBinding* binding = set.bindings[j];
 
+				bool is_storage_buffer = (binding->descriptor_type == SpvReflectDescriptorType::SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 
 				// Checking if a particular binding is already in the resoures
 				bool skip = false;
@@ -187,7 +211,7 @@ namespace trace {
 				ShaderResource resource;
 
 				resource.resource_name = binding->name;
-				resource.count = binding->count;
+				resource.count = binding->count > 0 ? binding->count : 1;
 				resource.resource_stage = res_stage;
 				resource.shader_stage = shader_stage;
 				resource.slot = binding->binding;
@@ -198,20 +222,22 @@ namespace trace {
 
 				if (is_structure)
 				{
+
 					SpvReflectBlockVariable& block = binding->block;
 
 					resource.def = ShaderDataDef::STRUCTURE;
-					resource.resource_size = block.padded_size;
-					for (uint32_t k = 0; k < block.member_count; k++)
+					if (is_instance && is_storage_buffer)
 					{
-						SpvReflectBlockVariable& blck_var = block.members[k];
-						ShaderResource::Member member_info;
-						member_info.resource_name = blck_var.name;
-						member_info.resource_size = blck_var.size;
-						member_info.offset = blck_var.offset;
-						member_info.resource_data_type = GetDataType(*blck_var.type_description);
-						resource.members.push_back(member_info);
+						SpvReflectBlockVariable& block_var = block.members[0];
+						resource.resource_size = block_var.padded_size;
+						GetBlockVariables(block_var, resource);
 					}
+					else
+					{
+						resource.resource_size = block.padded_size;
+						GetBlockVariables(block, resource);
+					}
+					
 
 					out_res.resources.push_back(resource);
 				}

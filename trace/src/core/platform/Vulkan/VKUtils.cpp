@@ -407,10 +407,10 @@ namespace vk {
 		// Non-uniform indexing and update after bind
 		TRC_ASSERT(des_indexing_feat.shaderSampledImageArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for sampled image");
 		TRC_ASSERT(des_indexing_feat.descriptorBindingSampledImageUpdateAfterBind, "GPU doesn't support update after bind for sampled image");
-		TRC_ASSERT(des_indexing_feat.shaderUniformBufferArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for uniform buffer");
-		TRC_ASSERT(des_indexing_feat.descriptorBindingUniformBufferUpdateAfterBind, "GPU doesn't support update after bind for uniform buffer");
-		TRC_ASSERT(des_indexing_feat.shaderStorageBufferArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for storage buffer");
-		TRC_ASSERT(des_indexing_feat.descriptorBindingStorageBufferUpdateAfterBind, "GPU doesn't support update after bind for stroage buffer");
+		//TRC_ASSERT(des_indexing_feat.shaderUniformBufferArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for uniform buffer");
+		//TRC_ASSERT(des_indexing_feat.descriptorBindingUniformBufferUpdateAfterBind, "GPU doesn't support update after bind for uniform buffer");
+		//TRC_ASSERT(des_indexing_feat.shaderStorageBufferArrayNonUniformIndexing, "GPU doesn't support non-uniform indexing for storage buffer");
+		//TRC_ASSERT(des_indexing_feat.descriptorBindingStorageBufferUpdateAfterBind, "GPU doesn't support update after bind for stroage buffer");
 		TRC_ASSERT(des_indexing_feat.runtimeDescriptorArray, "GPU doesn't support runtimeDescriptorArray");
 		TRC_ASSERT(des_indexing_feat.descriptorBindingPartiallyBound, "GPU doesn't support descriptorBindingPartiallyBound");
 
@@ -1838,12 +1838,7 @@ namespace vk {
 	void _DestroyPipeline(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKPipeline* pipeline)
 	{
 
-		if (pipeline->Scene_buffers.m_handle != VK_NULL_HANDLE)
-		{
-			_DestoryBuffer(instance, device, &pipeline->Scene_buffers);
-			
-		}
-
+		
 		if (pipeline->Scene_layout)
 		{
 			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Scene_layout, instance->m_alloc_callback);
@@ -1865,17 +1860,7 @@ namespace vk {
 				pipeline->Instance_pool = VK_NULL_HANDLE;
 			}
 		}
-		
-		if (pipeline->Local_layout)
-		{
-			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Local_layout, instance->m_alloc_callback);
-			pipeline->Local_layout = VK_NULL_HANDLE;
-			if (pipeline->Local_pool)
-			{
-				vkDestroyDescriptorPool(device->m_device, pipeline->Local_pool, instance->m_alloc_callback);
-				pipeline->Local_pool = VK_NULL_HANDLE;
-			}
-		}
+
 		
 
 		
