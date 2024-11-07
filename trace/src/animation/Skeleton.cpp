@@ -26,20 +26,6 @@ namespace trace {
 	void Skeleton::Destroy()
 	{
 	}
-	int32_t Skeleton::GetIndex(UUID idx)
-	{
-		int32_t i = 0;
-		for (UUID& id : m_boneEntites)
-		{
-			if (id == idx)
-			{
-				return i;
-			}
-
-			i++;
-		}
-		return -1;
-	}
 	int32_t Skeleton::GetBoneIndex(const std::string& bone_name)
 	{
 		return GetBoneIndex(std::hash<std::string>{}(bone_name));
@@ -57,23 +43,35 @@ namespace trace {
 
 			i++;
 		}
-		return -2;
+		return -1;
 	}
-	void Skeleton::SetAsRuntime(Scene* scene, UUID id)
+
+	void Skeleton::SetRootNode(std::string& root_node)
 	{
-		get_bone_entites(scene, m_boneEntites, id);
+		if (root_node.empty())
+		{
+			return;
+		}
+
+		m_rootNode = root_node;
+		m_rootNodeID = std::hash<std::string>{}(root_node);
 
 	}
-	void Skeleton::GetGlobalPose(Scene* scene, std::vector<glm::mat4>& out_pose, UUID id)
+
+
+	void SkeletonInstance::GetGlobalPose(std::vector<glm::mat4>& out_pose, UUID id)
 	{
+		std::vector<Bone>& bones = m_skeleton->GetBones();
+
+		Scene* scene = m_scene;
 		out_pose.clear();
-		out_pose.resize(m_bones.size());
+		out_pose.resize(bones.size());
 
 		if (!m_boneEntites.empty())
 		{
-			for (uint32_t i = 0; i < m_bones.size(); i++)
+			for (uint32_t i = 0; i < bones.size(); i++)
 			{
-				Bone& bone = m_bones[i];
+				Bone& bone = bones[i];
 				Entity obj = scene->GetEntity(m_boneEntites[i]);
 				if (!obj)
 				{
@@ -88,9 +86,9 @@ namespace trace {
 			std::vector<UUID> bone_entites;
 			get_bone_entites(scene, bone_entites, id);
 
-			for (uint32_t i = 0; i < m_bones.size(); i++)
+			for (uint32_t i = 0; i < bones.size(); i++)
 			{
-				Bone& bone = m_bones[i];
+				Bone& bone = bones[i];
 				Entity obj = scene->GetEntity(bone_entites[i]);
 				if (!obj)
 				{
@@ -101,40 +99,88 @@ namespace trace {
 			}
 		}
 	}
-	void Skeleton::SetRootNode(std::string& root_node)
+	int32_t SkeletonInstance::GetIndex(UUID idx)
 	{
-		if (root_node.empty())
+		int32_t i = 0;
+		for (UUID& id : m_boneEntites)
 		{
-			return;
+			if (id == idx)
+			{
+				return i;
+			}
+
+			i++;
 		}
-
-		m_rootNode = root_node;
-		m_rootNodeID = std::hash<std::string>{}(root_node);
-
+		return -1;
 	}
-	void Skeleton::get_bone_entites(Scene* scene, std::vector<UUID>& bone_entites, UUID id)
+	void SkeletonInstance::get_bone_entites(Scene* scene, std::vector<UUID>& bone_entites, UUID id)
 	{
+
 		Entity obj = scene->GetEntity(id);
 		if (!obj)
 		{
 			return;
 		}
 
-		Entity root_node = scene->GetParentByName(obj, m_rootNodeID);
+		std::vector<Bone>& bones = m_skeleton->GetBones();
+		
+		Bone& root_bone = bones[0];
 
-		if (!root_node)
+		Entity root_entity = scene->GetChildEntityByName(obj, root_bone.GetStringID());
+
+		if (root_entity)// found root bone in child
 		{
-			return;
+			bone_entites.resize(bones.size());
+			bone_entites[0] = root_entity.GetID();
+			for (uint32_t i = 1; i < bones.size(); i++)
+			{
+				Bone& bone = bones[i];
+
+				Entity entity = scene->GetChildEntityByName(root_entity, bone.GetStringID());
+				bone_entites[i] = entity.GetID();
+			}
+		}
+		else // try and find in parent nodes
+		{
+			root_entity = scene->FindEnityInHierachy(obj, root_bone.GetStringID());
+			if (!root_entity)
+			{
+				return;
+			}
+
+			bone_entites.resize(bones.size());
+			bone_entites[0] = root_entity.GetID();
+			for (uint32_t i = 1; i < bones.size(); i++)
+			{
+				Bone& bone = bones[i];
+
+				Entity entity = scene->GetChildEntityByName(root_entity, bone.GetStringID());
+				bone_entites[i] = entity.GetID();
+			}
+		}
+		
+	}
+
+
+	bool SkeletonInstance::CreateInstance(Ref<Skeleton> skeleton, Scene* scene, UUID id)
+	{
+		if (!m_skeleton && !skeleton)
+		{
+			TRC_ERROR("Invalid skeleton handle");
+			return false;
 		}
 
-		bone_entites.resize(m_bones.size());
-
-		for (uint32_t i = 0; i < m_bones.size(); i++)
+		if (!scene)
 		{
-			Bone& bone = m_bones[i];
-
-			Entity entity = scene->GetChildEntityByName(root_node, bone.GetStringID());
-			bone_entites[i] = entity.GetID();
+			TRC_ERROR("Invalid scene handle");
+			return false;
 		}
+
+		m_skeleton = m_skeleton ? m_skeleton : skeleton;
+		m_scene = scene;
+
+		get_bone_entites(scene, m_boneEntites, id);
+		
+		return true;
 	}
 }

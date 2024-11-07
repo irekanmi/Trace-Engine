@@ -6,6 +6,7 @@
 #include "scene/Entity.h"
 #include "core/Utils.h"
 #include "scene/Components.h"
+#include "animation/AnimationPose.h"
 
 #include "glm/glm.hpp"
 
@@ -25,7 +26,7 @@ namespace trace {
 	{
 	}
 
-	void AnimationEngine::Animate(AnimationState& state, Scene* scene, std::unordered_map<std::string, UUID>& data_map)
+	void AnimationEngine::Animate(AnimationState& state, Scene* scene, std::unordered_map<StringID, UUID>& data_map)
 	{
 
 		if (!state.IsPlaying()) return;
@@ -48,7 +49,7 @@ namespace trace {
 
 
 
-		auto lambda = [&](const std::string&, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_point)
+		auto lambda = [&](StringID, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_point)
 		{
 			CalculateAndSetData(a, b, scene, id, type, time_point);
 		};
@@ -56,10 +57,10 @@ namespace trace {
 
 	}
 
-	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, std::unordered_map<std::string, UUID>& data_map)
+	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, std::unordered_map<StringID, UUID>& data_map)
 	{
 
-		auto lambda = [&](const std::string&, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_)
+		auto lambda = [&](StringID, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_)
 		{
 			CalculateAndSetData(a, b, scene, id, type, time_);
 		};
@@ -109,31 +110,181 @@ namespace trace {
 				current_state.Stop();
 				return;
 			}
-			else elasped_animation_time = fmod(elasped_animation_time, clip->GetDuration());
+			else
+			{
+				elasped_animation_time = fmod(elasped_animation_time, clip->GetDuration());
+			}
 		}
 		current_state.SetElaspedTime(elasped_animation_time);
 
 		bool is_skeletal_animation = current_state.GetAnimationClip()->GetType() == AnimationClipType::SKELETAL_ANIMATIOM;
 		if (is_skeletal_animation)
 		{
-			AnimationPose current_state_anim_pose;
-			std::unordered_map<std::string, Transform>& runtime_track = current_state.GetRuntimeClip().GetRuntimeTracks();
-			
+			//AnimationPose current_state_anim_pose;
+			//std::unordered_map<std::string, Transform>& runtime_track = current_state.GetRuntimeClip().GetRuntimeTracks();
+			//
 
-			auto lambda = [&](const std::string& channel_name, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_point)
+			//auto lambda = [&](const std::string& channel_name, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_point)
+			//{
+			//	switch (type)
+			//	{
+			//	case AnimationDataType::NONE:
+			//	{
+			//		break;
+			//	}
+			//	case AnimationDataType::POSITION:
+			//	{
+			//		AnimatedOutput out = CalculateData(a, b, type, time_point);
+			//		glm::vec3 result = *(glm::vec3*)(&out.data);
+
+			//		runtime_track[channel_name].SetPosition(result);
+			//		break;
+			//	}
+			//	case AnimationDataType::ROTATION:
+			//	{
+			//		AnimatedOutput out = CalculateData(a, b, type, time_point);
+			//		glm::quat result = *(glm::quat*)(&out.data);
+
+			//		runtime_track[channel_name].SetRotation(result);
+			//		break;
+			//	}
+			//	case AnimationDataType::SCALE:
+			//	{
+			//		AnimatedOutput out = CalculateData(a, b, type, time_point);
+			//		glm::vec3 result = *(glm::vec3*)(&out.data);
+
+			//		runtime_track[channel_name].SetScale(result);
+			//		break;
+			//	}
+			//	case AnimationDataType::TEXT_INTENSITY:
+			//	case AnimationDataType::LIGHT_INTENSITY:
+			//	case AnimationDataType::IMAGE_COLOR:
+			//	{
+			//		CalculateAndSetData(a, b, scene, id, type, time_point);
+			//	}
+			//	}
+
+			//	
+
+			//};
+			//FindFrame(animation_component->entities, current_state.GetAnimationClip(), scene, elasped_animation_time, lambda);
+
+
+			////When we are done with all blending we set the entity pose
+
+			//for (auto& track : runtime_track)
+			//{
+			//	if (!track.second.IsDirty())
+			//	{
+			//		continue;
+			//	}
+
+			//	auto it = animation_component->entities.find(track.first);
+			//	if (it == animation_component->entities.end())
+			//	{
+			//		continue;
+			//	}
+
+			//	Entity entity = scene->GetEntity(it->second);
+
+			//	Transform& transform = entity.GetComponent<TransformComponent>()._transform;
+			//	transform.SetPosition(track.second.GetPosition());
+			//	transform.SetRotation(track.second.GetRotation());
+			//	transform.SetScale(track.second.GetScale());
+
+			//	track.second.SetDirty(false);
+			//}
+		}
+		else
+		{
+			Animate(current_state, scene, animation_component->entities);
+		}
+
+	}
+
+	void AnimationEngine::SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping)
+	{
+		SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
+		Scene* scene = skeleton_instance->GetScene();
+
+		float elasped_time = time;
+
+		if (looping)
+		{
+			elasped_time = fmod(elasped_time, clip->GetDuration());
+		}
+		else if (!looping && time > clip->GetDuration())
+		{
+			return;
+			time = clip->GetDuration();
+		}
+
+		for (auto& channel : clip->GetTracks())
+		{
+			int32_t bone_index = skeleton_instance->GetSkeleton()->GetBoneIndex(channel.first);
+
+			if (bone_index < 0)
 			{
+				continue;
+			}
+			for (auto& track : channel.second)
+			{
+				AnimationFrameData* curr = nullptr;
+				AnimationFrameData* prev = nullptr;
+
+				//TODO: Find a better way to find which frames to sample -----------
+				int i = track.second.size() - 1;
+				for (; i >= 0; i--)
+				{
+					curr = &track.second[i];
+					prev = i != 0 ? &track.second[i - 1] : nullptr;
+					if (elasped_time <= curr->time_point)
+					{
+						if (prev && elasped_time >= prev->time_point)
+						{
+							break;
+						}
+					}
+
+				}
+				// -----------------------------------------------------------------
+
+				if (!prev && !curr)
+				{
+					continue;
+				}
+
+				if (prev && !curr)
+				{
+					curr = prev;
+				}
+
+				if (!prev && curr)
+				{
+					prev = curr;
+				}
+
+
+				float lerp_value = (elasped_time - prev->time_point) / (curr->time_point - prev->time_point);
+
+				lerp_value = glm::min(0.0f, lerp_value);
+
+
+				AnimationDataType type = track.first;
+				float time_point = lerp_value;
+				AnimationFrameData* a = prev;
+				AnimationFrameData* b = curr;
+				
+				std::vector<Transform>& local_pose = out_pose->GetLocalPose();
+				Transform& pose = local_pose[bone_index];
 				switch (type)
 				{
-				case AnimationDataType::NONE:
-				{
-					break;
-				}
 				case AnimationDataType::POSITION:
 				{
 					AnimatedOutput out = CalculateData(a, b, type, time_point);
 					glm::vec3 result = *(glm::vec3*)(&out.data);
 
-					runtime_track[channel_name].SetPosition(result);
+					pose.SetPosition(result);
 					break;
 				}
 				case AnimationDataType::ROTATION:
@@ -141,7 +292,7 @@ namespace trace {
 					AnimatedOutput out = CalculateData(a, b, type, time_point);
 					glm::quat result = *(glm::quat*)(&out.data);
 
-					runtime_track[channel_name].SetRotation(result);
+					pose.SetRotation(result);
 					break;
 				}
 				case AnimationDataType::SCALE:
@@ -149,53 +300,15 @@ namespace trace {
 					AnimatedOutput out = CalculateData(a, b, type, time_point);
 					glm::vec3 result = *(glm::vec3*)(&out.data);
 
-					runtime_track[channel_name].SetScale(result);
+					pose.SetScale(result);
 					break;
 				}
-				case AnimationDataType::TEXT_INTENSITY:
-				case AnimationDataType::LIGHT_INTENSITY:
-				case AnimationDataType::IMAGE_COLOR:
-				{
-					CalculateAndSetData(a, b, scene, id, type, time_point);
+
 				}
-				}
-
-				
-
-			};
-			FindFrame(animation_component->entities, current_state.GetAnimationClip(), scene, elasped_animation_time, lambda);
-
-
-			//When we are done with all blending we set the entity pose
-
-			for (auto& track : runtime_track)
-			{
-				if (!track.second.IsDirty())
-				{
-					continue;
-				}
-
-				auto it = animation_component->entities.find(track.first);
-				if (it == animation_component->entities.end())
-				{
-					continue;
-				}
-
-				Entity entity = scene->GetEntity(it->second);
-
-				Transform& transform = entity.GetComponent<TransformComponent>()._transform;
-				transform.SetPosition(track.second.GetPosition());
-				transform.SetRotation(track.second.GetRotation());
-				transform.SetScale(track.second.GetScale());
-
-				track.second.SetDirty(false);
 			}
-		}
-		else
-		{
-			Animate(current_state, scene, animation_component->entities);
-		}
 
+			
+		}
 	}
 
 	AnimationEngine* AnimationEngine::get_instance()
@@ -375,7 +488,7 @@ namespace trace {
 
 	}
 
-	void AnimationEngine::FindFrame(std::unordered_map<std::string, UUID>& data_map, Ref<AnimationClip> clip, Scene* scene, float elasped_time, std::function<void(const std::string&, UUID, AnimationDataType , AnimationFrameData* , AnimationFrameData* , float )> callback)
+	void AnimationEngine::FindFrame(std::unordered_map<StringID, UUID>& data_map, Ref<AnimationClip> clip, Scene* scene, float elasped_time, std::function<void(StringID, UUID, AnimationDataType , AnimationFrameData* , AnimationFrameData* , float )> callback)
 	{
 
 		for (auto& channel : clip->GetTracks())
@@ -392,11 +505,11 @@ namespace trace {
 				AnimationFrameData* prev = nullptr;
 
 				//TODO: Find a better way to find which frames to sample -----------
-				int i = track.channel_data.size() - 1;
+				int i = track.second.size() - 1;
 				for (; i >= 0; i--)
 				{
-					curr = &track.channel_data[i];
-					prev = i != 0 ? &track.channel_data[i - 1] : nullptr;
+					curr = &track.second[i];
+					prev = i != 0 ? &track.second[i - 1] : nullptr;
 					if (elasped_time <= curr->time_point)
 					{
 						if (prev && elasped_time >= prev->time_point)
@@ -429,7 +542,7 @@ namespace trace {
 				lerp_value = glm::min(0.0f, lerp_value);
 
 
-				callback(channel.first, object, track.channel_type, prev, curr, lerp_value);
+				callback(channel.first, object, track.first, prev, curr, lerp_value);
 			}
 		}
 

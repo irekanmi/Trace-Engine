@@ -1,5 +1,9 @@
 #include "pch.h"
 #include "AnimationGraph.h"
+#include "animation/AnimationPoseNode.h"
+#include "animation/AnimationPose.h"
+#include "scene/Scene.h"
+#include "scene/Entity.h"
 
 bool trace::AnimationGraph::HasAnimationClip(Ref<AnimationClip> clip)
 {
@@ -36,4 +40,157 @@ void trace::AnimationGraph::Start()
     {
         current_state.Play();
     }
+}
+
+namespace trace::Animation {
+    GraphInstance::~GraphInstance()
+    {
+        DestroyInstance();
+    }
+    bool GraphInstance::CreateInstance(Ref<Graph> graph, Ref<Skeleton> skeleton)
+    {
+
+        if (!graph)
+        {
+            TRC_ERROR("Invalid graph handle");
+            return false;
+        }
+
+        if (!skeleton)
+        {
+            TRC_ERROR("Invalid skeleton handle");
+            return false;
+        }
+
+        m_graph = graph;
+        m_skeletonInstance.SetSkeleton(skeleton);        
+
+        
+        std::vector<Parameter>& parameters = graph->GetParameters();
+        m_parameterData.resize(parameters.size());
+
+        uint32_t i = 0;
+        for (Parameter& param : parameters)
+        {
+            m_parameterLUT[param.first] = i;
+            i++;
+        }
+
+        return true;
+    }
+
+    void GraphInstance::DestroyInstance()
+    {
+        if (m_destroyed)
+        {
+            return;
+        }
+
+        for (auto& i : m_nodesData)
+        {
+            delete i.second;// TODO: Use custom allocator
+        }
+
+
+        m_destroyed = true;
+    }
+
+    void GraphInstance::Start(Scene* scene, UUID id)
+    {
+        m_destroyed = false;
+
+        m_skeletonInstance.CreateInstance(Ref<Skeleton>(), scene, id);
+        std::unordered_map<UUID, Node*>& nodes = m_graph->GetNodes();
+        for (auto& i : nodes)
+        {
+            i.second->Instanciate(this);
+        }
+        m_started = true;
+    }
+
+    void GraphInstance::Stop(Scene* scene, UUID id)
+    {
+        DestroyInstance();
+
+        m_started = false;
+    }
+
+    void GraphInstance::Update(float deltaTime)
+    {
+
+        PoseNode* root_node = m_graph->GetRootNode();
+
+        root_node->Update(this, deltaTime);
+        PoseNodeResult* final_pose = root_node->GetFinalPose(this);
+
+        TRC_ASSERT(final_pose != nullptr, "Funtion: {}", __FUNCTION__);
+
+        final_pose->pose_data.SetEntityLocalPose();
+
+    }
+
+
+    ParameterData* GraphInstance::GetParameterData(Parameter& param)
+    {
+        int32_t index = m_parameterLUT[param.first];
+
+        return &m_parameterData[index];
+    }
+
+    void GraphInstance::set_parameter_data(const std::string& param_name, void* data, uint32_t size)
+    {
+        auto it = m_parameterLUT.find(param_name);
+        if (it == m_parameterLUT.end())
+        {
+            TRC_WARN("'{}' is not a parameter", param_name);
+            return;
+        }
+
+        ParameterData& param_data = m_parameterData[it->second];
+        
+        memcpy(param_data.data, data, size);
+
+        //.. Check for Transitions
+    }
+
+    bool Graph::Create()
+    {
+        m_rootNode = CreateNode<FinalOutputNode>();
+        FinalOutputNode* root_node = (FinalOutputNode*)GetNode(m_rootNode);
+
+        return true;
+    }
+
+    void Graph::Destroy()
+    {
+        for (auto& node : m_nodes)
+        {
+            delete node.second;// TODO: Use custom allocator
+        }
+
+    }
+
+    void Graph::CreateParameter(const std::string& param_name, ParameterType type)
+    {
+        m_parameters.emplace_back(std::make_pair(param_name, type));
+    }
+
+    Node* Graph::GetNode(UUID node_id)
+    {
+        auto it = m_nodes.find(node_id);
+        
+        if (it != m_nodes.end())
+        {
+            return m_nodes[node_id];
+        }
+
+        return nullptr;
+    }
+
+    void Graph::AddAnimationClip(Ref<AnimationClip> clip)
+    {
+        m_animationDataSet.push_back(clip);
+    }
+
+
 }

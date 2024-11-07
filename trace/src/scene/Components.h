@@ -14,6 +14,7 @@
 #include "render/SkinnedModel.h"
 #include "animation/Skeleton.h"
 #include "core/Coretypes.h"
+#include "animation/AnimationSequence.h"
 
 
 #include <string>
@@ -192,13 +193,12 @@ namespace trace {
 		Ref<SkinnedModel> _model;
 		bool cast_shadow = true;
 		std::vector<glm::mat4> bone_transforms;
-		Skeleton runtime_skeleton;
+		SkeletonInstance runtime_skeleton;
 
-		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
+		Ref<Skeleton> GetSkeleton() { return runtime_skeleton.GetSkeleton(); }
 		void SetSkeleton(Ref<Skeleton> skeleton, Scene* scene, UUID parent);
 
 	private:
-		Ref<Skeleton> m_skeleton;
 
 	};
 
@@ -261,7 +261,8 @@ namespace trace {
 	{
 		AnimationGraph runtime_graph;
 		bool play_on_start = false;
-		std::unordered_map<std::string, UUID> entities;
+		std::unordered_map<StringID, UUID> entities;
+		Animation::GraphInstance graph_instance;
 
 
 		bool InitializeEntities(Scene* scene, UUID parent = 0, bool refresh = false);
@@ -305,6 +306,11 @@ namespace trace {
 		bool cast_shadows = false;
 	};
 
+	struct SequencePlayer
+	{
+		Animation::SequenceInstance sequence;
+	};
+
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -314,6 +320,6 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight, SkinnedModelRenderer>;
+		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer>;
 
 }

@@ -79,4 +79,6 @@ namespace trace {
 
 	using StringID = size_t;
 
+	using UpdateID = uint32_t;
+
 }

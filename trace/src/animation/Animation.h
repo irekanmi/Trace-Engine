@@ -6,6 +6,7 @@
 #include "animation/Skeleton.h"
 #include "resource/Ref.h"
 #include "render/Transform.h"
+#include "core/Coretypes.h"
 
 #include <vector>
 #include <unordered_map>
@@ -46,6 +47,8 @@ namespace trace {
 		std::vector<AnimationFrameData> channel_data;
 	};
 
+	using AnimationDataTrack = std::unordered_map< AnimationDataType, std::vector<AnimationFrameData>>;
+
 
 	class AnimationClip : public Resource
 	{
@@ -53,26 +56,23 @@ namespace trace {
 	public:
 		~AnimationClip(){}
 
-		std::unordered_map<std::string, std::vector<AnimationTrack>>& GetTracks() { return m_tracks; }
+		std::unordered_map<StringID, AnimationDataTrack>& GetTracks() { return m_tracks; }
 		float GetDuration() { return m_duration; }
 		int GetSampleRate() { return m_sampleRate; }
 		AnimationClipType GetType() { return m_type; }
-		std::unordered_map<std::string, Transform>& GetRuntimeTracks() { return m_runtimeTracks; }
 
 		void SetDuration(float duration) { m_duration = duration; }
 		void SetSampleRate(int rate) { m_sampleRate = rate; }
-		void SetTracks(std::unordered_map<std::string, std::vector<AnimationTrack>>& new_tracks) { m_tracks = std::move(new_tracks); }
+		void SetTracks(std::unordered_map<StringID, AnimationDataTrack>& new_tracks) { m_tracks = std::move(new_tracks); }
 		void SetType(AnimationClipType type) { m_type = type; }
 
-		void SetAsRuntimeClip();
 
 		bool Compare(AnimationClip* other);
 
 	private:
 		float m_duration = 1.0f;
 		int m_sampleRate = 30;
-		std::unordered_map<std::string,std::vector<AnimationTrack>> m_tracks;
-		std::unordered_map<std::string,Transform> m_runtimeTracks;//NOTE: For Skeletal Animation
+		std::unordered_map<StringID, AnimationDataTrack> m_tracks;
 		AnimationClipType m_type = AnimationClipType::SKELETAL_ANIMATIOM;
 
 	protected:
@@ -80,29 +80,6 @@ namespace trace {
 
 	};
 
-	class AnimationPose
-	{
-
-	public:
-
-		
-		std::vector<Transform>& GetLocalPoses() { return m_localPoses; }
-		std::vector<Transform>& GetGlobalPoses() { return m_globalPoses; }
-		Skeleton* GetSkeleton() { return m_skeleton; }
-
-		void SetSkeleton(Skeleton* skeleton);
-		void SetPose(int32_t bone_index, Transform& pose)
-		{
-			m_localPoses[bone_index] = pose;
-		}
-
-	private:
-		std::vector<Transform> m_localPoses;
-		std::vector<Transform> m_globalPoses;
-		Skeleton* m_skeleton = nullptr;
-
-	protected:
-
-	};
+	
 
 }

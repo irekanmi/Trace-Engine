@@ -2,6 +2,8 @@
 
 #include "Utils.h"
 #include "core/Coretypes.h"
+#include "debug/Debugger.h"
+
 
 #include "glm/gtx/matrix_decompose.hpp"
 #include <filesystem>
@@ -132,6 +134,20 @@ namespace trace {
 
 		result = TRC_COL32(r, g, b, a);
 		return result;
+	}
+
+	StringID GetStringID(const std::string& data)
+	{
+		StringID id = std::hash<std::string>{}(data);
+		// NOTE: Only to be used for the editor
+		Debugger::get_instance()->SetString(id, data);
+		return id;
+	}
+
+	std::string& GetStringFromID(StringID string_id)
+	{
+		// NOTE: Only to be used for the editor
+		 return Debugger::get_instance()->GetString(string_id);
 	}
 
 }

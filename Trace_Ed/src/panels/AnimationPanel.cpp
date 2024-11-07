@@ -10,6 +10,7 @@
 #include "core/events/EventsSystem.h"
 #include "core/input/Input.h"
 #include "HierachyPanel.h"
+#include "core/Utils.h"
 
 #include "imgui.h"
 #include "imgui_neo_sequencer.h"
@@ -324,7 +325,7 @@ namespace trace {
                 {
 
 
-                    const std::string& name = channel.first;
+                    const std::string& name = STRING_FROM_ID(channel.first);
                     static bool do_open = false;
 
                     if (!has_entity)
@@ -335,24 +336,24 @@ namespace trace {
                     {
                         int track_index = 0;
                         static std::vector<int> tracks_to_delete{}; //TODO: Create a temp small vector
-                        for (AnimationTrack& track : channel.second)
+                        for (auto& track : channel.second)
                         {
                             bool open = true;
                             bool modified = false;
 
                             ImGuiID timeline_ID = ImGui::GetID(name.c_str());
                             ImGui::PushID(timeline_ID);
-                            if (ImGui::BeginNeoTimelineEx(get_animation_data_type_string(track.channel_type), &open, ImGuiNeoTimelineFlags_::ImGuiNeoTimelineFlags_AllowFrameChanging))
+                            if (ImGui::BeginNeoTimelineEx(get_animation_data_type_string(track.first), &open, ImGuiNeoTimelineFlags_::ImGuiNeoTimelineFlags_AllowFrameChanging))
                             {
                                 if (ImGui::IsNeoTimelineSelected())
                                 {
                                     if (delete_pressed)
                                     {
-                                        TRC_TRACE("Track: {} has been deleted", get_animation_data_type_string(track.channel_type));
+                                        TRC_TRACE("Track: {} has been deleted", get_animation_data_type_string(track.first));
                                         tracks_to_delete.push_back(track_index);
                                     }
                                 }
-                                std::vector<FrameIndex>& f_idx = m_currentTracks[channel.first][track.channel_type];
+                                std::vector<FrameIndex>& f_idx = m_currentTracks[channel.first][track.first];
                                 int frame_size = f_idx.size();
                                 static std::vector<int> frame_to_delete{}; //TODO: Create a temp small vector
                                 static std::vector<int> frame_to_duplicate{}; //TODO: Create a temp small vector
@@ -363,14 +364,14 @@ namespace trace {
                                     float time_point = ((float)fi.index / (float)m_endFrame) * clip_duration;
                                     if (ImGui::NeoIsDraggingSelection() && ImGui::IsNeoKeyframeSelected())
                                     {
-                                        track.channel_data[fi.current_fd_index].time_point = time_point;
+                                        track.second[fi.current_fd_index].time_point = time_point;
                                         bool begin = fi.current_fd_index == 0;
-                                        bool end = fi.current_fd_index == (track.channel_data.size() - 1);
-                                        if (!begin && track.channel_data[fi.current_fd_index - 1].time_point > time_point)
+                                        bool end = fi.current_fd_index == (track.second.size() - 1);
+                                        if (!begin && track.second[fi.current_fd_index - 1].time_point > time_point)
                                         {
-                                            AnimationFrameData temp = track.channel_data[fi.current_fd_index];
-                                            track.channel_data[fi.current_fd_index] = track.channel_data[fi.current_fd_index - 1];
-                                            track.channel_data[fi.current_fd_index - 1] = temp;
+                                            AnimationFrameData temp = track.second[fi.current_fd_index];
+                                            track.second[fi.current_fd_index] = track.second[fi.current_fd_index - 1];
+                                            track.second[fi.current_fd_index - 1] = temp;
 
                                             auto it = std::find_if(f_idx.begin(), f_idx.end(), [&fi](FrameIndex& a) {
                                                 return a.current_fd_index == (fi.current_fd_index - 1);
@@ -378,11 +379,11 @@ namespace trace {
                                             it->current_fd_index++;
                                             fi.current_fd_index--;
                                         }
-                                        if (!end && track.channel_data[fi.current_fd_index + 1].time_point < time_point)
+                                        if (!end && track.second[fi.current_fd_index + 1].time_point < time_point)
                                         {
-                                            AnimationFrameData temp = track.channel_data[fi.current_fd_index];
-                                            track.channel_data[fi.current_fd_index] = track.channel_data[fi.current_fd_index + 1];
-                                            track.channel_data[fi.current_fd_index + 1] = temp;
+                                            AnimationFrameData temp = track.second[fi.current_fd_index];
+                                            track.second[fi.current_fd_index] = track.second[fi.current_fd_index + 1];
+                                            track.second[fi.current_fd_index + 1] = temp;
 
                                             auto it = std::find_if(f_idx.begin(), f_idx.end(), [&fi](FrameIndex& a) {
                                                 return a.current_fd_index == (fi.current_fd_index + 1);
@@ -395,14 +396,14 @@ namespace trace {
                                     {
                                         ImGui::SetNextWindowPos(ImGui::GetNeoKeyFramePos());
                                         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-                                        std::string str_id = "##NeoKeyFrame" + std::to_string(fi.current_fd_index) + name + get_animation_data_type_string(track.channel_type);
+                                        std::string str_id = "##NeoKeyFrame" + std::to_string(fi.current_fd_index) + name + get_animation_data_type_string(track.first);
                                         ImGui::Begin(str_id.c_str(), &open,
                                             ImGuiWindowFlags_NoDocking |
                                             ImGuiWindowFlags_NoNav |
                                             ImGuiWindowFlags_AlwaysAutoResize |
                                             ImGuiWindowFlags_NoTitleBar
                                         );
-                                        animation_data_ui(track.channel_type, track.channel_data[fi.current_fd_index].data);
+                                        animation_data_ui(track.first, track.second[fi.current_fd_index].data);
                                         ImGui::End();
                                         ImGui::PopStyleVar(1);
                                     }
@@ -428,7 +429,7 @@ namespace trace {
                                         f_idx[j].current_fd_index--;
                                     }
 
-                                    track.channel_data.erase(track.channel_data.begin() + fi.current_fd_index);
+                                    track.second.erase(track.second.begin() + fi.current_fd_index);
                                     f_idx.erase(f_idx.begin() + delete_index);
                                     delete_count++;
                                 }
@@ -447,9 +448,9 @@ namespace trace {
                                         f_idx[j].current_fd_index++;
                                     }
 
-                                    AnimationFrameData anim_data = track.channel_data[fi.current_fd_index];
+                                    AnimationFrameData anim_data = track.second[fi.current_fd_index];
 
-                                    track.channel_data.insert(track.channel_data.begin() + fi.current_fd_index, anim_data);
+                                    track.second.insert(track.second.begin() + fi.current_fd_index, anim_data);
                                     f_idx.insert(f_idx.begin() + duplicate_index, fi_temp);
                                     duplicate_count++;
                                 }
@@ -463,14 +464,14 @@ namespace trace {
                             track_index++;
 
                             int delete_count = 0;//NOTE: Used to know the number of deleted frames
-                            for (int i = 0; i < tracks_to_delete.size(); i++)
+                            /*for (int i = 0; i < tracks_to_delete.size(); i++)
                             {
                                 int& delete_index = tracks_to_delete[i];
                                 delete_index -= delete_count;
 
                                 channel.second.erase(channel.second.begin() + delete_index);
 
-                            }
+                            }*/
 
                             tracks_to_delete.clear();
                         }
@@ -535,7 +536,7 @@ namespace trace {
     }
     void AnimationPanel::SetFrameData(UUID id, AnimationDataType type, void* data, int size)
     {
-        if (!m_currentClip)
+        /*if (!m_currentClip)
         {
             return;
         }
@@ -642,7 +643,7 @@ namespace trace {
             tracks.push_back(new_track);
         }
 
-        generate_tracks();
+        generate_tracks();*/
 
     }
     void AnimationPanel::OnSceneLoad()
@@ -653,7 +654,7 @@ namespace trace {
     }
     void AnimationPanel::generate_tracks()
     {
-        if (!m_currentClip)
+        /*if (!m_currentClip)
         {
             return;
         }
@@ -680,7 +681,7 @@ namespace trace {
 
             }
             
-        }
+        }*/
 
     }
     void AnimationPanel::play()

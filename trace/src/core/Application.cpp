@@ -167,6 +167,7 @@ namespace trace
 
 		while (m_isRunning)
 		{
+			m_Window->Update(0.0f);
 
 			if (m_isMinimized)
 			{
@@ -177,7 +178,6 @@ namespace trace
 			float deltaTime = _time - m_lastTime;
 			m_lastTime = _time;
 
-			m_Window->Update(0.0f);
 			//NOTE: Clamping deltaTime to 0.5sec, if the application is minimized or any other issues that causes stall in the application
 			if (deltaTime > 0.5f)
 			{
@@ -219,7 +219,7 @@ namespace trace
 				}
 			}
 
-			
+			m_updateID++;
 			
 		}
 	}

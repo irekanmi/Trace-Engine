@@ -5,6 +5,8 @@
 #include "resource/ModelManager.h"
 #include "resource/MeshManager.h"
 #include "resource/PipelineManager.h"
+#include "resource/GenericAssetManager.h"
+#include "resource/AnimationsManager.h"
 #include "scene/SceneManager.h"
 #include "scene/Components.h"
 #include "core/input/Input.h"
@@ -12,6 +14,7 @@
 #include "serialize/SceneSerializer.h"
 #include "serialize/PipelineSerializer.h"
 #include "serialize/ProjectSerializer.h"
+#include "serialize/AnimationsSerializer.h"
 #include "core/Utils.h"
 #include "scripting/ScriptEngine.h"
 #include "scene/Scene.h"
@@ -24,6 +27,9 @@
 #include "builder/ProjectBuilder.h"
 #include "scene/Entity.h"
 #include "import/Importer.h"
+#include "animation/AnimationNode.h"
+#include "animation/AnimationSequenceTrack.h"
+#include "animation/SequenceTrackChannel.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -48,11 +54,14 @@ void dark_purple();
 void custom_solid();
 
 
+
+
 namespace trace {
 
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
 	extern UUID GetUUIDFromName(const std::string& name);
 
+	
 
 	bool TraceEditor::Init()
 	{
@@ -329,7 +338,9 @@ namespace trace {
 		//Inspector
 		ImGui::Begin("Inspector");
 		if (m_inspectorPanel->GetDrawCallback())
+		{
 			m_inspectorPanel->GetDrawCallback()();
+		}
 		ImGui::End();
 
 		// Content Browser
@@ -1121,23 +1132,53 @@ namespace trace {
 		}
 		case KEY_N:
 		{
-			if (m_currentState != SceneEdit) break;
+			if (m_currentState != SceneEdit)
+			{
+				break;
+			}
 
 			if (control)
 			{
-				//NewScene();
+				
 			}
 
 			break;
 		}
 		case KEY_D:
 		{
-			if (m_currentState != SceneEdit) break;
+			if (m_currentState != SceneEdit)
+			{
+				break;
+			}
 
 			if (control && m_hierachyPanel->GetSelectedEntity())
 			{
 				m_currentScene->DuplicateEntity(m_hierachyPanel->GetSelectedEntity());
 			}
+
+			break;
+		}
+
+		case KEY_G:
+		{
+
+			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
+			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+
+			bool val = true;
+			anim.graph_instance.SetParameterData("Change To Ninja", val);
+
+			break;
+		}
+
+		case KEY_H:
+		{
+
+			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
+			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+
+			bool val = true;
+			anim.graph_instance.SetParameterData("Change To Soul", val);
 
 			break;
 		}
@@ -1189,6 +1230,68 @@ namespace trace {
 			{
 				m_fullScreen = false;
 
+			}
+			break;
+		}
+		case KEY_G:
+		{
+
+			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
+			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+
+			bool val = false;
+			anim.graph_instance.SetParameterData("Change To Ninja", val);
+
+			break;
+		}
+
+		case KEY_H:
+		{
+
+			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
+			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+
+			bool val = false;
+			anim.graph_instance.SetParameterData("Change To Soul", val);
+
+			break;
+		}
+		case KEY_SPACE:
+		{
+			if (m_currentState != SceneEdit)
+			{
+				break;
+			}
+
+			Entity entity = m_currentScene->GetEntityByName("Sequencer");
+			if (entity)
+			{
+				SequencePlayer& player = entity.AddComponent<SequencePlayer>();
+				Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->CreateAssetHandle<Animation::Sequence>("Sequence test t1");
+				Ref<AnimationClip> first_clip = AnimationsSerializer::DeserializeAnimationClip("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Animations/Fight_idle/fight_idle_mixamo.com.trcac");
+				Ref<AnimationClip> second_clip = AnimationsSerializer::DeserializeAnimationClip("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Animations/basic_idle/basic_idle_mixamo.com.trcac");
+
+				float duration = first_clip->GetDuration() + second_clip->GetDuration();
+				sequence->SetDuration(duration);
+				Animation::SkeletalAnimationTrack* track = new Animation::SkeletalAnimationTrack;
+				track->SetStringID(STR_ID("Sad Idle"));
+				Animation::SkeletalAnimationChannel* channel_1 = new Animation::SkeletalAnimationChannel;
+				channel_1->SetAnimationClip(first_clip);
+				channel_1->SetDuration(first_clip->GetDuration());
+				channel_1->SetStartTime(0.0f);
+				
+				track->GetTrackChannels().push_back(channel_1);
+
+				Animation::SkeletalAnimationChannel* channel_2 = new Animation::SkeletalAnimationChannel;
+				channel_2->SetAnimationClip(second_clip);
+				channel_2->SetDuration(second_clip->GetDuration());
+				channel_2->SetStartTime(first_clip->GetDuration() - 0.5f);
+
+				track->GetTrackChannels().push_back(channel_2);
+
+				sequence->GetTracks().push_back(track);
+
+				player.sequence.SetSequence(sequence);
 			}
 			break;
 		}

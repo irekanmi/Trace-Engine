@@ -41,6 +41,7 @@ namespace trace
 		virtual void PopOverLay(Layer* layer);
 		virtual std::vector<Object*> GetEngineSystemsID();
 		virtual Window* GetWindow() { return m_Window; }
+		UpdateID GetUpdateID() { return m_updateID; }
 
 		Clock& GetClock() { return m_clock; }
 
@@ -61,6 +62,7 @@ namespace trace
 		bool m_isRunning = true;
 		bool m_isMinimized = false;
 		bool m_vsync = false;
+		UpdateID m_updateID = 0;
 
 	};
 

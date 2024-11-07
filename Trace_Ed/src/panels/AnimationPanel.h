@@ -69,7 +69,7 @@ namespace trace {
 		Ref<AnimationClip> m_currentClip;
 		UUID current_entity_id = 0;
 		State m_state;
-		std::unordered_map<std::string, std::unordered_map<AnimationDataType,std::vector<FrameIndex>>> m_currentTracks;
+		std::unordered_map<StringID, std::unordered_map<AnimationDataType,std::vector<FrameIndex>>> m_currentTracks;
 
 	protected:
 	};

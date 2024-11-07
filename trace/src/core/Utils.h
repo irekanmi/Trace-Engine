@@ -2,14 +2,13 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "core/Coretypes.h"
 
 #include "glm/glm.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include <string>
 
-inline float lerp(float a, float b, float t)
-{
-	return a +((b - a) * t);
-}
+
 
 namespace trace {
 
@@ -23,5 +22,27 @@ namespace trace {
 	glm::vec4 colorFromUint32(uint32_t color);
 	uint32_t colorVec4ToUint(glm::vec4 color);
 
+	StringID GetStringID(const std::string& data);
+
+	std::string& GetStringFromID(StringID string_id);
+
+	inline float lerp(float a, float b, float t)
+	{
+		return a + ((b - a) * t);
+	}
+
+	inline glm::vec3 lerp(glm::vec3 a, glm::vec3 b, float t)
+	{
+		return a + ((b - a) * t);
+	}
+
+	inline glm::quat slerp(glm::quat a, glm::quat b, float t)
+	{
+		return glm::slerp(a, b, t);
+	}
+
 }
+
+#define STR_ID(string) trace::GetStringID(string)
+#define STRING_FROM_ID(string_id) trace::GetStringFromID(string_id)
 

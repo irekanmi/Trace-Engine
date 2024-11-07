@@ -5,6 +5,7 @@
 #include "resource/AnimationsManager.h"
 #include "MemoryStream.h"
 #include "resource/GenericAssetManager.h"
+#include "core/Utils.h"
 
 #include "yaml_util.h"
 
@@ -34,14 +35,14 @@ namespace trace {
 		{
 
 			emit << YAML::BeginMap;
-			emit << YAML::Key << "Handle" << YAML::Value << uuid.first;
+			emit << YAML::Key << "Handle" << YAML::Value << STRING_FROM_ID(uuid.first);
 			emit << YAML::Key << "Tracks" << YAML::Value << YAML::BeginSeq;
 			for (auto& track : uuid.second)
 			{
 				emit << YAML::BeginMap;
-				emit << YAML::Key << "Type" << YAML::Value << (int)track.channel_type;
+				emit << YAML::Key << "Type" << YAML::Value << (int)track.first;
 				emit << YAML::Key << "Track Data" << YAML::Value << YAML::BeginSeq;
-				for (AnimationFrameData& fd : track.channel_data)
+				for (AnimationFrameData& fd : track.second)
 				{
 					emit << YAML::BeginMap;
 					memcpy(&anim_data, fd.data, 16);
@@ -185,24 +186,30 @@ namespace trace {
 		clip->SetType(type);
 
 
-		std::unordered_map<std::string, std::vector<AnimationTrack>>& clip_tracks = clip->GetTracks();
+		std::unordered_map<StringID, AnimationDataTrack>& clip_tracks = clip->GetTracks();
 		glm::vec4 anim_data; // NOTE: used to serialize animation frame data
 		for (auto& uuid : data["Channels"])
 		{
 			std::string id = uuid["Handle"].as<std::string>();
 			for (auto& track : uuid["Tracks"])
 			{
-				AnimationTrack new_track;
-				new_track.channel_type = (AnimationDataType)track["Type"].as<int>();
+				//AnimationTrack new_track;
+				//new_track.channel_type = (AnimationDataType)track["Type"].as<int>();
+				AnimationDataType track_type = (AnimationDataType)track["Type"].as<int>();
+				std::vector<AnimationFrameData> track_data;
 				for (auto& frame_data : track["Track Data"])
 				{
 					AnimationFrameData fd;
 					anim_data = frame_data["Data"].as<glm::vec4>();
 					memcpy(fd.data, &anim_data, 16);
 					fd.time_point = frame_data["Time Point"].as<float>();
-					new_track.channel_data.push_back(fd);
+					//new_track.channel_data.push_back(fd);
+
+					track_data.push_back(fd);
 				}
-				clip_tracks[id].push_back(new_track);
+				//clip_tracks[id].push_back(new_track);
+				auto& object_tracks = clip_tracks[STR_ID(id)];
+				object_tracks[track_type] = std::move(track_data);
 			}
 		}
 

@@ -46,6 +46,7 @@ namespace trace {
 		Entity GetChildEntityByName(Entity parent, StringID name);
 		Entity GetParentByName(Entity entity, std::string parent_name);
 		Entity GetParentByName(Entity entity, StringID parent_name);
+		Entity FindEnityInHierachy(Entity entity, StringID name);
 		Entity GetParentWithAnimation(Entity entity);
 		Entity DuplicateEntity(Entity entity);
 		bool CopyEntity(Entity entity, Entity src);

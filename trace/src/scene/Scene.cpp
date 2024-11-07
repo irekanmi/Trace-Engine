@@ -10,6 +10,7 @@
 #include "scripting/ScriptEngine.h"
 #include "animation/AnimationEngine.h"
 #include "resource/PrefabManager.h"
+#include "animation/AnimationPose.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -115,10 +116,18 @@ namespace trace {
 			}
 			Entity entity(i, this);
 			anim_comp.InitializeEntities(this, entity.GetID());
-			if (anim_comp.play_on_start)
-			{
-				anim_comp.runtime_graph.Start();
-			}
+			anim_comp.graph_instance.Start(this, entity.GetID());
+
+		}
+
+		auto sequenes = m_registry.view<SequencePlayer>();
+		for (auto i : sequenes)
+		{
+			auto [seq] = sequenes.get(i);
+
+			Entity entity(i, this);
+			seq.sequence.Start(this, entity.GetID());
+
 		}
 
 	}
@@ -191,15 +200,22 @@ namespace trace {
 	}
 	void Scene::OnStop()
 	{
+		auto sequenes = m_registry.view<SequencePlayer>();
+		for (auto i : sequenes)
+		{
+			auto [seq] = sequenes.get(i);
+
+			Entity entity(i, this);
+			seq.sequence.Stop(this, entity.GetID());
+
+		}
+
 		auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
-			//if (!anim_comp.anim_graph) continue;
-			//anim_comp.anim_graph->SetCurrentStateIndex(anim_comp.anim_graph->GetCurrentStateIndex() == -1 ? anim_comp.anim_graph->GetStartIndex() : anim_comp.anim_graph->GetCurrentStateIndex());
-			//AnimationState& current_state = anim_comp.anim_graph->GetStates()[anim_comp.anim_graph->GetCurrentStateIndex()];
-			//if (!current_state.GetAnimationClip()) continue;
-			//current_state.Stop();
+			Entity entity(i, this);
+			anim_comp.graph_instance.Stop(this, entity.GetID());
 		}
 
 		if (m_physics3D)
@@ -326,11 +342,22 @@ namespace trace {
 				continue;
 			}
 
-			if (!anim_comp.runtime_graph.HasStarted())
+			/*if (!anim_comp.runtime_graph.HasStarted())
 			{
 				continue;
-			}
-			AnimationEngine::get_instance()->Animate(&anim_comp, entity.GetID(), this);
+			}*/
+			//AnimationEngine::get_instance()->Animate(&anim_comp, entity.GetID(), this);
+			anim_comp.graph_instance.Update(deltaTime);
+		}
+
+		auto sequenes = m_registry.view<SequencePlayer>();
+		for (auto i : sequenes)
+		{
+			auto [seq] = sequenes.get(i);
+
+			Entity entity(i, this);
+			seq.sequence.Update(this, deltaTime);
+
 		}
 
 	}
@@ -488,7 +515,7 @@ namespace trace {
 			{
 				continue;
 			}
-			model_renderer.runtime_skeleton.GetGlobalPose(this, model_renderer.bone_transforms, obj.GetID());
+			model_renderer.runtime_skeleton.GetGlobalPose(model_renderer.bone_transforms, obj.GetID());
 			renderer->DrawSkinnedModel(cmd_list, model_renderer._model, model_renderer._material, transform.transform, model_renderer.bone_transforms.data(), model_renderer.bone_transforms.size(), model_renderer.cast_shadow);
 
 
@@ -686,6 +713,25 @@ namespace trace {
 			if (parent.GetComponent<TagComponent>().GetStringID() == parent_name)
 			{
 				result = parent;
+				break;
+			}
+
+			parent = parent.GetParent();
+		}
+		return result;
+	}
+
+	Entity Scene::FindEnityInHierachy(Entity entity, StringID name)
+	{
+		Entity parent = entity.GetParent();
+
+		Entity result;
+		while (parent)
+		{
+			result = GetChildEntityByName(parent, name);
+
+			if (result)
+			{
 				break;
 			}
 
@@ -1152,6 +1198,18 @@ namespace trace {
 
 		CopyComponent(AllComponents{}, f_reg, t_reg, entity_map);
 		CopyComponent(ComponentGroup<HierachyComponent>{}, f_reg, t_reg, entity_map);
+
+		auto skin_view = f_reg.view<SkinnedModelRenderer>();
+		for (auto e : skin_view)
+		{
+			Entity from_entity = Entity(e, from.get());
+			SkinnedModelRenderer& from_model = skin_view.get<SkinnedModelRenderer>(e);
+			Entity to_entity = to->GetEntity(from_entity.GetID());
+			SkinnedModelRenderer& to_model = to_entity.GetComponent<SkinnedModelRenderer>();
+			
+			to_model.SetSkeleton(from_model.GetSkeleton(), to.get(), to_entity.GetID());
+
+		}
 
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);

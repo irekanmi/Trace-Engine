@@ -23,6 +23,16 @@ namespace trace {
 		m_initialized = false;
 	}
 
+	void Debugger::SetString(StringID string_id, const std::string& string_data)
+	{
+		m_stringData[string_id] = string_data;
+	}
+
+	std::string& Debugger::GetString(StringID string_id)
+	{
+		return m_stringData[string_id];
+	}
+
 	void Debugger::AddDebugLine(glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color)
 	{
 		glm::vec4 from = transform * glm::vec4(point_0, 1.0f);

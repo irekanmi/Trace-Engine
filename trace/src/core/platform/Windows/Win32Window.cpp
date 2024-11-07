@@ -111,6 +111,11 @@ namespace trace {
 
 		MSG msg;
 
+		if (!IsWindowEnabled(m_handle))
+		{
+			TRC_TRACE("Window diabled");
+		}
+
 		for (int i = 0; i < Keys::KEYS_MAX_KEYS; i++)
 		{
 			InputSystem::get_instance()->SetKey((Keys)i, GetAsyncKeyState(i) & 0x8000f);
@@ -154,10 +159,11 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 {
 	switch (msg)
 	{
+	//case WM_PAINT:
 	case WM_ERASEBKGND:
 	{
 		// Notify the OS that erasing is handled by the application to prevent 
-		return 1;
+		return 0;
 	}
 	case WM_CLOSE:
 	{
@@ -187,6 +193,26 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 			data->width = width;
 			data->height = height;
 		}
+
+		break;
+	}
+
+	case WM_SHOWWINDOW:
+	{
+		RECT r;
+		GetClientRect(wnd, &r);
+		uint32_t width = r.right - r.left;
+		uint32_t height = r.bottom - r.top;
+
+		/*trace::WindowResize resize(width, height);
+		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_WND_RESIZE, &resize);
+
+		trace::Win32Window::WindowData* data = (trace::Win32Window::WindowData*)GetWindowLongPtr(wnd, GWLP_USERDATA);
+		if (data)
+		{
+			data->width = width;
+			data->height = height;
+		}*/
 
 		break;
 	}

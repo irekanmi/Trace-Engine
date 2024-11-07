@@ -21,14 +21,98 @@
 #include "resource/ShaderManager.h"
 #include "core/Coretypes.h"
 #include "external_utils.h"
+#include "animation/AnimationPose.h"
+#include "animation/AnimationPoseNode.h"
+#include "core/Utils.h"
 
 #include <functional>
 #include <unordered_map>
+#include <typeindex>
 
 #include "yaml_util.h"
 
 namespace trace {
 
+	Ref<Animation::Graph> get_test_graph()
+	{
+		Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->Get<Animation::Graph>("Test_1");
+
+		if (graph)
+		{
+			return graph;
+		}
+
+		Ref<AnimationClip> soul_spin_clip = AnimationsSerializer::DeserializeAnimationClip("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Animations/soul_spin/soul_spin_mixamo.com.trcac");
+		Ref<AnimationClip> ninja_clip = AnimationsSerializer::DeserializeAnimationClip("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Animations/Ninja_idle/ninja_idle_mixamo.com.trcac");
+		graph = GenericAssetManager::get_instance()->CreateAssetHandle<Animation::Graph>("Test_1");
+		graph->Create();
+		graph->AddAnimationClip(soul_spin_clip);
+		graph->AddAnimationClip(ninja_clip);
+
+		Animation::Node* root_node = graph->GetRootNode();
+
+		graph->CreateParameter("Change To Ninja", Animation::ParameterType::Bool);
+		graph->CreateParameter("Change To Soul", Animation::ParameterType::Bool);
+		
+		UUID state_machine_id = graph->CreateNode<Animation::StateMachine>();
+		Animation::StateMachine* state_machine = (Animation::StateMachine*)graph->GetNode(state_machine_id);
+
+		root_node->GetInputs()[0].node_id = state_machine_id;
+		root_node->GetInputs()[0].value_index = 0;
+
+		UUID soul_node_id = state_machine->CreateState( graph.get(), STR_ID("Soul Spin State"));
+		Animation::StateNode* soul_node = (Animation::StateNode*)graph->GetNode(soul_node_id);
+
+		UUID ninja_node_id = state_machine->CreateState(graph.get(), STR_ID("Ninja State"));
+		Animation::StateNode* ninja_node = (Animation::StateNode*)graph->GetNode(ninja_node_id);
+
+		{
+			UUID anim_node_id = graph->CreateNode<Animation::AnimationSampleNode>();
+			Animation::Node* test_node = graph->GetNode(anim_node_id);
+			Animation::AnimationSampleNode* anim_node = (Animation::AnimationSampleNode*)test_node;
+			anim_node->SetAnimationClip(0, graph.get());
+			anim_node->SetLooping(true);
+
+			soul_node->GetInputs()[0].node_id = anim_node_id;
+			soul_node->GetInputs()[0].value_index = anim_node->GetOutputs()[0].value_index;
+		};
+
+		{
+			UUID anim_node_id = graph->CreateNode<Animation::AnimationSampleNode>();
+			Animation::Node* test_node = graph->GetNode(anim_node_id);
+			Animation::AnimationSampleNode* anim_node = (Animation::AnimationSampleNode*)test_node;
+			anim_node->SetAnimationClip(1, graph.get());
+			anim_node->SetLooping(true);
+
+			ninja_node->GetInputs()[0].node_id = anim_node_id;
+			ninja_node->GetInputs()[0].value_index = anim_node->GetOutputs()[0].value_index;
+		};
+		
+
+		{
+			UUID transition_id = soul_node->CreateTransition(graph.get(), ninja_node_id);
+			Animation::TransitionNode* transition_node = (Animation::TransitionNode*)graph->GetNode(transition_id);
+
+			Animation::GetParameterNode* get_param = (Animation::GetParameterNode*)graph->GetNode(graph->CreateNode<Animation::GetParameterNode>());
+			get_param->SetParameterIndex(0, graph.get());
+
+			transition_node->GetInputs()[0].node_id = get_param->GetUUID();
+			transition_node->GetInputs()[0].value_index = 0;
+		};
+
+		{
+			UUID transition_id = ninja_node->CreateTransition(graph.get(), soul_node_id);
+			Animation::TransitionNode* transition_node = (Animation::TransitionNode*)graph->GetNode(transition_id);
+
+			Animation::GetParameterNode* get_param = (Animation::GetParameterNode*)graph->GetNode(graph->CreateNode<Animation::GetParameterNode>());
+			get_param->SetParameterIndex(1, graph.get());
+
+			transition_node->GetInputs()[0].node_id = get_param->GetUUID();
+			transition_node->GetInputs()[0].value_index = 0;
+		};
+
+		return graph;
+	}
 
 	static std::function<void(Entity entity, YAML::Emitter& emit)> _serialize_components[] = {
 		[](Entity entity, YAML::Emitter& emit)
@@ -595,7 +679,14 @@ namespace trace {
 				}
 				if (res)
 				{
+					// Testing ----------------------
+					Ref<Skeleton> skeleton = AnimationsSerializer::DeserializeSkeleton("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Bot/Sad Idle.trcsk");
+					Ref<Animation::Graph> graph = get_test_graph();
+					// ------------------------------
 					ac.SetAnimationGraph(res);
+					ac.graph_instance.CreateInstance(graph, skeleton);
+					bool starting_node = true;
+					ac.graph_instance.SetParameterData("Starting Node", starting_node);
 				}
 			}
 			else

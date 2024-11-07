@@ -706,6 +706,8 @@ namespace vk {
 			}
 		}
 
+		present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+
 		VkSurfaceFormatKHR surface_format = {};
 		bool surface_found = false;
 		for (auto& i : device->m_swapchainInfo.formats)

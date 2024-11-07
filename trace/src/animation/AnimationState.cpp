@@ -109,13 +109,7 @@ namespace trace {
 
 	void AnimationState::SetAsRuntime()
 	{
-		if (!m_clip)
-		{
-			return;
-		}
-
-		m_runtimeClip = *(m_clip.get());
-		m_runtimeClip.SetAsRuntimeClip();
+		
 	}
 
 

@@ -893,7 +893,7 @@ namespace trace {
 				node_tracks.emplace_back(rotation_track);
 				node_tracks.emplace_back(scale_track);
 
-				tracks[node_name] = std::move(node_tracks);
+				//tracks[node_name] = std::move(node_tracks);
 				
 
 

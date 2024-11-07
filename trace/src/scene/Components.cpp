@@ -44,10 +44,7 @@ namespace trace {
             case AnimationClipType::SKELETAL_ANIMATIOM:
             {
 
-                if (parent_entity)
-                {
-                    entities[parent_entity.GetComponent<TagComponent>().GetTag()] = parent_entity.GetID();
-                }
+               
                 break;
             }
             }
@@ -112,9 +109,7 @@ namespace trace {
             return;
         }
 
-        m_skeleton = skeleton;
-        runtime_skeleton = *(skeleton.get());
-        runtime_skeleton.SetAsRuntime(scene, id);
+        runtime_skeleton.CreateInstance(skeleton, scene, id);
     }
 
 }

@@ -42,8 +42,8 @@ namespace trace {
 	{
         TraceEditor* editor = TraceEditor::get_instance();
 
-		ImGui::Begin("Animation Graph Editor");
-		ImGui::Columns(2);
+		//ImGui::Begin("Animation Graph Editor");
+		/*ImGui::Columns(2);
 
 		if (m_currentGraph)
 		{
@@ -267,9 +267,44 @@ namespace trace {
             }
         };
 
-		ImGui::Columns(1);
+		ImGui::Columns(1);*/
 
-		ImGui::End();
+
+float startTime = 0.0f, endTime = 10.0f; // Timeline range
+float clipStart = 2.0f, clipEnd = 5.0f;  // Initial clip position
+float pixelsPerSecond = 50.0f;
+
+ImGui::Begin("Timeline");
+
+// Draw Timeline Background
+ImGui::Text("Timeline");
+ImDrawList* drawList = ImGui::GetWindowDrawList();
+ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+ImVec2 timelineSize(500, 50); // Width and height of the timeline
+
+// Draw a base line
+drawList->AddLine(cursorPos, ImVec2(cursorPos.x + timelineSize.x, cursorPos.y), IM_COL32(200, 200, 200, 255), 2.0f);
+
+// Draw keyframes or clips
+ImVec2 clipStartPos = ImVec2(cursorPos.x + (clipStart - startTime) * pixelsPerSecond, cursorPos.y);
+ImVec2 clipEndPos = ImVec2(cursorPos.x + (clipEnd - startTime) * pixelsPerSecond, cursorPos.y + timelineSize.y);
+drawList->AddRectFilled(clipStartPos, clipEndPos, IM_COL32(100, 150, 250, 255));
+
+// Drag functionality (to move the clip horizontally)
+if (ImGui::IsItemActive()) {
+    ImVec2 delta = ImGui::GetIO().MouseDelta;
+    clipStart += delta.x / pixelsPerSecond;
+    clipEnd += delta.x / pixelsPerSecond;
+}
+
+ImGui::End();
+
+
+
+
+
+		//ImGui::End();
+
 
 	}
 
