@@ -3,6 +3,7 @@
 #include "resource/Resource.h"
 #include "resource/Ref.h"
 #include "scene/UUID.h"
+#include "reflection/TypeRegistry.h"
 
 #include <vector>
 
@@ -39,12 +40,17 @@ namespace trace::Animation {
 		void SetType(SequenceType type) { m_type = type; }
 		void SetDuration(float duration) { m_duration = duration; }
 
+	public:
+		static Ref<Sequence> Deserialize(const std::string& file_path);
+
 	private:
 		std::vector<SequenceTrack*> m_tracks;
 		SequenceType m_type = SequenceType::Unknown;
 		float m_duration = 0.0f;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(Sequence);
+		GET_TYPE_ID;
 
 	};
 
@@ -53,6 +59,11 @@ namespace trace::Animation {
 
 	public:
 		
+		SequenceInstance();
+		SequenceInstance(SequenceInstance& other);
+		SequenceInstance(const SequenceInstance& other);
+		~SequenceInstance();
+
 		bool CreateInstance(Ref<Sequence> sequence, Scene* scene);
 		void DestroyInstance();
 		void Update(Scene* scene, float deltaTime);
@@ -73,7 +84,7 @@ namespace trace::Animation {
 		float m_elaspedTime = 0.0f;
 		float m_previousTime = 0.0f;
 		bool m_started = false;
-		bool m_destroyed = false;
+		bool m_instanciated = false;
 
 	protected:
 

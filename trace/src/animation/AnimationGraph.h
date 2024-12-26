@@ -4,6 +4,7 @@
 #include "resource/Resource.h"
 #include "scene/UUID.h"
 #include "animation/AnimationNode.h"
+#include "reflection/TypeRegistry.h"
 
 #include <vector>
 #include <unordered_map>
@@ -64,7 +65,12 @@ namespace trace::Animation {
 		char data[16] = {0};
 	};
 
-	using Parameter = std::pair<std::string, ParameterType>;
+	//using Parameter = std::pair<std::string, ParameterType>;
+	struct Parameter
+	{
+		std::string first;
+		ParameterType second;
+	};
 
 	enum class ConditionType
 	{
@@ -86,7 +92,12 @@ namespace trace::Animation {
 		ConditionData data;
 	};
 
-	using TransitionSet = std::pair<Condition, UUID>;// first: condition, second: Transiiton 
+	//using TransitionSet = std::pair<Condition, UUID>;// first: condition, second: Transiiton 
+	struct TransitionSet
+	{
+		Condition first;
+		UUID second;
+	};
 
 	class Graph : public Resource
 	{
@@ -105,6 +116,8 @@ namespace trace::Animation {
 
 			return (PoseNode*)m_nodes[m_rootNode];
 		}
+		UUID GetRootNodeUUID() { return m_rootNode; }
+		void SetRootNodeUUID(UUID node_id) { m_rootNode = node_id; }
 		void CreateParameter(const std::string& param_name, ParameterType type);
 		template<typename T>
 		UUID CreateNode()
@@ -121,23 +134,30 @@ namespace trace::Animation {
 			return uuid;
 		}
 
+		void SetSkeleton(Ref<Skeleton> skeleton);
+		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
+
 
 		Node* GetNode(UUID node_id);
 		std::vector<Parameter>& GetParameters() { return m_parameters; }
-		std::vector<Ref<AnimationClip>> GetAnimationDataSet() { return m_animationDataSet; }
+		std::vector<Ref<AnimationClip>>& GetAnimationDataSet() { return m_animationDataSet; }
 		std::unordered_map<std::string, TransitionSet>& GetTransitionSet() { return m_parameterTranstions; }
 		void AddAnimationClip(Ref<AnimationClip> clip);
-
+		
+	public:
+		static Ref<Graph> Deserialize(const std::string& file_path);
 
 	private:
 		std::unordered_map<UUID, Node*> m_nodes;
 		UUID m_rootNode = 0;
-		Ref<Skeleton> skeleton;
+		Ref<Skeleton> m_skeleton;
 		std::vector<Ref<AnimationClip>> m_animationDataSet;
 		std::vector<Parameter> m_parameters;
 		std::unordered_map<std::string, TransitionSet> m_parameterTranstions;
 		
 
+		ACCESS_CLASS_MEMBERS(Graph);
+		GET_TYPE_ID;
 	protected:
 
 	};
@@ -146,9 +166,13 @@ namespace trace::Animation {
 	{
 
 	public:
+		GraphInstance();
+		GraphInstance(GraphInstance& other);
+		GraphInstance(const GraphInstance& other);
 		~GraphInstance();
 
-		bool CreateInstance(Ref<Graph> graph, Ref<Skeleton> skeleton);
+		//NOTE: To be called after creation[ After all data has been set]
+		bool CreateInstance(Ref<Graph> graph, Scene* scene, UUID entity_id);
 		void DestroyInstance();
 
 		void Start(Scene* scene, UUID id);
@@ -177,7 +201,7 @@ namespace trace::Animation {
 		Ref<Graph> m_graph;
 		SkeletonInstance m_skeletonInstance;
 		std::unordered_map<Node*, void*> m_nodesData;//NOTE: these member has high possibility to change when custom memory allocators has been added
-		bool m_destroyed = false;
+		bool m_instanciated = false;
 		bool m_started = false;
 
 		// std::string: parameter name, uint32_t: index into parameter data index

@@ -3,19 +3,10 @@
 #include "scene/Entity.h"
 #include "scene/Scene.h"
 #include "animation/Animation.h"
+#include "serialize/AnimationsSerializer.h"
 
 namespace trace {
-	/*void AnimationClip::SetAsRuntimeClip()
-	{
 
-		for (auto& track : m_tracks)
-		{
-			Transform pose;
-			pose.SetDirty(false);
-			m_runtimeTracks.insert(std::make_pair(track.first, pose));
-		}
-
-	}*/
 	bool AnimationClip::Compare(AnimationClip* other)
 	{
 		if (!other)
@@ -33,6 +24,11 @@ namespace trace {
 		}
 
 		return false;
+	}
+
+	Ref<AnimationClip> AnimationClip::Deserialize(const std::string& file_path)
+	{
+		return AnimationsSerializer::DeserializeAnimationClip(file_path);
 	}
 
 }

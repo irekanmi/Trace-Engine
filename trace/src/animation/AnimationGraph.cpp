@@ -4,6 +4,7 @@
 #include "animation/AnimationPose.h"
 #include "scene/Scene.h"
 #include "scene/Entity.h"
+#include "serialize/AnimationsSerializer.h"
 
 bool trace::AnimationGraph::HasAnimationClip(Ref<AnimationClip> clip)
 {
@@ -43,11 +44,28 @@ void trace::AnimationGraph::Start()
 }
 
 namespace trace::Animation {
+    GraphInstance::GraphInstance()
+    {
+        m_instanciated = false;
+        m_started = false;
+    }
+    GraphInstance::GraphInstance(GraphInstance& other)
+    {
+        m_instanciated = false;
+        m_started = false;
+        m_graph = other.m_graph;
+    }
+    GraphInstance::GraphInstance(const GraphInstance& other)
+    {
+        m_instanciated = false;
+        m_started = false;
+        m_graph = const_cast<Ref<Graph>&>(other.m_graph);
+    }
     GraphInstance::~GraphInstance()
     {
         DestroyInstance();
     }
-    bool GraphInstance::CreateInstance(Ref<Graph> graph, Ref<Skeleton> skeleton)
+    bool GraphInstance::CreateInstance(Ref<Graph> graph, Scene* scene, UUID entity_id)
     {
 
         if (!graph)
@@ -56,14 +74,26 @@ namespace trace::Animation {
             return false;
         }
 
-        if (!skeleton)
+        if (!graph->GetSkeleton())
         {
             TRC_ERROR("Invalid skeleton handle");
             return false;
         }
 
+        if (!scene)
+        {
+            TRC_ERROR("Invalid scene handle");
+            return false;
+        }
+
+        if (m_instanciated)
+        {
+            TRC_ERROR("These Instance has already been created, Try to destroy the instance before trying again");
+            return false;
+        }
+
         m_graph = graph;
-        m_skeletonInstance.SetSkeleton(skeleton);        
+        m_skeletonInstance.SetSkeleton(graph->GetSkeleton());        
 
         
         std::vector<Parameter>& parameters = graph->GetParameters();
@@ -76,47 +106,53 @@ namespace trace::Animation {
             i++;
         }
 
+
+        m_skeletonInstance.CreateInstance(graph->GetSkeleton(), scene, entity_id);
+        std::unordered_map<UUID, Node*>& nodes = m_graph->GetNodes();
+        for (auto& i : nodes)
+        {
+            i.second->Instanciate(this);
+        }
+
+        m_instanciated = true;
         return true;
     }
 
     void GraphInstance::DestroyInstance()
     {
-        if (m_destroyed)
+        if (m_instanciated)
         {
-            return;
+            for (auto& i : m_nodesData)
+            {
+                delete i.second;// TODO: Use custom allocator
+            }
+            m_instanciated = false;
         }
 
-        for (auto& i : m_nodesData)
-        {
-            delete i.second;// TODO: Use custom allocator
-        }
-
-
-        m_destroyed = true;
     }
 
     void GraphInstance::Start(Scene* scene, UUID id)
     {
-        m_destroyed = false;
-
-        m_skeletonInstance.CreateInstance(Ref<Skeleton>(), scene, id);
-        std::unordered_map<UUID, Node*>& nodes = m_graph->GetNodes();
-        for (auto& i : nodes)
+        if (!m_instanciated)
         {
-            i.second->Instanciate(this);
+            TRC_ERROR("This Graph Instance has not been initialised");
+            return;
         }
         m_started = true;
     }
 
     void GraphInstance::Stop(Scene* scene, UUID id)
     {
-        DestroyInstance();
-
         m_started = false;
     }
 
     void GraphInstance::Update(float deltaTime)
     {
+        if (!m_started)
+        {
+            TRC_WARN("Graph has not started can't update graph instance. Function: {}", __FUNCTION__);
+            return;
+        }
 
         PoseNode* root_node = m_graph->GetRootNode();
 
@@ -172,7 +208,18 @@ namespace trace::Animation {
 
     void Graph::CreateParameter(const std::string& param_name, ParameterType type)
     {
-        m_parameters.emplace_back(std::make_pair(param_name, type));
+        Parameter param;
+        param.first = param_name;
+        param.second = type;
+        m_parameters.emplace_back(param);
+    }
+
+    void Graph::SetSkeleton(Ref<Skeleton> skeleton)
+    {
+        if (skeleton)
+        {
+            m_skeleton = skeleton;
+        }
     }
 
     Node* Graph::GetNode(UUID node_id)
@@ -190,6 +237,11 @@ namespace trace::Animation {
     void Graph::AddAnimationClip(Ref<AnimationClip> clip)
     {
         m_animationDataSet.push_back(clip);
+    }
+
+    Ref<Graph> Graph::Deserialize(const std::string& file_path)
+    {
+        return AnimationsSerializer::DeserializeAnimGraph(file_path);
     }
 
 

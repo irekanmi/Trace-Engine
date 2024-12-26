@@ -2,6 +2,7 @@
 
 #include "animation/Animation.h"
 #include "core/Coretypes.h"
+#include "reflection/TypeRegistry.h"
 
 #include <vector>
 
@@ -37,6 +38,9 @@ namespace trace::Animation {
 		float m_startTime = 0.0f;
 		float m_duration = 0.0f;
 
+		ACCESS_CLASS_MEMBERS(SequenceTrackChannel);
+		GET_TYPE_ID;
+
 	};
 
 	using AnimationChannelData = std::unordered_map<StringID, std::unordered_map<AnimationDataType, AnimationFrameData>>;
@@ -56,6 +60,8 @@ namespace trace::Animation {
 
 
 	protected:
+		ACCESS_CLASS_MEMBERS(AnimationChannel);
+		GET_TYPE_ID;
 
 	};
 
@@ -72,6 +78,8 @@ namespace trace::Animation {
 
 
 	protected:
+		ACCESS_CLASS_MEMBERS(SkeletalAnimationChannel);
+		GET_TYPE_ID;
 
 	};
 

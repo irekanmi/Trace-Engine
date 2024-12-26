@@ -262,7 +262,6 @@ namespace trace {
 		AnimationGraph runtime_graph;
 		bool play_on_start = false;
 		std::unordered_map<StringID, UUID> entities;
-		Animation::GraphInstance graph_instance;
 
 
 		bool InitializeEntities(Scene* scene, UUID parent = 0, bool refresh = false);
@@ -309,6 +308,13 @@ namespace trace {
 	struct SequencePlayer
 	{
 		Animation::SequenceInstance sequence;
+		bool play_on_start = false;
+	};
+
+	struct AnimationGraphController
+	{
+		Animation::GraphInstance graph;
+		bool play_on_start = false;
 	};
 
 	template<typename... Component>
@@ -320,6 +326,6 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer>;
+		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController>;
 
 }

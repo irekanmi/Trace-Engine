@@ -61,19 +61,19 @@ namespace trace {
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
 	extern UUID GetUUIDFromName(const std::string& name);
 
-	
+	void SerializationTest();
+	void DeserializationTest();
 
 	bool TraceEditor::Init()
 	{
-
 		
 		embraceTheDarkness();
-		m_hierachyPanel = new HierachyPanel;
-		m_inspectorPanel = new InspectorPanel;
-		m_contentBrowser = new ContentBrowser;
-		m_animPanel = new AnimationPanel;
-		m_animGraphEditor = new AnimationGraphEditor;
-		m_importer = new Importer;
+		m_hierachyPanel = new HierachyPanel;//TODO: Use custom allocator
+		m_inspectorPanel = new InspectorPanel;//TODO: Use custom allocator
+		m_contentBrowser = new ContentBrowser;//TODO: Use custom allocator
+		m_animPanel = new AnimationPanel;//TODO: Use custom allocator
+		m_animGraphEditor = new AnimationGraphEditor;//TODO: Use custom allocator
+		m_importer = new Importer;//TODO: Use custom allocator
 
 		m_contentBrowser->Init();
 		m_animPanel->Init();
@@ -91,11 +91,6 @@ namespace trace {
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_DB_CLICK, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_TYPED, BIND_EVENT_FN(TraceEditor::OnEvent));
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_WHEEL, BIND_EVENT_FN(TraceEditor::OnEvent));
-		};
-
-		//TEMP: Finding project path
-		{
-
 		};
 
 		m_editSceneDuplicate = SceneManager::get_instance()->CreateScene("Duplicate Edit Scene");
@@ -124,6 +119,8 @@ namespace trace {
 
 		m_allAssets.pipelines.emplace("gbuffer_pipeline");
 
+		//SerializationTest();
+		//DeserializationTest();
 		
 		return true;
 	}
@@ -1163,10 +1160,10 @@ namespace trace {
 		{
 
 			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 
 			bool val = true;
-			anim.graph_instance.SetParameterData("Change To Ninja", val);
+			anim.graph.SetParameterData("Change To Ninja", val);
 
 			break;
 		}
@@ -1175,10 +1172,10 @@ namespace trace {
 		{
 
 			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 
 			bool val = true;
-			anim.graph_instance.SetParameterData("Change To Soul", val);
+			anim.graph.SetParameterData("Change To Soul", val);
 
 			break;
 		}
@@ -1237,10 +1234,10 @@ namespace trace {
 		{
 
 			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 
 			bool val = false;
-			anim.graph_instance.SetParameterData("Change To Ninja", val);
+			anim.graph.SetParameterData("Change To Ninja", val);
 
 			break;
 		}
@@ -1249,10 +1246,10 @@ namespace trace {
 		{
 
 			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 
 			bool val = false;
-			anim.graph_instance.SetParameterData("Change To Soul", val);
+			anim.graph.SetParameterData("Change To Soul", val);
 
 			break;
 		}
@@ -1263,36 +1260,7 @@ namespace trace {
 				break;
 			}
 
-			Entity entity = m_currentScene->GetEntityByName("Sequencer");
-			if (entity)
-			{
-				SequencePlayer& player = entity.AddComponent<SequencePlayer>();
-				Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->CreateAssetHandle<Animation::Sequence>("Sequence test t1");
-				Ref<AnimationClip> first_clip = AnimationsSerializer::DeserializeAnimationClip("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Animations/Fight_idle/fight_idle_mixamo.com.trcac");
-				Ref<AnimationClip> second_clip = AnimationsSerializer::DeserializeAnimationClip("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Animations/basic_idle/basic_idle_mixamo.com.trcac");
-
-				float duration = first_clip->GetDuration() + second_clip->GetDuration();
-				sequence->SetDuration(duration);
-				Animation::SkeletalAnimationTrack* track = new Animation::SkeletalAnimationTrack;
-				track->SetStringID(STR_ID("Sad Idle"));
-				Animation::SkeletalAnimationChannel* channel_1 = new Animation::SkeletalAnimationChannel;
-				channel_1->SetAnimationClip(first_clip);
-				channel_1->SetDuration(first_clip->GetDuration());
-				channel_1->SetStartTime(0.0f);
-				
-				track->GetTrackChannels().push_back(channel_1);
-
-				Animation::SkeletalAnimationChannel* channel_2 = new Animation::SkeletalAnimationChannel;
-				channel_2->SetAnimationClip(second_clip);
-				channel_2->SetDuration(second_clip->GetDuration());
-				channel_2->SetStartTime(first_clip->GetDuration() - 0.5f);
-
-				track->GetTrackChannels().push_back(channel_2);
-
-				sequence->GetTracks().push_back(track);
-
-				player.sequence.SetSequence(sequence);
-			}
+			
 			break;
 		}
 		}

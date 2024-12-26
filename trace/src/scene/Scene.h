@@ -104,6 +104,10 @@ namespace trace {
 		void OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent);
 		void OnConstructRigidBodyComponent(entt::registry& reg, entt::entity ent);
 		void OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent);
+		void OnConstructAnimationGraphController(entt::registry& reg, entt::entity ent);
+		void OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent);
+		void OnConstructSequencePlayer(entt::registry& reg, entt::entity ent);
+		void OnDestroySequencePlayer(entt::registry& reg, entt::entity ent);
 
 
 		void OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);

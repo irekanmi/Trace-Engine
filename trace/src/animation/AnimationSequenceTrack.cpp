@@ -9,12 +9,15 @@
 #include "animation/AnimationEngine.h"
 #include "animation/AnimationBlend.h"
 #include "animation/AnimationPose.h"
+#include "core/Utils.h"
 
 namespace trace::Animation {
 
 
 	bool AnimationSequenceTrack::Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index)
 	{
+
+		m_type = SequenceTrackType::ANIMATION_TRACK;
 
 		std::vector<void*>& tracks_data = instance->GetTracksData();
 
@@ -94,6 +97,8 @@ namespace trace::Animation {
 
 	bool SkeletalAnimationTrack::Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index)
 	{
+		m_type = SequenceTrackType::SKELETAL_ANIMATION_TRACK;
+
 		std::vector<void*>& tracks_data = instance->GetTracksData();
 
 		RuntimeData* data = new RuntimeData; //TODO: Use custom allocator
@@ -109,15 +114,15 @@ namespace trace::Animation {
 			return false;
 		}
 
-		if (!entity.HasComponent<AnimationComponent>())
+		if (!entity.HasComponent<AnimationGraphController>())
 		{
-			TRC_ERROR("Invalid Entity with no animation component, Function: {}", __FUNCTION__);
+			TRC_ERROR("Invalid Entity with no animation graph component, Name: {} Function: {}", entity.GetComponent<TagComponent>().GetTag(), __FUNCTION__);
 			return false;
 		}
 
 		data->entity_id = entity.GetID();
-		data->anim_comp = &entity.GetComponent<AnimationComponent>();		
-		GraphInstance& graph = data->anim_comp->graph_instance;
+		data->anim_controller = &entity.GetComponent<AnimationGraphController>();
+		GraphInstance& graph = data->anim_controller->graph;
 		if (!graph.HasStarted())
 		{
 			graph.Start(scene, data->entity_id);
@@ -136,7 +141,7 @@ namespace trace::Animation {
 
 		RuntimeData* data = (RuntimeData*)tracks_data[track_index];
 
-		if (!data->anim_comp)
+		if (!data->anim_controller)
 		{
 			return;
 		}

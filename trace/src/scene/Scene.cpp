@@ -23,9 +23,21 @@ namespace trace {
 		m_registry.on_construct<HierachyComponent>().connect<&Scene::OnConstructHierachyComponent>(*this);
 		m_registry.on_destroy<HierachyComponent>().connect<&Scene::OnDestroyHierachyComponent>(*this);
 
+		m_registry.on_construct<AnimationGraphController>().connect<&Scene::OnConstructAnimationGraphController>(*this);
+		m_registry.on_destroy<AnimationGraphController>().connect<&Scene::OnDestroyAnimationGraphController>(*this);
+
+		m_registry.on_construct<SequencePlayer>().connect<&Scene::OnConstructSequencePlayer>(*this);
+		m_registry.on_destroy<SequencePlayer>().connect<&Scene::OnDestroySequencePlayer>(*this);
+
 	}
 	void Scene::Destroy()
 	{
+		m_registry.on_construct<AnimationGraphController>().disconnect<&Scene::OnConstructAnimationGraphController>(*this);
+		m_registry.on_destroy<AnimationGraphController>().disconnect<&Scene::OnDestroyAnimationGraphController>(*this);
+
+		m_registry.on_construct<SequencePlayer>().disconnect<&Scene::OnConstructSequencePlayer>(*this);
+		m_registry.on_destroy<SequencePlayer>().disconnect<&Scene::OnDestroySequencePlayer>(*this);
+
 		m_registry.on_construct<HierachyComponent>().disconnect<&Scene::OnConstructHierachyComponent>(*this);
 		m_registry.on_destroy<HierachyComponent>().disconnect<&Scene::OnDestroyHierachyComponent>(*this);
 		delete m_rootNode; // TODO: Use Custom Allocator
@@ -106,7 +118,7 @@ namespace trace {
 			}
 		}
 		m_running = true;
-		auto animations = m_registry.view<AnimationComponent>();
+		/*auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
@@ -116,14 +128,31 @@ namespace trace {
 			}
 			Entity entity(i, this);
 			anim_comp.InitializeEntities(this, entity.GetID());
-			anim_comp.graph_instance.Start(this, entity.GetID());
+
+		}*/
+
+		auto animation_graphs = m_registry.view<AnimationGraphController>();
+		for (auto i : animation_graphs)
+		{
+			auto [anim_graph] = animation_graphs.get(i);
+			if (!anim_graph.graph.GetGraph() || !anim_graph.play_on_start)
+			{
+				continue;
+			}
+			Entity entity(i, this);
+			anim_graph.graph.Start(this, entity.GetID());
 
 		}
 
-		auto sequenes = m_registry.view<SequencePlayer>();
-		for (auto i : sequenes)
+		auto sequences = m_registry.view<SequencePlayer>();
+		for (auto i : sequences)
 		{
-			auto [seq] = sequenes.get(i);
+			auto [seq] = sequences.get(i);
+
+			if (!seq.play_on_start)
+			{
+				continue;
+			}
 
 			Entity entity(i, this);
 			seq.sequence.Start(this, entity.GetID());
@@ -200,22 +229,31 @@ namespace trace {
 	}
 	void Scene::OnStop()
 	{
-		auto sequenes = m_registry.view<SequencePlayer>();
-		for (auto i : sequenes)
+		auto sequences = m_registry.view<SequencePlayer>();
+		for (auto i : sequences)
 		{
-			auto [seq] = sequenes.get(i);
+			auto [seq] = sequences.get(i);
 
 			Entity entity(i, this);
 			seq.sequence.Stop(this, entity.GetID());
 
 		}
 
-		auto animations = m_registry.view<AnimationComponent>();
+		/*auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
 			Entity entity(i, this);
 			anim_comp.graph_instance.Stop(this, entity.GetID());
+		}*/
+
+		auto animation_graphs = m_registry.view<AnimationGraphController>();
+		for (auto i : animation_graphs)
+		{
+			auto [anim_graph] = animation_graphs.get(i);
+			
+			Entity entity(i, this);
+			anim_graph.graph.Stop(this, entity.GetID());
 		}
 
 		if (m_physics3D)
@@ -332,7 +370,7 @@ namespace trace {
 
 	void Scene::OnAnimationUpdate(float deltaTime)
 	{
-		auto animations = m_registry.view<AnimationComponent>();
+		/*auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
 			Entity entity(i, this);
@@ -342,19 +380,41 @@ namespace trace {
 				continue;
 			}
 
-			/*if (!anim_comp.runtime_graph.HasStarted())
+			if (!anim_comp.runtime_graph.HasStarted())
 			{
 				continue;
-			}*/
+			}
 			//AnimationEngine::get_instance()->Animate(&anim_comp, entity.GetID(), this);
 			anim_comp.graph_instance.Update(deltaTime);
+		}*/
+
+		auto animation_graphs = m_registry.view<AnimationGraphController>();
+		for (auto i : animation_graphs)
+		{
+			auto [anim_graph] = animation_graphs.get(i);
+			if (!anim_graph.graph.GetGraph())
+			{
+				continue;
+			}
+
+			if (!anim_graph.graph.HasStarted())
+			{
+				continue;
+			}
+
+			Entity entity(i, this);
+
+			anim_graph.graph.Update(deltaTime);
 		}
 
-		auto sequenes = m_registry.view<SequencePlayer>();
-		for (auto i : sequenes)
+		auto sequences = m_registry.view<SequencePlayer>();
+		for (auto i : sequences)
 		{
-			auto [seq] = sequenes.get(i);
-
+			auto [seq] = sequences.get(i);
+			if (!seq.sequence.HasStarted())
+			{
+				continue;
+			}
 			Entity entity(i, this);
 			seq.sequence.Update(this, deltaTime);
 
@@ -1211,6 +1271,28 @@ namespace trace {
 
 		}
 
+		auto graph_view = f_reg.view<AnimationGraphController>();
+		for (auto e : graph_view)
+		{
+			Entity from_entity = Entity(e, from.get());
+			AnimationGraphController& from_model = graph_view.get<AnimationGraphController>(e);
+			Entity to_entity = to->GetEntity(from_entity.GetID());
+			to_entity.RemoveComponent<AnimationGraphController>();
+			to_entity.AddOrReplaceComponent<AnimationGraphController>(from_model);			
+
+		}
+
+		auto sequence_view = f_reg.view<SequencePlayer>();
+		for (auto e : sequence_view)
+		{
+			Entity from_entity = Entity(e, from.get());
+			SequencePlayer& from_model = sequence_view.get<SequencePlayer>(e);
+			Entity to_entity = to->GetEntity(from_entity.GetID());
+			to_entity.RemoveComponent<SequencePlayer>();
+			to_entity.AddOrReplaceComponent<SequencePlayer>(from_model);
+
+		}
+
 
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 
@@ -1308,6 +1390,35 @@ namespace trace {
 
 	void Scene::OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent)
 	{
+	}
+
+	void Scene::OnConstructAnimationGraphController(entt::registry& reg, entt::entity ent)
+	{
+		Entity entity(ent, this);
+		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
+		controller.graph.DestroyInstance();
+		controller.graph.CreateInstance(controller.graph.GetGraph(), this, entity.GetID());
+	}
+
+	void Scene::OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent)
+	{
+		Entity entity(ent, this);
+		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
+		controller.graph.DestroyInstance();
+	}
+
+	void Scene::OnConstructSequencePlayer(entt::registry& reg, entt::entity ent)
+	{
+		Entity entity(ent, this);
+		SequencePlayer& player = entity.GetComponent<SequencePlayer>();
+		player.sequence.CreateInstance(player.sequence.GetSequence(), this);
+	}
+
+	void Scene::OnDestroySequencePlayer(entt::registry& reg, entt::entity ent)
+	{
+		Entity entity(ent, this);
+		SequencePlayer& player = entity.GetComponent<SequencePlayer>();
+		player.sequence.DestroyInstance();
 	}
 
 	void Scene::OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent)

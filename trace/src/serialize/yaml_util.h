@@ -3,6 +3,8 @@
 #define YAML_CPP_STATIC_DEFINE
 #include "yaml-cpp/yaml.h"
 
+#include "scene/UUID.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 
@@ -64,6 +66,13 @@ namespace YAML {
 		static bool decode(const Node& node, glm::quat& value);
 	};
 
+	template<>
+	struct convert<trace::UUID>
+	{
+		static Node encode(const trace::UUID& value);
+		static bool decode(const Node& node, trace::UUID& value);
+	};
+
 	Emitter& operator <<(Emitter& emit, const glm::vec2& value);
 
 	Emitter& operator <<(Emitter& emit, const glm::ivec2& value);
@@ -80,6 +89,9 @@ namespace YAML {
 
 	Emitter& operator <<(Emitter& emit, const glm::quat& value);
 
+	Emitter& operator <<(Emitter& emit, const trace::UUID& value);
+
 	bool save_emitter_data(Emitter& emit, const std::string& file_path);
 	bool load_yaml_data(const std::string& file_path, Node& out_data);
+	
 }

@@ -4,6 +4,7 @@
 #include "core/io/Logging.h"
 #include "scene/Entity.h"
 #include "scene/Scene.h"
+#include "serialize/AnimationsSerializer.h"
 
 namespace trace {
 	bool Skeleton::Create(const std::string& name, const std::string& root_node, std::vector<Bone>& bones)
@@ -56,6 +57,11 @@ namespace trace {
 		m_rootNode = root_node;
 		m_rootNodeID = std::hash<std::string>{}(root_node);
 
+	}
+
+	Ref<Skeleton> Skeleton::Deserialize(const std::string& file_path)
+	{
+		return AnimationsSerializer::DeserializeSkeleton(file_path);
 	}
 
 

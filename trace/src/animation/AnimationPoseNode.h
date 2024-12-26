@@ -25,6 +25,8 @@ namespace trace::Animation {
 	private:
 	protected:
 
+		GET_TYPE_ID;
+
 	};
 
 	class StateNode;
@@ -52,12 +54,20 @@ namespace trace::Animation {
 		void Start(GraphInstance* instance);
 		void SetCurrentNode(GraphInstance* instance, UUID uuid);
 
+		UUID GetEntryNode() { return m_entryNode; }
+		void SetEntryNode(UUID node_id) { m_entryNode = node_id; }
+
+		std::vector<UUID>& GetStates() { return m_states; }
+		void SetStates(std::vector<UUID>& states) { m_states = std::move(states); }
+
 	private:
 		std::vector<UUID> m_states;
 		UUID m_entryNode = 0;
 
 
 	protected:
+		ACCESS_CLASS_MEMBERS(StateMachine);
+		GET_TYPE_ID;
 
 	};
 
@@ -94,6 +104,8 @@ namespace trace::Animation {
 		void SetStateMachine(UUID uuid) { m_stateMachine = uuid; }
 		UUID GetStateMachine() { return m_stateMachine; }
 		UUID CreateTransition(Graph* graph, UUID target_node);
+		std::vector<UUID>& GetTransitions() { return m_transitions; }
+		void SetTransitions(std::vector<UUID>& transitions) { m_transitions = std::move(transitions); }
 
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
@@ -105,7 +117,8 @@ namespace trace::Animation {
 
 
 	protected:
-
+		ACCESS_CLASS_MEMBERS(StateNode);
+		GET_TYPE_ID;
 	};
 
 	class TransitionNode : public PoseNode
@@ -133,6 +146,10 @@ namespace trace::Animation {
 		void SetFromState(UUID uuid) { m_fromState = uuid; }
 		void SetTargetState(UUID uuid) { m_targetState = uuid; }
 
+		UUID GetFromState() { return m_fromState; }
+		UUID GetTargetState() { return m_targetState; }
+		float GetDuration() { return m_duration; }
+
 	private:
 		UUID m_fromState = 0;
 		UUID m_targetState = 0;
@@ -144,6 +161,8 @@ namespace trace::Animation {
 
 	protected:
 
+		ACCESS_CLASS_MEMBERS(TransitionNode);
+		GET_TYPE_ID;
 	};
 
 	class AnimationSampleNode : public PoseNode
@@ -169,15 +188,25 @@ namespace trace::Animation {
 		virtual void Reset(GraphInstance* instance);
 
 		void SetAnimationClip(int32_t clip_index, Graph* graph);
+
 		void SetLooping(bool loop) { m_looping = loop; }
+		bool GetLooping() { return m_looping; }
+
+		void SetAnimClipIndex(int32_t clip_index) { m_animClipIndex = clip_index; }
+		int32_t GetAnimClipIndex() { return m_animClipIndex; }
+
+		void SetDuration(float duration) { m_duration = duration; }
+		float GetDuration() { return m_duration; }
 
 	private:
-		int m_animClipIndex = -1;
+		int32_t m_animClipIndex = -1;
 		float m_duration = 0.0f;
 		bool m_looping = false;
 
 	protected:
 
+		ACCESS_CLASS_MEMBERS(AnimationSampleNode);
+		GET_TYPE_ID;
 	};
 
 	class FinalOutputNode : public PoseNode
@@ -203,6 +232,7 @@ namespace trace::Animation {
 
 
 	protected:
+		GET_TYPE_ID;
 
 	};
 }

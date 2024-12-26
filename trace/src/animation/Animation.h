@@ -69,6 +69,10 @@ namespace trace {
 
 		bool Compare(AnimationClip* other);
 
+	public:
+		static Ref<AnimationClip> Deserialize(const std::string& file_path);
+		
+
 	private:
 		float m_duration = 1.0f;
 		int m_sampleRate = 30;

@@ -5,6 +5,7 @@
 #include "animation/SequenceTrackChannel.h"
 #include "scene/Scene.h"
 #include "scene/Entity.h"
+#include "serialize/AnimationsSerializer.h"
 
 namespace trace::Animation {
 
@@ -26,9 +27,54 @@ namespace trace::Animation {
 		}
 	}
 
+	Ref<Sequence> Sequence::Deserialize(const std::string& file_path)
+	{
+		return AnimationsSerializer::DeserializeSequence(file_path);
+	}
+
+	SequenceInstance::SequenceInstance()
+	{
+		m_instanciated = false;
+		m_started = false;
+	}
+	SequenceInstance::SequenceInstance(SequenceInstance& other)
+	{
+		m_instanciated = false;
+		m_started = false;
+		m_sequence = other.m_sequence;
+	}
+	SequenceInstance::SequenceInstance(const SequenceInstance& other)
+	{
+		m_instanciated = false;
+		m_started = false;
+		m_sequence = const_cast<Ref<Sequence>&>(other.m_sequence);
+	}
+
+	SequenceInstance::~SequenceInstance()
+	{
+		DestroyInstance();
+	}
+
 	bool SequenceInstance::CreateInstance(Ref<Sequence> sequence, Scene* scene)
 	{
-		m_destroyed = false;
+		if (!sequence)
+		{
+			TRC_ERROR("Invalid Sequence handle");
+			return false;
+		}
+		if (!scene)
+		{
+			TRC_ERROR("Invalid scene handle");
+			return false;
+		}
+
+		if (m_instanciated)
+		{
+			TRC_ERROR("These Instance has already been created, Try to destroy the instance before trying again");
+			return false;
+		}
+
+		m_sequence = sequence;
 		std::vector<SequenceTrack*>& tracks = sequence->GetTracks();
 		m_tracksData.resize(tracks.size());
 		for (int32_t i = 0; i < tracks.size(); i++)
@@ -36,21 +82,29 @@ namespace trace::Animation {
 			tracks[i]->Instanciate(this, scene, i);
 		}
 
+		m_instanciated = true;
 		return true;
 	}
 
 	void SequenceInstance::DestroyInstance()
 	{
-
-		for (auto& data : m_tracksData)
+		if (m_instanciated)
 		{
-			delete data;//TODO: Use a custom allocator
+			for (auto& data : m_tracksData)
+			{
+				delete data;//TODO: Use a custom allocator
+			}
+			m_instanciated = false;
 		}
-		m_destroyed = true;
 	}
 
 	void SequenceInstance::Update(Scene* scene, float deltaTime)
 	{
+		if (!m_started)
+		{
+			TRC_WARN("Sequence has not started can't update sequence instance. Function: {}", __FUNCTION__);
+			return;
+		}
 
 		std::vector<SequenceTrack*>& tracks = m_sequence->GetTracks();
 
@@ -74,13 +128,11 @@ namespace trace::Animation {
 	void SequenceInstance::Start(Scene* scene, UUID id)
 	{
 		m_started = true;
-		CreateInstance(m_sequence, scene);
 	}
 
 	void SequenceInstance::Stop(Scene* scene, UUID id)
 	{
 		m_started = false;
-		DestroyInstance();
 	}
 
 }

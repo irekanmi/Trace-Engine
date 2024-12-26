@@ -30,6 +30,8 @@ namespace trace {
 		void SetAsRuntime(Scene* scene, UUID id);
 		void SetRootNode(std::string& root_node);
 
+	public:
+		static Ref<Skeleton> Deserialize(const std::string& file_path);
 
 	private:
 		std::string m_name;

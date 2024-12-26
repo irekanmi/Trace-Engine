@@ -6,6 +6,7 @@
 #include "resource/Ref.h"
 #include "animation/Animation.h"
 #include "animation/AnimationGraph.h"
+#include "animation/AnimationSequence.h"
 #include "FileStream.h"
 #include "AssetsInfo.h"
 
@@ -31,6 +32,12 @@ namespace trace {
 
 		static bool SerializeSkeleton(Ref<Skeleton> skeleton, const std::string& file_path);
 		static Ref<Skeleton> DeserializeSkeleton(const std::string& file_path);
+
+		static bool SerializeAnimGraph(Ref<Animation::Graph> graph, const std::string& file_path);
+		static Ref<Animation::Graph> DeserializeAnimGraph(const std::string& file_path);
+
+		static bool SerializeSequence(Ref<Animation::Sequence> sequence, const std::string& file_path);
+		static Ref<Animation::Sequence> DeserializeSequence(const std::string& file_path);
 
 	private:
 

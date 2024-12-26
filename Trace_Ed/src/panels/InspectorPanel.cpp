@@ -318,6 +318,16 @@ namespace trace {
 				entity.AddComponent<SpotLight>();
 				comp_dirty = true;
 			}
+			if (ImGui::MenuItem("AnimationGraphController"))
+			{
+				entity.AddComponent<AnimationGraphController>();
+				comp_dirty = true;
+			}
+			if (ImGui::MenuItem("SequencePlayer"))
+			{
+				entity.AddComponent<SequencePlayer>();
+				comp_dirty = true;
+			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
@@ -1072,6 +1082,64 @@ namespace trace {
 			return dirty;
 			});
 
+		comp_dirty = comp_dirty || DrawComponent<AnimationGraphController>(entity, "Animation Graph Controller", [&](Entity obj, AnimationGraphController& comp) -> bool {
+
+			static bool show_collider = true;
+
+			bool dirty = false;
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Play On Start", &comp.play_on_start), Play_On_Start)
+			{}
+
+			Ref<Animation::Graph> graph = comp.graph.GetGraph();
+			std::string name = "None (Animation Graph)";
+			if (graph)
+			{
+				name = graph->GetName();
+			}
+
+			ImGui::Text("Anim Graph: ");
+			ImGui::SameLine();
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()))
+			{}
+			graph = ImGuiDragDropResource<Animation::Graph>(".trcag");
+			if (graph)
+			{
+				comp.graph.DestroyInstance();
+				comp.graph.CreateInstance(graph, entity.GetScene(), entity.GetID());
+			}
+
+			return dirty;
+			});
+
+		comp_dirty = comp_dirty || DrawComponent<SequencePlayer>(entity, "Sequence Player", [&](Entity obj, SequencePlayer& comp) -> bool {
+
+			static bool show_collider = true;
+
+			bool dirty = false;
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Play On Start", &comp.play_on_start), Play_On_Start)
+			{}
+
+			Ref<Animation::Sequence> sequence = comp.sequence.GetSequence();
+			std::string name = "None (Animation Sequence)";
+			if (sequence)
+			{
+				name = sequence->GetName();
+			}
+			ImGui::Text("Animation Sequence: ");
+			ImGui::SameLine();
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()))
+			{}
+			sequence = ImGuiDragDropResource<Animation::Sequence>(".trcsq");
+			if (sequence)
+			{
+				comp.sequence.DestroyInstance();
+				comp.sequence.CreateInstance(sequence, entity.GetScene());
+			}
+
+			return dirty;
+			});
 
 		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
 

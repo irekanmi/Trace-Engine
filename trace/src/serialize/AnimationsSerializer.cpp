@@ -6,6 +6,11 @@
 #include "MemoryStream.h"
 #include "resource/GenericAssetManager.h"
 #include "core/Utils.h"
+#include "animation/AnimationPoseNode.h"
+#include "scene/UUID.h"
+#include "scene/Entity.h"
+#include "scene/Scene.h"
+#include "reflection/SerializeTypes.h"
 
 #include "yaml_util.h"
 
@@ -572,6 +577,126 @@ namespace trace {
 
 		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Skeleton>(file_path);
 		result->Create(skeleton_name, root_node,bones);
+
+		return result;
+	}
+
+
+	bool AnimationsSerializer::SerializeAnimGraph(Ref<Animation::Graph> graph, const std::string& file_path)
+	{
+		if (!graph)
+		{
+			return false;
+		}
+
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Anim_Graph Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Anim_Graph Name" << YAML::Value << graph->GetName();
+
+		Reflection::Serialize(*graph.get(), &emit, nullptr, Reflection::SerializationFormat::YAML);
+
+
+		emit << YAML::EndMap;
+
+		YAML::save_emitter_data(emit, file_path);
+
+
+		return true;
+	}
+
+	Ref<Animation::Graph> AnimationsSerializer::DeserializeAnimGraph(const std::string& file_path)
+	{
+		Ref<Animation::Graph> result;
+
+		std::filesystem::path p = file_path;
+		Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->Get<Animation::Graph>(p.filename().string());
+		if (graph)
+		{
+			TRC_WARN("{} has already been loaded", p.filename().string());
+			return graph;
+		}
+
+		YAML::Node data;
+		if (!YAML::load_yaml_data(file_path, data))
+		{
+			return result;
+		}
+
+		if (!data["Trace Version"] || !data["Anim_Graph Version"] || !data["Anim_Graph Name"])
+		{
+			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
+			return result;
+		}
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+		std::string graph_version = data["Anim_Graph Version"].as<std::string>(); // TODO: To be used later
+		std::string graph_name = data["Anim_Graph Name"].as<std::string>();
+
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(file_path);
+
+		Reflection::Deserialize(*result.get(), &data, nullptr, Reflection::SerializationFormat::YAML);
+
+
+		return result;
+	}
+
+	bool AnimationsSerializer::SerializeSequence(Ref<Animation::Sequence> sequence, const std::string& file_path)
+	{
+		if (!sequence)
+		{
+			return false;
+		}
+
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Anim_Sequence Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Anim_Sequence Name" << YAML::Value << sequence->GetName();
+
+		Reflection::Serialize(*sequence.get(), &emit, nullptr, Reflection::SerializationFormat::YAML);
+
+
+		emit << YAML::EndMap;
+
+		YAML::save_emitter_data(emit, file_path);
+	}
+
+	Ref<Animation::Sequence> AnimationsSerializer::DeserializeSequence(const std::string& file_path)
+	{
+		Ref<Animation::Sequence> result;
+
+		std::filesystem::path p = file_path;
+		Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->Get<Animation::Sequence>(p.filename().string());
+		if (sequence)
+		{
+			TRC_WARN("{} has already been loaded", p.filename().string());
+			return sequence;
+		}
+
+		YAML::Node data;
+		if (!YAML::load_yaml_data(file_path, data))
+		{
+			return result;
+		}
+
+		if (!data["Trace Version"] || !data["Anim_Sequence Version"] || !data["Anim_Sequence Name"])
+		{
+			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
+			return result;
+		}
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+		std::string sequence_version = data["Anim_Sequence Version"].as<std::string>(); // TODO: To be used later
+		std::string sequence_name = data["Anim_Sequence Name"].as<std::string>();
+
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(file_path);
+
+		Reflection::Deserialize(*result.get(), &data, nullptr, Reflection::SerializationFormat::YAML);
+
 
 		return result;
 	}

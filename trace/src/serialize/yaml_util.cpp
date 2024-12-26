@@ -190,6 +190,16 @@ namespace YAML {
 		return true;
 	}
 
+	Node convert<trace::UUID>::encode(const trace::UUID& value)
+	{
+		return convert<uint64_t>::encode((uint64_t)value);
+	}
+	bool convert<trace::UUID>::decode(const Node& node, trace::UUID& value)
+	{
+		uint64_t& val = *(uint64_t*)&value;
+		return convert<uint64_t>::decode(node, val);
+	}
+
 
 	Emitter& operator <<(Emitter& emit, const glm::vec2& value)
 	{
@@ -248,6 +258,11 @@ namespace YAML {
 		emit << Flow;
 		emit << BeginSeq << value.x << value.y << value.z << value.w << EndSeq;
 		return emit;
+	}
+
+	Emitter& operator<<(Emitter& emit, const trace::UUID& value)
+	{
+		return operator<<(emit, (uint64_t)value);
 	}
 
 	bool save_emitter_data(Emitter& emit, const std::string& file_path)

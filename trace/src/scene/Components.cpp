@@ -90,10 +90,10 @@ namespace trace {
             return;
         }
 
-        m_animGraph = animation_graph;
+        /*m_animGraph = animation_graph;
         runtime_graph = *(m_animGraph.get());
         
-        runtime_graph.SetAsRuntime();
+        runtime_graph.SetAsRuntime();*/
     }
 
     void TagComponent::SetTag(const std::string& name)

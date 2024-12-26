@@ -10,6 +10,7 @@ namespace trace::Animation {
 
 		Result* result = new Result;
 		instance_data_set[this] = result;
+		result->entry_node = 0;
 		
 
 		return true;

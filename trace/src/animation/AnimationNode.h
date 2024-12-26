@@ -3,6 +3,7 @@
 #include "scene/UUID.h"
 #include "core/Coretypes.h"
 #include "core/Enums.h"
+#include "reflection/TypeRegistry.h"
 
 namespace trace::Animation {
 
@@ -52,6 +53,7 @@ namespace trace::Animation {
 		// NOTE: Used to reset a node to it's start runtime values
 		// Also reseting a node will reset all input nodes connected to it
 		virtual void Reset(GraphInstance* instance) {}
+		virtual size_t GetHash() { return typeid(*this).hash_code(); }
 
 		std::vector<NodeInput>& GetInputs() { return m_inputs; }
 		std::vector<NodeOutput>& GetOutputs() { return m_outputs; }
@@ -72,6 +74,8 @@ namespace trace::Animation {
 
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) = 0;
 
+		ACCESS_CLASS_MEMBERS(Node);
+		GET_TYPE_ID;
 	};
 
 	class EntryNode : public Node
@@ -81,6 +85,7 @@ namespace trace::Animation {
 		virtual void Update(GraphInstance* instance, float deltaTime) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
+		//virtual size_t GetHash() override { return typeid(*this).hash_code(); }
 
 		void AddState(UUID node_id);
 
@@ -91,6 +96,8 @@ namespace trace::Animation {
 
 	private:
 	protected:
+
+		GET_TYPE_ID;
 	};
 
 	class GetParameterNode : public Node
@@ -108,6 +115,9 @@ namespace trace::Animation {
 	private:
 		int32_t m_parameterIndex = -1;
 	protected:
+
+		ACCESS_CLASS_MEMBERS(GetParameterNode);
+		GET_TYPE_ID;
 	};
 
 

@@ -3,6 +3,7 @@
 #include "scene/UUID.h"
 #include "core/Coretypes.h"
 #include "animation/AnimationPose.h"
+#include "reflection/TypeRegistry.h"
 
 #include <vector>
 
@@ -10,7 +11,7 @@
 namespace trace {
 
 	class Scene;
-	struct AnimationComponent;
+	struct AnimationGraphController;
 }
 
 namespace trace::Animation {
@@ -18,6 +19,13 @@ namespace trace::Animation {
 	class SequenceInstance;
 	class SequenceTrackChannel;
 	
+	enum SequenceTrackType
+	{
+		UNKNOWN,
+		ANIMATION_TRACK,
+		SKELETAL_ANIMATION_TRACK,
+		CUSTOM_TRACK
+	};
 
 	class SequenceTrack
 	{
@@ -31,11 +39,17 @@ namespace trace::Animation {
 		void SetStringID(StringID string_id) { m_stringID = string_id; }
 		bool IsTimeWithinChannel(SequenceTrackChannel* channel, float time);
 		int32_t FindChannelWithinTime(float time, int32_t current_index = 0);
+		SequenceTrackType GetType() { return m_type; }
+		void SetType(SequenceTrackType type) { m_type = type; }
 
 	private:
 	protected:
 		std::vector<SequenceTrackChannel*> m_channels;
 		StringID m_stringID = 0;
+		SequenceTrackType m_type;
+
+		ACCESS_CLASS_MEMBERS(SequenceTrack);
+		GET_TYPE_ID;
 
 	};
 
@@ -59,6 +73,9 @@ namespace trace::Animation {
 
 	protected:
 
+		ACCESS_CLASS_MEMBERS(AnimationSequenceTrack);
+		GET_TYPE_ID;
+
 	};
 
 	class SkeletalAnimationTrack : public SequenceTrack
@@ -75,12 +92,15 @@ namespace trace::Animation {
 		{
 			UUID entity_id = 0;
 			int32_t current_channel_index = -1;
-			AnimationComponent* anim_comp = nullptr;
+			AnimationGraphController* anim_controller = nullptr;
 			Pose skeleton_pose;
 			Pose blend_pose;
 		};
 
 	protected:
+
+		ACCESS_CLASS_MEMBERS(SkeletalAnimationTrack);
+		GET_TYPE_ID;
 
 	};
 

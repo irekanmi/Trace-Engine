@@ -167,7 +167,7 @@ namespace trace
 
 		while (m_isRunning)
 		{
-			m_Window->Update(0.0f);
+			m_Window->Update(0.0f);//NOTE: 
 
 			if (m_isMinimized)
 			{

@@ -6,6 +6,8 @@
 
 namespace trace {
 
+	class Event;
+
 	class AnimationGraphEditor
 	{
 
@@ -18,6 +20,7 @@ namespace trace {
 
 		void Update(float deltaTime);
 		void Render(float deltaTime);
+		void OnEvent(Event* p_event);
 
 		Ref<AnimationGraph> GetCurrentGraph() { return m_currentGraph; }
 		AnimationState* GetSelected() { return m_selectedState; }
