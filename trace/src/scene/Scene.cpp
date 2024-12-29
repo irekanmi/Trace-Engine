@@ -11,6 +11,8 @@
 #include "animation/AnimationEngine.h"
 #include "resource/PrefabManager.h"
 #include "animation/AnimationPose.h"
+#include "core/Coretypes.h"
+#include "core/Utils.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -118,28 +120,32 @@ namespace trace {
 			}
 		}
 		m_running = true;
-		/*auto animations = m_registry.view<AnimationComponent>();
+		auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.GetAnimationGraph())
+			if (!anim_comp.animation)
 			{
 				continue;
 			}
 			Entity entity(i, this);
-			anim_comp.InitializeEntities(this, entity.GetID());
+			anim_comp.InitializeEntities(this);
 
-		}*/
+			if (anim_comp.play_on_start && entity.HasComponent<ActiveComponent>())
+			{
+				anim_comp.Start();
+			}
+		}
 
 		auto animation_graphs = m_registry.view<AnimationGraphController>();
 		for (auto i : animation_graphs)
 		{
 			auto [anim_graph] = animation_graphs.get(i);
-			if (!anim_graph.graph.GetGraph() || !anim_graph.play_on_start)
+			Entity entity(i, this);
+			if (!anim_graph.graph.GetGraph() || !anim_graph.play_on_start || !entity.HasComponent<ActiveComponent>())
 			{
 				continue;
 			}
-			Entity entity(i, this);
 			anim_graph.graph.Start(this, entity.GetID());
 
 		}
@@ -149,12 +155,12 @@ namespace trace {
 		{
 			auto [seq] = sequences.get(i);
 
-			if (!seq.play_on_start)
+			Entity entity(i, this);
+			if (!seq.play_on_start || !entity.HasComponent<ActiveComponent>())
 			{
 				continue;
 			}
 
-			Entity entity(i, this);
 			seq.sequence.Start(this, entity.GetID());
 
 		}
@@ -239,13 +245,13 @@ namespace trace {
 
 		}
 
-		/*auto animations = m_registry.view<AnimationComponent>();
+		auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
 		{
 			auto [anim_comp] = animations.get(i);
 			Entity entity(i, this);
-			anim_comp.graph_instance.Stop(this, entity.GetID());
-		}*/
+			anim_comp.Stop();
+		}
 
 		auto animation_graphs = m_registry.view<AnimationGraphController>();
 		for (auto i : animation_graphs)
@@ -312,20 +318,26 @@ namespace trace {
 
 	void Scene::OnScriptUpdate(float deltaTime)
 	{
-		m_scriptRegistry.Iterate([deltaTime](ScriptRegistry::ScriptManager& manager)
+		m_scriptRegistry.Iterate([deltaTime, this](ScriptRegistry::ScriptManager& manager)
 			{
 				ScriptMethod* on_update = manager.script->GetMethod("OnUpdate");
 
 				if (!on_update) return;
 				float dt = deltaTime;
 
-				for (ScriptInstance& i : manager.instances)
+				for (auto& i : manager.entities)
 				{
+					Entity entity = this->GetEntity(i);
+					if (!entity.HasComponent<ActiveComponent>())//TODO: Optimize by creating a script component to use to filter inactive entities get<ScriptComponent, ActiveComponent>();
+					{
+						continue;
+					}
+					ScriptInstance& ins = manager.instances[manager.handle_map[i]];
 					void* params[1] =
 					{
 						&dt
 					};
-					InvokeScriptMethod_Instance(*on_update, i, params);
+					InvokeScriptMethod_Instance(*on_update, ins, params);
 				}
 
 			});
@@ -370,28 +382,22 @@ namespace trace {
 
 	void Scene::OnAnimationUpdate(float deltaTime)
 	{
-		/*auto animations = m_registry.view<AnimationComponent>();
+		auto animations = m_registry.view<AnimationComponent, ActiveComponent>();
 		for (auto i : animations)
 		{
 			Entity entity(i, this);
-			auto [anim_comp] = animations.get(i);
-			if (!anim_comp.GetAnimationGraph())
+			auto [anim_comp, active] = animations.get(i);
+			if (!anim_comp.animation)
 			{
 				continue;
 			}
+			anim_comp.Update(deltaTime, this);
+		}
 
-			if (!anim_comp.runtime_graph.HasStarted())
-			{
-				continue;
-			}
-			//AnimationEngine::get_instance()->Animate(&anim_comp, entity.GetID(), this);
-			anim_comp.graph_instance.Update(deltaTime);
-		}*/
-
-		auto animation_graphs = m_registry.view<AnimationGraphController>();
+		auto animation_graphs = m_registry.view<AnimationGraphController, ActiveComponent>();
 		for (auto i : animation_graphs)
 		{
-			auto [anim_graph] = animation_graphs.get(i);
+			auto [anim_graph, active] = animation_graphs.get(i);
 			if (!anim_graph.graph.GetGraph())
 			{
 				continue;
@@ -407,10 +413,10 @@ namespace trace {
 			anim_graph.graph.Update(deltaTime);
 		}
 
-		auto sequences = m_registry.view<SequencePlayer>();
+		auto sequences = m_registry.view<SequencePlayer, ActiveComponent>();
 		for (auto i : sequences)
 		{
-			auto [seq] = sequences.get(i);
+			auto [seq, active] = sequences.get(i);
 			if (!seq.sequence.HasStarted())
 			{
 				continue;
@@ -427,11 +433,11 @@ namespace trace {
 	{
 		Camera* main_camera = nullptr;
 
-		auto view = m_registry.view<CameraComponent , TransformComponent>();
+		auto view = m_registry.view<CameraComponent , TransformComponent, ActiveComponent>();
 	
 		for (auto entity : view)
 		{
-			auto [camera, _transform] = view.get<CameraComponent, TransformComponent>(entity);
+			auto [camera, _transform, active] = view.get(entity);
 			if (camera.is_main)
 			{
 				Entity obj(entity, this);
@@ -483,12 +489,12 @@ namespace trace {
 
 		}*/
 
-		auto sun_light_group = m_registry.view<SunLight, HierachyComponent>();
+		auto sun_light_group = m_registry.view<SunLight, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : sun_light_group)
 		{
 			Entity object(entity, this);
-			auto [light, transform] = sun_light_group.get(entity);
+			auto [light, transform, active] = sun_light_group.get(entity);
 			Transform final_transform = GetEntityWorldTransform(object);
 
 			Light light_data = {};
@@ -502,12 +508,12 @@ namespace trace {
 			renderer->AddLight(cmd_list, light_data, LightType::DIRECTIONAL);
 		}
 
-		auto spot_light_group = m_registry.view<SpotLight, HierachyComponent>();
+		auto spot_light_group = m_registry.view<SpotLight, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : spot_light_group)
 		{
 			Entity object(entity, this);
-			auto [light, transform] = spot_light_group.get(entity);
+			auto [light, transform, active] = spot_light_group.get(entity);
 			Transform final_transform = GetEntityWorldTransform(object);
 
 			Light light_data = {};
@@ -523,12 +529,12 @@ namespace trace {
 
 
 
-		auto point_light_group = m_registry.view<PointLight, HierachyComponent>();
+		auto point_light_group = m_registry.view<PointLight, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : point_light_group)
 		{
 			Entity object(entity, this);
-			auto [light, transform] = point_light_group.get(entity);
+			auto [light, transform, active] = point_light_group.get(entity);
 			Transform final_transform = GetEntityWorldTransform(object);
 			
 			Light light_data = {};
@@ -544,32 +550,32 @@ namespace trace {
 
 
 
-		auto group = m_registry.group<MeshComponent, HierachyComponent>();
+		auto group = m_registry.group<MeshComponent, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : group)
 		{
-			auto [mesh, transform] = group.get(entity);
+			auto [mesh, transform, active] = group.get(entity);
 
 			renderer->DrawMesh(cmd_list, mesh._mesh, transform.transform); // TODO Implement Hierachies
 
 		}
 
-		auto model_view = m_registry.view<ModelComponent, ModelRendererComponent, HierachyComponent>();
+		auto model_view = m_registry.view<ModelComponent, ModelRendererComponent, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : model_view)
 		{
-			auto [model, model_renderer, transform] = model_view.get(entity);
+			auto [model, model_renderer, transform, active] = model_view.get(entity);
 
 			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform, model_renderer.cast_shadow); // TODO Implement Hierachies
 
 		}
 
-		auto skinned_model_view = m_registry.view<SkinnedModelRenderer, HierachyComponent>();
+		auto skinned_model_view = m_registry.view<SkinnedModelRenderer, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : skinned_model_view)
 		{
 			Entity obj(entity, this);
-			auto [model_renderer, transform] = skinned_model_view.get(entity);
+			auto [model_renderer, transform, active] = skinned_model_view.get(entity);
 
 			if (!model_renderer._material || !model_renderer._model || !model_renderer.GetSkeleton())
 			{
@@ -581,22 +587,22 @@ namespace trace {
 
 		}
 
-		auto text_view = m_registry.view<TextComponent, HierachyComponent>();
+		auto text_view = m_registry.view<TextComponent, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : text_view)
 		{
-			auto [txt, transform] = text_view.get(entity);
+			auto [txt, transform, active] = text_view.get(entity);
 
 			glm::vec3 color = txt.color * txt.intensity;
 			renderer->DrawString(cmd_list, txt.font, txt.text, color, transform.transform); // TODO Implement Hierachies
 
 		}
 
-		auto images_view = m_registry.view<ImageComponent, HierachyComponent>();
+		auto images_view = m_registry.view<ImageComponent, HierachyComponent, ActiveComponent>();
 
 		for (auto entity : images_view)
 		{
-			auto [img, transform] = images_view.get(entity);
+			auto [img, transform, active] = images_view.get(entity);
 
 			if (img.image)
 			{
@@ -617,6 +623,40 @@ namespace trace {
 		{
 			auto& camera = view.get<CameraComponent>(entity);
 			camera._camera.SetAspectRatio(width / height);
+		}
+	}
+
+	void Scene::EnableEntity(Entity entity)
+	{
+		if (entity.HasComponent<ActiveComponent>())
+		{
+			return;
+		}
+
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		hi.is_enabled = true;
+		entity.AddComponent<ActiveComponent>();
+		for (auto& child_id : hi.children)
+		{
+			Entity child = GetEntity(child_id);
+			enable_child_entity(child);
+		}
+		
+	}
+
+	void Scene::DisableEntity(Entity entity)
+	{
+		if (entity.HasComponent<ActiveComponent>())
+		{
+			entity.RemoveComponent<ActiveComponent>();
+		}
+
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		hi.is_enabled = false;
+		for (auto& child_id : hi.children)
+		{
+			Entity child = GetEntity(child_id);
+			disable_child_entity(child);
 		}
 	}
 
@@ -674,22 +714,7 @@ namespace trace {
 
 	Entity Scene::GetEntityByName(const std::string& name)
 	{
-
-		auto tag_view = m_registry.view<TagComponent>();
-
-		for (auto entity : tag_view)
-		{
-			auto [tag] = tag_view.get(entity);
-
-			if (tag.GetStringID() == std::hash<std::string>{}(name))
-			{
-				Entity en(entity, this);
-				return en;
-			}
-
-		}
-
-		return Entity();
+		return GetEntityByName(STR_ID(name));
 	}
 
 	Entity Scene::GetEntityByName(StringID name)
@@ -713,26 +738,7 @@ namespace trace {
 
 	Entity Scene::GetChildEntityByName(Entity parent, const std::string& name)
 	{
-
-		for (UUID& child_id : parent.GetComponent<HierachyComponent>().children)
-		{
-			Entity child = GetEntity(child_id);
-			TagComponent& tag = child.GetComponent<TagComponent>();
-
-			if (tag.GetStringID() == std::hash<std::string>{}(name))
-			{
-				return child;
-			}
-
-			Entity result = GetChildEntityByName(child, name);
-
-			if (result)
-			{
-				return result;
-			}
-		}
-
-		return Entity();
+		return GetChildEntityByName(parent, STR_ID(name));
 	}
 
 	Entity Scene::GetChildEntityByName(Entity parent, StringID name)
@@ -760,7 +766,7 @@ namespace trace {
 
 	Entity Scene::GetParentByName(Entity entity, std::string parent_name)
 	{
-		return GetParentByName(entity, std::hash<std::string>{}(parent_name));
+		return GetParentByName(entity, STR_ID(parent_name));
 	}
 
 	Entity Scene::GetParentByName(Entity entity, StringID parent_name)
@@ -1419,6 +1425,42 @@ namespace trace {
 		Entity entity(ent, this);
 		SequencePlayer& player = entity.GetComponent<SequencePlayer>();
 		player.sequence.DestroyInstance();
+	}
+
+	void Scene::enable_child_entity(Entity entity)
+	{
+		if (entity.HasComponent<ActiveComponent>())
+		{
+			return;
+		}
+
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (!hi.is_enabled)
+		{
+			return;// Don't enable entity if it has been manuallay disabled
+		}
+		entity.AddComponent<ActiveComponent>();
+		for (auto& child_id : hi.children)
+		{
+			Entity child = GetEntity(child_id);
+			enable_child_entity(child);
+		}
+
+	}
+
+	void Scene::disable_child_entity(Entity entity)
+	{
+		if (entity.HasComponent<ActiveComponent>())
+		{
+			entity.RemoveComponent<ActiveComponent>();
+		}
+
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		for (auto& child_id : hi.children)
+		{
+			Entity child = GetEntity(child_id);
+			disable_child_entity(child);
+		}
 	}
 
 	void Scene::OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent)

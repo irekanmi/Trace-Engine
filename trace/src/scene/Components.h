@@ -25,6 +25,11 @@ namespace trace {
 
 	class Scene;
 
+	struct ActiveComponent
+	{
+		bool is_active = true;
+	};
+
 	struct IDComponent
 	{
 		UUID _id;
@@ -38,6 +43,7 @@ namespace trace {
 		UUID parent = 0;
 		std::vector<UUID> children;
 		glm::mat4 transform = glm::identity<glm::mat4>();
+		bool is_enabled = false;
 
 		HierachyComponent() = default;
 		HierachyComponent(const HierachyComponent&) = default;
@@ -259,17 +265,18 @@ namespace trace {
 
 	struct AnimationComponent
 	{
-		AnimationGraph runtime_graph;
 		bool play_on_start = false;
+		bool loop = false;
 		std::unordered_map<StringID, UUID> entities;
+		Ref<AnimationClip> animation;
+		float elasped_time = 0.0f;
+		bool started = false;
 
-
-		bool InitializeEntities(Scene* scene, UUID parent = 0, bool refresh = false);
-		Ref<AnimationGraph> GetAnimationGraph() { return m_animGraph; }
-		void SetAnimationGraph(Ref<AnimationGraph> animation_graph);
-
-	private:
-		Ref<AnimationGraph> m_animGraph;
+		bool InitializeEntities(Scene* scene);
+		void Start();
+		void Stop();
+		void Pause();
+		void Update(float deltaTime, Scene* scene);
 	};
 
 	struct ImageComponent
@@ -323,7 +330,7 @@ namespace trace {
 
 	};
 
-	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
+	using AllComponents = ComponentGroup<ActiveComponent, TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
 		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController>;

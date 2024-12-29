@@ -2,6 +2,8 @@
 
 #include "Core.h"
 
+#include <cinttypes>
+
 namespace trace {
 
 

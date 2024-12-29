@@ -30,7 +30,7 @@ namespace trace {
 
 		void Animate(AnimationState& state, Scene* scene, std::unordered_map<StringID, UUID>& data_map);
 		void Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, std::unordered_map<StringID, UUID>& data_map);
-		void Animate(AnimationComponent* animation_component, UUID entity, Scene* scene);
+		void Animate(AnimationComponent* animation_component, Scene* scene, float time_point,  bool loop);
 		void SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping);
 
 		static AnimationEngine* get_instance();

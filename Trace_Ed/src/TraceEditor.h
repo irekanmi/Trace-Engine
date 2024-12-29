@@ -13,6 +13,7 @@ namespace trace {
 	class ContentBrowser;
 	class AnimationPanel;
 	class AnimationGraphEditor;
+	class AnimationSequencer;
 	class Importer;
 
 	enum EditorState
@@ -99,6 +100,7 @@ namespace trace {
 		ContentBrowser* m_contentBrowser;
 		AnimationPanel* m_animPanel;
 		AnimationGraphEditor* m_animGraphEditor;
+		AnimationSequencer* m_animSequencer;
 		Importer* m_importer;
 
 		glm::vec2 m_viewportSize;

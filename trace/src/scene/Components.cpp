@@ -4,102 +4,83 @@
 #include "scene/Scene.h"
 #include "Components.h"
 #include "animation/AnimationGraph.h"
+#include "core/Utils.h"
+#include "animation/AnimationEngine.h"
 
 
 namespace trace {
 
 
 
-    bool AnimationComponent::InitializeEntities(Scene* scene, UUID parent, bool refresh)
+    bool AnimationComponent::InitializeEntities(Scene* scene)
     {
-        if (!entities.empty() && !refresh)
+        if (!entities.empty())
         {
             return false;
         }
 
-        if (!m_animGraph)
+        if (!animation)
         {
+            TRC_WARN("Ensure to include an animation before using component");
             return false;
         }
 
-        if (refresh)
+        for (auto& track : animation->GetTracks())
         {
-            entities.clear();
-        }
-
-        std::vector<AnimationState>& states = m_animGraph->GetStates();
-
-        for (AnimationState& state : states)
-        {
-
-            Ref<AnimationClip> anim_clip = state.GetAnimationClip();
-            if (!anim_clip)
+            Entity entity;
+            switch (animation->GetType())
             {
-                continue;
-            }
-            Entity parent_entity = scene->GetEntity(parent);
-
-            switch (anim_clip->GetType())
+            case AnimationClipType::SEQUENCE:
             {
-            case AnimationClipType::SKELETAL_ANIMATIOM:
-            {
-
-               
+                entity = scene->GetEntityByName(track.first);
                 break;
             }
+
             }
 
-            for (auto& track : anim_clip->GetTracks())
+            if (entity)
             {
-                Entity entity;
-                switch (anim_clip->GetType())
-                {
-                case AnimationClipType::SEQUENCE:
-                {
-                    entity = scene->GetEntityByName(track.first);
-                    break;
-                }
-                case AnimationClipType::SKELETAL_ANIMATIOM:
-                {
-                    
-                    if (parent_entity)
-                    {
-                        entity = scene->GetChildEntityByName(parent_entity, track.first);
-                    }
-                    break;
-                }
-                }
-
-                if (entity)
-                {
-                    entities[track.first] = entity.GetID();
-                }
+                entities[track.first] = entity.GetID();
             }
-
-            
-
         }
 
         return true;
     }
 
-    void AnimationComponent::SetAnimationGraph(Ref<AnimationGraph> animation_graph)
+    void AnimationComponent::Start()
     {
-        if (!animation_graph)
+        started = true;
+    }
+
+    void AnimationComponent::Stop()
+    {
+        started = false;
+        elasped_time = 0.0f;
+    }
+
+    void AnimationComponent::Pause()
+    {
+        started = false;
+    }
+
+    void AnimationComponent::Update(float deltaTime, Scene* scene)
+    {
+        if (!started)
         {
             return;
         }
 
-        /*m_animGraph = animation_graph;
-        runtime_graph = *(m_animGraph.get());
-        
-        runtime_graph.SetAsRuntime();*/
+        AnimationEngine::get_instance()->Animate(this, scene, elasped_time, loop);
+
+        elasped_time += deltaTime;
     }
+
+
 
     void TagComponent::SetTag(const std::string& name)
     {
         m_tag = name;
-        m_id = std::hash<std::string>{}(name);
+        m_id = STR_ID(name);
     }
 
     void SkinnedModelRenderer::SetSkeleton(Ref<Skeleton> skeleton, Scene* scene, UUID id)

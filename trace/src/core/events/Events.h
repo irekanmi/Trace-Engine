@@ -1,7 +1,6 @@
 #pragma once
-#include <core/Core.h>
-#include <core/Object.h>
-#include <core/pch.h>
+#include "core/Core.h"
+#include "core/Object.h"
 #include "core/Enums.h"
 #include "core/input/Keys.h"
 

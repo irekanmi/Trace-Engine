@@ -40,7 +40,9 @@ namespace trace {
 
 
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
+			{
 				m_selectedEntity = Entity();
+			}
 
 			if (ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 			{
@@ -151,16 +153,34 @@ namespace trace {
 		{
 			Entity entity = editor->GetCurrentScene()->GetEntity(uuid);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-
+			bool is_active = entity.HasComponent<ActiveComponent>();
 
 			bool selected = (m_selectedEntity == entity);
 			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 			TagComponent& tag = editor->GetCurrentScene()->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 
-			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
+			if (entity.HasComponent<PrefabComponent>())
+			{
+				ImVec4 text_color = ImVec4(0.1f, 0.3f, 0.65f, 0.85f);
+				if (!is_active)
+				{
+					text_color.w = 0.35f;
+				}
+				ImGui::PushStyleColor(ImGuiCol_Text, text_color);
+			}
+			else if (!is_active)
+			{
+				ImVec4* colors = ImGui::GetStyle().Colors;
+				ImVec4 text_color = colors[ImGuiCol_Text];
+				text_color.w = 0.35f;
+				ImGui::PushStyleColor(ImGuiCol_Text, text_color);
+			}
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
-			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
+			if (entity.HasComponent<PrefabComponent>() || !is_active)
+			{
+				ImGui::PopStyleColor(1);
+			}
 
 			if (ImGui::BeginDragDropSource())
 			{
@@ -254,6 +274,7 @@ namespace trace {
 			
 			Entity entity = editor->GetCurrentScene()->GetEntity(uuid);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			bool is_active = entity.HasComponent<ActiveComponent>();
 
 
 			bool selected = (m_selectedEntity == entity);
@@ -262,9 +283,27 @@ namespace trace {
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 
 
-			if (entity.HasComponent<PrefabComponent>()) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.3f, 0.65f, 0.85f));
+			if (entity.HasComponent<PrefabComponent>())
+			{
+				ImVec4 text_color = ImVec4(0.1f, 0.3f, 0.65f, 0.85f);
+				if (!is_active)
+				{
+					text_color.w = 0.35f;
+				}
+				ImGui::PushStyleColor(ImGuiCol_Text, text_color);
+			}
+			else if (!is_active)
+			{
+				ImVec4* colors = ImGui::GetStyle().Colors;
+				ImVec4 text_color = colors[ImGuiCol_Text];
+				text_color.w = 0.35f;
+				ImGui::PushStyleColor(ImGuiCol_Text, text_color);
+			}
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
-			if (entity.HasComponent<PrefabComponent>()) ImGui::PopStyleColor(1);
+			if (entity.HasComponent<PrefabComponent>() || !is_active)
+			{
+				ImGui::PopStyleColor(1);
+			}
 
 
 			if (ImGui::BeginDragDropSource())

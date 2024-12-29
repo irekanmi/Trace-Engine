@@ -138,7 +138,8 @@ namespace trace {
 
 	StringID GetStringID(const std::string& data)
 	{
-		StringID id = std::hash<std::string>{}(data);
+		StringID id;
+		id.value = std::hash<std::string>{}(data);
 		// NOTE: Only to be used for the editor
 		Debugger::get_instance()->SetString(id, data);
 		return id;

@@ -77,8 +77,27 @@ namespace trace {
 		static std::string exe_path;
 	};
 
-	using StringID = size_t;
+
+	struct StringID
+	{
+		size_t value = 0;
+		friend bool operator==(const trace::StringID& right, const trace::StringID& left);
+	};
 
 	using UpdateID = uint32_t;
 
 }
+
+namespace std {
+	
+	template<>
+	struct hash<trace::StringID>
+	{
+		std::size_t operator()(const trace::StringID& string_id) const
+		{
+			return hash<size_t>()(string_id.value);
+		}
+	};
+
+}
+

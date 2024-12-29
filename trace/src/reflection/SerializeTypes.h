@@ -6,6 +6,8 @@
 #include "Serialize.h"
 #include "resource/Ref.h"
 #include "Type.h"
+#include "core/Coretypes.h"
+#include "core/Utils.h"
 
 #include <map>
 #include <unordered_map>
@@ -498,6 +500,9 @@ namespace trace::Reflection {
 		}
 
 	}
+
+	template<>
+	void Serialize<StringID>(StringID& object, void* location, void* member_info, uint16_t format);
 
 	template<typename T, typename Alloc>
 	void SerializeContainer(std::vector<T, Alloc>& object, void* location, void* member_info, uint16_t format)
@@ -1027,6 +1032,9 @@ namespace trace::Reflection {
 		}
 
 	}
+
+	template<>
+	void Deserialize<StringID>(StringID& object, void* location, void* member_info, uint16_t format);
 
 	template<typename T, typename Alloc>
 	void DeserializeContainer(std::vector<T, Alloc>& object, void* location, void* member_info, uint16_t format)

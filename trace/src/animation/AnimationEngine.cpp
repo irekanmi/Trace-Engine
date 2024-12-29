@@ -13,8 +13,6 @@
 
 
 namespace trace {
-
-
 	
 
 	bool AnimationEngine::Init()
@@ -67,138 +65,37 @@ namespace trace {
 		FindFrame(data_map, clip, scene, time_point, lambda);
 	}
 
-	void AnimationEngine::Animate(AnimationComponent* animation_component, UUID entity, Scene* scene)
+	void AnimationEngine::Animate(AnimationComponent* animation_component, Scene* scene, float time_point, bool loop)
 	{
 		if (!animation_component)
 		{
 			return;
 		}
 
-		if (!animation_component->GetAnimationGraph())
+		if (animation_component->entities.empty())
+		{
+			animation_component->InitializeEntities(scene);
+		}
+
+		if (animation_component->entities.empty())
+		{
+			TRC_WARN("Couldn't find entites, Function: {}", __FUNCTION__);
+			return;
+		}
+
+		float elasped_time = time_point;
+		Ref<AnimationClip> clip = animation_component->animation;
+
+		if (loop)
+		{
+			elasped_time = fmod(elasped_time, clip->GetDuration());
+		}
+		else if (time_point > clip->GetDuration())
 		{
 			return;
 		}
 
-		if (!animation_component->runtime_graph.HasStarted())
-		{
-			return;
-		}
-
-
-
-		AnimationState& current_state = animation_component->runtime_graph.GetCurrentState();
-
-
-		if (!current_state.GetAnimationClip())
-		{
-			return;
-		}
-
-		if (!current_state.IsPlaying())
-		{
-			return;
-		}
-
-		Ref<AnimationClip> clip = current_state.GetAnimationClip();
-
-		float elasped_animation_time = Application::get_instance()->GetClock().GetElapsedTime() - current_state.GetStartTime();
-
-		if (elasped_animation_time > clip->GetDuration())
-		{
-			if (!current_state.GetLoop())
-			{
-				current_state.Stop();
-				return;
-			}
-			else
-			{
-				elasped_animation_time = fmod(elasped_animation_time, clip->GetDuration());
-			}
-		}
-		current_state.SetElaspedTime(elasped_animation_time);
-
-		bool is_skeletal_animation = current_state.GetAnimationClip()->GetType() == AnimationClipType::SKELETAL_ANIMATIOM;
-		if (is_skeletal_animation)
-		{
-			//AnimationPose current_state_anim_pose;
-			//std::unordered_map<std::string, Transform>& runtime_track = current_state.GetRuntimeClip().GetRuntimeTracks();
-			//
-
-			//auto lambda = [&](const std::string& channel_name, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_point)
-			//{
-			//	switch (type)
-			//	{
-			//	case AnimationDataType::NONE:
-			//	{
-			//		break;
-			//	}
-			//	case AnimationDataType::POSITION:
-			//	{
-			//		AnimatedOutput out = CalculateData(a, b, type, time_point);
-			//		glm::vec3 result = *(glm::vec3*)(&out.data);
-
-			//		runtime_track[channel_name].SetPosition(result);
-			//		break;
-			//	}
-			//	case AnimationDataType::ROTATION:
-			//	{
-			//		AnimatedOutput out = CalculateData(a, b, type, time_point);
-			//		glm::quat result = *(glm::quat*)(&out.data);
-
-			//		runtime_track[channel_name].SetRotation(result);
-			//		break;
-			//	}
-			//	case AnimationDataType::SCALE:
-			//	{
-			//		AnimatedOutput out = CalculateData(a, b, type, time_point);
-			//		glm::vec3 result = *(glm::vec3*)(&out.data);
-
-			//		runtime_track[channel_name].SetScale(result);
-			//		break;
-			//	}
-			//	case AnimationDataType::TEXT_INTENSITY:
-			//	case AnimationDataType::LIGHT_INTENSITY:
-			//	case AnimationDataType::IMAGE_COLOR:
-			//	{
-			//		CalculateAndSetData(a, b, scene, id, type, time_point);
-			//	}
-			//	}
-
-			//	
-
-			//};
-			//FindFrame(animation_component->entities, current_state.GetAnimationClip(), scene, elasped_animation_time, lambda);
-
-
-			////When we are done with all blending we set the entity pose
-
-			//for (auto& track : runtime_track)
-			//{
-			//	if (!track.second.IsDirty())
-			//	{
-			//		continue;
-			//	}
-
-			//	auto it = animation_component->entities.find(track.first);
-			//	if (it == animation_component->entities.end())
-			//	{
-			//		continue;
-			//	}
-
-			//	Entity entity = scene->GetEntity(it->second);
-
-			//	Transform& transform = entity.GetComponent<TransformComponent>()._transform;
-			//	transform.SetPosition(track.second.GetPosition());
-			//	transform.SetRotation(track.second.GetRotation());
-			//	transform.SetScale(track.second.GetScale());
-
-			//	track.second.SetDirty(false);
-			//}
-		}
-		else
-		{
-			Animate(current_state, scene, animation_component->entities);
-		}
+		Animate(clip, scene, elasped_time, animation_component->entities);
 
 	}
 
@@ -216,7 +113,6 @@ namespace trace {
 		else if (!looping && time > clip->GetDuration())
 		{
 			return;
-			time = clip->GetDuration();
 		}
 
 		for (auto& channel : clip->GetTracks())
@@ -320,7 +216,6 @@ namespace trace {
 	void AnimationEngine::CalculateAndSetData(const AnimationFrameData* frame_a, const AnimationFrameData* frame_b, Scene* scene, UUID id, AnimationDataType type, float time_point)
 	{
 		SetData(CalculateData(frame_a, frame_b, type, time_point), scene, id);
-
 	}
 
 	AnimatedOutput AnimationEngine::CalculateData(const AnimationFrameData* frame_a, const AnimationFrameData* frame_b, AnimationDataType type, float time_point)
@@ -539,7 +434,7 @@ namespace trace {
 
 				float lerp_value = (elasped_time - prev->time_point) / (curr->time_point - prev->time_point);
 
-				lerp_value = glm::min(0.0f, lerp_value);
+				lerp_value = glm::max(0.0f, lerp_value);
 
 
 				callback(channel.first, object, track.first, prev, curr, lerp_value);

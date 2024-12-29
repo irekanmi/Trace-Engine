@@ -5,6 +5,7 @@
 #include "scene/Entity.h"
 #include "scene/Scene.h"
 #include "serialize/AnimationsSerializer.h"
+#include "core/Utils.h"
 
 namespace trace {
 	bool Skeleton::Create(const std::string& name, const std::string& root_node, std::vector<Bone>& bones)
@@ -20,7 +21,7 @@ namespace trace {
 
 
 		m_rootNode = root_node;
-		m_rootNodeID = std::hash<std::string>{}(root_node);
+		m_rootNodeID = STR_ID(root_node);
 
 		return true;
 	}
@@ -29,7 +30,7 @@ namespace trace {
 	}
 	int32_t Skeleton::GetBoneIndex(const std::string& bone_name)
 	{
-		return GetBoneIndex(std::hash<std::string>{}(bone_name));
+		return GetBoneIndex(STR_ID(bone_name));
 	}
 	int32_t Skeleton::GetBoneIndex(StringID bone_name)
 	{
@@ -55,7 +56,7 @@ namespace trace {
 		}
 
 		m_rootNode = root_node;
-		m_rootNodeID = std::hash<std::string>{}(root_node);
+		m_rootNodeID = STR_ID(root_node);
 
 	}
 

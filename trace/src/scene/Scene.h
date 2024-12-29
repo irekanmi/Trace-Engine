@@ -7,11 +7,11 @@
 #include "UUID.h"
 #include "scripting/ScriptRegistry.h"
 #include "Components.h"
+#include "core/Coretypes.h"
 
 namespace trace {
 
 	class Entity;
-	using StringID = size_t;
 
 	class Scene : public Resource
 	{
@@ -35,6 +35,8 @@ namespace trace {
 		void OnRender(CommandList& cmd_list);
 		void OnViewportChange(float width, float height);
 
+		void EnableEntity(Entity entity);
+		void DisableEntity(Entity entity);
 		Entity CreateEntity(UUID parent = 0);
 		Entity CreateEntity(const std::string& _tag, UUID parent = 0);
 		Entity CreateEntity_UUID(UUID id,const std::string& _tag, UUID parent = 0);
@@ -108,6 +110,9 @@ namespace trace {
 		void OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent);
 		void OnConstructSequencePlayer(entt::registry& reg, entt::entity ent);
 		void OnDestroySequencePlayer(entt::registry& reg, entt::entity ent);
+
+		void enable_child_entity(Entity entity);
+		void disable_child_entity(Entity entity);
 
 
 		void OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);

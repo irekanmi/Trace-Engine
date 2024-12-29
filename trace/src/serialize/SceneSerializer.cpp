@@ -53,6 +53,7 @@ namespace trace {
 			{
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 			emit << YAML::Key << "Parent" << YAML::Value << hi.parent;
+			emit << YAML::Key << "Is Enabled" << YAML::Value << hi.is_enabled;
 			}
 		},
 		[](Entity entity, YAML::Emitter& emit)
@@ -245,11 +246,12 @@ namespace trace {
 				AnimationComponent& ac = entity.GetComponent<AnimationComponent>();
 				emit << YAML::Key << "AnimationComponent" << YAML::Value;
 				emit << YAML::BeginMap;
-				if (ac.GetAnimationGraph())
+				if (ac.animation)
 				{
-					emit << YAML::Key << "Anim Graph" << YAML::Value << GetUUIDFromName(ac.GetAnimationGraph()->GetName());
+					emit << YAML::Key << "Animation Clip" << YAML::Value << GetUUIDFromName(ac.animation->GetName());
 				}
 				emit << YAML::Key << "Play On Start" << YAML::Value << ac.play_on_start;
+				emit << YAML::Key << "Loop" << YAML::Value << ac.loop;
 
 				emit << YAML::EndMap;
 			}
@@ -364,7 +366,7 @@ namespace trace {
 
 			emit << YAML::EndMap;
 			}
-		}
+		},
 	};
 
 	static std::unordered_map<std::string, std::function<void(Entity entity, YAML::detail::iterator_value& value)>> _deserialize_components = {
@@ -616,35 +618,21 @@ namespace trace {
 		auto comp = value["AnimationComponent"];
 		AnimationComponent& ac = entity.AddComponent<AnimationComponent>();
 		ac.play_on_start = comp["Play On Start"].as<bool>();
-		if (comp["Anim Graph"])
+		if (comp["Loop"])
 		{
-			Ref<AnimationGraph> res;
-			UUID id = comp["Anim Graph"].as<uint64_t>();
+			ac.play_on_start = comp["Loop"].as<bool>();
+
+		}
+		if (comp["Animation Clip"])
+		{
+			Ref<AnimationClip> res;
+			UUID id = comp["Animation Clip"].as<uint64_t>();
 			if (AppSettings::is_editor)
 			{
 				std::filesystem::path p = GetPathFromUUID(id);
-				res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
-				if (res) {}
-				else
-				{
-					res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-				}
-				if (res)
-				{
-					// Testing ----------------------
-					/*Ref<Skeleton> skeleton = AnimationsSerializer::DeserializeSkeleton("C:/Dev/Trace_Projects/First_p/Assets/Meshes/Mixamo_Bot/Sad Idle.trcsk");
-					Ref<Animation::Graph> graph = get_test_graph();*/
-					// ------------------------------
-					ac.SetAnimationGraph(res);
-					/*ac.graph_instance.CreateInstance(graph, skeleton);
-					bool starting_node = true;
-					ac.graph_instance.SetParameterData("Starting Node", starting_node);*/
-				}
+				res = AnimationsSerializer::DeserializeAnimationClip(p.string());
 			}
-			else
-			{
-				ac.SetAnimationGraph(AnimationsManager::get_instance()->LoadGraph_Runtime(id));
-			}
+			ac.animation = res;
 		}
 
 		} },
@@ -759,7 +747,7 @@ namespace trace {
 			{
 				player.play_on_start = comp["Play On Start"].as<bool>();
 			}
-		} }
+		} },
 	};
 
 
@@ -937,143 +925,160 @@ namespace trace {
 	{
 		UUID uuid = entity["UUID"].as<uint64_t>();
 		UUID parent = 0;
-		if (entity["Parent"]) parent = entity["Parent"].as<uint64_t>();
+		if (entity["Parent"])
+		{
+			parent = entity["Parent"].as<uint64_t>();
+		}
 		Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
 		for (auto& i : _deserialize_components)
 		{
 			if (entity[i.first]) i.second(obj, entity);
 		}
+
 		YAML::Node scripts = entity["Scripts"];
-		if (!scripts) return obj;
-		std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
-
-		for (auto script : scripts)
+		if (scripts)
 		{
-			std::string script_name = script["Script Name"].as<std::string>();
-			auto it = g_Scripts.find(script_name);
-			if (it == g_Scripts.end())
-			{
-				TRC_WARN("Script:{} does not exist in the assembly", script_name);
-				continue;
-			}
-			obj.AddScript(script_name);
+			std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
 
-			ScriptRegistry& script_registry = scene->GetScriptRegistry();
-
-			//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-			auto& fields_instances = script_registry.GetFieldInstances();
-			auto& field_manager = fields_instances[&it->second];
-			auto field_it = field_manager.find(uuid);
-			if (field_it == field_manager.end())
+			for (auto script : scripts)
 			{
-				ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
-				field_ins.Init(&it->second);
-			}
-			ScriptFieldInstance& ins = field_manager[obj.GetID()];
-
-			for (auto values : script["Script Values"])
-			{
-				std::string field_name = values["Name"].as<std::string>();
-				auto f_it = ins.GetFields().find(field_name);
-				if (f_it == ins.GetFields().end())
+				std::string script_name = script["Script Name"].as<std::string>();
+				auto it = g_Scripts.find(script_name);
+				if (it == g_Scripts.end())
 				{
-					TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
+					TRC_WARN("Script:{} does not exist in the assembly", script_name);
 					continue;
 				}
-				switch (f_it->second.type)
+				obj.AddScript(script_name);
+
+				ScriptRegistry& script_registry = scene->GetScriptRegistry();
+
+				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+				auto& fields_instances = script_registry.GetFieldInstances();
+				auto& field_manager = fields_instances[&it->second];
+				auto field_it = field_manager.find(uuid);
+				if (field_it == field_manager.end())
 				{
-				case ScriptFieldType::String:
+					ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
+					field_ins.Init(&it->second);
+				}
+				ScriptFieldInstance& ins = field_manager[obj.GetID()];
+
+				for (auto values : script["Script Values"])
 				{
-					break;
+					std::string field_name = values["Name"].as<std::string>();
+					auto f_it = ins.GetFields().find(field_name);
+					if (f_it == ins.GetFields().end())
+					{
+						TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
+						continue;
+					}
+					switch (f_it->second.type)
+					{
+					case ScriptFieldType::String:
+					{
+						break;
+					}
+					case ScriptFieldType::Bool:
+					{
+						bool data = values["Value"].as<bool>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Byte:
+					{
+						char data = values["Value"].as<char>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Double:
+					{
+						double data = values["Value"].as<double>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Char:
+					{
+						char data = values["Value"].as<char>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Float:
+					{
+						float data = values["Value"].as<float>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Int16:
+					{
+						int16_t data = values["Value"].as<int16_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Int32:
+					{
+						int32_t data = values["Value"].as<int32_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Int64:
+					{
+						int64_t data = values["Value"].as<int64_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::UInt16:
+					{
+						uint16_t data = values["Value"].as<uint16_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::UInt32:
+					{
+						uint32_t data = values["Value"].as<uint32_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::UInt64:
+					{
+						uint64_t data = values["Value"].as<uint64_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Vec2:
+					{
+						glm::vec2 data = values["Value"].as<glm::vec2>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Vec3:
+					{
+						glm::vec3 data = values["Value"].as<glm::vec3>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Vec4:
+					{
+						glm::vec4 data = values["Value"].as<glm::vec4>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					}
 				}
-				case ScriptFieldType::Bool:
-				{
-					bool data = values["Value"].as<bool>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Byte:
-				{
-					char data = values["Value"].as<char>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Double:
-				{
-					double data = values["Value"].as<double>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Char:
-				{
-					char data = values["Value"].as<char>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Float:
-				{
-					float data = values["Value"].as<float>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Int16:
-				{
-					int16_t data = values["Value"].as<int16_t>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Int32:
-				{
-					int32_t data = values["Value"].as<int32_t>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Int64:
-				{
-					int64_t data = values["Value"].as<int64_t>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::UInt16:
-				{
-					uint16_t data = values["Value"].as<uint16_t>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::UInt32:
-				{
-					uint32_t data = values["Value"].as<uint32_t>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::UInt64:
-				{
-					uint64_t data = values["Value"].as<uint64_t>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Vec2:
-				{
-					glm::vec2 data = values["Value"].as<glm::vec2>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Vec3:
-				{
-					glm::vec3 data = values["Value"].as<glm::vec3>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				case ScriptFieldType::Vec4:
-				{
-					glm::vec4 data = values["Value"].as<glm::vec4>();
-					ins.SetValue(field_name, data);
-					break;
-				}
-				}
+
+
 			}
+		}
 
+		HierachyComponent& hi = obj.GetComponent<HierachyComponent>();
+		if (entity["Is Enabled"])
+		{
+			hi.is_enabled = entity["Is Enabled"].as<bool>();
+		}
 
+		if (hi.is_enabled)
+		{
+			scene->EnableEntity(obj);
 		}
 
 		return obj;

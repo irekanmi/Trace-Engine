@@ -110,7 +110,7 @@ namespace trace::Animation {
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 	private:
-		StringID m_name = 0;
+		StringID m_name;
 		std::vector<UUID> m_transitions;
 		UUID m_stateMachine = 0;
 		

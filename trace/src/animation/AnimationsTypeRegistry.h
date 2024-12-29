@@ -14,6 +14,9 @@
 
 namespace trace::Animation {
 
+	REGISTER_TYPE(StringID);//TODO: Move this type to a registry file that relates with Coretypes
+	REGISTER_TYPE(size_t);//TODO: Move this type to a registry file that relates with Coretypes
+
 	REGISTER_TYPE(ParameterType);
 
 	BEGIN_REGISTER_CLASS(ParameterData)

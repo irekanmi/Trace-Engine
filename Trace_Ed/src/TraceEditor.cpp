@@ -23,6 +23,7 @@
 #include "panels/ContentBrowser.h"
 #include "panels/AnimationPanel.h"
 #include "panels/AnimationGraphEditor.h"
+#include "panels/AnimationSequencer.h"
 #include "EditorRenderComposer.h"
 #include "builder/ProjectBuilder.h"
 #include "scene/Entity.h"
@@ -73,11 +74,13 @@ namespace trace {
 		m_contentBrowser = new ContentBrowser;//TODO: Use custom allocator
 		m_animPanel = new AnimationPanel;//TODO: Use custom allocator
 		m_animGraphEditor = new AnimationGraphEditor;//TODO: Use custom allocator
+		m_animSequencer = new AnimationSequencer;//TODO: Use custom allocator
 		m_importer = new Importer;//TODO: Use custom allocator
 
 		m_contentBrowser->Init();
 		m_animPanel->Init();
 		m_animGraphEditor->Init();
+		m_animSequencer->Init();
 
 		// Register Events
 		{
@@ -119,14 +122,12 @@ namespace trace {
 
 		m_allAssets.pipelines.emplace("gbuffer_pipeline");
 
-		//SerializationTest();
-		//DeserializationTest();
-		
 		return true;
 	}
 
 	void TraceEditor::Shutdown()
 	{
+		m_animSequencer->Shutdown();
 		m_animGraphEditor->Shutdown();
 		m_contentBrowser->Shutdown();
 		m_currentScene.release();
@@ -141,6 +142,7 @@ namespace trace {
 		delete m_contentBrowser;
 		delete m_animPanel;
 		delete m_animGraphEditor;
+		delete m_animSequencer;
 	}
 
 	void TraceEditor::Update(float deltaTime)
@@ -350,6 +352,9 @@ namespace trace {
 
 		// Animation Graph Editor
 		m_animGraphEditor->Render(deltaTime);
+
+		// Animation Sequencer
+		m_animSequencer->Render(deltaTime);
 
 		//Create Project
 		if (p_createProject)

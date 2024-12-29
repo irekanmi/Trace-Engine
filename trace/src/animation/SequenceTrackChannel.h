@@ -43,7 +43,6 @@ namespace trace::Animation {
 
 	};
 
-	using AnimationChannelData = std::unordered_map<StringID, std::unordered_map<AnimationDataType, AnimationFrameData>>;
 
 	class AnimationChannel : public SequenceTrackChannel
 	{

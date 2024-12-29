@@ -1,12 +1,12 @@
 #pragma once
 
+#include "core/Coretypes.h"
 
 #include "glm/glm.hpp"
 #include <string>
 
 namespace trace {
 
-	using StringID = size_t;
 
 	class Bone
 	{

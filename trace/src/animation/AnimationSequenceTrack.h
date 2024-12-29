@@ -45,7 +45,7 @@ namespace trace::Animation {
 	private:
 	protected:
 		std::vector<SequenceTrackChannel*> m_channels;
-		StringID m_stringID = 0;
+		StringID m_stringID;
 		SequenceTrackType m_type;
 
 		ACCESS_CLASS_MEMBERS(SequenceTrack);

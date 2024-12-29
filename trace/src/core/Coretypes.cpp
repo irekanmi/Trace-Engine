@@ -15,4 +15,10 @@ namespace trace {
 	bool         AppSettings::is_editor = false;
 	std::string  AppSettings::exe_path = "";
 
+	bool operator==(const trace::StringID& right, const trace::StringID& left)
+	{
+		return right.value == left.value;
+	}
 }
+
+

@@ -2,6 +2,7 @@
 
 #include "Bone.h"
 #include "core/io/Logging.h"
+#include "core/Utils.h"
 
 #include <unordered_map>
 
@@ -17,7 +18,7 @@ namespace trace {
 		m_name = name;
 		m_bindPose = bind_pose;
 		m_boneOffset = bone_offset;
-		m_id = std::hash<std::string>{}(name);
+		m_id = STR_ID(name);
 
 		return true;
 	}

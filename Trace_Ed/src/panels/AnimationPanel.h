@@ -53,6 +53,7 @@ namespace trace {
 
 	private:
 		void generate_tracks();
+		void generate_track(StringID id, AnimationDataType type);
 		void play();
 		void pause();
 		void animation_data_ui(AnimationDataType type, void* data);
@@ -70,6 +71,7 @@ namespace trace {
 		UUID current_entity_id = 0;
 		State m_state;
 		std::unordered_map<StringID, std::unordered_map<AnimationDataType,std::vector<FrameIndex>>> m_currentTracks;
+		std::unordered_map<StringID, UUID> m_clipEnities;
 
 	protected:
 	};

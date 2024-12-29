@@ -221,8 +221,34 @@ namespace trace {
 		char anim_data[16] = { 0 };
 		AnimationDataType type = AnimationDataType::NONE;
 		bool anim_dirty = false;
+		bool is_active = entity.HasComponent<ActiveComponent>();
 		bool comp_dirty = false;
 
+		if (!is_active)
+		{
+			ImVec4* colors = ImGui::GetStyle().Colors;
+			ImVec4 text_color = colors[ImGuiCol_Text];
+			text_color.w = 0.35f;
+			ImGui::PushStyleColor(ImGuiCol_Text, text_color);
+		}
+
+		if (entity.HasComponent<HierachyComponent>())
+		{
+			HierachyComponent& val = entity.GetComponent<HierachyComponent>();
+			bool enabled = val.is_enabled;
+			if (ImGui::Checkbox("##Is Enabled", &enabled))
+			{
+				if (enabled)
+				{
+					editor->GetCurrentScene()->EnableEntity(entity);
+				}
+				else
+				{
+					editor->GetCurrentScene()->DisableEntity(entity);
+				}
+			}
+			ImGui::SameLine();
+		}
 		if (entity.HasComponent<TagComponent>())
 		{
 			TagComponent& val = entity.GetComponent<TagComponent>();
@@ -888,41 +914,33 @@ namespace trace {
 		comp_dirty = comp_dirty || DrawComponent<AnimationComponent>(entity, "Animation", [&](Entity obj, AnimationComponent& comp) -> bool {
 
 			bool dirty = false;
-			Ref<AnimationGraph> graph = comp.GetAnimationGraph();
-			std::string graph_name = "None (Animation Graph)";
-			if (graph)
+			Ref<AnimationClip> clip = comp.animation;
+			std::string clip_name = "None (Animation Clip)";
+			if (clip)
 			{
-				graph_name = graph->GetName();
+				clip_name = clip->GetName();
 				
 			}
 
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
 			float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 			ImVec2 button_size = { content_ava.x, line_height };
-			ImGui::Text("Anim Graph: ");
+			ImGui::Text("Animation Clip: ");
 			ImGui::SameLine();
-			ImGui::Button(graph_name.c_str(), button_size);
+			ImGui::Button(clip_name.c_str(), button_size);			
 
-			if (ImGui::BeginDragDropTarget())
+			clip = ImGuiDragDropResource<AnimationClip>(".trcac");
+			if (clip)
 			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trcag"))
-				{
-					static char buf[1024] = { 0 };
-					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
-					std::filesystem::path p = buf;
-					Ref<AnimationGraph> ag = AnimationsManager::get_instance()->GetGraph(p.filename().string());
-					if (ag);
-					else ag = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-					if (ag)
-					{
-						comp.SetAnimationGraph(ag);
-						dirty = true;
-					}
-				}
-				ImGui::EndDragDropTarget();
+				comp.entities.clear();
+				comp.animation = clip;
+				comp.InitializeEntities(entity.GetScene());
 			}
 
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Play On Start", &comp.play_on_start), Play_On_Start)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Loop", &comp.loop), Loop)
 			{}
 
 			return dirty;
@@ -1100,7 +1118,7 @@ namespace trace {
 
 			ImGui::Text("Anim Graph: ");
 			ImGui::SameLine();
-			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()))
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()), Resource)
 			{}
 			graph = ImGuiDragDropResource<Animation::Graph>(".trcag");
 			if (graph)
@@ -1129,7 +1147,7 @@ namespace trace {
 			}
 			ImGui::Text("Animation Sequence: ");
 			ImGui::SameLine();
-			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()))
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()), Resource)
 			{}
 			sequence = ImGuiDragDropResource<Animation::Sequence>(".trcsq");
 			if (sequence)
@@ -1429,16 +1447,21 @@ namespace trace {
 
 			});
 
-			if (recording)
+		if (recording)
 			{
 				ImGui::PopStyleColor(2);
 			}
 
-			if(comp_dirty && is_prefab)
+		if(comp_dirty && is_prefab)
 			{
 				Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
 				editor->GetCurrentScene()->ApplyPrefabChanges(prefab);
 			}
+
+		if (!is_active)
+		{
+			ImGui::PopStyleColor();
+		}
 		
 	}
 
