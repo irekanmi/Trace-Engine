@@ -48,6 +48,8 @@ namespace trace {
 	}
 	void Scene::OnStart()
 	{
+		ResolveHierachyTransforms();
+
 		PhysicsFunc::CreateScene3D(m_physics3D, glm::vec3(0.0f, -9.81f, 0.0f));
 		if (m_physics3D)
 		{
@@ -1180,11 +1182,120 @@ namespace trace {
 		return transform;
 	}
 
+	glm::vec3 Scene::GetEntityWorldPosition(Entity entity)
+	{
+		if (!entity)
+		{
+			return glm::vec3(0.0f);
+		}
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (!hi.HasParent())
+		{
+			return entity.GetComponent<TransformComponent>()._transform.GetPosition();
+		}
+		return glm::vec3(hi.transform[3]);
+	}
+
+	glm::quat Scene::GetEntityWorldRotation(Entity entity)
+	{
+		if (!entity)
+		{
+			return glm::quat();
+		}
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (!hi.HasParent())
+		{
+			return entity.GetComponent<TransformComponent>()._transform.GetRotation();
+		}
+		return glm::quat_cast(hi.transform);
+	}
+
+	glm::vec3 Scene::GetEntityWorldScale(Entity entity)
+	{
+		if (!entity)
+		{
+			return glm::vec3(0.0f);
+		}
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (!hi.HasParent())
+		{
+			return entity.GetComponent<TransformComponent>()._transform.GetScale();
+		}
+		return glm::vec3(glm::length(hi.transform[0]), glm::length(hi.transform[1]), glm::length(hi.transform[2]));
+	}
+
+	void Scene::SetEntityWorldPosition(Entity entity, glm::vec3 position)
+	{
+		if (!entity)
+		{
+			return;
+		}
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		TransformComponent& pose = entity.GetComponent<TransformComponent>();
+		if (!hi.HasParent())
+		{
+			pose._transform.SetPosition(position);
+			return;
+		}
+		Entity parent = GetEntity(hi.parent);
+		HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+		glm::vec3 local_position = glm::vec3(glm::inverse(parent_hi.transform) * glm::vec4(position, 1.0f));
+		pose._transform.SetPosition(local_position);
+
+	}
+
+	void Scene::SetEntityWorldRotation(Entity entity, glm::quat rotation)
+	{
+		if (!entity)
+		{
+			return;
+		}
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		TransformComponent& pose = entity.GetComponent<TransformComponent>();
+		if (!hi.HasParent())
+		{
+			pose._transform.SetRotation(rotation);
+			return;
+		}
+		Entity parent = GetEntity(hi.parent);
+		HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+		glm::quat local_rotation = glm::inverse(glm::quat_cast(parent_hi.transform)) * rotation;
+		pose._transform.SetRotation(local_rotation);
+	}
+
+	void Scene::SetEntityWorldScale(Entity entity, glm::vec3 scale)
+	{
+		if (!entity)
+		{
+			return;
+		}
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		TransformComponent& pose = entity.GetComponent<TransformComponent>();
+		if (!hi.HasParent())
+		{
+			pose._transform.SetScale(scale);
+			return;
+		}
+		Entity parent = GetEntity(hi.parent);
+		HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+		glm::vec3 parent_world_scale = glm::vec3(
+			glm::length(parent_hi.transform[0]),
+			glm::length(parent_hi.transform[1]),
+			glm::length(parent_hi.transform[2])
+		);
+		glm::vec3 local_scale = scale / parent_world_scale;
+		pose._transform.SetPosition(local_scale);
+	}
+
 	void Scene::ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback)
 	{
 		for (UUID& uuid : m_rootNode->children)
 		{
 			Entity entity = GetEntity(uuid);
+			if (!entity.HasComponent<ActiveComponent>())
+			{
+				continue;
+			}
 			callback(entity, uuid, this);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 			ProcessEntityHierachy(hi, callback);
@@ -1311,6 +1422,10 @@ namespace trace {
 		for (auto& i : hierachy.children)
 		{
 			Entity entity = GetEntity(i);
+			if (!entity.HasComponent<ActiveComponent>())
+			{
+				continue;
+			}
 			if(!child_first) callback(entity, i, this);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 			ProcessEntityHierachy(hi, callback);

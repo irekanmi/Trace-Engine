@@ -8,6 +8,7 @@
 #include "scene/Entity.h"
 #include "scene/Components.h"
 #include "core/input/Input.h"
+#include "scripting/ScriptEngine.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -22,7 +23,7 @@
 struct ComponentMap
 {
 	MonoClass* component_class = nullptr;
-	std::unordered_map<UUID, MonoObject*> components_data;
+	//std::unordered_map<UUID, MonoObject*> components_data;
 };
 
 struct MonoData
@@ -39,8 +40,8 @@ struct MonoData
 
 
 	Scene* scene = nullptr;
-	MonoMethod* component_ctor = nullptr;
-	std::unordered_map<MonoType*, ComponentMap> get_components;
+	/*MonoMethod* component_ctor = nullptr;
+	std::unordered_map<MonoType*, ComponentMap> get_components;*/
 	std::unordered_map<MonoType*, std::function<bool(Entity&)>> has_components;
 	std::unordered_map<MonoType*, std::function<void(Entity&)>> remove_components;
 
@@ -108,8 +109,8 @@ bool RegisterComponent()
 		return false;
 	}
 
-	auto& get_comp = s_MonoData.get_components[res];
-	get_comp.component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", comp_name.c_str());;
+	/*auto& get_comp = s_MonoData.get_components[res];
+	get_comp.component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", comp_name.c_str());;*/
 	s_MonoData.has_components[res] = [](Entity& entity) -> bool { return entity.HasComponent<T>(); };
 	s_MonoData.remove_components[res] = [](Entity& entity) { entity.RemoveComponent<T>(); };
 
@@ -168,8 +169,8 @@ bool LoadCoreAssembly(const std::string& file_path)
 	s_MonoData.coreAssembly = LoadAssembly(file_path);
 	s_MonoData.coreImage = mono_assembly_get_image(s_MonoData.coreAssembly);
 
-	MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
-	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);
+	/*MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
+	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);*/
 
 	PrintAssemblyTypes(s_MonoData.coreAssembly);
 
@@ -212,8 +213,8 @@ bool ReloadAssemblies(const std::string& core_assembly, const std::string& main_
 	s_MonoData.coreAssembly = LoadAssembly(core_assembly);
 	s_MonoData.coreImage = mono_assembly_get_image(s_MonoData.coreAssembly);
 
-	MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
-	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);
+	/*MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
+	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);*/
 
 	PrintAssemblyTypes(s_MonoData.coreAssembly);
 
@@ -234,10 +235,10 @@ bool OnSceneStartInternal(Scene* scene)
 
 bool OnSceneStopInternal(Scene* scene)
 {
-	for (auto& i : s_MonoData.get_components)
+	/*for (auto& i : s_MonoData.get_components)
 	{
 		i.second.components_data.clear();
-	}
+	}*/
 
 	s_MonoData.scene = nullptr;
 	return true;
@@ -613,7 +614,7 @@ MonoObject* Action_GetComponent(UUID uuid, MonoReflectionType* reflect_type)
 		return nullptr;
 	}
 
-	MonoType* type = mono_reflection_type_get_type(reflect_type);
+	/*MonoType* type = mono_reflection_type_get_type(reflect_type);
 	auto it = s_MonoData.get_components.find(type);
 	
 	ComponentMap& comps = it->second;
@@ -636,8 +637,9 @@ MonoObject* Action_GetComponent(UUID uuid, MonoReflectionType* reflect_type)
 		mono_runtime_invoke((MonoMethod*)s_MonoData.component_ctor, res, params, &exp);
 		if (exp) mono_print_unhandled_exception(exp);
 		return res;
-	}
+	}*/
 
+	return nullptr;
 }
 
 MonoObject* Action_GetScript(UUID uuid, MonoReflectionType* reflect_type)
@@ -802,6 +804,44 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 	entity.GetComponent<TransformComponent>()._transform.SetPosition(*position);
 }
 
+void TransformComponent_GetWorldPosition(UUID id, glm::vec3* position)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*position = s_MonoData.scene->GetEntityWorldPosition(entity);
+}
+
+void TransformComponent_SetWorldPosition(UUID id, glm::vec3* position)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	s_MonoData.scene->SetEntityWorldPosition(entity, *position);
+}
+
 #pragma endregion
 
 #pragma region Input
@@ -870,6 +910,31 @@ void TextComponent_SetString(UUID id, MonoString* string)
 
 #pragma endregion
 
+#pragma region Scene
+
+MonoObject* Scene_GetEntityByName(uint64_t string_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+	StringID s_id;
+	s_id.value = string_id;
+	Entity entity = s_MonoData.scene->GetEntityByName(s_id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return nullptr;
+	}
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
+#pragma endregion
+
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
 
 void BindInternalFuncs()
@@ -888,11 +953,15 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(TransformComponent_GetPosition);
 	ADD_INTERNAL_CALL(TransformComponent_SetPosition);
+	ADD_INTERNAL_CALL(TransformComponent_GetWorldPosition);
+	ADD_INTERNAL_CALL(TransformComponent_SetWorldPosition);
 
 	ADD_INTERNAL_CALL(Input_GetKey);
 	ADD_INTERNAL_CALL(Input_GetButton);
 
 	ADD_INTERNAL_CALL(TextComponent_GetString);
 	ADD_INTERNAL_CALL(TextComponent_SetString);
+
+	ADD_INTERNAL_CALL(Scene_GetEntityByName);
 
 }

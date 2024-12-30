@@ -4,6 +4,7 @@
 #include "core/Coretypes.h"
 #include "animation/AnimationPose.h"
 #include "reflection/TypeRegistry.h"
+#include "animation/Skeleton.h"
 
 #include <vector>
 
@@ -24,6 +25,7 @@ namespace trace::Animation {
 		UNKNOWN,
 		ANIMATION_TRACK,
 		SKELETAL_ANIMATION_TRACK,
+		ACTIVATION_TRACK,
 		CUSTOM_TRACK
 	};
 
@@ -47,7 +49,7 @@ namespace trace::Animation {
 	protected:
 		std::vector<SequenceTrackChannel*> m_channels;
 		StringID m_stringID;
-		SequenceTrackType m_type;
+		SequenceTrackType m_type = SequenceTrackType::UNKNOWN;
 
 		ACCESS_CLASS_MEMBERS(SequenceTrack);
 		GET_TYPE_ID;
@@ -93,7 +95,7 @@ namespace trace::Animation {
 		{
 			UUID entity_id = 0;
 			int32_t current_channel_index = -1;
-			AnimationGraphController* anim_controller = nullptr;
+			SkeletonInstance skeletal_instance;
 			Pose skeleton_pose;
 			Pose blend_pose;
 		};
@@ -101,6 +103,30 @@ namespace trace::Animation {
 	protected:
 
 		ACCESS_CLASS_MEMBERS(SkeletalAnimationTrack);
+		GET_TYPE_ID;
+
+	};
+
+	class ActivationTrack : public SequenceTrack
+	{
+
+	public:
+		ActivationTrack();
+		virtual bool Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
+		virtual void Update(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
+
+	private:
+
+		struct RuntimeData
+		{
+			UUID entity_id = 0;
+			int32_t current_channel_index = -1;
+			bool enabled = false;
+		};
+
+	protected:
+
+		ACCESS_CLASS_MEMBERS(ActivationTrack);
 		GET_TYPE_ID;
 
 	};

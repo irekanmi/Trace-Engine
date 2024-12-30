@@ -106,12 +106,12 @@ namespace trace {
                 m_elapsed += deltaTime;
                 if (current_entity && is_skeletal_anim)
                 {
-                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed, m_clipEnities);
+                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed, true, m_clipEnities);
                 }
                 else if(current_entity && is_sequence_anim)
                 {
                     AnimationComponent& anim_comp = current_entity.GetComponent<AnimationComponent>();
-                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed, anim_comp.entities);
+                    AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), m_elapsed, true, anim_comp.entities);
                 }
                 m_currentFrame = int((m_elapsed / clip_duration) * (float)m_endFrame);
                 m_currentFrame %= m_endFrame;
@@ -125,12 +125,12 @@ namespace trace {
                     float t = ((float)m_currentFrame / (float)m_endFrame) * clip_duration;
                     if (current_entity && is_skeletal_anim)
                     {
-                        AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t, m_clipEnities);
+                        AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t, true, m_clipEnities);
                     }
                     else if (current_entity && is_sequence_anim)
                     {
                         AnimationComponent& anim_comp = current_entity.GetComponent<AnimationComponent>();
-                        AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t, anim_comp.entities);
+                        AnimationEngine::get_instance()->Animate(m_currentClip, scene.get(), t, true, anim_comp.entities);
                     }
                     m_lastSelectedFrame = m_currentFrame;
                 }

@@ -66,6 +66,13 @@ namespace trace {
 		ScriptRegistry& GetScriptRegistry() { return m_scriptRegistry; }
 
 		Transform GetEntityGlobalPose(Entity entity, bool recompute = false);
+		glm::vec3 GetEntityWorldPosition(Entity entity);
+		glm::quat GetEntityWorldRotation(Entity entity);
+		glm::vec3 GetEntityWorldScale(Entity entity);
+
+		void SetEntityWorldPosition(Entity entity, glm::vec3 position);
+		void SetEntityWorldRotation(Entity entity, glm::quat rotation);
+		void SetEntityWorldScale(Entity entity, glm::vec3 scale);
 
 
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);

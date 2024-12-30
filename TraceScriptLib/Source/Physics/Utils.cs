@@ -141,6 +141,21 @@ namespace Trace
             return new Vec3 { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z };
         }
 
+        static public Vec3 operator -(Vec3 a, Vec3 b)
+        {
+            return new Vec3 { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z };
+        }
+
+        static public bool operator ==(Vec3 a, Vec3 b)
+        {
+            return a.x == b.x && a.y == b.y && a.z == b.z;
+        }
+
+        static public bool operator !=(Vec3 a, Vec3 b)
+        {
+            return !(a == b);
+        }
+
 
     }
 

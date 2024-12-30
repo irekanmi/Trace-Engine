@@ -139,6 +139,32 @@ namespace trace::Animation {
 
 	}
 
+	void SequenceInstance::UpdateElaspedTime(Scene* scene, float elasped_time)
+	{
+		if (!m_instanciated)
+		{
+			TRC_WARN("Sequence has not been instanciated can't update sequence instance. Function: {}", __FUNCTION__);
+			return;
+		}
+
+		std::vector<SequenceTrack*>& tracks = m_sequence->GetTracks();
+
+		if (elasped_time > m_sequence->GetDuration())
+		{
+			return;
+		}
+		m_elaspedTime = elasped_time;
+
+		uint32_t index = 0;
+		for (SequenceTrack*& track : tracks)
+		{
+			track->Update(this, scene, index);
+
+			index++;
+		}
+
+	}
+
 	void SequenceInstance::Start(Scene* scene, UUID id)
 	{
 		m_started = true;

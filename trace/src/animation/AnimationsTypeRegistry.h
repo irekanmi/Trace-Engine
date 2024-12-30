@@ -146,6 +146,10 @@ namespace trace::Animation {
 		REGISTER_TYPE_PARENT(SkeletalAnimationTrack, SequenceTrack);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(ActivationTrack)
+		REGISTER_TYPE_PARENT(ActivationTrack, SequenceTrack);
+	END_REGISTER_CLASS;
+
 	BEGIN_REGISTER_CLASS(SequenceTrackChannel)
 		REGISTER_TYPE(SequenceTrackChannel);
 		REGISTER_MEMBER(SequenceTrackChannel, m_startTime);
@@ -160,6 +164,10 @@ namespace trace::Animation {
 	BEGIN_REGISTER_CLASS(SkeletalAnimationChannel)
 		REGISTER_TYPE_PARENT(SkeletalAnimationChannel, SequenceTrackChannel);
 		REGISTER_MEMBER(SkeletalAnimationChannel, m_clip);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(ActivationChannel)
+		REGISTER_TYPE_PARENT(ActivationChannel, SequenceTrackChannel);
 	END_REGISTER_CLASS;
 
 }

@@ -34,6 +34,12 @@ namespace Trace
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_SetPosition(ulong id, ref Vec3 position);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_GetWorldPosition(ulong id, out Vec3 position);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_SetWorldPosition(ulong id, ref Vec3 position);
+
         #endregion
 
         #region Debug
@@ -73,6 +79,13 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TextComponent_SetString(ulong id, string text);
+
+        #endregion
+
+        #region Scene
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_GetEntityByName(ulong id);
 
         #endregion
 

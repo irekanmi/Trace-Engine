@@ -83,6 +83,10 @@ namespace trace {
 	void ScriptEngine::OnSceneStop(Scene* scene)
 	{
 		OnSceneStopInternal(scene);
+		for (auto [id, ins] : m_entityActionInstance)
+		{
+			DestroyScriptInstance(ins);
+		}
 		m_entityActionInstance.clear();
 		m_currentScene = nullptr;
 	}
@@ -104,6 +108,10 @@ namespace trace {
 
 	ScriptInstance* ScriptEngine::GetEntityActionClass(UUID entity_id)
 	{
+		if (!m_currentScene)
+		{
+			return nullptr;
+		}
 		auto it = m_entityActionInstance.find(entity_id);
 
 		if (it == m_entityActionInstance.end())

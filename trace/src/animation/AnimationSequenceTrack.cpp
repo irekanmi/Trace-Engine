@@ -13,7 +13,6 @@
 
 namespace trace::Animation {
 
-
 	bool AnimationSequenceTrack::Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index)
 	{
 
@@ -101,7 +100,7 @@ namespace trace::Animation {
 			return;
 		}
 		float sample_time = instance->GetElaspedTime() - channel->GetStartTime();
-		AnimationEngine::get_instance()->Animate(clip, scene, sample_time, data->m_runtime_entites);
+		AnimationEngine::get_instance()->Animate(clip, scene, sample_time, true, data->m_runtime_entites);
 
 	}
 
@@ -131,14 +130,11 @@ namespace trace::Animation {
 		}
 
 		data->entity_id = entity.GetID();
-		data->anim_controller = &entity.GetComponent<AnimationGraphController>();
-		GraphInstance& graph = data->anim_controller->graph;
-		if (!graph.HasStarted())
-		{
-			graph.Start(scene, data->entity_id);
-		}
-		data->skeleton_pose.Init(&graph.GetSkeletonInstance());
-		data->blend_pose.Init(&graph.GetSkeletonInstance());
+		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
+		GraphInstance& graph = controller.graph;
+		data->skeletal_instance.CreateInstance(graph.GetGraph()->GetSkeleton(), scene, data->entity_id);
+		data->skeleton_pose.Init(&data->skeletal_instance);
+		data->blend_pose.Init(&data->skeletal_instance);
 
 
 		return true;
@@ -162,7 +158,7 @@ namespace trace::Animation {
 		RuntimeData* data = (RuntimeData*)tracks_data[track_index];
 
 
-		if (!data->anim_controller)
+		if (data->skeletal_instance.GetEntites().empty())
 		{
 			return;
 		}
@@ -178,7 +174,7 @@ namespace trace::Animation {
 			data->current_channel_index = index;
 		}
 
-		AnimationChannel* channel = (AnimationChannel*)m_channels[data->current_channel_index];
+		SkeletalAnimationChannel* channel = (SkeletalAnimationChannel*)m_channels[data->current_channel_index];
 		Ref<AnimationClip> clip = channel->GetAnimationClip();
 		if (!clip)
 		{
@@ -208,7 +204,99 @@ namespace trace::Animation {
 			}
 		}
 		
+		int32_t prev_index = data->current_channel_index - 1;
+		if (prev_index >= 0 && IsTimeWithinChannel(m_channels[prev_index], instance->GetElaspedTime()))
+		{
+
+			AnimationChannel* prev_channel = (AnimationChannel*)m_channels[prev_index];
+			float prev_sample_time = instance->GetElaspedTime() - m_channels[prev_index]->GetStartTime();
+			float prev_end_time = m_channels[prev_index]->GetStartTime() + m_channels[prev_index]->GetDuration();
+
+			float channel_end_time = channel->GetStartTime() + channel->GetDuration();
+			float blend_duration = prev_end_time - channel->GetStartTime() ;
+			float blend_weight = (instance->GetElaspedTime() - channel->GetStartTime()) / blend_duration;
+
+			Ref<AnimationClip> prev_clip = prev_channel->GetAnimationClip();
+
+			if (prev_clip)
+			{
+				AnimationEngine::get_instance()->SampleClip(prev_clip, prev_sample_time, &data->blend_pose, true);
+				BlendPose(&data->skeleton_pose, &data->blend_pose, &data->skeleton_pose, 1.0f - blend_weight);
+			}
+		}
+
 		data->skeleton_pose.SetEntityLocalPose();
+
+	}
+
+	bool ActivationTrack::Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index)
+	{
+		m_type = SequenceTrackType::ACTIVATION_TRACK;
+
+		std::vector<void*>& tracks_data = instance->GetTracksData();
+
+		RuntimeData* data = new RuntimeData; //TODO: Use custom allocator
+		tracks_data[track_index] = data;
+
+		data->current_channel_index = 0;
+
+		Entity entity = scene->GetEntityByName(m_stringID);
+
+		if (!entity)
+		{
+			TRC_ERROR("Invalid Entity, Function: {}", __FUNCTION__);
+			return false;
+		}
+
+		data->entity_id = entity.GetID();
+		data->enabled = false;
+
+
+		return true;
+	}
+
+	ActivationTrack::ActivationTrack()
+	{
+		m_type = SequenceTrackType::ACTIVATION_TRACK;
+	}
+
+	void ActivationTrack::Update(SequenceInstance* instance, Scene* scene, uint32_t track_index)
+	{
+
+		std::vector<void*>& tracks_data = instance->GetTracksData();
+
+		if (m_channels.empty())
+		{
+			return;
+		}
+
+		RuntimeData* data = (RuntimeData*)tracks_data[track_index];
+		if (data->entity_id == 0)
+		{
+			return;
+		}
+
+		if (!IsTimeWithinChannel(m_channels[data->current_channel_index], instance->GetElaspedTime()))
+		{
+			int32_t index = FindChannelWithinTime(instance->GetElaspedTime(), data->current_channel_index);
+			if (index < 0 && data->enabled)
+			{
+				scene->DisableEntity(scene->GetEntity(data->entity_id));
+				data->enabled = false;
+				return;
+			}
+			if (index < 0)
+			{
+				return;
+			}
+			data->current_channel_index = index;
+		}
+		if (IsTimeWithinChannel(m_channels[data->current_channel_index], instance->GetElaspedTime()) && !data->enabled)
+		{
+			scene->EnableEntity(scene->GetEntity(data->entity_id));
+			data->enabled = true;
+		}
+		
 
 	}
 
@@ -225,9 +313,9 @@ namespace trace::Animation {
 	int32_t SequenceTrack::FindChannelWithinTime(float time, int32_t current_index)
 	{
 		float duration_in_sequence = m_channels[current_index]->GetStartTime() + m_channels[current_index]->GetDuration();
-		if (time < m_channels[current_index]->GetStartTime())
+		if (time <= m_channels[current_index]->GetStartTime())
 		{
-			for (int32_t i = current_index; i > 0; i--)
+			for (int32_t i = current_index; i >= 0; i--)
 			{
 				if (IsTimeWithinChannel(m_channels[i], time))
 				{
@@ -235,7 +323,7 @@ namespace trace::Animation {
 				}
 			}
 		}
-		else if (time > duration_in_sequence)
+		else if (time >= duration_in_sequence)
 		{
 			for (int32_t i = current_index; i < m_channels.size(); i++)
 			{
@@ -244,6 +332,10 @@ namespace trace::Animation {
 					return i;
 				}
 			}
+		}
+		else if (IsTimeWithinChannel(m_channels[current_index], time))
+		{
+			return current_index;
 		}
 
 		return -1;

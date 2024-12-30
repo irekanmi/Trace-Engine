@@ -55,14 +55,24 @@ namespace trace {
 
 	}
 
-	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, std::unordered_map<StringID, UUID>& data_map)
+	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, bool loop, std::unordered_map<StringID, UUID>& data_map)
 	{
+		float elasped_time = time_point;
+
+		if (loop)
+		{
+			elasped_time = fmod(elasped_time, clip->GetDuration());
+		}
+		else if (time_point > clip->GetDuration())
+		{
+			return;
+		}
 
 		auto lambda = [&](StringID, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_)
 		{
 			CalculateAndSetData(a, b, scene, id, type, time_);
 		};
-		FindFrame(data_map, clip, scene, time_point, lambda);
+		FindFrame(data_map, clip, scene, elasped_time, lambda);
 	}
 
 	void AnimationEngine::Animate(AnimationComponent* animation_component, Scene* scene, float time_point, bool loop)
@@ -83,19 +93,9 @@ namespace trace {
 			return;
 		}
 
-		float elasped_time = time_point;
-		Ref<AnimationClip> clip = animation_component->animation;
+		
 
-		if (loop)
-		{
-			elasped_time = fmod(elasped_time, clip->GetDuration());
-		}
-		else if (time_point > clip->GetDuration())
-		{
-			return;
-		}
-
-		Animate(clip, scene, elasped_time, animation_component->entities);
+		Animate(animation_component->animation, scene, time_point, loop, animation_component->entities);
 
 	}
 

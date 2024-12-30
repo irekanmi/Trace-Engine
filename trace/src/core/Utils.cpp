@@ -139,7 +139,7 @@ namespace trace {
 	StringID GetStringID(const std::string& data)
 	{
 		StringID id;
-		id.value = std::hash<std::string>{}(data);
+		id.value = hash_string(data);
 		// NOTE: Only to be used for the editor
 		Debugger::get_instance()->SetString(id, data);
 		return id;
@@ -149,6 +149,18 @@ namespace trace {
 	{
 		// NOTE: Only to be used for the editor
 		 return Debugger::get_instance()->GetString(string_id);
+	}
+
+	uint64_t hash_string(const std::string& str)
+	{
+		std::uint64_t hash_value = 0xcbf29ce484222325ULL;
+		constexpr std::uint64_t prime = 0x100000001b3ULL;
+		for (char c : str)
+		{
+			hash_value ^= static_cast<std::uint64_t>(c);
+			hash_value *= prime;
+		}
+		return hash_value;
 	}
 
 }

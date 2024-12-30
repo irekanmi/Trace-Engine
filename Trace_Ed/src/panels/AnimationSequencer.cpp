@@ -52,6 +52,7 @@ namespace trace {
     float timelineEnd = 10.0f;
     float pixelsPerSecond = 100.0f;  // Initial zoom level
     float currentTime = 0.0f;        // Position of the playhead
+    float lastTime = 0.0f;
     bool isPlaying = false;
     // Variables for playhead dragging
     bool isDraggingPlayhead = false;
@@ -91,7 +92,7 @@ namespace trace {
 		trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(AnimationSequencer::OnEvent));
 
         track_ui_info& anim_track = render_table[Animation::SequenceTrackType::ANIMATION_TRACK];
-        anim_track.color = IM_COL32(150, 85, 77, 150);
+        anim_track.color = IM_COL32(150, 85, 77, 200);
         anim_track.can_blend = false;
         anim_track.item_on_render = [](Animation::SequenceTrack* track, uint32_t index)
         {
@@ -137,7 +138,7 @@ namespace trace {
         };
 
         track_ui_info& skeletal_track = render_table[Animation::SequenceTrackType::SKELETAL_ANIMATION_TRACK];
-        skeletal_track.color = IM_COL32(77, 85, 150, 150);
+        skeletal_track.color = IM_COL32(77, 85, 150, 200);
         skeletal_track.can_blend = true;
         skeletal_track.item_on_render = [](Animation::SequenceTrack* track, uint32_t index)
         {
@@ -172,6 +173,21 @@ namespace trace {
                 return anim;
             }
 
+            return nullptr;
+        };
+
+        track_ui_info& active_track = render_table[Animation::SequenceTrackType::ACTIVATION_TRACK];
+        active_track.color = IM_COL32(85, 150, 77, 200);
+        active_track.can_blend = false;
+        active_track.item_on_render = [](Animation::SequenceTrack* track, uint32_t index)
+        {
+           
+        };
+        active_track.item_get_name = [](Animation::SequenceTrack* track, uint32_t index, std::string& name)
+        {
+        };
+        active_track.item_on_drag_drop = [](Animation::SequenceTrack* track, ImRect rect, ImGuiID id) -> Animation::SequenceTrackChannel*
+        {
             return nullptr;
         };
 
@@ -226,6 +242,10 @@ namespace trace {
                 {
                     sequence->GetTracks().push_back(new Animation::SkeletalAnimationTrack);//TODO: Use custom allocator
                 }
+                if (ImGui::MenuItem("Activation track"))
+                {
+                    sequence->GetTracks().push_back(new Animation::ActivationTrack);//TODO: Use custom allocator
+                }
                 ImGui::EndPopup();
             }
             float duration = sequence->GetDuration();
@@ -236,16 +256,34 @@ namespace trace {
             }
 
             // Playback controls
-            if (ImGui::Button("Play")) isPlaying = true;
-            ImGui::SameLine();
-            if (ImGui::Button("Pause")) isPlaying = false;
-            ImGui::SameLine();
-            if (ImGui::Button("Stop")) { isPlaying = false; currentTime = timelineStart; }
-
-            if (isPlaying) {
-                currentTime += ImGui::GetIO().DeltaTime;
-                if (currentTime > timelineEnd) isPlaying = false;
+            if (ImGui::Button("Play"))
+            {
+                isPlaying = true;
             }
+            ImGui::SameLine();
+            if (ImGui::Button("Pause"))
+            {
+                isPlaying = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop")) 
+            { 
+                isPlaying = false;
+            }
+
+            if (!isPlaying && lastTime != currentTime)
+            {
+                m_instance.UpdateElaspedTime(editor->GetCurrentScene().get(), currentTime);
+                lastTime = currentTime;
+            }
+
+            if (isPlaying) 
+            {
+                currentTime += deltaTime;
+                currentTime = fmod(currentTime, sequence->GetDuration());
+                m_instance.UpdateElaspedTime(editor->GetCurrentScene().get(), currentTime);
+            }
+            
 
             if (ImGui::Button("Save"))
             {                
@@ -291,69 +329,85 @@ namespace trace {
         }
         ImGui::NextColumn();
         ImGui::BeginChild("##Sequencer");
+        ImGui::SetWindowFontScale(0.85f);
         static ImVec2 mouse_pos;
         bool is_left_key_pressed = InputSystem::get_instance()->GetButtonState(Buttons::BUTTON_LEFT) == KeyState::KEY_PRESS;
 
+        float headerHeight = 40.0f;
+        float trackHeight = 25.0f;
+        ImVec2 window_size = ImGui::GetWindowSize();
+        float timelineHeight = window_size.y * 2.0f;
+        ImVec2 window_pos = ImGui::GetWindowPos();
+        float window_width = ImGui::GetWindowWidth();
+        float draw_offset = 150.0f;
+
+        // Draw timeline header background
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+        cursorPos.x += draw_offset;
+        ImVec2 headerEnd = ImVec2(cursorPos.x + (timelineEnd - timelineStart) * pixelsPerSecond, cursorPos.y + headerHeight);
+        drawList->AddRectFilled(cursorPos, headerEnd, IM_COL32(50, 50, 50, 255));
+        if (ImGui::IsMouseHoveringRect(cursorPos, headerEnd) && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && rect_id == 0)
+        {
+            float time = mouse_pos.x - cursorPos.x;
+            time /= pixelsPerSecond;
+            time += timelineStart;
+            currentTime = time;
+        }
+
+        // Draw dynamic grid lines with increasing granularity as we zoom in
+        int32_t line_index = 0;
+        for (float timeStep = 1.0f; timeStep >= minTimeStep; timeStep /= 2.0f) {
+            if (pixelsPerSecond * timeStep < 10.0f) break;
+
+            for (float t = timelineStart; t <= timelineEnd; t += timeStep) {
+                float x = cursorPos.x + (t - timelineStart) * pixelsPerSecond;
+                int alpha = (timeStep < 1.0f) ? 100 : 200;
+                ImU32 lineColor = (timeStep == 1.0f) ? IM_COL32(200, 200, 200, alpha) : IM_COL32(150, 150, 150, alpha);
+                drawList->AddLine(ImVec2(x, cursorPos.y), ImVec2(x, cursorPos.y + timelineHeight + headerHeight), lineColor);
+                char buf[128] = {};
+                sprintf_s<128>(buf, "%.2f", t);
+                if (line_index % 2 == 0) {
+                    drawList->AddText(ImVec2(x - 7, cursorPos.y + 5), IM_COL32(255, 255, 255, 255), buf);
+                }
+
+                line_index++;
+            }
+        }
+
+        // Draw the playhead and handle dragging
+        float playheadX = cursorPos.x + (currentTime - timelineStart) * pixelsPerSecond;
+        ImVec2 playheadPos(playheadX, cursorPos.y + headerHeight);
+        ImVec2 playheadEnd(playheadX, cursorPos.y + timelineHeight + headerHeight);
+
+        ImVec2 play_head_start = ImVec2(playheadX - 5.0f, cursorPos.y + (headerHeight / 2.0f));
+        ImVec2 play_head_end = ImVec2(playheadX + 5.0f, cursorPos.y + headerHeight);
+        ImU32 head_color = IM_COL32(255, 0, 0, 100);
+        int32_t play_head_id = 25;
+        bool is_hovering_play_head = ImGui::IsMouseHoveringRect(play_head_start, play_head_end);
+        if (is_hovering_play_head)
+        {
+            head_color = IM_COL32(255, 0, 0, 255);
+        }
+        if (playheadX > (cursorPos.x))
+        {
+            drawList->AddRectFilled(play_head_start, play_head_end, head_color, 2.0f);
+        }
+
+        if (is_hovering_play_head && is_left_key_pressed) 
+        {
+            rect_id = play_head_id;
+        }
+        if (rect_id == play_head_id)
+        {
+            currentTime = timelineStart + (mouse_pos.x - cursorPos.x) / pixelsPerSecond;
+            currentTime = std::clamp(currentTime, timelineStart, timelineEnd);
+        }
+
         if (sequence)
         {
-            std::vector<Animation::SequenceTrack*>& tracks = sequence->GetTracks();
-
-            float timelineHeight = tracks.size() * 60.0f;
-            float headerHeight = 40.0f;
-            float trackHeight = 40.0f;
-            ImVec2 window_size = ImGui::GetWindowSize();
-            ImVec2 window_pos = ImGui::GetWindowPos();
-            float window_width = ImGui::GetWindowWidth();
-            float draw_offset = 150.0f;
-
-            // Draw timeline header background
-            ImDrawList* drawList = ImGui::GetWindowDrawList();
-            ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-            cursorPos.x += draw_offset;
-            ImVec2 headerEnd = ImVec2(cursorPos.x + (timelineEnd - timelineStart) * pixelsPerSecond, cursorPos.y + headerHeight);
-            drawList->AddRectFilled(cursorPos, headerEnd, IM_COL32(50, 50, 50, 255));
-
-            // Draw dynamic grid lines with increasing granularity as we zoom in
-            int32_t line_index = 0;
-            for (float timeStep = 1.0f; timeStep >= minTimeStep; timeStep /= 2.0f) {
-                if (pixelsPerSecond * timeStep < 10.0f) break;
-
-                for (float t = timelineStart; t <= timelineEnd; t += timeStep) {
-                    float x = cursorPos.x + (t - timelineStart) * pixelsPerSecond;
-                    int alpha = (timeStep < 1.0f) ? 100 : 200;
-                    ImU32 lineColor = (timeStep == 1.0f) ? IM_COL32(200, 200, 200, alpha) : IM_COL32(150, 150, 150, alpha);
-                    drawList->AddLine(ImVec2(x, cursorPos.y), ImVec2(x, cursorPos.y + timelineHeight + headerHeight), lineColor);
-                    char buf[128] = {};
-                    sprintf_s<128>(buf, "%.2f", t);
-                    if (line_index % 2 == 0) {
-                        drawList->AddText(ImVec2(x - 2, cursorPos.y + 5), IM_COL32(255, 255, 255, 255), buf);
-                    }
-
-                    line_index++;
-                }
-            }
-
-            // Draw the playhead and handle dragging
-            float playheadX = cursorPos.x + (currentTime - timelineStart) * pixelsPerSecond;
-            ImVec2 playheadPos(playheadX, cursorPos.y);
-            ImVec2 playheadEnd(playheadX, cursorPos.y + timelineHeight + headerHeight);
-
-            drawList->AddLine(playheadPos, playheadEnd, IM_COL32(255, 0, 0, 255), 2.0f);
-
-            ImVec2 mousePos = ImGui::GetIO().MousePos;
-            if (ImGui::IsMouseHoveringRect(ImVec2(playheadPos.x - 2.0f, playheadPos.y - 0.0f), ImVec2(playheadEnd.x + 2.0f, playheadEnd.y + 0.0f)) && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                isDraggingPlayhead = true;
-            }
-
-            if (isDraggingPlayhead) {
-                if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-                    currentTime = timelineStart + (mousePos.x - cursorPos.x) / pixelsPerSecond;
-                    currentTime = std::clamp(currentTime, timelineStart, timelineEnd);
-                }
-                else {
-                    isDraggingPlayhead = false;
-                }
-            }
+            std::vector<Animation::SequenceTrack*>& tracks = sequence->GetTracks();             
+            
 
             // Draw each track and its clips
             float trackY = cursorPos.y + headerHeight + 20.0f;
@@ -369,7 +423,7 @@ namespace trace {
                 {
                     name = STRING_FROM_ID(string_id);
                 }
-                ImGui::Button(name.c_str(), ImVec2(draw_offset, headerHeight));
+                ImGui::Button(name.c_str(), ImVec2(draw_offset, trackHeight));
                 ImGui::PushID((int)track_id);
                 if (ImGui::BeginPopupContextItem("Track Popup"))
                 {
@@ -425,11 +479,13 @@ namespace trace {
 
                     if (clipWidth <= 0.0f)
                     {
+                        index++;
                         continue;
                     }
 
                     if (clipX > (window_width + window_pos.x))
                     {
+                        index++;
                         continue;
                     }
 
@@ -529,7 +585,7 @@ namespace trace {
                         modified_tracks.emplace(track_index);
                     }
 
-                    if (index - 1 >= 0 && ui_info.can_blend) {
+                    if (index - 1 >= 0 && ui_info.can_blend && clipX > cursorPos.x ) {
                         auto& prevClip = track->GetTrackChannels()[index - 1];
                         if (prevClip->GetStartTime() + prevClip->GetDuration() > clip->GetStartTime()) {
                             float blendStartX = clipX;
@@ -601,6 +657,14 @@ namespace trace {
                             track->GetTrackChannels().push_back(chan);//TODO: Use custom allocator
                             break;
                         }
+                        case Animation::SequenceTrackType::ACTIVATION_TRACK:
+                        {
+                            Animation::SequenceTrackChannel* chan = new Animation::ActivationChannel;
+                            chan->SetStartTime(time);
+                            chan->SetDuration(1.0f);
+                            track->GetTrackChannels().push_back(chan);//TODO: Use custom allocator
+                            break;
+                        }
                         }
 
                         m_instance.DestroyInstance();
@@ -634,7 +698,7 @@ namespace trace {
                     }
                 }
 
-                trackY += trackHeight + 10.0f;
+                trackY += trackHeight + 3.0f;
                 track_id += 1000;
                 track_index++;
             }
@@ -654,6 +718,13 @@ namespace trace {
             }
         }
         mouse_pos = ImGui::GetMousePos();
+        
+        if (playheadX > (cursorPos.x))
+        {
+            drawList->AddLine(playheadPos, playheadEnd, IM_COL32(225, 225, 255, 175), 2.0f);
+        }
+
+
         ImGui::EndChild();
 
         ImGui::Columns(1);

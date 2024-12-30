@@ -77,12 +77,15 @@
     <Compile Include="Source\Action.cs" />
     <Compile Include="Source\Components.cs" />
     <Compile Include="Source\Core\Debug.cs" />
+    <Compile Include="Source\Core\EntityObject.cs" />
     <Compile Include="Source\Core\Input\Input.cs" />
     <Compile Include="Source\Core\Input\Keys.cs" />
     <Compile Include="Source\Internals.cs" />
     <Compile Include="Source\Physics\Utils.cs" />
     <Compile Include="Source\Player.cs" />
+    <Compile Include="Source\Scene\Scene.cs" />
     <Compile Include="Source\Test.cs" />
+    <Compile Include="Source\Utils.cs" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

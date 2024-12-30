@@ -6,33 +6,43 @@ using System.Threading.Tasks;
 
 namespace Trace
 {
-    public class Component
+    public interface Component<T> //: EntityObject
     {
-        public ulong entityId { get; protected set; }
-
-        protected Component()
-        {
-            entityId = 0;
-        }
-
-        internal protected Component(ulong ent)
-        {
-            entityId = ent;
-        }
+        T Create(ulong id);
+        
     }
 
-    public class TransformComponent : Component
+    public struct TransformComponent : Component<TransformComponent>
     {
+        private ulong Id;
+
+        TransformComponent(ulong Id)
+        {
+            this.Id = Id;
+        }
         public Vec3 Position
         {
             get
             {
-                InternalCalls.TransformComponent_GetPosition(entityId, out Vec3 position);
+                InternalCalls.TransformComponent_GetPosition(Id, out Vec3 position);
                 return position;
             }
             set
             {
-                InternalCalls.TransformComponent_SetPosition(entityId,ref value);
+                InternalCalls.TransformComponent_SetPosition(Id,ref value);
+            }
+        }
+
+        public Vec3 WorldPosition
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetWorldPosition(Id, out Vec3 position);
+                return position;
+            }
+            set
+            {
+                InternalCalls.TransformComponent_SetWorldPosition(Id, ref value);
             }
         }
 
@@ -48,20 +58,37 @@ namespace Trace
             }
         }
 
+        public TransformComponent Create(ulong id)
+        {
+            TransformComponent component = new TransformComponent(id);
+            return component;
+        }
+
     }
 
-    public class TextComponent : Component
+    public struct TextComponent : Component<TextComponent>
     {
+        private ulong Id;
 
-        public string Text { 
+        TextComponent(ulong Id)
+        {
+            this.Id = Id;
+        }
+        public string Text
+        {
             get
             {
-                return InternalCalls.TextComponent_GetString(entityId);
+                return InternalCalls.TextComponent_GetString(Id);
             }
             set
             {
-                InternalCalls.TextComponent_SetString(entityId, value);
+                InternalCalls.TextComponent_SetString(Id, value);
             }
+        }
+
+        public TextComponent Create(ulong id)
+        {
+            return new TextComponent(id);
         }
     }
 

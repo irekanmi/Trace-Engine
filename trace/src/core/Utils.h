@@ -41,6 +41,8 @@ namespace trace {
 		return glm::slerp(a, b, t);
 	}
 
+	inline uint64_t hash_string(const std::string& str);
+
 }
 
 #define STR_ID(string) trace::GetStringID(string)

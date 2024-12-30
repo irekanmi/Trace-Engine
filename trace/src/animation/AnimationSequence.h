@@ -68,6 +68,7 @@ namespace trace::Animation {
 		bool CreateInstance(Ref<Sequence> sequence, Scene* scene);
 		void DestroyInstance();
 		void Update(Scene* scene, float deltaTime);
+		void UpdateElaspedTime(Scene* scene, float elasped_time);
 		void Start(Scene* scene, UUID id);
 		void Stop(Scene* scene, UUID id);
 		bool HasStarted() { return m_started; }

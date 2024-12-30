@@ -82,4 +82,18 @@ namespace trace::Animation {
 
 	};
 
+	class ActivationChannel : public SequenceTrackChannel
+	{
+
+	public:
+
+	private:
+
+
+	protected:
+		ACCESS_CLASS_MEMBERS(ActivationChannel);
+		GET_TYPE_ID;
+
+	};
+
 }

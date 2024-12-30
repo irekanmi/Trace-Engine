@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Trace
 {
-    public class Action
+    public class Action 
     {
-        public readonly ulong Id;
+        protected ulong Id;
         protected Action() { Id = 0; }
 
         internal protected Action(ulong id)
@@ -16,12 +16,10 @@ namespace Trace
             Id = id;
         }
 
-        public T GetComponent<T>() where T : Component, new()
+        public T GetComponent<T>() where T : Component<T>, new()
         {
-            if (!HasComponent<T>()) return null;
-            Type component_type = typeof(T);
-            object component = InternalCalls.Action_GetComponent(Id, component_type); ;
-            return component as T;
+            if (!HasComponent<T>()) return default(T);
+            return new T().Create(Id);
         }
 
         public T GetScript<T>() where T : Action
@@ -32,7 +30,7 @@ namespace Trace
             return script as T;
         }
 
-        public bool HasComponent<T>() where T : Component
+        public bool HasComponent<T>() where T : Component<T>
         {
             Type component_type = typeof(T);
             return InternalCalls.Action_HasComponent(Id, component_type);
@@ -44,10 +42,10 @@ namespace Trace
             return InternalCalls.Action_HasScript(Id, script_type);
         }
 
-        public T AddComponent<T>() where T : Component, new()
+        public T AddComponent<T>() //where T : Component, new()
         {
             Type component_type = typeof(T);
-            return null;
+            return default(T);
         }
 
         public T AddScript<T>() where T : Action
@@ -56,7 +54,7 @@ namespace Trace
             return null;
         }
 
-        public void RemoveComponent<T>() where T : Component, new()
+        public void RemoveComponent<T>() //where T : Component, new()
         {
             Type component_type = typeof(T);
             InternalCalls.Action_RemoveComponent(Id, component_type);
