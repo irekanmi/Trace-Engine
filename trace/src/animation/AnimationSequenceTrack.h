@@ -41,6 +41,7 @@ namespace trace::Animation {
 		int32_t FindChannelWithinTime(float time, int32_t current_index = 0);
 		SequenceTrackType GetType() { return m_type; }
 		void SetType(SequenceTrackType type) { m_type = type; }
+		void RemoveChannel(int32_t index);
 
 	private:
 	protected:
@@ -58,7 +59,7 @@ namespace trace::Animation {
 	{
 
 	public:
-
+		AnimationSequenceTrack();
 		virtual bool Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 		virtual void Update(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 
@@ -82,7 +83,7 @@ namespace trace::Animation {
 	{
 
 	public:
-
+		SkeletalAnimationTrack();
 		virtual bool Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 		virtual void Update(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 

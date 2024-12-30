@@ -63,9 +63,19 @@ namespace trace::Animation {
 		return true;
 	}
 
+	AnimationSequenceTrack::AnimationSequenceTrack()
+	{
+		m_type = SequenceTrackType::ANIMATION_TRACK;
+	}
+
 	void AnimationSequenceTrack::Update(SequenceInstance* instance, Scene* scene, uint32_t track_index)
 	{
 		std::vector<void*>& tracks_data = instance->GetTracksData();
+
+		if (m_channels.empty())
+		{
+			return;
+		}
 
 		RuntimeData* data = (RuntimeData*)tracks_data[track_index];
 
@@ -134,12 +144,23 @@ namespace trace::Animation {
 		return true;
 	}
 
+	SkeletalAnimationTrack::SkeletalAnimationTrack()
+	{
+		m_type = SequenceTrackType::SKELETAL_ANIMATION_TRACK;
+	}
+
 	void SkeletalAnimationTrack::Update(SequenceInstance* instance, Scene* scene, uint32_t track_index)
 	{
 
 		std::vector<void*>& tracks_data = instance->GetTracksData();
 
+		if (m_channels.empty())
+		{
+			return;
+		}
+
 		RuntimeData* data = (RuntimeData*)tracks_data[track_index];
+
 
 		if (!data->anim_controller)
 		{
@@ -226,5 +247,18 @@ namespace trace::Animation {
 		}
 
 		return -1;
+	}
+	void SequenceTrack::RemoveChannel(int32_t index)
+	{
+		if (index > m_channels.size())
+		{
+			return;
+		}
+
+		SequenceTrackChannel* channel = m_channels[index];
+		m_channels[index] = m_channels.back();
+		m_channels.pop_back();
+
+		delete channel;//TODO: Use custom allocator
 	}
 }

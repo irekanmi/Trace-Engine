@@ -27,6 +27,20 @@ namespace trace::Animation {
 		}
 	}
 
+	void Sequence::RemoveTrack(int32_t index)
+	{
+		if (index > m_tracks.size())
+		{
+			return;
+		}
+
+		SequenceTrack* track = m_tracks[index];
+		m_tracks[index] = m_tracks.back();
+		m_tracks.pop_back();
+		delete track;//TODO: Use custom allocator
+
+	}
+
 	Ref<Sequence> Sequence::Deserialize(const std::string& file_path)
 	{
 		return AnimationsSerializer::DeserializeSequence(file_path);

@@ -39,6 +39,7 @@ namespace trace::Animation {
 
 		void SetType(SequenceType type) { m_type = type; }
 		void SetDuration(float duration) { m_duration = duration; }
+		void RemoveTrack(int32_t index);
 
 	public:
 		static Ref<Sequence> Deserialize(const std::string& file_path);

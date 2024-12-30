@@ -2,6 +2,9 @@
 
 #include "resource/Ref.h"
 
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_stdlib.h"
 #include "glm/glm.hpp"
 #include <string>
 
@@ -21,6 +24,24 @@ Ref<T> ImGuiDragDropResource(const std::string & tag)
 {
 	Ref<T> result;
 	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(tag.c_str()))
+		{
+			static char buf[1024] = { 0 };
+			memcpy_s(buf, 1024, payload->Data, payload->DataSize);
+			std::filesystem::path p = buf;
+			result = T::Deserialize(p.string());
+		}
+		ImGui::EndDragDropTarget();
+	}
+	return result;
+}
+
+template<typename T>
+Ref<T> ImGuiDragDropResourceCustom(ImRect rect, ImGuiID id, const std::string& tag)
+{
+	Ref<T> result;
+	if (ImGui::BeginDragDropTargetCustom(rect, id))
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(tag.c_str()))
 		{
