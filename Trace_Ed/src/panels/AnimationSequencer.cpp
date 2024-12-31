@@ -12,6 +12,7 @@
 #include "../TraceEditor.h"
 #include "serialize/AnimationsSerializer.h"
 #include "core/Utils.h"
+#include "AnimationPanel.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
@@ -85,6 +86,10 @@ namespace trace {
         }
 
         modified_tracks.clear();
+    }
+    float get_pixels_per_second(float window_width, float duration)
+    {
+        return window_width * (1.0f / duration);
     }
 
 	bool AnimationSequencer::Init()
@@ -213,10 +218,12 @@ namespace trace {
         ImGui::Columns(2);
 
         std::string name = "None (Animation Sequence)";
+        float sequence_duration = 10.0f;
 
         if (sequence)
         {
             name = sequence->GetName();
+            sequence_duration = sequence->GetDuration();
             ImGui::Text("Animation Sequence: ");
             ImGui::SameLine();
             ImGui::Button(name.c_str());
@@ -356,24 +363,77 @@ namespace trace {
         }
 
         // Draw dynamic grid lines with increasing granularity as we zoom in
-        int32_t line_index = 0;
-        for (float timeStep = 1.0f; timeStep >= minTimeStep; timeStep /= 2.0f) {
-            if (pixelsPerSecond * timeStep < 10.0f) break;
-
-            for (float t = timelineStart; t <= timelineEnd; t += timeStep) {
-                float x = cursorPos.x + (t - timelineStart) * pixelsPerSecond;
-                int alpha = (timeStep < 1.0f) ? 100 : 200;
-                ImU32 lineColor = (timeStep == 1.0f) ? IM_COL32(200, 200, 200, alpha) : IM_COL32(150, 150, 150, alpha);
-                drawList->AddLine(ImVec2(x, cursorPos.y), ImVec2(x, cursorPos.y + timelineHeight + headerHeight), lineColor);
-                char buf[128] = {};
-                sprintf_s<128>(buf, "%.2f", t);
-                if (line_index % 2 == 0) {
-                    drawList->AddText(ImVec2(x - 7, cursorPos.y + 5), IM_COL32(255, 255, 255, 255), buf);
-                }
-
-                line_index++;
-            }
+        float step = 4.0f;
+        if (pixelsPerSecond < 250.0f)
+        {
+            step = 1.0f;
         }
+        else if (pixelsPerSecond > 250.0f && pixelsPerSecond < 500.0f)
+        {
+            step = 0.5f;
+        }
+        else if (pixelsPerSecond > 500.0f && pixelsPerSecond < 750.0f)
+        {
+            step = 0.25f;
+        }
+        else if (pixelsPerSecond > 750.0f && pixelsPerSecond < 2500.0f)
+        {
+            step = 0.05f;
+        }
+        else if (pixelsPerSecond > 2500.0f && pixelsPerSecond < 5000.0f)
+        {
+            step = 0.01f;
+        }
+        else if (pixelsPerSecond >= 5000.f)
+        {
+            step = 0.005f;
+        }
+
+        for (float t = 0.0f; t <= timelineEnd; t += (step * 2.0f)) {
+            if (t < timelineStart)
+            {
+                continue;
+            }
+            float x = cursorPos.x + (t - timelineStart) * pixelsPerSecond;
+            if (x > (window_width + window_pos.x))
+            {
+                continue;
+            }
+            int alpha = 200;
+            ImU32 lineColor = IM_COL32(200, 200, 200, alpha);
+            drawList->AddLine(ImVec2(x, cursorPos.y), ImVec2(x, cursorPos.y + timelineHeight + headerHeight), lineColor);
+            
+
+        }
+
+        for (float t = 0.0f; t <= timelineEnd; t += (step)) {
+            if (t < timelineStart)
+            {
+                continue;
+            }
+            float x = cursorPos.x + (t - timelineStart) * pixelsPerSecond;
+            if (x > (window_width + window_pos.x))
+            {
+                continue;
+            }
+            int alpha = 100;
+            ImU32 lineColor = IM_COL32(150, 150, 150, alpha);
+            drawList->AddLine(ImVec2(x, cursorPos.y), ImVec2(x, cursorPos.y + timelineHeight + headerHeight), lineColor);
+            
+            char buf[128] = {};
+            if (step < 0.01f)
+            {
+                sprintf_s<128>(buf, "%.3f", t);
+            }
+            else
+            {
+                sprintf_s<128>(buf, "%.2f", t);
+            }
+            drawList->AddText(ImVec2(x - 7, cursorPos.y + 5), IM_COL32(255, 255, 255, 255), buf);
+
+
+        }
+
 
         // Draw the playhead and handle dragging
         float playheadX = cursorPos.x + (currentTime - timelineStart) * pixelsPerSecond;
@@ -406,10 +466,15 @@ namespace trace {
 
         if (sequence)
         {
+            mouse_pos = ImGui::GetMousePos();
+            float mouse_time = mouse_pos.x - cursorPos.x;
+            mouse_time /= pixelsPerSecond;
+            mouse_time += timelineStart;
             std::vector<Animation::SequenceTrack*>& tracks = sequence->GetTracks();             
             
 
             // Draw each track and its clips
+            float min_pixels_per_second = get_pixels_per_second(window_width - draw_offset, sequence->GetDuration());
             float trackY = cursorPos.y + headerHeight + 20.0f;
             int32_t track_id = 1000;
             uint32_t track_index = 0;
@@ -419,9 +484,11 @@ namespace trace {
                 ImGui::SetCursorScreenPos(ImVec2(cursorPos.x - 150.0f, trackY));
                 std::string name = "None (Entity)";
                 StringID string_id = track->GetStringID();
+                Entity entity;
                 if (string_id.value != 0)
                 {
                     name = STRING_FROM_ID(string_id);
+                    entity = editor->GetCurrentScene()->GetEntityByName(string_id);
                 }
                 ImGui::Button(name.c_str(), ImVec2(draw_offset, trackHeight));
                 ImGui::PushID((int)track_id);
@@ -497,12 +564,6 @@ namespace trace {
 
                     drawList->AddRectFilled(clipPos + shadowOffset + move_offset, clipSize + shadowOffset + move_offset, shadowColor);
                     drawList->AddRectFilled(clipPos, clipSize, ui_info.color);
-                    std::string clip_name;
-                    ui_info.item_get_name(track, index, clip_name);
-                    if (!clip_name.empty())
-                    {
-                        drawList->AddText(ImVec2(clipPos.x + 5.0f, clipPos.y + 5.0f), IM_COL32(255, 255, 255, 255), clip_name.c_str());
-                    }
 
                     auto prev_it = track->GetTrackChannels().end();
                     auto next_it = track->GetTrackChannels().end();
@@ -613,6 +674,20 @@ namespace trace {
                             modified_tracks.emplace(track_index);
                             sort_tracks(tracks);
                         }
+                        switch (track->GetType())
+                        {
+                        case Animation::SequenceTrackType::ANIMATION_TRACK:
+                        case Animation::SequenceTrackType::SKELETAL_ANIMATION_TRACK:
+                        {
+                            Animation::AnimationChannel* chan = (Animation::AnimationChannel*)clip;
+                            if (ImGui::MenuItem("Edit Animation Clip") && chan->GetAnimationClip() && entity)
+                            {
+                                editor->GetAnimationPanel()->SetAnimationClip(chan->GetAnimationClip(), entity.GetID());
+                            }
+                            
+                            break;
+                        }
+                        }
                         ImGui::EndPopup();
                     }
                     ImGui::PopID();
@@ -672,6 +747,7 @@ namespace trace {
                         modified_tracks.emplace(track_index);
                         sort_tracks(tracks);
                     }
+                    
                     ImGui::EndPopup();
                 }
                 ImGui::PopID();
@@ -705,10 +781,16 @@ namespace trace {
 
 
 
-            if (ImGui::IsWindowHovered() && ImGui::GetIO().MouseWheelH != 0) {
+            if (ImGui::IsWindowHovered() && ImGui::GetIO().MouseWheelH != 0) 
+            {
                 float zoomFactor = ImGui::GetIO().MouseWheelH > 0 ? 1.1f : 0.9f;
-                pixelsPerSecond = std::clamp(pixelsPerSecond * zoomFactor, 50.0f, 1000.0f);
-                ImGui::SetItemUsingMouseWheel();
+                pixelsPerSecond = std::clamp(pixelsPerSecond * zoomFactor, min_pixels_per_second, 7000.0f);
+                float deltaX = ImGui::GetIO().MouseDelta.x / pixelsPerSecond;
+                float diff = mouse_time - timelineStart;
+                float scale = ImGui::GetIO().MouseWheelH > 0 ? 0.1f : -0.1f;
+                timelineStart += diff * scale;
+                timelineStart = std::max(0.0f, timelineStart);
+
             }
 
             if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
