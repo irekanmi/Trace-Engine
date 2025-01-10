@@ -42,6 +42,7 @@ namespace trace {
 		uint32_t current_index;
 		std::vector<GTexture*> textures;
 		std::vector<glm::vec4> positions;
+		std::vector<float> cam_distance;// HACK: used for sorting
 		std::vector<glm::vec4> tex_coords;
 		GTexture* tex;
 	};

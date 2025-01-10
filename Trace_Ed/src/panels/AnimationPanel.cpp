@@ -180,7 +180,10 @@ namespace trace {
             }
             if (ImGui::InputInt("Sample Rate", &sample_rate))
             {
-                m_currentClip->SetSampleRate(sample_rate);
+                if (sample_rate > 5)
+                {
+                    m_currentClip->SetSampleRate(sample_rate);
+                }
             }
             if (ImGui::DragFloat("Duration(Seconds)", &duration, 0.25f, 0.005f))
             {
@@ -209,6 +212,20 @@ namespace trace {
                 }
 
                 ImGui::EndCombo();
+            }
+
+            bool has_root_motion = m_currentClip->HasRootMotion();
+            if (ImGui::Checkbox("Has Root Motion", &has_root_motion))
+            {
+                m_currentClip->SetRootMotion(has_root_motion);
+            }
+
+            if (has_root_motion)
+            {
+                RootMotionInfo& root_motion_info = m_currentClip->GetRootMotionInfo();
+                ImGui::Checkbox("Y motion", &root_motion_info.Y_motion);
+                ImGui::Checkbox("XZ motion", &root_motion_info.XZ_motion);
+                ImGui::Checkbox("Rotation Motion", &root_motion_info.enable_rotation);
             }
 
             if (ImGui::Button("Play"))

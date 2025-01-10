@@ -57,6 +57,8 @@ namespace trace {
 		void SetDirty(bool dirty) { m_dirty = dirty; }
 
 		static Transform CombineTransform(Transform& parent, Transform& child);
+		static Transform CombineTransform_Direction(Transform& parent, Transform& child);
+		static Transform Identity();
 
 	private:
 		void recalculate_local_matrix();

@@ -48,7 +48,9 @@ namespace trace {
 			{
 				if (ImGui::MenuItem("Create Empty Entity"))
 				{
-					editor->GetCurrentScene()->CreateEntity();
+					Entity new_entity = editor->GetCurrentScene()->CreateEntity();
+					editor->GetCurrentScene()->DisableEntity(new_entity);
+					editor->GetCurrentScene()->EnableEntity(new_entity);
 				}
 				ImGui::EndPopup();
 			}
@@ -245,7 +247,9 @@ namespace trace {
 			{
 				if (ImGui::MenuItem("Create Entity"))
 				{
-					editor->GetCurrentScene()->CreateEntity(entity.GetID());
+					Entity new_entity = editor->GetCurrentScene()->CreateEntity(entity.GetID());
+					editor->GetCurrentScene()->DisableEntity(new_entity);
+					editor->GetCurrentScene()->EnableEntity(new_entity);
 				}
 				if (ImGui::MenuItem("Delete Entity"))
 				{
@@ -369,7 +373,9 @@ namespace trace {
 			{
 				if (ImGui::MenuItem("Create Entity"))
 				{
-					editor->GetCurrentScene()->CreateEntity(entity.GetID());
+					Entity new_entity = editor->GetCurrentScene()->CreateEntity(entity.GetID());
+					editor->GetCurrentScene()->DisableEntity(new_entity);
+					editor->GetCurrentScene()->EnableEntity(new_entity);
 				}
 				if (ImGui::MenuItem("Delete Entity"))
 				{

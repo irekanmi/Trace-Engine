@@ -412,7 +412,7 @@ namespace trace {
 
 			Entity entity(i, this);
 
-			anim_graph.graph.Update(deltaTime);
+			anim_graph.graph.Update(deltaTime, this, entity.GetID());
 		}
 
 		auto sequences = m_registry.view<SequencePlayer, ActiveComponent>();
@@ -1020,13 +1020,20 @@ namespace trace {
 		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
 		Entity result = DuplicateEntity(handle);
 		result.AddComponent<PrefabComponent>(prefab);
+		EnableEntity(handle);
 		return result;
 	}
 
 	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab, Entity parent)
 	{
-		Entity result = InstanciatePrefab(prefab);
+		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
+		Entity result = DuplicateEntity(handle);
+		result.AddComponent<PrefabComponent>(prefab);
 		SetParent(result, parent);
+		if (parent.HasComponent<ActiveComponent>())
+		{
+			EnableEntity(result);
+		}
 		return result;
 	}
 
@@ -1287,18 +1294,18 @@ namespace trace {
 		pose._transform.SetPosition(local_scale);
 	}
 
-	void Scene::ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback)
+	void Scene::ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback, bool skip_inactive)
 	{
 		for (UUID& uuid : m_rootNode->children)
 		{
 			Entity entity = GetEntity(uuid);
-			if (!entity.HasComponent<ActiveComponent>())
+			if (!entity.HasComponent<ActiveComponent>() && skip_inactive)
 			{
 				continue;
 			}
 			callback(entity, uuid, this);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-			ProcessEntityHierachy(hi, callback);
+			ProcessEntityHierachy(hi, callback, skip_inactive);
 		}
 	}
 
@@ -1417,18 +1424,18 @@ namespace trace {
 
 	}
 
-	void Scene::ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool child_first)
+	void Scene::ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool skip_inactive, bool child_first)
 	{
 		for (auto& i : hierachy.children)
 		{
 			Entity entity = GetEntity(i);
-			if (!entity.HasComponent<ActiveComponent>())
+			if (!entity.HasComponent<ActiveComponent>() && skip_inactive)
 			{
 				continue;
 			}
 			if(!child_first) callback(entity, i, this);
 			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-			ProcessEntityHierachy(hi, callback);
+			ProcessEntityHierachy(hi, callback, skip_inactive);
 			if (child_first) callback(entity, i, this);
 		}
 	}
@@ -1525,7 +1532,7 @@ namespace trace {
 	{
 		Entity entity(ent, this);
 		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
-		controller.graph.DestroyInstance();
+		//controller.graph.DestroyInstance();
 	}
 
 	void Scene::OnConstructSequencePlayer(entt::registry& reg, entt::entity ent)

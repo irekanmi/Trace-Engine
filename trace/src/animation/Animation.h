@@ -49,6 +49,13 @@ namespace trace {
 
 	using AnimationDataTrack = std::unordered_map< AnimationDataType, std::vector<AnimationFrameData>>;
 
+	struct RootMotionInfo
+	{
+		bool Y_motion = false;
+		bool XZ_motion = true;
+		bool enable_rotation = false;
+		uint32_t root_bone_index = 0;
+	};
 
 	class AnimationClip : public Resource
 	{
@@ -65,9 +72,12 @@ namespace trace {
 		void SetSampleRate(int rate) { m_sampleRate = rate; }
 		void SetTracks(std::unordered_map<StringID, AnimationDataTrack>& new_tracks) { m_tracks = std::move(new_tracks); }
 		void SetType(AnimationClipType type) { m_type = type; }
-
-
 		bool Compare(AnimationClip* other);
+
+		void SetRootMotion(bool value) { m_hasRootMotion = value; }
+		bool GenerateRootMotionData();
+		RootMotionInfo& GetRootMotionInfo() { return m_rootMotionInfo; }
+		bool HasRootMotion() { return m_hasRootMotion; }
 
 	public:
 		static Ref<AnimationClip> Deserialize(const std::string& file_path);
@@ -78,6 +88,8 @@ namespace trace {
 		int m_sampleRate = 30;
 		std::unordered_map<StringID, AnimationDataTrack> m_tracks;
 		AnimationClipType m_type = AnimationClipType::SKELETAL_ANIMATIOM;
+		bool m_hasRootMotion = false;
+		RootMotionInfo m_rootMotionInfo;
 
 	protected:
 

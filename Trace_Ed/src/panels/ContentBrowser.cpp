@@ -5,6 +5,7 @@
 #include "resource/MeshManager.h"
 #include "resource/MaterialManager.h"
 #include "resource/PipelineManager.h"
+#include "resource/GenericAssetManager.h"
 #include "resource/ShaderManager.h"
 #include "resource/TextureManager.h"
 #include "resource/FontManager.h"
@@ -472,6 +473,7 @@ namespace trace {
 		m_allFilesID["tone_map_pass_pipeline"] = def_id0++;
 		m_allFilesID["black_texture"] = def_id0++;
 		m_allFilesID["skinned_gbuffer_pipeline"] = def_id0++;
+		m_allFilesID["transparent_texture"] = def_id0++;
 
 
 		m_allIDPath[def_id1++] = "albedo_map";
@@ -499,6 +501,7 @@ namespace trace {
 		m_allIDPath[def_id1++] = "tone_map_pass_pipeline";
 		m_allIDPath[def_id1++] = "black_texture";
 		m_allIDPath[def_id1++] = "skinned_gbuffer_pipeline";
+		m_allIDPath[def_id1++] = "transparent_texture";
 
 		//::-----::
 
@@ -709,6 +712,7 @@ namespace trace {
 			SCENE,
 			ANIMATION_CLIP,
 			ANIMATION_GRAPH,
+			ANIMATION_SEQUENCE,
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -742,6 +746,10 @@ namespace trace {
 				if (ImGui::MenuItem("Animation Graph"))
 				{
 					c_item = ANIMATION_GRAPH;
+				}
+				if (ImGui::MenuItem("Animation Sequence"))
+				{
+					c_item = ANIMATION_SEQUENCE;
 				}
 				ImGui::EndMenu();
 			}
@@ -785,8 +793,12 @@ namespace trace {
 						{
 							std::string path = (m_currentDir / (res + ".trmat")).string();
 							MaterialSerializer::Serialize(mat, path);
+							UUID new_id = UUID::GenUUID();
+							m_allFilesID[res + ".trmat"] = new_id;
+							m_allIDPath[new_id] = path;
+							ProcessAllDirectory(true);
+							OnDirectoryChanged();
 						}
-						OnDirectoryChanged();
 					}
 					else
 					{
@@ -795,7 +807,6 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
-			ProcessAllDirectory();
 			break;
 		}
 		case PIPELINE:
@@ -814,6 +825,10 @@ namespace trace {
 						new_pipeline->SetPipelineType(PipelineType::Surface_Material);
 						std::string path = (m_currentDir / (res + ".trpip")).string();
 						PipelineSerializer::Serialize(new_pipeline, path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + ".trpip"] = new_id;
+						m_allIDPath[new_id] = path;
+						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
@@ -823,7 +838,6 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
-			ProcessAllDirectory();
 			break;
 		}
 		case SCENE:
@@ -839,6 +853,10 @@ namespace trace {
 					{
 						std::string scene_path = (m_currentDir / (res + ".trscn")).string();
 						editor->CreateScene(scene_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + ".trscn"] = new_id;
+						m_allIDPath[new_id] = scene_path;
+						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
@@ -848,7 +866,6 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
-			ProcessAllDirectory();
 			break;
 		}
 		case ANIMATION_CLIP:
@@ -866,18 +883,11 @@ namespace trace {
 						std::string clip_path = (m_currentDir / (res + ".trcac")).string();
 						Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
 						AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + ".trcac"] = new_id;
+						m_allIDPath[new_id] = clip_path;
+						ProcessAllDirectory(true);
 						OnDirectoryChanged();
-					}
-					else if (id != 0)
-					{
-						auto ac_path = m_allIDPath.find(id);
-						if (ac_path == m_allIDPath.end())
-						{
-							std::string clip_path = (m_currentDir / (res + ".trcac")).string();
-							Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
-							AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
-							OnDirectoryChanged();
-						}
 					}
 					else
 					{
@@ -886,7 +896,7 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
-			ProcessAllDirectory();
+			
 			break;
 		}
 		case ANIMATION_GRAPH:
@@ -903,6 +913,10 @@ namespace trace {
 						std::string graph_path = (m_currentDir / (res + ".trcag")).string();
 						Ref<AnimationGraph> graph = AnimationsManager::get_instance()->LoadGraph_(graph_path);
 						AnimationsSerializer::SerializeAnimationGraph(graph, graph_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + ".trcag"] = new_id;
+						m_allIDPath[new_id] = graph_path;
+						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
@@ -912,7 +926,36 @@ namespace trace {
 				}
 			}
 			else c_item = (CreateItem)0;
-			ProcessAllDirectory();
+			break;
+		}
+		case ANIMATION_SEQUENCE:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Animation Sequence Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + ".trcsq");
+
+					if (id == 0)
+					{
+						std::string sequence_path = (m_currentDir / (res + ".trcsq")).string();
+						Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_path);
+						AnimationsSerializer::SerializeSequence(sequence, sequence_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + ".trcac"] = new_id;
+						m_allIDPath[new_id] = sequence_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + ".trcac");
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
 			break;
 		}
 		}
@@ -920,11 +963,32 @@ namespace trace {
 	}
 	void ContentBrowser::OnItemPopup(std::filesystem::path& path)
 	{
+		static std::string prev_file_name = "";
+		static bool rename_file = false;
+		bool is_directory = std::filesystem::is_directory(path);
+
+		TraceEditor* editor = TraceEditor::get_instance();
+
 		if (ImGui::BeginPopupContextItem())
 		{
+			if(ImGui::MenuItem("Rename"))
+			{
+				rename_file = true;
+			}
 			if(ImGui::MenuItem("Delete")){}
 			ImGui::EndPopup();
 		}
+
+		std::string res;
+		if (rename_file && editor->InputTextPopup("New File Name", res))
+		{
+			
+		}
+		else
+		{
+			rename_file = false;
+		}
+
 	}
 	void ContentBrowser::DrawEditMaterial()
 	{

@@ -54,12 +54,14 @@ namespace trace::Animation {
         m_instanciated = false;
         m_started = false;
         m_graph = other.m_graph;
+        m_nodesData.clear();
     }
     GraphInstance::GraphInstance(const GraphInstance& other)
     {
         m_instanciated = false;
         m_started = false;
         m_graph = const_cast<Ref<Graph>&>(other.m_graph);
+        m_nodesData.clear();
     }
     GraphInstance::~GraphInstance()
     {
@@ -126,6 +128,7 @@ namespace trace::Animation {
             {
                 delete i.second;// TODO: Use custom allocator
             }
+            m_nodesData.clear();
             m_instanciated = false;
         }
 
@@ -146,7 +149,7 @@ namespace trace::Animation {
         m_started = false;
     }
 
-    void GraphInstance::Update(float deltaTime)
+    void GraphInstance::Update(float deltaTime, Scene* scene, UUID id)
     {
         if (!m_started)
         {
@@ -162,6 +165,13 @@ namespace trace::Animation {
         TRC_ASSERT(final_pose != nullptr, "Funtion: {}", __FUNCTION__);
 
         final_pose->pose_data.SetEntityLocalPose();
+        Transform& root_motion_delta = final_pose->pose_data.GetRootMotionDelta();
+        Entity entity = scene->GetEntity(id);
+        Transform& pose = entity.GetComponent<TransformComponent>()._transform;
+        Transform model_space_delta = Transform::CombineTransform_Direction(pose, root_motion_delta);
+        pose.Translate(model_space_delta.GetPosition());
+        
+
 
     }
 

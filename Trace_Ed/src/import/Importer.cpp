@@ -842,6 +842,7 @@ namespace trace {
 			{
 				aiNodeAnim* node_anim = animation->mChannels[j];
 				std::string node_name = node_anim->mNodeName.C_Str();
+				StringID string_id = STR_ID(node_name);
 
 				AnimationTrack position_track;
 				position_track.channel_type = AnimationDataType::POSITION;
@@ -887,14 +888,10 @@ namespace trace {
 
 					scale_track.channel_data.emplace_back(frame_data);
 				}
-
-				std::vector<AnimationTrack> node_tracks;
-				node_tracks.emplace_back(position_track);
-				node_tracks.emplace_back(rotation_track);
-				node_tracks.emplace_back(scale_track);
-
-				//tracks[node_name] = std::move(node_tracks);
 				
+				tracks[string_id][AnimationDataType::POSITION] = std::move(position_track.channel_data);
+				tracks[string_id][AnimationDataType::ROTATION] = std::move(rotation_track.channel_data);
+				tracks[string_id][AnimationDataType::SCALE] = std::move(scale_track.channel_data);			
 
 
 			}

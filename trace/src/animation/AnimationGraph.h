@@ -177,7 +177,7 @@ namespace trace::Animation {
 
 		void Start(Scene* scene, UUID id);
 		void Stop(Scene* scene, UUID id);
-		void Update(float deltaTime);
+		void Update(float deltaTime, Scene* scene, UUID id);
 		bool HasStarted() { return m_started; }
 
 		template<typename T>

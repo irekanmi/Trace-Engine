@@ -173,6 +173,26 @@ namespace trace {
 		return result;
 	}
 
+	Transform Transform::CombineTransform_Direction(Transform& parent, Transform& child)
+	{
+		Transform result;
+		result.SetScale(parent.GetScale() * child.GetScale());
+		result.SetRotation(parent.GetRotation() * child.GetRotation());
+
+		glm::vec3 child_pos = child.GetPosition();
+		child_pos *= parent.GetScale();
+		child_pos = glm::rotate(parent.GetRotation(), child_pos);
+
+		result.SetPosition(child_pos);
+
+		return result;
+	}
+
+	Transform Transform::Identity()
+	{
+		return Transform();
+	}
+
 	void Transform::recalculate_local_matrix()
 	{
 		m_model = glm::identity<glm::mat4>();

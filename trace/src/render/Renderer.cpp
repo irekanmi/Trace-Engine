@@ -140,6 +140,7 @@ namespace trace {
 				graph_data.quadBatches[j].current_index = 0;
 				graph_data.quadBatches[j].current_texture_unit = 0;
 				graph_data.quadBatches[j].current_unit = 0;
+				graph_data.quadBatches[j].cam_distance.clear();
 				graph_data.quadBatches[j].tex = nullptr;
 			}
 			graph_data.boundQuadTextures.clear();
@@ -483,7 +484,9 @@ namespace trace {
 	{
 		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
 		
-
+		glm::mat4 final_transform = graph_data._camera->GetViewMatrix() * _transform;
+		glm::vec3 final_pos = glm::vec3(final_transform[3]);
+		uint32_t current_unit = graph_data.quadBatches[graph_data.current_quad_batch].current_unit;
 		if (!graph_data.quadBatches[graph_data.current_quad_batch].tex)
 		{
 			graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
@@ -514,10 +517,27 @@ namespace trace {
 			graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
 		}
 
+		//HACK: Used for sorting
+		uint32_t current_vert = graph_data.quadBatches[graph_data.current_quad_batch].current_unit * 6;
+		graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[current_unit] = final_pos.z;
+		for (uint32_t i = 0; i <= current_unit; i++)
+		{
+			float dis = graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[i];
+			if (final_pos.z < dis)
+			{
+				current_vert = i * 6;
+				graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[current_unit] = dis;
+				graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[i] = final_pos.z;
+				glm::vec4* data = graph_data.quadBatches[graph_data.current_quad_batch].positions.data();
+				glm::vec4* from = data + (i * 6);
+				glm::vec4* to = data + (current_unit * 6);
+				memcpy(to, from, sizeof(glm::vec4) * 6);
+			}
+		}
+
 		float new_color = 0.0f;
 		memcpy(&new_color, &color, sizeof(uint32_t));
 
-		uint32_t current_vert = graph_data.quadBatches[graph_data.current_quad_batch].current_unit * 6;
 		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
 		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
 		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -926,6 +946,7 @@ namespace trace {
 			quadBatches[current_quad_batch].textures.resize(quadBatches[current_quad_batch].max_texture_units);
 			quadBatches[current_quad_batch].positions.resize(quadBatches[current_quad_batch].max_units * 6);
 			quadBatches[current_quad_batch].tex_coords.resize(quadBatches[current_quad_batch].max_units * 6);
+			quadBatches[current_quad_batch].cam_distance.resize(quadBatches[current_quad_batch].max_units);
 			quadBatches[current_quad_batch].tex = nullptr;
 		}
 
@@ -1334,7 +1355,7 @@ namespace trace {
 
 	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color, int32_t render_graph_index)
 	{
-		DrawQuad_(_transform, texture, color);
+		DrawQuad_(_transform, texture, color, render_graph_index);
 	}
 
 	std::string Renderer::GetRenderPassName(GRenderPass* pass)

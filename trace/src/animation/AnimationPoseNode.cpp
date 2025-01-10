@@ -205,9 +205,19 @@ namespace trace::Animation {
 		
 		Ref<AnimationClip>& clip = animations[m_animClipIndex];
 
-		AnimationEngine::get_instance()->SampleClip(clip, data->elasped_time, &data->final_pose.pose_data, m_looping);
-		
-		data->elasped_time += deltaTime;
+		float next_frame_time = data->elasped_time + deltaTime;
+		if (clip->HasRootMotion())
+		{
+			AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(clip, data->elasped_time, next_frame_time, &data->final_pose.pose_data, m_looping);
+		}
+		else
+		{
+			AnimationEngine::get_instance()->SampleClip(clip, data->elasped_time, &data->final_pose.pose_data, m_looping);
+			Transform& root_motion_delta = data->final_pose.pose_data.GetRootMotionDelta();
+			root_motion_delta = Transform::Identity();
+		}
+
+		data->elasped_time = next_frame_time;
 		data->definition.update_id = Application::get_instance()->GetUpdateID();
 
 	}

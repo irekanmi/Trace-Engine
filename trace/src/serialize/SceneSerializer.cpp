@@ -930,6 +930,7 @@ namespace trace {
 			parent = entity["Parent"].as<uint64_t>();
 		}
 		Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
+		Entity parent_ent = scene->GetEntity(parent);
 		for (auto& i : _deserialize_components)
 		{
 			if (entity[i.first]) i.second(obj, entity);
@@ -1076,7 +1077,11 @@ namespace trace {
 			hi.is_enabled = entity["Is Enabled"].as<bool>();
 		}
 
-		if (hi.is_enabled)
+		if (!hi.HasParent() && hi.is_enabled)
+		{
+			scene->EnableEntity(obj);
+		}
+		else if (hi.HasParent() && parent_ent.HasComponent<ActiveComponent>() && hi.is_enabled)
 		{
 			scene->EnableEntity(obj);
 		}
@@ -1101,7 +1106,7 @@ namespace trace {
 			serialize_entity(en, emit, scene.get());
 		};
 
-		scene->ProcessEntitiesByHierachy(process_hierachy);
+		scene->ProcessEntitiesByHierachy(process_hierachy, false);
 
 		emit << YAML::EndSeq;
 

@@ -23,11 +23,11 @@ namespace trace {
 		std::vector<Bone>& GetBones() { return m_bones; }
 		std::string& GetRootNode() { return m_rootNode; }
 		StringID& GetRootNodeID() { return m_rootNodeID; }
+		Bone* GetBone(uint32_t bone_index);
 
 		int32_t GetBoneIndex(const std::string& bone_name);
 		int32_t GetBoneIndex(StringID bone_name);
 
-		void SetAsRuntime(Scene* scene, UUID id);
 		void SetRootNode(std::string& root_node);
 
 	public:

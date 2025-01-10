@@ -21,6 +21,8 @@
 #include "AnimationPanel.h"
 #include "../utils/ImGui_utils.h"
 #include "HierachyPanel.h"
+#include "ContentBrowser.h"
+#include "external_utils.h"
 
 
 namespace trace {
@@ -1005,6 +1007,31 @@ namespace trace {
 				ImGui::EndDragDropTarget();
 			}
 			ImGui::PopID();
+			static bool image_tex_modified = false;
+			if (ImGui::IsItemClicked())
+			{
+				image_tex_modified = true;
+			}
+			if (image_tex_modified)
+			{
+				std::string tex_res;
+				if (editor->DrawTexturesPopup(tex_res))
+				{
+					if (!tex_res.empty())
+					{
+						std::filesystem::path p = tex_res;
+						UUID id = editor->GetContentBrowser()->GetAllFilesID()[p.filename().string()];
+						Ref<GTexture> tex_r = LoadTexture(id);
+						if (tex_r)
+						{
+							comp.image = tex_r;
+							dirty = true;
+						}
+						image_tex_modified = false;
+					}
+				}
+				else image_tex_modified = false;
+			}
 
 			if (comp.image)
 			{

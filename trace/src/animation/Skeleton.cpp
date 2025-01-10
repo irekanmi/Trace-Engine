@@ -28,6 +28,19 @@ namespace trace {
 	void Skeleton::Destroy()
 	{
 	}
+	Bone* Skeleton::GetBone(uint32_t bone_index)
+	{
+		if (m_bones.empty())
+		{
+			return nullptr;
+		}
+		if (bone_index > m_bones.size())
+		{
+			return nullptr;
+		}
+
+		return &m_bones[bone_index];
+	}
 	int32_t Skeleton::GetBoneIndex(const std::string& bone_name)
 	{
 		return GetBoneIndex(STR_ID(bone_name));

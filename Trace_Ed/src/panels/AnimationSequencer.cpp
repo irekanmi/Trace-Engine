@@ -278,13 +278,13 @@ namespace trace {
                 isPlaying = false;
             }
 
-            if (!isPlaying && lastTime != currentTime)
+            if (!isPlaying && lastTime != currentTime && editor->GetEditorState() != EditorState::ScenePlay)
             {
                 m_instance.UpdateElaspedTime(editor->GetCurrentScene().get(), currentTime);
                 lastTime = currentTime;
             }
 
-            if (isPlaying) 
+            if (isPlaying && editor->GetEditorState() != EditorState::ScenePlay)
             {
                 currentTime += deltaTime;
                 currentTime = fmod(currentTime, sequence->GetDuration());
@@ -364,15 +364,19 @@ namespace trace {
 
         // Draw dynamic grid lines with increasing granularity as we zoom in
         float step = 4.0f;
-        if (pixelsPerSecond < 250.0f)
+        if (pixelsPerSecond <= 30.0f)
+        {
+            step = 2.0f;
+        }
+        else if (pixelsPerSecond > 30.0f && pixelsPerSecond < 60.0f)
         {
             step = 1.0f;
         }
-        else if (pixelsPerSecond > 250.0f && pixelsPerSecond < 500.0f)
+        else if (pixelsPerSecond > 60.0f && pixelsPerSecond < 120.0f)
         {
             step = 0.5f;
         }
-        else if (pixelsPerSecond > 500.0f && pixelsPerSecond < 750.0f)
+        else if (pixelsPerSecond > 120.0f && pixelsPerSecond < 750.0f)
         {
             step = 0.25f;
         }

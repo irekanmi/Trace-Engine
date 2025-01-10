@@ -629,6 +629,20 @@ namespace trace {
 		black_texture = CreateTexture("black_texture", texture_desc);
 		black_texture->m_path = "black_texture";
 
+		unsigned char* transparent_texture_data = new unsigned char[16];
+		transparent_texture_data[0] = 0;
+		transparent_texture_data[1] = 0;
+		transparent_texture_data[2] = 0;
+		transparent_texture_data[3] = 0;
+		texture_desc.m_width = 1;
+		texture_desc.m_height = 1;
+		texture_desc.m_data[0] = transparent_texture_data;
+		texture_desc.m_format = Format::R8G8B8A8_UNORM;
+		texture_desc.m_mipLevels = 1;
+
+		transparent_texture = CreateTexture("transparent_texture", texture_desc);
+		transparent_texture->m_path = "transparent_texture";
+
 		return true;
 	}
 

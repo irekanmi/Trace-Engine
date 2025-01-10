@@ -66,6 +66,12 @@ namespace trace {
 		}
 
 		emit << YAML::EndSeq;
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		emit << YAML::Key << "Has Root Motion" << YAML::Value << clip->HasRootMotion();
+		emit << YAML::Key << "Y Motion" << YAML::Value << root_motion_info.Y_motion;
+		emit << YAML::Key << "XZ Motion" << YAML::Value << root_motion_info.XZ_motion;
+		emit << YAML::Key << "Rotation Motion" << YAML::Value << root_motion_info.enable_rotation;
+		emit << YAML::Key << "Root Bone Index" << YAML::Value << root_motion_info.root_bone_index;
 		emit << YAML::EndMap;
 
 		FileHandle out_handle;
@@ -216,6 +222,16 @@ namespace trace {
 				auto& object_tracks = clip_tracks[STR_ID(id)];
 				object_tracks[track_type] = std::move(track_data);
 			}
+		}
+
+		if (data["Has Root Motion"])
+		{
+			clip->SetRootMotion(data["Has Root Motion"].as<bool>());
+			RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+			root_motion_info.Y_motion = data["Y Motion"].as<bool>();
+			root_motion_info.XZ_motion = data["XZ Motion"].as<bool>();
+			root_motion_info.enable_rotation = data["Rotation Motion"].as<bool>();
+			root_motion_info.root_bone_index = data["Root Bone Index"].as<uint32_t>();
 		}
 
 		result = clip;

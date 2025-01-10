@@ -26,6 +26,19 @@ namespace trace {
 		return false;
 	}
 
+	bool AnimationClip::GenerateRootMotionData()
+	{
+
+		if (!m_hasRootMotion)
+		{
+			return false;
+		}
+
+
+
+		return true;
+	}
+
 	Ref<AnimationClip> AnimationClip::Deserialize(const std::string& file_path)
 	{
 		return AnimationsSerializer::DeserializeAnimationClip(file_path);

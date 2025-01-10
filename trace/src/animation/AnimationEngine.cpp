@@ -99,6 +99,96 @@ namespace trace {
 
 	}
 
+	void AnimationEngine::SampleClipWithRootMotionDelta(Ref<AnimationClip> clip, float from_time, float to_time, Animation::Pose* out_pose, bool looping)
+	{
+
+		if (!clip->HasRootMotion())
+		{
+			return;
+		}
+
+		SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
+		Scene* scene = skeleton_instance->GetScene();
+
+		
+
+		if (looping)
+		{
+			
+
+		}
+		else if (!looping && (from_time > clip->GetDuration() || to_time > clip->GetDuration()) )
+		{
+			return;
+		}
+
+		SampleClip(clip, to_time, out_pose, looping);
+
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		Transform& root_motion_delta = out_pose->GetRootMotionDelta();
+		root_motion_delta = Transform::Identity();
+		Bone* bone = skeleton_instance->GetSkeleton()->GetBone(root_motion_info.root_bone_index);
+		if (!bone)
+		{
+			return;
+		}
+		Transform& root_pose = out_pose->GetLocalPose()[root_motion_info.root_bone_index];
+		glm::vec3 root_position = root_pose.GetPosition();
+		out_pose->SetRootMotionBone(root_motion_info.root_bone_index);
+
+		auto& channel = clip->GetTracks()[bone->GetStringID()];
+		auto& position_track = channel[AnimationDataType::POSITION];
+		auto& rotation_track = channel[AnimationDataType::ROTATION];
+		glm::vec3& _pos = *(glm::vec3*)(position_track.back().data);
+		glm::quat& _rot = *(glm::quat*)(rotation_track.back().data);
+
+		AnimatedOutput pos_output = GetFrameData(clip, channel, AnimationDataType::POSITION, from_time, looping);
+		AnimatedOutput rot_output = GetFrameData(clip, channel, AnimationDataType::ROTATION, from_time, looping);
+		glm::vec3 position = *(glm::vec3*)(&pos_output.data);
+		glm::quat rotation = *(glm::quat*)(&rot_output.data);
+
+		int f_times = int(from_time / clip->GetDuration());
+		int t_times = int(to_time / clip->GetDuration());
+
+		if (from_time > clip->GetDuration())
+		{
+			position += (_pos * float(f_times));
+		}
+		if (to_time > clip->GetDuration())
+		{
+			root_position += (_pos * float(t_times));
+		}
+		
+
+		if (root_motion_info.Y_motion)
+		{
+			glm::vec3 curr_position = root_pose.GetPosition();
+			glm::vec3 pos_delta = root_position - position;
+			curr_position.y = 0.0f;
+			root_pose.SetPosition(curr_position);
+			glm::vec3 motion_delta = root_motion_delta.GetPosition();
+			motion_delta.y = pos_delta.y;
+			root_motion_delta.SetPosition(motion_delta);
+
+		}
+
+		if (root_motion_info.XZ_motion)
+		{
+			glm::vec3 curr_position = root_pose.GetPosition();
+			glm::vec3 pos_delta = root_position - position;
+			curr_position.x = 0.0f;
+			curr_position.z = 0.0f;
+			root_pose.SetPosition(curr_position);
+			glm::vec3 motion_delta = root_motion_delta.GetPosition();
+			motion_delta.x = pos_delta.x;
+			motion_delta.z = pos_delta.z;
+			root_motion_delta.SetPosition(motion_delta);
+		}
+
+
+		
+	}
+
 	void AnimationEngine::SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping)
 	{
 		SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
@@ -205,6 +295,8 @@ namespace trace {
 
 			
 		}
+
+
 	}
 
 	AnimationEngine* AnimationEngine::get_instance()
@@ -401,19 +493,28 @@ namespace trace {
 
 				//TODO: Find a better way to find which frames to sample -----------
 				int i = track.second.size() - 1;
-				for (; i >= 0; i--)
+				if (track.second[i].time_point < elasped_time)
 				{
 					curr = &track.second[i];
-					prev = i != 0 ? &track.second[i - 1] : nullptr;
-					if (elasped_time <= curr->time_point)
-					{
-						if (prev && elasped_time >= prev->time_point)
-						{
-							break;
-						}
-					}
-
 				}
+				if (!curr)
+				{
+					for (; i >= 0; i--)
+					{
+						curr = &track.second[i];
+						prev = i != 0 ? &track.second[i - 1] : nullptr;
+						if (elasped_time <= curr->time_point)
+						{
+							if (prev && elasped_time >= prev->time_point)
+							{
+								break;
+							}
+						}
+
+
+					}
+				}
+				
 				// -----------------------------------------------------------------
 
 				if (!prev && !curr)
@@ -434,7 +535,7 @@ namespace trace {
 
 				float lerp_value = (elasped_time - prev->time_point) / (curr->time_point - prev->time_point);
 
-				lerp_value = glm::max(0.0f, lerp_value);
+				lerp_value = std::clamp(lerp_value, 0.0f, 1.0f);
 
 
 				callback(channel.first, object, track.first, prev, curr, lerp_value);
@@ -442,6 +543,69 @@ namespace trace {
 		}
 
 
+	}
+
+	AnimatedOutput AnimationEngine::GetFrameData(Ref<AnimationClip> clip, AnimationDataTrack& channel , AnimationDataType type, float time, bool looping)
+	{
+		float elasped_time = time;
+
+		if (looping)
+		{
+			elasped_time = fmod(elasped_time, clip->GetDuration());
+		}
+		else if (!looping && time > clip->GetDuration())
+		{
+			return AnimatedOutput();
+		}
+
+		auto& track = channel[type];
+
+		AnimationFrameData* curr = nullptr;
+		AnimationFrameData* prev = nullptr;
+
+		//TODO: Find a better way to find which frames to sample -----------
+		int i = track.size() - 1;
+		for (; i >= 0; i--)
+		{
+			curr = &track[i];
+			prev = i != 0 ? &track[i - 1] : nullptr;
+			if (elasped_time <= curr->time_point)
+			{
+				if (prev && elasped_time >= prev->time_point)
+				{
+					break;
+				}
+			}
+
+		}
+		// -----------------------------------------------------------------
+
+		if (!prev && !curr)
+		{
+			return AnimatedOutput();
+		}
+
+		if (prev && !curr)
+		{
+			curr = prev;
+		}
+
+		if (!prev && curr)
+		{
+			prev = curr;
+		}
+
+
+		float lerp_value = (elasped_time - prev->time_point) / (curr->time_point - prev->time_point);
+
+		lerp_value = glm::min(0.0f, lerp_value);
+
+
+		float time_point = lerp_value;
+		AnimationFrameData* a = prev;
+		AnimationFrameData* b = curr;
+
+		return CalculateData(a, b, type, time_point);
 	}
 
 }

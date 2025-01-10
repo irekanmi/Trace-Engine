@@ -75,7 +75,7 @@ namespace trace {
 		void SetEntityWorldScale(Entity entity, glm::vec3 scale);
 
 
-		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback);
+		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback, bool skip_inactive = true);
 		void ResolveHierachyTransforms();
 
 		std::string& GetName() { return m_name; }
@@ -106,7 +106,7 @@ namespace trace {
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
 
 	private:
-		void ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool child_first = false);
+		void ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool skip_inactive = true, bool child_first = false);
 		void ApplyPrefabChanges(Entity prefab_handle, Entity entity);
 
 		void OnConstructHierachyComponent(entt::registry& reg, entt::entity ent);

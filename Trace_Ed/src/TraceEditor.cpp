@@ -117,6 +117,7 @@ namespace trace {
 		m_allAssets.textures.emplace("specular_map");
 		m_allAssets.textures.emplace("normal_map");
 		m_allAssets.textures.emplace("black_texture");
+		m_allAssets.textures.emplace("transparent_texture");
 
 		m_allAssets.materials.emplace("default");
 
@@ -1164,23 +1165,11 @@ namespace trace {
 		case KEY_G:
 		{
 
-			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
-
-			bool val = true;
-			anim.graph.SetParameterData("Change To Ninja", val);
-
 			break;
 		}
 
 		case KEY_H:
 		{
-
-			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
-
-			bool val = true;
-			anim.graph.SetParameterData("Change To Soul", val);
 
 			break;
 		}
@@ -1238,23 +1227,11 @@ namespace trace {
 		case KEY_G:
 		{
 
-			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
-
-			bool val = false;
-			anim.graph.SetParameterData("Change To Ninja", val);
-
 			break;
 		}
 
 		case KEY_H:
 		{
-
-			Entity entity = m_currentScene->GetEntityByName("Sad Idle");
-			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
-
-			bool val = false;
-			anim.graph.SetParameterData("Change To Soul", val);
 
 			break;
 		}

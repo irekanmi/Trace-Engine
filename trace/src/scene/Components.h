@@ -43,7 +43,7 @@ namespace trace {
 		UUID parent = 0;
 		std::vector<UUID> children;
 		glm::mat4 transform = glm::identity<glm::mat4>();
-		bool is_enabled = false;
+		bool is_enabled = true;
 
 		HierachyComponent() = default;
 		HierachyComponent(const HierachyComponent&) = default;

@@ -94,7 +94,7 @@ class FollowEntity : Trace.Action
     public float follow_threshold = 1.0f;
     public void OnStart()
     {
-        target = Scene.GetEnityByName("mixamorig:Head");
+        target = Scene.GetEnityByName("mixamorig:Hips");
         TransformComponent target_transform = target.GetComponent<TransformComponent>();
         last_position = target_transform.WorldPosition;
     }

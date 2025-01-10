@@ -394,6 +394,7 @@ namespace trace {
 			_ds2.blend_state = clr_bld;
 			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
 
+
 			quad_pipeline = CreatePipeline(_ds2, "quad_batch_pipeline");
 			if (!quad_pipeline)
 			{

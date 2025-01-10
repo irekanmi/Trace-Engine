@@ -67,6 +67,7 @@ namespace trace {
 		Texture_Ref default_specular_map;
 		Texture_Ref default_normal_map;
 		Texture_Ref black_texture;
+		Texture_Ref transparent_texture;
 		GTexture default_diffuse_texture;
 		GTexture default_specular_texture;
 		GTexture default_normal_texture;
