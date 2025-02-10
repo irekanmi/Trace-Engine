@@ -55,7 +55,7 @@ namespace trace {
 
 	void LayerStack::Shutdown()
 	{
-		int i = Size() - 1;
+		int32_t i = static_cast<int32_t>(Size() - 1);
 		for (; i >= 0; --i)
 		{
 			Layer* layer = m_layers[i];

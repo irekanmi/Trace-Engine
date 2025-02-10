@@ -675,7 +675,7 @@ namespace trace {
 			}
 		}
 
-		for (int i = sorted_passes.size() - 1; i >= 0; i--)
+		for (int32_t i = static_cast<int32_t>(sorted_passes.size()) - 1; i >= 0; i--)
 		{
 			m_submissionPasses.push_back(FindPassIndex(sorted_passes[i]->GetPassName()));
 		}

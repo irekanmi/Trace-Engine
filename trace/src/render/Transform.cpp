@@ -4,6 +4,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include "glm/gtx/euler_angles.hpp"
+#include "core/Utils.h"
 
 
 
@@ -191,6 +192,47 @@ namespace trace {
 	Transform Transform::Identity()
 	{
 		return Transform();
+	}
+
+	Transform Transform::Blend(Transform& source, Transform& target, float blend_weight)
+	{
+		Transform out_pose;
+
+		glm::vec3 pos_a = source.GetPosition();
+		glm::vec3 pos_b = target.GetPosition();
+
+		glm::vec3 pos_res(0.0f);
+		pos_res.x = lerp(pos_a.x, pos_b.x, blend_weight);
+		pos_res.y = lerp(pos_a.y, pos_b.y, blend_weight);
+		pos_res.z = lerp(pos_a.z, pos_b.z, blend_weight);
+
+		out_pose.SetPosition(pos_res);
+
+		glm::quat rot_a = source.GetRotation();
+		glm::quat rot_b = target.GetRotation();
+
+		glm::quat rot_res;
+		rot_res = glm::slerp(rot_a, rot_b, blend_weight);
+
+		out_pose.SetRotation(rot_res);
+
+		glm::vec3 scale_a = source.GetScale();
+		glm::vec3 scale_b = target.GetScale();
+
+		glm::vec3 scale_res(0.0f);
+		scale_res.x = lerp(scale_a.x, scale_b.x, blend_weight);
+		scale_res.y = lerp(scale_a.y, scale_b.y, blend_weight);
+		scale_res.z = lerp(scale_a.z, scale_b.z, blend_weight);
+
+		out_pose.SetScale(scale_res);
+
+		return out_pose;
+	}
+
+	void Transform::ApplyRootMotion(Transform& pose, Transform& root_motion_delta)
+	{
+		Transform model_space_delta = Transform::CombineTransform_Direction(pose, root_motion_delta);
+		pose.Translate(model_space_delta.GetPosition());
 	}
 
 	void Transform::recalculate_local_matrix()

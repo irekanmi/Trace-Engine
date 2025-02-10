@@ -162,7 +162,7 @@ namespace trace {
 		RenderGraphFrameData* graph_data = renderer->GetRenderGraphData(render_graph_index);
 
 
-		int32_t current_resource_index = render_graph->GetResources().size();
+		int32_t current_resource_index = static_cast<int32_t>(render_graph->GetResources().size());
 
 		ShadowMapData& shadow_map_data = black_board.add<ShadowMapData>();
 		shadow_map_data.start_texture_index = current_resource_index;
@@ -181,7 +181,7 @@ namespace trace {
 		depth.m_mipLevels = depth.m_numLayers = 1;
 		depth.m_usage = UsageFlag::DEFAULT;
 
-		for (int32_t i = 0; i < graph_data->num_shadowed_sun_lights; i++)
+		for (uint32_t i = 0; i < graph_data->num_shadowed_sun_lights; i++)
 		{
 			std::string pass_name = "SUN_SHADOW_MAP_PASS" + std::to_string(i);
 			auto sun_pass = render_graph->AddPass(pass_name, GPU_QUEUE::GRAPHICS);
@@ -197,8 +197,8 @@ namespace trace {
 
 					Viewport view_port = renderer->_viewPort;
 					Rect2D rect = renderer->_rect;
-					view_port.width = sun_map_width;
-					view_port.height = sun_map_height;
+					view_port.width = static_cast<float>(sun_map_width);
+					view_port.height = static_cast<float>(sun_map_height);
 
 					rect.right = sun_map_width;
 					rect.bottom = sun_map_height;
@@ -287,7 +287,7 @@ namespace trace {
 		depth.m_height = spot_map_height;
 
 
-		for (int32_t i = 0; i < graph_data->num_shadowed_spot_lights; i++)
+		for (uint32_t i = 0; i < graph_data->num_shadowed_spot_lights; i++)
 		{
 			std::string spot_pass_name = "SPOT_SHADOW_MAP_PASS" + std::to_string(i);
 			//uint32_t res_index = render_graph->AddTextureResource(pass_name, depth);
@@ -304,8 +304,8 @@ namespace trace {
 
 					Viewport view_port = renderer->_viewPort;
 					Rect2D rect = renderer->_rect;
-					view_port.width = spot_map_width;
-					view_port.height = spot_map_height;
+					view_port.width = static_cast<float>(spot_map_width);
+					view_port.height = static_cast<float>(spot_map_height);
 
 					rect.right = spot_map_width;
 					rect.bottom = spot_map_height;

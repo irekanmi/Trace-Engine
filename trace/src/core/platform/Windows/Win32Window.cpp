@@ -264,11 +264,11 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 		int32_t xPos = GET_X_LPARAM(lparam);
 		int32_t yPos = GET_Y_LPARAM(lparam);
 
-		trace::MouseMove move(xPos, yPos);
+		trace::MouseMove move(static_cast<float>(xPos), static_cast<float>(yPos));
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_MOUSE_MOVE, &move);
 
-		trace::InputSystem::get_instance()->SetMouseX(xPos);
-		trace::InputSystem::get_instance()->SetMouseY(yPos);
+		trace::InputSystem::get_instance()->SetMouseX(static_cast<float>(xPos));
+		trace::InputSystem::get_instance()->SetMouseY(static_cast<float>(yPos));
 
 		break;
 	}

@@ -56,7 +56,7 @@ namespace trace {
 		app_info.Write(build_version);
 
 		std::string& project_name = project->GetProjectName();
-		int name_size = project_name.length() + 1;
+		int32_t name_size = static_cast<int32_t>(project_name.length() + 1);
 		app_info.Write(name_size);
 		app_info.Write(project_name.data(), name_size);
 		uint64_t start_scene = project->GetStartScene();
@@ -84,7 +84,7 @@ namespace trace {
 		FileSystem::read_all_lines(in_handle, file_data);
 		FileSystem::close_file(in_handle);
 
-		int file_data_size = file_data.length() + 1;
+		int32_t file_data_size = static_cast<int32_t>(file_data.length() + 1);
 		ast_db.Write(file_data_size);
 		ast_db.Write(file_data.data(), file_data_size);
 
@@ -274,7 +274,7 @@ namespace trace {
 
 			AssetHeader scn_header;
 			scn_header.offset = scn_bin.GetPosition();
-			int scn_size = file_data.length() + 1;
+			int32_t scn_size = static_cast<int32_t>(file_data.length() + 1);
 
 			scn_bin.Write(file_data.data(), scn_size);
 			scn_header.data_size = scn_bin.GetPosition() - scn_header.offset;
@@ -311,60 +311,60 @@ namespace trace {
 		bin_id = TRC_BUILD_PACK_ID;
 		pck_db.Write(bin_id);
 
-		int assets_type_count = 9;
-		pck_db.Write<int>(assets_type_count);
+		int32_t assets_type_count = 9;
+		pck_db.Write<int32_t>(assets_type_count);
 
-		int map_size = 0;
+		int32_t map_size = 0;
 
-		map_size = scn_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(scn_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_SCENE_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(scn_map.data(), map_size);
 
-		map_size = tex_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(tex_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_TEXTURE_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(tex_map.data(), map_size);
 		
-		map_size = animc_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(animc_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_ANIMATION_CLIP_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(animc_map.data(), map_size);
 
-		map_size = animg_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(animg_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_ANIMATION_GRAPH_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(animg_map.data(), map_size);
 
-		map_size = shd_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(shd_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_SHADER_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(shd_map.data(), map_size);
 
-		map_size = fnt_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(fnt_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_FONT_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(fnt_map.data(), map_size);
 
-		map_size = mdl_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(mdl_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_MODEL_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(mdl_map.data(), map_size);
 
-		map_size = pip_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(pip_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_PIPELINE_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);
 		pck_db.Write(pip_map.data(), map_size);
 
-		map_size = mat_map.size() * sizeof(std::pair<UUID, AssetHeader>);
+		map_size = static_cast<int32_t>(mat_map.size() * sizeof(std::pair<UUID, AssetHeader>));
 		bin_id = TRC_MATERIAL_ID;
 		pck_db.Write(bin_id);
 		pck_db.Write(map_size);

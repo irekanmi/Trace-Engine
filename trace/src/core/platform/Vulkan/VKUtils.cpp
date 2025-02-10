@@ -1662,10 +1662,10 @@ namespace vk {
 		VkRenderPassBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		begin_info.renderPass = render_pass->m_handle;
-		begin_info.renderArea.offset.x = render_pass->render_area->x;
-		begin_info.renderArea.offset.y = render_pass->render_area->y;
-		begin_info.renderArea.extent.width = render_pass->render_area->z;
-		begin_info.renderArea.extent.height = render_pass->render_area->w;
+		begin_info.renderArea.offset.x = static_cast<int32_t>(render_pass->render_area->x);
+		begin_info.renderArea.offset.y = static_cast<int32_t>(render_pass->render_area->y);
+		begin_info.renderArea.extent.width = static_cast<uint32_t>(render_pass->render_area->z);
+		begin_info.renderArea.extent.height = static_cast<uint32_t>(render_pass->render_area->w);
 		begin_info.framebuffer = framebuffer;
 		
 		VkClearValue clear_colors[2] = {};
@@ -2644,6 +2644,7 @@ namespace vk {
 		}
 		}
 
+		return VK_POLYGON_MODE_FILL;
 	}
 
 	VkShaderStageFlagBits convertShaderStage(trace::ShaderStage stage)
@@ -2830,6 +2831,7 @@ namespace vk {
 		}
 		}
 
+		return VK_CULL_MODE_NONE;
 	}
 
 	VkBlendFactor convertBlendFactor(trace::BlendFactor factor)

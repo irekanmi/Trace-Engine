@@ -171,8 +171,8 @@ namespace trace {
 			uint32_t input_layout_stride = ds.input_layout.stride;
 			stream.Write<uint32_t>(input_layout_stride);
 			stream.Write<InputClassification>(ds.input_layout.input_class);
-			int input_layout_element_count = ds.input_layout.elements.size();
-			stream.Write<int>(input_layout_element_count);
+			int32_t input_layout_element_count = static_cast<int32_t>(ds.input_layout.elements.size());
+			stream.Write<int32_t>(input_layout_element_count);
 			stream.Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
 
 			stream.Write<RasterizerState>(ds.rasteriser_state);
@@ -189,8 +189,8 @@ namespace trace {
 
 
 			std::string pass_name = Renderer::get_instance()->GetRenderPassName(ds.render_pass);
-			int pass_name_lenght = pass_name.length() + 1;
-			stream.Write<int>(pass_name_lenght);
+			int32_t pass_name_lenght = static_cast<int32_t>(pass_name.length() + 1);
+			stream.Write<int32_t>(pass_name_lenght);
 			stream.Write(pass_name.data(), pass_name_lenght);
 
 			ast_h.data_size = stream.GetPosition() - ast_h.offset;
@@ -228,7 +228,7 @@ namespace trace {
 			ast_h.offset = stream.GetPosition();
 			int shader_stage = shader->GetShaderStage();
 			stream.Write<int>(shader_stage);
-			uint32_t shader_size = shader->GetCode().size();
+			uint32_t shader_size = static_cast<uint32_t>(shader->GetCode().size());
 			stream.Write<uint32_t>(shader_size);
 			stream.Write(shader->GetCode().data(), shader_size * sizeof(uint32_t));
 
@@ -254,12 +254,12 @@ namespace trace {
 	{
 		FileStream stream(file_path, FileMode::WRITE);
 
-		int data_index_count = shader->GetDataIndex().size();
+		int32_t data_index_count = static_cast<int32_t>(shader->GetDataIndex().size());
 		stream.Write(data_index_count);
 
 		for (auto& i : shader->GetDataIndex())
 		{
-			int name_length = i.first.length() + 1;
+			int32_t name_length = static_cast<int32_t>(i.first.length() + 1);
 			stream.Write(name_length);
 			stream.Write(i.first.data(), name_length);
 
@@ -269,7 +269,7 @@ namespace trace {
 
 		int shader_stage = shader->GetShaderStage();
 		stream.Write(shader_stage);
-		int shader_size = shader->GetCode().size() * sizeof(uint32_t);
+		int32_t shader_size = static_cast<int32_t>(shader->GetCode().size() * sizeof(uint32_t));
 		stream.Write(shader_size);
 
 		stream.Write(shader->GetCode().data(), shader_size);

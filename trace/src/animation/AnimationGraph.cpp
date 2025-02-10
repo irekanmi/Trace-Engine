@@ -126,6 +126,8 @@ namespace trace::Animation {
         {
             for (auto& i : m_nodesData)
             {
+                uintptr_t _id = (uintptr_t)i.second;
+                TRC_DEBUG("Node Data Ptr: {}", _id);
                 delete i.second;// TODO: Use custom allocator
             }
             m_nodesData.clear();
@@ -168,8 +170,7 @@ namespace trace::Animation {
         Transform& root_motion_delta = final_pose->pose_data.GetRootMotionDelta();
         Entity entity = scene->GetEntity(id);
         Transform& pose = entity.GetComponent<TransformComponent>()._transform;
-        Transform model_space_delta = Transform::CombineTransform_Direction(pose, root_motion_delta);
-        pose.Translate(model_space_delta.GetPosition());
+        Transform::ApplyRootMotion(pose, root_motion_delta);
         
 
 

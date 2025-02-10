@@ -68,6 +68,16 @@ namespace Trace
             return;
         }
 
+        public Action GetChildWithName(ulong str_id)
+        {
+            object obj = InternalCalls.Scene_GetChildEntityByName(Id, str_id);
+            return obj as Action;
+        }
+
+        public Action GetChildWithName(string name)
+        {
+            return GetChildWithName(Utils.HashString(name));
+        }
 
 
 

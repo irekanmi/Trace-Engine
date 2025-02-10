@@ -63,6 +63,7 @@ namespace trace::Reflection {
 			if constexpr (IsTypeContainer<T>{})
 			{
 				RegisterTypeObject<ContainerTraits<T>::type> value_reg;
+				(void)value_reg;//NOTE: Used to suppress warning C4101
 				container.value_type_id = TypeID<ContainerTraits<T>::type>();
 
 				info.serializer = [](void* data, void* location, void* member_info, uint16_t format) { SerializeContainer(*static_cast<T*>(data), location, member_info, format); };
@@ -71,7 +72,9 @@ namespace trace::Reflection {
 			else if constexpr (IsTypeKeyValueContainer<T>())
 			{
 				RegisterTypeObject<KeyValueContainerTraits<T>::key_type> key_reg;
+				(void)key_reg;//NOTE: Used to suppress warning C4101
 				RegisterTypeObject<KeyValueContainerTraits<T>::value_type> value_reg;
+				(void)value_reg;//NOTE: Used to suppress warning C4101
 				container.key_type_id = TypeID<KeyValueContainerTraits<T>::key_type>();
 				container.value_type_id = TypeID<KeyValueContainerTraits<T>::value_type>();
 
@@ -137,7 +140,7 @@ namespace trace::Reflection {
 			return;
 		}
 
-		static Member& RegisterField(uint64_t class_id, Variable variable, const std::string& field_name, uint32_t offset, uint32_t size, uint32_t align)
+		static Member RegisterField(uint64_t class_id, Variable variable, const std::string& field_name, uint32_t offset, uint32_t size, uint32_t align)
 		{
 			Member info{};
 			info.name = field_name;

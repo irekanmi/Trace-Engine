@@ -290,11 +290,11 @@ namespace trace {
 
 			if (press->GetKeyCode() == KEY_O)
 			{
-				exposure += 0.4;
+				exposure += 0.4f;
 			}
 			else if (press->GetKeyCode() == KEY_P)
 			{
-				exposure -= 0.4;
+				exposure -= 0.4f;
 			}
 			else if (press->GetKeyCode() == KEY_1)
 			{
@@ -624,7 +624,7 @@ namespace trace {
 		auto tex_index = graph_data.bound_text_atlases.find(texture->m_id);
 		if (tex_index == graph_data.bound_text_atlases.end())
 		{
-			current_tex_index = graph_data.text_atlases.size();
+			current_tex_index = static_cast<uint32_t>(graph_data.text_atlases.size());
 			graph_data.text_atlases.emplace_back(texture.get());
 			graph_data.bound_text_atlases.emplace(texture->m_id);
 		}
@@ -636,7 +636,7 @@ namespace trace {
 				index++;
 				return tex->m_id == *tex_index;
 				});
-			current_tex_index = (float)(index - 1);
+			current_tex_index = static_cast<uint32_t>(index - 1);
 		}
 		// ==================================================================
 
@@ -857,7 +857,7 @@ namespace trace {
 		for (GTexture*& i : graph_data.text_atlases)
 		{
 			std::vector<TextVertex>& vertices = graph_data.text_vertices[index];
-			uint32_t count = vertices.size();
+			uint32_t count = static_cast<uint32_t>(vertices.size());
 			if (count == 0) continue;
 			uint32_t size = count * sizeof(TextVertex);
 			RenderFunc::SetBufferDataOffset(&graph_data.text_buffer, vertices.data(), offset, size);

@@ -59,6 +59,8 @@ namespace trace {
 		static Transform CombineTransform(Transform& parent, Transform& child);
 		static Transform CombineTransform_Direction(Transform& parent, Transform& child);
 		static Transform Identity();
+		static Transform Blend(Transform& source, Transform& target, float blend_weight);
+		static void ApplyRootMotion(Transform& pose, Transform& root_motion_delta);
 
 	private:
 		void recalculate_local_matrix();

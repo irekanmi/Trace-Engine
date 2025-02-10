@@ -40,6 +40,10 @@ namespace trace::Animation {
 		StringID GetStringID() { return m_stringID; }
 		void SetStringID(StringID string_id) { m_stringID = string_id; }
 		bool IsTimeWithinChannel(SequenceTrackChannel* channel, float time);
+		bool IsNextWithinChannel(int32_t channel_index);
+		bool IsPrevWithinChannel(int32_t channel_index);
+		bool GetNextBlend(int32_t channel_index, float elapsed_time, float& out_blend_weight, float& out_blend_duration);
+		bool GetPrevBlend(int32_t channel_index, float elapsed_time, float& out_blend_weight, float& out_blend_duration);
 		int32_t FindChannelWithinTime(float time, int32_t current_index = 0);
 		SequenceTrackType GetType() { return m_type; }
 		void SetType(SequenceTrackType type) { m_type = type; }
@@ -98,6 +102,8 @@ namespace trace::Animation {
 			SkeletonInstance skeletal_instance;
 			Pose skeleton_pose;
 			Pose blend_pose;
+			glm::vec3 start_entity_position;
+			glm::quat start_entity_rotation;
 		};
 
 	protected:

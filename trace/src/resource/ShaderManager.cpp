@@ -278,7 +278,7 @@ namespace trace {
 		std::string path = code_path.string();
 		if (FileSystem::open_file(path, (FileMode)(FileMode::BINARY | FileMode::WRITE), handle))
 		{
-			uint32_t code_size = code.size() * 4;
+			uint32_t code_size = static_cast<uint32_t>(code.size() * 4);
 			FileSystem::write(code.data(), code.size() * 4, handle);
 		}
 		FileSystem::close_file(handle);

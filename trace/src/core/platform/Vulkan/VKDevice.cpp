@@ -33,7 +33,7 @@ namespace vk {
 		for (auto& i : pipeline->instance_buffer_infos)
 		{
 			write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			write.descriptorCount = i.second.size();
+			write.descriptorCount = static_cast<uint32_t>(i.second.size());
 			write.dstArrayElement = 0;
 			write.dstBinding = i.first;
 			write.dstSet = pipeline->Instance_set;
@@ -79,7 +79,7 @@ namespace vk {
 
 
 			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			write.descriptorCount = i.second.size();
+			write.descriptorCount = static_cast<uint32_t>(i.second.size());
 			write.dstArrayElement = 0;
 			write.dstBinding = i.first;
 			write.dstSet = pipeline->Instance_set;
@@ -841,10 +841,10 @@ namespace vk {
 		VkRenderPassBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		begin_info.renderPass = pass->m_handle;
-		begin_info.renderArea.offset.x = pass->render_area->x;
-		begin_info.renderArea.offset.y = pass->render_area->y;
-		begin_info.renderArea.extent.width = pass->render_area->z;
-		begin_info.renderArea.extent.height = pass->render_area->w;
+		begin_info.renderArea.offset.x = static_cast<int32_t>(pass->render_area->x);
+		begin_info.renderArea.offset.y = static_cast<int32_t>(pass->render_area->y);
+		begin_info.renderArea.extent.width = static_cast<uint32_t>(pass->render_area->z);
+		begin_info.renderArea.extent.height = static_cast<uint32_t>(pass->render_area->w);
 		begin_info.framebuffer = frameBuffer->m_handle[_handle->m_imageIndex].m_handle;
 
 		VkClearValue clear_colors[2] = {};
@@ -970,7 +970,7 @@ namespace vk {
 
 		
 
-		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT64_MAX))
+		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT32_MAX))
 		{
 			return false;
 		}

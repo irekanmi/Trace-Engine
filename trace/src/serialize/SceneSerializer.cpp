@@ -1077,14 +1077,6 @@ namespace trace {
 			hi.is_enabled = entity["Is Enabled"].as<bool>();
 		}
 
-		if (!hi.HasParent() && hi.is_enabled)
-		{
-			scene->EnableEntity(obj);
-		}
-		else if (hi.HasParent() && parent_ent.HasComponent<ActiveComponent>() && hi.is_enabled)
-		{
-			scene->EnableEntity(obj);
-		}
 
 		return obj;
 	}
@@ -1215,7 +1207,11 @@ namespace trace {
 		}
 		
 		if (AppSettings::is_editor)
+		{
 			scene->ApplyPrefabChangesOnSceneLoad();
+		}
+
+		scene->InitializeSceneComponents();
 
 		return scene;
 	}
@@ -1491,7 +1487,7 @@ namespace trace {
 		if (entities)
 		{
 			char* data = nullptr;// TODO: Use custom allocator
-			int data_size = 0;
+			uint32_t data_size = 0;
 			for (auto entity : entities)
 			{
 				if (entity["ImageComponent"])
@@ -1858,11 +1854,11 @@ namespace trace {
 							ast_h.offset = stream.GetPosition();
 							std::vector<Vertex>& verticies = res->GetVertices();
 							std::vector<uint32_t>& indices = res->GetIndices();
-							int vertex_count = verticies.size();
-							int index_count = indices.size();
-							stream.Write<int>(vertex_count);
+							int32_t vertex_count = static_cast<int32_t>(verticies.size());
+							int32_t index_count = static_cast<int32_t>(indices.size());
+							stream.Write<int32_t>(vertex_count);
 							stream.Write(verticies.data(), vertex_count * sizeof(Vertex));
-							stream.Write<int>(index_count);
+							stream.Write<int32_t>(index_count);
 							stream.Write(indices.data(), index_count * sizeof(uint32_t));
 							ast_h.data_size = stream.GetPosition() - ast_h.offset;
 

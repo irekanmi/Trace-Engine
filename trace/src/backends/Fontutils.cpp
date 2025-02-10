@@ -99,9 +99,9 @@ bool submitAtlasBitmapAndLayout(msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3>
 	unsigned char* map_data = new unsigned char[bitmap_ref.width * bitmap_ref.height * 4];
 	unsigned char* bitmap_data = (unsigned char*)bitmap_ref.pixels;
 	memset(map_data, 0, bitmap_ref.width * bitmap_ref.height * 4);
-	for (uint32_t row = 0; row < bitmap_ref.height; row++)
+	for (int32_t row = 0; row < bitmap_ref.height; row++)
 	{
-		for (uint32_t coloumn = 0; coloumn < bitmap_ref.width; coloumn++)
+		for (int32_t coloumn = 0; coloumn < bitmap_ref.width; coloumn++)
 		{
 			uint32_t index = (row * bitmap_ref.height) + coloumn;
 			uint32_t _idx = index * 4;
@@ -160,7 +160,7 @@ static void load_font_data(msdfgen::FreetypeHandle* ft, msdfgen::FontHandle* fon
 	packer.setPixelRange(2.0);
 	packer.setMiterLimit(1.0);
 	// Compute atlas layout - pack glyphs
-	packer.pack(_internal->glyphs.data(), _internal->glyphs.size());
+	packer.pack(_internal->glyphs.data(), static_cast<int32_t>(_internal->glyphs.size()));
 	// Get final atlas dimensions
 	int width = 0, height = 0;
 	packer.getDimensions(width, height);
@@ -180,7 +180,7 @@ static void load_font_data(msdfgen::FreetypeHandle* ft, msdfgen::FontHandle* fon
 	generator.setAttributes(attributes);
 	generator.setThreadCount(4);
 	// Generate atlas bitmap
-	generator.generate(_internal->glyphs.data(), _internal->glyphs.size());
+	generator.generate(_internal->glyphs.data(), static_cast<int32_t>(_internal->glyphs.size()));
 	// The atlas bitmap can now be retrieved via atlasStorage as a BitmapConstRef.
 	// The glyphs array (or fontGeometry) contains positioning data for typesetting text.
 	success = submitAtlasBitmapAndLayout(generator.atlasStorage(), _internal->glyphs, name, _font);
@@ -289,7 +289,7 @@ bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::v
 
 	double x = 0.0f;
 	double y = 0.0f;
-	float fsScale = 1.0f / fontMetrics.ascenderY - fontMetrics.descenderY;
+	double fsScale = 1.0f / fontMetrics.ascenderY - fontMetrics.descenderY;
 
 	double spaceAdvance = fontGeometry.getGlyph(' ')->getAdvance();
 	
@@ -375,7 +375,7 @@ bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::v
 		count++;
 	}
 	
-
+	return true;
 }
 
 bool __MSDF_ComputeTextVertex(trace::Font* font, const std::string& text, std::vector<trace::TextVertex>& text_vertices, glm::mat4& _transform, glm::vec3& color)
@@ -396,7 +396,7 @@ bool __MSDF_ComputeTextVertex(trace::Font* font, const std::string& text, std::v
 
 	double x = 0.0f;
 	double y = 0.0f;
-	float fsScale = 1.0f / fontMetrics.ascenderY - fontMetrics.descenderY;
+	double fsScale = 1.0f / fontMetrics.ascenderY - fontMetrics.descenderY;
 
 	double spaceAdvance = fontGeometry.getGlyph(' ')->getAdvance();
 

@@ -933,6 +933,34 @@ MonoObject* Scene_GetEntityByName(uint64_t string_id)
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+MonoObject* Scene_GetChildEntityByName(UUID id, uint64_t string_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+	StringID s_id;
+	s_id.value = string_id;
+	Entity parent = s_MonoData.scene->GetEntity(id);
+	if (!parent)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return nullptr;
+	}
+
+	Entity entity = s_MonoData.scene->GetChildEntityByName(parent, s_id);
+	if (!entity)
+	{
+		TRC_ERROR("Can't find child. Scene Name: {}", s_MonoData.scene->GetName());
+		return nullptr;
+	}
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 #pragma endregion
 
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
@@ -963,5 +991,6 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TextComponent_SetString);
 
 	ADD_INTERNAL_CALL(Scene_GetEntityByName);
+	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 
 }

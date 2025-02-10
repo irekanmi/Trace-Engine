@@ -87,6 +87,9 @@ namespace Trace
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static object Scene_GetEntityByName(ulong id);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_GetChildEntityByName(ulong id, ulong child_name);
+
         #endregion
 
     }

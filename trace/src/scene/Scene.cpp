@@ -584,7 +584,7 @@ namespace trace {
 				continue;
 			}
 			model_renderer.runtime_skeleton.GetGlobalPose(model_renderer.bone_transforms, obj.GetID());
-			renderer->DrawSkinnedModel(cmd_list, model_renderer._model, model_renderer._material, transform.transform, model_renderer.bone_transforms.data(), model_renderer.bone_transforms.size(), model_renderer.cast_shadow);
+			renderer->DrawSkinnedModel(cmd_list, model_renderer._model, model_renderer._material, transform.transform, model_renderer.bone_transforms.data(), static_cast<uint32_t>(model_renderer.bone_transforms.size()), model_renderer.cast_shadow);
 
 
 		}
@@ -628,6 +628,31 @@ namespace trace {
 		}
 	}
 
+	bool Scene::InitializeSceneComponents()
+	{
+		auto animation_graphs = m_registry.view<AnimationGraphController>();
+		for (auto i : animation_graphs)
+		{
+			auto [anim_graph] = animation_graphs.get(i);
+			Entity entity(i, this);
+
+			anim_graph.graph.CreateInstance(anim_graph.graph.GetGraph(), this, entity.GetID());
+
+		}
+
+		for (UUID& id : m_rootNode->children)
+		{
+			Entity entity = GetEntity(id);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			if (hi.is_enabled)
+			{
+				EnableEntity(entity);
+			}
+		}
+
+		return true;
+	}
+
 	void Scene::EnableEntity(Entity entity)
 	{
 		if (entity.HasComponent<ActiveComponent>())
@@ -643,6 +668,17 @@ namespace trace {
 			Entity child = GetEntity(child_id);
 			enable_child_entity(child);
 		}
+		m_scriptRegistry.Iterate(entity.GetID(), [](UUID uuid, Script* script, ScriptInstance* instance)
+			{
+				ScriptMethod* on_enable = script->GetMethod("OnEnable");
+				if (!on_enable)
+				{
+					return;
+				}
+
+
+				InvokeScriptMethod_Instance(*on_enable, *instance, nullptr);
+			});
 		
 	}
 
@@ -901,6 +937,7 @@ namespace trace {
 		}
 	}
 
+	//TODO: Update this function to initialize components
 	Entity Scene::DuplicateEntity(Entity entity)
 	{
 		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>().GetTag());		
@@ -1020,7 +1057,7 @@ namespace trace {
 		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
 		Entity result = DuplicateEntity(handle);
 		result.AddComponent<PrefabComponent>(prefab);
-		EnableEntity(handle);
+		EnableEntity(result);
 		return result;
 	}
 
@@ -1395,7 +1432,7 @@ namespace trace {
 
 		}
 
-		auto graph_view = f_reg.view<AnimationGraphController>();
+		/*auto graph_view = f_reg.view<AnimationGraphController>();
 		for (auto e : graph_view)
 		{
 			Entity from_entity = Entity(e, from.get());
@@ -1404,7 +1441,7 @@ namespace trace {
 			to_entity.RemoveComponent<AnimationGraphController>();
 			to_entity.AddOrReplaceComponent<AnimationGraphController>(from_model);			
 
-		}
+		}*/
 
 		auto sequence_view = f_reg.view<SequencePlayer>();
 		for (auto e : sequence_view)
@@ -1421,6 +1458,8 @@ namespace trace {
 		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
 
 		to->m_rootNode->children = from->m_rootNode->children;
+
+		to->InitializeSceneComponents();
 
 	}
 
@@ -1522,17 +1561,17 @@ namespace trace {
 
 	void Scene::OnConstructAnimationGraphController(entt::registry& reg, entt::entity ent)
 	{
-		Entity entity(ent, this);
+		/*Entity entity(ent, this);
 		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
 		controller.graph.DestroyInstance();
-		controller.graph.CreateInstance(controller.graph.GetGraph(), this, entity.GetID());
+		controller.graph.CreateInstance(controller.graph.GetGraph(), this, entity.GetID());*/
 	}
 
 	void Scene::OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent)
 	{
-		Entity entity(ent, this);
+		/*Entity entity(ent, this);
 		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
-		//controller.graph.DestroyInstance();
+		controller.graph.DestroyInstance();*/
 	}
 
 	void Scene::OnConstructSequencePlayer(entt::registry& reg, entt::entity ent)
@@ -1567,7 +1606,17 @@ namespace trace {
 			Entity child = GetEntity(child_id);
 			enable_child_entity(child);
 		}
+		m_scriptRegistry.Iterate(entity.GetID(), [](UUID uuid, Script* script, ScriptInstance* instance)
+			{
+				ScriptMethod* on_enable = script->GetMethod("OnEnable");
+				if (!on_enable)
+				{
+					return;
+				}
 
+
+				InvokeScriptMethod_Instance(*on_enable, *instance, nullptr);
+			});
 	}
 
 	void Scene::disable_child_entity(Entity entity)

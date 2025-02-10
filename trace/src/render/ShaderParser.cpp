@@ -311,18 +311,18 @@ namespace trace {
 			if (i.find("TexIndex ") != std::string::npos)
 			{
 				std::vector<std::string> index_line = SplitString(i, ' ');
-				int value_index = index_line.size() - 9;
-				int name_index = value_index - 3;
+				int32_t value_index = static_cast<int32_t>(index_line.size()) - 9;
+				int32_t name_index = value_index - 3;
 
-				int slot_value_index = index_line.size() - 4;
+				int32_t slot_value_index = static_cast<int32_t>(index_line.size()) - 4;
 				
 
 				std::string& name = index_line[name_index];
-				int index_value = std::stoi(index_line[value_index]);
+				int32_t index_value = std::stoi(index_line[value_index]);
 
-				int slot_value = std::stoi(index_line[slot_value_index]);
+				int32_t slot_value = std::stoi(index_line[slot_value_index]);
 
-				int value = (slot_value << 16) | (index_value);
+				int32_t value = (slot_value << 16) | (index_value);
 
 				out_index.push_back(std::make_pair(name, value));
 			}

@@ -32,7 +32,7 @@ namespace trace {
 				int slot = i.second >> 16;
 				int index = ((0x0000FFFF) & i.second);
 				uint32_t& hash_id = _hashTable.Get_Ref(i.first);
-				uint32_t current_id = _pipeline->GetSceneUniforms().size();
+				uint32_t current_id = static_cast<uint32_t>(_pipeline->GetSceneUniforms().size());
 				_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
 				hash_id = current_id;
 				_pipeline->GetSceneUniforms()[current_id]._id = current_id;
@@ -70,7 +70,7 @@ namespace trace {
 		uint32_t total_size_instance = 0;
 		uint32_t total_size_local = 0;
 
-		uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
+		uint32_t offset_alignment = static_cast<uint32_t>( device->m_properties.limits.minUniformBufferOffsetAlignment );
 
 
 		uint32_t z = 0;
@@ -97,7 +97,7 @@ namespace trace {
 					max_alignment = alignment > max_alignment ? alignment : max_alignment;
 
 					uint32_t& hash_id = _hashTable.Get_Ref(mem.resource_name);
-					uint32_t current_id = _pipeline->GetSceneUniforms().size();
+					uint32_t current_id = static_cast<uint32_t>(_pipeline->GetSceneUniforms().size());
 					_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
 					hash_id = current_id;
 					_pipeline->GetSceneUniforms()[current_id]._id = current_id;
@@ -135,7 +135,7 @@ namespace trace {
 				if (i.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 				{
 					uint32_t& hash_id = _hashTable.Get_Ref(i.resource_name);
-					uint32_t current_id = _pipeline->GetSceneUniforms().size();
+					uint32_t current_id = static_cast<uint32_t>(_pipeline->GetSceneUniforms().size());
 					_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
 					hash_id = current_id;
 					_pipeline->GetSceneUniforms()[current_id]._id = current_id;
@@ -155,7 +155,7 @@ namespace trace {
 			if (is_image)
 			{
 				uint32_t& hash_id = _hashTable.Get_Ref(i.resource_name);
-				uint32_t current_id = _pipeline->GetSceneUniforms().size();
+				uint32_t current_id = static_cast<uint32_t>(_pipeline->GetSceneUniforms().size());
 				_pipeline->GetSceneUniforms().push_back(trace::UniformMetaData());
 				hash_id = current_id;
 				_pipeline->GetSceneUniforms()[current_id]._id = current_id;
@@ -297,7 +297,7 @@ namespace trace {
 
 bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline* pipeline, trace::VKPipeline* handle)
 {
-	uint32_t offset_alignment = device->m_properties.limits.minUniformBufferOffsetAlignment;
+	uint32_t offset_alignment = static_cast<uint32_t>(device->m_properties.limits.minUniformBufferOffsetAlignment);
 
 	for (trace::ShaderResource& resource : pipeline->GetDesc().resources.resources)
 	{
@@ -928,7 +928,7 @@ namespace vk {
 
 			trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
 
-			uint32_t buffer_index = (_handle->instance_buffer_infos[meta_data._slot].size() - 1);
+			uint32_t buffer_index = static_cast<uint32_t>(_handle->instance_buffer_infos[meta_data._slot].size() - 1);
 			trace::BufferDescriptorInfo& buf_info = _handle->instance_buffer_infos[meta_data._slot][buffer_index];
 
 			uint32_t buf_offset = buf_info.offset + meta_data._offset;

@@ -170,7 +170,7 @@ namespace trace {
 			size_t begin = _file->tellg();
 			_file->seekg(0, std::ios::end);
 			size_t end = _file->tellg();
-			read_bytes = end - begin;
+			read_bytes = static_cast<uint32_t>(end - begin);
 			_file->seekg(0, std::ios::beg);
 			if (!data) return;
 			read(data, read_bytes, file);

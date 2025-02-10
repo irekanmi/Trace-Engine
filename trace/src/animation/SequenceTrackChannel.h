@@ -29,6 +29,7 @@ namespace trace::Animation {
 
 		float GetStartTime() { return m_startTime; }
 		float GetDuration() { return m_duration; }
+		float GetEndTime() { return (m_startTime + m_duration); }
 
 		void SetStartTime(float start_time) { m_startTime = start_time; }
 		void SetDuration(float duration) { m_duration = duration; }

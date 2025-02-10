@@ -133,59 +133,25 @@ namespace trace {
 			return;
 		}
 		Transform& root_pose = out_pose->GetLocalPose()[root_motion_info.root_bone_index];
-		glm::vec3 root_position = root_pose.GetPosition();
 		out_pose->SetRootMotionBone(root_motion_info.root_bone_index);
-
-		auto& channel = clip->GetTracks()[bone->GetStringID()];
-		auto& position_track = channel[AnimationDataType::POSITION];
-		auto& rotation_track = channel[AnimationDataType::ROTATION];
-		glm::vec3& _pos = *(glm::vec3*)(position_track.back().data);
-		glm::quat& _rot = *(glm::quat*)(rotation_track.back().data);
-
-		AnimatedOutput pos_output = GetFrameData(clip, channel, AnimationDataType::POSITION, from_time, looping);
-		AnimatedOutput rot_output = GetFrameData(clip, channel, AnimationDataType::ROTATION, from_time, looping);
-		glm::vec3 position = *(glm::vec3*)(&pos_output.data);
-		glm::quat rotation = *(glm::quat*)(&rot_output.data);
-
-		int f_times = int(from_time / clip->GetDuration());
-		int t_times = int(to_time / clip->GetDuration());
-
-		if (from_time > clip->GetDuration())
-		{
-			position += (_pos * float(f_times));
-		}
-		if (to_time > clip->GetDuration())
-		{
-			root_position += (_pos * float(t_times));
-		}
 		
 
 		if (root_motion_info.Y_motion)
 		{
 			glm::vec3 curr_position = root_pose.GetPosition();
-			glm::vec3 pos_delta = root_position - position;
 			curr_position.y = 0.0f;
 			root_pose.SetPosition(curr_position);
-			glm::vec3 motion_delta = root_motion_delta.GetPosition();
-			motion_delta.y = pos_delta.y;
-			root_motion_delta.SetPosition(motion_delta);
-
 		}
 
 		if (root_motion_info.XZ_motion)
 		{
 			glm::vec3 curr_position = root_pose.GetPosition();
-			glm::vec3 pos_delta = root_position - position;
 			curr_position.x = 0.0f;
 			curr_position.z = 0.0f;
 			root_pose.SetPosition(curr_position);
-			glm::vec3 motion_delta = root_motion_delta.GetPosition();
-			motion_delta.x = pos_delta.x;
-			motion_delta.z = pos_delta.z;
-			root_motion_delta.SetPosition(motion_delta);
 		}
 
-
+		root_motion_delta = GetRootMotionDelta(clip, skeleton_instance->GetSkeleton(), from_time, to_time, looping);
 		
 	}
 
@@ -219,7 +185,7 @@ namespace trace {
 				AnimationFrameData* prev = nullptr;
 
 				//TODO: Find a better way to find which frames to sample -----------
-				int i = track.second.size() - 1;
+				int32_t i = static_cast<int32_t>(track.second.size() - 1);
 				for (; i >= 0; i--)
 				{
 					curr = &track.second[i];
@@ -297,6 +263,80 @@ namespace trace {
 		}
 
 
+	}
+
+	Transform AnimationEngine::GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Skeleton> skeleton, float from_time, float to_time, bool looping)
+	{
+		Transform result;
+		if (!clip->HasRootMotion())
+		{
+			return result;
+		}
+
+
+		if (looping)
+		{
+
+		}
+		else if (!looping && (from_time > clip->GetDuration() || to_time > clip->GetDuration()))
+		{
+			return result;
+		}
+
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+		if (!bone)
+		{
+			return result;
+		}
+
+		auto& channel = clip->GetTracks()[bone->GetStringID()];
+		auto& position_track = channel[AnimationDataType::POSITION];
+		auto& rotation_track = channel[AnimationDataType::ROTATION];
+		glm::vec3& _pos = *(glm::vec3*)(position_track.back().data);
+		glm::quat& _rot = *(glm::quat*)(rotation_track.back().data);
+
+		AnimatedOutput pos_output = GetFrameData(clip, channel, AnimationDataType::POSITION, from_time, looping);
+		AnimatedOutput rot_output = GetFrameData(clip, channel, AnimationDataType::ROTATION, from_time, looping);
+		glm::vec3 position = *(glm::vec3*)(&pos_output.data);
+		glm::quat rotation = *(glm::quat*)(&rot_output.data);
+
+		AnimatedOutput root_pos_output = GetFrameData(clip, channel, AnimationDataType::POSITION, to_time, looping);
+		AnimatedOutput root_rot_output = GetFrameData(clip, channel, AnimationDataType::ROTATION, to_time, looping);
+		glm::vec3 root_position = *(glm::vec3*)(&root_pos_output.data);
+		glm::quat root_rotation = *(glm::quat*)(&root_rot_output.data);
+
+		int f_times = int(from_time / clip->GetDuration());
+		int t_times = int(to_time / clip->GetDuration());
+
+		if (from_time > clip->GetDuration())
+		{
+			position += (_pos * float(f_times));
+		}
+		if (to_time > clip->GetDuration())
+		{
+			root_position += (_pos * float(t_times));
+		}
+
+		if (root_motion_info.Y_motion)
+		{
+			glm::vec3 pos_delta = root_position - position;
+			glm::vec3 motion_delta = result.GetPosition();
+			motion_delta.y = pos_delta.y;
+			result.SetPosition(motion_delta);
+
+		}
+
+		if (root_motion_info.XZ_motion)
+		{
+			glm::vec3 pos_delta = root_position - position;
+			glm::vec3 motion_delta = result.GetPosition();
+			motion_delta.x = pos_delta.x;
+			motion_delta.z = pos_delta.z;
+			result.SetPosition(motion_delta);
+		}
+
+		return result;
 	}
 
 	AnimationEngine* AnimationEngine::get_instance()
@@ -492,7 +532,7 @@ namespace trace {
 				AnimationFrameData* prev = nullptr;
 
 				//TODO: Find a better way to find which frames to sample -----------
-				int i = track.second.size() - 1;
+				int32_t i = static_cast<int32_t>(track.second.size() - 1);
 				if (track.second[i].time_point < elasped_time)
 				{
 					curr = &track.second[i];
@@ -564,7 +604,7 @@ namespace trace {
 		AnimationFrameData* prev = nullptr;
 
 		//TODO: Find a better way to find which frames to sample -----------
-		int i = track.size() - 1;
+		int32_t i = static_cast<int32_t>(track.size() - 1);
 		for (; i >= 0; i--)
 		{
 			curr = &track[i];

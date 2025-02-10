@@ -187,7 +187,7 @@ namespace trace
 			m_clock.Tick(deltaTime);
 
 			mem_manager->BeginFrame();
-			for (int i = m_LayerStack->Size() - 1; i >= 0; i--)
+			for (int32_t i = static_cast<int32_t>(m_LayerStack->Size() - 1); i >= 0; i--)
 			{
 				Layer* layer = m_LayerStack->GetLayers()[i];
 				layer->Update(deltaTime);
@@ -243,7 +243,7 @@ namespace trace
 
 
 		// TODO: Maybe all event should be sent to Layers by the application or layers should register themself to the Event System
-		int i = m_LayerStack->Size() - 1;
+		int i = static_cast<int32_t>(m_LayerStack->Size() - 1);
 		for (; i >= 0; --i)
 		{
 			Layer* layer = m_LayerStack->GetLayers()[i];

@@ -362,6 +362,7 @@ namespace trace::Reflection {
 		{
 			TRC_TRACE("Type has not registered -> Type Name: {}", TypeName<T>());
 			RegisterTypeObject<T> type_registered;
+			(void)type_registered;//NOTE: Used to suppress warning C4101
 		}
 
 		TypeInfo& info = TypeRegistry::GetTypesData().data[type_id];
@@ -507,7 +508,7 @@ namespace trace::Reflection {
 	template<typename T, typename Alloc>
 	void SerializeContainer(std::vector<T, Alloc>& object, void* location, void* member_info, uint16_t format)
 	{
-		uint32_t size = object.size();
+		uint32_t size = static_cast<uint32_t>(object.size());
 		constexpr std::string_view type_name = TypeName< std::vector<T, Alloc>>();
 		BeginContainer(type_name, location, member_info, format);
 		SerializeContainerSize(size, location, member_info, format);
@@ -659,7 +660,7 @@ namespace trace::Reflection {
 	void SerializeContainer(std::unordered_map<Key, T, Compare, Alloc>& object, void* location, void* member_info, uint16_t format)
 	{
 		using key_type = std::remove_cv_t<Key>;
-		uint32_t size = object.size();
+		uint32_t size = static_cast<uint32_t>(object.size());
 		constexpr std::string_view type_name = TypeName< std::unordered_map<Key, T, Compare, Alloc>>();
 		BeginKeyValueContainer(type_name, location, member_info, format);
 		SerializeContainerSize(size, location, member_info, format);

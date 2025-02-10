@@ -181,7 +181,7 @@ namespace trace {
 			ast_h.offset = stream.GetPosition();
 			uint64_t pipeline_id = GetUUIDFromName(material->GetRenderPipline()->GetName());
 			stream.Write<uint64_t>(pipeline_id);
-			uint32_t data_count = material->GetMaterialData().size();
+			uint32_t data_count = static_cast<uint32_t>(material->GetMaterialData().size());
 			stream.Write<uint32_t>(data_count);
 			auto lambda = [](FileStream& stream, trace::ShaderData type, std::any& dst)
 			{
@@ -281,7 +281,7 @@ namespace trace {
 			};
 			for (auto& i : material->GetMaterialData())
 			{
-				uint32_t name_length = i.first.length() + 1;
+				uint32_t name_length = static_cast<uint32_t>(i.first.length() + 1);
 				stream.Write<uint32_t>(name_length);
 				stream.Write((void*)i.first.data(), name_length);
 				trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.second];

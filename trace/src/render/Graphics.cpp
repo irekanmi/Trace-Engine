@@ -2,6 +2,7 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "core/io/Logging.h"
 
 #include "Graphics.h"
 
@@ -61,6 +62,9 @@ namespace trace {
 			return 3;
 		}
 		}
+
+		TRC_ASSERT(false, "Ensure the input format is valid");
+		return 0;
 	}
 
 }

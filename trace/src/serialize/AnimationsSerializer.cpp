@@ -369,11 +369,11 @@ namespace trace {
 
 			std::vector<AnimationState>& states = graph->GetStates();
 			
-			int states_count = states.size();
+			int32_t states_count = static_cast<int32_t>(states.size());
 			stream.Write(states_count);
 			for (auto& s : states)
 			{
-				int name_size = s.GetName().length() + 1;
+				int32_t name_size = static_cast<int32_t>(s.GetName().length() + 1);
 				stream.Write(name_size);
 				stream.Write(s.GetName().data(), name_size);
 				if (s.GetAnimationClip())
@@ -679,6 +679,8 @@ namespace trace {
 		emit << YAML::EndMap;
 
 		YAML::save_emitter_data(emit, file_path);
+
+		return true;
 	}
 
 	Ref<Animation::Sequence> AnimationsSerializer::DeserializeSequence(const std::string& file_path)

@@ -34,6 +34,7 @@ namespace trace {
 		void OnRender();
 		void OnRender(CommandList& cmd_list);
 		void OnViewportChange(float width, float height);
+		bool InitializeSceneComponents();
 
 		void EnableEntity(Entity entity);
 		void DisableEntity(Entity entity);

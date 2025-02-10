@@ -101,7 +101,7 @@ namespace vk {
 			result = false;
 		}
 		
-		uint32_t color_attachment_count = has_depth && (attachments_ref.size() > 0) ? attachments_ref.size() - has_depth : 0;
+		uint32_t color_attachment_count = has_depth && (attachments_ref.size() > 0) ? static_cast<uint32_t>(attachments_ref.size()) - has_depth : 0;
 
 		render_pass->SetColorAttachmentCount(static_cast<uint32_t>(attachments_ref.size() - has_depth));
 

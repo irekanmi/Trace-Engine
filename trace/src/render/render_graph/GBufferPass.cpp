@@ -188,8 +188,8 @@ namespace trace {
 
 				Viewport view_port = m_renderer->_viewPort;
 				Rect2D rect = m_renderer->_rect;
-				view_port.width = width;
-				view_port.height = height;
+				view_port.width = static_cast<float>(width);
+				view_port.height = static_cast<float>(height);
 
 				rect.right = width;
 				rect.bottom = height;

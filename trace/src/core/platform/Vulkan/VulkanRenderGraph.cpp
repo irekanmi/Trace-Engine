@@ -399,10 +399,10 @@ namespace vk {
 		VkRenderPassBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		begin_info.renderPass = pass_handle->physical_pass.m_handle;
-		begin_info.renderArea.offset.x = pass_handle->physical_pass.render_area->x;
-		begin_info.renderArea.offset.y = pass_handle->physical_pass.render_area->y;
-		begin_info.renderArea.extent.width = pass_handle->physical_pass.render_area->z;
-		begin_info.renderArea.extent.height = pass_handle->physical_pass.render_area->w;
+		begin_info.renderArea.offset.x = static_cast<int32_t>(pass_handle->physical_pass.render_area->x);
+		begin_info.renderArea.offset.y = static_cast<int32_t>(pass_handle->physical_pass.render_area->y);
+		begin_info.renderArea.extent.width = static_cast<uint32_t>(pass_handle->physical_pass.render_area->z);
+		begin_info.renderArea.extent.height = static_cast<uint32_t>(pass_handle->physical_pass.render_area->w);
 		begin_info.framebuffer = pass_handle->frame_buffer;
 
 		VkClearValue clear_color = {};
@@ -988,9 +988,9 @@ namespace vk {
 				VK_ASSERT(vkCreateImage(_device->m_device, &img_create_info, instance->m_alloc_callback, &res_handle->resource.texture.m_handle));
 
 				vkGetImageMemoryRequirements(_device->m_device, res_handle->resource.texture.m_handle, &res_handle->tex_mem_req);
-				graph_handle->memory_size = get_alignment(graph_handle->memory_size, res_handle->tex_mem_req.alignment);
-				graph_handle->memory_size += res_handle->tex_mem_req.size;
-				graph_handle->memory_size = get_alignment(graph_handle->memory_size, res_handle->tex_mem_req.alignment);
+				graph_handle->memory_size = get_alignment(graph_handle->memory_size, static_cast<uint32_t>(res_handle->tex_mem_req.alignment));
+				graph_handle->memory_size += static_cast<uint32_t>(res_handle->tex_mem_req.size);
+				graph_handle->memory_size = get_alignment(graph_handle->memory_size, static_cast<uint32_t>(res_handle->tex_mem_req.alignment));
 				graph_handle->memory_type_bits = res_handle->tex_mem_req.memoryTypeBits;
 
 
@@ -1023,8 +1023,8 @@ namespace vk {
 		VkFramebufferCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		create_info.layers = 1;
-		create_info.width = pass->renderArea.z;
-		create_info.height = pass->renderArea.w;
+		create_info.width = static_cast<uint32_t>(pass->renderArea.z);
+		create_info.height = static_cast<uint32_t>(pass->renderArea.w);
 		create_info.renderPass = handle->physical_pass.m_handle;
 		
 		VkResult _result = VK_ERROR_UNKNOWN;
@@ -1131,7 +1131,7 @@ namespace vk {
 			if (isTexture)
 			{
 				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
-				graph_handle->current_offset = get_alignment(graph_handle->current_offset, res_handle->tex_mem_req.alignment);
+				graph_handle->current_offset = get_alignment(graph_handle->current_offset, static_cast<uint32_t>(res_handle->tex_mem_req.alignment));
 				vkBindImageMemory(
 					_device->m_device,
 					res_handle->resource.texture.m_handle,
@@ -1139,8 +1139,8 @@ namespace vk {
 					graph_handle->current_offset
 				);
 				res_handle->memory_offset = graph_handle->current_offset;
-				graph_handle->current_offset += res_handle->tex_mem_req.size;
-				graph_handle->current_offset = get_alignment(graph_handle->current_offset, res_handle->tex_mem_req.alignment);
+				graph_handle->current_offset += static_cast<uint32_t>(res_handle->tex_mem_req.size);
+				graph_handle->current_offset = get_alignment(graph_handle->current_offset, static_cast<uint32_t>(res_handle->tex_mem_req.alignment));
 
 				VkImageAspectFlags aspect_flags = 0;
 

@@ -240,8 +240,8 @@ namespace trace {
 			float threshold = 1.01f;
 
 			Viewport view_port = m_renderer->_viewPort;
-			view_port.width = width;
-			view_port.height = height;
+			view_port.width = static_cast<float>(width);
+			view_port.height = static_cast<float>(height);
 
 			Rect2D rect = m_renderer->_rect;
 			rect.right = width;
@@ -313,8 +313,8 @@ namespace trace {
 
 
 				Viewport view_port = m_renderer->_viewPort;
-				view_port.width = width;
-				view_port.height = height;
+				view_port.width = static_cast<float>(width);
+				view_port.height = static_cast<float>(height);
 
 				Rect2D rect = m_renderer->_rect;
 				rect.right = width;
@@ -389,12 +389,12 @@ namespace trace {
 				);
 
 				Viewport view_port = m_renderer->_viewPort;
-				view_port.width = res.resource_data.texture.width;
-				view_port.height = res.resource_data.texture.height;
+				view_port.width = static_cast<float>(res.resource_data.texture.width);
+				view_port.height = static_cast<float>(res.resource_data.texture.height);
 
 				Rect2D rect = m_renderer->_rect;
-				rect.right = view_port.width;
-				rect.bottom = view_port.height;
+				rect.right = res.resource_data.texture.width;
+				rect.bottom = res.resource_data.texture.height;
 
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
@@ -437,12 +437,12 @@ namespace trace {
 			);
 
 			Viewport view_port = m_renderer->_viewPort;
-			view_port.width = res.resource_data.texture.width;
-			view_port.height = res.resource_data.texture.height;
+			view_port.width = static_cast<float>(res.resource_data.texture.width);
+			view_port.height = static_cast<float>(res.resource_data.texture.height);
 
 			Rect2D rect = m_renderer->_rect;
-			rect.right = view_port.width;
-			rect.bottom = view_port.height;
+			rect.right = res.resource_data.texture.width;
+			rect.bottom = res.resource_data.texture.height;
 
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
