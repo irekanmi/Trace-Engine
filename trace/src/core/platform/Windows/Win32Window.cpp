@@ -380,13 +380,16 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 
 static std::wstring to_ws(const std::string& str)
 {
-	size_t len = mbstowcs(nullptr, str.data(), 0);
+	size_t len;// = mbstowcs(nullptr, str.data(), 0);
+	mbstowcs_s(&len, nullptr, 0,str.data(), _TRUNCATE);
 	if (len == -1)
 	{
 		TRC_ASSERT(false, "invalid string");
 		return std::wstring();
 	}
 	std::wstring ret;
-	mbstowcs(&ret[0], &str[0], len + 1);
+	ret.reserve(len);
+	//mbstowcs(&ret[0], &str[0], len + 1);
+	mbstowcs_s(&len, ret.data(), len, str.data(), _TRUNCATE);
 	return ret;
 }

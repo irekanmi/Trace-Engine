@@ -373,7 +373,7 @@ namespace trace {
                                     }
                                 }
                                 std::vector<FrameIndex>& f_idx = m_currentTracks[channel.first][track.first];
-                                int frame_size = f_idx.size();
+                                int frame_size = static_cast<int>(f_idx.size());
                                 static std::vector<int> frame_to_delete{}; //TODO: Create a temp small vector
                                 static std::vector<int> frame_to_duplicate{}; //TODO: Create a temp small vector
                                 for (int i = 0; i < frame_size; i++)
