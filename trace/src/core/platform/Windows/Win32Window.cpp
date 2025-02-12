@@ -358,18 +358,21 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 	{
 		trace::MouseDBClick click(trace::Buttons::BUTTON_LEFT);
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_MOUSE_DB_CLICK, &click);
+		break;
 	}
 
 	case WM_RBUTTONDBLCLK:
 	{
 		trace::MouseDBClick click(trace::Buttons::BUTTON_RIGHT);
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_MOUSE_DB_CLICK, &click);
+		break;
 	}
 
 	case WM_MBUTTONDBLCLK:
 	{
 		trace::MouseDBClick click(trace::Buttons::BUTTON_MIDDLE);
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_MOUSE_DB_CLICK, &click);
+		break;
 	}
 
 

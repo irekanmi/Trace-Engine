@@ -160,7 +160,10 @@ namespace trace {
 			stream.Read(arr_map.data(), map_size);
 
 			for (auto& ast_h : arr_map)
+			{
 				map.emplace(ast_h);
+			}
+
 
 			switch (asset_type)
 			{
