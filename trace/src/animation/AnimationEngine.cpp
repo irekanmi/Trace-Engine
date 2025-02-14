@@ -107,7 +107,7 @@ namespace trace {
 			return;
 		}
 
-		SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
+		Animation::SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
 		Scene* scene = skeleton_instance->GetScene();
 
 		
@@ -127,7 +127,7 @@ namespace trace {
 		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
 		Transform& root_motion_delta = out_pose->GetRootMotionDelta();
 		root_motion_delta = Transform::Identity();
-		Bone* bone = skeleton_instance->GetSkeleton()->GetBone(root_motion_info.root_bone_index);
+		Animation::Bone* bone = skeleton_instance->GetSkeleton()->GetBone(root_motion_info.root_bone_index);
 		if (!bone)
 		{
 			return;
@@ -157,7 +157,7 @@ namespace trace {
 
 	void AnimationEngine::SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping)
 	{
-		SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
+		Animation::SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
 		Scene* scene = skeleton_instance->GetScene();
 
 		float elasped_time = time;
@@ -265,7 +265,7 @@ namespace trace {
 
 	}
 
-	Transform AnimationEngine::GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Skeleton> skeleton, float from_time, float to_time, bool looping)
+	Transform AnimationEngine::GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float from_time, float to_time, bool looping)
 	{
 		Transform result;
 		if (!clip->HasRootMotion())
@@ -284,7 +284,7 @@ namespace trace {
 		}
 
 		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
-		Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
 		if (!bone)
 		{
 			return result;

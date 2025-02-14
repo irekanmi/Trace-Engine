@@ -210,6 +210,7 @@ namespace trace::Animation {
 		
 
 	protected:
+		ACCESS_CLASS_MEMBERS(GraphInstance);
 
 	};
 

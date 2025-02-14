@@ -750,7 +750,7 @@ namespace trace {
 					static char buf[1024] = { 0 };
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
-					Ref<Skeleton> _res = AnimationsSerializer::DeserializeSkeleton(p.filename().string());
+					Ref<Animation::Skeleton> _res = AnimationsSerializer::DeserializeSkeleton(p.filename().string());
 					if (_res)
 					{
 						comp.SetSkeleton(_res, obj.GetScene(), obj.GetID());

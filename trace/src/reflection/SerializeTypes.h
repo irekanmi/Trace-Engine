@@ -2,6 +2,7 @@
 
 #include "TypeHash.h"
 #include "serialize/YAMLTypeSerializer.h"
+#include "serialize/BinaryTypeSerializer.h"
 #include "core/io/Logging.h"
 #include "Serialize.h"
 #include "resource/Ref.h"
@@ -63,7 +64,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::SerializeTypeData(obj, location);
+			BinaryTypeSerializer::SerializeTypeData(obj, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -88,7 +89,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::SerializeContainerSize(size, location);
+			BinaryTypeSerializer::SerializeContainerSize(size, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -110,6 +111,11 @@ namespace trace::Reflection {
 			YAMLTypeSerializer::SerializeNullMember(location, member_info);
 			break;
 		}
+		case SerializationFormat::BINARY:
+		{
+			BinaryTypeSerializer::SerializeNullMember(location, member_info);
+			break;
+		}
 
 		}
 	}
@@ -126,7 +132,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::BeginContainer(location);
+			BinaryTypeSerializer::BeginContainer(type_name, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -149,7 +155,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::EndContainer(location);
+			BinaryTypeSerializer::EndContainer(location, member_info);
 			break;
 		}
 
@@ -175,7 +181,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::BeginKeyValueContainer(location);
+			BinaryTypeSerializer::BeginKeyValueContainer(type_name, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -199,7 +205,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::EndKeyValueContainer(location);
+			BinaryTypeSerializer::EndKeyValueContainer(location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -223,7 +229,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::BeginTypeMembers(type_id, type_name, location);
+			BinaryTypeSerializer::BeginTypeMembers(type_id, type_name, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -247,7 +253,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::EndTypeMembers(type_id, type_name, location);
+			BinaryTypeSerializer::EndTypeMembers(type_id, type_name, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -268,6 +274,11 @@ namespace trace::Reflection {
 			YAMLTypeSerializer::BeginParent(location);
 			break;
 		}
+		case SerializationFormat::BINARY:
+		{
+			BinaryTypeSerializer::BeginParent(location);
+			break;
+		}
 		}
 	}
 
@@ -278,6 +289,11 @@ namespace trace::Reflection {
 		case SerializationFormat::YAML:
 		{
 			YAMLTypeSerializer::EndParent(location);
+			break;
+		}
+		case SerializationFormat::BINARY:
+		{
+			BinaryTypeSerializer::EndParent(location);
 			break;
 		}
 		}
@@ -291,6 +307,11 @@ namespace trace::Reflection {
 		case SerializationFormat::YAML:
 		{
 			YAMLTypeSerializer::SerializeContainerMember(obj, index, type_info, location, member_info);
+			break;
+		}
+		case SerializationFormat::BINARY:
+		{
+			BinaryTypeSerializer::SerializeContainerMember(obj, index, type_info, location, member_info);
 			break;
 		}
 
@@ -310,7 +331,7 @@ namespace trace::Reflection {
 		}
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::SerializeKeyValuePair(key, value, location);
+			BinaryTypeSerializer::SerializeKeyValuePair(key, value, type_info, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -330,6 +351,11 @@ namespace trace::Reflection {
 		case SerializationFormat::YAML:
 		{
 			YAMLTypeSerializer::SerializeTypeID(type_id, location, member_info);
+			break;
+		}
+		case SerializationFormat::BINARY:
+		{
+			BinaryTypeSerializer::SerializeTypeID(type_id, location, member_info);
 			break;
 		}
 
@@ -708,7 +734,7 @@ namespace trace::Reflection {
 
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::DeserializeTypeData(obj, location);
+			BinaryTypeSerializer::DeserializeTypeData(obj, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -728,7 +754,7 @@ namespace trace::Reflection {
 
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::DeserializeContainerSize(out_size, location);
+			BinaryTypeSerializer::DeserializeContainerSize(out_size, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -748,7 +774,7 @@ namespace trace::Reflection {
 
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::DeserializeContainerMember(obj, index, location);
+			BinaryTypeSerializer::DeserializeContainerMember(obj, index, type_info, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -768,7 +794,7 @@ namespace trace::Reflection {
 
 		case SerializationFormat::BINARY:
 		{
-			BinarySerializer::DeserializeKeyValuePair(key, value, index, location);
+			BinaryTypeSerializer::DeserializeKeyValuePair(key, value, type_info, index, location, member_info);
 			break;
 		}
 		case SerializationFormat::YAML:
@@ -780,7 +806,7 @@ namespace trace::Reflection {
 		}
 	}
 
-	static void GetMemberLocation(void* location, char* out_location, void* member_info, uint32_t format)
+	static void GetMemberLocation(void* location, char*& out_location, void* member_info, uint32_t format)
 	{
 		uintptr_t location_ptr = (uintptr_t)location;
 		switch (format)
@@ -791,12 +817,12 @@ namespace trace::Reflection {
 			break;
 		}
 		default:
-			memcpy(out_location, &location_ptr, sizeof(uintptr_t));
+			out_location = (char*)location;
 		}
 
 	}
 
-	static void GetTypeMemberLocation(uint64_t type_id, std::string_view type_name, void* location, char* out_location, void* member_info, uint32_t format)
+	static void GetTypeMemberLocation(uint64_t type_id, std::string_view type_name, void* location, char*& out_location, void* member_info, uint32_t format)
 	{
 		uintptr_t location_ptr = (uintptr_t)location;
 		switch (format)
@@ -807,7 +833,7 @@ namespace trace::Reflection {
 			break;
 		}
 		default:
-			memcpy(out_location, &location_ptr, sizeof(uintptr_t));
+			out_location = (char*)location;
 		}
 
 	}
@@ -820,6 +846,11 @@ namespace trace::Reflection {
 		case SerializationFormat::YAML:
 		{
 			YAMLTypeSerializer::DeserializeTypeID(out_type_id, location, member_info, index);
+			break;
+		}
+		case SerializationFormat::BINARY:
+		{
+			BinaryTypeSerializer::DeserializeTypeID(out_type_id, location, member_info, index);
 			break;
 		}
 
@@ -839,14 +870,20 @@ namespace trace::Reflection {
 			return YAMLTypeSerializer::CheckValidMemberPointer(location, member_info);
 			break;
 		}
+		case SerializationFormat::BINARY:
+		{
+			return BinaryTypeSerializer::CheckValidMemberPointer(location, member_info);
+			break;
+		}
 
 		}
 
 		return true;
 	}
 
-	static void GetParentLocation(void* location, char* out_location, void* member_info, uint16_t format)
+	static void GetParentLocation(void* location, char*& out_location, void* member_info, uint16_t format)
 	{
+		uintptr_t location_ptr = (uintptr_t)location;
 		switch (format)
 		{
 		case SerializationFormat::YAML:
@@ -854,6 +891,9 @@ namespace trace::Reflection {
 			YAMLTypeSerializer::GetParentLocation(location, out_location, member_info);
 			break;
 		}
+
+		default:
+			out_location = (char*)location;
 		}
 	}
 
@@ -879,7 +919,7 @@ namespace trace::Reflection {
 			return;
 		}
 
-		constexpr uint64_t type_id = TypeID<T>();
+		uint64_t type_id = TypeID<T>();
 		if (!TypeRegistry::HasType(type_id))
 		{
 			std::cout << "Type has not registered ->" << TypeName<T>() << std::endl;
@@ -900,7 +940,8 @@ namespace trace::Reflection {
 		{
 			uint32_t index = 0;
 			void* type_location = location;
-			char _location[128] = { 0 };
+			char location_data[128] = { 0 };
+			char* _location = location_data;
 			GetTypeMemberLocation(type_id, info.name, location, _location, member_info, format);
 
 			if (member_info)
@@ -909,6 +950,7 @@ namespace trace::Reflection {
 				if (class_info.variable.IsPointer())
 				{
 					//memcpy(type_location, &location, sizeof(void*));
+					//DeserializeTypeID(type_id, type_location, nullptr, format, index);
 				}
 			}
 			else
@@ -922,7 +964,8 @@ namespace trace::Reflection {
 
 				if (it != TypeRegistry::GetTypesData().data.end())
 				{
-					char parent_location[128] = { 0 };
+					char location_data[128] = { 0 };
+					char* parent_location = location_data;
 					GetParentLocation(type_location, parent_location, member_info, format);
 					it->second.deserializer(&object, parent_location, nullptr, format);
 				}
@@ -935,7 +978,8 @@ namespace trace::Reflection {
 			{
 				void* member_location = (char*)&object + member.offset;
 				TypeInfo& member_type_info = TypeRegistry::GetTypesData().data[member.type_id];
-				char member_data_location[128] = { 0 };
+				char location_data[128] = { 0 };
+				char* member_data_location = location_data;
 				GetMemberLocation(type_location, member_data_location, (void*)&member, format);
 				member_type_info.deserializer(member_location, member_data_location, (void*)&member, format);
 
@@ -946,7 +990,8 @@ namespace trace::Reflection {
 		else if (!TypeRegistry::HasMembers(type_id) && info.HasParent())
 		{
 			void* type_location = location;
-			char _location[128] = { 0 };
+			char location_data[128] = { 0 };
+			char* _location = location_data;
 			GetTypeMemberLocation(type_id, info.name, location, _location, member_info, format);
 
 			if (member_info)
@@ -967,7 +1012,8 @@ namespace trace::Reflection {
 
 				if (it != TypeRegistry::GetTypesData().data.end())
 				{
-					char parent_location[128] = { 0 };
+					char location_data[128] = { 0 };
+					char* parent_location = location_data;
 					GetParentLocation(type_location, parent_location, member_info, format);
 					it->second.deserializer(&object, parent_location, member_info, format);
 				}
@@ -1042,7 +1088,8 @@ namespace trace::Reflection {
 	{
 		void* type_location = location;
 
-		char _location[128] = { 0 };
+		char location_data[128] = { 0 };
+		char* _location = location_data;
 		if (!member_info)
 		{
 			constexpr uint64_t container_id = TypeID< std::vector<T, Alloc>>();
@@ -1092,7 +1139,8 @@ namespace trace::Reflection {
 	{
 		void* type_location = location;
 
-		char _location[128] = { 0 };
+		char location_data[128] = { 0 };
+		char* _location = location_data;
 		if (!member_info)
 		{
 			constexpr uint64_t container_id = TypeID< std::set<T, Compare, Alloc>>();
@@ -1140,7 +1188,8 @@ namespace trace::Reflection {
 	{
 		void* type_location = location;
 
-		char _location[128] = { 0 };
+		char location_data[128] = { 0 };
+		char* _location = location_data;
 		if (!member_info)
 		{
 			constexpr uint64_t container_id = TypeID< std::unordered_set<T, Compare, Alloc>>();
@@ -1190,7 +1239,8 @@ namespace trace::Reflection {
 
 		void* type_location = location;
 
-		char _location[128] = { 0 };
+		char location_data[128] = { 0 };
+		char* _location = location_data;
 		if (!member_info)
 		{
 			constexpr uint64_t container_id = TypeID<std::map<Key, T, Compare, Alloc>>();
@@ -1245,7 +1295,8 @@ namespace trace::Reflection {
 
 		void* type_location = location;
 
-		char _location[128] = { 0 };
+		char location_data[128] = { 0 };
+		char* _location = location_data;
 		if (!member_info)
 		{
 			constexpr uint64_t container_id = TypeID<std::unordered_map<Key, T, Compare, Alloc>>();

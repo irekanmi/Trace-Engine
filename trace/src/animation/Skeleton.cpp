@@ -7,7 +7,7 @@
 #include "serialize/AnimationsSerializer.h"
 #include "core/Utils.h"
 
-namespace trace {
+namespace trace::Animation {
 	bool Skeleton::Create(const std::string& name, const std::string& root_node, std::vector<Bone>& bones)
 	{
 		if (!m_name.empty())

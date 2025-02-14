@@ -5,6 +5,7 @@
 #include "core/FileSystem.h"
 #include "reflection/TypeRegistry.h"
 #include "reflection/SerializeTypes.h"
+#include "serialize/FileStream.h"
 
 #include "serialize/yaml_util.h"
 #include <vector>
@@ -67,11 +68,11 @@ namespace trace {
 	
 	void SerializationTest()
 	{
-		YAML::Emitter emit;
+		/*YAML::Emitter emit;
 
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Reflection Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Reflection Version" << YAML::Value << "0.0.0.0";*/
 
 		Pos pos;
 		pos.many = { 6, 7, 8, 9, 10 };
@@ -98,16 +99,18 @@ namespace trace {
 		Pos*& ptr_result = *static_cast<Pos**>(_ptr);
 		std::vector<Pos*> vec_ptr = { rot_ptr, &p_test };
 		std::map<int, Pos*> map_ptr = { {7, rot_ptr}, {8, &p_test } };
-		Reflection::SerializeContainer(map_ptr, &emit, nullptr ,Reflection::SerializationFormat::YAML);
+		//Reflection::SerializeContainer(map_ptr, &emit, nullptr ,Reflection::SerializationFormat::YAML);
+		FileStream stream("../Reflection_test.bin", FileMode::WRITE);
+		Reflection::SerializeContainer(map_ptr, &stream, nullptr ,Reflection::SerializationFormat::BINARY);
 
-		emit << YAML::EndMap;
+		/*emit << YAML::EndMap;
 
 		FileHandle out_handle;
 		if (FileSystem::open_file("../reflection_test.txt", FileMode::WRITE, out_handle))
 		{
 			FileSystem::writestring(out_handle, emit.c_str());
 			FileSystem::close_file(out_handle);
-		}
+		}*/
 
 
 
@@ -115,7 +118,7 @@ namespace trace {
 
 	void DeserializationTest()
 	{
-		FileHandle in_handle;
+		/*FileHandle in_handle;
 		if (!FileSystem::open_file("../reflection_test.txt", FileMode::READ, in_handle))
 		{
 			TRC_ERROR("Unable to open file");
@@ -125,12 +128,14 @@ namespace trace {
 		FileSystem::read_all_lines(in_handle, file_data);
 		FileSystem::close_file(in_handle);
 
-		YAML::Node data = YAML::Load(file_data);
+		YAML::Node data = YAML::Load(file_data);*/
 
 		Rot rot;
 		std::vector<Pos*> vec_ptr;
 		std::map<int, Pos*> map_ptr;
-		Reflection::DeserializeContainer(map_ptr, &data, nullptr, Reflection::SerializationFormat::YAML);
+		//Reflection::DeserializeContainer(map_ptr, &data, nullptr, Reflection::SerializationFormat::YAML);
+		FileStream stream("../Reflection_test.bin", FileMode::READ);
+		Reflection::DeserializeContainer(map_ptr, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		return;
 	}

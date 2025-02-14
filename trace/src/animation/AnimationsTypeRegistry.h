@@ -1,11 +1,13 @@
 
-#include "Animation.h"
-#include "AnimationGraph.h"
-#include "AnimationNode.h"
-#include "AnimationPoseNode.h"
-#include "AnimationSequence.h"
-#include "AnimationSequenceTrack.h"
-#include "SequenceTrackChannel.h"
+#include "animation/Animation.h"
+#include "animation/AnimationGraph.h"
+#include "animation/AnimationNode.h"
+#include "animation/AnimationPoseNode.h"
+#include "animation/AnimationSequence.h"
+#include "animation/AnimationSequenceTrack.h"
+#include "animation/SequenceTrackChannel.h"
+#include "animation/Bone.h"
+#include "animation/Skeleton.h"
 
 #include "reflection/TypeRegistry.h"
 
@@ -168,6 +170,31 @@ namespace trace::Animation {
 
 	BEGIN_REGISTER_CLASS(ActivationChannel)
 		REGISTER_TYPE_PARENT(ActivationChannel, SequenceTrackChannel);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(Bone)
+		REGISTER_TYPE(Bone);
+		REGISTER_MEMBER(Bone, m_bindPose);
+		REGISTER_MEMBER(Bone, m_boneOffset);
+		REGISTER_MEMBER(Bone, m_id);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(Skeleton)
+		REGISTER_TYPE(Skeleton);
+		REGISTER_MEMBER(Skeleton, m_name);
+		REGISTER_MEMBER(Skeleton, m_bones);
+		REGISTER_MEMBER(Skeleton, m_rootNodeID);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(SkeletonInstance)
+		REGISTER_TYPE(SkeletonInstance);
+		REGISTER_MEMBER(SkeletonInstance, m_skeleton);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(GraphInstance)
+		REGISTER_TYPE(GraphInstance);
+		REGISTER_MEMBER(GraphInstance, m_graph);
+		REGISTER_MEMBER(GraphInstance, m_skeletonInstance);
 	END_REGISTER_CLASS;
 
 }

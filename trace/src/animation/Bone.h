@@ -1,11 +1,12 @@
 #pragma once
 
 #include "core/Coretypes.h"
+#include "reflection/TypeRegistry.h"
 
 #include "glm/glm.hpp"
 #include <string>
 
-namespace trace {
+namespace trace::Animation {
 
 
 	class Bone
@@ -29,6 +30,7 @@ namespace trace {
 		StringID m_id;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(Bone);
 
 	};
 

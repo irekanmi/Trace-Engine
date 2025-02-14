@@ -123,6 +123,9 @@ namespace trace {
 
 		m_allAssets.pipelines.emplace("gbuffer_pipeline");
 
+		/*SerializationTest();
+		DeserializationTest();*/
+
 		return true;
 	}
 

@@ -83,7 +83,7 @@ namespace trace {
         m_id = STR_ID(name);
     }
 
-    void SkinnedModelRenderer::SetSkeleton(Ref<Skeleton> skeleton, Scene* scene, UUID id)
+    void SkinnedModelRenderer::SetSkeleton(Ref<Animation::Skeleton> skeleton, Scene* scene, UUID id)
     {
         if (!skeleton)
         {

@@ -540,7 +540,7 @@ namespace trace {
 			{
 				if (AppSettings::is_editor)
 				{
-					Ref<Skeleton> skeleton = AnimationsSerializer::DeserializeSkeleton(GetPathFromUUID(skeleton_id).string());
+					Ref<Animation::Skeleton> skeleton = AnimationsSerializer::DeserializeSkeleton(GetPathFromUUID(skeleton_id).string());
 					if (skeleton)
 					{
 						model_renderer.SetSkeleton(skeleton, entity.GetScene(), entity.GetID());

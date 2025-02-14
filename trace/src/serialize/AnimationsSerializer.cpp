@@ -503,7 +503,7 @@ namespace trace {
 		delete[] data;// TODO: Use custom allocator
 	}
 
-	bool AnimationsSerializer::SerializeSkeleton(Ref<Skeleton> skeleton, const std::string& file_path)
+	bool AnimationsSerializer::SerializeSkeleton(Ref<Animation::Skeleton> skeleton, const std::string& file_path)
 	{
 		if (!skeleton)
 		{
@@ -521,7 +521,7 @@ namespace trace {
 		emit << YAML::Key << "Bones" << YAML::Value << YAML::BeginSeq;
 
 
-		for (Bone& bone : skeleton->GetBones())
+		for (Animation::Bone& bone : skeleton->GetBones())
 		{
 
 			emit << YAML::BeginMap;
@@ -544,12 +544,12 @@ namespace trace {
 		return true;
 	}
 
-	Ref<Skeleton> AnimationsSerializer::DeserializeSkeleton(const std::string& file_path)
+	Ref<Animation::Skeleton> AnimationsSerializer::DeserializeSkeleton(const std::string& file_path)
 	{
-		Ref<Skeleton> result;
+		Ref<Animation::Skeleton> result;
 
 		std::filesystem::path p = file_path;
-		Ref<Skeleton> skeleton = GenericAssetManager::get_instance()->Get<Skeleton>(p.filename().string());
+		Ref<Animation::Skeleton> skeleton = GenericAssetManager::get_instance()->Get<Animation::Skeleton>(p.filename().string());
 		if (skeleton)
 		{
 			TRC_WARN("{} has already been loaded", p.filename().string());
@@ -578,20 +578,20 @@ namespace trace {
 		std::string skeleton_name = data["Skeleton Name"].as<std::string>();
 		std::string root_node = data["Root Node"].as<std::string>();
 
-		std::vector<Bone> bones;
+		std::vector<Animation::Bone> bones;
 		for (auto& bone : data["Bones"])
 		{
 			std::string bone_name = bone["Bone Name"].as<std::string>();
 			glm::mat4 bind_pose = bone["Bind Pose"].as<glm::mat4>();
 			glm::mat4 bone_offset = bone["Bone Offset"].as<glm::mat4>();
 
-			Bone bone_ins;
+			Animation::Bone bone_ins;
 			bone_ins.Create(bone_name, bind_pose, bone_offset);
 
 			bones.push_back(bone_ins);
 		}
 
-		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Skeleton>(file_path);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>(file_path);
 		result->Create(skeleton_name, root_node,bones);
 
 		return result;

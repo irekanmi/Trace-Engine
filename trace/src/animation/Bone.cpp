@@ -6,7 +6,7 @@
 
 #include <unordered_map>
 
-namespace trace {
+namespace trace::Animation {
 	bool Bone::Create(const std::string& name, glm::mat4 bind_pose, glm::mat4 bone_offset)
 	{
 		if (!m_name.empty())

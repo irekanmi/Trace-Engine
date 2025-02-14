@@ -199,10 +199,10 @@ namespace trace {
 		Ref<SkinnedModel> _model;
 		bool cast_shadow = true;
 		std::vector<glm::mat4> bone_transforms;
-		SkeletonInstance runtime_skeleton;
+		Animation::SkeletonInstance runtime_skeleton;
 
-		Ref<Skeleton> GetSkeleton() { return runtime_skeleton.GetSkeleton(); }
-		void SetSkeleton(Ref<Skeleton> skeleton, Scene* scene, UUID parent);
+		Ref<Animation::Skeleton> GetSkeleton() { return runtime_skeleton.GetSkeleton(); }
+		void SetSkeleton(Ref<Animation::Skeleton> skeleton, Scene* scene, UUID parent);
 
 	private:
 

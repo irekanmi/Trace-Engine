@@ -4,13 +4,19 @@
 #include "scene/UUID.h"
 #include "resource/Resource.h"
 #include "resource/Ref.h"
+#include "reflection/TypeRegistry.h"
 
 #include <string>
 #include <vector>
 
-namespace trace {
 
+namespace trace {
 	class Scene;
+}
+
+namespace trace::Animation {
+
+	
 
 	class Skeleton : public Resource
 	{
@@ -42,6 +48,7 @@ namespace trace {
 		
 
 	protected:
+		ACCESS_CLASS_MEMBERS(Skeleton);
 
 	};
 
@@ -65,7 +72,7 @@ namespace trace {
 		Ref<Skeleton> m_skeleton;
 		Scene* m_scene = nullptr;
 	protected:
-
+		ACCESS_CLASS_MEMBERS(SkeletonInstance);
 	};
 
 }

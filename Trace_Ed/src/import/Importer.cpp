@@ -422,7 +422,7 @@ namespace trace {
 		return result;
 	}
 
-	Ref<SkinnedModel> load_assimp_skinned_mesh(const aiScene* scene, aiMesh* mesh, const std::string& model_name, std::string& filename, Ref<Skeleton>& out_skeleton_name, Importer* importer)
+	Ref<SkinnedModel> load_assimp_skinned_mesh(const aiScene* scene, aiMesh* mesh, const std::string& model_name, std::string& filename, Ref<Animation::Skeleton>& out_skeleton_name, Importer* importer)
 	{
 		Ref<SkinnedModel> result;
 
@@ -535,7 +535,7 @@ namespace trace {
 			if (mesh->HasBones())
 			{
 				SkinnedModelRenderer& model_renderer = object.AddComponent<SkinnedModelRenderer>();
-				Ref<Skeleton> skeleton;
+				Ref<Animation::Skeleton> skeleton;
 				model_renderer._model = load_assimp_skinned_mesh(ass_scene, mesh, model_name, filename, skeleton, importer);
 				model_renderer.SetSkeleton(skeleton, scene.get(), object.GetID());
 				
@@ -690,7 +690,7 @@ namespace trace {
 		}
 	}
 
-	void add_bone(aiNode* node, std::unordered_map<std::string, Bone>& bones_map, std::vector<Bone>& bones)
+	void add_bone(aiNode* node, std::unordered_map<std::string, Animation::Bone>& bones_map, std::vector<Animation::Bone>& bones)
 	{
 		for (uint32_t i = 0; i < node->mNumChildren; i++)
 		{
@@ -704,9 +704,9 @@ namespace trace {
 		}
 	}
 
-	void create_skeleton(const aiScene* ass_scene, aiNode* node, std::unordered_map<std::string, Bone>& bones_map, std::string& root_node, std::string& filename, std::filesystem::path& directory, Importer* importer)
+	void create_skeleton(const aiScene* ass_scene, aiNode* node, std::unordered_map<std::string, Animation::Bone>& bones_map, std::string& root_node, std::string& filename, std::filesystem::path& directory, Importer* importer)
 	{
-		std::vector<Bone> bones;
+		std::vector<Animation::Bone> bones;
 		bones.push_back(bones_map[node->mName.C_Str()]);
 		add_bone(node, bones_map, bones);
 		std::string import_filename = std::filesystem::path(filename).stem().string();
@@ -714,14 +714,14 @@ namespace trace {
 		std::string skeleton_name = (root_node == "RootNode") ? import_filename + ".trcsk" : root_node + ".trcsk";
 		root_node = (root_node == "RootNode") ? import_filename : root_node;
 
-		Ref<Skeleton> skeleton;
+		Ref<Animation::Skeleton> skeleton;
 		if (std::filesystem::exists(directory / skeleton_name))
 		{
 			skeleton = AnimationsSerializer::DeserializeSkeleton((directory / skeleton_name).string());
 		}
 		else
 		{
-			skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Skeleton>((directory / skeleton_name).string());
+			skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>((directory / skeleton_name).string());
 			skeleton->Create(skeleton_name, root_node, bones);
 
 			TraceEditor* editor = TraceEditor::get_instance();
@@ -739,7 +739,7 @@ namespace trace {
 
 	}
 
-	void find_and_create_skeletons(const aiScene* ass_scene, aiNode* node, std::unordered_map<std::string, Bone>& bones_map, std::string& filename, std::filesystem::path& directory, Importer* importer)
+	void find_and_create_skeletons(const aiScene* ass_scene, aiNode* node, std::unordered_map<std::string, Animation::Bone>& bones_map, std::string& filename, std::filesystem::path& directory, Importer* importer)
 	{
 		std::string root_node;
 		for (uint32_t i = 0; i < node->mNumChildren; i++)
@@ -764,7 +764,7 @@ namespace trace {
 			std::string skeleton_name = ass_skeleton->mName.C_Str();
 			skeleton_name += ".trcsk";
 
-			std::vector<Bone> bones;
+			std::vector<Animation::Bone> bones;
 			for (uint32_t j = 0; j < ass_skeleton->mNumBones; j++)
 			{
 				aiSkeletonBone* ass_bone = ass_skeleton->mBones[j];
@@ -777,13 +777,13 @@ namespace trace {
 				bones.push_back(bone);
 			}
 
-			Ref<Skeleton> skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Skeleton>((directory / skeleton_name).string());
+			Ref<Animation::Skeleton> skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>((directory / skeleton_name).string());
 			skeleton->Create(skeleton_name, bones);
 
 			AnimationsSerializer::SerializeSkeleton(skeleton, (directory / skeleton_name).string());
 		}*/
 
-		std::unordered_map<std::string, Bone> bones_map;
+		std::unordered_map<std::string, Animation::Bone> bones_map;
 
 		for (uint32_t i = 0; i < ass_scene->mNumMeshes; i++)
 		{
@@ -808,7 +808,7 @@ namespace trace {
 				bone_offset = glm::translate(bone_offset, position);
 				bone_offset *= glm::toMat4(rotation);
 				bone_offset = glm::scale(bone_offset, scale);
-				Bone bone;
+				Animation::Bone bone;
 				bone.Create(bone_name, bind_pose, bone_offset);
 				bones_map[bone_name] = bone;
 			}
@@ -1099,7 +1099,7 @@ namespace trace {
 			std::string mesh_name = mesh->mName.C_Str();
 			if (mesh_name == paths[1])
 			{
-				Ref<Skeleton> skeleton;
+				Ref<Animation::Skeleton> skeleton;
 				model = load_assimp_skinned_mesh(scene, mesh,file_path, paths[0], skeleton, this);
 				break;
 			}
