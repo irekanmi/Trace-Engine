@@ -48,6 +48,7 @@ namespace trace {
 		Pos* pos_test = nullptr;
 		std::map<UUID, glm::vec3> all;
 		EnumTest enum_test{};
+		std::pair<int, float> pair_test;
 
 		GET_TYPE_ID
 	};
@@ -61,6 +62,7 @@ namespace trace {
 		REGISTER_MEMBER(Rot, data);
 		REGISTER_MEMBER(Rot, pos_test);
 		REGISTER_MEMBER(Rot, enum_test);
+		REGISTER_MEMBER(Rot, pair_test);
 	END_REGISTER_CLASS
 
 	Reflection::RegisterTypeObject<std::vector<Pos*>> vec_pos_type;
@@ -68,11 +70,11 @@ namespace trace {
 	
 	void SerializationTest()
 	{
-		/*YAML::Emitter emit;
+		YAML::Emitter emit;
 
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Reflection Version" << YAML::Value << "0.0.0.0";*/
+		emit << YAML::Key << "Reflection Version" << YAML::Value << "0.0.0.0";
 
 		Pos pos;
 		pos.many = { 6, 7, 8, 9, 10 };
@@ -88,6 +90,7 @@ namespace trace {
 		rot.many = { 67, 68, 69, 70 };
 		rot.all = { {71, glm::vec3(1.0f)}, {72, glm::vec3(2.0f)}, {73, glm::vec3(3.0f)} };
 		rot.pos_test = &p_test;
+		rot.pair_test = std::make_pair(13, 18.0f);
 		Pos* rot_ptr = &rot;
 		char value[16] = "0123456789ABCDE";
 		//rot.data = value;
@@ -99,18 +102,18 @@ namespace trace {
 		Pos*& ptr_result = *static_cast<Pos**>(_ptr);
 		std::vector<Pos*> vec_ptr = { rot_ptr, &p_test };
 		std::map<int, Pos*> map_ptr = { {7, rot_ptr}, {8, &p_test } };
-		//Reflection::SerializeContainer(map_ptr, &emit, nullptr ,Reflection::SerializationFormat::YAML);
-		FileStream stream("../Reflection_test.bin", FileMode::WRITE);
-		Reflection::SerializeContainer(map_ptr, &stream, nullptr ,Reflection::SerializationFormat::BINARY);
+		Reflection::SerializeContainer(map_ptr, &emit, nullptr ,Reflection::SerializationFormat::YAML);
+		//FileStream stream("../Reflection_test.bin", FileMode::WRITE);
+		//Reflection::SerializeContainer(map_ptr, &stream, nullptr ,Reflection::SerializationFormat::BINARY);
 
-		/*emit << YAML::EndMap;
+		emit << YAML::EndMap;
 
 		FileHandle out_handle;
 		if (FileSystem::open_file("../reflection_test.txt", FileMode::WRITE, out_handle))
 		{
 			FileSystem::writestring(out_handle, emit.c_str());
 			FileSystem::close_file(out_handle);
-		}*/
+		}
 
 
 
@@ -118,7 +121,7 @@ namespace trace {
 
 	void DeserializationTest()
 	{
-		/*FileHandle in_handle;
+		FileHandle in_handle;
 		if (!FileSystem::open_file("../reflection_test.txt", FileMode::READ, in_handle))
 		{
 			TRC_ERROR("Unable to open file");
@@ -128,14 +131,14 @@ namespace trace {
 		FileSystem::read_all_lines(in_handle, file_data);
 		FileSystem::close_file(in_handle);
 
-		YAML::Node data = YAML::Load(file_data);*/
+		YAML::Node data = YAML::Load(file_data);
 
 		Rot rot;
 		std::vector<Pos*> vec_ptr;
 		std::map<int, Pos*> map_ptr;
-		//Reflection::DeserializeContainer(map_ptr, &data, nullptr, Reflection::SerializationFormat::YAML);
-		FileStream stream("../Reflection_test.bin", FileMode::READ);
-		Reflection::DeserializeContainer(map_ptr, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Reflection::DeserializeContainer(map_ptr, &data, nullptr, Reflection::SerializationFormat::YAML);
+		//FileStream stream("../Reflection_test.bin", FileMode::READ);
+		//Reflection::DeserializeContainer(map_ptr, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		return;
 	}

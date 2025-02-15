@@ -718,6 +718,36 @@ namespace trace::Reflection {
 		EndKeyValueContainer(location, member_info, format);
 	}
 
+	template<typename Key, typename T>
+	void SerializeContainer(std::pair<Key, T>& object, void* location, void* member_info, uint16_t format)
+	{
+		using key_type = std::remove_cv_t<Key>;
+		constexpr std::string_view type_name = TypeName< std::pair<Key, T>>();
+		BeginKeyValueContainer(type_name, location, member_info, format);
+
+		key_type& key_value = object.first;
+		T& value = object.second;
+
+		using type = remove_all_pointers_t<T>;
+		uint64_t type_id = TypeID<type>();
+
+		TypeInfo t_info = TypeRegistry::GetTypesData().data[type_id];
+
+		if constexpr (has_get_id_v<type> && std::is_pointer_v<T>)
+		{
+			type_id = value->GetTypeID();
+			t_info = TypeRegistry::GetTypesData().data[type_id];
+			SerializeTypeID(type_id, location, nullptr, format);
+			SerializeKeyValuePair(key_value, *value, t_info, location, nullptr, format);
+		}
+		else
+		{
+			SerializeKeyValuePair(key_value, value, t_info, location, nullptr, format);
+		}
+
+		EndKeyValueContainer(location, member_info, format);
+	}
+
 	
 
 	// --------------------------------------------------------------------------------
@@ -1341,6 +1371,54 @@ namespace trace::Reflection {
 				object[key_value] = value_data;
 			}
 			index++;
+		}
+	}
+
+	template<typename Key, typename T>
+	void DeserializeContainer(std::pair<Key, T>& object, void* location, void* member_info, uint16_t format)
+	{
+		using key_type = std::remove_cv_t<Key>;
+
+		void* type_location = location;
+
+		char location_data[128] = { 0 };
+		char* _location = location_data;
+		if (!member_info)
+		{
+			constexpr uint64_t container_id = TypeID<std::pair<Key, T>>();
+			TypeInfo& container_info = TypeRegistry::GetTypesData().data[container_id];
+			GetTypeMemberLocation(container_id, container_info.name, location, _location, nullptr, format);
+			type_location = (char*)_location;
+		}
+
+		uint32_t index = 0;//NOTE: index is required here, it is assumed that DeserializeKeyValuePair() is to used for containers not std::pair 
+
+
+		using type = remove_all_pointers_t<T>;
+		uint64_t type_id = TypeID<type>();
+
+		TypeInfo t_info = TypeRegistry::GetTypesData().data[type_id];
+
+		key_type key_value{};
+
+		if constexpr (std::is_pointer_v<T>)
+		{
+			DeserializeTypeID(type_id, type_location, nullptr, format, index);
+			t_info = TypeRegistry::GetTypesData().data[type_id];
+			type* value_data = (type*)t_info.construct();
+			DeserializeKeyValuePair(key_value, *value_data, t_info, index, type_location, member_info, format);
+
+			object.first = key_value;
+			object.second = value_data;
+		}
+		else
+		{
+			T value_data{};
+
+			DeserializeKeyValuePair(key_value, value_data, t_info, index, type_location, member_info, format);
+
+			object.first = key_value;
+			object.second = value_data;
 		}
 	}
 

@@ -39,6 +39,10 @@ namespace trace::Reflection {
 	struct IsTypeKeyValueContainer<std::unordered_map<Key, T, Compare, Alloc>> : std::true_type
 	{};
 
+	template<typename Key, typename T>
+	struct IsTypeKeyValueContainer<std::pair<Key, T>> : std::true_type
+	{};
+
 	template<typename T>
 	struct ContainerTraits
 	{};
@@ -79,6 +83,13 @@ namespace trace::Reflection {
 		using value_type = T;
 	};
 
+	template<typename Key, typename T>
+	struct KeyValueContainerTraits<std::pair<Key, T>>
+	{
+		using key_type = Key;
+		using value_type = T;
+	};
+
 
 	struct TypeInfo final
 	{
@@ -111,7 +122,6 @@ namespace trace::Reflection {
 
 
 	};
-
 
 
 }
