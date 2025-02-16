@@ -5,6 +5,7 @@
 #include "resource/Ref.h"
 #include "render/GTexture.h"
 #include "render/GPipeline.h"
+#include "scene/UUID.h"
 
 #include <any>
 #include <variant>
@@ -16,7 +17,7 @@ namespace trace {
 	using MaterialData = std::unordered_map<std::string, std::pair<std::any, uint32_t>>;
 	class GPipeline;
 
-	class TRACE_API MaterialInstance : public Resource
+	class MaterialInstance : public Resource
 	{
 
 	public:
@@ -33,6 +34,9 @@ namespace trace {
 
 		void SetRenderPipeline(Ref<GPipeline> pipeline) { m_renderPipeline = pipeline; }
 		void SetMaterialData(MaterialData& material_data) { m_data = std::move(material_data); }
+
+
+		static Ref<MaterialInstance> Deserialize(UUID id);
 
 	private:
 		Ref<GPipeline> m_renderPipeline;

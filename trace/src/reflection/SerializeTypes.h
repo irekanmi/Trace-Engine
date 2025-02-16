@@ -9,6 +9,7 @@
 #include "Type.h"
 #include "core/Coretypes.h"
 #include "core/Utils.h"
+#include "external_utils.h"
 
 #include <map>
 #include <unordered_map>
@@ -17,10 +18,6 @@
 #include <iostream>
 #include <type_traits>
 
-namespace trace {
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
-}
 
 namespace trace::Reflection {
 	 
@@ -1104,8 +1101,7 @@ namespace trace::Reflection {
 			{
 				return;
 			}
-			std::string path = GetPathFromUUID(id).string();
-			object = T::Deserialize(path);
+			object = T::Deserialize(id);
 		}
 
 	}
@@ -1391,7 +1387,7 @@ namespace trace::Reflection {
 			type_location = (char*)_location;
 		}
 
-		uint32_t index = 0;//NOTE: index is required here, it is assumed that DeserializeKeyValuePair() is to used for containers not std::pair 
+		uint32_t index = 0;//NOTE: index is required here, because it is assumed that DeserializeKeyValuePair() is to used for containers not std::pair 
 
 
 		using type = remove_all_pointers_t<T>;

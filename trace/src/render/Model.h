@@ -6,10 +6,12 @@
 #include "GBuffer.h"
 #include "Material.h"
 #include "resource/Resource.h"
+#include "resource/Ref.h"
+#include "scene/UUID.h"
 
 namespace trace {
 
-	class TRACE_API Model : public Resource
+	class Model : public Resource
 	{
 
 	public:
@@ -25,6 +27,7 @@ namespace trace {
 		std::vector<uint32_t>& GetIndices() { return m_indices; }
 		void Release();
 
+		static Ref<Model> Deserialize(UUID id);
 
 	private:
 		std::vector<Vertex> m_vertices;

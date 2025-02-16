@@ -2,9 +2,9 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
-
 #include "resource/Ref.h"
 #include "resource/Resource.h"
+#include "scene/UUID.h"
 
 namespace trace {
 
@@ -22,7 +22,7 @@ namespace trace {
 		void SetInternal(void* value);
 		void SetFontName(const std::string& name);
 
-
+		static Ref<Font> Deserialize(UUID id);
 	private:
 		Ref<GTexture> m_atlas;
 		std::string m_fontName;

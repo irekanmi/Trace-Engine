@@ -27,7 +27,7 @@ namespace trace {
 		void Release();
 		virtual void Destroy() override;
 
-
+		static Ref<SkinnedModel> Deserialize(UUID id);
 	private:
 		std::vector<SkinnedVertex> m_vertices;
 		std::vector<uint32_t> m_indices;

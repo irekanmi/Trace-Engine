@@ -575,19 +575,19 @@ namespace physx {
 		PxShape* res = nullptr;
 		switch (geometry.type)
 		{
-		case trace::PhyShape::Box:
+		case trace::PhyShapeType::Box:
 		{
 			PxVec3 extents = { geometry.box.half_extents.x, geometry.box.half_extents.y, geometry.box.half_extents.z };
 			res = phy.physics->createShape(PxBoxGeometry(extents), *phy.default_material);
 			break;
 		}
-		case trace::PhyShape::Sphere:
+		case trace::PhyShapeType::Sphere:
 		{
 			float radius = geometry.sphere.radius;
 			res = phy.physics->createShape(PxSphereGeometry(radius), *phy.default_material);
 			break;
 		}
-		case trace::PhyShape::Capsule:
+		case trace::PhyShapeType::Capsule:
 		{
 			float radius = geometry.capsule.radius;
 			float half_height = geometry.capsule.half_height;
@@ -628,19 +628,19 @@ namespace physx {
 		PxShape* res = nullptr;
 		switch (geometry.type)
 		{
-		case trace::PhyShape::Box:
+		case trace::PhyShapeType::Box:
 		{
 			PxVec3 extents = { geometry.box.half_extents.x, geometry.box.half_extents.y, geometry.box.half_extents.z };
 			res = phy.physics->createShape(PxBoxGeometry(extents), *phy.default_material);
 			break;
 		}
-		case trace::PhyShape::Sphere:
+		case trace::PhyShapeType::Sphere:
 		{
 			float radius = geometry.sphere.radius;
 			res = phy.physics->createShape(PxSphereGeometry(radius), *phy.default_material);
 			break;
 		}
-		case trace::PhyShape::Capsule:
+		case trace::PhyShapeType::Capsule:
 		{
 			float radius = geometry.capsule.radius;
 			float half_height = geometry.capsule.half_height;
@@ -844,13 +844,13 @@ namespace physx {
 		
 		switch (rigid_body.GetType())
 		{
-		case trace::RigidBody::Static:
+		case trace::RigidBodyType::Static:
 		{
 			PxRigidStatic* res = phy.physics->createRigidStatic(pose);
 			actor = res;
 			break;
 		}
-		case trace::RigidBody::Dynamic:
+		case trace::RigidBodyType::Dynamic:
 		{
 			PxRigidDynamic* res = phy.physics->createRigidDynamic(pose);
 			actor = res;
@@ -858,7 +858,7 @@ namespace physx {
 			PxRigidBodyExt::setMassAndUpdateInertia(*res, rigid_body.mass);
 			break;
 		}
-		case trace::RigidBody::Kinematic:
+		case trace::RigidBodyType::Kinematic:
 		{
 			PxRigidDynamic* res = phy.physics->createRigidDynamic(pose);
 

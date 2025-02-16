@@ -54,7 +54,7 @@ namespace trace {
 	};
 
 
-	enum RenderAPI
+	enum class RenderAPI
 	{
 		None,
 		OpenGL,

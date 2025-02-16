@@ -101,7 +101,9 @@ namespace trace {
 				}
 				if (generate_uuid)
 				{
-					content_browser->GetAllFilesID()[tex_name] = UUID::GenUUID();
+					UUID uuid = UUID::GenUUID();
+					content_browser->GetAllFilesID()[tex_name] = uuid;
+					content_browser->GetUUIDName()[uuid] = tex_name;
 				}
 			}
 			else
@@ -119,7 +121,9 @@ namespace trace {
 				}
 				if (generate_uuid)
 				{
-					content_browser->GetAllFilesID()[tex_name] = UUID::GenUUID();
+					UUID uuid = UUID::GenUUID();
+					content_browser->GetAllFilesID()[tex_name] = uuid;
+					content_browser->GetUUIDName()[uuid] = tex_name;
 				}
 
 			}
@@ -372,6 +376,8 @@ namespace trace {
 	
 	Ref<Model> load_assimp_mesh(const aiScene* scene, aiMesh* mesh, const std::string& model_name)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
+		ContentBrowser* content_browser = editor->GetContentBrowser();
 		Ref<Model> result;
 
 
@@ -419,11 +425,27 @@ namespace trace {
 		generateVertexTangent(vertices, indices);
 		result = ModelManager::get_instance()->LoadModel(vertices, indices, model_name);
 
+		auto it = content_browser->GetAllFilesID().find(model_name);
+		if (it == content_browser->GetAllFilesID().end())
+		{
+			UUID uuid = UUID::GenUUID();
+			content_browser->GetAllFilesID()[model_name] = uuid;
+			content_browser->GetUUIDName()[uuid] = model_name;
+		}
+		else if (it->second == 0)
+		{
+			UUID uuid = UUID::GenUUID();
+			content_browser->GetAllFilesID()[model_name] = uuid;
+			content_browser->GetUUIDName()[uuid] = model_name;
+		}
+
 		return result;
 	}
 
 	Ref<SkinnedModel> load_assimp_skinned_mesh(const aiScene* scene, aiMesh* mesh, const std::string& model_name, std::string& filename, Ref<Animation::Skeleton>& out_skeleton_name, Importer* importer)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
+		ContentBrowser* content_browser = editor->GetContentBrowser();
 		Ref<SkinnedModel> result;
 
 
@@ -507,6 +529,20 @@ namespace trace {
 		result = GenericAssetManager::get_instance()->CreateAssetHandle_<SkinnedModel>(model_name);
 		result->Init(vertices, indices);
 
+		auto it = content_browser->GetAllFilesID().find(model_name);
+		if (it == content_browser->GetAllFilesID().end())
+		{
+			UUID uuid = UUID::GenUUID();
+			content_browser->GetAllFilesID()[model_name] = uuid;
+			content_browser->GetUUIDName()[uuid] = model_name;
+		}
+		else if (it->second == 0)
+		{
+			UUID uuid = UUID::GenUUID();
+			content_browser->GetAllFilesID()[model_name] = uuid;
+			content_browser->GetUUIDName()[uuid] = model_name;
+		}
+
 		return result;
 	}
 
@@ -581,7 +617,7 @@ namespace trace {
 				
 				object.AddComponent<ModelComponent>()._model = load_assimp_mesh(ass_scene, mesh, model_name);
 
-				//content_browser->GetAllFilesID()[model_name] = UUID::GenUUID();
+				
 
 				if (mesh->mMaterialIndex != -1)
 				{

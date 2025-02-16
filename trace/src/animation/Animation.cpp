@@ -4,6 +4,8 @@
 #include "scene/Scene.h"
 #include "animation/Animation.h"
 #include "serialize/AnimationsSerializer.h"
+#include "core/Coretypes.h"
+#include "external_utils.h"
 
 namespace trace {
 
@@ -39,9 +41,24 @@ namespace trace {
 		return true;
 	}
 
-	Ref<AnimationClip> AnimationClip::Deserialize(const std::string& file_path)
+	Ref<AnimationClip> AnimationClip::Deserialize(UUID id)
 	{
-		return AnimationsSerializer::DeserializeAnimationClip(file_path);
+		Ref<AnimationClip> result;
+
+		if (AppSettings::is_editor)
+		{
+			std::string file_path = GetPathFromUUID(id).string();
+			if (!file_path.empty())
+			{
+				result = AnimationsSerializer::DeserializeAnimationClip(file_path);
+			}
+		}
+		else
+		{
+
+		}
+
+		return result;
 	}
 
 }

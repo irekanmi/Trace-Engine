@@ -37,7 +37,7 @@ namespace trace::Animation {
 		void SetRootNode(std::string& root_node);
 
 	public:
-		static Ref<Skeleton> Deserialize(const std::string& file_path);
+		static Ref<Skeleton> Deserialize(UUID id);
 
 	private:
 		std::string m_name;

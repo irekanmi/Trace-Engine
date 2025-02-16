@@ -42,7 +42,7 @@ namespace trace::Animation {
 		void RemoveTrack(int32_t index);
 
 	public:
-		static Ref<Sequence> Deserialize(const std::string& file_path);
+		static Ref<Sequence> Deserialize(UUID id);
 
 	private:
 		std::vector<SequenceTrack*> m_tracks;

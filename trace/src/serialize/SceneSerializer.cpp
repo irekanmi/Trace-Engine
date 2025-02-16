@@ -427,7 +427,7 @@ namespace trace {
 			std::string filename = comp["Name"].as<std::string>();
 			if (AppSettings::is_editor)
 			{
-				LoadModel(id, filename, model, comp);
+				model._model = LoadModel(id, filename);
 			}
 			else
 			{
@@ -518,7 +518,7 @@ namespace trace {
 			{
 				if (AppSettings::is_editor)
 				{
-					LoadSkinnedModel(model_id, model_name, model_renderer, comp);
+					model_renderer._model = LoadSkinnedModel(model_id, model_name);
 				}
 				else
 				{
@@ -592,7 +592,7 @@ namespace trace {
 		{ "RigidBodyComponent", [](Entity entity, YAML::detail::iterator_value& value) {
 		auto comp = value["RigidBodyComponent"];
 		RigidBodyComponent& body = entity.AddComponent<RigidBodyComponent>();
-		body.body.SetType((RigidBody::Type)comp["Type"].as<int>());
+		body.body.SetType((RigidBodyType)comp["Type"].as<int>());
 		body.body.density = comp["Density"].as<float>();
 		body.body.mass = comp["Mass"].as<float>();
 

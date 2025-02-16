@@ -15,8 +15,8 @@ namespace trace {
 	extern std::filesystem::path GetPathFromUUID(UUID uuid);
 	extern UUID GetUUIDFromName(const std::string& name);
 	extern std::string GetNameFromUUID(UUID uuid);
-	extern bool LoadModel(UUID uuid, std::string& filename, ModelComponent& out_model, YAML::Node& node);
-	extern bool LoadSkinnedModel(UUID uuid, std::string& filename, SkinnedModelRenderer& out_model, YAML::Node& node);
+	extern Ref<Model> LoadModel(UUID uuid, std::string& model_name);
+	extern Ref<SkinnedModel> LoadSkinnedModel(UUID uuid, std::string& model_name);
 	extern Ref<GTexture> LoadTexture(UUID uuid);
 
 }

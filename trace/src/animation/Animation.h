@@ -8,6 +8,7 @@
 #include "render/Transform.h"
 #include "core/Coretypes.h"
 
+
 #include <vector>
 #include <unordered_map>
 #include <string>
@@ -80,7 +81,7 @@ namespace trace {
 		bool HasRootMotion() { return m_hasRootMotion; }
 
 	public:
-		static Ref<AnimationClip> Deserialize(const std::string& file_path);
+		static Ref<AnimationClip> Deserialize(UUID id);
 		
 
 	private:

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "resource/Ref.h"
+#include "external_utils.h"
+#include "../TraceEditor.h"
+#include "../panels/ContentBrowser.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -27,10 +30,13 @@ Ref<T> ImGuiDragDropResource(const std::string & tag)
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(tag.c_str()))
 		{
+			trace::TraceEditor* editor = trace::TraceEditor::get_instance();
+			trace::ContentBrowser* content_browser = editor->GetContentBrowser();
 			static char buf[1024] = { 0 };
 			memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 			std::filesystem::path p = buf;
-			result = T::Deserialize(p.string());
+			trace::UUID id = trace::GetUUIDFromName(p.filename().string());
+			result = T::Deserialize(id);
 		}
 		ImGui::EndDragDropTarget();
 	}
@@ -45,10 +51,13 @@ Ref<T> ImGuiDragDropResourceCustom(ImRect rect, ImGuiID id, const std::string& t
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(tag.c_str()))
 		{
+			trace::TraceEditor* editor = trace::TraceEditor::get_instance();
+			trace::ContentBrowser* content_browser = editor->GetContentBrowser();
 			static char buf[1024] = { 0 };
 			memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 			std::filesystem::path p = buf;
-			result = T::Deserialize(p.string());
+			trace::UUID id = trace::GetUUIDFromName(p.filename().string());
+			result = T::Deserialize(id);
 		}
 		ImGui::EndDragDropTarget();
 	}

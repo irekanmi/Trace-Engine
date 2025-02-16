@@ -6,6 +6,8 @@
 #include "scene/Scene.h"
 #include "serialize/AnimationsSerializer.h"
 #include "core/Utils.h"
+#include "core/Coretypes.h"
+#include "external_utils.h"
 
 namespace trace::Animation {
 	bool Skeleton::Create(const std::string& name, const std::string& root_node, std::vector<Bone>& bones)
@@ -73,9 +75,24 @@ namespace trace::Animation {
 
 	}
 
-	Ref<Skeleton> Skeleton::Deserialize(const std::string& file_path)
+	Ref<Skeleton> Skeleton::Deserialize(UUID id)
 	{
-		return AnimationsSerializer::DeserializeSkeleton(file_path);
+		Ref<Skeleton> result;
+
+		if (AppSettings::is_editor)
+		{
+			std::string file_path = GetPathFromUUID(id).string();
+			if (!file_path.empty())
+			{
+				result = AnimationsSerializer::DeserializeSkeleton(file_path);
+			}
+		}
+		else
+		{
+
+		}
+
+		return result;
 	}
 
 

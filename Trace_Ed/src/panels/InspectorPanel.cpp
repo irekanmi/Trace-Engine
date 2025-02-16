@@ -834,7 +834,7 @@ namespace trace {
 
 			bool dirty = false;
 			RigidBody& body = comp.body;
-			RigidBody::Type type = body.GetType();
+			RigidBodyType type = body.GetType();
 
 			const char* type_string[] = { "Static", "Kinematic", "Dynamic" };
 			const char* current_type = type_string[(int)type];
@@ -845,12 +845,14 @@ namespace trace {
 					bool selected = (current_type == type_string[i]);
 					if (ImGui::Selectable(type_string[i], selected))
 					{
-						body.SetType((RigidBody::Type)i);
+						body.SetType((RigidBodyType)i);
 						dirty = true;
 					}
 
 					if (selected)
+					{
 						ImGui::SetItemDefaultFocus();
+					}
 				}
 
 				ImGui::EndCombo();

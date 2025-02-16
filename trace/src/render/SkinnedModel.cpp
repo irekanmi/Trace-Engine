@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "SkinnedModel.h"
-#include "glm/ext.hpp"
 #include "backends/Renderutils.h"
+#include "core/Coretypes.h"
+#include "external_utils.h"
+
+#include "glm/ext.hpp"
 
 namespace trace {
 
@@ -56,6 +59,20 @@ namespace trace {
 	void SkinnedModel::Destroy()
 	{
 		Release();
+	}
+
+	Ref<SkinnedModel> SkinnedModel::Deserialize(UUID id)
+	{
+		Ref<SkinnedModel> result;
+		if (AppSettings::is_editor)
+		{
+			std::string model_name = GetNameFromUUID(id);
+			result = LoadSkinnedModel(id, model_name);
+		}
+		else
+		{
+		}
+		return result;
 	}
 
 	

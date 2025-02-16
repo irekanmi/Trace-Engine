@@ -525,6 +525,7 @@ namespace trace {
 				std::string filename = i["Name"].as<std::string>();
 				UUID id = i["UUID"].as<uint64_t>();
 				m_allFilesID[filename] = id;
+				m_allIDNames[id] = filename;
 			}
 
 		}

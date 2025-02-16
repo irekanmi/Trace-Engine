@@ -4,12 +4,14 @@
 #include "core/Enums.h"
 #include "Graphics.h"
 #include "resource/Resource.h"
+#include "resource/Ref.h"
 #include "GHandle.h"
+#include "scene/UUID.h"
 
 namespace trace {
 
 
-	class TRACE_API GTexture : public Resource
+	class GTexture : public Resource
 	{
 
 	public:
@@ -22,6 +24,7 @@ namespace trace {
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
 
+		static Ref<GTexture> Deserialize(UUID id);
 	private:
 		GHandle m_renderHandle;
 		TextureDesc m_desc;

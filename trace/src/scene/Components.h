@@ -15,6 +15,7 @@
 #include "animation/Skeleton.h"
 #include "core/Coretypes.h"
 #include "animation/AnimationSequence.h"
+#include "reflection/TypeRegistry.h"
 
 
 #include <string>
@@ -96,6 +97,8 @@ namespace trace {
 	private:
 		std::string m_tag;
 		StringID m_id;
+
+		ACCESS_CLASS_MEMBERS(TagComponent);
 
 	};
 

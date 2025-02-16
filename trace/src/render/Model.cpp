@@ -1,7 +1,14 @@
 #include "pch.h"
+
+
 #include "Model.h"
-#include "glm/ext.hpp"
 #include "backends/Renderutils.h"
+#include "core/Coretypes.h"
+#include "external_utils.h"
+#include "resource/ModelManager.h"
+
+
+#include "glm/ext.hpp"
 
 namespace trace {
 
@@ -52,6 +59,21 @@ namespace trace {
 		m_indices.clear();
 		RenderFunc::DestroyBuffer(&m_vertexBuffer);
 		RenderFunc::DestroyBuffer(&m_indexBuffer);
+	}
+
+	Ref<Model> Model::Deserialize(UUID id)
+	{
+		Ref<Model> result;
+		if (AppSettings::is_editor)
+		{
+			std::string model_name = GetNameFromUUID(id);
+			result = LoadModel(id, model_name);
+		}
+		else
+		{
+			result = ModelManager::get_instance()->LoadModel_Runtime(id);
+		}
+		return result;
 	}
 
 	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices)

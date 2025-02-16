@@ -2,11 +2,18 @@
 
 #include "glm/glm.hpp"
 #include "scene/UUID.h"
+#include "reflection/TypeRegistry.h"
 
 #include <xhash>
 
 namespace trace {
-	
+	enum class PhyShapeType
+	{
+		None,
+		Box,
+		Sphere,
+		Capsule
+	};
 
 	class PhyShape
 	{
@@ -15,35 +22,29 @@ namespace trace {
 
 		void SetBox(glm::vec3 extents)
 		{
-			type = Type::Box;
+			type = PhyShapeType::Box;
 			box.half_extents = extents;
 		}
 
 		void SetSphere(float radius)
 		{
-			type = Type::Sphere;
+			type = PhyShapeType::Sphere;
 			sphere.radius = radius;
 		}
 
 		void SetCapsule(float radius, float half_height)
 		{
-			type = Type::Capsule;
+			type = PhyShapeType::Capsule;
 			capsule.radius = radius;
 			capsule.half_height = half_height;
 		}
 
 
 
-		enum Type
-		{
-			None,
-			Box,
-			Sphere,
-			Capsule
-		};
+
 
 		glm::vec3 offset;
-		Type type = Type::None;
+		PhyShapeType type = PhyShapeType::None;
 
 		
 	public:
@@ -68,6 +69,7 @@ namespace trace {
 				float half_height;
 			} capsule;
 
+			char data[16];//NOTE: Used by the reflection system to serialize data
 		};
 
 	private:
@@ -75,30 +77,33 @@ namespace trace {
 
 	};
 
+	enum class RigidBodyType
+	{
+		Static,
+		Kinematic,
+		Dynamic
+	};
+
 	class RigidBody
 	{
 
 	public:
-		enum Type
-		{
-			Static,
-			Kinematic,
-			Dynamic
-		};
-
-		Type GetType() { return m_type; }
-		void SetType(Type type) { m_type = type; }
-		void*& GetInternal() { return m_internal; }
 		
+
+		RigidBodyType GetType() { return m_type; }
+		void SetType(RigidBodyType type) { m_type = type; }
+		void*& GetInternal() { return m_internal; }
+
 
 		float mass = 1.0f;
 		float density = 10.0f;
 
 	private:
-		Type m_type = Type::Static;
+		RigidBodyType m_type = RigidBodyType::Static;
 		void* m_internal = nullptr;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(RigidBody);
 
 	};
 

@@ -1,3 +1,5 @@
+#pragma once
+
 
 #include "animation/Animation.h"
 #include "animation/AnimationGraph.h"

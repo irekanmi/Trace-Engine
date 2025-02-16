@@ -2,6 +2,7 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "reflection/TypeRegistry.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -9,7 +10,7 @@
 
 namespace trace {
 
-	class TRACE_API Transform
+	class Transform
 	{
 
 	public:
@@ -73,6 +74,7 @@ namespace trace {
 		bool m_dirty = true;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(Transform);
 
 	};
 

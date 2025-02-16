@@ -145,7 +145,7 @@ namespace trace::Animation {
 		void AddAnimationClip(Ref<AnimationClip> clip);
 		
 	public:
-		static Ref<Graph> Deserialize(const std::string& file_path);
+		static Ref<Graph> Deserialize(UUID id);
 
 	private:
 		std::unordered_map<UUID, Node*> m_nodes;

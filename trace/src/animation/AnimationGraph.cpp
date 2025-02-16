@@ -5,6 +5,8 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 #include "serialize/AnimationsSerializer.h"
+#include "external_utils.h"
+#include "core/Coretypes.h"
 
 bool trace::AnimationGraph::HasAnimationClip(Ref<AnimationClip> clip)
 {
@@ -250,9 +252,24 @@ namespace trace::Animation {
         m_animationDataSet.push_back(clip);
     }
 
-    Ref<Graph> Graph::Deserialize(const std::string& file_path)
+    Ref<Graph> Graph::Deserialize(UUID id)
     {
-        return AnimationsSerializer::DeserializeAnimGraph(file_path);
+        Ref<Graph> result;
+
+        if (AppSettings::is_editor)
+        {
+            std::string file_path = GetPathFromUUID(id).string();
+            if (!file_path.empty())
+            {
+                result = AnimationsSerializer::DeserializeAnimGraph(file_path);
+            }
+        }
+        else
+        {
+
+        }
+
+        return result;
     }
 
 

@@ -32,68 +32,66 @@ namespace trace {
 
 	std::string GetNameFromUUID(UUID uuid)
 	{
-		return "";
+		//TODO: Add Error Handling
+		TraceEditor* editor = TraceEditor::get_instance();
+		return editor->GetContentBrowser()->GetUUIDName()[uuid];
 	}
 
-	bool LoadModel(UUID uuid, std::string& filename, ModelComponent& out_model, YAML::Node& comp)
+	Ref<Model> LoadModel(UUID uuid, std::string& model_name)
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
 		ContentBrowser* content_browser = editor->GetContentBrowser();
 		Importer* importer = editor->GetImporter();
 
-		Ref<Model> model = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
+		Ref<Model> model = ModelManager::get_instance()->GetModel(model_name);
 		std::filesystem::path p = GetPathFromUUID(uuid);
 
 		if (model)
 		{
-			out_model._model = model;
-			return true;
+			return model;
 		}
 		else
 		{
 
-			if (!filename.empty())
+			if (!model_name.empty())
 			{
-				if (filename.empty())
+				if (model_name.empty())
 				{
-					return false;
+					return model;
 				}
-				out_model._model = importer->LoadModel(filename);
-				return true;
+				return importer->LoadModel(model_name);
 			}
 
 		}
-		return false;
+		return model;
 	}
 
-	bool LoadSkinnedModel(UUID uuid, std::string& filename, SkinnedModelRenderer& out_model, YAML::Node& node)
+	Ref<SkinnedModel> LoadSkinnedModel(UUID uuid, std::string& model_name)
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
 		ContentBrowser* content_browser = editor->GetContentBrowser();
 		Importer* importer = editor->GetImporter();
 
-		Ref<SkinnedModel> model = GenericAssetManager::get_instance()->Get<SkinnedModel>(node["Model Name"].as<std::string>());
+		Ref<SkinnedModel> model = GenericAssetManager::get_instance()->Get<SkinnedModel>(model_name);
 
 		if (model)
 		{
-			out_model._model = model;
-			return true;
+			return model;
 		}
 		else
 		{
 
-			if (!filename.empty())
+			if (!model_name.empty())
 			{
-				if (filename.empty())
+				if (model_name.empty())
 				{
-					return false;
+					return model;
 				}
-				out_model._model = importer->LoadSkinnedModel(filename);
-				return true;
+				return importer->LoadSkinnedModel(model_name);
 			}
 
 		}
-		return false;
+		return model;
 	}
 
 	Ref<GTexture> LoadTexture(UUID uuid)
