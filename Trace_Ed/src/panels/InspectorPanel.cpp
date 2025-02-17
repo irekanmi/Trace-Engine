@@ -1369,7 +1369,7 @@ namespace trace {
 						for (auto& i : ins.GetFields())
 						{
 							const std::string& name = i.first;
-							ScriptFieldInstance::ScriptData& data = i.second;
+							ScriptData& data = i.second;
 							switch (data.type)
 							{
 							case ScriptFieldType::String:

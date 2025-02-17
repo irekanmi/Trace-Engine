@@ -89,6 +89,7 @@ namespace trace::Animation {
 		bool m_instanciated = false;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(SequenceInstance);
 
 	};
 

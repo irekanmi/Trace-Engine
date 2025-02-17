@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include "reflection/TypeRegistry.h"
+
 #include <string>
 #include <map>
 #include <unordered_map>
@@ -65,6 +68,13 @@ namespace trace {
 
 	};
 
+	struct ScriptData
+	{
+		char data[16];
+		void* ptr = nullptr;
+		ScriptFieldType type;
+	};
+
 	class ScriptFieldInstance
 	{
 
@@ -98,13 +108,7 @@ namespace trace {
 			memcpy_s(it->second.data, 16, &value, sizeof(T));
 		}
 
-		struct ScriptData
-		{
-			char data[16];
-			void* ptr = nullptr;
-			ScriptFieldType type;
-		};
-
+		
 		std::unordered_map<std::string, ScriptData>& GetFields() { return m_fields; }
 		Script* GetScript() { return m_script; }
 
@@ -116,6 +120,7 @@ namespace trace {
 		Script* m_script = nullptr;
 		
 	private:
+		ACCESS_CLASS_MEMBERS(ScriptFieldInstance);
 
 	protected:
 

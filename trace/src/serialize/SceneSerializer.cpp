@@ -24,9 +24,12 @@
 #include "animation/AnimationPose.h"
 #include "animation/AnimationPoseNode.h"
 #include "core/Utils.h"
+#include "reflection/TypeHash.h"
+#include "reflection/SerializeTypes.h"
 
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 #include <typeindex>
 
 #include "yaml_util.h"
@@ -765,12 +768,8 @@ namespace trace {
 		return true;
 	}
 
-	static void serialize_entity(Entity entity, YAML::Emitter& emit, Scene* scene)
+	static void serialize_entity_scripts(Entity entity, YAML::Emitter& emit, Scene* scene)
 	{
-		emit << YAML::BeginMap;
-		SerializeEntites(entity, emit);
-
-
 		//Scripts ----------------------------------------
 		emit << YAML::Key << "Scripts" << YAML::Value;
 		emit << YAML::BeginSeq;
@@ -918,24 +917,11 @@ namespace trace {
 
 		emit << YAML::EndSeq;
 		// --------------------------------------------------
-
-		emit << YAML::EndMap;
 	}
-	static Entity deserialize_components(Scene* scene, YAML::detail::iterator_value& entity)
-	{
-		UUID uuid = entity["UUID"].as<uint64_t>();
-		UUID parent = 0;
-		if (entity["Parent"])
-		{
-			parent = entity["Parent"].as<uint64_t>();
-		}
-		Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
-		Entity parent_ent = scene->GetEntity(parent);
-		for (auto& i : _deserialize_components)
-		{
-			if (entity[i.first]) i.second(obj, entity);
-		}
 
+	static void deserialize_entity_scripts(Entity obj, Scene* scene, YAML::detail::iterator_value& entity)
+	{
+		UUID uuid = obj.GetID();
 		YAML::Node scripts = entity["Scripts"];
 		if (scripts)
 		{
@@ -1070,6 +1056,34 @@ namespace trace {
 
 			}
 		}
+	}
+
+	static void serialize_entity(Entity entity, YAML::Emitter& emit, Scene* scene)
+	{
+		emit << YAML::BeginMap;
+		SerializeEntites(entity, emit);
+
+
+		serialize_entity_scripts(entity, emit, scene);
+
+		emit << YAML::EndMap;
+	}
+	static Entity deserialize_entity(Scene* scene, YAML::detail::iterator_value& entity)
+	{
+		UUID uuid = entity["UUID"].as<uint64_t>();
+		UUID parent = 0;
+		if (entity["Parent"])
+		{
+			parent = entity["Parent"].as<uint64_t>();
+		}
+		Entity obj = scene->CreateEntity_UUID(uuid, "", parent);
+		Entity parent_ent = scene->GetEntity(parent);
+		for (auto& i : _deserialize_components)
+		{
+			if (entity[i.first]) i.second(obj, entity);
+		}
+
+		deserialize_entity_scripts(obj, scene, entity);
 
 		HierachyComponent& hi = obj.GetComponent<HierachyComponent>();
 		if (entity["Is Enabled"])
@@ -1081,6 +1095,108 @@ namespace trace {
 		return obj;
 	}
 
+	template<typename... Component>
+	void serialize_component_type_id(Entity entity, std::vector<UUID>& components_type_id)
+	{
+
+		([&]() {
+			if (entity.HasComponent<Component>())
+			{
+				components_type_id.emplace_back(UUID(Reflection::TypeID<Component>()));
+			}
+			}(), ...);
+
+
+	}
+
+	template<typename... Component>
+	void serialize_component_type_id(ComponentGroup<Component...>, Entity entity, std::vector<UUID>& components_type_id)
+	{
+		serialize_component_type_id<Component...>(entity, components_type_id);
+	}
+
+	template<typename... Component>
+	void serialize_component_data(Entity entity, YAML::Emitter& emit)
+	{
+
+		([&]() {
+			if (entity.HasComponent<Component>())
+			{
+				Component& comp = entity.GetComponent<Component>();
+				Reflection::Serialize(comp, &emit, nullptr, Reflection::SerializationFormat::YAML);
+			}
+			}(), ...);
+
+
+	}
+
+	template<typename... Component>
+	void serialize_component_data(ComponentGroup<Component...>, Entity entity, YAML::Emitter& emit)
+	{
+		serialize_component_data<Component...>(entity, emit);
+	}
+
+	template<typename... Component>
+	void deserialize_component_data(Entity entity, YAML::detail::iterator_value& data, UUID& component_type_id)
+	{
+
+		([&]() {
+			if (component_type_id == Reflection::TypeID<Component>())
+			{
+				Component& comp = entity.GetOrAddComponent<Component>();
+				Reflection::Deserialize(comp, &data, nullptr, Reflection::SerializationFormat::YAML);
+			}
+			}(), ...);
+
+
+	}
+
+	template<typename... Component>
+	void deserialize_component_data(ComponentGroup<Component...>, Entity entity, YAML::detail::iterator_value& data, UUID& component_type_id)
+	{
+		deserialize_component_data<Component...>(entity, data, component_type_id);
+	}
+
+	static void serialize_entity_components(Entity entity, YAML::Emitter& emit, Scene* scene)
+	{
+		emit << YAML::BeginMap;
+		std::vector<UUID> components_type_id;
+		
+		serialize_component_type_id(AllComponents{}, entity, components_type_id);
+
+		Reflection::Serialize(components_type_id, &emit, nullptr, Reflection::SerializationFormat::YAML);
+
+		serialize_component_data(ComponentGroup<IDComponent, HierachyComponent>{}, entity, emit);
+		serialize_component_data(AllComponents{}, entity, emit);
+
+		serialize_entity_scripts(entity, emit, scene);
+
+		emit << YAML::EndMap;
+	}
+
+	static Entity deserialize_entity_components(Scene* scene, YAML::detail::iterator_value& entity)
+	{
+		std::vector<UUID> components_type_id;
+		Reflection::Deserialize(components_type_id, &entity, nullptr, Reflection::SerializationFormat::YAML);
+
+		IDComponent id;
+		Reflection::Deserialize(id, &entity, nullptr, Reflection::SerializationFormat::YAML);
+		HierachyComponent hi;
+		Reflection::Deserialize(hi, &entity, nullptr, Reflection::SerializationFormat::YAML);
+		Entity obj = scene->CreateEntity_UUID(id._id, "", hi.parent);
+		obj.AddOrReplaceComponent<IDComponent>(id);
+		obj.AddOrReplaceComponent<HierachyComponent>(hi);
+		for (uint32_t i = 0; i < components_type_id.size(); i++)
+		{
+			deserialize_component_data(AllComponents{}, obj, entity, components_type_id[i]);
+		}
+
+		deserialize_entity_scripts(obj, scene, entity);
+
+		return obj;
+	}
+
+	
 
 	bool SceneSerializer::Serialize(Ref<Scene> scene, const std::string& file_path)
 	{
@@ -1095,7 +1211,7 @@ namespace trace {
 		auto process_hierachy = [&](Entity entity, UUID, Scene*)
 		{
 			Entity en(entity, scene.get());
-			serialize_entity(en, emit, scene.get());
+			serialize_entity_components(en, emit, scene.get());
 		};
 
 		scene->ProcessEntitiesByHierachy(process_hierachy, false);
@@ -1104,12 +1220,7 @@ namespace trace {
 
 		emit << YAML::EndMap;
 
-		FileHandle out_handle;
-		if (FileSystem::open_file(file_path, FileMode::WRITE, out_handle))
-		{
-			FileSystem::writestring(out_handle, emit.c_str());
-			FileSystem::close_file(out_handle);
-		}
+		YAML::save_emitter_data(emit, file_path);
 
 		return true;
 	}
@@ -1169,17 +1280,8 @@ namespace trace {
 
 	Ref<Scene> SceneSerializer::Deserialize(const std::string& file_path)
 	{
-		FileHandle in_handle;
-		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
-		{
-			TRC_ERROR("Unable to open file {}", file_path);
-			return Ref<Scene>();
-		}
-		std::string file_data;
-		FileSystem::read_all_lines(in_handle, file_data); // opening file
-		FileSystem::close_file(in_handle);
-
-		YAML::Node data = YAML::Load(file_data);
+		YAML::Node data;
+		YAML::load_yaml_data(file_path, data);
 		if (!data["Trace Version"] || !data["Scene Name"])
 		{
 			TRC_ERROR("These file is not a valid scene file {}", file_path);
@@ -1202,10 +1304,10 @@ namespace trace {
 		{
 			for (auto entity : entities)
 			{
-				deserialize_components(scene.get(), entity);
+				deserialize_entity_components(scene.get(), entity);
 			}
 		}
-		
+
 		if (AppSettings::is_editor)
 		{
 			scene->ApplyPrefabChangesOnSceneLoad();
@@ -1256,7 +1358,7 @@ namespace trace {
 		{
 			for (auto entity : handle)
 			{
-				obj =  deserialize_components(scene, entity);
+				obj =  deserialize_entity(scene, entity);
 			}
 		}
 
@@ -1265,7 +1367,7 @@ namespace trace {
 		{
 			for (auto entity : entities)
 			{
-				deserialize_components(scene, entity);
+				deserialize_entity(scene, entity);
 			}
 		}
 

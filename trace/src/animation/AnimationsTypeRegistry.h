@@ -199,4 +199,9 @@ namespace trace::Animation {
 		REGISTER_MEMBER(GraphInstance, m_skeletonInstance);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(SequenceInstance)
+		REGISTER_TYPE(SequenceInstance);
+		REGISTER_MEMBER(SequenceInstance, m_sequence);
+	END_REGISTER_CLASS;
+
 }
