@@ -34,8 +34,14 @@ namespace trace {
 			return false;
 		}
 
-		if (!std::filesystem::exists(out_path / "Meta")) std::filesystem::create_directory(out_path / "Meta");
-		if (!std::filesystem::exists(out_path / "Data")) std::filesystem::create_directory(out_path / "Data");
+		if (!std::filesystem::exists(out_path / "Meta"))
+		{
+			std::filesystem::create_directory(out_path / "Meta");
+		}
+		if (!std::filesystem::exists(out_path / "Data"))
+		{
+			std::filesystem::create_directory(out_path / "Data");
+		}
 		int bin_id;
 
 		/*

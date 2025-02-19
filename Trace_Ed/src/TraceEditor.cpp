@@ -1229,13 +1229,11 @@ namespace trace {
 		}
 		case KEY_G:
 		{
-
 			break;
 		}
 
 		case KEY_H:
 		{
-
 			break;
 		}
 		case KEY_SPACE:

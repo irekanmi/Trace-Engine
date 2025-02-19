@@ -630,6 +630,18 @@ namespace trace {
 
 	bool Scene::InitializeSceneComponents()
 	{
+		
+
+		for (UUID& id : m_rootNode->children)
+		{
+			Entity entity = GetEntity(id);
+			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+			if (hi.is_enabled)
+			{
+				EnableEntity(entity);
+			}
+		}
+
 		auto animation_graphs = m_registry.view<AnimationGraphController>();
 		for (auto i : animation_graphs)
 		{
@@ -640,14 +652,14 @@ namespace trace {
 
 		}
 
-		for (UUID& id : m_rootNode->children)
+		auto skinned_models = m_registry.view<SkinnedModelRenderer>();
+		for (auto i : skinned_models)
 		{
-			Entity entity = GetEntity(id);
-			HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-			if (hi.is_enabled)
-			{
-				EnableEntity(entity);
-			}
+			auto [model] = skinned_models.get(i);
+			Entity entity(i, this);
+
+			model.SetSkeleton(model.runtime_skeleton.GetSkeleton(), this, entity.GetID());
+
 		}
 
 		return true;

@@ -1,20 +1,22 @@
 #pragma once
 
+#include "serialize/DataStream.h"
+
 #include <stdint.h>
 
 namespace trace {
 
-	class MemoryStream
+	class MemoryStream : public DataStream
 	{
 
 	public:
-		MemoryStream(void* data, uint32_t size,bool read = true);
+		MemoryStream(void* data, uint32_t size, bool read = true);
 		~MemoryStream();
 
-		void Read(void* data, uint32_t size);
-		void Write(void* data, uint32_t size);
-		void SetPosition(uint32_t pos);
-		uint32_t GetPosition() { return m_pos; }
+		virtual void Read(void* data, uint32_t size) override;
+		virtual void Write(void* data, uint32_t size) override;
+		virtual void SetPosition(uint32_t pos) override;
+		virtual uint32_t GetPosition() override { return m_pos; }
 		char* GetData() { return m_data; }
 
 		template<typename T>

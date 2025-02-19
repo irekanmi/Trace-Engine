@@ -919,6 +919,162 @@ namespace trace {
 		// --------------------------------------------------
 	}
 
+	static void serialize_entity_scripts_binary(Entity entity, DataStream* stream, Scene* scene)
+	{
+		//Scripts ----------------------------------------
+		ScriptRegistry& script_registry = scene->GetScriptRegistry();
+
+		uint32_t count = 0;
+		script_registry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
+			{
+				count++;
+			}
+		);
+		stream->Write<uint32_t>(count);
+
+		script_registry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
+			{
+				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+				auto& fields_instances = script_registry.GetFieldInstances();
+				auto& field_manager = fields_instances[script];
+				auto field_it = field_manager.find(uuid);
+
+				uint32_t script_str_count = static_cast<uint32_t>(script->GetScriptName().size() + 1);
+				stream->Write<uint32_t>(script_str_count);
+				stream->Write((void*)script->GetScriptName().data(), script_str_count);
+
+				bool has_fields = !(field_it == field_manager.end());
+				uint32_t field_count = 0;
+				if (!has_fields)
+				{
+					TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->GetScriptName());
+					stream->Write<uint32_t>(field_count);
+				}
+				if (has_fields)
+				{
+					ScriptFieldInstance& ins = field_manager[uuid];
+					field_count = static_cast<uint32_t>(ins.GetFields().size());
+					stream->Write<uint32_t>(field_count);
+					for (auto& [name, field] : ins.GetFields())
+					{
+						uint32_t str_count = static_cast<uint32_t>(name.size() + 1);
+						stream->Write<uint32_t>(str_count);
+						stream->Write((void*)name.data(), str_count);
+						switch (field.type)
+						{
+						case ScriptFieldType::String:
+						{
+							break;
+						}
+						case ScriptFieldType::Bool:
+						{
+							bool data;
+							ins.GetValue(name, data);
+							stream->Write<bool>(data);
+							break;
+						}
+						case ScriptFieldType::Byte:
+						{
+							char data;
+							ins.GetValue(name, data);
+							stream->Write<char>(data);
+							break;
+						}
+						case ScriptFieldType::Double:
+						{
+							double data;
+							ins.GetValue(name, data);
+							stream->Write<double>(data);
+							break;
+						}
+						case ScriptFieldType::Char:
+						{
+							char data;
+							ins.GetValue(name, data);
+							stream->Write<char>(data);
+							break;
+						}
+						case ScriptFieldType::Float:
+						{
+							float data;
+							ins.GetValue(name, data);
+							stream->Write<float>(data);
+							break;
+						}
+						case ScriptFieldType::Int16:
+						{
+							int16_t data;
+							ins.GetValue(name, data);
+							stream->Write<int16_t>(data);
+							break;
+						}
+						case ScriptFieldType::Int32:
+						{
+							int32_t data;
+							ins.GetValue(name, data);
+							stream->Write<int32_t>(data);
+							break;
+						}
+						case ScriptFieldType::Int64:
+						{
+							int64_t data;
+							ins.GetValue(name, data);
+							stream->Write<int64_t>(data);
+							break;
+						}
+						case ScriptFieldType::UInt16:
+						{
+							uint16_t data;
+							ins.GetValue(name, data);
+							stream->Write<uint16_t>(data);
+							break;
+						}
+						case ScriptFieldType::UInt32:
+						{
+							uint32_t data;
+							ins.GetValue(name, data);
+							stream->Write<uint32_t>(data);
+							break;
+						}
+						case ScriptFieldType::UInt64:
+						{
+							uint64_t data;
+							ins.GetValue(name, data);
+							stream->Write<uint64_t>(data);
+							break;
+						}
+						case ScriptFieldType::Vec2:
+						{
+							glm::vec2 data;
+							ins.GetValue(name, data);
+							stream->Write<glm::vec2>(data);
+							break;
+						}
+						case ScriptFieldType::Vec3:
+						{
+							glm::vec3 data;
+							ins.GetValue(name, data);
+							stream->Write<glm::vec3>(data);
+							break;
+						}
+						case ScriptFieldType::Vec4:
+						{
+							glm::vec4 data;
+							ins.GetValue(name, data);
+							stream->Write<glm::vec4>(data);
+							break;
+						}
+
+						}
+
+					}
+				}
+				
+			});
+
+		// --------------------------------------------------
+	}
+
 	static void deserialize_entity_scripts(Entity obj, Scene* scene, YAML::detail::iterator_value& entity)
 	{
 		UUID uuid = obj.GetID();
@@ -1058,6 +1214,171 @@ namespace trace {
 		}
 	}
 
+	static void deserialize_entity_scripts_binary(Entity obj, Scene* scene, DataStream* stream)
+	{
+		UUID uuid = obj.GetID();
+		uint32_t script_count = 0;
+		stream->Read<uint32_t>(script_count);
+		if (script_count > 0)
+		{
+			std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
+
+			for (uint32_t i = 0; i < script_count; i++)
+			{
+				uint32_t script_str_count = 0;
+				std::string script_name;
+				stream->Read<uint32_t>(script_str_count);
+				script_name.reserve(script_str_count);
+				script_name.resize(script_str_count - 1);
+				stream->Read((void*)script_name.data(), script_str_count);
+				auto it = g_Scripts.find(script_name);
+				if (it == g_Scripts.end())
+				{
+					TRC_ASSERT(false, "Script:{} does not exist in the assembly", script_name);
+					continue;
+				}
+				obj.AddScript(script_name);
+
+				ScriptRegistry& script_registry = scene->GetScriptRegistry();
+
+				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
+				auto& fields_instances = script_registry.GetFieldInstances();
+				auto& field_manager = fields_instances[&it->second];
+				auto field_it = field_manager.find(uuid);
+				if (field_it == field_manager.end())
+				{
+					ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
+					field_ins.Init(&it->second);
+				}
+				ScriptFieldInstance& ins = field_manager[obj.GetID()];
+				uint32_t field_count = 0;
+				stream->Read<uint32_t>(field_count);
+				for (uint32_t i = 0; i < field_count; i++)
+				{
+					uint32_t field_str_count = 0;
+					std::string field_name;
+					stream->Read<uint32_t>(field_str_count);
+					field_name.reserve(field_str_count);
+					field_name.resize(field_str_count - 1);
+					stream->Read((void*)field_name.data(), field_str_count);
+					auto f_it = ins.GetFields().find(field_name);
+					if (f_it == ins.GetFields().end())
+					{
+						TRC_ASSERT(false, "Script Field:{} does not exist in the Script Class", field_name);
+						continue;
+					}
+					switch (f_it->second.type)
+					{
+					case ScriptFieldType::String:
+					{
+						break;
+					}
+					case ScriptFieldType::Bool:
+					{
+						bool data;
+						stream->Read<bool>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Byte:
+					{
+						char data;
+						stream->Read<char>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Double:
+					{
+						double data;
+						stream->Read<double>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Char:
+					{
+						char data;
+						stream->Read<char>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Float:
+					{
+						float data;
+						stream->Read<float>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Int16:
+					{
+						int16_t data;
+						stream->Read<int16_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Int32:
+					{
+						int32_t data;
+						stream->Read<int32_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Int64:
+					{
+						int64_t data;
+						stream->Read<int64_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::UInt16:
+					{
+						uint16_t data;
+						stream->Read<uint16_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::UInt32:
+					{
+						uint32_t data;
+						stream->Read<uint32_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::UInt64:
+					{
+						uint64_t data;
+						stream->Read<uint64_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Vec2:
+					{
+						glm::vec2 data;
+						stream->Read<glm::vec2>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Vec3:
+					{
+						glm::vec3 data;
+						stream->Read<glm::vec3>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Vec4:
+					{
+						glm::vec4 data;
+						stream->Read<glm::vec4>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					}
+				}
+
+
+			}
+		}
+	}
+
 	static void serialize_entity(Entity entity, YAML::Emitter& emit, Scene* scene)
 	{
 		emit << YAML::BeginMap;
@@ -1137,6 +1458,27 @@ namespace trace {
 	}
 
 	template<typename... Component>
+	void serialize_component_data(Entity entity, DataStream* stream)
+	{
+
+		([&]() {
+			if (entity.HasComponent<Component>())
+			{
+				Component& comp = entity.GetComponent<Component>();
+				Reflection::Serialize(comp, stream, nullptr, Reflection::SerializationFormat::BINARY);
+			}
+			}(), ...);
+
+
+	}
+
+	template<typename... Component>
+	void serialize_component_data(ComponentGroup<Component...>, Entity entity, DataStream* stream)
+	{
+		serialize_component_data<Component...>(entity, stream);
+	}
+
+	template<typename... Component>
 	void deserialize_component_data(Entity entity, YAML::detail::iterator_value& data, UUID& component_type_id)
 	{
 
@@ -1157,6 +1499,27 @@ namespace trace {
 		deserialize_component_data<Component...>(entity, data, component_type_id);
 	}
 
+	template<typename... Component>
+	void deserialize_component_data(Entity entity, DataStream* stream, UUID& component_type_id)
+	{
+
+		([&]() {
+			if (component_type_id == Reflection::TypeID<Component>())
+			{
+				Component& comp = entity.GetOrAddComponent<Component>();
+				Reflection::Deserialize(comp, stream, nullptr, Reflection::SerializationFormat::BINARY);
+			}
+			}(), ...);
+
+
+	}
+
+	template<typename... Component>
+	void deserialize_component_data(ComponentGroup<Component...>, Entity entity, DataStream* stream, UUID& component_type_id)
+	{
+		deserialize_component_data<Component...>(entity, stream, component_type_id);
+	}
+
 	static void serialize_entity_components(Entity entity, YAML::Emitter& emit, Scene* scene)
 	{
 		emit << YAML::BeginMap;
@@ -1172,6 +1535,21 @@ namespace trace {
 		serialize_entity_scripts(entity, emit, scene);
 
 		emit << YAML::EndMap;
+	}
+
+	static void serialize_entity_components_binary(Entity entity, DataStream* stream, Scene* scene)
+	{
+		std::vector<UUID> components_type_id;
+
+		serialize_component_type_id(AllComponents{}, entity, components_type_id);
+
+		Reflection::Serialize(components_type_id, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		serialize_component_data(ComponentGroup<IDComponent, HierachyComponent>{}, entity, stream);
+		serialize_component_data(AllComponents{}, entity, stream);
+
+		serialize_entity_scripts_binary(entity, stream, scene);
+
 	}
 
 	static Entity deserialize_entity_components(Scene* scene, YAML::detail::iterator_value& entity)
@@ -1192,6 +1570,28 @@ namespace trace {
 		}
 
 		deserialize_entity_scripts(obj, scene, entity);
+
+		return obj;
+	}
+
+	static Entity deserialize_entity_components_binary(Scene* scene, DataStream* stream)
+	{
+		std::vector<UUID> components_type_id;
+		Reflection::Deserialize(components_type_id, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		IDComponent id;
+		Reflection::Deserialize(id, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		HierachyComponent hi;
+		Reflection::Deserialize(hi, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Entity obj = scene->CreateEntity_UUID(id._id, "", hi.parent);
+		obj.AddOrReplaceComponent<IDComponent>(id);
+		obj.AddOrReplaceComponent<HierachyComponent>(hi);
+		for (uint32_t i = 0; i < components_type_id.size(); i++)
+		{
+			deserialize_component_data(AllComponents{}, obj, stream, components_type_id[i]);
+		}
+
+		deserialize_entity_scripts_binary(obj, scene, stream);
 
 		return obj;
 	}
@@ -1229,7 +1629,7 @@ namespace trace {
 	static void SerializePrefabEntity(Entity entity, YAML::Emitter& emit)
 	{
 
-		serialize_entity(entity, emit, entity.GetScene());
+		serialize_entity_components(entity, emit, entity.GetScene());
 
 		for(auto& i : entity.GetComponent<HierachyComponent>().children)
 		{
@@ -1252,7 +1652,7 @@ namespace trace {
 
 		Scene* scene = PrefabManager::get_instance()->GetScene();
 		Entity handle = scene->GetEntity(prefab->GetHandle());
-		serialize_entity(handle, emit, handle.GetScene());
+		serialize_entity_components(handle, emit, handle.GetScene());
 
 		emit << YAML::EndSeq;
 
@@ -1268,12 +1668,7 @@ namespace trace {
 
 		emit << YAML::EndMap;
 
-		FileHandle out_handle;
-		if (FileSystem::open_file(file_path, FileMode::WRITE, out_handle))
-		{
-			FileSystem::writestring(out_handle, emit.c_str());
-			FileSystem::close_file(out_handle);
-		}
+		YAML::save_emitter_data(emit, file_path);
 
 		return true;
 	}
@@ -1322,17 +1717,8 @@ namespace trace {
 	{
 		Ref<Prefab> result;
 
-		FileHandle in_handle;
-		if (!FileSystem::open_file(file_path, FileMode::READ, in_handle))
-		{
-			TRC_ERROR("Unable to open file {}", file_path);
-			return result;
-		}
-		std::string file_data;
-		FileSystem::read_all_lines(in_handle, file_data); // opening file
-		FileSystem::close_file(in_handle);
-
-		YAML::Node data = YAML::Load(file_data);
+		YAML::Node data;
+		YAML::load_yaml_data(file_path, data);
 		if (!data["Trace Version"] || !data["Prefab Name"])
 		{
 			TRC_ERROR("These file is not a valid Prefab file {}", file_path);
@@ -1358,7 +1744,7 @@ namespace trace {
 		{
 			for (auto entity : handle)
 			{
-				obj =  deserialize_entity(scene, entity);
+				obj = deserialize_entity_components(scene, entity);
 			}
 		}
 
@@ -1367,7 +1753,7 @@ namespace trace {
 		{
 			for (auto entity : entities)
 			{
-				deserialize_entity(scene, entity);
+				deserialize_entity_components(scene, entity);
 			}
 		}
 
@@ -1554,6 +1940,58 @@ namespace trace {
 		delete[] _data;//TODO: Use custom allocator
 
 		return true;
+	}
+
+	bool SceneSerializer::Serialize(Ref<Scene> scene, FileStream& stream)
+	{
+		uint32_t script_str_count = static_cast<uint32_t>(scene->GetName().size() + 1);
+		stream.Write<uint32_t>(script_str_count);
+		stream.Write((void*)scene->GetName().data(), script_str_count);
+
+		uint32_t pos_1 = stream.GetPosition();
+		uint32_t entity_count = 0;
+		stream.Write<uint32_t>(entity_count);
+		auto process_hierachy = [&](Entity entity, UUID, Scene*)
+		{
+			Entity en(entity, scene.get());
+			serialize_entity_components_binary(en, &stream, scene.get());
+			entity_count++;
+		};
+
+		scene->ProcessEntitiesByHierachy(process_hierachy, false);
+		uint32_t pos_2 = stream.GetPosition();
+		stream.SetPosition(pos_1);
+		stream.Write<uint32_t>(entity_count);
+		stream.SetPosition(pos_2);
+
+		return true;
+	}
+
+	Ref<Scene> SceneSerializer::Deserialize(FileStream& stream)
+	{
+		uint32_t scene_str_count = 0;
+		std::string scene_name;
+		stream.Read<uint32_t>(scene_str_count);
+		scene_name.reserve(scene_str_count);
+		scene_name.resize(scene_str_count - 1);
+		stream.Read((void*)scene_name.data(), scene_str_count);
+		Ref<Scene> scene = SceneManager::get_instance()->GetScene(scene_name);
+		if (scene)
+		{
+			TRC_WARN("{} has already been loaded", scene_name);
+			return scene;
+		}
+		scene = SceneManager::get_instance()->CreateScene(scene_name);
+		uint32_t entity_count = 0;
+		stream.Read<uint32_t>(entity_count);
+		for (uint32_t i = 0; i < entity_count; i++)
+		{
+			deserialize_entity_components_binary(scene.get(), &stream);
+		}
+
+		scene->InitializeSceneComponents();
+
+		return scene;
 	}
 
 	/*
