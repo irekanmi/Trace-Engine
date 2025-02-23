@@ -9,6 +9,7 @@
 #include "render/GShader.h"
 #include "backends/Renderutils.h"
 #include "render/Renderer.h"
+#include "reflection/SerializeTypes.h"
 
 
 #include "yaml_util.h"
@@ -120,6 +121,48 @@ namespace trace {
 			FileSystem::writestring(out_handle, emit.c_str());
 			FileSystem::close_file(out_handle);
 		}
+
+		return true;
+	}
+
+	bool PipelineSerializer::Serialize(Ref<GPipeline> pipeline, DataStream* stream)
+	{
+		std::string pipeline_name = pipeline->GetName();
+		Reflection::Serialize(pipeline_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		uint32_t pip_type = pipeline->GetPipelineType();
+		stream->Write<uint32_t>(pip_type);
+		PipelineStateDesc ds = pipeline->GetDesc();
+		Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
+		Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
+		uint64_t vertex_shader_id = GetUUIDFromName(ds.vertex_shader->GetName());
+		uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
+		stream->Write<uint64_t>(vertex_shader_id);
+		stream->Write<uint64_t>(pixel_shader_id);
+
+		uint32_t input_layout_stride = ds.input_layout.stride;
+		stream->Write<uint32_t>(input_layout_stride);
+		stream->Write<InputClassification>(ds.input_layout.input_class);
+		int32_t input_layout_element_count = static_cast<int32_t>(ds.input_layout.elements.size());
+		stream->Write<int32_t>(input_layout_element_count);
+		stream->Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+
+		stream->Write<RasterizerState>(ds.rasteriser_state);
+
+		stream->Write<DepthStencilState>(ds.depth_sten_state);
+
+		stream->Write<ColorBlendState>(ds.blend_state);
+
+		stream->Write<PRIMITIVETOPOLOGY>(ds.topology);
+
+		stream->Write<Viewport>(ds.view_port);
+
+		stream->Write<uint32_t>(ds.subpass_index);
+
+
+		std::string pass_name = Renderer::get_instance()->GetRenderPassName(ds.render_pass);
+		Reflection::Serialize(pass_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
 
 		return true;
 	}
@@ -240,6 +283,32 @@ namespace trace {
 		return true;
 	}
 
+	bool PipelineSerializer::SerializeShader(Ref<GShader> shader, DataStream* stream)
+	{
+		std::string shader_name = shader->GetName();
+		Reflection::Serialize(shader_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		int32_t data_index_count = static_cast<int32_t>(shader->GetDataIndex().size());
+		stream->Write(data_index_count);
+
+		for (auto& i : shader->GetDataIndex())
+		{
+			Reflection::Serialize(i.first, stream, nullptr, Reflection::SerializationFormat::BINARY);
+			stream->Write(i.second);
+
+		}
+
+		int shader_stage = shader->GetShaderStage();
+		stream->Write(shader_stage);
+		int32_t shader_size = static_cast<int32_t>(shader->GetCode().size() * sizeof(uint32_t));
+		stream->Write(shader_size);
+
+		stream->Write(shader->GetCode().data(), shader_size);
+
+
+		return true;
+	}
+
 	/*
 	* Shader
 	*  '-> data_index_count
@@ -309,6 +378,49 @@ namespace trace {
 		stream.Read(out_code.data(), shader_size);
 
 		return true;
+	}
+
+	Ref<GShader> PipelineSerializer::DeserializeShader(DataStream* stream)
+	{
+		Ref<GShader> result;
+		std::string shader_name;
+		Reflection::Deserialize(shader_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		result = ShaderManager::get_instance()->GetShader(shader_name);
+		if (result)
+		{
+			TRC_WARN("{} shader has already been loaded", shader_name);
+			return result;
+		}
+		std::vector<uint32_t> code;
+		std::vector<std::pair<std::string, int>> data_index;
+		int32_t data_index_count = 0;
+		stream->Read(data_index_count);
+
+		for (int32_t i = 0; i < data_index_count; i++)
+		{
+			std::string name;
+			Reflection::Deserialize(name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+			int index_value = -1;
+			stream->Read(index_value);
+
+			data_index.push_back(std::make_pair(name, index_value));
+
+		}
+
+		int shader_stage = -1;
+		stream->Read(shader_stage);
+
+		int shader_size = 0;
+		stream->Read(shader_size);
+
+		code.resize(shader_size / sizeof(uint32_t));
+
+		stream->Read(code.data(), shader_size);
+
+		result = ShaderManager::get_instance()->CreateShader(code, data_index, shader_name, (ShaderStage)shader_stage);
+
+		return result;
 	}
 
 	Ref<GPipeline> PipelineSerializer::Deserialize(const std::string& file_path)
@@ -427,6 +539,69 @@ namespace trace {
 		if (!result)
 		{
 			TRC_ERROR("Unable to create pipeline -> name : {}, path : {}", pipeline_name, file_path);
+		}
+
+		return result;
+	}
+
+	Ref<GPipeline> PipelineSerializer::Deserialize(DataStream* stream)
+	{
+		std::string pipeline_name;
+		Reflection::Deserialize(pipeline_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		Ref<GPipeline> result;
+
+		result = PipelineManager::get_instance()->GetPipeline(pipeline_name);
+		if (result)
+		{
+			TRC_WARN("{} has already been loaded", pipeline_name);
+			return result;
+		}
+
+		uint32_t pip_type;
+		stream->Read<uint32_t>(pip_type);
+
+		UUID vert_id = 0;
+		stream->Read<UUID>(vert_id);
+		UUID frag_id = 0;
+		stream->Read<UUID>(frag_id);
+		PipelineStateDesc desc;
+		desc.vertex_shader = ShaderManager::get_instance()->LoadShader_Runtime(vert_id).get();
+		desc.pixel_shader = ShaderManager::get_instance()->LoadShader_Runtime(frag_id).get();
+
+		stream->Read<uint32_t>(desc.input_layout.stride);
+		stream->Read<InputClassification>(desc.input_layout.input_class);
+		int input_layout_element_count = 0;
+		stream->Read<int>(input_layout_element_count);
+		desc.input_layout.elements.resize(input_layout_element_count);
+		stream->Read(desc.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+
+		stream->Read<RasterizerState>(desc.rasteriser_state);
+
+		stream->Read<DepthStencilState>(desc.depth_sten_state);
+
+		stream->Read<ColorBlendState>(desc.blend_state);
+
+		stream->Read<PRIMITIVETOPOLOGY>(desc.topology);
+
+		stream->Read<Viewport>(desc.view_port);
+
+		stream->Read<uint32_t>(desc.subpass_index);
+
+
+		std::string pass_name;
+		Reflection::Deserialize(pass_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		desc.render_pass = Renderer::get_instance()->GetRenderPass(pass_name);
+
+		ShaderResources s_res = {};
+		ShaderParser::generate_shader_resources(desc.vertex_shader, s_res);
+		ShaderParser::generate_shader_resources(desc.pixel_shader, s_res);
+		desc.resources = s_res;
+
+		result = PipelineManager::get_instance()->CreatePipeline(desc, pipeline_name, false);
+		if (result)
+		{
+			result->SetPipelineType(pip_type);
 		}
 
 		return result;

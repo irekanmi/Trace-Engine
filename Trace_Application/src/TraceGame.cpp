@@ -55,7 +55,7 @@ namespace trace {
 		m_currentScene->OnStart();
 		m_currentScene->OnScriptStart();
 
-		m_currentScene->OnViewportChange(Renderer::get_instance()->GetFrameWidth(), Renderer::get_instance()->GetFrameHeight());
+		m_currentScene->OnViewportChange(static_cast<float>(Renderer::get_instance()->GetFrameWidth()), static_cast<float>(Renderer::get_instance()->GetFrameHeight()));
 	}
 
 	void TraceGame::Update(float deltaTime)
@@ -111,7 +111,7 @@ namespace trace {
 			trace::WindowResize* wnd = reinterpret_cast<trace::WindowResize*>(p_event);
 			if (m_currentScene)
 			{
-				m_currentScene->OnViewportChange(wnd->GetWidth(), wnd->GetHeight());
+				m_currentScene->OnViewportChange(static_cast<float>(wnd->GetWidth()), static_cast<float>(wnd->GetHeight()));
 			}
 
 			break;

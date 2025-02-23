@@ -26,6 +26,7 @@ namespace trace {
 		Ref<GShader> GetShader(const std::string& name);
 		Ref<GShader> CreateShader(const std::string& name, ShaderStage shader_stage);
 		Ref<GShader> CreateShader_(const std::string& path, ShaderStage shader_stage);
+		Ref<GShader> CreateShader(std::vector<uint32_t>& code, std::vector<std::pair<std::string, int>>& data_index, const std::string& shader_name, ShaderStage shader_stage);
 		void UnloadShader(Resource* res);
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{

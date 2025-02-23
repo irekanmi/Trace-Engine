@@ -104,6 +104,19 @@ namespace trace {
 			return result;
 		}
 
+		template<typename Component>
+		void IterateComponent(std::function<void(Entity)> callback)
+		{
+			auto comp_group = m_registry.view<Component>();
+			for (auto i : comp_group)
+			{
+				auto [comp] = comp_group.get(i);
+				Entity entity(i, this);
+				callback(entity);
+
+			}
+		}
+
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
 
 	private:

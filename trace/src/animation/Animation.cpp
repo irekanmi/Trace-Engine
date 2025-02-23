@@ -6,6 +6,7 @@
 #include "serialize/AnimationsSerializer.h"
 #include "core/Coretypes.h"
 #include "external_utils.h"
+#include "resource/AnimationsManager.h"
 
 namespace trace {
 
@@ -55,10 +56,15 @@ namespace trace {
 		}
 		else
 		{
-
+			return AnimationsManager::get_instance()->LoadClip_Runtime(id);
 		}
 
 		return result;
+	}
+
+	Ref<AnimationClip> AnimationClip::Deserialize(DataStream* stream)
+	{
+		return AnimationsSerializer::DeserializeAnimationClip(stream);
 	}
 
 }

@@ -123,8 +123,8 @@ namespace trace {
 
 		m_allAssets.pipelines.emplace("gbuffer_pipeline");
 
-		/*SerializationTest();
-		DeserializationTest();*/
+		//SerializationTest();
+		//DeserializationTest();
 
 		return true;
 	}
@@ -1229,6 +1229,7 @@ namespace trace {
 		}
 		case KEY_G:
 		{
+			
 			break;
 		}
 

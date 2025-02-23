@@ -1,8 +1,9 @@
 
-#include "../src/TraceGame.h"
-#include "serialize/yaml_util.h"
 #include "render/GTexture.h"
 #include "resource/Ref.h"
+#include "scene/UUID.h"
+#include "render/Model.h"
+#include "render/SkinnedModel.h"
 
 namespace trace {
 
@@ -23,9 +24,14 @@ namespace trace {
 		return id_names[uuid];
 	}
 
-	bool LoadModel(UUID uuid, ModelComponent& out_model, YAML::Node& node)
+	Ref<Model> LoadModel(UUID uuid, std::string& model_name)
 	{
-		return false;
+		return Ref<Model>();
+	}
+
+	Ref<SkinnedModel> LoadSkinnedModel(UUID uuid, std::string& model_name)
+	{
+		return Ref<SkinnedModel>();
 	}
 
 	Ref<GTexture> LoadTexture(UUID uuid)

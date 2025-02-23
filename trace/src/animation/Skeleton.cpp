@@ -8,6 +8,7 @@
 #include "core/Utils.h"
 #include "core/Coretypes.h"
 #include "external_utils.h"
+#include "resource/GenericAssetManager.h"
 
 namespace trace::Animation {
 	bool Skeleton::Create(const std::string& name, const std::string& root_node, std::vector<Bone>& bones)
@@ -89,10 +90,15 @@ namespace trace::Animation {
 		}
 		else
 		{
-
+			return GenericAssetManager::get_instance()->Load_Runtime<Skeleton>(id);
 		}
 
 		return result;
+	}
+
+	Ref<Skeleton> Skeleton::Deserialize(DataStream* stream)
+	{
+		return AnimationsSerializer::DeserializeSkeleton(stream);
 	}
 
 

@@ -4,7 +4,8 @@
 #include "serialize/yaml_util.h"
 #include "render/GTexture.h"
 #include "resource/Ref.h"
-#include "scene/Components.h"
+#include "render/SkinnedModel.h"
+#include "render/Model.h"
 
 
 #include <filesystem>

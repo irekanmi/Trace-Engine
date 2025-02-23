@@ -8,6 +8,7 @@
 #include "backends/Renderutils.h"
 #include "scene/UUID.h"
 #include "external_utils.h"
+#include "reflection/SerializeTypes.h"
 
 
 #include "glm/glm.hpp"
@@ -160,140 +161,127 @@ namespace trace {
 	*    '-> value_size
 	*    '-> value_data
 	*/
-	bool MaterialSerializer::Serialize(Ref<MaterialInstance> material, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	bool MaterialSerializer::Serialize(Ref<MaterialInstance> material, DataStream* stream)
 	{
 		if (!material)
 		{
 			TRC_WARN("Pass in a valid material, Function -> {}", __FUNCTION__);
 			return false;
 		}
+		
+		std::string material_name = material->GetName();
+		Reflection::Serialize(material_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-
-		UUID id = GetUUIDFromName(material->GetName());
-		auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-			{
-				return i.first == id;
-			});
-
-		if (it == map.end())
+		uint64_t pipeline_id = GetUUIDFromName(material->GetRenderPipline()->GetName());
+		stream->Write<uint64_t>(pipeline_id);
+		uint32_t data_count = static_cast<uint32_t>(material->GetMaterialData().size());
+		stream->Write<uint32_t>(data_count);
+		auto lambda = [](DataStream* stream, trace::ShaderData type, std::any& dst)
 		{
-			AssetHeader ast_h;
-			ast_h.offset = stream.GetPosition();
-			uint64_t pipeline_id = GetUUIDFromName(material->GetRenderPipline()->GetName());
-			stream.Write<uint64_t>(pipeline_id);
-			uint32_t data_count = static_cast<uint32_t>(material->GetMaterialData().size());
-			stream.Write<uint32_t>(data_count);
-			auto lambda = [](FileStream& stream, trace::ShaderData type, std::any& dst)
+
+			switch (type)
 			{
-				
-				switch (type)
-				{
-				case trace::ShaderData::CUSTOM_DATA_BOOL:
-				{
-					bool* data = &std::any_cast<bool&>(dst);
-					uint16_t data_size = sizeof(bool);
-					stream.Write(data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_FLOAT:
-				{
-					float* data = &std::any_cast<float&>(dst);
-					uint16_t data_size = sizeof(float);
-					stream.Write(data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_INT:
-				{
-					int* data = &std::any_cast<int&>(dst);
-					uint16_t data_size = sizeof(int);
-					stream.Write(data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_IVEC2:
-				{
-					glm::ivec2& data = std::any_cast<glm::ivec2&>(dst);
-					uint16_t data_size = sizeof(glm::ivec2);
-					stream.Write(&data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_IVEC3:
-				{
-					glm::ivec3& data = std::any_cast<glm::ivec3&>(dst);
-					uint16_t data_size = sizeof(glm::ivec3);
-					stream.Write(&data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_IVEC4:
-				{
-					glm::ivec4* data = &std::any_cast<glm::ivec4&>(dst);
-					uint16_t data_size = sizeof(glm::ivec4);
-					stream.Write(&data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_MAT2:
-				{
-					glm::mat2& data = std::any_cast<glm::mat2&>(dst);
-					TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_MAT3:
-				{
-					glm::mat3& data = std::any_cast<glm::mat3&>(dst);
-					TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_MAT4:
-				{
-					glm::mat4& data = std::any_cast<glm::mat4&>(dst);
-					TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_TEXTURE:
-				{
-					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
-					uint16_t data_size = sizeof(uint64_t);
-					uint64_t data = GetUUIDFromName(tex->GetName());
-					stream.Write(&data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_VEC2:
-				{
-					glm::vec2& data = std::any_cast<glm::vec2&>(dst);
-					uint16_t data_size = sizeof(glm::vec2);
-					stream.Write(&data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_VEC3:
-				{
-					glm::vec3& data = std::any_cast<glm::vec3&>(dst);
-					uint16_t data_size = sizeof(glm::vec3);
-					stream.Write(&data, data_size);
-					break;
-				}
-				case trace::ShaderData::CUSTOM_DATA_VEC4:
-				{
-					glm::vec4& data = std::any_cast<glm::vec4&>(dst);
-					uint16_t data_size = sizeof(glm::vec4);
-					stream.Write(&data, data_size);
-					break;
-				}
-				}
-			};
-			for (auto& i : material->GetMaterialData())
+			case trace::ShaderData::CUSTOM_DATA_BOOL:
 			{
-				uint32_t name_length = static_cast<uint32_t>(i.first.length() + 1);
-				stream.Write<uint32_t>(name_length);
-				stream.Write((void*)i.first.data(), name_length);
-				trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.second];
-				int type = (int)meta_data.data_type;
-				stream.Write<int>(type);
-				lambda(stream, meta_data.data_type, i.second.first);
+				bool* data = &std::any_cast<bool&>(dst);
+				uint16_t data_size = sizeof(bool);
+				stream->Write(data, data_size);
+				break;
 			}
-			ast_h.data_size = stream.GetPosition() - ast_h.offset;
-
-			map.push_back(std::make_pair(id, ast_h));
+			case trace::ShaderData::CUSTOM_DATA_FLOAT:
+			{
+				float* data = &std::any_cast<float&>(dst);
+				uint16_t data_size = sizeof(float);
+				stream->Write(data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_INT:
+			{
+				int* data = &std::any_cast<int&>(dst);
+				uint16_t data_size = sizeof(int);
+				stream->Write(data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC2:
+			{
+				glm::ivec2& data = std::any_cast<glm::ivec2&>(dst);
+				uint16_t data_size = sizeof(glm::ivec2);
+				stream->Write(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC3:
+			{
+				glm::ivec3& data = std::any_cast<glm::ivec3&>(dst);
+				uint16_t data_size = sizeof(glm::ivec3);
+				stream->Write(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC4:
+			{
+				glm::ivec4* data = &std::any_cast<glm::ivec4&>(dst);
+				uint16_t data_size = sizeof(glm::ivec4);
+				stream->Write(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT2:
+			{
+				glm::mat2& data = std::any_cast<glm::mat2&>(dst);
+				TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT3:
+			{
+				glm::mat3& data = std::any_cast<glm::mat3&>(dst);
+				TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT4:
+			{
+				glm::mat4& data = std::any_cast<glm::mat4&>(dst);
+				TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
+			{
+				Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
+				uint16_t data_size = sizeof(uint64_t);
+				uint64_t data = GetUUIDFromName(tex->GetName());
+				stream->Write(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC2:
+			{
+				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
+				uint16_t data_size = sizeof(glm::vec2);
+				stream->Write(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC3:
+			{
+				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
+				uint16_t data_size = sizeof(glm::vec3);
+				stream->Write(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC4:
+			{
+				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
+				uint16_t data_size = sizeof(glm::vec4);
+				stream->Write(&data, data_size);
+				break;
+			}
+			}
+		};
+		for (auto& i : material->GetMaterialData())
+		{
+			std::string name = i.first;
+			Reflection::Serialize(name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+			trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.second];
+			int type = (int)meta_data.data_type;
+			stream->Write<int>(type);
+			lambda(stream, meta_data.data_type, i.second.first);
 		}
-
+		
 
 		return true;
 	}
@@ -455,10 +443,156 @@ namespace trace {
 
 		return result;
 	}
+	Ref<MaterialInstance> MaterialSerializer::Deserialize(DataStream* stream)
+	{
+		std::string material_name;
+		Reflection::Deserialize(material_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		Ref<MaterialInstance> result;
+
+		result = MaterialManager::get_instance()->GetMaterial(material_name);
+		if (result)
+		{
+			TRC_WARN("{} has already been loaded", material_name);
+			return result;
+		}
+
+		uint64_t pipeline_id = 0;
+		stream->Read<uint64_t>(pipeline_id);
+		Ref<GPipeline> pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(pipeline_id);
+
+		if (!pipeline)
+		{
+			TRC_WARN("{} pipeline is not valid, please ensure to pass a valid pipeline", __FUNCTION__);
+			return result;
+		}
+
+		result = MaterialManager::get_instance()->CreateMaterial(material_name, pipeline);
+		MaterialInstance* material = result.get();
+
+		int32_t data_count = 0;
+		stream->Read<int32_t>(data_count);
+
+
+		auto lambda = [](DataStream* stream, trace::ShaderData type, std::any& dst)
+		{
+
+			switch (type)
+			{
+			case trace::ShaderData::CUSTOM_DATA_BOOL:
+			{
+				bool* data = &std::any_cast<bool&>(dst);
+				stream->Read(data);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_FLOAT:
+			{
+				float* data = &std::any_cast<float&>(dst);
+				uint16_t data_size = sizeof(float);
+				stream->Read(data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_INT:
+			{
+				int* data = &std::any_cast<int&>(dst);
+				uint16_t data_size = sizeof(int);
+				stream->Read(data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC2:
+			{
+				glm::ivec2& data = std::any_cast<glm::ivec2&>(dst);
+				uint16_t data_size = sizeof(glm::ivec2);
+				stream->Read(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC3:
+			{
+				glm::ivec3& data = std::any_cast<glm::ivec3&>(dst);
+				uint16_t data_size = sizeof(glm::ivec3);
+				stream->Read(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_IVEC4:
+			{
+				glm::ivec4* data = &std::any_cast<glm::ivec4&>(dst);
+				uint16_t data_size = sizeof(glm::ivec4);
+				stream->Read(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT2:
+			{
+				glm::mat2& data = std::any_cast<glm::mat2&>(dst);
+				TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT3:
+			{
+				glm::mat3& data = std::any_cast<glm::mat3&>(dst);
+				TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_MAT4:
+			{
+				glm::mat4& data = std::any_cast<glm::mat4&>(dst);
+				TRC_ASSERT(false, "Function has not been implemented, {}, line -> {}", __FUNCTION__, __LINE__);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
+			{
+				UUID tex_id = 0;
+				stream->Read<UUID>(tex_id);
+				Ref<GTexture> tex = TextureManager::get_instance()->LoadTexture_Runtime(tex_id);
+				dst = tex;
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC2:
+			{
+				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
+				uint16_t data_size = sizeof(glm::vec2);
+				stream->Read(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC3:
+			{
+				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
+				uint16_t data_size = sizeof(glm::vec3);
+				stream->Read(&data, data_size);
+				break;
+			}
+			case trace::ShaderData::CUSTOM_DATA_VEC4:
+			{
+				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
+				uint16_t data_size = sizeof(glm::vec4);
+				stream->Read(&data, data_size);
+				break;
+			}
+			}
+		};
+
+		for (int32_t i = 0; i < data_count; i++)
+		{
+			std::string name;
+			Reflection::Deserialize(name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+			int type = -1;
+			stream->Read<int>(type);
+
+			auto& data = material->GetMaterialData();
+			auto it = data.find(name);
+			if (it != data.end())
+			{
+				lambda(stream, (ShaderData)type, it->second.first);
+			}
+
+		}
+
+		return result;
+	}
 	bool MaterialSerializer::Deserialize(Ref<GPipeline> pipeline, MaterialInstance* material, MemoryStream& stream)
 	{
-		int data_count = 0;
-		stream.Read<int>(data_count);
+		int32_t data_count = 0;
+		stream.Read<int32_t>(data_count);
 
 
 		auto lambda = [](MemoryStream& stream, trace::ShaderData type, std::any& dst)
@@ -558,7 +692,7 @@ namespace trace {
 		};
 
 		char buf[512] = { 0 };
-		for (int i = 0; i < data_count; i++)
+		for (int32_t i = 0; i < data_count; i++)
 		{
 			int name_length = 0;
 			stream.Read<int>(name_length);

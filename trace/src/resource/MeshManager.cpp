@@ -251,84 +251,84 @@ namespace trace {
 	bool MeshManager::LoadDefaults()
 	{
 
-		std::vector<Vertex> verts;
-		std::vector<uint32_t> _ind;
-		Mesh* _mesh = nullptr;
-		
-		//Cube
-		{
-			generateDefaultCube(verts, _ind);
-			generateVertexTangent(verts, _ind);
-			Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
+		//std::vector<Vertex> verts;
+		//std::vector<uint32_t> _ind;
+		//Mesh* _mesh = nullptr;
+		//
+		////Cube
+		//{
+		//	generateDefaultCube(verts, _ind);
+		//	generateVertexTangent(verts, _ind);
+		//	Ref<Model> cube_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
 
-			for (uint32_t k = 0; k < m_numEntries; k++)
-			{
-				if (m_meshes[k].m_id == INVALID_ID)
-				{
-					m_meshes[k].m_id = k;
-					m_hashtable.Set("Cube", k);
-					_mesh = &m_meshes[k];
-					break;
-				}
-			}
-
-
-			DefaultCube = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
-			_mesh = nullptr;
-			DefaultCube->GetModels().push_back(cube_ref);
-			DefaultCube->m_path = "Cube";
-		}
-
-		// Sphere
-		{
-			verts.clear();
-			_ind.clear();
-
-			generateSphere(verts, _ind, 1.0f, 45, 45);
-			generateVertexTangent(verts, _ind);
-			Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
-			
+		//	for (uint32_t k = 0; k < m_numEntries; k++)
+		//	{
+		//		if (m_meshes[k].m_id == INVALID_ID)
+		//		{
+		//			m_meshes[k].m_id = k;
+		//			m_hashtable.Set("Cube", k);
+		//			_mesh = &m_meshes[k];
+		//			break;
+		//		}
+		//	}
 
 
-			for (uint32_t k = 0; k < m_numEntries; k++)
-			{
-				if (m_meshes[k].m_id == INVALID_ID)
-				{
-					m_meshes[k].m_id = k;
-					m_hashtable.Set("Sphere", k);
-					_mesh = &m_meshes[k];
-					break;
-				}
-			}
-			DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
-			DefaultSphere->GetModels().push_back(sphere_ref);
-			DefaultSphere->m_path = "Sphere";
-		};
+		//	DefaultCube = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+		//	_mesh = nullptr;
+		//	DefaultCube->GetModels().push_back(cube_ref);
+		//	DefaultCube->m_path = "Cube";
+		//}
 
-		//Plane
-		{
-			verts.clear();
-			_ind.clear();
+		//// Sphere
+		//{
+		//	verts.clear();
+		//	_ind.clear();
 
-			generateDefaultPlane(verts, _ind);
-			generateVertexTangent(verts, _ind);
-			Ref<Model> plane_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Plane");
+		//	generateSphere(verts, _ind, 1.0f, 45, 45);
+		//	generateVertexTangent(verts, _ind);
+		//	Ref<Model> sphere_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
+		//	
 
 
-			for (uint32_t k = 0; k < m_numEntries; k++)
-			{
-				if (m_meshes[k].m_id == INVALID_ID)
-				{
-					m_meshes[k].m_id = k;
-					m_hashtable.Set("Plane", k);
-					_mesh = &m_meshes[k];
-					break;
-				}
-			}
-			DefaultPlane = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
-			DefaultPlane->GetModels().push_back(plane_ref);
-			DefaultPlane->m_path = "Plane";
-		};
+		//	for (uint32_t k = 0; k < m_numEntries; k++)
+		//	{
+		//		if (m_meshes[k].m_id == INVALID_ID)
+		//		{
+		//			m_meshes[k].m_id = k;
+		//			m_hashtable.Set("Sphere", k);
+		//			_mesh = &m_meshes[k];
+		//			break;
+		//		}
+		//	}
+		//	DefaultSphere = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+		//	DefaultSphere->GetModels().push_back(sphere_ref);
+		//	DefaultSphere->m_path = "Sphere";
+		//};
+
+		////Plane
+		//{
+		//	verts.clear();
+		//	_ind.clear();
+
+		//	generateDefaultPlane(verts, _ind);
+		//	generateVertexTangent(verts, _ind);
+		//	Ref<Model> plane_ref = ModelManager::get_instance()->LoadModel(verts, _ind, "Plane");
+
+
+		//	for (uint32_t k = 0; k < m_numEntries; k++)
+		//	{
+		//		if (m_meshes[k].m_id == INVALID_ID)
+		//		{
+		//			m_meshes[k].m_id = k;
+		//			m_hashtable.Set("Plane", k);
+		//			_mesh = &m_meshes[k];
+		//			break;
+		//		}
+		//	}
+		//	DefaultPlane = { _mesh, BIND_RESOURCE_UNLOAD_FN(MeshManager::Unload, this) };
+		//	DefaultPlane->GetModels().push_back(plane_ref);
+		//	DefaultPlane->m_path = "Plane";
+		//};
 
 		return true;
 	}

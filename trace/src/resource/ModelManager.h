@@ -5,6 +5,7 @@
 #include "render/Model.h"
 #include "HashTable.h"
 #include "serialize/AssetsInfo.h"
+#include "serialize/FileStream.h"
 #include "scene/UUID.h"
 
 namespace trace {
@@ -28,6 +29,10 @@ namespace trace {
 			m_assetMap = map;
 		}
 		Ref<Model> LoadModel_Runtime(UUID id);
+		bool LoadDefaults();
+		bool LoadDefaults_Runtime();
+
+		bool BuildDefaultModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map);
 
 		static ModelManager* get_instance();
 	private:
@@ -37,6 +42,9 @@ namespace trace {
 		HashTable<uint32_t> m_hashtable;
 		uint32_t m_numModelUnits;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
+		Ref<Model> Cube;
+		Ref<Model> Sphere;
+		Ref<Model> Plane;
 
 	protected:
 

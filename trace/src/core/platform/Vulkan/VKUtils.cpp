@@ -758,10 +758,10 @@ namespace vk {
 		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		create_info.preTransform = device->m_swapchainInfo.surface_capabilities.currentTransform;
 
+		uint32_t queues[] = { device->m_queues.graphics_queue, device->m_queues.present_queue };
 		if (device->m_queues.graphics_queue != device->m_queues.present_queue)
 		{
 			create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			uint32_t queues[] = { device->m_queues.graphics_queue, device->m_queues.present_queue };
 			create_info.queueFamilyIndexCount = 2;
 			create_info.pQueueFamilyIndices = queues;
 		}

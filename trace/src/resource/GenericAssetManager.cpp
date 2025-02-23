@@ -41,11 +41,14 @@ namespace trace {
 
 		m_assets[asset->m_id] = nullptr;
 		asset->m_id = INVALID_ID;
+		TRC_TRACE("{} is destroyed", asset->GetName());
 		m_hashtable.Set(asset->GetName(), INVALID_ID);
 		asset->Destroy();
 
+
 		delete asset;//TODO: Use custom memory allocator
 	}
+
 
 	GenericAssetManager* GenericAssetManager::get_instance()
 	{

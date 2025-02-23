@@ -195,35 +195,11 @@ namespace trace {
 			return result;
 		}
 
-		AnimationClip* _clip = nullptr;
-		std::string name = GetNameFromUUID(id);
-
-		result = GetClip(name);
-		if (result) return result;
-
-		uint32_t i = 0;
-		for (AnimationClip& clip : m_clips)
-		{
-			if (clip.m_id == INVALID_ID)
-			{
-				// TODO: Implement Loading of Animation Clips
-				clip.SetDuration(1.0f);
-				clip.SetSampleRate(30);
-				clip.m_id = i;
-				hashTable.Set(name, i);
-				_clip = &clip;
-				break;
-			}
-
-			i++;
-		}
-
-		result = { _clip, BIND_RENDER_COMMAND_FN(AnimationsManager::UnloadClip) };
-
 		std::string bin_dir;
 		FindDirectory(AppSettings::exe_path, "Data/tranimc.trbin", bin_dir);
 		FileStream stream(bin_dir, FileMode::READ);
-		AnimationsSerializer::DeserializeAnimationClip(result, stream, it->second);
+		stream.SetPosition(it->second.offset);
+		result = AnimationsSerializer::DeserializeAnimationClip(&stream);
 
 		return result;
 	}

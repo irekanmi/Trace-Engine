@@ -8,6 +8,7 @@
 #include "serialize/AnimationsSerializer.h"
 #include "external_utils.h"
 #include "core/Coretypes.h"
+#include "resource/GenericAssetManager.h"
 
 namespace trace::Animation {
 
@@ -57,10 +58,15 @@ namespace trace::Animation {
 		}
 		else
 		{
-
+			return GenericAssetManager::get_instance()->Load_Runtime<Sequence>(id);
 		}
 
 		return result;
+	}
+
+	Ref<Sequence> Sequence::Deserialize(DataStream* stream)
+	{
+		return AnimationsSerializer::DeserializeSequence(stream);
 	}
 
 	SequenceInstance::SequenceInstance()

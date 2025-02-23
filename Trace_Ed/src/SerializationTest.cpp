@@ -45,7 +45,7 @@ namespace trace {
 		int five;
 		double size;
 		char data[16] = { 0 };
-		Pos* pos_test = nullptr;
+		Pos pos_test;
 		std::map<UUID, glm::vec3> all;
 		EnumTest enum_test{};
 		std::pair<int, float> pair_test;
@@ -89,7 +89,7 @@ namespace trace {
 		rot.size = 66.0;
 		rot.many = { 67, 68, 69, 70 };
 		rot.all = { {71, glm::vec3(1.0f)}, {72, glm::vec3(2.0f)}, {73, glm::vec3(3.0f)} };
-		rot.pos_test = &p_test;
+		rot.pos_test = pos;
 		rot.pair_test = std::make_pair(13, 18.0f);
 		Pos* rot_ptr = &rot;
 		char value[16] = "0123456789ABCDE";
@@ -102,18 +102,28 @@ namespace trace {
 		Pos*& ptr_result = *static_cast<Pos**>(_ptr);
 		std::vector<Pos*> vec_ptr = { rot_ptr, &p_test };
 		std::map<int, Pos*> map_ptr = { {7, rot_ptr}, {8, &p_test } };
-		Reflection::SerializeContainer(map_ptr, &emit, nullptr ,Reflection::SerializationFormat::YAML);
+
+		std::function<void(void*)> int_test = [](void* location)
+		{
+			int& obj = *(int*)location;
+
+			TRC_INFO("Int Data: {}", obj);
+		};
+
+		Reflection::CustomMemberCallback(rot, Reflection::TypeID<int>(), int_test);
+
+		//Reflection::SerializeContainer(map_ptr, &emit, nullptr ,Reflection::SerializationFormat::YAML);
 		//FileStream stream("../Reflection_test.bin", FileMode::WRITE);
 		//Reflection::SerializeContainer(map_ptr, &stream, nullptr ,Reflection::SerializationFormat::BINARY);
 
-		emit << YAML::EndMap;
+		/*emit << YAML::EndMap;
 
 		FileHandle out_handle;
 		if (FileSystem::open_file("../reflection_test.txt", FileMode::WRITE, out_handle))
 		{
 			FileSystem::writestring(out_handle, emit.c_str());
 			FileSystem::close_file(out_handle);
-		}
+		}*/
 
 
 

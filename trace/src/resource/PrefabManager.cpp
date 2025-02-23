@@ -2,6 +2,11 @@
 
 #include "PrefabManager.h"
 #include "scene/Scene.h"
+#include "core/Utils.h"
+#include "core/Coretypes.h"
+#include "serialize/FileStream.h"
+#include "serialize/MemoryStream.h"
+#include "serialize/SceneSerializer.h"
 
 namespace trace {
 
@@ -74,7 +79,28 @@ namespace trace {
 
 	Ref<Prefab> PrefabManager::Load_Runtime(UUID id)
 	{
-		return Ref<Prefab>();
+		Ref<Prefab> result;
+		auto it = m_assetsMap.find(id);
+		if (it == m_assetsMap.end())
+		{
+			TRC_WARN("{} is not available in the build", id);
+			return result;
+		}
+
+
+		std::string bin_dir;
+		FindDirectory(AppSettings::exe_path, "Data/trprf.trbin", bin_dir);
+		FileStream stream(bin_dir, FileMode::READ);
+
+		stream.SetPosition(it->second.offset);
+
+		result = SceneSerializer::DeserializePrefab(&stream);
+		return result;
+	}
+
+	void PrefabManager::SetAssetMap(std::unordered_map<UUID, AssetHeader>& map)
+	{
+		m_assetsMap = map;
 	}
 
 	PrefabManager* PrefabManager::get_instance()

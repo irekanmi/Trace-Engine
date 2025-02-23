@@ -38,8 +38,8 @@ namespace trace {
 		}
 		Ref<GPipeline> LoadPipeline_Runtime(UUID id);
 
-		bool BuildDefaultPipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
-		bool BuildDefaultPipelineShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
+		bool BuildDefaultPipelines(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map);
+		bool BuildDefaultPipelineShaders(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map);
 
 		bool LoadDefaults();
 		bool LoadDefaults_Runtime();

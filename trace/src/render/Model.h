@@ -8,6 +8,7 @@
 #include "resource/Resource.h"
 #include "resource/Ref.h"
 #include "scene/UUID.h"
+#include "reflection/TypeRegistry.h"
 
 namespace trace {
 
@@ -36,6 +37,7 @@ namespace trace {
 		GBuffer m_indexBuffer;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(Model);
 
 	};
 

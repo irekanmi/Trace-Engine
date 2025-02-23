@@ -5,6 +5,7 @@
 #include "resource/Resource.h"
 #include "resource/Ref.h"
 #include "reflection/TypeRegistry.h"
+#include "serialize/DataStream.h"
 
 #include <string>
 #include <vector>
@@ -38,6 +39,7 @@ namespace trace::Animation {
 
 	public:
 		static Ref<Skeleton> Deserialize(UUID id);
+		static Ref<Skeleton> Deserialize(DataStream* stream);
 
 	private:
 		std::string m_name;

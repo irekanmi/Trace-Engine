@@ -6,6 +6,9 @@
 #include "HashTable.h"
 #include "core/io/Logging.h"
 #include "resource/Resource.h"
+#include "serialize/FileStream.h"
+#include "scene/UUID.h"
+#include "core/Utils.h"
 
 #include <vector>
 
@@ -86,11 +89,24 @@ namespace trace {
 		{
 			m_assetMap = map;
 		}
+		
 
 		template<typename T>
 		Ref<T> Load_Runtime(UUID id)
 		{
-			return Ref<T>();
+			auto it = m_assetMap.find(id);
+			if (it == m_assetMap.end())
+			{
+				return Ref<T>();
+			}
+
+			std::string bin_dir;
+			FindDirectory(AppSettings::exe_path, "Data/generic.trbin", bin_dir);
+			FileStream stream(bin_dir, FileMode::READ);
+
+			stream.SetPosition(it->second.offset);
+
+			return T::Deserialize(&stream);
 		}
 
 		template<typename T>
@@ -115,6 +131,7 @@ namespace trace {
 		HashTable<uint32_t> m_hashtable;
 		uint32_t m_numUnits;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
+
 
 	protected:
 

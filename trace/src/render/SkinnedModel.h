@@ -7,6 +7,8 @@
 #include "Material.h"
 #include "resource/Resource.h"
 #include "core/defines.h"
+#include "reflection/TypeRegistry.h"
+#include "serialize/DataStream.h"
 
 namespace trace {
 
@@ -28,6 +30,7 @@ namespace trace {
 		virtual void Destroy() override;
 
 		static Ref<SkinnedModel> Deserialize(UUID id);
+		static Ref<SkinnedModel> Deserialize(DataStream* stream);
 	private:
 		std::vector<SkinnedVertex> m_vertices;
 		std::vector<uint32_t> m_indices;
@@ -35,6 +38,7 @@ namespace trace {
 		GBuffer m_indexBuffer;
 
 	protected:
+		ACCESS_CLASS_MEMBERS(SkinnedModel);
 
 	};
 

@@ -62,7 +62,7 @@ namespace trace
 		bool m_isRunning = true;
 		bool m_isMinimized = false;
 		bool m_vsync = false;
-		UpdateID m_updateID = 0;
+		UpdateID m_updateID = 30;//NOTE: The value 30 is given just to allow the animation graph to have a head start
 
 	};
 

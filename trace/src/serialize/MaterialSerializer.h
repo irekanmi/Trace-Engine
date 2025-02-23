@@ -18,8 +18,9 @@ namespace trace {
 	public:
 
 		static bool Serialize(Ref<MaterialInstance> material, const std::string& file_path);
-		static bool Serialize(Ref<MaterialInstance> material, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
+		static bool Serialize(Ref<MaterialInstance> material, DataStream* stream);
 		static Ref<MaterialInstance> Deserialize(const std::string& file_path);
+		static Ref<MaterialInstance> Deserialize(DataStream* stream);
 		static bool Deserialize(Ref<GPipeline> pipeline, MaterialInstance* material, MemoryStream& stream);
 
 	private:

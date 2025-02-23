@@ -74,7 +74,18 @@ namespace trace {
 					emit << YAML::BeginMap;
 				}
 
-				emit << YAML::Key << key << YAML::Value << std::string(&obj);
+				if (member_info && (uintptr_t)member_info != (uintptr_t)0x00000000000000FF)
+				{
+					Reflection::Member& member = *(Reflection::Member*)member_info;
+					std::string val = std::string(&obj, member.variable.GetArraySize());
+					YAML::Binary dat((const unsigned char*)&obj, member.variable.GetArraySize());
+					emit << YAML::Key << key << YAML::Value << dat;
+
+				}
+				else
+				{
+					emit << YAML::Key << key << YAML::Value << std::string(&obj);
+				}
 
 				if (!member_info)
 				{
@@ -94,6 +105,10 @@ namespace trace {
 				{
 					emit << YAML::EndMap;
 				}
+			}
+			else if constexpr (Reflection::IsTypeContainer<T>{} || Reflection::IsTypeKeyValueContainer<T>{})
+			{
+				return;
 			}
 			else if constexpr (has_emit_operator_v<T>)
 			{
@@ -148,12 +163,12 @@ namespace trace {
 		{
 			YAML::Emitter& emit = *(YAML::Emitter*)location;
 
-			if (!can_serialize<T>)
+			if (!can_serialize<T> || Reflection::IsTypeContainer<T>{} || Reflection::IsTypeKeyValueContainer<T>{})
 			{
 				emit << YAML::BeginMap;
 			}
 			type_info.serializer(&obj, location, nullptr, (uint16_t)Reflection::SerializationFormat::YAML);
-			if (!can_serialize<T>)
+			if (!can_serialize<T> || Reflection::IsTypeContainer<T>{} || Reflection::IsTypeKeyValueContainer<T>{})
 			{
 				emit << YAML::EndMap;
 			}
@@ -259,12 +274,12 @@ namespace trace {
 			emit << YAML::Key << "Key" << YAML::Value;
 			Reflection::Serialize(key, location, nullptr, Reflection::SerializationFormat::YAML);
 			emit << YAML::Key << "Value" << YAML::Value;
-			if (!can_serialize<Value>)
+			if (!can_serialize<Value> || Reflection::IsTypeContainer<Value>{} || Reflection::IsTypeKeyValueContainer<Value>{})
 			{
 				emit << YAML::BeginMap;
 			}
 			type_info.serializer(&value, location, nullptr, (uint16_t)Reflection::SerializationFormat::YAML);
-			if (!can_serialize<Value>)
+			if (!can_serialize<Value> || Reflection::IsTypeContainer<Value>{} || Reflection::IsTypeKeyValueContainer<Value>{})
 			{
 				emit << YAML::EndMap;
 			}
@@ -328,8 +343,18 @@ namespace trace {
 
 			if constexpr (std::is_same_v<T, char>)
 			{
-				std::string str = member_info ? node.as<std::string>() : node[key].as<std::string>();
-				memcpy(&obj, str.data(), str.size());
+				if (member_info)
+				{
+					Reflection::Member& mem_info = *(Reflection::Member*)member_info;
+					YAML::Binary str = node.as<YAML::Binary>();
+					
+					memcpy(&obj, str.data(), mem_info.variable.GetArraySize());
+				}
+				else
+				{
+					std::string str = node[key].as<std::string>();
+					memcpy(&obj, str.data(), str.size());
+				}
 			}
 			else if constexpr (std::is_enum_v<T>)
 			{				

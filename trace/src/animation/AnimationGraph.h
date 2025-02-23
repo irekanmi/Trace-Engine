@@ -5,6 +5,7 @@
 #include "scene/UUID.h"
 #include "animation/AnimationNode.h"
 #include "reflection/TypeRegistry.h"
+#include "serialize/DataStream.h"
 
 #include <vector>
 #include <unordered_map>
@@ -146,6 +147,7 @@ namespace trace::Animation {
 		
 	public:
 		static Ref<Graph> Deserialize(UUID id);
+		static Ref<Graph> Deserialize(DataStream* stream);
 
 	private:
 		std::unordered_map<UUID, Node*> m_nodes;

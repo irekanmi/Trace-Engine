@@ -41,6 +41,23 @@ namespace trace {
 		REGISTER_MEMBER(Light, params1 );
 		REGISTER_MEMBER(Light, params2);
 	END_REGISTER_CLASS;
+
+
+	REGISTER_TYPE(SkinnedVertex);
+
+	BEGIN_REGISTER_CLASS(SkinnedModel)
+		REGISTER_TYPE(SkinnedModel);
+		REGISTER_MEMBER(SkinnedModel, m_vertices);
+		REGISTER_MEMBER(SkinnedModel, m_indices);
+	END_REGISTER_CLASS;
+
+	REGISTER_TYPE(Vertex);
+
+	BEGIN_REGISTER_CLASS(Model)
+		REGISTER_TYPE(Model);
+		REGISTER_MEMBER(Model, m_vertices);
+		REGISTER_MEMBER(Model, m_indices);
+	END_REGISTER_CLASS;
 		
 
 }

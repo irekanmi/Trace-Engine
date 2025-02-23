@@ -35,7 +35,8 @@ namespace trace {
 			DataStream* stream = (DataStream*)location;
 
 			if constexpr (std::is_same_v<T, std::string>)
-			{
+			{				
+
 				std::string& str = static_cast<std::string&>(obj);
 
 				size_t str_size = str.length() + 1;
@@ -44,8 +45,20 @@ namespace trace {
 			}
 			else if constexpr (std::is_same_v<T, char>)
 			{
-				std::string val(&obj);
-				SerializeTypeData(val, location, member_info);
+				if (member_info)
+				{
+					Reflection::Member& mem = *(Reflection::Member*)member_info;
+					stream->Write((void*)&obj, mem.variable.GetArraySize());
+				}
+				else
+				{
+					std::string val(&obj);
+					SerializeTypeData(val, location, member_info);
+				}
+			}
+			else if constexpr (Reflection::IsTypeContainer<T>{} || Reflection::IsTypeKeyValueContainer<T>{})
+			{
+				return;
 			}
 			else if constexpr (!std::is_pointer_v<T>)
 			{
@@ -184,9 +197,18 @@ namespace trace {
 			}
 			else if constexpr (std::is_same_v<T, char>)
 			{
-				size_t str_size;
-				stream->Read<size_t>(str_size);
-				stream->Read(&obj, static_cast<uint32_t>(str_size));
+				if (member_info)
+				{
+					Reflection::Member& mem = *(Reflection::Member*)member_info;
+					stream->Read((void*)&obj, mem.variable.GetArraySize());
+				}
+				else
+				{
+					size_t str_size;
+					stream->Read<size_t>(str_size);
+					stream->Read(&obj, static_cast<uint32_t>(str_size));
+
+				}
 			}
 			else if constexpr (!std::is_pointer_v<T>)
 			{

@@ -109,6 +109,9 @@ namespace trace {
 		result = result && AnimationsManager::get_instance()->LoadDefaults();
 		TRC_ASSERT(result, "Failed to load default animations");
 
+		result = result && ModelManager::get_instance()->LoadDefaults();
+		TRC_ASSERT(result, "Failed to load default models");
+
 		
 
 		

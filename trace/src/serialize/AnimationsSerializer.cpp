@@ -84,6 +84,17 @@ namespace trace {
 		return true;
 	}
 
+	bool AnimationsSerializer::SerializeAnimationClip(Ref<AnimationClip> clip, DataStream* stream)
+	{
+		std::string clip_name = clip->GetName();
+
+		Reflection::Serialize(clip_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Reflection::Serialize(*clip.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+
+		return true;
+	}
+
 	/*
 	* Animation Clip
 	*  '-> duration
@@ -239,6 +250,25 @@ namespace trace {
 		return result;
 	}
 
+	Ref<AnimationClip> AnimationsSerializer::DeserializeAnimationClip(DataStream* stream)
+	{
+
+		std::string clip_name;
+		Reflection::Deserialize(clip_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(clip_name);
+		if (clip)
+		{
+			TRC_WARN("{} has already been loaded", clip_name);
+			return clip;
+		}
+
+		clip = AnimationsManager::get_instance()->LoadClip_(clip_name);
+		Reflection::Deserialize(*clip.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		return clip;
+	}
+
 	void AnimationsSerializer::DeserializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, AssetHeader& header)
 	{
 
@@ -335,6 +365,7 @@ namespace trace {
 
 		return true;
 	}
+
 
 	/*
 	* Animation Graph
@@ -544,6 +575,21 @@ namespace trace {
 		return true;
 	}
 
+	bool AnimationsSerializer::SerializeSkeleton(Ref<Animation::Skeleton> skeleton, DataStream* stream)
+	{
+		if (!skeleton)
+		{
+			return false;
+		}
+
+		std::string skeleton_name = skeleton->GetName();
+		Reflection::Serialize(skeleton_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Reflection::Serialize(*skeleton.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+
+		return true;
+	}
+
 	Ref<Animation::Skeleton> AnimationsSerializer::DeserializeSkeleton(const std::string& file_path)
 	{
 		Ref<Animation::Skeleton> result;
@@ -597,6 +643,23 @@ namespace trace {
 		return result;
 	}
 
+	Ref<Animation::Skeleton> AnimationsSerializer::DeserializeSkeleton(DataStream* stream)
+	{
+
+		std::string skeleton_name;
+		Reflection::Deserialize(skeleton_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Ref<Animation::Skeleton> skeleton = GenericAssetManager::get_instance()->Get<Animation::Skeleton>(skeleton_name);
+		if (skeleton)
+		{
+			TRC_WARN("{} has already been loaded", skeleton_name);
+			return skeleton;
+		}
+		skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>(skeleton_name);
+		Reflection::Deserialize(*skeleton.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		return skeleton;
+	}
+
 
 	bool AnimationsSerializer::SerializeAnimGraph(Ref<Animation::Graph> graph, const std::string& file_path)
 	{
@@ -620,6 +683,20 @@ namespace trace {
 		YAML::save_emitter_data(emit, file_path);
 
 
+		return true;
+	}
+
+
+	bool AnimationsSerializer::SerializeAnimGraph(Ref<Animation::Graph> graph, DataStream* stream)
+	{
+		if (!graph)
+		{
+			TRC_TRACE("{}", __FUNCTION__);
+			return false;
+		}
+		std::string graph_name = graph->GetName();
+		Reflection::Serialize(graph_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Reflection::Serialize(*graph.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
 		return true;
 	}
 
@@ -659,6 +736,23 @@ namespace trace {
 		return result;
 	}
 
+	Ref<Animation::Graph> AnimationsSerializer::DeserializeAnimGraph(DataStream* stream)
+	{
+		std::string graph_name;
+		Reflection::Deserialize(graph_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->Get<Animation::Graph>(graph_name);
+		if (graph)
+		{
+			TRC_WARN("{} has already been loaded", graph_name);
+			return graph;
+		}
+
+		graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(graph_name);
+		Reflection::Deserialize(*graph.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		return graph;
+	}
+
 	bool AnimationsSerializer::SerializeSequence(Ref<Animation::Sequence> sequence, const std::string& file_path)
 	{
 		if (!sequence)
@@ -679,6 +773,20 @@ namespace trace {
 		emit << YAML::EndMap;
 
 		YAML::save_emitter_data(emit, file_path);
+
+		return true;
+	}
+
+	bool AnimationsSerializer::SerializeSequence(Ref<Animation::Sequence> sequence, DataStream* stream)
+	{
+		if (!sequence)
+		{
+			return false;
+		}
+
+		std::string sequence_name = sequence->GetName();
+		Reflection::Serialize(sequence_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Reflection::Serialize(*sequence.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		return true;
 	}
@@ -717,6 +825,25 @@ namespace trace {
 
 
 		return result;
+	}
+
+	Ref<Animation::Sequence> AnimationsSerializer::DeserializeSequence(DataStream* stream)
+	{
+		std::string sequence_name;
+		Reflection::Deserialize(sequence_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->Get<Animation::Sequence>(sequence_name);
+		if (sequence)
+		{
+			TRC_WARN("{} has already been loaded", sequence_name);
+			return sequence;
+		}
+
+
+		sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_name);
+
+		Reflection::Deserialize(*sequence.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		return sequence;
 	}
 
 }

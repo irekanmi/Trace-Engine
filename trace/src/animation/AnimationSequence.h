@@ -4,6 +4,7 @@
 #include "resource/Ref.h"
 #include "scene/UUID.h"
 #include "reflection/TypeRegistry.h"
+#include "serialize/DataStream.h"
 
 #include <vector>
 
@@ -43,6 +44,7 @@ namespace trace::Animation {
 
 	public:
 		static Ref<Sequence> Deserialize(UUID id);
+		static Ref<Sequence> Deserialize(DataStream* stream);
 
 	private:
 		std::vector<SequenceTrack*> m_tracks;

@@ -115,46 +115,19 @@ namespace trace {
 	}
 	Ref<Scene> SceneManager::LoadScene_Runtime(UUID id)
 	{
-		Ref<Scene> result;
-		Scene* _scene = nullptr;
-
 		auto it = m_assetMap.find(id);
 		if (it == m_assetMap.end())
 		{
 			TRC_WARN("{} is not available in the build", id);
-			return result;
+			return Ref<Scene>();
 		}
-
-		std::string name = GetNameFromUUID(id);
-
-		result = GetScene(name);
-		if (result)
-		{
-			return result;
-		}
-
-		for (uint32_t i = 0; i < m_entries; i++)
-		{
-			Scene& scene = m_scenes[i];
-			if (scene.m_id == INVALID_ID)
-			{
-				scene.Create();
-				m_hashTable.Set(name, i);
-				_scene = &scene;
-				_scene->SetName(name);
-				_scene->m_id = i;
-				break;
-			}
-		}
-
-		result = { _scene, BIND_RESOURCE_UNLOAD_FN(SceneManager::UnloadScene, this) };
 
 		std::string bin_dir;
 		FindDirectory(AppSettings::exe_path, "Data/trscn.trbin", bin_dir);
 		FileStream stream(bin_dir, FileMode::READ);
-		SceneSerializer::Deserialize(result, stream, it->second);
-
-		return result;
+		
+		stream.SetPosition(it->second.offset);
+		return SceneSerializer::Deserialize(&stream);
 	}
 	SceneManager* SceneManager::get_instance()
 	{

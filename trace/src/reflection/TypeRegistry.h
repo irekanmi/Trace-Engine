@@ -68,6 +68,10 @@ namespace trace::Reflection {
 
 				info.serializer = [](void* data, void* location, void* member_info, uint16_t format) { SerializeContainer(*static_cast<T*>(data), location, member_info, format); };
 				info.deserializer = [](void* data, void* location, void* member_info, uint16_t format) { DeserializeContainer(*static_cast<T*>(data), location, member_info, format); };
+				info.custom_member_callback = [](void* data, uint64_t type_id, std::function<void(void*)>& callback)
+				{
+					CustomMemberCallback_Container(*static_cast<T*>(data), type_id, callback);
+				};
 			}
 			else if constexpr (IsTypeKeyValueContainer<T>())
 			{
@@ -80,6 +84,10 @@ namespace trace::Reflection {
 
 				info.serializer = [](void* data, void* location, void* member_info, uint16_t format) { SerializeContainer(*static_cast<T*>(data), location, member_info, format); };
 				info.deserializer = [](void* data, void* location, void* member_info, uint16_t format) { DeserializeContainer(*static_cast<T*>(data), location, member_info, format); };
+				info.custom_member_callback = [](void* data, uint64_t type_id, std::function<void(void*)>& callback)
+				{
+					CustomMemberCallback_Container(*static_cast<T*>(data), type_id, callback);
+				};
 			}
 			else
 			{
@@ -121,8 +129,11 @@ namespace trace::Reflection {
 						}
 					}
 				};
+				info.custom_member_callback = [](void* data, uint64_t type_id, std::function<void(void*)>& callback)
+			{
+				CustomMemberCallback(*static_cast<T*>(data), type_id, callback);
+			};
 			}
-
 
 
 			info.container_info = container;
@@ -206,6 +217,7 @@ namespace trace::Reflection {
 #define REGISTER_TYPE(TYPE) _REGISTER_TYPE_INTERNAL(TYPE, RegisterTypeObject_)
 #define REGISTER_TYPE_PARENT(TYPE, PARENT) trace::Reflection::RegisterTypeParentObject<TYPE, PARENT> RegisterTypeParentObject_##TYPE##PARENT{};
 #define REGISTER_KEY_VALUE_CONTAINER(CONTAINER, KEY, TYPE) trace::Reflection::RegisterTypeObject<CONTAINER<KEY, TYPE>> RegisterTypeObject_##TYPE {};
+#define REGISTER_KEY_VALUE_CONTAINER_PLACEHOLDER(CONTAINER, KEY, TYPE, PLACEHOLDER) trace::Reflection::RegisterTypeObject<CONTAINER<KEY, TYPE>> RegisterTypeObject_##PLACEHOLDER {};
 #define REGISTER_CONTAINER(CONTAINER, TYPE) trace::Reflection::RegisterTypeObject<CONTAINER<TYPE>> RegisterType_##TYPE {};
 
 	struct RegisterMember final

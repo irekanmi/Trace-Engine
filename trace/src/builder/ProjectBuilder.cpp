@@ -13,9 +13,12 @@
 #include "resource/ModelManager.h" 
 #include "resource/ShaderManager.h" 
 #include "resource/TextureManager.h" 
+#include "resource/PrefabManager.h" 
+#include "resource/GenericAssetManager.h"
 #include "core/Coretypes.h"
 #include "core/Utils.h"
 #include "scene/SceneManager.h"
+#include "reflection/SerializeTypes.h"
 
 #include "serialize/yaml_util.h"
 
@@ -150,80 +153,59 @@ namespace trace {
 			return false;
 		}
 
-		int asset_type_count = 0;
-		stream.Read<int>(asset_type_count);
+		std::unordered_map<UUID, AssetHeader> scn_map;
+		std::unordered_map<UUID, AssetHeader> tex_map;
+		std::unordered_map<UUID, AssetHeader> animc_map;
+		std::unordered_map<UUID, AssetHeader> shd_map;
+		std::unordered_map<UUID, AssetHeader> fnt_map;
+		std::unordered_map<UUID, AssetHeader> mdl_map;
+		std::unordered_map<UUID, AssetHeader> pip_map;
+		std::unordered_map<UUID, AssetHeader> mat_map;
+		std::unordered_map<UUID, AssetHeader> prefab_map;
+		std::unordered_map<UUID, AssetHeader> generic_assets_map;
 
-		for (int i = 0; i < asset_type_count; i++)
-		{
-			int asset_type = 0;
-			stream.Read<int>(asset_type);
-			std::unordered_map<UUID, AssetHeader> map;
-			std::vector<std::pair<UUID, AssetHeader>> arr_map;
+		// TRC_SCENE_ID
+		Reflection::DeserializeContainer(scn_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-			int map_size = 0;
-			stream.Read<int>(map_size);
-			arr_map.resize(map_size / sizeof(std::pair<UUID, AssetHeader>));
-			stream.Read(arr_map.data(), map_size);
+		// TRC_TEXTURE_ID
+		Reflection::DeserializeContainer(tex_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-			for (auto& ast_h : arr_map)
-			{
-				map.emplace(ast_h);
-			}
-
-
-			switch (asset_type)
-			{
-			case TRC_SCENE_ID:
-			{				
-				SceneManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_SHADER_ID:
-			{				
-				ShaderManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_TEXTURE_ID:
-			{				
-				TextureManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_FONT_ID:
-			{				
-				FontManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_MATERIAL_ID:
-			{				
-				MaterialManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_MODEL_ID:
-			{				
-				ModelManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_PIPELINE_ID:
-			{				
-				PipelineManager::get_instance()->SetAssetMap(map);
-				break;
-			}
-			case TRC_ANIMATION_CLIP_ID:
-			{				
-				AnimationsManager::get_instance()->SetClipsAssetMap(map);
-				break;
-			}
-			case TRC_ANIMATION_GRAPH_ID:
-			{				
-				AnimationsManager::get_instance()->SetGraphsAssetMap(map);
-				break;
-			}
-			}
-
-			
-		}
+		// TRC_ANIMATION_CLIP_ID
+		Reflection::DeserializeContainer(animc_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		
+		// TRC_SHADER_ID
+		Reflection::DeserializeContainer(shd_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		// TRC_FONT_ID
+		Reflection::DeserializeContainer(fnt_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		// TRC_MODEL_ID
+		Reflection::DeserializeContainer(mdl_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		// TRC_PIPELINE_ID
+		Reflection::DeserializeContainer(pip_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		// TRC_MATERIAL_ID
+		Reflection::DeserializeContainer(mat_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		//TRC_PREFAB_ID
+		Reflection::DeserializeContainer(prefab_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		//TRC_GENERIC_ASSETS_ID
+		Reflection::DeserializeContainer(generic_assets_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		SceneManager::get_instance()->SetAssetMap(scn_map);
+		TextureManager::get_instance()->SetAssetMap(tex_map);
+		AnimationsManager::get_instance()->SetClipsAssetMap(animc_map);
+		ShaderManager::get_instance()->SetAssetMap(shd_map);
+		FontManager::get_instance()->SetAssetMap(fnt_map);
+		ModelManager::get_instance()->SetAssetMap(mdl_map);
+		PipelineManager::get_instance()->SetAssetMap(pip_map);
+		MaterialManager::get_instance()->SetAssetMap(mat_map);
+		PrefabManager::get_instance()->SetAssetMap(prefab_map);
+		GenericAssetManager::get_instance()->SetAssetMap(generic_assets_map);
+
 
 		return true;
 	}
@@ -240,9 +222,6 @@ namespace trace {
 		FileStream animc_bin(output_dir + "/Data/tranimc.trbin", FileMode::WRITE);
 		bin_id = TRC_ANIMATION_CLIP_ID;
 		animc_bin.Write(bin_id);
-		FileStream animg_bin(output_dir + "/Data/tranimg.trbin", FileMode::WRITE);
-		bin_id = TRC_ANIMATION_GRAPH_ID;
-		animg_bin.Write(bin_id);
 		FileStream shd_bin(output_dir + "/Data/trshd.trbin", FileMode::WRITE);
 		bin_id = TRC_SHADER_ID;
 		shd_bin.Write(bin_id);
@@ -258,54 +237,61 @@ namespace trace {
 		FileStream pip_bin(output_dir + "/Data/trpip.trbin", FileMode::WRITE);
 		bin_id = TRC_PIPELINE_ID;
 		pip_bin.Write(bin_id);
+		FileStream prefab_bin(output_dir + "/Data/trprf.trbin", FileMode::WRITE);
+		bin_id = TRC_PREFAB_ID;
+		prefab_bin.Write(bin_id);
+		FileStream generic_bin(output_dir + "/Data/generic.trbin", FileMode::WRITE);
+		bin_id = TRC_GENERIC_ASSETS_ID;
+		generic_bin.Write(bin_id);
 
-		std::vector<std::pair<UUID, AssetHeader>> scn_map;
-		std::vector<std::pair<UUID, AssetHeader>> tex_map;
-		std::vector<std::pair<UUID, AssetHeader>> animc_map;
-		std::vector<std::pair<UUID, AssetHeader>> animg_map;
-		std::vector<std::pair<UUID, AssetHeader>> shd_map;
-		std::vector<std::pair<UUID, AssetHeader>> fnt_map;
-		std::vector<std::pair<UUID, AssetHeader>> mdl_map;
-		std::vector<std::pair<UUID, AssetHeader>> pip_map;
-		std::vector<std::pair<UUID, AssetHeader>> mat_map;
+		std::unordered_map<UUID, AssetHeader> scn_map;
+		std::unordered_map<UUID, AssetHeader> tex_map;
+		std::unordered_map<UUID, AssetHeader> animc_map;
+		std::unordered_map<UUID, AssetHeader> shd_map;
+		std::unordered_map<UUID, AssetHeader> fnt_map;
+		std::unordered_map<UUID, AssetHeader> mdl_map;
+		std::unordered_map<UUID, AssetHeader> pip_map;
+		std::unordered_map<UUID, AssetHeader> mat_map;
+		std::unordered_map<UUID, AssetHeader> prefab_map;
+		std::unordered_map<UUID, AssetHeader> generic_assets_map;
+
+
 
 		for (auto& i : scenes)
 		{
-			FileHandle in_handle;
-			if (!FileSystem::open_file(i.string(), FileMode::READ, in_handle))
+
+			Ref<Scene> current_scene = SceneSerializer::Deserialize(i.string());
+			if (!current_scene)
 			{
-				TRC_ERROR("Unable to open file {}", i.string());
+				TRC_ERROR("Unable load scene {}", i.string());
 				continue;
 			}
-			std::string file_data;
-			FileSystem::read_all_lines(in_handle, file_data); // opening file
-			FileSystem::close_file(in_handle);
-
 			AssetHeader scn_header;
 			scn_header.offset = scn_bin.GetPosition();
-			int32_t scn_size = static_cast<int32_t>(file_data.length() + 1);
-
-			scn_bin.Write(file_data.data(), scn_size);
+			SceneSerializer::Serialize(current_scene, &scn_bin);
 			scn_header.data_size = scn_bin.GetPosition() - scn_header.offset;
-			std::pair<UUID, AssetHeader> scn_pair = std::make_pair(GetUUIDFromName(i.filename().string()), scn_header);
-			scn_map.push_back(scn_pair);
+			std::pair<UUID, AssetHeader> scn_pair = std::make_pair(GetUUIDFromName(current_scene->GetName()), scn_header);
+			scn_map.emplace(scn_pair);
 
 
-			SceneSerializer::SerializeTextures(tex_bin, tex_map, file_data);
-			SceneSerializer::SerializeAnimationClips(animc_bin, animc_map, file_data);
-			SceneSerializer::SerializeAnimationGraphs(animg_bin, animg_map, file_data);
-			SceneSerializer::SerializeFonts(fnt_bin, fnt_map, file_data);
-			SceneSerializer::SerializeMaterials(mat_bin, mat_map, file_data);
-			SceneSerializer::SerializeModels(mdl_bin, mdl_map, file_data);
-
-			SceneSerializer::SerializePipelines(pip_bin, pip_map, file_data);
-
-			SceneSerializer::SerializeShaders(shd_bin, shd_map, file_data);
+			SceneSerializer::SerializeTextures(tex_bin, tex_map, current_scene);
+			SceneSerializer::SerializeAnimationClips(animc_bin, animc_map, current_scene);
+			SceneSerializer::SerializeFonts(fnt_bin, fnt_map, current_scene);
+			SceneSerializer::SerializeMaterials(mat_bin, mat_map, current_scene);
+			SceneSerializer::SerializeModels(mdl_bin, mdl_map, current_scene);
+			SceneSerializer::SerializePipelines(pip_bin, pip_map, current_scene);
+			SceneSerializer::SerializeShaders(shd_bin, shd_map, current_scene);
+			SceneSerializer::SerializePrefabs(prefab_bin, prefab_map, current_scene);
+			SceneSerializer::SerializeAnimationGraphs(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeSkeletons(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeSequences(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeSkinnedModels(generic_bin, generic_assets_map, current_scene);
 
 
 		}
 		PipelineManager::get_instance()->BuildDefaultPipelines(pip_bin, pip_map);
 		PipelineManager::get_instance()->BuildDefaultPipelineShaders(shd_bin, shd_map);
+		ModelManager::get_instance()->BuildDefaultModels(mdl_bin, mdl_map);
 
 		/*
 		* buildpck.trbin
@@ -320,64 +306,37 @@ namespace trace {
 		bin_id = TRC_BUILD_PACK_ID;
 		pck_db.Write(bin_id);
 
-		int32_t assets_type_count = 9;
-		pck_db.Write<int32_t>(assets_type_count);
 
-		int32_t map_size = 0;
+		// TRC_SCENE_ID
+		Reflection::SerializeContainer(scn_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(scn_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_SCENE_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(scn_map.data(), map_size);
+		// TRC_TEXTURE_ID
+		Reflection::SerializeContainer(tex_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(tex_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_TEXTURE_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(tex_map.data(), map_size);
+		// TRC_ANIMATION_CLIP_ID
+		Reflection::SerializeContainer(animc_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
+
 		
-		map_size = static_cast<int32_t>(animc_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_ANIMATION_CLIP_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(animc_map.data(), map_size);
+		// TRC_SHADER_ID
+		Reflection::SerializeContainer(shd_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(animg_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_ANIMATION_GRAPH_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(animg_map.data(), map_size);
+		// TRC_FONT_ID
+		Reflection::SerializeContainer(fnt_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(shd_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_SHADER_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(shd_map.data(), map_size);
+		// TRC_MODEL_ID
+		Reflection::SerializeContainer(mdl_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(fnt_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_FONT_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(fnt_map.data(), map_size);
+		// TRC_PIPELINE_ID
+		Reflection::SerializeContainer(pip_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(mdl_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_MODEL_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(mdl_map.data(), map_size);
+		// TRC_MATERIAL_ID
+		Reflection::SerializeContainer(mat_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(pip_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_PIPELINE_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(pip_map.data(), map_size);
+		//TRC_PREFAB_ID
+		Reflection::SerializeContainer(prefab_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
-		map_size = static_cast<int32_t>(mat_map.size() * sizeof(std::pair<UUID, AssetHeader>));
-		bin_id = TRC_MATERIAL_ID;
-		pck_db.Write(bin_id);
-		pck_db.Write(map_size);
-		pck_db.Write(mat_map.data(), map_size);
+		//TRC_GENERIC_ASSETS_ID
+		Reflection::SerializeContainer(generic_assets_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
 
 		// ------------------------------------------------------------------

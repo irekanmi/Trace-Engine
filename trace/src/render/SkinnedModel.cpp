@@ -3,6 +3,7 @@
 #include "backends/Renderutils.h"
 #include "core/Coretypes.h"
 #include "external_utils.h"
+#include "resource/GenericAssetManager.h"
 
 #include "glm/ext.hpp"
 
@@ -71,8 +72,28 @@ namespace trace {
 		}
 		else
 		{
+			return GenericAssetManager::get_instance()->Load_Runtime<SkinnedModel>(id);
 		}
 		return result;
+	}
+
+	Ref<SkinnedModel> SkinnedModel::Deserialize(DataStream* stream)
+	{
+		std::string model_name;
+		Reflection::Deserialize(model_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		Ref<SkinnedModel> model = GenericAssetManager::get_instance()->Get<SkinnedModel>(model_name);
+		if (model)
+		{
+			TRC_WARN("{} model has already been loaded");
+			return model;
+		}
+
+		model = GenericAssetManager::get_instance()->CreateAssetHandle<SkinnedModel>(model_name);
+		Reflection::Deserialize(*model.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+		model->Init(model->GetVertices(), model->GetIndices());
+
+		return model;
 	}
 
 	

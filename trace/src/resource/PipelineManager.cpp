@@ -11,12 +11,10 @@
 #include "serialize/PipelineSerializer.h"
 #include "core/Utils.h"
 #include "core/Coretypes.h"
+#include "external_utils.h"
 
 namespace trace {
 
-	extern std::string GetNameFromUUID(UUID uuid);
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
 
 
 	PipelineManager::PipelineManager()
@@ -165,7 +163,6 @@ namespace trace {
 	Ref<GPipeline> PipelineManager::LoadPipeline_Runtime(UUID id)
 	{
 		Ref<GPipeline> result;
-		GPipeline* _pipe = nullptr;
 
 		auto it = m_assetMap.find(id);
 		if (it == m_assetMap.end())
@@ -174,83 +171,16 @@ namespace trace {
 			return result;
 		}
 
-		std::string name = GetNameFromUUID(id);
-		result = GetPipeline(name);
-		if (result)
-		{
-			TRC_WARN("{} name has already been created", name);
-			return result;
-		}
-		for (uint32_t i = 0; i < m_numEntries; i++)
-		{
-			if (m_pipelines[i].m_id == INVALID_ID)
-			{
-				std::string bin_dir;
-				FindDirectory(AppSettings::exe_path, "Data/trpip.trbin", bin_dir);
-				FileStream stream(bin_dir, FileMode::READ);
+		std::string bin_dir;
+		FindDirectory(AppSettings::exe_path, "Data/trpip.trbin", bin_dir);
+		FileStream stream(bin_dir, FileMode::READ);
 
-				stream.SetPosition(it->second.offset);
-				UUID vert_id = 0;
-				stream.Read<UUID>(vert_id);
-				UUID frag_id = 0;
-				stream.Read<UUID>(frag_id);
-				PipelineStateDesc desc;
-				desc.vertex_shader = ShaderManager::get_instance()->LoadShader_Runtime(vert_id).get();
-				desc.pixel_shader = ShaderManager::get_instance()->LoadShader_Runtime(frag_id).get();
+		stream.SetPosition(it->second.offset);
 
-				stream.Read<uint32_t>(desc.input_layout.stride);
-				stream.Read<InputClassification>(desc.input_layout.input_class);
-				int input_layout_element_count = 0;
-				stream.Read<int>(input_layout_element_count);
-				desc.input_layout.elements.resize(input_layout_element_count);
-				stream.Read(desc.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
-
-				stream.Read<RasterizerState>(desc.rasteriser_state);
-
-				stream.Read<DepthStencilState>(desc.depth_sten_state);
-
-				stream.Read<ColorBlendState>(desc.blend_state);
-
-				stream.Read<PRIMITIVETOPOLOGY>(desc.topology);
-
-				stream.Read<Viewport>(desc.view_port);
-
-				stream.Read<uint32_t>(desc.subpass_index);
-
-
-				char buf[128] = { 0 };
-				int pass_name_lenght = 0;
-				stream.Read<int>(pass_name_lenght);
-				stream.Read(buf, pass_name_lenght);
-				desc.render_pass = Renderer::get_instance()->GetRenderPass(buf);
-
-				ShaderResources s_res = {};
-				ShaderParser::generate_shader_resources(desc.vertex_shader, s_res);
-				ShaderParser::generate_shader_resources(desc.pixel_shader, s_res);
-				desc.resources = s_res;
-
-				if (!RenderFunc::CreatePipeline(&m_pipelines[i], desc))
-				{
-					TRC_ERROR("Failed to create pipeline {}", name);
-					return result;
-				}
-				if (!RenderFunc::InitializePipeline(&m_pipelines[i]))
-				{
-					TRC_ERROR("Failed to initialize pipeline {}", name);
-					RenderFunc::DestroyPipeline(&m_pipelines[i]);
-					return result;
-				}
-				m_pipelines[i].m_id = i;
-				m_hashtable.Set(name, i);
-				_pipe = &m_pipelines[i];
-				break;
-			}
-		}
-
-		result = { _pipe, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
+		result = PipelineSerializer::Deserialize(&stream);
 		return result;
 	}
-	bool PipelineManager::BuildDefaultPipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	bool PipelineManager::BuildDefaultPipelines(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map)
 	{
 
 
@@ -259,28 +189,59 @@ namespace trace {
 			if (_p.m_id != INVALID_ID)
 			{
 				Ref<GPipeline> pipeline = { &_p, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
-				PipelineSerializer::Serialize(pipeline, stream, map);
+				UUID id = GetUUIDFromName(pipeline->GetName());
+				auto it = map.find(id);
+				if (it != map.end())
+				{
+					continue;
+				}
+				AssetHeader header = {};
+				header.offset = stream.GetPosition();
+
+				PipelineSerializer::Serialize(pipeline, &stream);
+				header.data_size = stream.GetPosition() - header.offset;
+				map.emplace(std::make_pair(id, header));
 
 			}
-			
+
 		}
 
 		return true;
 	}
-	bool PipelineManager::BuildDefaultPipelineShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map)
+	bool PipelineManager::BuildDefaultPipelineShaders(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map)
 	{
 
+		auto shad_lambda = [&](GShader* shader)
+		{
+			if (shader == nullptr)
+			{
+				return;
+			}
 
+			Ref<GShader> shader_ref = ShaderManager::get_instance()->GetShader(shader->GetName());
+
+			UUID id = GetUUIDFromName(shader_ref->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			PipelineSerializer::SerializeShader(shader_ref, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+
+		};
 		for (GPipeline& _p : m_pipelines)
 		{
 			if (_p.m_id != INVALID_ID)
 			{
 				Ref<GPipeline> pipeline = { &_p, BIND_RENDER_COMMAND_FN(PipelineManager::Unload) };
 				PipelineStateDesc ds = pipeline->GetDesc();
-				Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
-				Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
-				PipelineSerializer::SerializeShader(vert, stream, map);
-				PipelineSerializer::SerializeShader(frag, stream, map);
+				shad_lambda(ds.vertex_shader);
+				shad_lambda(ds.pixel_shader);
 			}
 
 		}

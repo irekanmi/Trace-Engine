@@ -1132,7 +1132,7 @@ namespace trace::Reflection {
 			return;
 		}
 
-		object.reserve(size);
+		object.resize(size);
 
 		using type = remove_all_pointers_t<T>;
 		uint64_t type_id = TypeID<type>();
@@ -1147,13 +1147,12 @@ namespace trace::Reflection {
 				++index;
 				type* member = (type*)t_info.construct();
 				DeserializeContainerMember(*member, index, t_info, type_location, member_info, format);
-				object.emplace_back(member);
+				object[i - 1] = member;
 			}
 			else
 			{
-				T member{};
+				T& member = object[i - 1];
 				DeserializeContainerMember(member, i, t_info, type_location, member_info, format);
-				object.emplace_back(member);
 			}
 			index++;
 		}
@@ -1364,7 +1363,15 @@ namespace trace::Reflection {
 
 				DeserializeKeyValuePair(key_value, value_data, t_info, index, type_location, member_info, format);
 
-				object[key_value] = value_data;
+				if constexpr (Reflection::IsTypeContainer<T>{} || Reflection::IsTypeKeyValueContainer<T>{})
+				{
+
+					object[key_value] = std::move(value_data);
+				}
+				else
+				{
+					object[key_value] = value_data;
+				}
 			}
 			index++;
 		}
@@ -1419,5 +1426,172 @@ namespace trace::Reflection {
 	}
 
 	// -----------------------------------------------------------------------------------
+
+	template<typename T>
+	void CustomMemberCallback_Container(T& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+		TRC_ASSERT(false, "This type is not a container type");
+	}
+
+	// Custom Function
+	template<typename T>
+	void CustomMemberCallback(T& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+		if constexpr (std::is_pointer_v<T>)
+		{
+			TRC_ERROR("{} does not take in a ptr type", __FUNCTION__);
+			return;
+		}
+
+		constexpr uint64_t type_id = TypeID<T>();
+		if (!TypeRegistry::HasType(type_id))
+		{
+			TRC_TRACE("Type has not registered -> Type Name: {}", TypeName<T>());
+			
+			return;
+		}
+
+		TypeInfo& info = TypeRegistry::GetTypesData().data[type_id];
+
+		if (info.IsContainer() || info.IsKeyValueContainer())
+		{
+			CustomMemberCallback_Container(obj, member_type_id, callback);
+			return;
+		}
+
+		if (TypeRegistry::HasMembers(type_id))
+		{
+
+			if (info.HasParent())
+			{
+				auto it = TypeRegistry::GetTypesData().data.find(info.parent_class);
+
+				if (it != TypeRegistry::GetTypesData().data.end())
+				{
+					it->second.custom_member_callback(&obj, member_type_id, callback);
+				}
+
+			}
+			for (auto& member : TypeRegistry::GetTypesData().members_data[type_id])
+			{
+				void* member_location = (char*)&obj + member.offset;
+				TypeInfo& member_type_info = TypeRegistry::GetTypesData().data[member.type_id];
+				member_type_info.custom_member_callback(member_location, member_type_id, callback);
+
+			}
+
+			if (type_id == member_type_id)
+			{
+				callback(&obj);
+			}
+		}
+		else if (!TypeRegistry::HasMembers(type_id) && info.HasParent())
+		{
+			if (info.HasParent())
+			{
+				auto it = TypeRegistry::GetTypesData().data.find(info.parent_class);
+
+				if (it != TypeRegistry::GetTypesData().data.end())
+				{
+					it->second.custom_member_callback(&obj, member_type_id, callback);
+				}
+
+			}
+
+			if (type_id == member_type_id)
+			{
+				callback(&obj);
+			}
+		}
+		else
+		{
+			if (type_id == member_type_id)
+			{
+				callback(&obj);
+			}
+		}
+
+	}
+
+	template<typename T, typename Alloc>
+	void CustomMemberCallback_Container(std::vector<T, Alloc>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			for (auto& member : obj)
+			{
+				callback(&member);
+			}
+		}
+	}
+
+	template<typename T, typename Compare, typename Alloc>
+	void CustomMemberCallback_Container(std::set<T, Compare, Alloc>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			for (auto& member : obj)
+			{
+				callback(&member);
+			}
+		}
+	}
+
+	template<typename T, typename Compare, typename Alloc>
+	void CustomMemberCallback_Container(std::unordered_set<T, Compare, Alloc>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			for (auto& member : obj)
+			{
+				callback(&member);
+			}
+		}
+	}
+
+	template<typename T, typename Compare, typename Alloc>
+	void CustomMemberCallback_Container(std::map<T, Compare, Alloc>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			for (auto& member : obj)
+			{
+				callback(&member);
+			}
+		}
+	}
+
+	template<typename T, typename Compare, typename Alloc>
+	void CustomMemberCallback_Container(std::unordered_map<T, Compare, Alloc>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			for (auto& member : obj)
+			{
+				callback(&member);
+			}
+		}
+	}
+
+	template<typename Key, typename T>
+	void CustomMemberCallback_Container(std::pair<Key, T>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			callback(&obj.second);
+		}
+	}
 
 }

@@ -100,6 +100,7 @@ namespace trace::Reflection {
 		Reflection::Container container_info{};
 		std::function<void(void* data, void* location, void* member_info, uint16_t format)> serializer;// NOTE: Use a static variable to determine format
 		std::function<void(void* data, void* location, void* member_info, uint16_t format)> deserializer;// NOTE: Use a static variable to determine format
+		std::function<void(void* data, uint64_t type_id, std::function<void(void*)>& callback)> custom_member_callback;// NOTE: Used when we want to operate on specific member variables
 		std::function<void*()> construct;// NOTE: Use a static variable to determine format
 
 

@@ -26,6 +26,7 @@
 #include "core/Utils.h"
 #include "reflection/TypeHash.h"
 #include "reflection/SerializeTypes.h"
+#include "serialize/SceneSerializeFunctions.h"
 
 #include <functional>
 #include <unordered_map>
@@ -768,617 +769,7 @@ namespace trace {
 		return true;
 	}
 
-	static void serialize_entity_scripts(Entity entity, YAML::Emitter& emit, Scene* scene)
-	{
-		//Scripts ----------------------------------------
-		emit << YAML::Key << "Scripts" << YAML::Value;
-		emit << YAML::BeginSeq;
-
-		ScriptRegistry& script_registry = scene->GetScriptRegistry();
-
-		script_registry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
-			{
-				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-				auto& fields_instances = script_registry.GetFieldInstances();
-				auto& field_manager = fields_instances[script];
-				auto field_it = field_manager.find(uuid);
-				bool has_fields = !(field_it == field_manager.end());
-				if (!has_fields)
-				{
-					TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->GetScriptName());
-				}
-				emit << YAML::BeginMap;
-
-				emit << YAML::Key << "Script Name" << YAML::Value << script->GetScriptName();
-				emit << YAML::Key << "Script Values" << YAML::Value << YAML::BeginSeq; // Script values
-				if (has_fields)
-				{
-					ScriptFieldInstance& ins = field_manager[uuid];
-					for (auto& [name, field] : ins.GetFields())
-					{
-						emit << YAML::BeginMap;
-
-						emit << YAML::Key << "Name" << YAML::Value << name;
-						//emit << YAML::Key << "Type" << YAML::Value << (int)field.type;
-						switch (field.type)
-						{
-						case ScriptFieldType::String:
-						{
-							break;
-						}
-						case ScriptFieldType::Bool:
-						{
-							bool data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Byte:
-						{
-							char data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Double:
-						{
-							double data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Char:
-						{
-							char data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Float:
-						{
-							float data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Int16:
-						{
-							int16_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Int32:
-						{
-							int32_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Int64:
-						{
-							int64_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::UInt16:
-						{
-							uint16_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::UInt32:
-						{
-							uint32_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::UInt64:
-						{
-							uint64_t data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Vec2:
-						{
-							glm::vec2 data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Vec3:
-						{
-							glm::vec3 data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-						case ScriptFieldType::Vec4:
-						{
-							glm::vec4 data;
-							ins.GetValue(name, data);
-							emit << YAML::Key << "Value" << YAML::Value << data;
-							break;
-						}
-
-						}
-
-						emit << YAML::EndMap;
-					}
-				}
-				emit << YAML::EndSeq; // Script values
-
-				emit << YAML::EndMap;
-			});
-
-		emit << YAML::EndSeq;
-		// --------------------------------------------------
-	}
-
-	static void serialize_entity_scripts_binary(Entity entity, DataStream* stream, Scene* scene)
-	{
-		//Scripts ----------------------------------------
-		ScriptRegistry& script_registry = scene->GetScriptRegistry();
-
-		uint32_t count = 0;
-		script_registry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
-			{
-				count++;
-			}
-		);
-		stream->Write<uint32_t>(count);
-
-		script_registry.Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
-			{
-				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-				auto& fields_instances = script_registry.GetFieldInstances();
-				auto& field_manager = fields_instances[script];
-				auto field_it = field_manager.find(uuid);
-
-				uint32_t script_str_count = static_cast<uint32_t>(script->GetScriptName().size() + 1);
-				stream->Write<uint32_t>(script_str_count);
-				stream->Write((void*)script->GetScriptName().data(), script_str_count);
-
-				bool has_fields = !(field_it == field_manager.end());
-				uint32_t field_count = 0;
-				if (!has_fields)
-				{
-					TRC_WARN("entity id:{} does not have a field instance with script:{}", (uint64_t)uuid, script->GetScriptName());
-					stream->Write<uint32_t>(field_count);
-				}
-				if (has_fields)
-				{
-					ScriptFieldInstance& ins = field_manager[uuid];
-					field_count = static_cast<uint32_t>(ins.GetFields().size());
-					stream->Write<uint32_t>(field_count);
-					for (auto& [name, field] : ins.GetFields())
-					{
-						uint32_t str_count = static_cast<uint32_t>(name.size() + 1);
-						stream->Write<uint32_t>(str_count);
-						stream->Write((void*)name.data(), str_count);
-						switch (field.type)
-						{
-						case ScriptFieldType::String:
-						{
-							break;
-						}
-						case ScriptFieldType::Bool:
-						{
-							bool data;
-							ins.GetValue(name, data);
-							stream->Write<bool>(data);
-							break;
-						}
-						case ScriptFieldType::Byte:
-						{
-							char data;
-							ins.GetValue(name, data);
-							stream->Write<char>(data);
-							break;
-						}
-						case ScriptFieldType::Double:
-						{
-							double data;
-							ins.GetValue(name, data);
-							stream->Write<double>(data);
-							break;
-						}
-						case ScriptFieldType::Char:
-						{
-							char data;
-							ins.GetValue(name, data);
-							stream->Write<char>(data);
-							break;
-						}
-						case ScriptFieldType::Float:
-						{
-							float data;
-							ins.GetValue(name, data);
-							stream->Write<float>(data);
-							break;
-						}
-						case ScriptFieldType::Int16:
-						{
-							int16_t data;
-							ins.GetValue(name, data);
-							stream->Write<int16_t>(data);
-							break;
-						}
-						case ScriptFieldType::Int32:
-						{
-							int32_t data;
-							ins.GetValue(name, data);
-							stream->Write<int32_t>(data);
-							break;
-						}
-						case ScriptFieldType::Int64:
-						{
-							int64_t data;
-							ins.GetValue(name, data);
-							stream->Write<int64_t>(data);
-							break;
-						}
-						case ScriptFieldType::UInt16:
-						{
-							uint16_t data;
-							ins.GetValue(name, data);
-							stream->Write<uint16_t>(data);
-							break;
-						}
-						case ScriptFieldType::UInt32:
-						{
-							uint32_t data;
-							ins.GetValue(name, data);
-							stream->Write<uint32_t>(data);
-							break;
-						}
-						case ScriptFieldType::UInt64:
-						{
-							uint64_t data;
-							ins.GetValue(name, data);
-							stream->Write<uint64_t>(data);
-							break;
-						}
-						case ScriptFieldType::Vec2:
-						{
-							glm::vec2 data;
-							ins.GetValue(name, data);
-							stream->Write<glm::vec2>(data);
-							break;
-						}
-						case ScriptFieldType::Vec3:
-						{
-							glm::vec3 data;
-							ins.GetValue(name, data);
-							stream->Write<glm::vec3>(data);
-							break;
-						}
-						case ScriptFieldType::Vec4:
-						{
-							glm::vec4 data;
-							ins.GetValue(name, data);
-							stream->Write<glm::vec4>(data);
-							break;
-						}
-
-						}
-
-					}
-				}
-				
-			});
-
-		// --------------------------------------------------
-	}
-
-	static void deserialize_entity_scripts(Entity obj, Scene* scene, YAML::detail::iterator_value& entity)
-	{
-		UUID uuid = obj.GetID();
-		YAML::Node scripts = entity["Scripts"];
-		if (scripts)
-		{
-			std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
-
-			for (auto script : scripts)
-			{
-				std::string script_name = script["Script Name"].as<std::string>();
-				auto it = g_Scripts.find(script_name);
-				if (it == g_Scripts.end())
-				{
-					TRC_WARN("Script:{} does not exist in the assembly", script_name);
-					continue;
-				}
-				obj.AddScript(script_name);
-
-				ScriptRegistry& script_registry = scene->GetScriptRegistry();
-
-				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-				auto& fields_instances = script_registry.GetFieldInstances();
-				auto& field_manager = fields_instances[&it->second];
-				auto field_it = field_manager.find(uuid);
-				if (field_it == field_manager.end())
-				{
-					ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
-					field_ins.Init(&it->second);
-				}
-				ScriptFieldInstance& ins = field_manager[obj.GetID()];
-
-				for (auto values : script["Script Values"])
-				{
-					std::string field_name = values["Name"].as<std::string>();
-					auto f_it = ins.GetFields().find(field_name);
-					if (f_it == ins.GetFields().end())
-					{
-						TRC_WARN("Script Field:{} does not exist in the Script Class", field_name);
-						continue;
-					}
-					switch (f_it->second.type)
-					{
-					case ScriptFieldType::String:
-					{
-						break;
-					}
-					case ScriptFieldType::Bool:
-					{
-						bool data = values["Value"].as<bool>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Byte:
-					{
-						char data = values["Value"].as<char>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Double:
-					{
-						double data = values["Value"].as<double>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Char:
-					{
-						char data = values["Value"].as<char>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Float:
-					{
-						float data = values["Value"].as<float>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Int16:
-					{
-						int16_t data = values["Value"].as<int16_t>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Int32:
-					{
-						int32_t data = values["Value"].as<int32_t>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Int64:
-					{
-						int64_t data = values["Value"].as<int64_t>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::UInt16:
-					{
-						uint16_t data = values["Value"].as<uint16_t>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::UInt32:
-					{
-						uint32_t data = values["Value"].as<uint32_t>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::UInt64:
-					{
-						uint64_t data = values["Value"].as<uint64_t>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Vec2:
-					{
-						glm::vec2 data = values["Value"].as<glm::vec2>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Vec3:
-					{
-						glm::vec3 data = values["Value"].as<glm::vec3>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Vec4:
-					{
-						glm::vec4 data = values["Value"].as<glm::vec4>();
-						ins.SetValue(field_name, data);
-						break;
-					}
-					}
-				}
-
-
-			}
-		}
-	}
-
-	static void deserialize_entity_scripts_binary(Entity obj, Scene* scene, DataStream* stream)
-	{
-		UUID uuid = obj.GetID();
-		uint32_t script_count = 0;
-		stream->Read<uint32_t>(script_count);
-		if (script_count > 0)
-		{
-			std::unordered_map<std::string, Script>& g_Scripts = ScriptEngine::get_instance()->GetScripts();
-
-			for (uint32_t i = 0; i < script_count; i++)
-			{
-				uint32_t script_str_count = 0;
-				std::string script_name;
-				stream->Read<uint32_t>(script_str_count);
-				script_name.reserve(script_str_count);
-				script_name.resize(script_str_count - 1);
-				stream->Read((void*)script_name.data(), script_str_count);
-				auto it = g_Scripts.find(script_name);
-				if (it == g_Scripts.end())
-				{
-					TRC_ASSERT(false, "Script:{} does not exist in the assembly", script_name);
-					continue;
-				}
-				obj.AddScript(script_name);
-
-				ScriptRegistry& script_registry = scene->GetScriptRegistry();
-
-				//auto& fields_instances = ScriptEngine::get_instance()->GetFieldInstances();
-				auto& fields_instances = script_registry.GetFieldInstances();
-				auto& field_manager = fields_instances[&it->second];
-				auto field_it = field_manager.find(uuid);
-				if (field_it == field_manager.end())
-				{
-					ScriptFieldInstance& field_ins = field_manager[obj.GetID()];
-					field_ins.Init(&it->second);
-				}
-				ScriptFieldInstance& ins = field_manager[obj.GetID()];
-				uint32_t field_count = 0;
-				stream->Read<uint32_t>(field_count);
-				for (uint32_t i = 0; i < field_count; i++)
-				{
-					uint32_t field_str_count = 0;
-					std::string field_name;
-					stream->Read<uint32_t>(field_str_count);
-					field_name.reserve(field_str_count);
-					field_name.resize(field_str_count - 1);
-					stream->Read((void*)field_name.data(), field_str_count);
-					auto f_it = ins.GetFields().find(field_name);
-					if (f_it == ins.GetFields().end())
-					{
-						TRC_ASSERT(false, "Script Field:{} does not exist in the Script Class", field_name);
-						continue;
-					}
-					switch (f_it->second.type)
-					{
-					case ScriptFieldType::String:
-					{
-						break;
-					}
-					case ScriptFieldType::Bool:
-					{
-						bool data;
-						stream->Read<bool>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Byte:
-					{
-						char data;
-						stream->Read<char>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Double:
-					{
-						double data;
-						stream->Read<double>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Char:
-					{
-						char data;
-						stream->Read<char>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Float:
-					{
-						float data;
-						stream->Read<float>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Int16:
-					{
-						int16_t data;
-						stream->Read<int16_t>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Int32:
-					{
-						int32_t data;
-						stream->Read<int32_t>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Int64:
-					{
-						int64_t data;
-						stream->Read<int64_t>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::UInt16:
-					{
-						uint16_t data;
-						stream->Read<uint16_t>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::UInt32:
-					{
-						uint32_t data;
-						stream->Read<uint32_t>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::UInt64:
-					{
-						uint64_t data;
-						stream->Read<uint64_t>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Vec2:
-					{
-						glm::vec2 data;
-						stream->Read<glm::vec2>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Vec3:
-					{
-						glm::vec3 data;
-						stream->Read<glm::vec3>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					case ScriptFieldType::Vec4:
-					{
-						glm::vec4 data;
-						stream->Read<glm::vec4>(data);
-						ins.SetValue(field_name, data);
-						break;
-					}
-					}
-				}
-
-
-			}
-		}
-	}
-
+	
 	static void serialize_entity(Entity entity, YAML::Emitter& emit, Scene* scene)
 	{
 		emit << YAML::BeginMap;
@@ -1416,188 +807,7 @@ namespace trace {
 		return obj;
 	}
 
-	template<typename... Component>
-	void serialize_component_type_id(Entity entity, std::vector<UUID>& components_type_id)
-	{
-
-		([&]() {
-			if (entity.HasComponent<Component>())
-			{
-				components_type_id.emplace_back(UUID(Reflection::TypeID<Component>()));
-			}
-			}(), ...);
-
-
-	}
-
-	template<typename... Component>
-	void serialize_component_type_id(ComponentGroup<Component...>, Entity entity, std::vector<UUID>& components_type_id)
-	{
-		serialize_component_type_id<Component...>(entity, components_type_id);
-	}
-
-	template<typename... Component>
-	void serialize_component_data(Entity entity, YAML::Emitter& emit)
-	{
-
-		([&]() {
-			if (entity.HasComponent<Component>())
-			{
-				Component& comp = entity.GetComponent<Component>();
-				Reflection::Serialize(comp, &emit, nullptr, Reflection::SerializationFormat::YAML);
-			}
-			}(), ...);
-
-
-	}
-
-	template<typename... Component>
-	void serialize_component_data(ComponentGroup<Component...>, Entity entity, YAML::Emitter& emit)
-	{
-		serialize_component_data<Component...>(entity, emit);
-	}
-
-	template<typename... Component>
-	void serialize_component_data(Entity entity, DataStream* stream)
-	{
-
-		([&]() {
-			if (entity.HasComponent<Component>())
-			{
-				Component& comp = entity.GetComponent<Component>();
-				Reflection::Serialize(comp, stream, nullptr, Reflection::SerializationFormat::BINARY);
-			}
-			}(), ...);
-
-
-	}
-
-	template<typename... Component>
-	void serialize_component_data(ComponentGroup<Component...>, Entity entity, DataStream* stream)
-	{
-		serialize_component_data<Component...>(entity, stream);
-	}
-
-	template<typename... Component>
-	void deserialize_component_data(Entity entity, YAML::detail::iterator_value& data, UUID& component_type_id)
-	{
-
-		([&]() {
-			if (component_type_id == Reflection::TypeID<Component>())
-			{
-				Component& comp = entity.GetOrAddComponent<Component>();
-				Reflection::Deserialize(comp, &data, nullptr, Reflection::SerializationFormat::YAML);
-			}
-			}(), ...);
-
-
-	}
-
-	template<typename... Component>
-	void deserialize_component_data(ComponentGroup<Component...>, Entity entity, YAML::detail::iterator_value& data, UUID& component_type_id)
-	{
-		deserialize_component_data<Component...>(entity, data, component_type_id);
-	}
-
-	template<typename... Component>
-	void deserialize_component_data(Entity entity, DataStream* stream, UUID& component_type_id)
-	{
-
-		([&]() {
-			if (component_type_id == Reflection::TypeID<Component>())
-			{
-				Component& comp = entity.GetOrAddComponent<Component>();
-				Reflection::Deserialize(comp, stream, nullptr, Reflection::SerializationFormat::BINARY);
-			}
-			}(), ...);
-
-
-	}
-
-	template<typename... Component>
-	void deserialize_component_data(ComponentGroup<Component...>, Entity entity, DataStream* stream, UUID& component_type_id)
-	{
-		deserialize_component_data<Component...>(entity, stream, component_type_id);
-	}
-
-	static void serialize_entity_components(Entity entity, YAML::Emitter& emit, Scene* scene)
-	{
-		emit << YAML::BeginMap;
-		std::vector<UUID> components_type_id;
-		
-		serialize_component_type_id(AllComponents{}, entity, components_type_id);
-
-		Reflection::Serialize(components_type_id, &emit, nullptr, Reflection::SerializationFormat::YAML);
-
-		serialize_component_data(ComponentGroup<IDComponent, HierachyComponent>{}, entity, emit);
-		serialize_component_data(AllComponents{}, entity, emit);
-
-		serialize_entity_scripts(entity, emit, scene);
-
-		emit << YAML::EndMap;
-	}
-
-	static void serialize_entity_components_binary(Entity entity, DataStream* stream, Scene* scene)
-	{
-		std::vector<UUID> components_type_id;
-
-		serialize_component_type_id(AllComponents{}, entity, components_type_id);
-
-		Reflection::Serialize(components_type_id, stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		serialize_component_data(ComponentGroup<IDComponent, HierachyComponent>{}, entity, stream);
-		serialize_component_data(AllComponents{}, entity, stream);
-
-		serialize_entity_scripts_binary(entity, stream, scene);
-
-	}
-
-	static Entity deserialize_entity_components(Scene* scene, YAML::detail::iterator_value& entity)
-	{
-		std::vector<UUID> components_type_id;
-		Reflection::Deserialize(components_type_id, &entity, nullptr, Reflection::SerializationFormat::YAML);
-
-		IDComponent id;
-		Reflection::Deserialize(id, &entity, nullptr, Reflection::SerializationFormat::YAML);
-		HierachyComponent hi;
-		Reflection::Deserialize(hi, &entity, nullptr, Reflection::SerializationFormat::YAML);
-		Entity obj = scene->CreateEntity_UUID(id._id, "", hi.parent);
-		obj.AddOrReplaceComponent<IDComponent>(id);
-		obj.AddOrReplaceComponent<HierachyComponent>(hi);
-		for (uint32_t i = 0; i < components_type_id.size(); i++)
-		{
-			deserialize_component_data(AllComponents{}, obj, entity, components_type_id[i]);
-		}
-
-		deserialize_entity_scripts(obj, scene, entity);
-
-		return obj;
-	}
-
-	static Entity deserialize_entity_components_binary(Scene* scene, DataStream* stream)
-	{
-		std::vector<UUID> components_type_id;
-		Reflection::Deserialize(components_type_id, stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		IDComponent id;
-		Reflection::Deserialize(id, stream, nullptr, Reflection::SerializationFormat::BINARY);
-		HierachyComponent hi;
-		Reflection::Deserialize(hi, stream, nullptr, Reflection::SerializationFormat::BINARY);
-		Entity obj = scene->CreateEntity_UUID(id._id, "", hi.parent);
-		obj.AddOrReplaceComponent<IDComponent>(id);
-		obj.AddOrReplaceComponent<HierachyComponent>(hi);
-		for (uint32_t i = 0; i < components_type_id.size(); i++)
-		{
-			deserialize_component_data(AllComponents{}, obj, stream, components_type_id[i]);
-		}
-
-		deserialize_entity_scripts_binary(obj, scene, stream);
-
-		return obj;
-	}
-
 	
-
 	bool SceneSerializer::Serialize(Ref<Scene> scene, const std::string& file_path)
 	{
 		YAML::Emitter emit;
@@ -1669,6 +879,51 @@ namespace trace {
 		emit << YAML::EndMap;
 
 		YAML::save_emitter_data(emit, file_path);
+
+		return true;
+	}
+
+	//TODO: Move serialization of an entity into a funtion
+	static void SerializePrefabEntity_Binary(Entity entity, DataStream* stream, uint32_t& entity_count)
+	{
+
+		serialize_entity_components_binary(entity, stream, entity.GetScene());
+
+		for (auto& i : entity.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = entity.GetScene()->GetEntity(i);
+			SerializePrefabEntity_Binary(child, stream, entity_count);
+			entity_count++;
+		}
+
+	}
+
+	bool SceneSerializer::SerializePrefab(Ref<Prefab> prefab, DataStream* stream)
+	{
+		uint32_t prefab_str_count = static_cast<uint32_t>(prefab->GetName().size() + 1);
+		stream->Write<uint32_t>(prefab_str_count);
+		stream->Write((void*)prefab->GetName().data(), prefab_str_count);
+		
+		uint32_t pos_1 = stream->GetPosition();
+		uint32_t entity_count = 0;
+		stream->Write<uint32_t>(entity_count);
+
+		Scene* scene = PrefabManager::get_instance()->GetScene();
+		Entity handle = scene->GetEntity(prefab->GetHandle());
+		serialize_entity_components_binary(handle, stream, handle.GetScene());
+
+
+		for (auto& i : handle.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = handle.GetScene()->GetEntity(i);
+			SerializePrefabEntity_Binary(child, stream, entity_count);
+			entity_count++;
+		}
+
+		uint32_t pos_2 = stream->GetPosition();
+		stream->SetPosition(pos_1);
+		stream->Write<uint32_t>(entity_count);
+		stream->SetPosition(pos_2);
 
 		return true;
 	}
@@ -1759,6 +1014,46 @@ namespace trace {
 
 		prefab->SetHandle(obj.GetID());
 		prefab->m_path = file_path;
+
+		result = prefab;
+
+		return result;
+	}
+
+	Ref<Prefab> SceneSerializer::DeserializePrefab(DataStream* stream)
+	{
+		Ref<Prefab> result;
+
+		uint32_t prefab_str_count = 0;
+		std::string prefab_name;
+		stream->Read<uint32_t>(prefab_str_count);
+		prefab_name.reserve(prefab_str_count);
+		prefab_name.resize(prefab_str_count - 1);
+		stream->Read((void*)prefab_name.data(), prefab_str_count);
+		uint32_t entity_count = 0;
+		stream->Read<uint32_t>(entity_count);
+		Ref<Prefab> prefab = PrefabManager::get_instance()->Get(prefab_name);
+		if (prefab)
+		{
+			return prefab;
+		}
+
+		prefab = PrefabManager::get_instance()->Create(prefab_name);
+
+
+		Scene* scene = PrefabManager::get_instance()->GetScene();
+
+		Entity obj;
+
+		obj = deserialize_entity_components_binary(scene, stream);
+
+
+		for (uint32_t i = 0; i < entity_count; i++)
+		{
+			deserialize_entity_components_binary(scene, stream);
+		}
+
+		prefab->SetHandle(obj.GetID());
 
 		result = prefab;
 
@@ -1942,39 +1237,39 @@ namespace trace {
 		return true;
 	}
 
-	bool SceneSerializer::Serialize(Ref<Scene> scene, FileStream& stream)
+	bool SceneSerializer::Serialize(Ref<Scene> scene, DataStream* stream)
 	{
-		uint32_t script_str_count = static_cast<uint32_t>(scene->GetName().size() + 1);
-		stream.Write<uint32_t>(script_str_count);
-		stream.Write((void*)scene->GetName().data(), script_str_count);
+		uint32_t scene_str_count = static_cast<uint32_t>(scene->GetName().size() + 1);
+		stream->Write<uint32_t>(scene_str_count);
+		stream->Write((void*)scene->GetName().data(), scene_str_count);
 
-		uint32_t pos_1 = stream.GetPosition();
+		uint32_t pos_1 = stream->GetPosition();
 		uint32_t entity_count = 0;
-		stream.Write<uint32_t>(entity_count);
+		stream->Write<uint32_t>(entity_count);
 		auto process_hierachy = [&](Entity entity, UUID, Scene*)
 		{
 			Entity en(entity, scene.get());
-			serialize_entity_components_binary(en, &stream, scene.get());
+			serialize_entity_components_binary(en, stream, scene.get());
 			entity_count++;
 		};
 
 		scene->ProcessEntitiesByHierachy(process_hierachy, false);
-		uint32_t pos_2 = stream.GetPosition();
-		stream.SetPosition(pos_1);
-		stream.Write<uint32_t>(entity_count);
-		stream.SetPosition(pos_2);
+		uint32_t pos_2 = stream->GetPosition();
+		stream->SetPosition(pos_1);
+		stream->Write<uint32_t>(entity_count);
+		stream->SetPosition(pos_2);
 
 		return true;
 	}
 
-	Ref<Scene> SceneSerializer::Deserialize(FileStream& stream)
+	Ref<Scene> SceneSerializer::Deserialize(DataStream* stream)
 	{
 		uint32_t scene_str_count = 0;
 		std::string scene_name;
-		stream.Read<uint32_t>(scene_str_count);
+		stream->Read<uint32_t>(scene_str_count);
 		scene_name.reserve(scene_str_count);
 		scene_name.resize(scene_str_count - 1);
-		stream.Read((void*)scene_name.data(), scene_str_count);
+		stream->Read((void*)scene_name.data(), scene_str_count);
 		Ref<Scene> scene = SceneManager::get_instance()->GetScene(scene_name);
 		if (scene)
 		{
@@ -1983,10 +1278,10 @@ namespace trace {
 		}
 		scene = SceneManager::get_instance()->CreateScene(scene_name);
 		uint32_t entity_count = 0;
-		stream.Read<uint32_t>(entity_count);
+		stream->Read<uint32_t>(entity_count);
 		for (uint32_t i = 0; i < entity_count; i++)
 		{
-			deserialize_entity_components_binary(scene.get(), &stream);
+			deserialize_entity_components_binary(scene.get(), stream);
 		}
 
 		scene->InitializeSceneComponents();
@@ -2014,282 +1309,330 @@ namespace trace {
 	*  '-> AttachmentType m_attachmentType = AttachmentType::NONE;
 	*  '-> texture_data
 	*/
-	bool SceneSerializer::SerializeTextures(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeTextures(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
-		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
+		
 		float total_tex_size = 0.0f;
-		if (entities)
-		{
-			char* data = nullptr;// TODO: Use custom allocator
-			uint32_t data_size = 0;
-			for (auto entity : entities)
+		char* data = nullptr;// TODO: Use custom allocator
+		uint32_t data_size = 0;
+
+
+		auto img_lambda = [&](Entity entity) {
+			ImageComponent& img = entity.GetComponent<ImageComponent>();
+			if (!img.image)
 			{
-				if (entity["ImageComponent"])
+				return;
+			}
+			UUID id = GetUUIDFromName(img.image->GetName());
+			auto it = map.find(id);
+			
+			if (it == map.end())
+			{
+				Ref<GTexture> res = img.image;
+				TextureDesc tex_desc = res->GetTextureDescription();
+				uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+				TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
+				total_tex_size += (float)tex_size;
+				if (data_size < tex_size)
 				{
-					auto comp = entity["ImageComponent"];
-					if (comp["Image"])
+					if (data)
 					{
-						Ref<GTexture> res;
-						UUID id = comp["Image"].as<uint64_t>();
-						auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-							{
-								return i.first == id;
-							});
-
-						if (it == map.end())
-						{
-							std::filesystem::path p = GetPathFromUUID(id);
-							res = TextureManager::get_instance()->LoadTexture_(p.string());
-							if (res)
-							{
-								TextureDesc tex_desc = res->GetTextureDescription();
-								uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
-								TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
-								total_tex_size += (float)tex_size;
-								if (data_size < tex_size)
-								{
-									if (data) delete[] data;// TODO: Use custom allocator
-									data = new char[tex_size];
-									data_size = tex_size;
-								}
-								RenderFunc::GetTextureData(res.get(),(void*&) data);
-								AssetHeader ast_h;
-								ast_h.offset = stream.GetPosition();
-
-								stream.Write<uint32_t>(tex_desc.m_width);
-								stream.Write<uint32_t>(tex_desc.m_height);
-								stream.Write<uint32_t>(tex_desc.m_mipLevels);
-
-
-								stream.Write<Format>(tex_desc.m_format);
-
-								stream.Write<BindFlag>(tex_desc.m_flag);
-
-								stream.Write<UsageFlag>(tex_desc.m_usage);
-
-								stream.Write<uint32_t>(tex_desc.m_channels);
-								stream.Write<uint32_t>(tex_desc.m_numLayers);
-
-								stream.Write<ImageType>(tex_desc.m_image_type);
-
-								stream.Write<AddressMode>(tex_desc.m_addressModeU);
-								stream.Write<AddressMode>(tex_desc.m_addressModeV);
-								stream.Write<AddressMode>(tex_desc.m_addressModeW);
-
-								stream.Write<FilterMode>(tex_desc.m_minFilterMode);
-								stream.Write<FilterMode>(tex_desc.m_magFilterMode);
-
-								stream.Write<AttachmentType>(tex_desc.m_attachmentType);
-
-
-								stream.Write(data, tex_size);
-								ast_h.data_size = stream.GetPosition() - ast_h.offset;
-								map.push_back(std::make_pair(id, ast_h));
-							}
-							else
-							{
-								TRC_ERROR("Unable to able to load image, path -> {}", p.string());
-							}
-						}
+						delete[] data;// TODO: Use custom allocator
 					}
+					data = new char[tex_size];
+					data_size = tex_size;
 				}
-				if (entity["ModelRendererComponent"])
+				RenderFunc::GetTextureData(res.get(), (void*&)data);
+				AssetHeader ast_h;
+				ast_h.offset = stream.GetPosition();
+
+				stream.Write<uint32_t>(tex_desc.m_width);
+				stream.Write<uint32_t>(tex_desc.m_height);
+				stream.Write<uint32_t>(tex_desc.m_mipLevels);
+
+
+				stream.Write<Format>(tex_desc.m_format);
+
+				stream.Write<BindFlag>(tex_desc.m_flag);
+
+				stream.Write<UsageFlag>(tex_desc.m_usage);
+
+				stream.Write<uint32_t>(tex_desc.m_channels);
+				stream.Write<uint32_t>(tex_desc.m_numLayers);
+
+				stream.Write<ImageType>(tex_desc.m_image_type);
+
+				stream.Write<AddressMode>(tex_desc.m_addressModeU);
+				stream.Write<AddressMode>(tex_desc.m_addressModeV);
+				stream.Write<AddressMode>(tex_desc.m_addressModeW);
+
+				stream.Write<FilterMode>(tex_desc.m_minFilterMode);
+				stream.Write<FilterMode>(tex_desc.m_magFilterMode);
+
+				stream.Write<AttachmentType>(tex_desc.m_attachmentType);
+
+
+				stream.Write(data, tex_size);
+				ast_h.data_size = stream.GetPosition() - ast_h.offset;
+				map.emplace(std::make_pair(id, ast_h));
+			}
+		};
+
+		auto model_lambda = [&](Entity entity) {
+			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			Ref<MaterialInstance> res = renderer._material;
+			for (auto& m_data : res->GetMaterialData())
+			{
+				trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
+				if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
 				{
-					auto comp = entity["ModelRendererComponent"];
-					UUID m_id = comp["file id"].as<uint64_t>();
+					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
+					UUID id = GetUUIDFromName(tex->GetName());
 
-					std::filesystem::path p = GetPathFromUUID(m_id);
-					Ref<MaterialInstance> res;
-					res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-					if (res) {}
-					else res = MaterialSerializer::Deserialize(p.string());
-					if (res)
+					auto it = map.find(id);
+
+					if (it == map.end())
 					{
-						for (auto& m_data : res->GetMaterialData())
+
+						TextureDesc tex_desc = tex->GetTextureDescription();
+						uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+						TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
+						total_tex_size += (float)tex_size;
+						if (data_size < tex_size)
 						{
-							trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
-							if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
-							{
-								Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
-								UUID id = GetUUIDFromName(tex->GetName());
-
-								auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-									{
-										return i.first == id;
-									});
-
-								if (it == map.end())
-								{
-
-									TextureDesc tex_desc = tex->GetTextureDescription();
-									uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
-									TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
-									total_tex_size += (float)tex_size;
-									if (data_size < tex_size)
-									{
-										if (data) delete[] data;// TODO: Use custom allocator
-										data = new char[tex_size];
-										data_size = tex_size;
-									}
-									RenderFunc::GetTextureData(tex.get(), (void*&)data);
-									AssetHeader ast_h;
-									ast_h.offset = stream.GetPosition();
-									stream.Write<uint32_t>(tex_desc.m_width);
-									stream.Write<uint32_t>(tex_desc.m_height);
-									stream.Write<uint32_t>(tex_desc.m_mipLevels);
-
-
-									stream.Write<Format>(tex_desc.m_format);
-
-									stream.Write<BindFlag>(tex_desc.m_flag);
-
-									stream.Write<UsageFlag>(tex_desc.m_usage);
-
-									stream.Write<uint32_t>(tex_desc.m_channels);
-									stream.Write<uint32_t>(tex_desc.m_numLayers);
-
-									stream.Write<ImageType>(tex_desc.m_image_type);
-
-									stream.Write<AddressMode>(tex_desc.m_addressModeU);
-									stream.Write<AddressMode>(tex_desc.m_addressModeV);
-									stream.Write<AddressMode>(tex_desc.m_addressModeW);
-
-									stream.Write<FilterMode>(tex_desc.m_minFilterMode);
-									stream.Write<FilterMode>(tex_desc.m_magFilterMode);
-
-									stream.Write<AttachmentType>(tex_desc.m_attachmentType);
-									stream.Write(data, tex_size);
-									ast_h.data_size = stream.GetPosition() - ast_h.offset;
-									map.push_back(std::make_pair(id, ast_h));
-								}
-								
-							}
+							if (data) delete[] data;// TODO: Use custom allocator
+							data = new char[tex_size];
+							data_size = tex_size;
 						}
-					}
-					else
-					{
-						TRC_ERROR("Unable to load material, path -> {}", p.string());
+						RenderFunc::GetTextureData(tex.get(), (void*&)data);
+						AssetHeader ast_h;
+						ast_h.offset = stream.GetPosition();
+						stream.Write<uint32_t>(tex_desc.m_width);
+						stream.Write<uint32_t>(tex_desc.m_height);
+						stream.Write<uint32_t>(tex_desc.m_mipLevels);
+
+
+						stream.Write<Format>(tex_desc.m_format);
+
+						stream.Write<BindFlag>(tex_desc.m_flag);
+
+						stream.Write<UsageFlag>(tex_desc.m_usage);
+
+						stream.Write<uint32_t>(tex_desc.m_channels);
+						stream.Write<uint32_t>(tex_desc.m_numLayers);
+
+						stream.Write<ImageType>(tex_desc.m_image_type);
+
+						stream.Write<AddressMode>(tex_desc.m_addressModeU);
+						stream.Write<AddressMode>(tex_desc.m_addressModeV);
+						stream.Write<AddressMode>(tex_desc.m_addressModeW);
+
+						stream.Write<FilterMode>(tex_desc.m_minFilterMode);
+						stream.Write<FilterMode>(tex_desc.m_magFilterMode);
+
+						stream.Write<AttachmentType>(tex_desc.m_attachmentType);
+						stream.Write(data, tex_size);
+						ast_h.data_size = stream.GetPosition() - ast_h.offset;
+						map.emplace(std::make_pair(id, ast_h));
 					}
 
-					
 				}
 			}
-			if(data) delete[] data;// TODO: Use custom allocator
+		};
 
-			float m_b = ((float)MB);
-			float t_size = total_tex_size / m_b;
-			TRC_INFO("Total Texture Size: {}MB", t_size);
+		auto skinned_model_lambda = [&](Entity entity) {
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			Ref<MaterialInstance> res = renderer._material;
+			for (auto& m_data : res->GetMaterialData())
+			{
+				trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
+				if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
+				{
+					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
+					UUID id = GetUUIDFromName(tex->GetName());
+
+					auto it = map.find(id);
+
+					if (it == map.end())
+					{
+
+						TextureDesc tex_desc = tex->GetTextureDescription();
+						uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+						TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
+						total_tex_size += (float)tex_size;
+						if (data_size < tex_size)
+						{
+							if (data) delete[] data;// TODO: Use custom allocator
+							data = new char[tex_size];
+							data_size = tex_size;
+						}
+						RenderFunc::GetTextureData(tex.get(), (void*&)data);
+						AssetHeader ast_h;
+						ast_h.offset = stream.GetPosition();
+						stream.Write<uint32_t>(tex_desc.m_width);
+						stream.Write<uint32_t>(tex_desc.m_height);
+						stream.Write<uint32_t>(tex_desc.m_mipLevels);
+
+
+						stream.Write<Format>(tex_desc.m_format);
+
+						stream.Write<BindFlag>(tex_desc.m_flag);
+
+						stream.Write<UsageFlag>(tex_desc.m_usage);
+
+						stream.Write<uint32_t>(tex_desc.m_channels);
+						stream.Write<uint32_t>(tex_desc.m_numLayers);
+
+						stream.Write<ImageType>(tex_desc.m_image_type);
+
+						stream.Write<AddressMode>(tex_desc.m_addressModeU);
+						stream.Write<AddressMode>(tex_desc.m_addressModeV);
+						stream.Write<AddressMode>(tex_desc.m_addressModeW);
+
+						stream.Write<FilterMode>(tex_desc.m_minFilterMode);
+						stream.Write<FilterMode>(tex_desc.m_magFilterMode);
+
+						stream.Write<AttachmentType>(tex_desc.m_attachmentType);
+						stream.Write(data, tex_size);
+						ast_h.data_size = stream.GetPosition() - ast_h.offset;
+						map.emplace(std::make_pair(id, ast_h));
+					}
+
+				}
+			}
+		};
+
+		scene->IterateComponent<ImageComponent>(img_lambda);
+		scene->IterateComponent<ModelRendererComponent>(model_lambda);
+		scene->IterateComponent<SkinnedModelRenderer>(skinned_model_lambda);
+
+		if (data)
+		{
+			delete[] data;// TODO: Use custom allocator
 		}
+
+		float m_b = ((float)MB);
+		float t_size = total_tex_size / m_b;
+		TRC_INFO("Total Texture Size: {}MB", t_size);
 
 		return true;
 	}
 
-	bool SceneSerializer::SerializeAnimationClips(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeAnimationClips(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
-		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (entities)
-		{
 
-			for (auto entity : entities)
+		auto anim_lambda = [&](Entity entity) 
+		{
+			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
+			if (!anim.animation)
 			{
-				if (entity["AnimationComponent"])
-				{
-					auto comp = entity["AnimationComponent"];
-					if (comp["Anim Graph"])
-					{
-						Ref<AnimationGraph> res;
-						UUID id = comp["Anim Graph"].as<uint64_t>();
-
-						std::filesystem::path p = GetPathFromUUID(id);
-						res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
-						if (res) {}
-						else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-						if (res)
-						{
-							std::vector<AnimationState>& states = res->GetStates();
-							for (AnimationState& state : states)
-							{
-								if (state.GetAnimationClip())
-								{
-									Ref<AnimationClip> clip = state.GetAnimationClip();
-									AnimationsSerializer::SerializeAnimationClip(clip,  stream,  map);
-								}
-							}
-						}
-						else
-						{
-							TRC_ERROR("Unable to load anim_graph, path -> {}", p.string());
-						}
-
-						
-					}
-				}
-
+				return;
 			}
+			UUID id = GetUUIDFromName(anim.animation->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			AnimationsSerializer::SerializeAnimationClip(anim.animation, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
 
-		}
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		scene->IterateComponent<AnimationComponent>(anim_lambda);
+
+		std::function<void(void*)> anim_clip_callback = [&](void* location)
+		{
+			Ref<AnimationClip>& clip = *(Ref<AnimationClip>*)location;
+			UUID id = GetUUIDFromName(clip->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			AnimationsSerializer::SerializeAnimationClip(clip, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+
+			map.emplace(std::make_pair(id, header));
+		};
+
+		auto graph_lambda = [&](Entity entity) 
+		{
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
+			Ref<Animation::Graph> graph = anim.graph.GetGraph();
+			if (!graph)
+			{
+				return;
+			}
+			uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
+			Reflection::CustomMemberCallback(*graph.get(), anim_clip_type_id, anim_clip_callback);
+
+		};
+
+		scene->IterateComponent<AnimationGraphController>(graph_lambda);
+
+		auto sequence_lambda = [&](Entity entity)
+		{
+			SequencePlayer& player = entity.GetComponent<SequencePlayer>();
+			Ref<Animation::Sequence> sequence = player.sequence.GetSequence();
+			if (!sequence)
+			{
+				return;
+			}
+			uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
+			Reflection::CustomMemberCallback(*sequence.get(), anim_clip_type_id, anim_clip_callback);
+
+		};
+
+		scene->IterateComponent<SequencePlayer>(sequence_lambda);
 
 		return true;
 	}
 
-	bool SceneSerializer::SerializeAnimationGraphs(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeAnimationGraphs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
-		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (entities)
-		{
 
-			for (auto entity : entities)
+		auto graph_lambda = [&](Entity entity)
+		{
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
+			Ref<Animation::Graph> graph = anim.graph.GetGraph();
+			if (!graph)
 			{
-				if (entity["AnimationComponent"])
-				{
-					auto comp = entity["AnimationComponent"];
-					if (comp["Anim Graph"])
-					{
-						Ref<AnimationGraph> res;
-						UUID id = comp["Anim Graph"].as<uint64_t>();
-						auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-							{
-								return i.first == id;
-							});
-
-						if (it == map.end())
-						{
-							std::filesystem::path p = GetPathFromUUID(id);
-							res = AnimationsManager::get_instance()->GetGraph(p.filename().string());
-							if (res) {}
-							else res = AnimationsSerializer::DeserializeAnimationGraph(p.string());
-							if (res)
-							{
-								AnimationsSerializer::SerializeAnimationGraph(res, stream, map);
-							}
-							else
-							{
-								TRC_ERROR("Unable to load anim_graph, path -> {}", p.string());
-							}
-						}
-					}
-				}
+				return;
+			}
+			
+			UUID id = GetUUIDFromName(graph->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
 			}
 
-		}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			AnimationsSerializer::SerializeAnimGraph(graph, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		scene->IterateComponent<AnimationGraphController>(graph_lambda);
 
 		return true;
 	}
@@ -2299,60 +1642,49 @@ namespace trace {
 	*  '-> file_size
 	*  '-> file_data
 	*/
-	bool SceneSerializer::SerializeFonts(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeFonts(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
+		
+		auto fnt_lambda = [&](Entity entity)
 		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (!entities) return false;
-
-		for (auto entity : entities)
-		{
-			if (entity["TextComponent"])
+			TextComponent& txt = entity.GetComponent<TextComponent>();
+			if (!txt.font)
 			{
-				auto comp = entity["TextComponent"];
-				if (comp["Font file_id"])
-				{
-					Ref<Font> res;
-					UUID id = comp["Font file_id"].as<uint64_t>();
-					auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-						{
-							return i.first == id;
-						});
-					if (it == map.end())
-					{
-						std::filesystem::path p = GetPathFromUUID(id);
-						FileHandle file_handle;
-						if (FileSystem::open_file(p.string(), (FileMode)(FileMode::READ | FileMode::BINARY), file_handle))
-						{
-							AssetHeader ast_h;
-							ast_h.offset = stream.GetPosition();
-							uint32_t file_size = 0;
-							FileSystem::read_all_bytes(file_handle, nullptr, file_size);
-							stream.Write<uint32_t>(file_size);
-							char* font_data = new char[file_size];// TODO: Use custom allocator
-							FileSystem::read_all_bytes(file_handle, font_data, file_size);
-							stream.Write(font_data, file_size);
-							delete[] font_data;// TODO: Use custom allocator
-							ast_h.data_size = stream.GetPosition() - ast_h.offset;
-							FileSystem::close_file(file_handle);
-
-							map.push_back(std::make_pair(id, ast_h));
-						}
-						else
-						{
-							TRC_ERROR("Failed to open font file, path -> {}", p.string());
-						}
-					}
-				}
-
+				return;
 			}
-		}
+			UUID id = GetUUIDFromName(txt.font->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
 
+			std::filesystem::path p = GetPathFromUUID(id);
+			FileHandle file_handle;
+			if (FileSystem::open_file(p.string(), (FileMode)(FileMode::READ | FileMode::BINARY), file_handle))
+			{
+				AssetHeader ast_h;
+				ast_h.offset = stream.GetPosition();
+				uint32_t file_size = 0;
+				FileSystem::read_all_bytes(file_handle, nullptr, file_size);
+				stream.Write<uint32_t>(file_size);
+				char* font_data = new char[file_size];// TODO: Use custom allocator
+				FileSystem::read_all_bytes(file_handle, font_data, file_size);
+				stream.Write(font_data, file_size);
+				delete[] font_data;// TODO: Use custom allocator
+				ast_h.data_size = stream.GetPosition() - ast_h.offset;
+				FileSystem::close_file(file_handle);
+
+				map.emplace(std::make_pair(id, ast_h));
+			}
+			else
+			{
+				TRC_ERROR("Failed to open font file, path -> {}", p.string());
+			}
+			
+		};
+
+		scene->IterateComponent<TextComponent>(fnt_lambda);
 
 		return true;
 	}
@@ -2364,190 +1696,362 @@ namespace trace {
 	*  '-> index_count
 	*  '-> indicies
 	*/
-	bool SceneSerializer::SerializeModels(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
+		
+		auto mdl_lambda = [&](Entity entity)
 		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (entities)
-		{
-			for (auto entity : entities)
+			ModelComponent& comp = entity.GetComponent<ModelComponent>();
+			if (comp._model)
 			{
-				if (entity["ModelComponent"])
-				{
-					auto comp = entity["ModelComponent"];
-					if (comp["file id"])
-					{
-						UUID id = comp["file id"].as<uint64_t>();
-						auto it = std::find_if(map.begin(), map.end(), [&id](std::pair<UUID, AssetHeader>& i)
-							{
-								return i.first == id;
-							});
-						if (it == map.end())
-						{
-							Ref<Model> res = ModelManager::get_instance()->GetModel(comp["Name"].as<std::string>());
-							AssetHeader ast_h;
-							ast_h.offset = stream.GetPosition();
-							std::vector<Vertex>& verticies = res->GetVertices();
-							std::vector<uint32_t>& indices = res->GetIndices();
-							int32_t vertex_count = static_cast<int32_t>(verticies.size());
-							int32_t index_count = static_cast<int32_t>(indices.size());
-							stream.Write<int32_t>(vertex_count);
-							stream.Write(verticies.data(), vertex_count * sizeof(Vertex));
-							stream.Write<int32_t>(index_count);
-							stream.Write(indices.data(), index_count * sizeof(uint32_t));
-							ast_h.data_size = stream.GetPosition() - ast_h.offset;
-
-							map.push_back(std::make_pair(id, ast_h));
-						}
-
-					}
-
-				}
+				return;
 			}
-		}
+			UUID id = GetUUIDFromName(comp._model->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			Ref<Model> res = comp._model;
+			AssetHeader ast_h;
+			ast_h.offset = stream.GetPosition();
+			std::string model_name = res->GetName();
+			Reflection::Serialize(model_name, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			Reflection::Serialize(*res.get(), &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+			map.emplace(std::make_pair(id, ast_h));
+		};
+
+		scene->IterateComponent<ModelComponent>(mdl_lambda);
 
 
 		return true;
 	}
 
-	bool SceneSerializer::SerializeMaterials(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeMaterials(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
-		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (entities)
-		{
-			for (auto entity : entities)
-			{
-				if (entity["ModelRendererComponent"])
-				{
-					auto comp = entity["ModelRendererComponent"];
-					if (comp["file id"])
-					{
-						Ref<MaterialInstance> res;
-						UUID id = comp["file id"].as<uint64_t>();
-						std::filesystem::path p = GetPathFromUUID(id);
-						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-						if (res) {}
-						else
-						{
-							res = MaterialSerializer::Deserialize(p.string());
-						}
-						if (res) MaterialSerializer::Serialize(res, stream, map);
-						else
-						{
-							TRC_ERROR("Failed to load material, path -> {}", p.string());
-						}
-					}
 
-				}
+		auto mat_lambda = [&](Entity entity)
+		{
+			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
+			if (!renderer._material)
+			{
+				return;
 			}
-		}
+			UUID id = GetUUIDFromName(renderer._material->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			MaterialSerializer::Serialize(renderer._material, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
+
+		auto skin_mat_lambda = [&](Entity entity)
+		{
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			UUID id = GetUUIDFromName(renderer._material->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			MaterialSerializer::Serialize(renderer._material, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializePipelines(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
+	{
+		
+		auto mat_lambda = [&](Entity entity)
+		{
+			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
+			if (!pipeline)
+			{
+				return;
+			}
+			UUID id = GetUUIDFromName(pipeline->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			PipelineSerializer::Serialize(pipeline, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
+
+		auto skin_mat_lambda = [&](Entity entity)
+		{
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
+			if (!pipeline)
+			{
+				return;
+			}
+			UUID id = GetUUIDFromName(pipeline->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			PipelineSerializer::Serialize(pipeline, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeShaders(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
+	{
+		auto shad_lambda = [&](GShader* shader)
+		{
+			if (shader == nullptr)
+			{
+				return;
+			}
+
+			Ref<GShader> shader_ref = ShaderManager::get_instance()->GetShader(shader->GetName());
+
+			UUID id = GetUUIDFromName(shader_ref->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			PipelineSerializer::SerializeShader(shader_ref, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		auto mat_lambda = [&](Entity entity)
+		{
+			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
+			if (!pipeline)
+			{
+				return;
+			}
+			PipelineStateDesc ds = pipeline->GetDesc();
+			shad_lambda(ds.vertex_shader);
+			shad_lambda(ds.pixel_shader);
+		};
+
+		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
+
+		auto skin_mat_lambda = [&](Entity entity)
+		{
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			if (!renderer._material)
+			{
+				return;
+			}
+			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
+			if (!pipeline)
+			{
+				return;
+			}
+			PipelineStateDesc ds = pipeline->GetDesc();
+			shad_lambda(ds.vertex_shader);
+			shad_lambda(ds.pixel_shader);
+		};
+
+		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializePrefabs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
+	{
+
+		auto prefab_lambda = [&](Entity entity)
+		{
+			PrefabComponent& comp = entity.GetComponent<PrefabComponent>();
+			Ref<Prefab> prefab = comp.handle;
+			if (!prefab)
+			{
+				return;
+			}
+
+			UUID id = GetUUIDFromName(prefab->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			SerializePrefab(prefab, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		scene->IterateComponent<PrefabComponent>(prefab_lambda);
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeSkeletons(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
+	{
+
+		std::function<void(void*)> skeleton_callback = [&](void* location)
+		{
+			Ref<Animation::Skeleton>& skeleton = *(Ref<Animation::Skeleton>*)location;
+			UUID id = GetUUIDFromName(skeleton->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			AnimationsSerializer::SerializeSkeleton(skeleton, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+
+			map.emplace(std::make_pair(id, header));
+		};
+
+		auto graph_lambda = [&](Entity entity)
+		{
+			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
+			Ref<Animation::Graph> graph = anim.graph.GetGraph();
+			if (!graph)
+			{
+				return;
+			}
+			uint64_t skeleton_type_id = Reflection::TypeID<Ref<Animation::Skeleton>>();
+			Reflection::CustomMemberCallback(*graph.get(), skeleton_type_id, skeleton_callback);
+
+		};
+
+		scene->IterateComponent<AnimationGraphController>(graph_lambda);
+
+		auto skinned_model_lambda = [&](Entity entity)
+		{
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			uint64_t skeleton_type_id = Reflection::TypeID<Ref<Animation::Skeleton>>();
+			Reflection::CustomMemberCallback(renderer, skeleton_type_id, skeleton_callback);
+
+		};
+
+		scene->IterateComponent<SkinnedModelRenderer>(skinned_model_lambda);
 
 
 		return true;
 	}
 
-	bool SceneSerializer::SerializePipelines(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeSequences(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
+		auto sequence_lambda = [&](Entity entity)
 		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (entities)
-		{
-			for (auto entity : entities)
+			SequencePlayer& anim = entity.GetComponent<SequencePlayer>();
+			Ref<Animation::Sequence> sequence = anim.sequence.GetSequence();
+			if (!sequence)
 			{
-				if (entity["ModelRendererComponent"])
-				{
-					auto comp = entity["ModelRendererComponent"];
-					if (comp["file id"])
-					{
-						Ref<MaterialInstance> res;
-						UUID id = comp["file id"].as<uint64_t>();
-						std::filesystem::path p = GetPathFromUUID(id);
-						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-						if (res) {}
-						else
-						{
-							res = MaterialSerializer::Deserialize(p.string());
-						}
-						if (res)
-						{
-							PipelineSerializer::Serialize(res->GetRenderPipline(), stream, map);
-						}
-						else
-						{
-							TRC_ERROR("Failed to load material, path -> {}", p.string());
-						}
-					}
-
-				}
+				return;
 			}
-		}
 
+			UUID id = GetUUIDFromName(sequence->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			AnimationsSerializer::SerializeSequence(sequence, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		scene->IterateComponent<SequencePlayer>(sequence_lambda);
 
 		return true;
 	}
 
-	bool SceneSerializer::SerializeShaders(FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map, std::string& scn_data)
+	bool SceneSerializer::SerializeSkinnedModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		YAML::Node data = YAML::Load(scn_data);
-		if (!data["Trace Version"] || !data["Scene Name"])
+		auto skinned_model_lambda = [&](Entity entity)
 		{
-			TRC_ERROR("These file is not a valid scene file, Function -> {}", __FUNCTION__);
-			return false;
-		}
-		YAML::Node entities = data["Entities"];
-		if (entities)
-		{
-			for (auto entity : entities)
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			if (!renderer._model)
 			{
-				if (entity["ModelRendererComponent"])
-				{
-					auto comp = entity["ModelRendererComponent"];
-					if (comp["file id"])
-					{
-						Ref<MaterialInstance> res;
-						UUID id = comp["file id"].as<uint64_t>();
-						std::filesystem::path p = GetPathFromUUID(id);
-						res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
-						if (res) {}
-						else
-						{
-							res = MaterialSerializer::Deserialize(p.string());
-						}
-						if (res)
-						{
-							Ref<GPipeline> pipeline = res->GetRenderPipline();
-							PipelineStateDesc ds = pipeline->GetDesc();
-							Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
-							Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
-							PipelineSerializer::SerializeShader(vert, stream, map);
-							PipelineSerializer::SerializeShader(frag, stream, map);
-						}
-						else
-						{
-							TRC_ERROR("Failed to load material, path -> {}", p.string());
-						}
-					}
-
-				}
+				return;
 			}
-		}
+			UUID id = GetUUIDFromName(renderer._model->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
 
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			std::string model_name = renderer._model->GetName();
+			Reflection::Serialize(model_name , &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			Reflection::Serialize(*renderer._model.get(), &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			header.data_size = stream.GetPosition() - header.offset;
+
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		scene->IterateComponent<SkinnedModelRenderer>(skinned_model_lambda);
 
 		return true;
 	}

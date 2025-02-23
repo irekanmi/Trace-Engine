@@ -4,6 +4,7 @@
 #include "core/Utils.h"
 #include "core/Coretypes.h"
 #include "serialize/FileStream.h"
+#include "external_utils.h"
 
 namespace trace {
 
@@ -160,21 +161,13 @@ namespace trace {
 
 				stream.SetPosition(it->second.offset);
 
-				int vertex_count = 0;
-				stream.Read<int>(vertex_count);
-				std::vector<Vertex> vertices;
-				vertices.resize(vertex_count);
-				stream.Read(vertices.data(), vertex_count * sizeof(Vertex));
+				std::string model_name;
+				Reflection::Deserialize(model_name, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+				Reflection::Deserialize(m_models[i], &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-				int index_count = 0;
-				stream.Read<int>(index_count);
-				std::vector<uint32_t> indices;
-				indices.resize(index_count);
-				stream.Read(indices.data(), index_count * sizeof(uint32_t));
-				
-
-				m_models[i].Init(vertices, indices);
+				m_models[i].Init(m_models[i].GetVertices(), m_models[i].GetIndices());
 				m_models[i].m_id = i;
+				m_models[i].m_path = model_name;
 				m_hashtable.Set(name, i);
 				_model = &m_models[i];
 				break;
@@ -184,6 +177,80 @@ namespace trace {
 
 		result = { _model,BIND_RENDER_COMMAND_FN(ModelManager::UnLoadModel) };
 		return result;
+	}
+	bool ModelManager::LoadDefaults()
+	{
+
+		std::vector<Vertex> verts;
+		std::vector<uint32_t> _ind;
+
+		//Cube
+		{
+			generateDefaultCube(verts, _ind);
+			generateVertexTangent(verts, _ind);
+			Cube = ModelManager::get_instance()->LoadModel(verts, _ind, "Cube");
+		}
+
+		// Sphere
+		{
+			verts.clear();
+			_ind.clear();
+
+			generateSphere(verts, _ind, 1.0f, 45, 45);
+			generateVertexTangent(verts, _ind);
+			Sphere = ModelManager::get_instance()->LoadModel(verts, _ind, "Sphere");
+
+		};
+
+		//Plane
+		{
+			verts.clear();
+			_ind.clear();
+
+			generateDefaultPlane(verts, _ind);
+			generateVertexTangent(verts, _ind);
+			Plane = ModelManager::get_instance()->LoadModel(verts, _ind, "Plane");
+		};
+		return true;
+	}
+	bool ModelManager::LoadDefaults_Runtime()
+	{
+		UUID id = GetUUIDFromName("Cube");
+		Cube = LoadModel_Runtime(id);
+
+		id = GetUUIDFromName("Sphere");
+		Sphere = LoadModel_Runtime(id);
+
+		id = GetUUIDFromName("Plane");
+		Plane = LoadModel_Runtime(id);
+
+		return true;
+	}
+	bool ModelManager::BuildDefaultModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map)
+	{
+		auto lambda = [&](Ref<Model> model)
+		{
+			UUID id = GetUUIDFromName(model->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			std::string model_name = model->GetName();
+			Reflection::Serialize(model_name, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			Reflection::Serialize(*model.get(), &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		lambda(Cube);
+		lambda(Sphere);
+		lambda(Plane);
+
+		
+		return true;
 	}
 	ModelManager* ModelManager::get_instance()
 	{

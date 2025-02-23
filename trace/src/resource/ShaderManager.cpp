@@ -198,6 +198,44 @@ namespace trace {
 		return result;
 	}
 
+	Ref<GShader> ShaderManager::CreateShader(std::vector<uint32_t>& code, std::vector<std::pair<std::string, int>>& data_index, const std::string& shader_name, ShaderStage shader_stage)
+	{
+		Ref<GShader> result;
+		GShader* _shad = nullptr;
+		result = GetShader(shader_name);
+		if (result)
+		{
+			TRC_WARN("Shader {} already exists", shader_name);
+			return result;
+		}
+
+
+		uint32_t i = 0;
+		for (GShader& shader : m_shaders)
+		{
+			if (shader.m_id == INVALID_ID)
+			{
+				if (RenderFunc::CreateShader(&shader, code, shader_stage))
+				{
+					shader.m_id = i;
+					m_hashTable.Set(shader_name, i);
+					shader.m_path = shader_name;
+					_shad = &shader;
+					break;
+				}
+				TRC_ERROR("Failed to create shader => {}", shader_name);
+				break;
+			}
+			i++;
+		}
+
+		std::vector<std::pair<std::string, int>>& shader_data_index = _shad->GetDataIndex();
+		shader_data_index = std::move(data_index);
+
+		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
+		return result;
+	}
+
 	void ShaderManager::UnloadShader(Resource* res)
 	{
 		GShader* shader = (GShader*)res;
@@ -208,7 +246,6 @@ namespace trace {
 	{
 
 
-		std::string name = GetNameFromUUID(id);
 		Ref<GShader> result;
 		GShader* _shad = nullptr;
 
@@ -219,50 +256,13 @@ namespace trace {
 			return result;
 		}
 
-		result = GetShader(name);
-		if (result)
-		{
-			TRC_WARN("Shader {} already exists", name);
-			return result;
-		}
 
+		std::string bin_dir;
+		FindDirectory(AppSettings::exe_path, "Data/trshd.trbin", bin_dir);
+		FileStream stream(bin_dir, FileMode::READ);
+		stream.SetPosition(it->second.offset);
 
-
-		uint32_t i = 0;
-		for (GShader& shader : m_shaders)
-		{
-			if (shader.m_id == INVALID_ID)
-			{
-				std::string bin_dir;
-				FindDirectory(AppSettings::exe_path, "Data/trshd.trbin", bin_dir);
-				FileStream stream(bin_dir, FileMode::READ);
-
-				stream.SetPosition(it->second.offset);
-				int shader_stage = -1;
-				stream.Read<int>(shader_stage);
-
-
-				int shader_size = 0;
-				std::vector<uint32_t> code;
-				stream.Read<int>(shader_size);
-				code.resize(shader_size);
-				stream.Read(code.data(), shader_size * sizeof(uint32_t));
-
-
-				if (RenderFunc::CreateShader(&shader, code, (ShaderStage)shader_stage))
-				{
-					shader.m_id = i;
-					m_hashTable.Set(name, i);
-					_shad = &shader;
-					break;
-				}
-				TRC_ERROR("Failed to create shader => {}", name);
-				break;
-			}
-			i++;
-		}
-
-		result = { _shad, BIND_RENDER_COMMAND_FN(ShaderManager::UnloadShader) };
+		result = PipelineSerializer::DeserializeShader(&stream);
 		return result;
 	}
 

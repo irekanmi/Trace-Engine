@@ -7,6 +7,8 @@
 #include "resource/Ref.h"
 #include "render/Transform.h"
 #include "core/Coretypes.h"
+#include "reflection/TypeRegistry.h"
+#include "serialize/DataStream.h"
 
 
 #include <vector>
@@ -82,18 +84,19 @@ namespace trace {
 
 	public:
 		static Ref<AnimationClip> Deserialize(UUID id);
+		static Ref<AnimationClip> Deserialize(DataStream* stream);
 		
 
 	private:
 		float m_duration = 1.0f;
 		int m_sampleRate = 30;
-		std::unordered_map<StringID, AnimationDataTrack> m_tracks;
+		std::unordered_map<StringID, std::unordered_map< AnimationDataType, std::vector<AnimationFrameData>>> m_tracks;
 		AnimationClipType m_type = AnimationClipType::SKELETAL_ANIMATIOM;
 		bool m_hasRootMotion = false;
 		RootMotionInfo m_rootMotionInfo;
 
 	protected:
-
+		ACCESS_CLASS_MEMBERS(AnimationClip);
 
 	};
 

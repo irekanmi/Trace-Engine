@@ -25,9 +25,12 @@ namespace trace {
 		virtual void UnLoad(Resource* res) override;
 		virtual Ref<Prefab> Load_Runtime(UUID id) override;
 
+		void SetAssetMap(std::unordered_map<UUID, AssetHeader>& map);
+
 		static PrefabManager* get_instance();
 	private:
 		Scene* m_prefabScene;
+		std::unordered_map<UUID, AssetHeader> m_assetsMap;
 
 	protected:
 

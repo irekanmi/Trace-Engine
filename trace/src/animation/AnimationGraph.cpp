@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #include "AnimationGraph.h"
 #include "animation/AnimationPoseNode.h"
 #include "animation/AnimationPose.h"
@@ -7,6 +8,7 @@
 #include "serialize/AnimationsSerializer.h"
 #include "external_utils.h"
 #include "core/Coretypes.h"
+#include "resource/GenericAssetManager.h"
 
 bool trace::AnimationGraph::HasAnimationClip(Ref<AnimationClip> clip)
 {
@@ -266,10 +268,15 @@ namespace trace::Animation {
         }
         else
         {
-
+            return GenericAssetManager::get_instance()->Load_Runtime<Graph>(id);
         }
 
         return result;
+    }
+
+    Ref<Graph> Graph::Deserialize(DataStream* stream)
+    {
+        return AnimationsSerializer::DeserializeAnimGraph(stream);
     }
 
 
