@@ -24,7 +24,7 @@ Follow the instructions to compile and run the engine from source
 ### Windows
 * Install Visual Studio 2022 or newer
 * Install Python and ensure it's added to PATH
-* Download the [external dependencies](https://drive.google.com/file/d/10MnovPlvnMxcar0gX6QFolMGgV2od92Y/view?usp=drive_link) and extract it to the engine root
+* Download the [external dependencies](https://drive.google.com/file/d/1Sr5SftLc2sPyUjmdlP1Hl72r48D23346/view?usp=drive_link) and extract it to the engine root
 * Run __windows_setup.bat__
 * If successful open __Trace.sln__ and set __Trace_Ed__ as the startup project
 
