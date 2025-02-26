@@ -64,8 +64,6 @@ namespace trace {
 
 	struct RenderGraphFrameData
 	{
-		RenderGraph frame_graph;
-
 		Viewport _viewPort;
 		Rect2D _rect;
 		Camera* _camera = nullptr;
@@ -156,6 +154,7 @@ namespace trace {
 		GSwapchain* GetSwapchain() { return &m_swapChain; }
 		uint32_t GetFrameWidth() { return m_frameWidth; }
 		uint32_t GetFrameHeight() { return m_frameHeight; }
+		std::vector<RenderGraphFrameData>& GetRenderGraphFrameData() { return m_renderGraphsData; }
 
 		std::unordered_map<std::string, void*>& GetAvaliableRenderPasses() { return m_avaliablePasses; }
 

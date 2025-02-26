@@ -18,6 +18,10 @@ namespace trace {
 		virtual bool PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0) override;
 		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0) override;
 
+		virtual void Render(float deltaTime) override;
+		virtual bool ComposeGraph(FrameSettings frame_settings) override;
+		virtual bool ReComposeGraph(FrameSettings frame_settings) override;
+
 	private:
 		GBufferPass gbuffer_pass;
 		LightingPass lighting_pass;
@@ -28,6 +32,10 @@ namespace trace {
 		UIPass ui_pass;
 		EditorUIPass editor_ui_pass;
 		ShadowPass shadow_pass;
+
+		float x = 800.0f;
+		float y = 600.0f;
+		FrameSettings current_settings;
 
 	protected:
 

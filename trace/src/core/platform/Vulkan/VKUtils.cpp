@@ -706,7 +706,6 @@ namespace vk {
 			}
 		}
 
-		present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
 		VkSurfaceFormatKHR surface_format = {};
 		bool surface_found = false;
@@ -893,6 +892,8 @@ namespace vk {
 		{
 			TRC_CRITICAL("Failed to present swapchain image");
 		}
+
+		TRC_ASSERT(result == VK_SUCCESS, "Failed to present swapchain image");
 
 		device->m_currentFrame = (device->m_currentFrame + 1) % device->frames_in_flight;
 
@@ -1976,10 +1977,7 @@ namespace vk {
 		alloc_info.allocationSize = mem_requirements.size;
 		alloc_info.memoryTypeIndex = FindMemoryIndex(device, mem_requirements.memoryTypeBits, memory_property);
 
-		if (vkAllocateMemory(device->m_device, &alloc_info, instance->m_alloc_callback, &out_buffer->m_memory) != VK_SUCCESS)
-		{
-			TRC_ERROR("failed to allocate buffer memory");
-		}
+		VK_ASSERT(vkAllocateMemory(device->m_device, &alloc_info, instance->m_alloc_callback, &out_buffer->m_memory));
 
 		_BindBufferMem(instance, device, out_buffer->m_handle, out_buffer->m_memory, 0);
 

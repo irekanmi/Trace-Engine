@@ -366,6 +366,11 @@ bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline
 				buffer_size = total_size + (2 * KB);
 			}
 
+			if (resource.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE && is_storage_buffer)
+			{
+				buffer_size = total_size * 512;
+			}
+
 			for (uint32_t i = 0; i < device->frames_in_flight; i++)
 			{
 
@@ -519,6 +524,7 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 
 
+		
 		_ResizeBuffer( _instance, _device, buffer, new_size);
 
 		VkWriteDescriptorSet write = {};
@@ -936,7 +942,8 @@ namespace vk {
 			if (buf_offset + meta_data._size >= buffer.m_info.m_size)
 			{
 				if (is_storage_buffer)
-				{					
+				{
+					//TODO: the device gets lost if the buffer is resized here, which crashes the program
 					VkDescriptorSet& set = _handle->Instance_sets[_device->m_imageIndex];
 					uint32_t new_size = buffer.m_info.m_size * 2;
 					resize_buffer_and_update_set(pipeline, _handle, meta_data, buffer, new_size, set);

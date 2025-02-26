@@ -346,7 +346,7 @@ namespace trace {
 	{
 		void* m_device = nullptr;
 		void* m_instance = nullptr;
-		std::vector<VKEvntPair> events;
+		std::vector<VKEvntPair> events[VK_MAX_NUM_FRAMES];
 		VkDeviceMemory m_memory;
 		uint32_t memory_size = 0;
 		uint32_t memory_type_bits = 0;
@@ -355,10 +355,15 @@ namespace trace {
 
 	struct VKRenderGraphPass
 	{
-		std::vector<VkEvent> wait_events;
-		std::vector<VkEvent> signal_events;
-		VKRenderPass physical_pass;
-		VkFramebuffer frame_buffer;
+		struct GraphPass
+		{
+			std::vector<VkEvent> wait_events;
+			std::vector<VkEvent> signal_events;
+			VKRenderPass physical_pass;
+			VkFramebuffer frame_buffer;
+		};
+		GraphPass data[VK_MAX_NUM_FRAMES];
+		
 	};
 
 	struct VKRenderGraphResource
@@ -366,7 +371,7 @@ namespace trace {
 		struct {
 			VKImage texture;
 			VKBuffer buffer;
-		} resource;
+		} resource[VK_MAX_NUM_FRAMES];
 		uint32_t memory_offset = 0;
 		VkMemoryRequirements tex_mem_req;
 		VkMemoryRequirements buf_mem_req;

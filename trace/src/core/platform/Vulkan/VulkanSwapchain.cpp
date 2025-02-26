@@ -158,7 +158,6 @@ namespace vk {
 		trace::VKSwapChain* _handle = (trace::VKSwapChain*)swapchain->GetRenderHandle()->m_internalData;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
-
 		vk::_PresentSwapchainImage(
 			_instance,
 			_device,

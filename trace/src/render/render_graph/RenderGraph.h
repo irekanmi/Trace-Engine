@@ -2,11 +2,13 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
+#include "render/Graphics.h"
+#include "render/GHandle.h"
+
+
 #include <string>
 #include <vector>
 #include <functional>
-#include "render/Graphics.h"
-#include "render/GHandle.h"
 
 namespace trace {
 	class GTexture;

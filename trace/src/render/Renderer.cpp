@@ -197,6 +197,7 @@ namespace trace {
 			m_composer = new RenderComposer();
 			m_composer->Init(this);
 		}
+		m_composer->ComposeGraph(frame_settings);
 
 		for (uint32_t i = 0; i < num_render_graphs; i++)
 		{
@@ -307,10 +308,12 @@ namespace trace {
 			else if (press->GetKeyCode() == KEY_N)
 			{
 				frame_settings |= RENDER_BLOOM;
+				m_composer->ReComposeGraph(frame_settings);
 			}
 			else if (press->GetKeyCode() == KEY_M)
 			{
 				frame_settings &= ~RENDER_BLOOM;
+				m_composer->ReComposeGraph(frame_settings);
 			}
 
 			break;
@@ -330,6 +333,8 @@ namespace trace {
 
 			_rect.right = wnd->GetWidth();
 			_rect.bottom = wnd->GetHeight();
+
+			m_composer->ReComposeGraph(frame_settings);
 			break;
 		}
 
@@ -355,13 +360,7 @@ namespace trace {
 
 			for (uint32_t i = 0; i < num_render_graphs; i++)
 			{
-				RenderGraphFrameData& graph_data = m_renderGraphsData[i];
-
-				RGBlackBoard frame_blck_bd;
-				RenderGraph& frame_graph = graph_data.frame_graph;
-				m_composer->PreFrame(frame_graph, frame_blck_bd, frame_settings, i);
-				frame_graph.Execute(i);
-				m_composer->PostFrame(frame_graph, frame_blck_bd, i);
+				m_composer->Render(deltaTime);
 			}
 
 			EndFrame();
@@ -370,9 +369,6 @@ namespace trace {
 			for (uint32_t i = 0; i < num_render_graphs; i++)
 			{
 				RenderGraphFrameData& graph_data = m_renderGraphsData[i];
-
-				RenderGraph& frame_graph = graph_data.frame_graph;
-				frame_graph.Destroy();
 
 				graph_data.num_non_shadowed_point_lights = 0;
 				graph_data.num_non_shadowed_sun_lights = 0;

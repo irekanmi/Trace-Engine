@@ -26,11 +26,21 @@ namespace trace {
 		bloom_pass.Init(m_renderer);
 		ui_pass.Init(m_renderer);
 
+		m_graphs.resize(1);
+		m_graphsBlackBoard.resize(1);
+
+
 		return result;
 	}
 
 	void RenderComposer::Shutdowm()
 	{
+
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Destroy();
+		}
+
 		ui_pass.ShutDown();
 		bloom_pass.ShutDown();
 		forward_pass.ShutDown();
@@ -59,7 +69,7 @@ namespace trace {
 			ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
 		}
 		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
-		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
+		//forward_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
 		{
 			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
@@ -81,6 +91,33 @@ namespace trace {
 
 
 		return result;
+	}
+
+	void RenderComposer::Render(float deltaTime)
+	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Execute(i);
+		}
+	}
+
+	bool RenderComposer::ComposeGraph(FrameSettings frame_settings)
+	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			PreFrame(m_graphs[i], m_graphsBlackBoard[i], frame_settings, i);
+		}
+
+		return true;
+	}
+
+	bool RenderComposer::ReComposeGraph(FrameSettings frame_settings)
+	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Destroy();
+		}
+		return ComposeGraph(frame_settings);
 	}
 
 }

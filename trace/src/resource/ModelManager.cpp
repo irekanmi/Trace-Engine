@@ -34,8 +34,10 @@ namespace trace {
 		{
 			if (model.m_id == INVALID_ID)
 				continue;
-			UnLoadModel(&model);
+			
 			TRC_TRACE("Model was still in use, name : {}, RefCount : {}", model.GetName(), model.m_refCount);
+			model.m_refCount = 0;
+			UnLoadModel(&model);
 		}
 
 	}

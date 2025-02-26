@@ -90,7 +90,7 @@ namespace trace {
 		file_logging = true;
 
 		filepath = file_path;
-		file_logger = spdlog::basic_logger_mt("TRACE", filepath, true);
+		file_logger = spdlog::basic_logger_st("TRACE", filepath, true);
 		file_logger->set_pattern("[%n][%H:%M:%S:%e]%^[%l] %v%$");
 
 

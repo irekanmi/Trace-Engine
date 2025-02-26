@@ -962,16 +962,16 @@ namespace vk {
 		// Wait for work to finish "if any"
 		if (!vk::_WaitFence(_instance, _handle, &_handle->m_inFlightFence[_handle->m_currentFrame], UINT64_MAX))
 		{
-			TRC_WARN("Fence timeout or wait failure");
+			TRC_ASSERT(false, "Fence timeout or wait failure");
 			return false;
 		}
 
 		vk::_FenceReset(_handle, &_handle->m_inFlightFence[_handle->m_currentFrame]);
 
 		
-
 		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT32_MAX))
 		{
+			TRC_ASSERT(false, "Failed to acquire swapchain image");
 			return false;
 		}
 
@@ -1048,7 +1048,7 @@ namespace vk {
 		sub_info.pWaitDstStageMask = pipeline_flag;
 
 		VkResult _result = vkQueueSubmit(_handle->m_graphicsQueue, 1, &sub_info, _handle->m_inFlightFence[_handle->m_currentFrame].m_handle);
-
+		VK_ASSERT(_result);
 
 		vk::_CommandBufferSubmitted(command_buffer);
 		// Destroy previous frame resources 
@@ -1061,6 +1061,8 @@ namespace vk {
 			TRC_ERROR("Unable to submit command buffer, Error String : {}, frame_index = {}", vulkan_result_string(_result, true), frame_index);
 			return false;
 		}
+
+		
 
 
 		frame_index++;

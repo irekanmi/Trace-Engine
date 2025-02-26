@@ -11,6 +11,7 @@
 #include "render_graph/BloomPass.h"
 #include "render_graph/UIPass.h"
 #include "render_graph/ShadowPass.h"
+#include "render_graph/RenderGraph.h"
 
 
 namespace trace {
@@ -20,7 +21,7 @@ namespace trace {
 	class RGBlackBoard;
 
 
-	class TRACE_API RenderComposer
+	class RenderComposer
 	{
 
 	public:
@@ -33,6 +34,11 @@ namespace trace {
 		virtual bool PreFrame(RenderGraph& frame_graph,RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0);
 		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0);
 
+		virtual void Render(float deltaTime);
+		virtual bool ComposeGraph(FrameSettings frame_settings);
+		virtual bool ReComposeGraph(FrameSettings frame_settings);
+
+
 	private:
 		GBufferPass gbuffer_pass;
 		LightingPass lighting_pass;
@@ -44,6 +50,8 @@ namespace trace {
 
 	protected:
 		Renderer* m_renderer;
+		std::vector<RenderGraph> m_graphs;//Used for rendering
+		std::vector<RGBlackBoard> m_graphsBlackBoard;//Used for rendering
 
 	};
 

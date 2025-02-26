@@ -25,10 +25,19 @@ namespace trace {
 		editor_ui_pass.Init(m_renderer);
 		shadow_pass.Init(m_renderer);
 
+		m_graphs.resize(1);
+		m_graphsBlackBoard.resize(1);
+
+
 		return result;
 	}
 	void EditorRenderComposer::Shutdowm()
 	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Destroy();
+		}
+
 		shadow_pass.ShutDown();
 		editor_ui_pass.ShutDown();
 		ui_pass.ShutDown();
@@ -49,8 +58,8 @@ namespace trace {
 
 		fd.hdr_index = INVALID_ID;
 		fd.swapchain_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
-		fd.frame_width = static_cast<uint32_t>(TraceEditor::get_instance()->GetViewportSize().x);
-		fd.frame_height = static_cast<uint32_t>(TraceEditor::get_instance()->GetViewportSize().y);
+		fd.frame_width = static_cast<uint32_t>(x);
+		fd.frame_height = static_cast<uint32_t>(y);
 
 		TextureDesc gPos = {};
 		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
@@ -96,6 +105,41 @@ namespace trace {
 
 
 		return result;
+	}
+	void EditorRenderComposer::Render(float deltaTime)
+	{
+		bool x_dirty = x != TraceEditor::get_instance()->GetViewportSize().x && TraceEditor::get_instance()->GetViewportSize().x > 0.0f;
+		bool y_dirty = y != TraceEditor::get_instance()->GetViewportSize().y && TraceEditor::get_instance()->GetViewportSize().y > 0.0f;
+		if (x_dirty || y_dirty)
+		{
+			x = TraceEditor::get_instance()->GetViewportSize().x;
+			y = TraceEditor::get_instance()->GetViewportSize().y;
+			ReComposeGraph(current_settings);
+		}
+
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Execute(i);
+		}
+	}
+	bool EditorRenderComposer::ComposeGraph(FrameSettings frame_settings)
+	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			PreFrame(m_graphs[i], m_graphsBlackBoard[i], frame_settings, i);
+		}
+		current_settings = frame_settings;
+		return true;
+	}
+	bool EditorRenderComposer::ReComposeGraph(FrameSettings frame_settings)
+	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Destroy();
+		}
+
+		ComposeGraph(frame_settings);
+		return true;
 	}
 }
 
