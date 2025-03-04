@@ -58,7 +58,8 @@ namespace trace::Animation {
 	{
 		Float,
 		Bool,
-		Int
+		Int,
+		Max
 	};
 
 	struct ParameterData
@@ -140,6 +141,8 @@ namespace trace::Animation {
 
 
 		Node* GetNode(UUID node_id);
+		void DestroyNode(UUID node_id);
+		void DestroyNodeWithInputs(UUID node_id);
 		std::vector<Parameter>& GetParameters() { return m_parameters; }
 		std::vector<Ref<AnimationClip>>& GetAnimationDataSet() { return m_animationDataSet; }
 		std::unordered_map<std::string, TransitionSet>& GetTransitionSet() { return m_parameterTranstions; }

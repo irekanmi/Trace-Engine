@@ -833,20 +833,21 @@ namespace trace::Reflection {
 		}
 	}
 
-	static void GetMemberLocation(void* location, char*& out_location, void* member_info, uint32_t format)
+	static bool GetMemberLocation(void* location, char*& out_location, void* member_info, uint32_t format)
 	{
 		uintptr_t location_ptr = (uintptr_t)location;
 		switch (format)
 		{
 		case SerializationFormat::YAML:
 		{
-			YAMLTypeSerializer::GetMemberLocation(location, out_location, member_info);
+			return YAMLTypeSerializer::GetMemberLocation(location, out_location, member_info);
 			break;
 		}
 		default:
 			out_location = (char*)location;
 		}
 
+		return true;
 	}
 
 	static void GetTypeMemberLocation(uint64_t type_id, std::string_view type_name, void* location, char*& out_location, void* member_info, uint32_t format)
@@ -1007,7 +1008,11 @@ namespace trace::Reflection {
 				TypeInfo& member_type_info = TypeRegistry::GetTypesData().data[member.type_id];
 				char location_data[128] = { 0 };
 				char* member_data_location = location_data;
-				GetMemberLocation(type_location, member_data_location, (void*)&member, format);
+				bool has_member = GetMemberLocation(type_location, member_data_location, (void*)&member, format);
+				if (!has_member)
+				{
+					continue;
+				}
 				member_type_info.deserializer(member_location, member_data_location, (void*)&member, format);
 
 				index++;

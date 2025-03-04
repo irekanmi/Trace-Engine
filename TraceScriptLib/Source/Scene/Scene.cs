@@ -8,15 +8,22 @@ namespace Trace
 {
     public class Scene
     {
-        static public Action GetEnityByName(ulong string_id)
+        static public Action GetEntityByName(ulong string_id)
         {
             object obj = InternalCalls.Scene_GetEntityByName(string_id);
             return obj as Action;
         }
 
-        static public Action GetEnityByName(string str)
+        static public Action GetEntityByName(string str)
         {
-            return GetEnityByName(Utils.HashString(str));
+            return GetEntityByName(Utils.HashString(str));
         }
+
+        static public Action GetEntity(ulong entity_id)
+        {
+            object obj = InternalCalls.Scene_GetEntity(entity_id);
+            return obj as Action;
+        }
+
     }
 }

@@ -3,6 +3,8 @@
 
 #include "Script.h"
 #include <string>
+#include "physics/Physics.h"
+#include "scene/UUID.h"
 
 namespace trace {
 	class Scene;
@@ -39,11 +41,16 @@ bool InvokeScriptMethod_Class(ScriptMethod& method, Script& script, void** param
 bool GetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* out_value, uint32_t val_size);
 bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* value, uint32_t val_size);
 
+
 template<typename T>
 void* GetValueInternal(T* value);
 
 
 void BindInternalFuncs();
+
+// In Engine Callback functions
+
+bool Script_OnCollisionEnter(UUID entity_id, ScriptInstance& instance, CollisionData& collision_data);
 
 
 

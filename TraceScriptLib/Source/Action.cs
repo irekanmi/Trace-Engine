@@ -16,6 +16,11 @@ namespace Trace
             Id = id;
         }
 
+        public ulong GetID()
+        {
+            return Id;
+        }
+
         public T GetComponent<T>() where T : Component<T>, new()
         {
             if (!HasComponent<T>()) return default(T);
@@ -79,6 +84,10 @@ namespace Trace
             return GetChildWithName(Utils.HashString(name));
         }
 
+        public virtual void OnCollisionEnter(CollisionData collision_data)
+        {
+            
+        }
 
 
     }

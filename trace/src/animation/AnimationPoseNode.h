@@ -106,6 +106,9 @@ namespace trace::Animation {
 		UUID CreateTransition(Graph* graph, UUID target_node);
 		std::vector<UUID>& GetTransitions() { return m_transitions; }
 		void SetTransitions(std::vector<UUID>& transitions) { m_transitions = std::move(transitions); }
+		bool HasTransition(Graph* graph, UUID transition_node);
+		void RemoveTransition(Graph* graph, UUID transition_node);
+
 
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 

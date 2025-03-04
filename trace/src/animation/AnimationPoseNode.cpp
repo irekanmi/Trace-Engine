@@ -148,6 +148,29 @@ namespace trace::Animation {
 		return transition_id;
 	}
 
+	bool StateNode::HasTransition(Graph* graph, UUID transition_node)
+	{
+		auto it = std::find(m_transitions.begin(), m_transitions.end(), transition_node);
+		return it != m_transitions.end();
+	}
+
+	void StateNode::RemoveTransition(Graph* graph, UUID transition_node)
+	{
+		if (HasTransition(graph, transition_node))
+		{
+			int32_t index = 0;
+			for (UUID& id : m_transitions)
+			{
+				if (id == transition_node)
+				{
+					graph->DestroyNodeWithInputs(id);
+					break;
+				}
+				index++;
+			}
+		}
+	}
+
 	PoseNodeResult* StateNode::GetFinalPose(GraphInstance* instance)
 	{
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -492,8 +515,6 @@ namespace trace::Animation {
 		StateNode* state_node = (StateNode*)graph->GetNode(state_id);
 		state_node->SetName(state_name);
 		state_node->SetStateMachine(m_uuid);
-		EntryNode* entry_node = (EntryNode*)graph->GetNode(m_entryNode);
-		entry_node->AddState(state_id);
 
 		return state_id;
 	}
@@ -507,9 +528,17 @@ namespace trace::Animation {
 		EntryNode* entry_node = (EntryNode*)nodes[m_entryNode];
 
 		entry_node->Update(instance, 0.0f);
-		int32_t* entry_state_index = entry_node->GetValue<int32_t>(instance);
+		UUID* entry_state_index = entry_node->GetValue<UUID>(instance);
 
-		data->current_node = (PoseNode*)nodes[m_states[*entry_state_index]];
+		if (*entry_state_index != 0)
+		{
+			data->current_node = (PoseNode*)nodes[*entry_state_index];
+		}
+		else
+		{
+			data->current_node = (PoseNode*)nodes[m_states[0]];
+		}
+
 
 	}
 

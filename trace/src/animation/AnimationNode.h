@@ -16,7 +16,8 @@ namespace trace::Animation {
 		Pose,
 		Float,
 		Int,
-		Bool
+		Bool,
+		Max
 	};
 
 	struct NodeInput
@@ -85,13 +86,11 @@ namespace trace::Animation {
 		virtual void Update(GraphInstance* instance, float deltaTime) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
-		//virtual size_t GetHash() override { return typeid(*this).hash_code(); }
 
-		void AddState(UUID node_id);
 
 		struct Result
 		{
-			int32_t entry_node = 0;
+			UUID entry_node = 0;
 		};
 
 	private:

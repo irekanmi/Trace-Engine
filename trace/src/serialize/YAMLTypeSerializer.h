@@ -288,15 +288,21 @@ namespace trace {
 			emit << YAML::EndMap;
 		}
 
-		static void GetMemberLocation(void* location, char* out_location, void* member_info)
+		static bool GetMemberLocation(void* location, char* out_location, void* member_info)
 		{
 			TRC_ASSERT(member_info, "Invalid Member Info, Funtion: {}", __FUNCTION__);
 			YAML::Node& node = *(YAML::Node*)location;
 			Reflection::Member& mem_info = *(Reflection::Member*)member_info;
 			YAML::Node member_node = node[mem_info.name];
 
+			if (!member_node)
+			{
+				return false;
+			}
+
 			memcpy(out_location, &member_node, sizeof(YAML::Node));
 
+			return true;
 		}
 		static void GetTypeMemberLocation(uint64_t type_id, std::string_view type_name, void* location, char* out_location, void* member_info)
 		{

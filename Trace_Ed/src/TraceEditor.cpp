@@ -31,6 +31,7 @@
 #include "animation/AnimationNode.h"
 #include "animation/AnimationSequenceTrack.h"
 #include "animation/SequenceTrackChannel.h"
+#include "debug/Debugger.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -53,7 +54,6 @@ void dark_red();
 void embraceTheDarkness();
 void dark_purple();
 void custom_solid();
-
 
 
 
@@ -989,7 +989,6 @@ namespace trace {
 		// Global Z-Coordinate
 		renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, 0.0f, line_lenght * 10.0f), glm::vec3(0.0f, 0.0f, -line_lenght * 10.0f), TRC_COL32(55, 55, 255, 255));
 
-
 	}
 	void TraceEditor::CloseCurrentScene()
 	{
@@ -1245,6 +1244,26 @@ namespace trace {
 			}
 
 			
+			break;
+		}
+		case KEY_4:
+		{
+			break;
+		}
+		case KEY_5:
+		{
+			break;
+		}
+		case KEY_6:
+		{
+			break;
+		}
+		case KEY_7:
+		{
+			break;
+		}
+		case KEY_8:
+		{
 			break;
 		}
 		}

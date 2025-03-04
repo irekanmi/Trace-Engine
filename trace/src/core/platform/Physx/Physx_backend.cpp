@@ -222,26 +222,49 @@ namespace physx {
 
 		void SendCollisionEvents()
 		{
+			trace::ScriptEngine* script_engine = trace::ScriptEngine::get_instance();
+			trace::Scene* scene = script_engine->GetCurrentScene();
+			trace::ScriptRegistry& scene_registry = scene->GetScriptRegistry();
 
 			for (auto& i : NewCollisions)
 			{
 				trace::CollisionData& col = CollisionsMap[i];
 
-				TRC_INFO("Collision Enter");
+				scene_registry.Iterate(col.entity, [&col](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_collision_enter = script->GetMethod("OnCollisionEnter");
+						if (!on_collision_enter)
+						{
+							return;
+						}
+
+						Script_OnCollisionEnter(uuid, *instance, col);
+					});
+
+				col.Swap();
+
+				scene_registry.Iterate(col.entity, [&col](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_collision_enter = script->GetMethod("OnCollisionEnter");
+						if (!on_collision_enter)
+						{
+							return;
+						}
+
+						Script_OnCollisionEnter(uuid, *instance, col);
+					});
 			}
 
 			for (auto& i : StayCollisions)
 			{
 				trace::CollisionData& col = CollisionsMap[i];
 
-				TRC_WARN("Collision Stay");
 			}
 
 			for (auto& i : RemovedCollisions)
 			{
 				trace::CollisionData& col = PrevCollisions[i];
 
-				TRC_INFO("Collision Exit");
 			}
 
 		}

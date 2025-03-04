@@ -735,6 +735,12 @@ namespace vk {
 			image_count = device->m_swapchainInfo.surface_capabilities.maxImageCount;
 		}
 
+		TRC_INFO("Minimum image count: {}", device->m_swapchainInfo.surface_capabilities.minImageCount);
+		TRC_INFO("Maximum image count: {}", device->m_swapchainInfo.surface_capabilities.maxImageCount);
+		TRC_INFO("Image count: {}", image_count);
+
+		image_count = device->frames_in_flight;
+
 
 		VkExtent2D min = device->m_swapchainInfo.surface_capabilities.minImageExtent;
 		VkExtent2D max = device->m_swapchainInfo.surface_capabilities.maxImageExtent;

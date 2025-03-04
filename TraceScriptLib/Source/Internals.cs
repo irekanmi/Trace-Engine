@@ -88,7 +88,17 @@ namespace Trace
         extern public static object Scene_GetEntityByName(ulong id);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_GetEntity(ulong entity_id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static object Scene_GetChildEntityByName(ulong id, ulong child_name);
+
+        #endregion
+
+        #region Physics
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Physics_GetCollisionData(ref CollisionData data, Int64 collision_data);
 
         #endregion
 

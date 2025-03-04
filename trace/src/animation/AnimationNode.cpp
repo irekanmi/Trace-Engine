@@ -25,7 +25,6 @@ namespace trace::Animation {
 
 		Result* result = reinterpret_cast<Result*>(instance_data_set[this]);
 
-		int32_t index = 0;
 		for (NodeInput& input : m_inputs)
 		{
 			if (input.node_id == 0)
@@ -33,18 +32,7 @@ namespace trace::Animation {
 				continue;
 			}
 
-			Node* node = nodes[input.node_id];
-			node->Update(instance, deltaTime);
-
-			bool node_result = *(node->GetValue<bool>(instance, input.value_index));
-
-			if (node_result)
-			{
-				result->entry_node = index;
-				break;
-			}
-
-			index++;
+			result->entry_node = input.node_id;
 		}
 	}
 	void* EntryNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
@@ -66,18 +54,12 @@ namespace trace::Animation {
 	}
 	void EntryNode::Init(Graph* graph)
 	{
-
-	}
-
-	void EntryNode::AddState(UUID node_id)
-	{
 		NodeInput input = {};
 		input.node_id = 0;
-		input.type = ValueType::Bool;
-		input.value_index = INVALID_ID;
-
-		m_inputs.push_back(input);
+		input.type = ValueType::Unknown;
+		input.value_index = 0;
 	}
+
 
 	// -----------------------------------------------------------------------
 
@@ -140,14 +122,17 @@ namespace trace::Animation {
 		case ParameterType::Bool:
 		{
 			type = ValueType::Bool;
+			break;
 		}
 		case ParameterType::Int:
 		{
 			type = ValueType::Int;
+			break;
 		}
 		case ParameterType::Float:
 		{
 			type = ValueType::Float;
+			break;
 		}
 		}
 

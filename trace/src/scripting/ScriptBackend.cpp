@@ -45,7 +45,8 @@ struct MonoData
 	std::unordered_map<MonoType*, std::function<bool(Entity&)>> has_components;
 	std::unordered_map<MonoType*, std::function<void(Entity&)>> remove_components;
 
-
+	MonoClass* physics_class = nullptr;
+	MonoMethod* on_collision_enter = nullptr;
 
 };
 
@@ -169,8 +170,11 @@ bool LoadCoreAssembly(const std::string& file_path)
 	s_MonoData.coreAssembly = LoadAssembly(file_path);
 	s_MonoData.coreImage = mono_assembly_get_image(s_MonoData.coreAssembly);
 
-	/*MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
-	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);*/
+	MonoClass* physics_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Physics");
+	TRC_ASSERT(physics_class != nullptr, "Can't find Physics class inside assembly, Function: {}", __FUNCTION__);
+	s_MonoData.on_collision_enter = mono_class_get_method_from_name(physics_class, "OnCollisionEnter", 2);
+	TRC_ASSERT(s_MonoData.on_collision_enter != nullptr, "Can't find OnCollisionEnter inside Physics class, Function: {}", __FUNCTION__);
+	s_MonoData.physics_class = physics_class;
 
 	PrintAssemblyTypes(s_MonoData.coreAssembly);
 
@@ -210,13 +214,7 @@ bool ReloadAssemblies(const std::string& core_assembly, const std::string& main_
 	s_MonoData.appDomain = mono_domain_create_appdomain("TraceAppDomain", nullptr);
 	mono_domain_set(s_MonoData.appDomain, true);
 
-	s_MonoData.coreAssembly = LoadAssembly(core_assembly);
-	s_MonoData.coreImage = mono_assembly_get_image(s_MonoData.coreAssembly);
-
-	/*MonoClass* component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Component");
-	s_MonoData.component_ctor = mono_class_get_method_from_name(component_class, ".ctor", 1);*/
-
-	PrintAssemblyTypes(s_MonoData.coreAssembly);
+	LoadCoreAssembly(core_assembly);
 
 
 	s_MonoData.mainAssembly = LoadAssembly(main_assembly);
@@ -613,32 +611,6 @@ MonoObject* Action_GetComponent(UUID uuid, MonoReflectionType* reflect_type)
 		TRC_WARN("Scene is not yet valid");
 		return nullptr;
 	}
-
-	/*MonoType* type = mono_reflection_type_get_type(reflect_type);
-	auto it = s_MonoData.get_components.find(type);
-	
-	ComponentMap& comps = it->second;
-	auto obj_it = comps.components_data.find(uuid);
-	if (obj_it != comps.components_data.end())
-	{
-		return obj_it->second;
-	}
-	else
-	{
-		UUID val = uuid;
-		MonoObject* res = mono_object_new(s_MonoData.appDomain, comps.component_class);
-		comps.components_data[uuid] = res;
-		mono_runtime_object_init(res);
-		MonoObject* exp = nullptr;
-		void* params[1] =
-		{
-			&val
-		};
-		mono_runtime_invoke((MonoMethod*)s_MonoData.component_ctor, res, params, &exp);
-		if (exp) mono_print_unhandled_exception(exp);
-		return res;
-	}*/
-
 	return nullptr;
 }
 
@@ -933,6 +905,26 @@ MonoObject* Scene_GetEntityByName(uint64_t string_id)
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+MonoObject* Scene_GetEntity(uint64_t entity_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(entity_id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return nullptr;
+	}
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 MonoObject* Scene_GetChildEntityByName(UUID id, uint64_t string_id)
 {
 	if (!s_MonoData.scene)
@@ -960,6 +952,34 @@ MonoObject* Scene_GetChildEntityByName(UUID id, uint64_t string_id)
 
 	return (MonoObject*)ins->GetBackendHandle();
 }
+
+#pragma endregion
+
+#pragma region Physics
+
+void Physics_GetCollisionData(CollisionData* out_data, int64_t collision_data)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+	CollisionData* ptr = (CollisionData*)collision_data;
+	
+	out_data->entity = ptr->entity;
+	out_data->otherEntity = ptr->otherEntity;
+	out_data->impulse = ptr->impulse;
+	out_data->numContacts = ptr->numContacts;
+
+	for (uint32_t i = 0; i < ptr->numContacts; i++)
+	{
+		out_data->contacts[i].normal = ptr->contacts[i].normal;
+		out_data->contacts[i].point = ptr->contacts[i].point;
+		out_data->contacts[i].seperation = ptr->contacts[i].seperation;
+	}
+
+}
+
 
 #pragma endregion
 
@@ -991,6 +1011,29 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TextComponent_SetString);
 
 	ADD_INTERNAL_CALL(Scene_GetEntityByName);
+	ADD_INTERNAL_CALL(Scene_GetEntity);
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 
+	ADD_INTERNAL_CALL(Physics_GetCollisionData);
+
+}
+
+bool Script_OnCollisionEnter(UUID entity_id, ScriptInstance& instance, CollisionData& collision_data)
+{
+	
+	MonoInstance* internal_ins = (MonoInstance*)instance.GetInternal();
+
+	void* ptr = &collision_data;
+	int64_t ptr_location = (int64_t)ptr;
+	MonoObject* exp = nullptr;
+	void* args[] =
+	{
+		instance.GetBackendHandle(),
+		&ptr_location
+	};
+
+	mono_runtime_invoke(s_MonoData.on_collision_enter, nullptr, args, &exp);
+	if (exp) mono_print_unhandled_exception(exp);
+
+	return true;
 }

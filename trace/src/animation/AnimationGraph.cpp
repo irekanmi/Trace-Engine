@@ -246,7 +246,35 @@ namespace trace::Animation {
             return m_nodes[node_id];
         }
 
+        TRC_ASSERT(false, "Ensure to Get valid nodes, Function: {}", __FUNCTION__);
         return nullptr;
+    }
+
+    void Graph::DestroyNode(UUID node_id)
+    {
+        Node* node = GetNode(node_id);
+        if (node)
+        {
+            m_nodes.erase(node_id);
+            delete node;//TODO: Use custom allocator
+        }
+    }
+
+    void Graph::DestroyNodeWithInputs(UUID node_id)
+    {
+        Node* node = GetNode(node_id);
+        if (node)
+        {
+            for (NodeInput& input : node->GetInputs())
+            {
+                if (input.node_id != 0)
+                {
+                    DestroyNode(input.node_id);
+                }
+            }
+            m_nodes.erase(node_id);
+            delete node;//TODO: Use custom allocator
+        }
     }
 
     void Graph::AddAnimationClip(Ref<AnimationClip> clip)

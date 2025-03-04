@@ -133,7 +133,7 @@ namespace trace {
 		{
 			UUID temp = entity;
 			entity = otherEntity;
-			otherEntity = entity;
+			otherEntity = temp;
 		}
 	};
 

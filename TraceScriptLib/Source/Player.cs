@@ -22,7 +22,7 @@ class Player : Trace.Action
     
     public void OnUpdate(float deltaTime)
     {
-        Trace.Action sad_idle = Scene.GetEnityByName("Sad Idle");
+        Trace.Action sad_idle = Scene.GetEntityByName("Sad Idle");
         TransformComponent pose = sad_idle.GetComponent<TransformComponent>();
 
         Vec3 dir = Vec3.Zero;
@@ -94,7 +94,7 @@ class FollowEntity : Trace.Action
     public float follow_threshold = 1.0f;
     public void OnStart()
     {
-        target = Scene.GetEnityByName("mixamorig:Head");
+        target = Scene.GetEntityByName("mixamorig:Head");
         TransformComponent target_transform = target.GetComponent<TransformComponent>();
         last_position = target_transform.WorldPosition;
     }
@@ -125,7 +125,7 @@ class FollowXBot : Trace.Action
     public float follow_threshold = 1.0f;
     public void OnEnable()
     {
-        Trace.Action x_bot = Scene.GetEnityByName("X_bot_1");
+        Trace.Action x_bot = Scene.GetEntityByName("X_bot_1");
         target = x_bot.GetChildWithName("mixamorig:Head");
         TransformComponent target_transform = target.GetComponent<TransformComponent>();
         last_position = target_transform.WorldPosition;
@@ -156,7 +156,7 @@ class FollowYBot : Trace.Action
     public float follow_threshold = 1.0f;
     public void OnEnable()
     {
-        Trace.Action x_bot = Scene.GetEnityByName("Y_Bot_1");
+        Trace.Action x_bot = Scene.GetEntityByName("Y_Bot_1");
         target = x_bot.GetChildWithName("mixamorig:Hips");
         TransformComponent target_transform = target.GetComponent<TransformComponent>();
         last_position = target_transform.WorldPosition;

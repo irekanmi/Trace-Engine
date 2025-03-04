@@ -104,11 +104,11 @@ namespace trace {
 	{
 		VkRenderPass m_handle;
 
-		glm::vec4* clear_color;
-		glm::vec4* render_area;
+		glm::vec4* clear_color = nullptr;
+		glm::vec4* render_area = nullptr;
 
-		float* depth_value;
-		uint32_t* stencil_value;
+		float* depth_value = nullptr;
+		uint32_t* stencil_value = nullptr;
 
 		RenderPassState m_state;
 

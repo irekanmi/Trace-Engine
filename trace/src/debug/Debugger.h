@@ -32,6 +32,12 @@ namespace trace {
 		// Rendering ---------------------------------
 		void AddDebugLine(glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color = 1);
 		void AddDebugLine(glm::vec3 from, glm::vec3 to, uint32_t color = 1);
+		void DrawDebugCapsule(float radius, float height, glm::mat4 transform, uint32_t color = 1);
+		void DrawDebugCylinder(float radius, float height, glm::mat4 transform, uint32_t color = 1);
+		void DrawDebugCircle(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugSemiCircle(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugSphere(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugHemiSphere(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 
 		DebugRenderData& GetRenderData() { return m_renderData; }
 
