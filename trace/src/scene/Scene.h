@@ -25,8 +25,10 @@ namespace trace {
 		void Destroy();
 		void OnStart();
 		void OnScriptStart();
+		void OnPhysicsStart();
 		void OnStop();
 		void OnScriptStop();
+		void OnPhysicsStop();
 		void OnUpdate(float deltaTime);
 		void OnScriptUpdate(float deltaTime);
 		void OnPhysicsUpdate(float deltaTime);

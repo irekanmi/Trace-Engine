@@ -23,6 +23,8 @@
 #include "HierachyPanel.h"
 #include "../import/Importer.h"
 #include "external_utils.h"
+#include "core/defines.h"
+#include "scene/SceneManager.h"
 
 
 #include "imgui.h"
@@ -36,9 +38,9 @@
 
 namespace trace {
 	extern void ImportOBJ(const std::string& path, std::vector<std::string>& out_models, bool create_materials);
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
 
+
+	static bool rename_file = false;
 	static float thumbnail_size = 96.0f;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> process_callbacks;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> extensions_callbacks;
@@ -68,19 +70,19 @@ namespace trace {
 					}
 				}*/
 			};
-			process_callbacks[".trmat"] = [editor](std::filesystem::path& path)
+			process_callbacks[MATERIAL_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->GetAllProjectAssets().materials.emplace(path);
 
 			};
 
-			process_callbacks[".trpip"] = [editor](std::filesystem::path& path)
+			process_callbacks[RENDER_PIPELINE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->GetAllProjectAssets().pipelines.emplace(path);
 
 			};
 
-			process_callbacks[".trscn"] = [editor](std::filesystem::path& path)
+			process_callbacks[SCENE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->GetAllProjectAssets().scenes.emplace(path);
 
@@ -92,12 +94,12 @@ namespace trace {
 
 			};
 
-			
+
 			auto tex_lambda = [editor](std::filesystem::path& path)
 			{
 				editor->GetAllProjectAssets().textures.emplace(path);
 			};
-			
+
 
 			process_callbacks[".png"] = tex_lambda;
 			process_callbacks[".jpg"] = tex_lambda;
@@ -107,7 +109,7 @@ namespace trace {
 		//extensions callbacks
 		{
 
-			extensions_callbacks[".trmat"] = [editor](std::filesystem::path& path)
+			extensions_callbacks[MATERIAL_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
 				assets_edit.editMaterialPath = path;
@@ -141,7 +143,7 @@ namespace trace {
 						assets_edit.editMaterial->SetMaterialData(assets_edit.materialDataCache);
 						RenderFunc::PostInitializeMaterial(assets_edit.editMaterial.get(), assets_edit.editMaterialPipe);
 
-						
+
 						assets_edit.editMaterial.free();
 						assets_edit.materialDataCache.clear();
 						assets_edit.editMaterialPipe.free();
@@ -151,8 +153,8 @@ namespace trace {
 
 			extensions_callbacks[".trprf"] = [editor](std::filesystem::path& path)
 			{
-				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() 
-					{ 
+				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
+					{
 						if (editor->GetHierachyPanel()->GetSelectedEntity())
 							editor->GetInspectorPanel()->DrawEntityComponent(editor->GetHierachyPanel()->GetSelectedEntity());
 					},
@@ -160,14 +162,14 @@ namespace trace {
 					{
 						editor->GetHierachyPanel()->SetPrefabEdit(SceneSerializer::DeserializePrefab(path.string()));
 					},
-					[editor]()
+						[editor]()
 					{
 						Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
-						SceneSerializer::SerializePrefab(prefab,prefab->m_path.string());
+						SceneSerializer::SerializePrefab(prefab, prefab->m_path.string());
 					});
 			};
 
-			extensions_callbacks[".trscn"] = [editor](std::filesystem::path& path)
+			extensions_callbacks[SCENE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->OpenScene(path.string());
 			};
@@ -202,7 +204,7 @@ namespace trace {
 					});
 			};
 
-			extensions_callbacks[".trpip"] = [editor](std::filesystem::path& path)
+			extensions_callbacks[RENDER_PIPELINE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditPipeline(); },
 					[editor, path]()
@@ -407,6 +409,22 @@ namespace trace {
 			}
 		}
 
+		std::string new_filename;
+		if (rename_file && !m_renamePath.empty() && editor->InputTextPopup("New File Name", new_filename))
+		{
+			if (!new_filename.empty())
+			{
+				RenameFile(m_renamePath, new_filename);
+				rename_file = false;
+				m_renamePath = "";
+			}
+		}
+		else
+		{
+			rename_file = false;
+			m_renamePath = "";
+		}
+
 	}
 	void ContentBrowser::OnDirectoryChanged()
 	{
@@ -580,7 +598,7 @@ namespace trace {
 		// =======================================
 
 
-		
+
 		if (!std::filesystem::exists(assetsDB_path))
 		{
 			if (!std::filesystem::exists(db_path)) std::filesystem::create_directory(db_path);
@@ -692,7 +710,7 @@ namespace trace {
 			emit << YAML::EndSeq;
 			emit << YAML::EndMap;
 
-			
+
 			YAML::save_emitter_data(emit, assetsDB_path.string());
 		}
 
@@ -725,7 +743,7 @@ namespace trace {
 				if (ImGui::MenuItem("Material"))
 				{
 					c_item = MATERIAL;
-					
+
 				}
 				if (ImGui::MenuItem("Pipeline"))
 				{
@@ -770,11 +788,11 @@ namespace trace {
 				{
 					c_item = (CreateItem)0;
 					std::filesystem::create_directory(m_currentDir / res);
+					ProcessAllDirectory();
 					OnDirectoryChanged();
 				}
 			}
 			else c_item = (CreateItem)0;
-			ProcessAllDirectory();
 			break;
 		}
 		case MATERIAL:
@@ -785,17 +803,17 @@ namespace trace {
 				if (!res.empty())
 				{
 					c_item = (CreateItem)0;
-					UUID id = GetUUIDFromName(res + ".trmat");
+					UUID id = GetUUIDFromName(res + MATERIAL_FILE_EXTENSION);
 					if (id == 0)
 					{
 						Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline");
-						Ref<MaterialInstance> mat = MaterialManager::get_instance()->CreateMaterial(res + ".trmat", sp);
+						Ref<MaterialInstance> mat = MaterialManager::get_instance()->CreateMaterial(res + MATERIAL_FILE_EXTENSION, sp);
 						if (mat)
 						{
-							std::string path = (m_currentDir / (res + ".trmat")).string();
+							std::string path = (m_currentDir / (res + MATERIAL_FILE_EXTENSION)).string();
 							MaterialSerializer::Serialize(mat, path);
 							UUID new_id = UUID::GenUUID();
-							m_allFilesID[res + ".trmat"] = new_id;
+							m_allFilesID[res + MATERIAL_FILE_EXTENSION] = new_id;
 							m_allIDPath[new_id] = path;
 							ProcessAllDirectory(true);
 							OnDirectoryChanged();
@@ -803,7 +821,7 @@ namespace trace {
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trmat");
+						TRC_ERROR("{} has already been created", res + MATERIAL_FILE_EXTENSION);
 					}
 				}
 			}
@@ -818,23 +836,23 @@ namespace trace {
 				if (!res.empty())
 				{
 					c_item = (CreateItem)0;
-					UUID id = GetUUIDFromName(res + ".trpip");
+					UUID id = GetUUIDFromName(res + RENDER_PIPELINE_FILE_EXTENSION);
 					if (id == 0)
 					{
 						Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline");
-						Ref<GPipeline> new_pipeline = PipelineManager::get_instance()->CreatePipeline(sp->GetDesc(), res + ".trpip", false);
+						Ref<GPipeline> new_pipeline = PipelineManager::get_instance()->CreatePipeline(sp->GetDesc(), res + RENDER_PIPELINE_FILE_EXTENSION, false);
 						new_pipeline->SetPipelineType(PipelineType::Surface_Material);
-						std::string path = (m_currentDir / (res + ".trpip")).string();
+						std::string path = (m_currentDir / (res + RENDER_PIPELINE_FILE_EXTENSION)).string();
 						PipelineSerializer::Serialize(new_pipeline, path);
 						UUID new_id = UUID::GenUUID();
-						m_allFilesID[res + ".trpip"] = new_id;
+						m_allFilesID[res + RENDER_PIPELINE_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = path;
 						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trpip");
+						TRC_ERROR("{} has already been created", res + RENDER_PIPELINE_FILE_EXTENSION);
 					}
 				}
 			}
@@ -849,20 +867,20 @@ namespace trace {
 				if (!res.empty())
 				{
 					c_item = (CreateItem)0;
-					UUID id = GetUUIDFromName(res + ".trscn");
+					UUID id = GetUUIDFromName(res + SCENE_FILE_EXTENSION);
 					if (id == 0)
 					{
-						std::string scene_path = (m_currentDir / (res + ".trscn")).string();
+						std::string scene_path = (m_currentDir / (res + SCENE_FILE_EXTENSION)).string();
 						editor->CreateScene(scene_path);
 						UUID new_id = UUID::GenUUID();
-						m_allFilesID[res + ".trscn"] = new_id;
+						m_allFilesID[res + SCENE_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = scene_path;
 						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trscn");
+						TRC_ERROR("{} has already been created", res + SCENE_FILE_EXTENSION);
 					}
 				}
 			}
@@ -877,27 +895,27 @@ namespace trace {
 				if (!res.empty())
 				{
 					c_item = (CreateItem)0;
-					UUID id = GetUUIDFromName(res + ".trcac");
-					
+					UUID id = GetUUIDFromName(res + ANIMATION_CLIP_FILE_EXTENSION);
+
 					if (id == 0)
 					{
-						std::string clip_path = (m_currentDir / (res + ".trcac")).string();
+						std::string clip_path = (m_currentDir / (res + ANIMATION_CLIP_FILE_EXTENSION)).string();
 						Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
 						AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
 						UUID new_id = UUID::GenUUID();
-						m_allFilesID[res + ".trcac"] = new_id;
+						m_allFilesID[res + ANIMATION_CLIP_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = clip_path;
 						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trcac");
+						TRC_ERROR("{} has already been created", res + ANIMATION_CLIP_FILE_EXTENSION);
 					}
 				}
 			}
 			else c_item = (CreateItem)0;
-			
+
 			break;
 		}
 		case ANIMATION_GRAPH:
@@ -908,21 +926,22 @@ namespace trace {
 				if (!res.empty())
 				{
 					c_item = (CreateItem)0;
-					UUID id = GetUUIDFromName(res + ".trcag");
+					UUID id = GetUUIDFromName(res + ANIMATION_GRAPH_FILE_EXTENSION);
 					if (id == 0)
 					{
-						std::string graph_path = (m_currentDir / (res + ".trcag")).string();
-						Ref<AnimationGraph> graph = AnimationsManager::get_instance()->LoadGraph_(graph_path);
-						AnimationsSerializer::SerializeAnimationGraph(graph, graph_path);
+						std::string graph_path = (m_currentDir / (res + ANIMATION_GRAPH_FILE_EXTENSION)).string();
+						Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(graph_path);
+						graph->Create();
+						AnimationsSerializer::SerializeAnimGraph(graph, graph_path);
 						UUID new_id = UUID::GenUUID();
-						m_allFilesID[res + ".trcag"] = new_id;
+						m_allFilesID[res + ANIMATION_GRAPH_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = graph_path;
 						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trcag");
+						TRC_ERROR("{} has already been created", res + ANIMATION_GRAPH_FILE_EXTENSION);
 					}
 				}
 			}
@@ -937,22 +956,22 @@ namespace trace {
 				if (!res.empty())
 				{
 					c_item = (CreateItem)0;
-					UUID id = GetUUIDFromName(res + ".trcsq");
+					UUID id = GetUUIDFromName(res + SEQUENCE_FILE_EXTENSION);
 
 					if (id == 0)
 					{
-						std::string sequence_path = (m_currentDir / (res + ".trcsq")).string();
+						std::string sequence_path = (m_currentDir / (res + SEQUENCE_FILE_EXTENSION)).string();
 						Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_path);
 						AnimationsSerializer::SerializeSequence(sequence, sequence_path);
 						UUID new_id = UUID::GenUUID();
-						m_allFilesID[res + ".trcac"] = new_id;
+						m_allFilesID[res + ANIMATION_CLIP_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = sequence_path;
 						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ".trcac");
+						TRC_ERROR("{} has already been created", res + ANIMATION_CLIP_FILE_EXTENSION);
 					}
 				}
 			}
@@ -965,8 +984,8 @@ namespace trace {
 	void ContentBrowser::OnItemPopup(std::filesystem::path& path)
 	{
 		static std::string prev_file_name = "";
-		static bool rename_file = false;
 		bool is_directory = std::filesystem::is_directory(path);
+		std::string filename = path.filename().string();
 
 		TraceEditor* editor = TraceEditor::get_instance();
 
@@ -974,22 +993,118 @@ namespace trace {
 		{
 			if(ImGui::MenuItem("Rename"))
 			{
-				rename_file = true;
+				rename_file = true && !is_directory;//TODO: Add logic to rename directories
+				m_renamePath = path;
 			}
 			if(ImGui::MenuItem("Delete")){}
 			ImGui::EndPopup();
 		}
 
-		std::string res;
-		if (rename_file && editor->InputTextPopup("New File Name", res))
+		
+
+	}
+	void ContentBrowser::RenameFile(std::filesystem::path& path, std::string& new_name)
+	{
+		std::string filename = path.filename().string();
+		std::string extension = path.extension().string();
+
+		std::string new_filename = new_name + extension;
+
+		std::filesystem::path new_path = path.parent_path() / new_filename;
+
+
+		UUID file_id = m_allFilesID[filename];
+		m_allFilesID.erase(filename);
+		m_allFilesID[new_filename] = file_id;
+		
+		m_allIDNames[file_id] = new_filename;
+		m_allIDPath[file_id] = new_path;
+
+		std::filesystem::rename(path, new_path);
+
+		if (extension == ANIMATION_CLIP_FILE_EXTENSION)
 		{
-			
+			Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(filename);
+
+			if (clip)
+			{
+				AnimationsManager::get_instance()->RenameAsset(clip, new_filename);
+				clip->m_path = new_path;
+			}
 		}
-		else
+		else if (extension == ANIMATION_GRAPH_FILE_EXTENSION)
 		{
-			rename_file = false;
+			Ref<Animation::Graph> asset = GenericAssetManager::get_instance()->Get<Animation::Graph>(filename);
+
+			if (asset)
+			{
+				GenericAssetManager::get_instance()->RenameAsset<Animation::Graph>(asset, new_filename);
+				asset->m_path = new_path;
+			}
+		}
+		else if (extension == PREFAB_FILE_EXTENSION)
+		{
+			Ref<Prefab> asset = PrefabManager::get_instance()->Get(filename);
+
+			if (asset)
+			{
+				PrefabManager::get_instance()->RenameAsset(asset, new_filename);
+				asset->m_path = new_path;
+			}
+		}
+		else if (extension == MATERIAL_FILE_EXTENSION)
+		{
+			Ref<MaterialInstance> asset = MaterialManager::get_instance()->GetMaterial(filename);
+
+			if (asset)
+			{
+				MaterialManager::get_instance()->RenameAsset(asset, new_filename);
+				asset->m_path = new_path;
+			}
+		}
+		else if (extension == RENDER_PIPELINE_FILE_EXTENSION)
+		{
+			Ref<GPipeline> asset = PipelineManager::get_instance()->GetPipeline(filename);
+
+			if (asset)
+			{
+				PipelineManager::get_instance()->RenameAsset(asset, new_filename);
+				asset->m_path = new_path;
+			}
+		}
+		else if (extension == SKELETON_FILE_EXTENSION)
+		{
+			Ref<Animation::Skeleton> asset = GenericAssetManager::get_instance()->Get<Animation::Skeleton>(filename);
+
+			if (asset)
+			{
+				GenericAssetManager::get_instance()->RenameAsset<Animation::Skeleton>(asset, new_filename);
+				asset->m_path = new_path;
+			}
+		}
+		else if (extension == SEQUENCE_FILE_EXTENSION)
+		{
+			Ref<Animation::Sequence> asset = GenericAssetManager::get_instance()->Get<Animation::Sequence>(filename);
+
+			if (asset)
+			{
+				GenericAssetManager::get_instance()->RenameAsset<Animation::Sequence>(asset, new_filename);
+				asset->m_path = new_path;
+			}
+		}
+		else if (extension == SCENE_FILE_EXTENSION)
+		{
+			Ref<Scene> asset = SceneManager::get_instance()->GetScene(filename);
+
+			if (asset)
+			{
+				SceneManager::get_instance()->RenameAsset(asset, new_filename);
+				asset->m_path = new_path;
+			}
 		}
 
+		ProcessAllDirectory(true);
+		OnDirectoryChanged();
 	}
 	void ContentBrowser::DrawEditMaterial()
 	{

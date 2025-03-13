@@ -35,6 +35,14 @@ namespace trace {
 	typedef bool (*__SetRigidBodyTransform)(RigidBody&, Transform&);
 	typedef bool (*__GetRigidBodyTransform)(RigidBody&, Transform&);
 
+	//Character Controller
+	typedef bool (*__CreateCharacterController)(CharacterController&, void*&, Transform&);
+	typedef bool (*__DestroyCharacterController)(CharacterController&, void*&);
+	typedef bool (*__MoveCharacterController)(CharacterController&, glm::vec3, float);
+	typedef bool (*__GetCharacterControllerPosition)(CharacterController&, glm::vec3&);
+	typedef bool (*__SetControllerDataPtr)(CharacterController&, void*);
+
+
 	class PhysicsFuncLoader
 	{
 	public:
@@ -70,6 +78,12 @@ namespace trace {
 		static bool SetRigidBodyTransform(RigidBody& rigid_body, Transform& transform);
 		static bool GetRigidBodyTransform(RigidBody& rigid_body, Transform&);
 
+		static bool CreateCharacterController(CharacterController& controller, void*& scene, Transform& pose);
+		static bool DestroyCharacterController(CharacterController& controller, void*& scene);
+		static bool MoveCharacterController(CharacterController& controller, glm::vec3 displacement, float deltaTime);
+		static bool SetControllerDataPtr(CharacterController& controller, void* ptr);
+		static bool GetCharacterControllerPosition(CharacterController& controller, glm::vec3& out_position);
+
 
 
 	private:
@@ -97,6 +111,12 @@ namespace trace {
 		static __DestroyRigidBody _destroyRigidBody;
 		static __SetRigidBodyTransform _setRigidBodyTransform;
 		static __GetRigidBodyTransform _getRigidBodyTransform;
+
+		static __CreateCharacterController _createCharacterController;
+		static __DestroyCharacterController _destroyCharacterController;
+		static __MoveCharacterController _moveCharacterController;
+		static __SetControllerDataPtr _setControllerDataPtr;
+		static __GetCharacterControllerPosition _getCharacterControllerPosition;
 
 
 	protected:

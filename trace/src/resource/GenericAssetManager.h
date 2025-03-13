@@ -82,6 +82,14 @@ namespace trace {
 			return result;
 		}
 
+		template<typename T>
+		void RenameAsset(Ref<T> asset, const std::string& new_name)
+		{
+			uint32_t index = m_hashtable.Get(asset->GetName());
+			m_hashtable.Set(asset->GetName(), INVALID_ID);
+			m_hashtable.Set(new_name, index);
+		}
+
 		virtual void UnLoad(Resource* asset);
 		
 

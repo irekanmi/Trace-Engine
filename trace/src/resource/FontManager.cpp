@@ -234,6 +234,13 @@ namespace trace {
 		return result;
 	}
 
+	void FontManager::RenameAsset(Ref<Font> asset, const std::string& new_name)
+	{
+		uint32_t index = hashTable.Get(asset->GetName());
+		hashTable.Set(asset->GetName(), INVALID_ID);
+		hashTable.Set(new_name, index);
+	}
+
 	FontManager* FontManager::get_instance()
 	{
 		static FontManager* s_instance = new FontManager;

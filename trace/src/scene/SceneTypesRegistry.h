@@ -144,4 +144,9 @@ namespace trace {
 		REGISTER_MEMBER(AnimationGraphController, play_on_start);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(CharacterControllerComponent)
+		REGISTER_TYPE(CharacterControllerComponent);
+		REGISTER_MEMBER(CharacterControllerComponent, character);
+	END_REGISTER_CLASS;
+
 }

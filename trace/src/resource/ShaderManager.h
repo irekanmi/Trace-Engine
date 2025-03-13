@@ -33,6 +33,7 @@ namespace trace {
 			m_assetMap = map;
 		}
 		Ref<GShader> LoadShader_Runtime(UUID id);
+		void RenameAsset(Ref<GShader> asset, const std::string& new_name);
 
 
 		std::string GetShaderResourcePath() { return shader_resource_path.string(); }

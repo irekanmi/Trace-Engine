@@ -43,6 +43,7 @@ namespace trace {
 
 		bool LoadDefaults();
 		bool LoadDefaults_Runtime();
+		void RenameAsset(Ref<GPipeline> asset, const std::string& new_name);
 
 		static PipelineManager* get_instance();
 	private:

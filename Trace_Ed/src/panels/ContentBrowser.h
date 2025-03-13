@@ -50,6 +50,7 @@ namespace trace {
 		void ProcessAllDirectory(bool update_assets_db = false);
 		void OnWindowPopup();
 		void OnItemPopup(std::filesystem::path& path);
+		void RenameFile(std::filesystem::path& path, std::string& new_name);
 		void DrawEditMaterial();
 		void DrawEditFont();
 		void DrawEditPipeline();
@@ -77,6 +78,7 @@ namespace trace {
 
 	private:
 		std::filesystem::path m_currentDir;
+		std::filesystem::path m_renamePath;
 		std::vector<std::filesystem::path> m_dirContents;
 		Ref<GTexture> directory_icon;
 		Ref<GTexture> default_icon;

@@ -46,6 +46,16 @@ namespace Trace
             return new Vec2 { x = a.x * b.x, y = a.y * b.y };
         }
 
+        static public bool operator ==(Vec2 a, Vec2 b)
+        {
+            return a.x == b.x && a.y == b.y;
+        }
+
+        static public bool operator !=(Vec2 a, Vec2 b)
+        {
+            return !(a == b);
+        }
+
     }
 
     public struct Vec3
@@ -159,16 +169,7 @@ namespace Trace
 
     }
 
-    /// <summary>
-    /// triggerEntity - Entity which holds the trigger
-    /// otherEntity - Entity that entered or exited the trigger
-    /// </summary>
-    public class TriggerPair
-    {
-        public TriggerPair() { triggerEntity = null; otherEntity = null ; }
-        public Action triggerEntity;
-        public Action otherEntity;
-    };
+    
     
 
 }

@@ -22,7 +22,8 @@
 namespace physx {
 	static glm::vec3 Px3ToGlm3(PxVec3& val);
 
-	class SceneEvnetCallback : public PxSimulationEventCallback
+
+	class SceneEventCallback : public PxSimulationEventCallback
 	{
 
 	public:
@@ -123,15 +124,19 @@ namespace physx {
 				auto trigger = static_cast<trace::Entity*>(pair.triggerShape->userData);
 				auto otherCollider = static_cast<trace::Entity*>(pair.otherShape->userData);
 				TRC_ASSERT(trigger && otherCollider, "Invalid trigger pair");
-				trace::CollisionPair colliders_pair = std::make_pair(trigger->GetID(), otherCollider->GetID());
+
+				trace::TriggerPair trigger_pair = {};
+				trigger_pair.entity = trigger->GetID();
+				trigger_pair.entity = otherCollider->GetID();
+
 
 				if (pair.status & PxPairFlag::eNOTIFY_TOUCH_LOST)
 				{
-					ExitTriggers.emplace_back(colliders_pair);
+					ExitTriggers.emplace_back(trigger_pair);
 				}
 				else
 				{
-					EnterTriggers.emplace_back(colliders_pair);
+					EnterTriggers.emplace_back(trigger_pair);
 				}
 			}
 		}
@@ -150,36 +155,22 @@ namespace physx {
 			trace::ScriptRegistry& scene_registry = scene->GetScriptRegistry();
 
 			for (auto& i : EnterTriggers)
-			{
-			
-				
-				
-				ScriptInstance trigger_pair;
-				CreateScriptInstanceNoInit(*script_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
-				void* triggerEntity_handle = script_engine->GetEntityActionClass(i.first)->GetBackendHandle();
-				void* otherEntity_handle = script_engine->GetEntityActionClass(i.second)->GetBackendHandle();
+			{				
 
-				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
-				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
-
-				scene_registry.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.entity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
 
-						void* params[1] = { trigger_pair.GetBackendHandle() };
-
-						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+						Script_OnTriggerEnter(i.entity, *instance, i);
 					});
 
-				scene_registry.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.otherEntity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
 
-						void* params[1] = { trigger_pair.GetBackendHandle() };
-
-						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+						Script_OnTriggerEnter(i.otherEntity, *instance, i);
 					});
 
 				
@@ -188,32 +179,20 @@ namespace physx {
 			for (auto& i : ExitTriggers)
 			{
 
-				ScriptInstance trigger_pair;
-				CreateScriptInstanceNoInit(*script_engine->GetBuiltInScript("TriggerPair"), trigger_pair);
-				void* triggerEntity_handle = script_engine->GetEntityActionClass(i.first)->GetBackendHandle();
-				void* otherEntity_handle = script_engine->GetEntityActionClass(i.second)->GetBackendHandle();
-
-				trigger_pair.SetFieldValueInternal("triggerEntity", triggerEntity_handle, sizeof(void*));
-				trigger_pair.SetFieldValueInternal("otherEntity", otherEntity_handle, sizeof(void*));
-
-				scene_registry.Iterate(i.first, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.entity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
-						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
-						if (!on_trigger_enter) return;
+						ScriptMethod* on_trigger_exit = script->GetMethod("OnTriggerExit");
+						if (!on_trigger_exit) return;
 
-						void* params[1] = { trigger_pair.GetBackendHandle() };
-
-						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+						Script_OnTriggerExit(i.entity, *instance, i);
 					});
 
-				scene_registry.Iterate(i.second, [&trigger_pair](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.otherEntity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
-						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerExit");
-						if (!on_trigger_enter) return;
+						ScriptMethod* on_trigger_exit = script->GetMethod("OnTriggerExit");
+						if (!on_trigger_exit) return;
 
-						void* params[1] = { trigger_pair.GetBackendHandle() };
-
-						InvokeScriptMethod_Instance(*on_trigger_enter, *instance, params);
+						Script_OnTriggerExit(i.otherEntity, *instance, i);
 					});
 			}
 
@@ -265,6 +244,31 @@ namespace physx {
 			{
 				trace::CollisionData& col = PrevCollisions[i];
 
+
+				scene_registry.Iterate(col.entity, [&col](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_collision_exit = script->GetMethod("OnCollisionExit");
+						if (!on_collision_exit)
+						{
+							return;
+						}
+
+						Script_OnCollisionExit(uuid, *instance, col);
+					});
+
+				col.Swap();
+
+				scene_registry.Iterate(col.entity, [&col](UUID uuid, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_collision_exit = script->GetMethod("OnCollisionExit");
+						if (!on_collision_exit)
+						{
+							return;
+						}
+
+						Script_OnCollisionExit(uuid, *instance, col);
+					});
+
 			}
 
 		}
@@ -309,8 +313,8 @@ namespace physx {
 		}
 
 	private:
-		std::vector<trace::CollisionPair> EnterTriggers;
-		std::vector<trace::CollisionPair> ExitTriggers;
+		std::vector<trace::TriggerPair> EnterTriggers;
+		std::vector<trace::TriggerPair> ExitTriggers;
 
 		std::unordered_map<trace::CollisionPair, CollisionData> PrevCollisions;
 		std::vector<trace::CollisionPair> NewCollisions;
@@ -380,7 +384,8 @@ namespace physx {
 	struct PhysxScene
 	{
 		PxScene* scene = nullptr;
-		SceneEvnetCallback event_callback;
+		SceneEventCallback event_callback;
+		PxControllerManager* controller_manager = nullptr;
 	};
 
 	struct PhysxShape
@@ -510,9 +515,11 @@ namespace physx {
 		{		
 			out_scene->scene = res;
 			scene = out_scene;
+			out_scene->controller_manager = PxCreateControllerManager(*res);
 		}
 		else
 		{
+			TRC_ASSERT(false, "Unable to Create Physx scene, Funtion: {}", __FUNCTION__);
 			delete out_scene;
 			scene = nullptr;
 			return false;
@@ -533,6 +540,8 @@ namespace physx {
 
 
 		PxScene* res = in_scene->scene;
+		PxControllerManager* manager = in_scene->controller_manager;
+		PX_RELEASE(manager);
 		PX_RELEASE(res);
 		delete in_scene;
 		scene = nullptr;
@@ -960,6 +969,92 @@ namespace physx {
 		PxTransform pose = body->getGlobalPose();
 		transform.SetPosition(Px3ToGlm3(pose.p));
 		transform.SetRotation(PxQuatToGlmQuat(pose.q));
+
+		return true;
+	}
+	bool __CreateCharacterController(trace::CharacterController& controller, void*& scene, trace::Transform& pose)
+	{
+		bool result = true;
+
+		PhysxScene* in_scene = reinterpret_cast<PhysxScene*>(scene);
+
+		const float min_contact_offset = 0.00000001f;
+
+		PxCapsuleControllerDesc desc = {};
+		desc.behaviorCallback = nullptr;
+		desc.climbingMode = PxCapsuleClimbingMode::eCONSTRAINED;
+		desc.contactOffset = controller.contact_offset;
+		desc.contactOffset = glm::max(desc.contactOffset, min_contact_offset);
+		desc.height = controller.height;
+		desc.material = phy.default_material;
+		desc.stepOffset = controller.step_offset;
+		desc.radius = controller.radius;
+		desc.slopeLimit = cosf(glm::radians(controller.slope_limit));
+		glm::vec3 pos = pose.GetPosition();
+		pos += controller.offset;
+		desc.position = PxExtendedVec3(pos.x, pos.y, pos.z);
+		desc.reportCallback = nullptr;
+
+		PxController* res = nullptr;
+		res = in_scene->controller_manager->createController(desc);
+
+		TRC_ASSERT(res != nullptr, "Unable to Create Character Controller, Function: {}", __FUNCTION__);
+
+		controller.SetInternal(res);
+
+		return result;
+	}
+	bool __DestroyCharacterController(trace::CharacterController& controller, void*& scene)
+	{
+		PxController* res = reinterpret_cast<PxController*>(controller.GetInternal());
+		
+		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
+
+		PX_RELEASE(res);
+
+		return true;
+	}
+	bool __MoveCharacterController(trace::CharacterController& controller, glm::vec3 displacement, float deltaTime)
+	{
+
+		PxController* res = reinterpret_cast<PxController*>(controller.GetInternal());
+
+		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
+
+		PxControllerCollisionFlags collisionFlags = res->move( Glm3ToPx3(displacement), controller.min_move_distance, deltaTime, PxControllerFilters());
+
+		bool is_down = TRC_HAS_FLAG(collisionFlags, PxControllerCollisionFlag::eCOLLISION_DOWN);
+
+		controller.SetIsGrounded(is_down);
+
+		return true;
+	}
+	bool __SetControllerDataPtr(trace::CharacterController& controller, void* ptr)
+	{
+		PxController* res = reinterpret_cast<PxController*>(controller.GetInternal());
+
+		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
+
+		PxRigidActor* actor = res->getActor();
+		PxShape* shape = nullptr;
+		actor->getShapes(&shape, 1);
+		
+		TRC_ASSERT(shape != nullptr, "Unable to get Character Controller shape, Function: {}", __FUNCTION__);
+
+		shape->userData = ptr;
+
+		return true;
+	}
+	bool __GetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& out_position)
+	{
+		PxController* res = reinterpret_cast<PxController*>(controller.GetInternal());
+
+		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
+
+		PxExtendedVec3 pos = res->getPosition();
+		out_position.x = pos.x;
+		out_position.y = pos.y;
+		out_position.z = pos.z;
 
 		return true;
 	}

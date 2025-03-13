@@ -34,6 +34,7 @@ namespace trace {
 			m_assetMap = map;
 		}
 		Ref<MaterialInstance> LoadMaterial_Runtime(UUID id);
+		void RenameAsset(Ref<MaterialInstance> asset, const std::string& new_name);
 
 		static MaterialManager* get_instance();
 	private:

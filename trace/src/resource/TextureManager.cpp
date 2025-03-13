@@ -492,6 +492,15 @@ namespace trace {
 		return result;
 	}
 
+	void TextureManager::RenameAsset(Ref<GTexture> asset, const std::string& new_name)
+	{
+		TextureHash index = m_hashTable.Get(asset->GetName());
+		TextureHash Invalid;
+		Invalid._id = INVALID_ID;
+		m_hashTable.Set(asset->GetName(), Invalid);
+		m_hashTable.Set(new_name, index);
+	}
+
 	bool TextureManager::LoadDefaultTextures()
 	{
 		uint32_t dimension = 256;

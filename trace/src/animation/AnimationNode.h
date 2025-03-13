@@ -119,6 +119,27 @@ namespace trace::Animation {
 		GET_TYPE_ID;
 	};
 
+	class IfNode : public Node
+	{
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+
+		struct Result
+		{
+			bool True = false;
+			bool False = false;
+		};
+
+	private:
+	protected:
+
+		ACCESS_CLASS_MEMBERS(IfNode);
+		GET_TYPE_ID;
+	};
+
 
 
 }

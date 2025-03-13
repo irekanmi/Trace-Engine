@@ -228,6 +228,12 @@ namespace trace {
 
 		return true;
 	}
+	void ModelManager::RenameAsset(Ref<Model> asset, const std::string& new_name)
+	{
+		uint32_t index = m_hashtable.Get(asset->GetName());
+		m_hashtable.Set(asset->GetName(), INVALID_ID);
+		m_hashtable.Set(new_name, index);
+	}
 	bool ModelManager::BuildDefaultModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map)
 	{
 		auto lambda = [&](Ref<Model> model)

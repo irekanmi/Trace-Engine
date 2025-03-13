@@ -24,6 +24,7 @@ namespace trace {
 
 		virtual void UnLoad(Resource* res) override;
 		virtual Ref<Prefab> Load_Runtime(UUID id) override;
+		void RenameAsset(Ref<Prefab> asset, const std::string& new_name);
 
 		void SetAssetMap(std::unordered_map<UUID, AssetHeader>& map);
 

@@ -815,7 +815,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Scene Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Scene Name" << YAML::Value << scene->GetName();
 		emit << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
 		auto process_hierachy = [&](Entity entity, UUID, Scene*)
@@ -856,7 +855,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Prefab Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Prefab Name" << YAML::Value << prefab->GetName();
 
 		emit << YAML::Key << "Entity" << YAML::Value << YAML::BeginSeq;
 
@@ -932,15 +930,17 @@ namespace trace {
 	{
 		YAML::Node data;
 		YAML::load_yaml_data(file_path, data);
-		if (!data["Trace Version"] || !data["Scene Name"])
+		if (!data["Trace Version"])
 		{
 			TRC_ERROR("These file is not a valid scene file {}", file_path);
 			return Ref<Scene>();
 		}
 
+		std::filesystem::path p = file_path;
+
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string scene_version = data["Scene Version"].as<std::string>(); // TODO: To be used later
-		std::string scene_name = data["Scene Name"].as<std::string>();
+		std::string scene_name = p.filename().string();
 
 		Ref<Scene> scene = SceneManager::get_instance()->GetScene(scene_name);
 		if (scene)
@@ -974,15 +974,17 @@ namespace trace {
 
 		YAML::Node data;
 		YAML::load_yaml_data(file_path, data);
-		if (!data["Trace Version"] || !data["Prefab Name"])
+		if (!data["Trace Version"])
 		{
 			TRC_ERROR("These file is not a valid Prefab file {}", file_path);
 			return result;
 		}
 
+		std::filesystem::path p = file_path;
+
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string prefab_version = data["Prefab Version"].as<std::string>(); // TODO: To be used later
-		std::string prefab_name = data["Prefab Name"].as<std::string>();
+		std::string prefab_name = p.filename().string();
 
 		Ref<Prefab> prefab = PrefabManager::get_instance()->Get(prefab_name);
 		if (prefab) return prefab;

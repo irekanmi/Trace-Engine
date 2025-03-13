@@ -98,6 +98,13 @@ namespace trace {
 		return result;
 	}
 
+	void PrefabManager::RenameAsset(Ref<Prefab> asset, const std::string& new_name)
+	{
+		uint32_t index = m_hashtable.Get(asset->GetName());
+		m_hashtable.Set(asset->GetName(), INVALID_ID);
+		m_hashtable.Set(new_name, index);
+	}
+
 	void PrefabManager::SetAssetMap(std::unordered_map<UUID, AssetHeader>& map)
 	{
 		m_assetsMap = map;

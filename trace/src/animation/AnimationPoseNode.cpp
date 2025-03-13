@@ -38,6 +38,18 @@ namespace trace::Animation {
 
 		StateMachine* state_machine = (StateMachine*)nodes[m_stateMachine];
 
+
+		NodeInput& input = m_inputs[0];
+		if (input.node_id == 0)
+		{
+			return;
+		}
+
+		Node* in_node = nodes[input.node_id];
+		in_node->Update(instance, deltaTime);
+		data->final_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index);
+
+
 		if (data->current_flag == StateFlag::Running)
 		{
 
@@ -55,16 +67,6 @@ namespace trace::Animation {
 
 			}
 		}
-
-		NodeInput& input = m_inputs[0];
-		if (input.node_id == 0)
-		{
-			return;
-		}
-
-		Node* in_node = nodes[input.node_id];
-		in_node->Update(instance, deltaTime);
-		data->final_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index);
 		
 	}
 
@@ -334,13 +336,14 @@ namespace trace::Animation {
 		}
 		data->definition.update_id = Application::get_instance()->GetUpdateID();
 
-		if (data->elapsed_time == 0.0f)
-		{
-
-		}
 
 		StateNode* current_state = (StateNode*)nodes[m_fromState];
 		StateNode* target_state = (StateNode*)nodes[m_targetState];
+
+		if (data->elapsed_time == 0.0f)
+		{
+			target_state->SetStateFlag(instance, StateFlag::InTransition);
+		}
 		StateMachine* state_machine = (StateMachine*)nodes[current_state->GetStateMachine()];
 
 		float blend_weight = data->elapsed_time / m_duration;
@@ -350,10 +353,7 @@ namespace trace::Animation {
 		target_state->Update(instance, deltaTime);
 		PoseNodeResult* target_state_result = target_state->GetFinalPose(instance);
 
-		if (data->elapsed_time == 0.0f)
-		{
-			target_state->SetStateFlag(instance, StateFlag::InTransition);
-		}
+		
 
 		if (data->elapsed_time >= m_duration)
 		{

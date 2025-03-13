@@ -582,6 +582,12 @@ namespace trace {
 
 		return true;
 	}
+	void PipelineManager::RenameAsset(Ref<GPipeline> asset, const std::string& new_name)
+	{
+		uint32_t index = m_hashtable.Get(asset->GetName());
+		m_hashtable.Set(asset->GetName(), INVALID_ID);
+		m_hashtable.Set(new_name, index);
+	}
 	PipelineManager* PipelineManager::get_instance()
 	{
 		static PipelineManager* s_instance = new PipelineManager;

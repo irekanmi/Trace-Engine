@@ -46,6 +46,7 @@ namespace trace {
 			m_assetMap = map;
 		}
 		Ref<GTexture> LoadTexture_Runtime(UUID id);
+		void RenameAsset(Ref<GTexture> asset, const std::string& new_name);
 
 		bool LoadDefaultTextures();
 

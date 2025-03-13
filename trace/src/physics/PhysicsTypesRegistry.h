@@ -23,6 +23,16 @@ namespace trace {
 		REGISTER_MEMBER(PhyShape, data);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(CharacterController)
+		REGISTER_TYPE(CharacterController);
+		REGISTER_MEMBER(CharacterController, height);
+		REGISTER_MEMBER(CharacterController, radius);
+		REGISTER_MEMBER(CharacterController, min_move_distance);
+		REGISTER_MEMBER(CharacterController, slope_limit);
+		REGISTER_MEMBER(CharacterController, contact_offset);
+		REGISTER_MEMBER(CharacterController, step_offset);
+		REGISTER_MEMBER(CharacterController, offset);
+	END_REGISTER_CLASS;
 	
 
 

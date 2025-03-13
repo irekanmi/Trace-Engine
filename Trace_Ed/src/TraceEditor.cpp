@@ -176,6 +176,8 @@ namespace trace {
 
 			m_animGraphEditor->Update(deltaTime);
 
+			HandleEntityDebugDraw();
+
 			break;
 		}
 		case ScenePlay:
@@ -840,6 +842,36 @@ namespace trace {
 		return res;
 	}
 
+	void TraceEditor::HandleEntityDebugDraw()
+	{
+		Entity selected_entity = m_hierachyPanel->GetSelectedEntity();
+		if (!selected_entity)
+		{
+			return;
+		}
+
+		Debugger* debugger = Debugger::get_instance();
+
+		TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
+
+		if (selected_entity.HasComponent<CharacterControllerComponent>())
+		{
+			CharacterControllerComponent& controller = selected_entity.GetComponent<CharacterControllerComponent>();
+			float scale_x = pose._transform.GetScale().x;
+			float scale_y = pose._transform.GetScale().y;
+			float scale_z = pose._transform.GetScale().z;
+			float height = controller.character.height * pose._transform.GetScale().y;
+			float radius = controller.character.radius * ((scale_x + scale_z) / 2.0f);
+			glm::mat4 controller_transform = pose._transform.GetLocalMatrix();
+			controller_transform = glm::translate(controller_transform, controller.character.offset);
+			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(255, 145, 255, 255));
+
+			radius += controller.character.contact_offset;
+			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(0, 255, 255, 25));
+		}
+
+	}
+
 
 	TraceEditor* TraceEditor::get_instance()
 	{
@@ -1277,6 +1309,7 @@ namespace trace {
 		m_currentScene = m_editSceneDuplicate;
 		m_currentScene->OnStart();
 		m_currentScene->OnScriptStart();
+		m_currentScene->OnPhysicsStart();
 		if (m_hierachyPanel->GetSelectedEntity())
 		{
 			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
@@ -1303,8 +1336,9 @@ namespace trace {
 	{
 		if ((m_currentState == EditorState::SceneEdit)) return;
 
-		m_currentScene->OnStop();
+		m_currentScene->OnPhysicsStop();
 		m_currentScene->OnScriptStop();
+		m_currentScene->OnStop();
 		m_currentScene = m_editScene;
 		if (m_hierachyPanel->GetSelectedEntity())
 		{

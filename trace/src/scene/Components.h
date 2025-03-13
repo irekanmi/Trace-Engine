@@ -327,6 +327,11 @@ namespace trace {
 		bool play_on_start = false;
 	};
 
+	struct CharacterControllerComponent
+	{
+		CharacterController character;
+	};
+
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -336,6 +341,6 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController>;
+		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent>;
 
 }

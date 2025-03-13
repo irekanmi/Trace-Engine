@@ -208,6 +208,7 @@ namespace trace::Animation {
     {
         m_rootNode = CreateNode<FinalOutputNode>();
         FinalOutputNode* root_node = (FinalOutputNode*)GetNode(m_rootNode);
+        root_node->Init(this);
 
         return true;
     }

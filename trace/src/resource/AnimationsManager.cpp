@@ -357,6 +357,13 @@ namespace trace {
 		return result;
 	}
 
+	void AnimationsManager::RenameAsset(Ref<AnimationClip> asset, const std::string& new_name)
+	{
+		uint32_t index = hashTable.Get(asset->GetName());
+		hashTable.Set(asset->GetName(), INVALID_ID);
+		hashTable.Set(new_name, index);
+	}
+
 	AnimationsManager* AnimationsManager::get_instance()
 	{
 		static AnimationsManager* s_instance = new AnimationsManager;

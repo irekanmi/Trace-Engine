@@ -93,6 +93,10 @@ namespace trace::Animation {
 		REGISTER_MEMBER(GetParameterNode, m_parameterIndex);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(IfNode)
+		REGISTER_TYPE_PARENT(IfNode, Node);
+	END_REGISTER_CLASS;
+
 	REGISTER_TYPE_PARENT(PoseNode, Node);
 
 	BEGIN_REGISTER_CLASS(StateMachine)
@@ -121,6 +125,8 @@ namespace trace::Animation {
 		REGISTER_MEMBER(AnimationSampleNode, m_duration);
 		REGISTER_MEMBER(AnimationSampleNode, m_looping);
 	END_REGISTER_CLASS;
+
+
 
 	REGISTER_TYPE_PARENT(FinalOutputNode, PoseNode);
 

@@ -50,25 +50,12 @@ class Player : Trace.Action
 
     }   
 
-    public void OnTriggerEnter(Trace.TriggerPair collision)
-    {
-        if (collision.triggerEntity.HasComponent<TextComponent>())
-        {
-            TextComponent txt = collision.triggerEntity.GetComponent<TextComponent>();
-            txt.Text = "Has Trigger";
-        }
-    }
-
-    public void OnTriggerExit(Trace.TriggerPair collision)
-    {
-        collision.otherEntity.GetScript<Player>().Speed = 10.5f;
-
-    }
-
+    
     ~Player()
     {
         Debug.Log($"Player Destroyed, ID: {Id}");
     }
+
 
 }
 

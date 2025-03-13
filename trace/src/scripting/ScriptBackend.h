@@ -51,6 +51,9 @@ void BindInternalFuncs();
 // In Engine Callback functions
 
 bool Script_OnCollisionEnter(UUID entity_id, ScriptInstance& instance, CollisionData& collision_data);
+bool Script_OnCollisionExit(UUID entity_id, ScriptInstance& instance, CollisionData& collision_data);
+bool Script_OnTriggerEnter(UUID entity_id, ScriptInstance& instance, TriggerPair& pair);
+bool Script_OnTriggerExit(UUID entity_id, ScriptInstance& instance, TriggerPair& pair);
 
 
 

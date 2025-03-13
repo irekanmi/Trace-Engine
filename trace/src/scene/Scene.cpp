@@ -50,77 +50,7 @@ namespace trace {
 	{
 		ResolveHierachyTransforms();
 
-		PhysicsFunc::CreateScene3D(m_physics3D, glm::vec3(0.0f, -9.81f, 0.0f));
-		if (m_physics3D)
-		{
-			auto rigid_view = m_registry.view<TransformComponent, RigidBodyComponent>();
-			for (auto i : rigid_view)
-			{
-				auto [pose, rigid] = rigid_view.get(i);
-				PhysicsFunc::CreateRigidBody_Scene(m_physics3D,rigid.body, pose._transform);
-			}
-
-			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent>();
-			for (auto i : bcd)
-			{
-				auto [pose, box] = bcd.get(i);
-				glm::vec3 extent = box.shape.box.half_extents;
-				box.shape.box.half_extents *= pose._transform.GetScale();
-				Transform local;
-				local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
-				local.SetRotation(pose._transform.GetRotation());
-				PhysicsFunc::CreateShapeWithTransform(m_physics3D,box._internal, box.shape, local, box.is_trigger);
-				//Temp _______________
-				PhysicsFunc::SetShapeMask(box._internal, BIT(1), BIT(1));
-				// -------------------
-
-				box.shape.box.half_extents = extent;
-
-
-				Entity entity(i, this);
-				UUID _id = entity.GetComponent<IDComponent>()._id;
-				Entity* shp_ptr = &m_entityMap[_id];
-				PhysicsFunc::SetShapePtr(box._internal, shp_ptr);
-				if (!box.is_trigger && entity.HasComponent<RigidBodyComponent>())
-				{
-					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
-					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
-					PhysicsFunc::AttachShape(box._internal, rigid.body.GetInternal());
-
-				}
-
-			}
-
-			auto scd = m_registry.view<TransformComponent, SphereColliderComponent>();
-			for (auto i : scd)
-			{
-				auto [pose, sc] = scd.get(i);
-				float radius = sc.shape.sphere.radius;
-				sc.shape.sphere.radius *= pose._transform.GetScale().x; //TODO: Determine maybe scale in transform should be used or not
-				Transform local;
-				local.SetPosition(pose._transform.GetPosition() + sc.shape.offset);
-				local.SetRotation(pose._transform.GetRotation());
-				PhysicsFunc::CreateShapeWithTransform(m_physics3D, sc._internal, sc.shape, local, sc.is_trigger);
-				sc.shape.sphere.radius = radius;
-				//Temp _______________
-				PhysicsFunc::SetShapeMask(sc._internal, BIT(1), BIT(1));
-				// -------------------
-
-				Entity entity(i, this);
-				UUID _id = entity.GetComponent<IDComponent>()._id;
-				Entity* shp_ptr = &m_entityMap[_id];
-				PhysicsFunc::SetShapePtr(sc._internal, shp_ptr);
-				if (!sc.is_trigger && entity.HasComponent<RigidBodyComponent>())
-				{
-					
-					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
-					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
-					PhysicsFunc::AttachShape(sc._internal, rigid.body.GetInternal());
-
-				}
-
-			}
-		}
+		
 		m_running = true;
 		auto animations = m_registry.view<AnimationComponent>();
 		for (auto i : animations)
@@ -235,6 +165,97 @@ namespace trace {
 			});
 
 	}
+	void Scene::OnPhysicsStart()
+	{
+		PhysicsFunc::CreateScene3D(m_physics3D, glm::vec3(0.0f, -9.81f, 0.0f));
+		if (m_physics3D)
+		{
+			auto rigid_view = m_registry.view<TransformComponent, RigidBodyComponent>();
+			for (auto i : rigid_view)
+			{
+				auto [pose, rigid] = rigid_view.get(i);
+				PhysicsFunc::CreateRigidBody_Scene(m_physics3D, rigid.body, pose._transform);
+			}
+
+			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent>();
+			for (auto i : bcd)
+			{
+				auto [pose, box] = bcd.get(i);
+				glm::vec3 extent = box.shape.box.half_extents;
+				box.shape.box.half_extents *= pose._transform.GetScale();
+				Transform local;
+				local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
+				local.SetRotation(pose._transform.GetRotation());
+				PhysicsFunc::CreateShapeWithTransform(m_physics3D, box._internal, box.shape, local, box.is_trigger);
+				//Temp _______________
+				PhysicsFunc::SetShapeMask(box._internal, BIT(1), BIT(1));
+				// -------------------
+
+				box.shape.box.half_extents = extent;
+
+
+				Entity entity(i, this);
+				UUID _id = entity.GetComponent<IDComponent>()._id;
+				Entity* shp_ptr = &m_entityMap[_id];
+				PhysicsFunc::SetShapePtr(box._internal, shp_ptr);
+				if (!box.is_trigger && entity.HasComponent<RigidBodyComponent>())
+				{
+					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
+					PhysicsFunc::AttachShape(box._internal, rigid.body.GetInternal());
+
+				}
+
+			}
+
+			auto scd = m_registry.view<TransformComponent, SphereColliderComponent>();
+			for (auto i : scd)
+			{
+				auto [pose, sc] = scd.get(i);
+				float radius = sc.shape.sphere.radius;
+				sc.shape.sphere.radius *= pose._transform.GetScale().x; //TODO: Determine maybe scale in transform should be used or not
+				Transform local;
+				local.SetPosition(pose._transform.GetPosition() + sc.shape.offset);
+				local.SetRotation(pose._transform.GetRotation());
+				PhysicsFunc::CreateShapeWithTransform(m_physics3D, sc._internal, sc.shape, local, sc.is_trigger);
+				sc.shape.sphere.radius = radius;
+				//Temp _______________
+				PhysicsFunc::SetShapeMask(sc._internal, BIT(1), BIT(1));
+				// -------------------
+
+				Entity entity(i, this);
+				UUID _id = entity.GetComponent<IDComponent>()._id;
+				Entity* shp_ptr = &m_entityMap[_id];
+				PhysicsFunc::SetShapePtr(sc._internal, shp_ptr);
+				if (!sc.is_trigger && entity.HasComponent<RigidBodyComponent>())
+				{
+
+					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
+					PhysicsFunc::AttachShape(sc._internal, rigid.body.GetInternal());
+
+				}
+
+			}
+
+			auto controllers = m_registry.view<TransformComponent, CharacterControllerComponent>();
+			for (auto i : controllers)
+			{
+				auto [pose, charac] = controllers.get(i);
+
+				Entity entity(i, this);
+
+				float scale_x = pose._transform.GetScale().x;
+				float scale_y = pose._transform.GetScale().y;
+				float scale_z = pose._transform.GetScale().z;
+				charac.character.radius *= (scale_x + scale_z) / 2.0f;//TODO: Determine maybe scale in transform should be used or not
+				charac.character.height *= pose._transform.GetScale().y;//TODO: Determine maybe scale in transform should be used or not
+
+				PhysicsFunc::CreateCharacterController(charac.character, m_physics3D, pose._transform);
+				PhysicsFunc::SetControllerDataPtr(charac.character, &m_entityMap[entity.GetID()]);
+			}
+		}
+	}
 	void Scene::OnStop()
 	{
 		auto sequences = m_registry.view<SequencePlayer>();
@@ -264,13 +285,43 @@ namespace trace {
 			anim_graph.graph.Stop(this, entity.GetID());
 		}
 
+		
+		m_running = false;
+	}
+	void Scene::OnScriptStop()
+	{
+
+		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+			{
+
+				for (ScriptInstance& i : manager.instances)
+				{
+					DestroyScriptInstance(i);
+				}
+
+			});
+
+		ScriptEngine::get_instance()->OnSceneStop(this);
+
+	}
+	void Scene::OnPhysicsStop()
+	{
 		if (m_physics3D)
 		{
+
+			auto controllers = m_registry.view<CharacterControllerComponent>();
+			for (auto i : controllers)
+			{
+				auto [ charac] = controllers.get(i);
+
+				PhysicsFunc::DestroyCharacterController(charac.character, m_physics3D);
+
+			}
 
 			auto bodies = m_registry.view<RigidBodyComponent>();
 			for (auto i : bodies)
 			{
-				auto [ rigid] = bodies.get(i);
+				auto [rigid] = bodies.get(i);
 
 				PhysicsFunc::RemoveActor(m_physics3D, rigid.body.GetInternal());
 				PhysicsFunc::DestroyRigidBody(rigid.body);
@@ -294,23 +345,6 @@ namespace trace {
 
 			PhysicsFunc::DestroyScene3D(m_physics3D);
 		}
-		m_running = false;
-	}
-	void Scene::OnScriptStop()
-	{
-
-		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
-			{
-
-				for (ScriptInstance& i : manager.instances)
-				{
-					DestroyScriptInstance(i);
-				}
-
-			});
-
-		ScriptEngine::get_instance()->OnSceneStop(this);
-
 	}
 	void Scene::OnUpdate(float deltaTime)
 	{
@@ -378,6 +412,19 @@ namespace trace {
 				auto [transform ,rigid] = bodies.get(i);
 
 				PhysicsFunc::GetRigidBodyTransform(rigid.body, transform._transform);
+			}
+
+			auto controllers = m_registry.view<TransformComponent, CharacterControllerComponent>();
+			for (auto i : controllers)
+			{
+				auto [pose, charac] = controllers.get(i);
+
+				Entity entity(i, this);
+
+				glm::vec3 curr_pos(0.0f);
+				PhysicsFunc::GetCharacterControllerPosition(charac.character, curr_pos);
+
+				pose._transform.SetPosition(curr_pos);
 			}
 		}
 	}
@@ -476,20 +523,7 @@ namespace trace {
 
 		Renderer* renderer = Renderer::get_instance();
 
-		/*auto light_group = m_registry.view<LightComponent, HierachyComponent>();
 
-		for (auto entity : light_group)
-		{
-			Entity object(entity, this);
-			auto [light, transform] = light_group.get(entity);
-			Transform final_transform = GetEntityWorldTransform(object);
-			light._light.position = glm::vec4(final_transform.GetPosition(), 0.0f);
-			light._light.direction = glm::vec4(final_transform.GetForward(), 0.0f);
-			
-
-			renderer->AddLight(cmd_list, light._light, light.light_type);
-
-		}*/
 
 		auto sun_light_group = m_registry.view<SunLight, HierachyComponent, ActiveComponent>();
 

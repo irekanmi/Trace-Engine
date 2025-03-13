@@ -37,7 +37,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Pipeline Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Pipeline Name" << YAML::Value << pipeline->GetName();
 		emit << YAML::Key << "Pipeline Type" << YAML::Value << pipeline->GetPipelineType();
 
 
@@ -438,15 +437,17 @@ namespace trace {
 		FileSystem::close_file(in_handle);
 
 		YAML::Node data = YAML::Load(file_data);
-		if (!data["Trace Version"] || !data["Pipeline Version"] || !data["Pipeline Name"])
+		if (!data["Trace Version"] || !data["Pipeline Version"])
 		{
 			TRC_ERROR("These file is not a valid pipeline file {}", file_path);
 			return result;
 		}
 
+		std::filesystem::path p = file_path;
+
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string pipeline_version = data["Pipeline Version"].as<std::string>(); // TODO: To be used later
-		std::string pipeline_name = data["Pipeline Name"].as<std::string>();
+		std::string pipeline_name = p.filename().string();
 
 		result = PipelineManager::get_instance()->GetPipeline(pipeline_name);
 		if (result)

@@ -129,6 +129,13 @@ namespace trace {
 		stream.SetPosition(it->second.offset);
 		return SceneSerializer::Deserialize(&stream);
 	}
+	void SceneManager::RenameAsset(Ref<Scene> asset, const std::string& new_name)
+	{
+		uint32_t index = m_hashTable.Get(asset->GetName());
+		m_hashTable.Set(asset->GetName(), INVALID_ID);
+		m_hashTable.Set(new_name, index);
+		
+	}
 	SceneManager* SceneManager::get_instance()
 	{
 		static SceneManager* s_instance = new SceneManager;

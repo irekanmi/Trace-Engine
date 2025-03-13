@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "EditorRenderComposer.h"
@@ -43,6 +44,7 @@ namespace trace {
 		bool DrawPipelinesPopup(std::string& result);
 		bool DrawShadersPopup(std::string& result);
 		bool InputTextPopup(const std::string& label, std::string& result);
+		void HandleEntityDebugDraw();
 
 		static TraceEditor* get_instance();
 

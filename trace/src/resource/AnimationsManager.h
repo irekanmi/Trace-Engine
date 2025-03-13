@@ -45,6 +45,8 @@ namespace trace {
 			m_graphAssetMap = map;
 		}
 
+		void RenameAsset(Ref<AnimationClip> asset, const std::string& new_name);
+
 		static AnimationsManager* get_instance();
 
 	private:

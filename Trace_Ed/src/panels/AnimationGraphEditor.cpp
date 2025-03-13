@@ -25,6 +25,7 @@ namespace trace {
     static int start_link_id = 0xFF00FF0F;
     static int _link_id = 0x0A;
     static int link_id = 0;
+    static int output_start_index = 64;
 
     uint32_t value_color[(int)Animation::ValueType::Max] =
     {
@@ -69,6 +70,10 @@ namespace trace {
             {
                 Reflection::TypeID<Animation::AnimationSampleNode>(),
                 "Animation Sample"
+            },
+            {
+                Reflection::TypeID<Animation::IfNode>(),
+                "If Node"
             }
     };
 
@@ -125,7 +130,7 @@ namespace trace {
                         Animation::Parameter& parameter = m_currentGraph->GetParameters()[param_index];
                         ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
                         ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
-                        ImNodes::BeginOutputAttribute((1 << 24) | node_index);
+                        ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
                         ImGui::Text(parameter.first.c_str());
                         ImNodes::EndOutputAttribute();
                         ImNodes::PopColorStyle();
@@ -153,7 +158,7 @@ namespace trace {
 
                     ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
                     ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
-                    ImNodes::BeginOutputAttribute((1 << 24) | node_index );
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index );
                     ImGui::Text("Pose");
                     ImNodes::EndOutputAttribute();
                     ImNodes::PopColorStyle();
@@ -237,13 +242,62 @@ namespace trace {
                     }
                     ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
                     ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
-                    ImNodes::BeginOutputAttribute((1 << 24) | node_index);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
                     ImGui::Text(clip_name.c_str());
                     ImNodes::EndOutputAttribute();
                     ImNodes::PopColorStyle();
                     ImNodes::PopColorStyle();
 
                     
+
+                    ImNodes::EndNode();
+                }
+            },
+            {
+                Reflection::TypeID<Animation::IfNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::IfNode* sample_node = (Animation::IfNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("If Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeInput& input_0 = node->GetInputs()[0];
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)input_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)input_0.type]);
+                    ImNodes::BeginInputAttribute((1 << 24) | node_index);
+                    ImGui::Text("Condition");
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text("True");
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeOutput& output_1 = node->GetOutputs()[1];
+
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_1.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_1.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_1.value_index) << 24) | node_index);
+                    ImGui::Text("False");
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
 
                     ImNodes::EndNode();
                 }
@@ -600,6 +654,11 @@ namespace trace {
                         UUID node_id = m_currentGraph->CreateNode<Animation::GetParameterNode>();
                         add_new_node(node_id);
                     }
+                    if (ImGui::MenuItem("If Node"))
+                    {
+                        UUID node_id = m_currentGraph->CreateNode<Animation::IfNode>();
+                        add_new_node(node_id);
+                    }
                     ImGui::EndPopup();
                 }
             }
@@ -647,14 +706,14 @@ namespace trace {
                     int32_t from_node_index = start_attr & mask;
                     int32_t to_node_index = end_attr & mask;
 
-                    int32_t from_value_index = ((~mask & start_attr) >> 24) - 1;
+                    int32_t from_value_index = ((~mask & start_attr) >> 24) - output_start_index;
                     int32_t to_index = ((~mask & end_attr) >> 24) - 1;
 
                     Animation::Node* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
                     Animation::Node* to_node = m_currentGraph->GetNode(m_graphIndex[to_node_index]);
 
                     Animation::NodeInput& input = to_node->GetInputs()[to_index];
-                    Animation::NodeOutput& output = to_node->GetOutputs()[from_value_index];
+                    Animation::NodeOutput& output = from_node->GetOutputs()[from_value_index];
                     if (input.type == output.type && input.node_id == 0)
                     {
                         input.node_id = from_node->GetUUID();
@@ -678,7 +737,7 @@ namespace trace {
                     int32_t from_node_index = link.from & mask;
                     int32_t to_node_index = link.to & mask;
 
-                    int32_t from_value_index = ((~mask & link.from) >> 24) - 1;
+                    int32_t from_value_index = ((~mask & link.from) >> 24) - output_start_index;
                     int32_t to_index = ((~mask & link.to) >> 24) - 1;
 
                     Animation::Node* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
@@ -788,6 +847,7 @@ namespace trace {
         case Reflection::TypeID<Animation::StateNode>():
         case Reflection::TypeID<Animation::TransitionNode>():
         case Reflection::TypeID<Animation::AnimationSampleNode>():
+        case Reflection::TypeID<Animation::IfNode>():
         {
             Animation::Node* current_node = m_currentNode;
             for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
@@ -840,6 +900,7 @@ namespace trace {
         case Reflection::TypeID<Animation::StateNode>():
         case Reflection::TypeID<Animation::TransitionNode>():
         case Reflection::TypeID<Animation::AnimationSampleNode>():
+        case Reflection::TypeID<Animation::IfNode>():
         {
             Animation::Node* current_node = m_currentNode;
             for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
@@ -849,7 +910,7 @@ namespace trace {
                 {
                     Link link = {};
                     link.to = ((i + 1) << 24) | m_graphNodeIndex[current_node->GetUUID()];
-                    link.from = ((input.value_index + 1) << 24) | m_graphNodeIndex[input.node_id];
+                    link.from = ((input.value_index + output_start_index) << 24) | m_graphNodeIndex[input.node_id];
                     link.id = static_cast<int32_t>(m_currentNodeLinks.size());
                     link.value_type = input.type;
                     m_currentNodeLinks.push_back(link);
@@ -950,7 +1011,7 @@ namespace trace {
             {
                 Link link = {};
                 link.to = ((i + 1) << 24) | m_graphNodeIndex[current_node->GetUUID()];
-                link.from = ((input.value_index + 1) << 24) | m_graphNodeIndex[input.node_id];
+                link.from = ((input.value_index + output_start_index) << 24) | m_graphNodeIndex[input.node_id];
                 link.id = static_cast<int32_t>(m_currentNodeLinks.size());
                 link.value_type = input.type;
                 m_currentNodeLinks.push_back(link);
@@ -1140,6 +1201,7 @@ namespace trace {
         for (uint32_t i = 0; i < parameters.size(); i++)
         {
             Animation::Parameter& param = parameters[i];
+            ImGui::PushID((int)i);
             ImGui::InputText("Parameter Name", &param.first);
 
             char* parameter_type_string[] =
@@ -1154,7 +1216,7 @@ namespace trace {
                 for (uint32_t j = 0; j < (uint32_t)Animation::ParameterType::Max; j++)
                 {
                     bool selected = (param.second == (Animation::ParameterType)j);
-                    if (ImGui::Selectable(parameter_type_string[i], selected))
+                    if (ImGui::Selectable(parameter_type_string[j], selected))
                     {
                         param.second = (Animation::ParameterType)j;
                     }
@@ -1166,6 +1228,7 @@ namespace trace {
                 }
                 ImGui::EndCombo();
             }
+            ImGui::PopID();
             
 
         }

@@ -92,4 +92,62 @@ namespace Trace
         }
     }
 
+    public struct CharacterControllerComponent : Component<CharacterControllerComponent>
+    {
+        private ulong Id;
+
+        CharacterControllerComponent(ulong Id)
+        {
+            this.Id = Id;
+        }
+
+        public CharacterControllerComponent Create(ulong id)
+        {
+            CharacterControllerComponent component = new CharacterControllerComponent(id);
+            return component;
+        }
+
+        public bool IsGrounded
+        {
+            get
+            {
+                return InternalCalls.CharacterController_IsGrounded(Id);
+            }
+        }
+
+        public void Move(Vec3 displacement, float deltaTime)
+        {
+            InternalCalls.CharacterController_Move(Id, ref displacement, deltaTime);
+        }
+
+
+    }
+
+    public struct AnimationGraphController : Component<AnimationGraphController>
+    {
+        private ulong Id;
+
+        AnimationGraphController(ulong Id)
+        {
+            this.Id = Id;
+        }
+
+        public AnimationGraphController Create(ulong id)
+        {
+            AnimationGraphController component = new AnimationGraphController(id);
+            return component;
+        }
+
+        public void SetParameterBool(string name, bool value)
+        {
+            InternalCalls.AnimationGraphController_SetParameterBool(Id, name, value);
+        }
+
+    }
+
+
+
+
 }
+
+

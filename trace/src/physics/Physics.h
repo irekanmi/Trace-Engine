@@ -1,8 +1,10 @@
 #pragma once
 
-#include "glm/glm.hpp"
 #include "scene/UUID.h"
 #include "reflection/TypeRegistry.h"
+
+
+#include "glm/glm.hpp"
 
 #include <xhash>
 
@@ -107,14 +109,44 @@ namespace trace {
 
 	};
 
+	class CharacterController
+	{
+	public:
+
+		void SetInternal(void* handle) { m_internal = handle; }
+		void* GetInternal() { return m_internal; }
+
+		void SetIsGrounded(bool grounded) { m_isGrounded = grounded; }
+		bool GetIsGrounded() { return m_isGrounded; }
+
+		float height = 1.0f;
+		float radius = 1.0f;
+		float min_move_distance = 0.001f;
+		float slope_limit = 45.0f;
+		float contact_offset = 0.01f;
+		float step_offset = 0.1f;
+		glm::vec3 offset = glm::vec3(0.0f);
+	private:
+		bool m_isGrounded = false;
+		void* m_internal = nullptr;
+
+	protected:
+		ACCESS_CLASS_MEMBERS(CharacterController);
+
+	};
+
 	using CollisionPair = std::pair<uint64_t, uint64_t>;
 
-	
+	struct TriggerPair
+	{
+		UUID entity = 0;
+		UUID otherEntity = 0;
+	};
 
 	struct ContactPoint
 	{
-		glm::vec3 point;
-		glm::vec3 normal;
+		glm::vec3 point = glm::vec3(0.0f);
+		glm::vec3 normal = glm::vec3(0.0f);
 		float seperation;
 	};
 

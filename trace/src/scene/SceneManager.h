@@ -27,6 +27,7 @@ namespace trace {
 			m_assetMap = map;
 		}
 		Ref<Scene> LoadScene_Runtime(UUID id);
+		void RenameAsset(Ref<Scene> asset, const std::string& new_name);
 
 		static SceneManager* get_instance();
 	private:

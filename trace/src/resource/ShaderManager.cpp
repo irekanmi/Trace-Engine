@@ -266,6 +266,13 @@ namespace trace {
 		return result;
 	}
 
+	void ShaderManager::RenameAsset(Ref<GShader> asset, const std::string& new_name)
+	{
+		uint32_t index = m_hashTable.Get(asset->GetName());
+		m_hashTable.Set(asset->GetName(), INVALID_ID);
+		m_hashTable.Set(new_name, index);
+	}
+
 	ShaderManager* ShaderManager::get_instance()
 	{
 		static ShaderManager* s_instance = new ShaderManager;

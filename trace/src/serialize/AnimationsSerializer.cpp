@@ -26,7 +26,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Clip Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Clip Name" << YAML::Value << clip->GetName();
 
 		emit << YAML::Key << "Duration" << YAML::Value << clip->GetDuration();
 		emit << YAML::Key << "Sample Rate" << YAML::Value << clip->GetSampleRate();
@@ -187,7 +186,7 @@ namespace trace {
 		FileSystem::close_file(in_handle);
 
 		YAML::Node data = YAML::Load(file_data);
-		if (!data["Trace Version"] || !data["Clip Version"] || !data["Clip Name"])
+		if (!data["Trace Version"] || !data["Clip Version"])
 		{
 			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
 			return result;
@@ -195,7 +194,7 @@ namespace trace {
 
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string clip_version = data["Clip Version"].as<std::string>(); // TODO: To be used later
-		std::string clip_name = data["Clip Name"].as<std::string>();
+		std::string clip_name = p.filename().string();
 		
 		
 		clip = AnimationsManager::get_instance()->LoadClip_(file_path);
@@ -335,7 +334,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Anim Graph Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Anim Graph Name" << YAML::Value << graph->GetName();
 
 		emit << YAML::Key << "States" << YAML::Value << YAML::BeginSeq;
 
@@ -444,15 +442,17 @@ namespace trace {
 		FileSystem::close_file(in_handle);
 
 		YAML::Node data = YAML::Load(file_data);
-		if (!data["Trace Version"] || !data["Anim Graph Version"] || !data["Anim Graph Name"])
+		if (!data["Trace Version"] || !data["Anim Graph Version"])
 		{
 			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
 			return result;
 		}
 
+		std::filesystem::path p = file_path;
+
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string graph_version = data["Anim Graph Version"].as<std::string>(); // TODO: To be used later
-		std::string graph_name = data["Anim Graph Name"].as<std::string>();
+		std::string graph_name = p.filename().string();
 
 		Ref<AnimationGraph> graph = AnimationsManager::get_instance()->GetGraph(graph_name);
 		if (graph)
@@ -546,7 +546,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Skeleton Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Skeleton Name" << YAML::Value << skeleton->GetName();
 		emit << YAML::Key << "Root Node" << YAML::Value << skeleton->GetRootNode();
 
 		emit << YAML::Key << "Bones" << YAML::Value << YAML::BeginSeq;
@@ -613,7 +612,7 @@ namespace trace {
 		FileSystem::close_file(in_handle);
 
 		YAML::Node data = YAML::Load(file_data);
-		if (!data["Trace Version"] || !data["Skeleton Version"] || !data["Skeleton Name"])
+		if (!data["Trace Version"] || !data["Skeleton Version"])
 		{
 			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
 			return result;
@@ -621,7 +620,7 @@ namespace trace {
 
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string skeleton_version = data["Skeleton Version"].as<std::string>(); // TODO: To be used later
-		std::string skeleton_name = data["Skeleton Name"].as<std::string>();
+		std::string skeleton_name = p.filename().string();
 		std::string root_node = data["Root Node"].as<std::string>();
 
 		std::vector<Animation::Bone> bones;
@@ -673,7 +672,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Anim_Graph Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Anim_Graph Name" << YAML::Value << graph->GetName();
 
 		Reflection::Serialize(*graph.get(), &emit, nullptr, Reflection::SerializationFormat::YAML);
 
@@ -718,7 +716,7 @@ namespace trace {
 			return result;
 		}
 
-		if (!data["Trace Version"] || !data["Anim_Graph Version"] || !data["Anim_Graph Name"])
+		if (!data["Trace Version"] || !data["Anim_Graph Version"])
 		{
 			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
 			return result;
@@ -726,7 +724,7 @@ namespace trace {
 
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string graph_version = data["Anim_Graph Version"].as<std::string>(); // TODO: To be used later
-		std::string graph_name = data["Anim_Graph Name"].as<std::string>();
+		std::string graph_name = p.filename().string();
 
 		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(file_path);
 
@@ -765,7 +763,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Anim_Sequence Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Anim_Sequence Name" << YAML::Value << sequence->GetName();
 
 		Reflection::Serialize(*sequence.get(), &emit, nullptr, Reflection::SerializationFormat::YAML);
 
@@ -809,7 +806,7 @@ namespace trace {
 			return result;
 		}
 
-		if (!data["Trace Version"] || !data["Anim_Sequence Version"] || !data["Anim_Sequence Name"])
+		if (!data["Trace Version"] || !data["Anim_Sequence Version"])
 		{
 			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
 			return result;
@@ -817,7 +814,7 @@ namespace trace {
 
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string sequence_version = data["Anim_Sequence Version"].as<std::string>(); // TODO: To be used later
-		std::string sequence_name = data["Anim_Sequence Name"].as<std::string>();
+		std::string sequence_name = p.filename().string();
 
 		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(file_path);
 

@@ -42,6 +42,12 @@ namespace trace {
 	__SetRigidBodyTransform PhysicsFunc::_setRigidBodyTransform = nullptr;
 	__GetRigidBodyTransform PhysicsFunc::_getRigidBodyTransform = nullptr;
 
+	__CreateCharacterController PhysicsFunc::_createCharacterController = nullptr;
+	__DestroyCharacterController PhysicsFunc::_destroyCharacterController = nullptr;
+	__MoveCharacterController PhysicsFunc::_moveCharacterController = nullptr;
+	__SetControllerDataPtr PhysicsFunc::_setControllerDataPtr = nullptr;
+	__GetCharacterControllerPosition PhysicsFunc::_getCharacterControllerPosition = nullptr;
+
 	// Loader ---------------------------------------
 	bool PhysicsFuncLoader::LoadPhysxFunctions()
 	{
@@ -68,6 +74,13 @@ namespace trace {
 		PhysicsFunc::_destroyRigidBody = physx::__DestroyRigidBody;
 		PhysicsFunc::_setRigidBodyTransform = physx::__SetRigidBodyTransform;
 		PhysicsFunc::_getRigidBodyTransform = physx::__GetRigidBodyTransform;
+
+		PhysicsFunc::_createCharacterController = physx::__CreateCharacterController;
+		PhysicsFunc::_destroyCharacterController = physx::__DestroyCharacterController;
+		PhysicsFunc::_moveCharacterController = physx::__MoveCharacterController;
+		PhysicsFunc::_setControllerDataPtr = physx::__SetControllerDataPtr;
+		PhysicsFunc::_getCharacterControllerPosition = physx::__GetCharacterControllerPosition;
+
 
 		return true;
 	}
@@ -197,6 +210,36 @@ namespace trace {
 	{
 		PHYSICS_FUNC_IS_VALID(_getRigidBodyTransform);
 		return _getRigidBodyTransform(rigid_body, transform);
+	}
+
+	bool PhysicsFunc::CreateCharacterController(CharacterController& controller, void*& scene, Transform& pose)
+	{
+		PHYSICS_FUNC_IS_VALID(_createCharacterController);
+		return _createCharacterController(controller, scene, pose);
+	}
+
+	bool PhysicsFunc::DestroyCharacterController(CharacterController& controller, void*& scene)
+	{
+		PHYSICS_FUNC_IS_VALID(_destroyCharacterController);
+		return _destroyCharacterController(controller, scene);
+	}
+
+	bool PhysicsFunc::MoveCharacterController(CharacterController& controller, glm::vec3 displacement, float deltaTime)
+	{
+		PHYSICS_FUNC_IS_VALID(_moveCharacterController);
+		return _moveCharacterController(controller, displacement, deltaTime);
+	}
+
+	bool PhysicsFunc::SetControllerDataPtr(CharacterController& controller, void* ptr)
+	{
+		PHYSICS_FUNC_IS_VALID(_setControllerDataPtr);
+		return _setControllerDataPtr(controller, ptr);
+	}
+
+	bool PhysicsFunc::GetCharacterControllerPosition(CharacterController& controller, glm::vec3& out_position)
+	{
+		PHYSICS_FUNC_IS_VALID(_getCharacterControllerPosition);
+		return _getCharacterControllerPosition(controller, out_position);
 	}
 
 }

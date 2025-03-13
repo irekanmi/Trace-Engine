@@ -28,5 +28,10 @@ namespace physx {
 	bool __DestroyRigidBody(trace::RigidBody& rigid_body);
 	bool __SetRigidBodyTransform(trace::RigidBody& rigid_body, trace::Transform& transform);
 	bool __GetRigidBodyTransform(trace::RigidBody& rigid_body, trace::Transform& transform);
+	bool __CreateCharacterController(trace::CharacterController& controller, void*& scene, trace::Transform& pose);
+	bool __DestroyCharacterController(trace::CharacterController& controller, void*& scene);
+	bool __MoveCharacterController(trace::CharacterController& controller, glm::vec3 displacement, float deltaTime);
+	bool __SetControllerDataPtr(trace::CharacterController& controller, void* ptr);
+	bool __GetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& out_position);
 
 }

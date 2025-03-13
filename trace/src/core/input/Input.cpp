@@ -82,9 +82,29 @@ namespace trace {
 		return keyboard_curr.keys[key];
 	}
 
+	bool InputSystem::GetKeyPressed(Keys key)
+	{
+		return GetKeyState(key) == KeyState::KEY_PRESS;
+	}
+
+	bool InputSystem::GetKeyReleased(Keys key)
+	{
+		return GetKeyState(key) == KeyState::KEY_RELEASE;
+	}
+
 	bool InputSystem::GetButton(Buttons button)
 	{
 		return mouse_curr.buttons[button];
+	}
+
+	bool InputSystem::GetButtonReleased(Buttons button)
+	{
+		return GetButtonState(button) == KeyState::KEY_RELEASE;
+	}
+
+	bool InputSystem::GetButtonPressed(Buttons button)
+	{
+		return GetButtonState(button) == KeyState::KEY_PRESS;
 	}
 
 	void InputSystem::SetKey(Keys key, bool val)

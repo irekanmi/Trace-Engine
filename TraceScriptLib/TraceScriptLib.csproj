@@ -82,7 +82,7 @@
     <Compile Include="Source\Core\Input\Keys.cs" />
     <Compile Include="Source\Internals.cs" />
     <Compile Include="Source\Physics\Physics.cs" />
-    <Compile Include="Source\Physics\Utils.cs" />
+    <Compile Include="Source\Physics\Maths.cs" />
     <Compile Include="Source\Player.cs" />
     <Compile Include="Source\Scene\Scene.cs" />
     <Compile Include="Source\Test.cs" />

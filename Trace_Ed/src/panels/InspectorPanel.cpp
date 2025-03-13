@@ -331,29 +331,34 @@ namespace trace {
 				entity.AddComponent<ImageComponent>();
 				comp_dirty = true;
 			}
-			if (ImGui::MenuItem("SunLight"))
+			if (ImGui::MenuItem("Sun Light"))
 			{
 				entity.AddComponent<SunLight>();
 				comp_dirty = true;
 			}
-			if (ImGui::MenuItem("PointLight"))
+			if (ImGui::MenuItem("Point Light"))
 			{
 				entity.AddComponent<PointLight>();
 				comp_dirty = true;
 			}
-			if (ImGui::MenuItem("SpotLight"))
+			if (ImGui::MenuItem("Spot Light"))
 			{
 				entity.AddComponent<SpotLight>();
 				comp_dirty = true;
 			}
-			if (ImGui::MenuItem("AnimationGraphController"))
+			if (ImGui::MenuItem("Animation Graph Controller"))
 			{
 				entity.AddComponent<AnimationGraphController>();
 				comp_dirty = true;
 			}
-			if (ImGui::MenuItem("SequencePlayer"))
+			if (ImGui::MenuItem("Sequence Player"))
 			{
 				entity.AddComponent<SequencePlayer>();
+				comp_dirty = true;
+			}
+			if (ImGui::MenuItem("Character Controller"))
+			{
+				entity.AddComponent<CharacterControllerComponent>();
 				comp_dirty = true;
 			}
 
@@ -1055,7 +1060,7 @@ namespace trace {
 			return dirty;
 			});
 
-		comp_dirty = comp_dirty || DrawComponent<SunLight>(entity, "SunLight", [&](Entity obj, SunLight& comp) -> bool {
+		comp_dirty = comp_dirty || DrawComponent<SunLight>(entity, "Sun Light", [&](Entity obj, SunLight& comp) -> bool {
 			bool dirty = false;
 
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
@@ -1073,7 +1078,7 @@ namespace trace {
 			return dirty;
 			});
 
-		comp_dirty = comp_dirty || DrawComponent<PointLight>(entity, "PointLight", [&](Entity obj, PointLight& comp) -> bool {
+		comp_dirty = comp_dirty || DrawComponent<PointLight>(entity, "Point Light", [&](Entity obj, PointLight& comp) -> bool {
 			bool dirty = false;
 
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
@@ -1098,7 +1103,7 @@ namespace trace {
 			return dirty;
 			});
 
-		comp_dirty = comp_dirty || DrawComponent<SpotLight>(entity, "SpotLight", [&](Entity obj, SpotLight& comp) -> bool {
+		comp_dirty = comp_dirty || DrawComponent<SpotLight>(entity, "Spot Light", [&](Entity obj, SpotLight& comp) -> bool {
 			bool dirty = false;
 
 			ImVec2 content_ava = ImGui::GetContentRegionAvail();
@@ -1187,6 +1192,37 @@ namespace trace {
 
 			return dirty;
 			});
+
+		comp_dirty = comp_dirty || DrawComponent<CharacterControllerComponent>(entity, "Character Controller", [](Entity obj, CharacterControllerComponent& comp) -> bool {
+
+			bool dirty = false;
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Contact Offset", &comp.character.contact_offset, 0.005f), ContactOffset)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Height", &comp.character.height, 0.005f), Height)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Radius", &comp.character.radius, 0.005f), Radius)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Min Move Distance", &comp.character.min_move_distance, 0.005f), MinMoveDistance)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Slope Limit", &comp.character.slope_limit, 0.005f), SlopeLimit)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Step Offset", &comp.character.step_offset, 0.005f), StepOffset)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, DrawVec3("Offset", comp.character.offset), Offset)
+			{}
+
+
+			return dirty;
+			});
+
 
 		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
 

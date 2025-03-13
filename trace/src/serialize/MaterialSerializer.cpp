@@ -120,7 +120,6 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Material Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Material Name" << YAML::Value << mat->GetName();
 		emit << YAML::Key << "Pipeline ID" << YAML::Value << GetUUIDFromName(mat->GetRenderPipline()->GetName());
 		emit << YAML::Key << "Data" << YAML::Value << YAML::BeginSeq;
 
@@ -309,7 +308,7 @@ namespace trace {
 		FileSystem::close_file(in_handle);
 
 		YAML::Node data = YAML::Load(file_data);
-		if (!data["Trace Version"] || !data["Material Version"] || !data["Material Name"])
+		if (!data["Trace Version"] || !data["Material Version"])
 		{
 			TRC_ERROR("These file is not a valid material file {}", file_path);
 			return result;
@@ -317,7 +316,7 @@ namespace trace {
 
 		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
 		std::string material_version = data["Material Version"].as<std::string>(); // TODO: To be used later
-		std::string material_name = data["Material Name"].as<std::string>();
+		std::string material_name = p.filename().string();
 
 		
 

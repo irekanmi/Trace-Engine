@@ -31,6 +31,7 @@ namespace trace {
 		Ref<Model> LoadModel_Runtime(UUID id);
 		bool LoadDefaults();
 		bool LoadDefaults_Runtime();
+		void RenameAsset(Ref<Model> asset, const std::string& new_name);
 
 		bool BuildDefaultModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map);
 

@@ -9,6 +9,7 @@
 #include "scene/Components.h"
 #include "core/input/Input.h"
 #include "scripting/ScriptEngine.h"
+#include "backends/Physicsutils.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -47,6 +48,9 @@ struct MonoData
 
 	MonoClass* physics_class = nullptr;
 	MonoMethod* on_collision_enter = nullptr;
+	MonoMethod* on_collision_exit = nullptr;
+	MonoMethod* on_trigger_enter = nullptr;
+	MonoMethod* on_trigger_exit = nullptr;
 
 };
 
@@ -96,26 +100,38 @@ MonoAssembly* LoadAssembly(const std::string& filePath);
 void PrintAssemblyTypes(MonoAssembly* assembly);
 void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, Script>& data, bool core);
 
-template<typename T>
-bool RegisterComponent()
+
+
+template<typename... Component>
+void RegisterComponent()
 {
-	std::string name = typeid(T).name();
-	std::string comp_name = name.substr(name.find_last_of(':') + 1);
 
-	std::string _name = fmt::format("Trace.{}", comp_name);
-	MonoType* res = mono_reflection_type_from_name(_name.data(), s_MonoData.coreImage);
-	if (!res)
-	{
-		TRC_WARN("{} is not present in the assembly", name);
-		return false;
-	}
+	([&]() 
+		{
+			std::string name = typeid(Component).name();
+			std::string comp_name = name.substr(name.find_last_of(':') + 1);
 
-	/*auto& get_comp = s_MonoData.get_components[res];
-	get_comp.component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", comp_name.c_str());;*/
-	s_MonoData.has_components[res] = [](Entity& entity) -> bool { return entity.HasComponent<T>(); };
-	s_MonoData.remove_components[res] = [](Entity& entity) { entity.RemoveComponent<T>(); };
+			std::string _name = fmt::format("Trace.{}", comp_name);
+			MonoType* res = mono_reflection_type_from_name(_name.data(), s_MonoData.coreImage);
+			if (!res)
+			{
+				TRC_WARN("{} is not present in the assembly", name);
+				return;
+			}
 
-	return true;
+			/*auto& get_comp = s_MonoData.get_components[res];
+			get_comp.component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", comp_name.c_str());;*/
+			s_MonoData.has_components[res] = [](Entity& entity) -> bool { return entity.HasComponent<Component>(); };
+			s_MonoData.remove_components[res] = [](Entity& entity) { entity.RemoveComponent<Component>(); };
+		}(), ...);
+
+
+}
+
+template<typename... Component>
+void RegisterComponent(ComponentGroup<Component...>)
+{
+	RegisterComponent<Component...>();
 }
 
 bool InitializeInternal(const std::string& bin_dir)
@@ -148,19 +164,7 @@ bool ShutdownInternal()
 bool LoadComponents()
 {
 
-	bool result = true;
-
-	result = RegisterComponent<TransformComponent>() && result;
-	result = RegisterComponent<TagComponent>() && result;
-	result = RegisterComponent<CameraComponent>() && result;
-	result = RegisterComponent<LightComponent>() && result;
-	result = RegisterComponent<MeshComponent>() && result;
-	result = RegisterComponent<ModelComponent>() && result;
-	result = RegisterComponent<ModelRendererComponent>() && result;
-	result = RegisterComponent<TextComponent>() && result;
-	result = RegisterComponent<RigidBodyComponent>() && result;
-	result = RegisterComponent<BoxColliderComponent>() && result;
-	result = RegisterComponent<SphereColliderComponent>() && result;
+	RegisterComponent(AllComponents{});
 
 	return true;
 }
@@ -173,7 +177,13 @@ bool LoadCoreAssembly(const std::string& file_path)
 	MonoClass* physics_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Physics");
 	TRC_ASSERT(physics_class != nullptr, "Can't find Physics class inside assembly, Function: {}", __FUNCTION__);
 	s_MonoData.on_collision_enter = mono_class_get_method_from_name(physics_class, "OnCollisionEnter", 2);
+	s_MonoData.on_collision_exit = mono_class_get_method_from_name(physics_class, "OnCollisionExit", 2);
+	s_MonoData.on_trigger_enter = mono_class_get_method_from_name(physics_class, "OnTriggerEnter", 2);
+	s_MonoData.on_trigger_exit = mono_class_get_method_from_name(physics_class, "OnTriggerExit", 2);
 	TRC_ASSERT(s_MonoData.on_collision_enter != nullptr, "Can't find OnCollisionEnter inside Physics class, Function: {}", __FUNCTION__);
+	TRC_ASSERT(s_MonoData.on_collision_exit != nullptr, "Can't find OnCollisionExit inside Physics class, Function: {}", __FUNCTION__);
+	TRC_ASSERT(s_MonoData.on_trigger_enter != nullptr, "Can't find OnTriggerEnter inside Physics class, Function: {}", __FUNCTION__);
+	TRC_ASSERT(s_MonoData.on_trigger_exit != nullptr, "Can't find OnTriggerExit inside Physics class, Function: {}", __FUNCTION__);
 	s_MonoData.physics_class = physics_class;
 
 	PrintAssemblyTypes(s_MonoData.coreAssembly);
@@ -733,6 +743,28 @@ void Action_RemoveScript(UUID uuid, MonoReflectionType* reflect_type)
 	entity.RemoveScript((uintptr_t)type);
 }
 
+MonoString* Action_GetName(UUID uuid)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(uuid);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return nullptr;
+	}
+
+	std::string& name = entity.GetComponent<TagComponent>().GetTag();
+
+	return mono_string_new(s_MonoData.appDomain, name.c_str());
+
+}
+
 #pragma endregion
 
 #pragma region TransformComponent
@@ -823,9 +855,29 @@ bool Input_GetKey(Keys key)
 	return InputSystem::get_instance()->GetKey(key);
 }
 
+bool Input_GetKeyPressed(Keys key)
+{
+	return InputSystem::get_instance()->GetKeyPressed(key);
+}
+
+bool Input_GetKeyReleased(Keys key)
+{
+	return InputSystem::get_instance()->GetKeyReleased(key);
+}
+
 bool Input_GetButton(Buttons button)
 {
 	return InputSystem::get_instance()->GetButton(button);
+}
+
+bool Input_GetButtonPressed(Buttons button)
+{
+	return InputSystem::get_instance()->GetButtonPressed(button);
+}
+
+bool Input_GetButtonReleased(Buttons button)
+{
+	return InputSystem::get_instance()->GetButtonReleased(button);
 }
 
 #pragma endregion
@@ -980,6 +1032,98 @@ void Physics_GetCollisionData(CollisionData* out_data, int64_t collision_data)
 
 }
 
+void Physics_GetTriggerData(TriggerPair* out_data, int64_t trigger_data)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+	TriggerPair* ptr = (TriggerPair*)trigger_data;
+
+	out_data->entity = ptr->entity;
+	out_data->otherEntity = ptr->otherEntity;
+	
+
+}
+
+
+#pragma endregion
+
+#pragma region CharacterController
+
+bool CharacterController_IsGrounded(UUID id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return false;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return false;
+	}
+
+	CharacterControllerComponent& controller = entity.GetComponent<CharacterControllerComponent>();
+
+	return controller.character.GetIsGrounded();
+}
+
+void CharacterController_Move(UUID id, glm::vec3* displacement, float deltaTime)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	CharacterControllerComponent& controller = entity.GetComponent<CharacterControllerComponent>();
+
+	PhysicsFunc::MoveCharacterController(controller.character, *displacement, deltaTime);
+
+}
+
+#pragma endregion
+
+#pragma region AnimationGraphController
+
+void AnimationGraphController_SetParameterBool(UUID id, MonoString* parameter_name, bool value)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
+
+	char* c_str = mono_string_to_utf8(parameter_name);
+
+	controller.graph.SetParameterData(c_str, value);
+
+	mono_free(c_str);
+
+}
 
 #pragma endregion
 
@@ -997,6 +1141,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Action_HasScript);
 	ADD_INTERNAL_CALL(Action_RemoveComponent);
 	ADD_INTERNAL_CALL(Action_RemoveScript);
+	ADD_INTERNAL_CALL(Action_GetName);
 
 
 	ADD_INTERNAL_CALL(TransformComponent_GetPosition);
@@ -1005,7 +1150,11 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TransformComponent_SetWorldPosition);
 
 	ADD_INTERNAL_CALL(Input_GetKey);
+	ADD_INTERNAL_CALL(Input_GetKeyPressed);
+	ADD_INTERNAL_CALL(Input_GetKeyReleased);
 	ADD_INTERNAL_CALL(Input_GetButton);
+	ADD_INTERNAL_CALL(Input_GetButtonPressed);
+	ADD_INTERNAL_CALL(Input_GetButtonReleased);
 
 	ADD_INTERNAL_CALL(TextComponent_GetString);
 	ADD_INTERNAL_CALL(TextComponent_SetString);
@@ -1015,6 +1164,12 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 
 	ADD_INTERNAL_CALL(Physics_GetCollisionData);
+	ADD_INTERNAL_CALL(Physics_GetTriggerData);
+
+	ADD_INTERNAL_CALL(CharacterController_IsGrounded);
+	ADD_INTERNAL_CALL(CharacterController_Move);
+
+	ADD_INTERNAL_CALL(AnimationGraphController_SetParameterBool);
 
 }
 
@@ -1022,6 +1177,7 @@ bool Script_OnCollisionEnter(UUID entity_id, ScriptInstance& instance, Collision
 {
 	
 	MonoInstance* internal_ins = (MonoInstance*)instance.GetInternal();
+
 
 	void* ptr = &collision_data;
 	int64_t ptr_location = (int64_t)ptr;
@@ -1033,6 +1189,65 @@ bool Script_OnCollisionEnter(UUID entity_id, ScriptInstance& instance, Collision
 	};
 
 	mono_runtime_invoke(s_MonoData.on_collision_enter, nullptr, args, &exp);
+	if (exp) mono_print_unhandled_exception(exp);
+
+	return true;
+}
+
+bool Script_OnCollisionExit(UUID entity_id, ScriptInstance& instance, CollisionData& collision_data)
+{
+
+	MonoInstance* internal_ins = (MonoInstance*)instance.GetInternal();
+
+	void* ptr = &collision_data;
+	int64_t ptr_location = (int64_t)ptr;
+	MonoObject* exp = nullptr;
+	void* args[] =
+	{
+		instance.GetBackendHandle(),
+		&ptr_location
+	};
+
+	mono_runtime_invoke(s_MonoData.on_collision_exit, nullptr, args, &exp);
+	if (exp) mono_print_unhandled_exception(exp);
+
+	return true;
+}
+
+bool Script_OnTriggerEnter(UUID entity_id, ScriptInstance& instance, TriggerPair& pair)
+{
+	MonoInstance* internal_ins = (MonoInstance*)instance.GetInternal();
+
+	void* ptr = &pair;
+	int64_t ptr_location = (int64_t)ptr;
+	MonoObject* exp = nullptr;
+	void* args[] =
+	{
+		instance.GetBackendHandle(),
+		&ptr_location
+	};
+
+	mono_runtime_invoke(s_MonoData.on_trigger_enter, nullptr, args, &exp);
+	if (exp) mono_print_unhandled_exception(exp);
+
+	return true;
+}
+
+bool Script_OnTriggerExit(UUID entity_id, ScriptInstance& instance, TriggerPair& pair)
+{
+
+	MonoInstance* internal_ins = (MonoInstance*)instance.GetInternal();
+
+	void* ptr = &pair;
+	int64_t ptr_location = (int64_t)ptr;
+	MonoObject* exp = nullptr;
+	void* args[] =
+	{
+		instance.GetBackendHandle(),
+		&ptr_location
+	};
+
+	mono_runtime_invoke(s_MonoData.on_trigger_exit, nullptr, args, &exp);
 	if (exp) mono_print_unhandled_exception(exp);
 
 	return true;

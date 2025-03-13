@@ -30,6 +30,7 @@ namespace trace {
 			m_assetMap = map;
 		}
 		Ref<Font> LoadFont_Runtime(UUID id);
+		void RenameAsset(Ref<Font> asset, const std::string& new_name);
 
 		static FontManager* get_instance();
 

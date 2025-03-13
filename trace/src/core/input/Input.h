@@ -38,7 +38,11 @@ namespace trace {
 		KeyState GetButtonState(Buttons button);
 
 		bool GetKey(Keys key);
+		bool GetKeyPressed(Keys key);
+		bool GetKeyReleased(Keys key);
 		bool GetButton(Buttons button);
+		bool GetButtonPressed(Buttons button);
+		bool GetButtonReleased(Buttons button);
 
 		void SetKey(Keys key, bool value);
 		void SetButton(Buttons button, bool value);

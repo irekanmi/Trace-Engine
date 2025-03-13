@@ -21,6 +21,11 @@ namespace Trace
             return Id;
         }
 
+        public string GetName()
+        {
+            return InternalCalls.Action_GetName(Id);
+        }
+
         public T GetComponent<T>() where T : Component<T>, new()
         {
             if (!HasComponent<T>()) return default(T);
@@ -50,7 +55,7 @@ namespace Trace
         public T AddComponent<T>() //where T : Component, new()
         {
             Type component_type = typeof(T);
-            return default(T);
+            return default(T); // TODO: Implement AddComponent
         }
 
         public T AddScript<T>() where T : Action
@@ -87,6 +92,21 @@ namespace Trace
         public virtual void OnCollisionEnter(CollisionData collision_data)
         {
             
+        }
+
+        public virtual void OnCollisionExit(CollisionData collision_data)
+        {
+
+        }
+        
+        public virtual void OnTriggerEnter(TriggerPair pair)
+        {
+
+        }
+        
+        public virtual void OnTriggerExit(TriggerPair pair)
+        {
+
         }
 
 
