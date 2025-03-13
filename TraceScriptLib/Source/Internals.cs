@@ -43,6 +43,12 @@ namespace Trace
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_SetWorldPosition(ulong id, ref Vec3 position);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_GetRotation(ulong id, out Quat rotation);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_SetRotation(ulong id, ref Quat rotation);
+
         #endregion
 
         #region Debug
@@ -134,6 +140,17 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void AnimationGraphController_SetParameterBool(ulong entity_id,string parameter_name, bool value);
+
+        #endregion
+
+        #region Maths
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Maths_Quat_LookDirection(ref Vec3 direction, out Quat result);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Maths_Quat_Slerp(ref Quat a, ref Quat b, float lerp_value, out Quat out_rotation);
+
 
         #endregion
 

@@ -46,6 +46,19 @@ namespace Trace
             }
         }
 
+        public Quat Rotation
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetRotation(Id, out Quat rotation);
+                return rotation;
+            }
+            set
+            {
+                InternalCalls.TransformComponent_SetRotation(Id, ref value);
+            }
+        }
+
         public Vec3 Scale
         {
             get

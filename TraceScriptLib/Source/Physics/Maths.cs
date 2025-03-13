@@ -169,7 +169,36 @@ namespace Trace
 
     }
 
-    
+    public struct Quat
+    {
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+
+        public Quat(float _x, float _y, float _z, float _w)
+        {
+            x = _x;
+            y = _y;
+            z = _z;
+            w = _w;
+        }
+
+        public static Quat Identity => new Quat { x = 0, y = 0, z = 0, w = 1 };
+
+        public static Quat LookDirection(Vec3 direction)
+        {
+            InternalCalls.Maths_Quat_LookDirection(ref direction, out Quat result);
+            return result;
+        }
+
+        public static Quat Slerp(Quat a, Quat b, float t)
+        {
+            InternalCalls.Maths_Quat_Slerp(ref a, ref b, t, out Quat result);
+            return result;
+        }
+
+    }
     
 
 }

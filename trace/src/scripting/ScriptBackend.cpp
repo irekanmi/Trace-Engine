@@ -846,6 +846,45 @@ void TransformComponent_SetWorldPosition(UUID id, glm::vec3* position)
 	s_MonoData.scene->SetEntityWorldPosition(entity, *position);
 }
 
+void TransformComponent_GetRotation(UUID id, glm::quat* rotation)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	glm::quat res = entity.GetComponent<TransformComponent>()._transform.GetRotation();
+	*rotation = res;
+}
+
+void TransformComponent_SetRotation(UUID id, glm::quat* rotation)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	entity.GetComponent<TransformComponent>()._transform.SetRotation(*rotation);
+}
+
 #pragma endregion
 
 #pragma region Input
@@ -1127,6 +1166,28 @@ void AnimationGraphController_SetParameterBool(UUID id, MonoString* parameter_na
 
 #pragma endregion
 
+#pragma region Maths
+
+void Maths_Quat_LookDirection(glm::vec3* direction, glm::quat* out_rotation)
+{
+	glm::vec3 forward = glm::normalize(*direction);
+	glm::vec3 up(0.0f, 1.0f, 0.0f);
+	glm::vec3 right = glm::normalize(glm::cross(up, forward));
+
+	up = glm::cross(forward, right);
+
+	glm::mat3 rotation_matrix(right, up, forward);
+
+	*out_rotation = glm::quat_cast(rotation_matrix);
+}
+
+void Maths_Quat_Slerp(glm::quat* a, glm::quat* b, float lerp_value, glm::quat* out_rotation)
+{
+	*out_rotation = glm::slerp(*a, *b, lerp_value);
+}
+
+#pragma endregion
+
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
 
 void BindInternalFuncs()
@@ -1148,6 +1209,8 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TransformComponent_SetPosition);
 	ADD_INTERNAL_CALL(TransformComponent_GetWorldPosition);
 	ADD_INTERNAL_CALL(TransformComponent_SetWorldPosition);
+	ADD_INTERNAL_CALL(TransformComponent_GetRotation);
+	ADD_INTERNAL_CALL(TransformComponent_SetRotation);
 
 	ADD_INTERNAL_CALL(Input_GetKey);
 	ADD_INTERNAL_CALL(Input_GetKeyPressed);
@@ -1170,6 +1233,9 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(CharacterController_Move);
 
 	ADD_INTERNAL_CALL(AnimationGraphController_SetParameterBool);
+
+	ADD_INTERNAL_CALL(Maths_Quat_LookDirection);
+	ADD_INTERNAL_CALL(Maths_Quat_Slerp);
 
 }
 
