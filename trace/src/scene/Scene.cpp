@@ -19,7 +19,7 @@
 namespace trace {
 	void Scene::Create()
 	{
-		m_scriptRegistry.Init();
+		m_scriptRegistry.Init(this);
 		m_rootNode = new HierachyComponent(); // TODO: Use Custom Allocator
 
 		m_registry.on_construct<HierachyComponent>().connect<&Scene::OnConstructHierachyComponent>(*this);
@@ -46,6 +46,18 @@ namespace trace {
 	}
 	void Scene::Destroy()
 	{
+		m_registry.on_construct<RigidBodyComponent>().disconnect<&Scene::OnConstructRigidBodyComponent>(*this);
+		m_registry.on_destroy<RigidBodyComponent>().disconnect<&Scene::OnDestroyRigidBodyComponent>(*this);
+
+		m_registry.on_construct<BoxColliderComponent>().disconnect<&Scene::OnConstructBoxColliderComponent>(*this);
+		m_registry.on_destroy<BoxColliderComponent>().disconnect<&Scene::OnDestroyBoxColliderComponent>(*this);
+
+		m_registry.on_construct<SphereColliderComponent>().disconnect<&Scene::OnConstructSphereColliderComponent>(*this);
+		m_registry.on_destroy<SphereColliderComponent>().disconnect<&Scene::OnDestroySphereColliderComponent>(*this);
+
+		m_registry.on_construct<CharacterControllerComponent>().disconnect<&Scene::OnConstructCharacterControllerComponent>(*this);
+		m_registry.on_destroy<CharacterControllerComponent>().disconnect<&Scene::OnDestroyCharacterControllerComponent>(*this);
+
 		m_registry.on_construct<AnimationGraphController>().disconnect<&Scene::OnConstructAnimationGraphController>(*this);
 		m_registry.on_destroy<AnimationGraphController>().disconnect<&Scene::OnDestroyAnimationGraphController>(*this);
 

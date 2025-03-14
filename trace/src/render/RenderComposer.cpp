@@ -69,7 +69,7 @@ namespace trace {
 			ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
 		}
 		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
-		//forward_pass.Setup(&frame_graph, black_board, render_graph_index);
+		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
 		{
 			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
@@ -97,6 +97,8 @@ namespace trace {
 	{
 		for (uint32_t i = 0; i < m_graphs.size(); i++)
 		{
+			
+
 			m_graphs[i].Execute(i);
 		}
 	}
@@ -118,6 +120,18 @@ namespace trace {
 			m_graphs[i].Destroy();
 		}
 		return ComposeGraph(frame_settings);
+	}
+
+	bool RenderComposer::recompose_graph(uint32_t index, FrameSettings frame_settings)
+	{
+		m_graphs[index].Destroy();
+		return compose_graph(index, frame_settings);
+	}
+
+	bool RenderComposer::compose_graph(uint32_t index, FrameSettings frame_settings)
+	{
+		PreFrame(m_graphs[index], m_graphsBlackBoard[index], frame_settings, index);
+		return true;
 	}
 
 }

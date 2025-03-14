@@ -36,6 +36,15 @@ namespace Trace
             object obj = InternalCalls.Scene_InstanciateEntity_Position(entity_id, ref position);
             return obj as Action;
         }
+        
+        static public void DestroyEntity(ulong entity_id)
+        {
+            InternalCalls.Scene_DestroyEntity(entity_id);
+        }
+        static public void DestroyEntity(Trace.Action entity)
+        {
+            DestroyEntity(entity.GetID());
+        }
 
 
 

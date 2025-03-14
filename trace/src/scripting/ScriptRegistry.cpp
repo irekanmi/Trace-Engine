@@ -3,6 +3,10 @@
 #include "ScriptRegistry.h"
 #include "ScriptEngine.h"
 #include "core/io/Logging.h"
+#include "scene/Scene.h"
+#include "scene/Entity.h"
+#include "ScriptBackend.h"
+
 #include <iostream>
 
 namespace trace {
@@ -16,9 +20,9 @@ namespace trace {
 	{
 	}
 
-	bool ScriptRegistry::Init(uint32_t reserved_count)
+	bool ScriptRegistry::Init(Scene* scene, uint32_t reserved_count)
 	{
-
+		m_scene = scene;
 		for (auto& i : ScriptEngine::get_instance()->GetScripts())
 		{
 			m_scripts[i.second.GetID()].script = &i.second;
@@ -110,7 +114,20 @@ namespace trace {
 			sm.entities.emplace_back(id);
 			ScriptInstance& res = sm.instances.emplace_back();
 			res.m_script = sm.script;
-			return &sm.instances.back();
+
+			if (m_scene->IsRunning())
+			{
+				ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
+				CreateScriptInstance(*sm.script, res);
+
+				void* params[1] =
+				{
+					&id
+				};
+				InvokeScriptMethod_Instance(*constructor, res, params);
+			}
+
+			return &res;
 		}
 
 		return nullptr;
@@ -138,10 +155,15 @@ namespace trace {
 
 
 			size_t index = sm.handle_map[id];
+			if (m_scene->IsRunning())
+			{
+				DestroyScriptInstance(sm.instances[index]);
+			}
 			sm.instances[index] = std::move(sm.instances.back());
 			sm.entities[index] = std::move(sm.entities.back());
 
 			sm.handle_map[sm.entities[index]] = index;
+
 
 			sm.instances.pop_back();
 			sm.entities.pop_back();

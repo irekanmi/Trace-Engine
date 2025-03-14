@@ -17,6 +17,9 @@ namespace Trace
         extern public static void Action_RemoveComponent(ulong id, Type component_type);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Action_AddScript(ulong id, Type script_type);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Action_RemoveScript(ulong id, Type script_type);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -116,6 +119,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static object Scene_InstanciateEntity_Position(ulong id, ref Vec3 position);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_DestroyEntity(ulong id);
 
         #endregion
 

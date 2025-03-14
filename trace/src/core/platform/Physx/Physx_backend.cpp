@@ -127,7 +127,7 @@ namespace physx {
 
 				trace::TriggerPair trigger_pair = {};
 				trigger_pair.entity = trigger->GetID();
-				trigger_pair.entity = otherCollider->GetID();
+				trigger_pair.otherEntity = otherCollider->GetID();
 
 
 				if (pair.status & PxPairFlag::eNOTIFY_TOUCH_LOST)
@@ -412,6 +412,7 @@ namespace physx {
 				pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
 			}
 			pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT; //TODO: Check Docks to understand Flag
+			pairFlags |= PxPairFlag::eSOLVE_CONTACT; //TODO: Check Docks to understand Flag
 			return PxFilterFlag::eDEFAULT;
 		}
 
@@ -1052,9 +1053,9 @@ namespace physx {
 		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
 
 		PxExtendedVec3 pos = res->getPosition();
-		out_position.x = pos.x;
-		out_position.y = pos.y;
-		out_position.z = pos.z;
+		out_position.x = static_cast<float>(pos.x);
+		out_position.y = static_cast<float>(pos.y);
+		out_position.z = static_cast<float>(pos.z);
 
 		return true;
 	}

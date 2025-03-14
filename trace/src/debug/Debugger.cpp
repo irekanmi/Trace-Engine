@@ -181,6 +181,128 @@ namespace trace {
 		DrawDebugSemiCircle(radius, steps, new_transform, color, render_graph_index);
 	}
 
+	void Debugger::DrawDebugBox(float half_extent_x, float half_extent_y, float half_extent_z, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
+	{
+		glm::vec3 point1;
+		glm::vec3 point2;
+
+		float x, y, z;
+
+		{
+			x = half_extent_x;
+			y = half_extent_y;
+			z = half_extent_z;
+
+			point1 = glm::vec3(x, y, z);
+			z = -half_extent_z;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+
+			x = half_extent_x;
+			y = -half_extent_y;
+			z = half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			z = -half_extent_z;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+		};
+
+		{
+			x = half_extent_x;
+			y = half_extent_y;
+			z = half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			y = -half_extent_y;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+
+			x = half_extent_x;
+			y = half_extent_y;
+			z = -half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			y = -half_extent_y;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+		};
+
+		{
+			x = -half_extent_x;
+			y = half_extent_y;
+			z = half_extent_z;
+
+			point1 = glm::vec3(x, y, z);
+			z = -half_extent_z;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+
+			x = -half_extent_x;
+			y = -half_extent_y;
+			z = half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			z = -half_extent_z;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+		};
+
+		{
+			x = -half_extent_x;
+			y = half_extent_y;
+			z = half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			y = -half_extent_y;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+
+			x = -half_extent_x;
+			y = half_extent_y;
+			z = -half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			y = -half_extent_y;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+		};
+
+		{
+			x = half_extent_x;
+			y = half_extent_y;
+			z = half_extent_z;
+
+			point1 = glm::vec3(x, y, z);
+			x = -half_extent_x;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+
+			x = half_extent_x;
+			y = -half_extent_y;
+			z = half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			x = -half_extent_x;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+		};
+
+		{
+			x = half_extent_x;
+			y = half_extent_y;
+			z = -half_extent_z;
+
+			point1 = glm::vec3(x, y, z);
+			x = -half_extent_x;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+
+			x = half_extent_x;
+			y = -half_extent_y;
+			z = -half_extent_z;
+			point1 = glm::vec3(x, y, z);
+			x = -half_extent_x;
+			point2 = glm::vec3(x, y, z);
+			AddDebugLine(point1, point2, transform, color);
+		};
+
+
+	}
+
 	Debugger* Debugger::get_instance()
 	{
 		static Debugger* s_instance = new Debugger;

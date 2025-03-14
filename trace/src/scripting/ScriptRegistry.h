@@ -23,7 +23,7 @@ namespace trace {
 		ScriptRegistry();
 		~ScriptRegistry();
 
-		bool Init(uint32_t reserved_count = 64);
+		bool Init(Scene* scene, uint32_t reserved_count = 64);
 		void Clear();
 
 		bool HasScript(UUID id, const std::string& script_name);
@@ -53,6 +53,7 @@ namespace trace {
 	private:
 		std::unordered_map<uintptr_t, ScriptManager> m_scripts;
 		std::unordered_map<Script*, FieldManager> m_fieldInstance;
+		Scene* m_scene = nullptr;
 
 	protected:
 		friend class Scene;

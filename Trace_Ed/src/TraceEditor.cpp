@@ -874,6 +874,17 @@ namespace trace {
 			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(0, 255, 255, 25));
 		}
 
+		if (selected_entity.HasComponent<BoxColliderComponent>())
+		{
+			BoxColliderComponent& box = selected_entity.GetComponent<BoxColliderComponent>();
+			glm::vec3 extent = box.shape.box.half_extents * pose._transform.GetScale();
+			extent += glm::vec3(0.00005f);//NOTE: Added offset to allow the collider visible
+			Transform local;
+			local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
+			local.SetRotation(pose._transform.GetRotation());
+			debugger->DrawDebugBox(extent.x, extent.y, extent.z, local.GetLocalMatrix(), TRC_COL32(222, 74, 247, 255));
+		}
+
 	}
 
 

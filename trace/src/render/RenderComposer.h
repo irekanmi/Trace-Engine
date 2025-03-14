@@ -38,6 +38,9 @@ namespace trace {
 		virtual bool ComposeGraph(FrameSettings frame_settings);
 		virtual bool ReComposeGraph(FrameSettings frame_settings);
 
+	protected:
+		virtual bool recompose_graph(uint32_t index, FrameSettings frame_settings);
+		virtual bool compose_graph(uint32_t index, FrameSettings frame_settings);
 
 	private:
 		GBufferPass gbuffer_pass;
@@ -47,6 +50,7 @@ namespace trace {
 		ForwardPass forward_pass;
 		BloomPass bloom_pass;
 		UIPass ui_pass;
+
 
 	protected:
 		Renderer* m_renderer;

@@ -358,10 +358,7 @@ namespace trace {
 				}
 			}
 
-			for (uint32_t i = 0; i < num_render_graphs; i++)
-			{
-				m_composer->Render(deltaTime);
-			}
+			m_composer->Render(deltaTime);
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);

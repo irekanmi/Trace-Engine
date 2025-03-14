@@ -636,7 +636,25 @@ MonoObject* Action_GetScript(UUID uuid, MonoReflectionType* reflect_type)
 
 	Entity entity = s_MonoData.scene->GetEntity(uuid);
 
-	MonoObject* res = (MonoObject*)entity.GetScript((uintptr_t)type)->GetInternal();
+	MonoObject* res = (MonoObject*)entity.GetScript((uintptr_t)type)->GetBackendHandle();
+
+	return res;
+
+}
+
+MonoObject* Action_AddScript(UUID uuid, MonoReflectionType* reflect_type)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+	MonoType* type = mono_reflection_type_get_type(reflect_type);
+
+	Entity entity = s_MonoData.scene->GetEntity(uuid);
+
+	MonoObject* res = (MonoObject*)entity.AddScript((uintptr_t)type)->GetBackendHandle();
 
 	return res;
 
@@ -1067,6 +1085,26 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+void Scene_DestroyEntity(UUID id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return;
+	}
+
+	s_MonoData.scene->DestroyEntity(entity);
+
+}
+
 #pragma endregion
 
 #pragma region Physics
@@ -1221,6 +1259,7 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(Action_GetComponent);
 	ADD_INTERNAL_CALL(Action_GetScript);
+	ADD_INTERNAL_CALL(Action_AddScript);
 	ADD_INTERNAL_CALL(Action_HasComponent);
 	ADD_INTERNAL_CALL(Action_HasScript);
 	ADD_INTERNAL_CALL(Action_RemoveComponent);
@@ -1249,6 +1288,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetEntity);
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position);
+	ADD_INTERNAL_CALL(Scene_DestroyEntity);
 
 	ADD_INTERNAL_CALL(Physics_GetCollisionData);
 	ADD_INTERNAL_CALL(Physics_GetTriggerData);

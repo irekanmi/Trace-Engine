@@ -38,6 +38,7 @@ namespace trace {
 		void DrawDebugSemiCircle(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 		void DrawDebugSphere(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 		void DrawDebugHemiSphere(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugBox(float half_extent_x, float half_extent_y, float half_extent_z, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 
 		DebugRenderData& GetRenderData() { return m_renderData; }
 

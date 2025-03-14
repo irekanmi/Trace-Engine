@@ -61,7 +61,8 @@ namespace Trace
         public T AddScript<T>() where T : Action
         {
             Type script_type = typeof(T);
-            return null;
+            object obj = InternalCalls.Action_AddScript(Id, script_type);
+            return obj as T;
         }
 
         public void RemoveComponent<T>() //where T : Component, new()
