@@ -164,7 +164,7 @@ namespace physx {
 
 						Script_OnTriggerEnter(i.entity, *instance, i);
 					});
-
+				i.Swap();
 				scene_registry.Iterate(i.otherEntity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
@@ -186,7 +186,7 @@ namespace physx {
 
 						Script_OnTriggerExit(i.entity, *instance, i);
 					});
-
+				i.Swap();
 				scene_registry.Iterate(i.otherEntity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_exit = script->GetMethod("OnTriggerExit");

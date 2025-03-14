@@ -56,6 +56,11 @@ namespace Trace
             return !(a == b);
         }
 
+        static public Vec2 Lerp(Vec2 a, Vec2 b, float t)
+        {
+            return new Vec2(Utils.Lerp(a.x, b.x, t), Utils.Lerp(a.y, b.y, t));
+        }
+
     }
 
     public struct Vec3
@@ -164,6 +169,11 @@ namespace Trace
         static public bool operator !=(Vec3 a, Vec3 b)
         {
             return !(a == b);
+        }
+
+        static public Vec3 Lerp(Vec3 a, Vec3 b, float t)
+        {
+            return new Vec3(Utils.Lerp(a.x, b.x, t), Utils.Lerp(a.y, b.y, t), Utils.Lerp(a.z, b.z, t));
         }
 
 

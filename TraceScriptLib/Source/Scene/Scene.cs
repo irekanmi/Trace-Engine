@@ -25,5 +25,19 @@ namespace Trace
             return obj as Action;
         }
 
+        static public Action InstanciateEntity(Trace.Action entity, Vec3 position)
+        {
+            object obj = InternalCalls.Scene_InstanciateEntity_Position(entity.GetID(), ref position);
+            return obj as Action;
+        }
+
+        static public Action InstanciateEntity(ulong entity_id, Vec3 position)
+        {
+            object obj = InternalCalls.Scene_InstanciateEntity_Position(entity_id, ref position);
+            return obj as Action;
+        }
+
+
+
     }
 }

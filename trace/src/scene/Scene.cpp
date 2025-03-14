@@ -31,6 +31,18 @@ namespace trace {
 		m_registry.on_construct<SequencePlayer>().connect<&Scene::OnConstructSequencePlayer>(*this);
 		m_registry.on_destroy<SequencePlayer>().connect<&Scene::OnDestroySequencePlayer>(*this);
 
+		m_registry.on_construct<RigidBodyComponent>().connect<&Scene::OnConstructRigidBodyComponent>(*this);
+		m_registry.on_destroy<RigidBodyComponent>().connect<&Scene::OnDestroyRigidBodyComponent>(*this);
+
+		m_registry.on_construct<BoxColliderComponent>().connect<&Scene::OnConstructBoxColliderComponent>(*this);
+		m_registry.on_destroy<BoxColliderComponent>().connect<&Scene::OnDestroyBoxColliderComponent>(*this);
+
+		m_registry.on_construct<SphereColliderComponent>().connect<&Scene::OnConstructSphereColliderComponent>(*this);
+		m_registry.on_destroy<SphereColliderComponent>().connect<&Scene::OnDestroySphereColliderComponent>(*this);
+
+		m_registry.on_construct<CharacterControllerComponent>().connect<&Scene::OnConstructCharacterControllerComponent>(*this);
+		m_registry.on_destroy<CharacterControllerComponent>().connect<&Scene::OnDestroyCharacterControllerComponent>(*this);
+
 	}
 	void Scene::Destroy()
 	{
@@ -45,6 +57,23 @@ namespace trace {
 		delete m_rootNode; // TODO: Use Custom Allocator
 		m_registry.clear();
 		m_scriptRegistry.Clear();
+	}
+	void Scene::BeginFrame()
+	{
+		if (m_running)
+		{
+			if (!m_entityToDestroy.empty())
+			{
+				for (Entity& entity : m_entityToDestroy)
+				{
+					destroy_entity(entity);
+				}
+				m_entityToDestroy.clear();
+			}
+		}
+	}
+	void Scene::EndFrame()
+	{
 	}
 	void Scene::OnStart()
 	{
@@ -123,7 +152,10 @@ namespace trace {
 						{
 							for (auto& [name, data] : field_it->second.GetFields())
 							{
-								if (data.type == ScriptFieldType::String) continue;
+								if (data.type == ScriptFieldType::String)
+								{
+									continue;
+								}
 								i.SetFieldValueInternal(name, data.data, 16);
 							}
 						}
@@ -249,7 +281,7 @@ namespace trace {
 				float scale_y = pose._transform.GetScale().y;
 				float scale_z = pose._transform.GetScale().z;
 				charac.character.radius *= (scale_x + scale_z) / 2.0f;//TODO: Determine maybe scale in transform should be used or not
-				charac.character.height *= pose._transform.GetScale().y;//TODO: Determine maybe scale in transform should be used or not
+				charac.character.height *= scale_y;//TODO: Determine maybe scale in transform should be used or not
 
 				PhysicsFunc::CreateCharacterController(charac.character, m_physics3D, pose._transform);
 				PhysicsFunc::SetControllerDataPtr(charac.character, &m_entityMap[entity.GetID()]);
@@ -285,7 +317,7 @@ namespace trace {
 			anim_graph.graph.Stop(this, entity.GetID());
 		}
 
-		
+		m_entityToDestroy.clear();
 		m_running = false;
 	}
 	void Scene::OnScriptStop()
@@ -913,7 +945,7 @@ namespace trace {
 	{
 
 		([&]() {
-			if (from.HasComponent<Component>())
+			if (from.HasComponent<Component>() && !to.HasComponent<Component>())
 			{
 				to.AddOrReplaceComponent<Component>(from.GetComponent<Component>());
 			}
@@ -952,6 +984,7 @@ namespace trace {
 	{
 		Entity _res = scene->CreateEntity_UUID(UUID::GenUUID(), e.GetComponent<TagComponent>().GetTag());
 
+		_res.RemoveComponent<TransformComponent>();
 		CopyComponent(AllComponents{}, e, _res);
 		_res.AddOrReplaceComponent<HierachyComponent>();
 		scene->SetParent(_res, parent);
@@ -972,6 +1005,32 @@ namespace trace {
 			{
 				ScriptInstance* sc_ins = _res.AddScript(script->GetID());
 				*sc_ins = *other;
+
+				if (scene->IsRunning())
+				{
+					ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
+					CreateScriptInstance(*script, *sc_ins);
+
+					// Setting values ..............
+					for (auto& [name, data] : other->GetFields())
+					{
+						if (data->field_type == ScriptFieldType::String)
+						{
+							continue;
+						}
+						char field_data[16];
+						other->GetFieldValueInternal(name, field_data, 16);
+						sc_ins->SetFieldValueInternal(name, field_data, 16);
+					}
+					// ..................................................................
+
+					UUID id = _res.GetID();
+					void* params[1] =
+					{
+						&id
+					};
+					InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
+				}
 			});
 
 		HierachyComponent& hierachy = e.GetComponent<HierachyComponent>();
@@ -988,45 +1047,8 @@ namespace trace {
 	{
 		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>().GetTag());		
 
-
-		CopyComponent(AllComponents{}, entity, res);
-		res.AddOrReplaceComponent<HierachyComponent>();
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-		if (GetEntity(entity.GetID()) && hi.HasParent())// The entity arguement is a member of the scene
-		{
-			Entity parent = GetEntity(entity.GetComponent<HierachyComponent>().parent);
-			SetParent(res, parent);
-		}
-
-		
-		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
-			{
-				ScriptInstance* sc_ins = res.AddScript(script->GetID());
-				*sc_ins = *other;
-			});	
-
-
-		
-
-		if (entity.HasComponent<SkinnedModelRenderer>())
-		{
-			SkinnedModelRenderer& obj_renderer = res.AddOrReplaceComponent<SkinnedModelRenderer>();
-			SkinnedModelRenderer& skinned_renderer = entity.GetComponent<SkinnedModelRenderer>();
-
-			obj_renderer._model = skinned_renderer._model;
-			obj_renderer._material = skinned_renderer._material;
-			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
-			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), this, res.GetID());
-		}
-
-
-		
-		Scene* scene = entity.GetScene();
-		for (auto& i : hi.children)
-		{
-			Entity d_child = scene->GetEntity(i);
-			duplicate_entity_hierachy(this, d_child, res);
-		}
+		res.RemoveComponent<TransformComponent>();
+		duplicate_entity(entity, res);
 
 		return res;
 	}
@@ -1061,41 +1083,14 @@ namespace trace {
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		if (this != entity.GetScene())
+		if (m_running)
 		{
-			TRC_WARN("Can't destory an entity that is not a member of a scene, scene name: {}", GetName());
-			return;
-		}
-
-		// Checking if the entity still exists in the scene
-		if (!GetEntity(entity.GetID()))
-		{
-			TRC_WARN("Entity is not valid, Function: {} ", __FUNCTION__);
-			return;
-		}
-
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-		while(hi.children.size() > 0)
-		{
-			UUID& id = hi.children.front();
-			Entity child = GetEntity(id);
-			DestroyEntity(child);
-		}
-
-		if (hi.HasParent())
-		{
-			Entity parent = GetEntity(hi.parent);
-			HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
-			parent_hi.RemoveChild(entity.GetID());
+			m_entityToDestroy.push_back(entity);
 		}
 		else
 		{
-			m_rootNode->RemoveChild(entity.GetID());
+			destroy_entity(entity);
 		}
-
-		m_scriptRegistry.Erase(entity.GetID());
-		m_entityMap.erase(entity.GetID());
-		m_registry.destroy(entity);
 	}
 
 	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab)
@@ -1117,6 +1112,27 @@ namespace trace {
 		{
 			EnableEntity(result);
 		}
+		return result;
+	}
+
+
+
+	Entity Scene::InstanciateEntity(Entity source, glm::vec3 position)
+	{
+		if (!m_running)
+		{
+			return Entity();
+		}
+
+		Entity result = CreateEntity_UUID(UUID::GenUUID(), source.GetComponent<TagComponent>().GetTag());
+
+		TransformComponent& pose = result.AddOrReplaceComponent<TransformComponent>(source.GetComponent<TransformComponent>());
+		pose._transform.SetPosition(position);
+		
+		duplicate_entity(source, result);
+
+		EnableEntity(result);
+
 		return result;
 	}
 
@@ -1599,10 +1615,149 @@ namespace trace {
 
 	void Scene::OnConstructRigidBodyComponent(entt::registry& reg, entt::entity ent)
 	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			TransformComponent& pose = entity.GetComponent<TransformComponent>();
+			RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+			void*& internal_ptr = rigid.body.GetInternal();
+			internal_ptr = nullptr;//NOTE: Because we are trying to copy from another object
+			PhysicsFunc::CreateRigidBody_Scene(m_physics3D, rigid.body, pose._transform);
+		}
 	}
-
 	void Scene::OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent)
 	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+			PhysicsFunc::RemoveActor(m_physics3D, rigid.body.GetInternal());
+			PhysicsFunc::DestroyRigidBody(rigid.body);
+		}
+	}
+
+
+	void Scene::OnConstructBoxColliderComponent(entt::registry& reg, entt::entity ent)
+	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			TransformComponent& pose = entity.GetComponent<TransformComponent>();
+			BoxColliderComponent& box = entity.GetComponent<BoxColliderComponent>();
+
+			glm::vec3 extent = box.shape.box.half_extents;
+			box.shape.box.half_extents *= pose._transform.GetScale();
+			Transform local;
+			local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
+			local.SetRotation(pose._transform.GetRotation());
+			box._internal = nullptr;//NOTE: Because we are trying to copy from another object
+			PhysicsFunc::CreateShapeWithTransform(m_physics3D, box._internal, box.shape, local, box.is_trigger);
+			//Temp _______________
+			PhysicsFunc::SetShapeMask(box._internal, BIT(1), BIT(1));
+			// -------------------
+
+			box.shape.box.half_extents = extent;
+
+
+			UUID _id = entity.GetID();
+			Entity* shp_ptr = &m_entityMap[_id];
+			PhysicsFunc::SetShapePtr(box._internal, shp_ptr);
+			if (!box.is_trigger && entity.HasComponent<RigidBodyComponent>())
+			{
+				RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+				TRC_ASSERT(rigid.body.GetInternal() != nullptr, "Invalid Rigid body handle, Function: {}", __FUNCTION__);
+				PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
+				PhysicsFunc::AttachShape(box._internal, rigid.body.GetInternal());
+
+			}
+		}
+	}
+
+	void Scene::OnDestroyBoxColliderComponent(entt::registry& reg, entt::entity ent)
+	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			BoxColliderComponent& box = entity.GetComponent<BoxColliderComponent>();
+
+			PhysicsFunc::DestroyShape(box._internal);
+		}
+	}
+
+	void Scene::OnConstructSphereColliderComponent(entt::registry& reg, entt::entity ent)
+	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			TransformComponent& pose = entity.GetComponent<TransformComponent>();
+			SphereColliderComponent& sc = entity.GetComponent<SphereColliderComponent>();
+
+			float radius = sc.shape.sphere.radius;
+			sc.shape.sphere.radius *= pose._transform.GetScale().x; //TODO: Determine maybe scale in transform should be used or not
+			Transform local;
+			local.SetPosition(pose._transform.GetPosition() + sc.shape.offset);
+			local.SetRotation(pose._transform.GetRotation());
+			sc._internal = nullptr;//NOTE: Because we are trying to copy from another object
+			PhysicsFunc::CreateShapeWithTransform(m_physics3D, sc._internal, sc.shape, local, sc.is_trigger);
+			sc.shape.sphere.radius = radius;
+			//Temp _______________
+			PhysicsFunc::SetShapeMask(sc._internal, BIT(1), BIT(1));
+			// -------------------
+
+			UUID _id = entity.GetID();
+			Entity* shp_ptr = &m_entityMap[_id];
+			PhysicsFunc::SetShapePtr(sc._internal, shp_ptr);
+			if (!sc.is_trigger && entity.HasComponent<RigidBodyComponent>())
+			{
+				RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+				TRC_ASSERT(rigid.body.GetInternal() != nullptr, "Invalid Rigid body handle, Function: {}", __FUNCTION__);
+				PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
+				PhysicsFunc::AttachShape(sc._internal, rigid.body.GetInternal());
+
+			}
+
+		}
+	}
+
+	void Scene::OnDestroySphereColliderComponent(entt::registry& reg, entt::entity ent)
+	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			SphereColliderComponent& sc = entity.GetComponent<SphereColliderComponent>();
+			PhysicsFunc::DestroyShape(sc._internal);
+		}
+
+	}
+
+	void Scene::OnConstructCharacterControllerComponent(entt::registry& reg, entt::entity ent)
+	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			TransformComponent& pose = entity.GetComponent<TransformComponent>();
+			CharacterControllerComponent& charac = entity.GetComponent<CharacterControllerComponent>();
+
+			float scale_x = pose._transform.GetScale().x;
+			float scale_y = pose._transform.GetScale().y;
+			float scale_z = pose._transform.GetScale().z;
+			charac.character.radius *= (scale_x + scale_z) / 2.0f;//TODO: Determine maybe scale in transform should be used or not
+			charac.character.height *= scale_y;//TODO: Determine maybe scale in transform should be used or not
+
+			PhysicsFunc::CreateCharacterController(charac.character, m_physics3D, pose._transform);
+			PhysicsFunc::SetControllerDataPtr(charac.character, &m_entityMap[entity.GetID()]);
+		}
+	}
+
+	void Scene::OnDestroyCharacterControllerComponent(entt::registry& reg, entt::entity ent)
+	{
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			CharacterControllerComponent& charac = entity.GetComponent<CharacterControllerComponent>();
+
+			PhysicsFunc::DestroyCharacterController(charac.character, m_physics3D);
+		}
 	}
 
 	void Scene::OnConstructAnimationGraphController(entt::registry& reg, entt::entity ent)
@@ -1677,6 +1832,119 @@ namespace trace {
 		{
 			Entity child = GetEntity(child_id);
 			disable_child_entity(child);
+		}
+	}
+
+	void Scene::destroy_entity(Entity entity)
+	{
+		if (this != entity.GetScene())
+		{
+			TRC_WARN("Can't destory an entity that is not a member of a scene, scene name: {}", GetName());
+			return;
+		}
+
+		// Checking if the entity still exists in the scene
+		if (!GetEntity(entity.GetID()))
+		{
+			TRC_WARN("Entity is not valid, Function: {} ", __FUNCTION__);
+			return;
+		}
+
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		while (hi.children.size() > 0)
+		{
+			UUID& id = hi.children.front();
+			Entity child = GetEntity(id);
+			destroy_entity(child);
+		}
+
+		if (hi.HasParent())
+		{
+			Entity parent = GetEntity(hi.parent);
+			HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
+			parent_hi.RemoveChild(entity.GetID());
+		}
+		else
+		{
+			m_rootNode->RemoveChild(entity.GetID());
+		}
+
+		if (m_running)
+		{
+			ScriptEngine::get_instance()->RemoveEnityActionClass(entity.GetID());
+		}
+
+		m_scriptRegistry.Erase(entity.GetID());
+		m_entityMap.erase(entity.GetID());
+		m_registry.destroy(entity);
+	}
+
+	void Scene::duplicate_entity(Entity entity, Entity res)
+	{
+		CopyComponent(AllComponents{}, entity, res);
+		res.AddOrReplaceComponent<HierachyComponent>();
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+		if (GetEntity(entity.GetID()) && hi.HasParent())// The entity arguement is a member of the scene
+		{
+			Entity parent = GetEntity(entity.GetComponent<HierachyComponent>().parent);
+			SetParent(res, parent);
+		}
+
+
+		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
+			{
+				ScriptInstance* sc_ins = res.AddScript(script->GetID());
+				*sc_ins = *other;
+
+				if (m_running)
+				{
+					ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
+					CreateScriptInstance(*script, *sc_ins);
+
+					// Setting values ..............
+					for (auto& [name, data] : other->GetFields())
+					{
+						if (data->field_type == ScriptFieldType::String)
+						{
+							continue;
+						}
+						char field_data[16];
+						other->GetFieldValueInternal(name, field_data, 16);
+						sc_ins->SetFieldValueInternal(name, field_data, 16);
+					}
+					// ..................................................................
+
+					UUID id = res.GetID();
+					void* params[1] =
+					{
+						&id
+					};
+					InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
+				}
+
+			});
+
+
+
+
+		if (entity.HasComponent<SkinnedModelRenderer>())
+		{
+			SkinnedModelRenderer& obj_renderer = res.AddOrReplaceComponent<SkinnedModelRenderer>();
+			SkinnedModelRenderer& skinned_renderer = entity.GetComponent<SkinnedModelRenderer>();
+
+			obj_renderer._model = skinned_renderer._model;
+			obj_renderer._material = skinned_renderer._material;
+			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
+			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), this, res.GetID());
+		}
+
+
+
+		Scene* scene = entity.GetScene();
+		for (auto& i : hi.children)
+		{
+			Entity d_child = scene->GetEntity(i);
+			duplicate_entity_hierachy(this, d_child, res);
 		}
 	}
 

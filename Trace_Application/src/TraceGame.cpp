@@ -60,11 +60,15 @@ namespace trace {
 
 	void TraceGame::Update(float deltaTime)
 	{
+		m_currentScene->BeginFrame();
+
 		m_currentScene->OnAnimationUpdate(deltaTime);
 		m_currentScene->OnScriptUpdate(deltaTime);
 		m_currentScene->OnPhysicsUpdate(deltaTime);
 		m_currentScene->OnUpdate(deltaTime);
 		m_currentScene->OnRender();
+
+		m_currentScene->EndFrame();
 	}
 
 	void TraceGame::Render(float deltaTime)

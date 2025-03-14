@@ -137,6 +137,8 @@ namespace trace {
 
 		bool Init();
 		void Shutdown();
+		std::unordered_map<std::string, ScriptField*>& GetFields() { return m_fields; }
+
 
 		//NOTE: To be used for builtin types not for (std types and custom types)
 		template<typename T>

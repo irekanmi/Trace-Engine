@@ -23,6 +23,8 @@ namespace trace {
 
 		void Create();
 		void Destroy();
+		void BeginFrame();
+		void EndFrame();
 		void OnStart();
 		void OnScriptStart();
 		void OnPhysicsStart();
@@ -58,6 +60,7 @@ namespace trace {
 		void DestroyEntity(Entity entity);
 		Entity InstanciatePrefab(Ref<Prefab> prefab);
 		Entity InstanciatePrefab(Ref<Prefab> prefab, Entity parent);
+		Entity InstanciateEntity(Entity source, glm::vec3 position);
 		bool ApplyPrefabChanges(Ref<Prefab> prefab);
 
 		bool ApplyPrefabChangesOnSceneLoad();
@@ -129,6 +132,12 @@ namespace trace {
 		void OnDestroyHierachyComponent(entt::registry& reg, entt::entity ent);
 		void OnConstructRigidBodyComponent(entt::registry& reg, entt::entity ent);
 		void OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent);
+		void OnConstructBoxColliderComponent(entt::registry& reg, entt::entity ent);
+		void OnDestroyBoxColliderComponent(entt::registry& reg, entt::entity ent);
+		void OnConstructSphereColliderComponent(entt::registry& reg, entt::entity ent);
+		void OnDestroySphereColliderComponent(entt::registry& reg, entt::entity ent);
+		void OnConstructCharacterControllerComponent(entt::registry& reg, entt::entity ent);
+		void OnDestroyCharacterControllerComponent(entt::registry& reg, entt::entity ent);
 		void OnConstructAnimationGraphController(entt::registry& reg, entt::entity ent);
 		void OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent);
 		void OnConstructSequencePlayer(entt::registry& reg, entt::entity ent);
@@ -136,6 +145,8 @@ namespace trace {
 
 		void enable_child_entity(Entity entity);
 		void disable_child_entity(Entity entity);
+		void destroy_entity(Entity entity);
+		void duplicate_entity(Entity entity, Entity res);
 
 
 		void OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);
@@ -148,6 +159,7 @@ namespace trace {
 		std::unordered_map<UUID, Entity> m_entityMap;
 		HierachyComponent* m_rootNode;
 		bool m_running = false;
+		std::vector<Entity> m_entityToDestroy;
 
 	protected:
 		friend class Entity;

@@ -124,6 +124,21 @@ namespace trace {
 		return &m_entityActionInstance.at(entity_id);
 	}
 
+	void ScriptEngine::RemoveEnityActionClass(UUID entity_id)
+	{
+		if (!m_currentScene)
+		{
+			return;
+		}
+		auto it = m_entityActionInstance.find(entity_id);
+
+		if (it != m_entityActionInstance.end())
+		{
+			
+			m_entityActionInstance.erase(entity_id);
+		}
+	}
+
 	ScriptEngine* ScriptEngine::get_instance()
 	{
 		static ScriptEngine* s_instance = new ScriptEngine;

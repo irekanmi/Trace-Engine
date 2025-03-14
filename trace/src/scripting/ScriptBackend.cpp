@@ -1044,6 +1044,29 @@ MonoObject* Scene_GetChildEntityByName(UUID id, uint64_t string_id)
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return nullptr;
+	}
+
+	Entity result = s_MonoData.scene->InstanciateEntity(entity, *position);
+	TRC_ASSERT(result, "Unable to Instaciate Entity, Funciton: {}", __FUNCTION__);
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 #pragma endregion
 
 #pragma region Physics
@@ -1225,6 +1248,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetEntityByName);
 	ADD_INTERNAL_CALL(Scene_GetEntity);
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
+	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position);
 
 	ADD_INTERNAL_CALL(Physics_GetCollisionData);
 	ADD_INTERNAL_CALL(Physics_GetTriggerData);

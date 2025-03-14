@@ -141,6 +141,13 @@ namespace trace {
 	{
 		UUID entity = 0;
 		UUID otherEntity = 0;
+
+		void Swap()
+		{
+			UUID temp = entity;
+			entity = otherEntity;
+			otherEntity = temp;
+		}
 	};
 
 	struct ContactPoint

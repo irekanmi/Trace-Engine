@@ -33,6 +33,7 @@ namespace trace {
 		Script* GetBuiltInScript(const std::string script_name);
 
 		ScriptInstance* GetEntityActionClass(UUID entity_id);
+		void RemoveEnityActionClass(UUID entity_id);
 
 		static ScriptEngine* get_instance();
 	private:

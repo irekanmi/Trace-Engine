@@ -113,6 +113,9 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static object Scene_GetChildEntityByName(ulong id, ulong child_name);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_InstanciateEntity_Position(ulong id, ref Vec3 position);
 
         #endregion
 
