@@ -46,6 +46,24 @@ namespace Trace
             DestroyEntity(entity.GetID());
         }
 
+        static public void EnableEntity(ulong entity_id)
+        {
+            InternalCalls.Scene_EnableEntity(entity_id);
+        }
+        static public void EnableEntity(Trace.Action entity)
+        {
+            EnableEntity(entity.GetID());
+        }
+
+        static public void DisableEntity(ulong entity_id)
+        {
+            InternalCalls.Scene_DisableEntity(entity_id);
+        }
+        static public void DisableEntity(Trace.Action entity)
+        {
+            DisableEntity(entity.GetID());
+        }
+
 
 
     }

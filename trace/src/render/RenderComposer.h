@@ -51,6 +51,7 @@ namespace trace {
 		ForwardPass forward_pass;
 		BloomPass bloom_pass;
 		UIPass ui_pass;
+		ShadowPass shadow_pass;
 
 
 	protected:

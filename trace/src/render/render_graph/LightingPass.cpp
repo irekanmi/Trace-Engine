@@ -233,12 +233,20 @@ namespace trace {
 					}
 
 				}
-				else
+				if (graph_data->num_shadowed_sun_lights <= 0)
 				{
 					//HACK: It crashes because the binded texture has been destroyed due to the use of frame graph
 					for (uint32_t i = 0; i < MAX_SHADOW_SUN_LIGHTS; i++)
 					{
 						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
+					}
+				}
+				if (graph_data->num_shadowed_spot_lights <= 0)
+				{
+					//HACK: It crashes because the binded texture has been destroyed due to the use of frame graph
+					for (uint32_t i = 0; i < MAX_SHADOW_SUN_LIGHTS; i++)
+					{
+						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "spot_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
 					}
 				}
 

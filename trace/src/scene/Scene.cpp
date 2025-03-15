@@ -741,6 +741,17 @@ namespace trace {
 
 		}
 
+		auto sequences = m_registry.view<SequencePlayer>();
+		for (auto i : sequences)
+		{
+			auto [seq] = sequences.get(i);
+
+			Entity entity(i, this);
+			
+			seq.sequence.CreateInstance(seq.sequence.GetSequence(), this);
+
+		}
+
 		return true;
 	}
 

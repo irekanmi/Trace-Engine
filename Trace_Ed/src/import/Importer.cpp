@@ -68,7 +68,23 @@ namespace trace {
 		ContentBrowser* content_browser = editor->GetContentBrowser();
 		TextureManager* texture_manager = TextureManager::get_instance();
 
-		const aiTexture* ass_texture = scene->GetEmbeddedTexture(texture_path.c_str());
+		//NOTE: Added because "texture_path" can be a path from the asset creator device
+		std::string actual_name = std::filesystem::path(texture_path).filename().string();
+
+		//const aiTexture* ass_texture = scene->GetEmbeddedTexture(texture_path.c_str());
+		const aiTexture* ass_texture = nullptr;
+		for (uint32_t i = 0; i < scene->mNumTextures; i++)
+		{
+			aiTexture* tex = scene->mTextures[i];
+			std::string name = std::filesystem::path(tex->mFilename.C_Str()).filename().string();
+
+			if (name == actual_name)
+			{
+				ass_texture = tex;
+			}
+		}
+
+
 
 		if (ass_texture)
 		{
@@ -82,7 +98,8 @@ namespace trace {
 			texture_desc.m_image_type = ImageType::IMAGE_2D;
 			texture_desc.m_numLayers = 1;
 
-			std::string tex_name = filename + "`" + texture_path;
+
+			std::string tex_name = filename + "`" + actual_name;
 			if (ass_texture->mHeight == 0)
 			{
 				int _width, _height, _channels;
@@ -149,7 +166,11 @@ namespace trace {
 			{
 				
 				std::string tex_path = texture_path.C_Str();
-				load_assimp_embedded_texture(scene, filename, tex_path, true);
+				Ref<GTexture> texture = load_assimp_embedded_texture(scene, filename, tex_path, true);
+				if (texture)
+				{
+					result = texture;
+				}
 			}
 			else
 			{
@@ -1014,6 +1035,8 @@ namespace trace {
 
 		const aiScene* scene = nullptr;
 
+		std::filesystem::path directory;
+
 		auto it = m_loadedFiles.find(paths[0]);
 		if (it != m_loadedFiles.end())
 		{
@@ -1024,13 +1047,15 @@ namespace trace {
 			UUID id = content_browser->GetAllFilesID()[paths[0]];
 			std::filesystem::path dir_path = content_browser->GetUUIDPath()[id];
 			const aiScene* result = m_importer.ReadFile(dir_path.string(), ASSIMP_LOAD_FLAGS);
+			directory = dir_path.parent_path();
 
 			if (!result)
 			{
-				TRC_ERROR("Failed to open mesh, filename: {}", paths[0]);
+				TRC_ERROR("Failed to open texture, filename: {}", paths[0]);
 				return texture;
 			}
 
+			import_skeletons(result, paths[0], directory, this);
 			m_loadedFiles[paths[0]] = result;
 
 			scene = result;
@@ -1054,6 +1079,8 @@ namespace trace {
 
 		const aiScene* scene = nullptr;
 
+		std::filesystem::path directory;
+
 		auto it = m_loadedFiles.find(paths[0]);
 		if (it != m_loadedFiles.end())
 		{
@@ -1064,6 +1091,7 @@ namespace trace {
 			UUID id = content_browser->GetAllFilesID()[paths[0]];
 			std::filesystem::path dir_path = content_browser->GetUUIDPath()[id];
 			const aiScene* result = m_importer.ReadFile(dir_path.string(), ASSIMP_LOAD_FLAGS);
+			directory = dir_path.parent_path();
 
 			if (!result)
 			{
@@ -1071,6 +1099,7 @@ namespace trace {
 				return model;
 			}
 
+			import_skeletons(result, paths[0], directory, this);
 			m_loadedFiles[paths[0]] = result;
 
 			scene = result;
@@ -1104,6 +1133,7 @@ namespace trace {
 		const aiScene* scene = nullptr;
 
 		std::filesystem::path directory;
+
 		auto it = m_loadedFiles.find(paths[0]);
 		if (it != m_loadedFiles.end())
 		{

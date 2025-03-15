@@ -50,7 +50,7 @@ namespace trace {
 			result = FontManager::get_instance()->GetFont(p.filename().string());
 			if (!result)
 			{
-				FontManager::get_instance()->LoadFont_(p.string());
+				result = FontManager::get_instance()->LoadFont_(p.string());
 			}
 		}
 		else

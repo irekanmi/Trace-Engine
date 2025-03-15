@@ -1106,6 +1106,46 @@ void Scene_DestroyEntity(UUID id)
 
 }
 
+void Scene_EnableEntity(UUID id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return;
+	}
+
+	s_MonoData.scene->EnableEntity(entity);
+
+}
+
+void Scene_DisableEntity(UUID id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		return;
+	}
+
+	s_MonoData.scene->DisableEntity(entity);
+
+}
+
 #pragma endregion
 
 #pragma region Physics
@@ -1305,6 +1345,8 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position);
 	ADD_INTERNAL_CALL(Scene_DestroyEntity);
+	ADD_INTERNAL_CALL(Scene_EnableEntity);
+	ADD_INTERNAL_CALL(Scene_DisableEntity);
 
 	ADD_INTERNAL_CALL(Physics_GetCollisionData);
 	ADD_INTERNAL_CALL(Physics_GetTriggerData);

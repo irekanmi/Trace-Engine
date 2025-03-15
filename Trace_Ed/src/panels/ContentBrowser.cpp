@@ -495,6 +495,10 @@ namespace trace {
 		m_allFilesID["black_texture"] = def_id0++;
 		m_allFilesID["skinned_gbuffer_pipeline"] = def_id0++;
 		m_allFilesID["transparent_texture"] = def_id0++;
+		m_allFilesID["sun_shadow_map_pass_pipeline"] = def_id0++;
+		m_allFilesID["spot_shadow_map_pass_pipeline"] = def_id0++;
+		m_allFilesID["sun_shadow_skinned_map_pass_pipeline"] = def_id0++;
+		m_allFilesID["spot_shadow_skinned_map_pass_pipeline"] = def_id0++;
 
 
 		m_allIDPath[def_id1++] = "albedo_map";
@@ -523,6 +527,10 @@ namespace trace {
 		m_allIDPath[def_id1++] = "black_texture";
 		m_allIDPath[def_id1++] = "skinned_gbuffer_pipeline";
 		m_allIDPath[def_id1++] = "transparent_texture";
+		m_allIDPath[def_id1++] = "sun_shadow_map_pass_pipeline";
+		m_allIDPath[def_id1++] = "spot_shadow_map_pass_pipeline";
+		m_allIDPath[def_id1++] = "sun_shadow_skinned_map_pass_pipeline";
+		m_allIDPath[def_id1++] = "spot_shadow_skinned_map_pass_pipeline";
 
 		//::-----::
 

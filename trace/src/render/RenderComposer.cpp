@@ -25,6 +25,7 @@ namespace trace {
 		forward_pass.Init(m_renderer);
 		bloom_pass.Init(m_renderer);
 		ui_pass.Init(m_renderer);
+		shadow_pass.Init(m_renderer);
 
 		m_graphs.resize(1);
 		m_graphsBlackBoard.resize(1);
@@ -41,6 +42,7 @@ namespace trace {
 			m_graphs[i].Destroy();
 		}
 
+		shadow_pass.ShutDown();
 		ui_pass.ShutDown();
 		bloom_pass.ShutDown();
 		forward_pass.ShutDown();
@@ -63,6 +65,8 @@ namespace trace {
 		fd.frame_height = m_renderer->GetFrameHeight();
 
 		frame_graph.SetRenderer(m_renderer);
+
+		shadow_pass.Setup(&frame_graph, black_board, render_graph_index);
 		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index);
 		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
 		{

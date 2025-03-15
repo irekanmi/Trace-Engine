@@ -138,11 +138,17 @@ namespace trace {
 		}
 		else
 		{
-			UUID id = GetUUIDFromName("sun_map_pass_pipeline");
+			UUID id = GetUUIDFromName("sun_shadow_map_pass_pipeline");
 			m_sun_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
 
-			id = GetUUIDFromName("spot_map_pass_pipeline");
+			id = GetUUIDFromName("spot_shadow_map_pass_pipeline");
 			m_spot_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+
+			id = GetUUIDFromName("sun_shadow_skinned_map_pass_pipeline");
+			m_sun_skinned_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+
+			id = GetUUIDFromName("spot_shadow_skinned_map_pass_pipeline");
+			m_spot_skinned_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
 		}
 
 	}
@@ -205,7 +211,7 @@ namespace trace {
 
 
 					Camera cam;
-					cam.SetOrthographicSize(95.0f);
+					cam.SetOrthographicSize(100.0f);
 					cam.SetNear(-1000.0f);
 					cam.SetFar(500.0f);
 					cam.SetCameraType(CameraType::ORTHOGRAPHIC);

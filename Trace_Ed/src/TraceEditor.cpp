@@ -1334,11 +1334,11 @@ namespace trace {
 
 		Scene::Copy(m_editScene, m_editSceneDuplicate);
 		m_currentScene = m_editSceneDuplicate;
-		if (m_hierachyPanel->GetSelectedEntity())
+		/*if (m_hierachyPanel->GetSelectedEntity())
 		{
 			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
-		}
-
+		}*/
+		m_hierachyPanel->SetSelectedEntity(Entity());
 		start_current_scene();
 		
 	}
@@ -1359,10 +1359,11 @@ namespace trace {
 		if ((m_currentState == EditorState::SceneEdit)) return;
 
 		stop_current_scene();
-		if (m_hierachyPanel->GetSelectedEntity() && m_currentScene == m_editScene)
+		m_hierachyPanel->SetSelectedEntity(Entity());
+		/*if (m_hierachyPanel->GetSelectedEntity() && m_currentScene == m_editScene)
 		{
 			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
-		}
+		}*/
 		m_currentScene = m_editScene;
 		m_nextScene.free();
 	}

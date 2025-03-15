@@ -122,6 +122,12 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Scene_DestroyEntity(ulong id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_EnableEntity(ulong id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_DisableEntity(ulong id);
 
         #endregion
 
