@@ -205,13 +205,14 @@ namespace trace {
 
 
 					Camera cam;
-					cam.SetOrthographicSize(425.0f);
+					cam.SetOrthographicSize(95.0f);
 					cam.SetNear(-1000.0f);
 					cam.SetFar(500.0f);
 					cam.SetCameraType(CameraType::ORTHOGRAPHIC);
 					cam.SetPosition(glm::vec3(0.0f));
 					cam.SetLookDir(glm::vec3(current_light.direction));
-					cam.SetAspectRatio((float)sun_map_width / (float)sun_map_height);
+					cam.SetScreenWidth((float)sun_map_width);
+					cam.SetScreenHeight((float)sun_map_width);
 					
 					glm::mat4 view = cam.GetViewMatrix();
 					glm::mat4 projection = cam.GetProjectionMatix();
@@ -316,7 +317,8 @@ namespace trace {
 					cam.SetCameraType(CameraType::PERSPECTIVE);
 					cam.SetPosition(glm::vec3(current_light.position));
 					cam.SetLookDir(glm::vec3(current_light.direction));
-					cam.SetAspectRatio((float)spot_map_width / (float)spot_map_height);
+					cam.SetScreenWidth((float)spot_map_width);
+					cam.SetScreenHeight((float)spot_map_height);
 
 					float fov = glm::degrees(glm::acos(current_light.params2.x)) * 2.0f;
 					cam.SetFov(fov);

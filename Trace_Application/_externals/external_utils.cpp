@@ -4,6 +4,8 @@
 #include "scene/UUID.h"
 #include "render/Model.h"
 #include "render/SkinnedModel.h"
+#include "scene/SceneManager.h"
+#include "../src/TraceGame.h"
 
 namespace trace {
 
@@ -37,6 +39,30 @@ namespace trace {
 	Ref<GTexture> LoadTexture(UUID uuid)
 	{
 		return Ref<GTexture>();
+	}
+
+	bool LoadAndSetScene(const std::string& filename)
+	{
+
+		Ref<Scene> scene = SceneManager::get_instance()->GetScene(filename);
+		if (!scene)
+		{
+			UUID id = GetUUIDFromName(filename);
+			std::string file_path = GetPathFromUUID(id).string();
+			scene = SceneManager::get_instance()->LoadScene_Runtime(id);
+			if (!scene)
+			{
+				TRC_ERROR("Unable to load scene, Filename:{} , Function: {}", filename, __FUNCTION__);
+				return false;
+			}
+		}
+
+		TraceGame* game = TraceGame::get_instance();
+
+		game->SetNextScene(scene);
+
+
+		return true;
 	}
 
 }

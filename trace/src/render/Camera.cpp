@@ -48,13 +48,15 @@ namespace trace {
 		{
 			if (m_type == CameraType::PERSPECTIVE)
 			{
-				m_projection = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_zNear, m_zFar);
+				float aspect_ratio = m_screenWidth / m_screenHeight;
+				m_projection = glm::perspective(glm::radians(m_fov), aspect_ratio, m_zNear, m_zFar);
 				m_projection[1][1] *= -1.0f; //FIX: Added due to vulkan viewport issuses
 			}
 			else if (m_type == CameraType::ORTHOGRAPHIC)
 			{
-				float left = -m_orthographicSize * m_aspectRatio;
-				float right = m_orthographicSize * m_aspectRatio;
+				float aspect_ratio = m_screenWidth / m_screenHeight;
+				float left = -m_orthographicSize * aspect_ratio;
+				float right = m_orthographicSize * aspect_ratio;
 				float top = m_orthographicSize;
 				float bottom = -m_orthographicSize;
 
@@ -81,10 +83,6 @@ namespace trace {
 		return m_zFar;
 	}
 
-	float Camera::GetAspectRatio()
-	{
-		return m_aspectRatio;
-	}
 
 	void Camera::Update(float deltaTime)
 	{
@@ -194,6 +192,18 @@ namespace trace {
 
 	}
 
+	void Camera::SetScreenWidth(float width)
+	{
+		m_screenWidth = width;
+		is_dirty[0] = true;
+	}
+
+	void Camera::SetScreenHeight(float height)
+	{
+		m_screenHeight = height;
+		is_dirty[0] = true;
+	}
+
 	void Camera::SetPosition(glm::vec3 position)
 	{
 		m_position = position;
@@ -241,12 +251,5 @@ namespace trace {
 
 	}
 
-	void Camera::SetAspectRatio(float aspect_ratio)
-	{
-		m_aspectRatio = aspect_ratio;
-
-		is_dirty[0] = true;
-
-	}
 
 }

@@ -62,58 +62,61 @@ namespace trace {
 	{
 		DrawDebugCylinder(radius, height, transform, color);
 
-		glm::mat4 new_transform = glm::translate(transform, glm::vec3(0.0f, height, 0.0f));
+		float half_height = height / 2.0f;
+		glm::mat4 new_transform = glm::translate(transform, glm::vec3(0.0f, half_height, 0.0f));
 		DrawDebugHemiSphere(radius, 15, new_transform, color);
 
-		new_transform = glm::translate(transform, glm::vec3(0.0f, -height, 0.0f));
+		new_transform = glm::translate(transform, glm::vec3(0.0f, -half_height, 0.0f));
 		new_transform = glm::rotate(new_transform, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		DrawDebugHemiSphere(radius, 15, new_transform, color);
 	}
 
 	void Debugger::DrawDebugCylinder(float radius, float height, glm::mat4 transform, uint32_t color)
 	{
+
+		float half_height = height / 2.0f;
 		float x = radius;
 		float z = 0.0f;
-		float y = height;
+		float y = half_height;
 
 		glm::vec3 point_1(x, y, z);
-		y = -height;
+		y = -half_height;
 		glm::vec3 point_2(x, y, z);
 		//Line 1
 		AddDebugLine(point_1, point_2, transform, color);
 
 		x = -radius;
 		z = 0.0f;
-		y = height;
+		y = half_height;
 		point_1 = glm::vec3(x, y, z);
-		y = -height;
+		y = -half_height;
 		point_2 = glm::vec3(x, y, z);
 		//Line 2
 		AddDebugLine(point_1, point_2, transform, color);
 
 		x = 0.0f;
 		z = radius;
-		y = height;
+		y = half_height;
 		point_1 = glm::vec3(x, y, z);
-		y = -height;
+		y = -half_height;
 		point_2 = glm::vec3(x, y, z);
 		//Line 3
 		AddDebugLine(point_1, point_2, transform, color);
 
 		x = 0.0f;
 		z = -radius;
-		y = height;
+		y = half_height;
 		point_1 = glm::vec3(x, y, z);
-		y = -height;
+		y = -half_height;
 		point_2 = glm::vec3(x, y, z);
 		//Line 4
 		AddDebugLine(point_1, point_2, transform, color);
 
-		glm::mat4 new_transform = glm::translate(transform, glm::vec3(0.0f, height, 0.0f));
+		glm::mat4 new_transform = glm::translate(transform, glm::vec3(0.0f, half_height, 0.0f));
 		new_transform = glm::rotate(new_transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		DrawDebugCircle(radius, 15, new_transform, color);
 
-		new_transform = glm::translate(transform, glm::vec3(0.0f, -height, 0.0f));
+		new_transform = glm::translate(transform, glm::vec3(0.0f, -half_height, 0.0f));
 		new_transform = glm::rotate(new_transform, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		DrawDebugCircle(radius, 15, new_transform, color);
 

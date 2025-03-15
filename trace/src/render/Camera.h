@@ -35,10 +35,11 @@ namespace trace {
 		float GetFov();
 		float GetNear();
 		float GetFar();
-		float GetAspectRatio();
 		float GetOrthographicSize() { return m_orthographicSize; }
 		void Update(float deltaTime);
 
+		void SetScreenWidth(float width);
+		void SetScreenHeight(float height);
 
 		void SetPosition(glm::vec3 position);
 		void SetLookDir(glm::vec3 look_dir);
@@ -47,7 +48,7 @@ namespace trace {
 		void SetFov(float fov);
 		void SetNear(float z_near);
 		void SetFar(float z_far);
-		void SetAspectRatio(float aspect_ratio);
+		
 		void SetCameraType(CameraType type) { m_type = type; }
 
 		void SetOrthographicSize(float ortho_size) { m_orthographicSize = ortho_size; is_dirty[0] = true; }
@@ -59,11 +60,11 @@ namespace trace {
 		float m_fov = 45.0f;
 		float m_zNear = 0.1f;
 		float m_zFar = 1000.0f;
-		float m_aspectRatio = (16.0f / 9.0f);
 
 		float m_orthographicSize = 10.0f;
 		
-
+		float m_screenWidth = 800.0f;
+		float m_screenHeight = 600.0f;
 
 		glm::vec3 m_position = glm::vec3(0.0f, .0f, 1.0f);
 		glm::vec3 m_lookDirection = glm::vec3(0.0f, .0f, -1.0f);

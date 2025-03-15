@@ -32,6 +32,7 @@
 #include "animation/AnimationSequenceTrack.h"
 #include "animation/SequenceTrackChannel.h"
 #include "debug/Debugger.h"
+#include "external_utils.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -58,9 +59,6 @@ void custom_solid();
 
 
 namespace trace {
-
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
 
 	void SerializationTest();
 	void DeserializationTest();
@@ -101,7 +99,8 @@ namespace trace {
 		m_editorCamera.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
 		m_editorCamera.SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
 		m_editorCamera.SetUpDir(glm::vec3(0.0f, 1.0f, 0.0f));
-		m_editorCamera.SetAspectRatio(((float)800.0f) / ((float)600.0f));
+		m_editorCamera.SetScreenWidth(800.0f);
+		m_editorCamera.SetScreenHeight(600.0f);
 		m_editorCamera.SetFov(60.0f);
 		m_editorCamera.SetNear(0.1f);
 		m_editorCamera.SetFar(15000.0f);
@@ -184,6 +183,17 @@ namespace trace {
 		{
 			if (m_currentScene)
 			{
+				if (m_nextScene)
+				{
+					m_hierachyPanel->SetSelectedEntity(Entity());
+					stop_current_scene();
+					m_currentScene.free();
+
+					m_currentScene = m_nextScene;
+					start_current_scene();
+					m_nextScene.free();
+				}
+
 				m_currentScene->BeginFrame();
 
 				m_currentScene->OnAnimationUpdate(deltaTime);
@@ -423,7 +433,8 @@ namespace trace {
 			if (m_viewportSize != v_size)
 			{
 				m_viewportSize = v_size;
-				m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+				m_editorCamera.SetScreenWidth(m_viewportSize.x);
+				m_editorCamera.SetScreenHeight(m_viewportSize.y);
 				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 			}
 			m_viewportFocused = ImGui::IsWindowFocused();
@@ -448,7 +459,8 @@ namespace trace {
 			if (m_viewportSize != v_size)
 			{
 				m_viewportSize = v_size;
-				m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+				m_editorCamera.SetScreenWidth(m_viewportSize.x);
+				m_editorCamera.SetScreenHeight(m_viewportSize.y);
 				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
 			}
 			m_viewportFocused = ImGui::IsWindowFocused();
@@ -1237,9 +1249,9 @@ namespace trace {
 		{
 			m_editorCamera.SetCameraType(CameraType::ORTHOGRAPHIC);
 			m_editorCamera.SetFov(60.0f);
-			m_editorCamera.SetNear(-200.0f);
+			m_editorCamera.SetNear(-100.0f);
 			m_editorCamera.SetFar(200.0f);
-			m_editorCamera.SetOrthographicSize(55.0f);
+			m_editorCamera.SetOrthographicSize(65.0f);
 			break;
 		}
 
@@ -1322,18 +1334,13 @@ namespace trace {
 
 		Scene::Copy(m_editScene, m_editSceneDuplicate);
 		m_currentScene = m_editSceneDuplicate;
-		m_currentScene->OnStart();
-		m_currentScene->OnScriptStart();
-		m_currentScene->OnPhysicsStart();
 		if (m_hierachyPanel->GetSelectedEntity())
 		{
 			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
 		}
-		m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
-		if (m_currentScene)
-		{
-			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
-		}
+
+		start_current_scene();
+		
 	}
 	void TraceEditor::OnSceneStimulate()
 	{
@@ -1351,14 +1358,45 @@ namespace trace {
 	{
 		if ((m_currentState == EditorState::SceneEdit)) return;
 
-		m_currentScene->OnPhysicsStop();
-		m_currentScene->OnScriptStop();
-		m_currentScene->OnStop();
-		m_currentScene = m_editScene;
-		if (m_hierachyPanel->GetSelectedEntity())
+		stop_current_scene();
+		if (m_hierachyPanel->GetSelectedEntity() && m_currentScene == m_editScene)
 		{
 			m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
 		}
+		m_currentScene = m_editScene;
+		m_nextScene.free();
+	}
+
+	bool TraceEditor::SetNextScene(Ref<Scene> scene)
+	{
+		if (m_currentState != EditorState::ScenePlay || !scene)
+		{
+			return false;
+		}
+
+		m_nextScene = scene;
+
+		return true;
+	}
+
+	void TraceEditor::start_current_scene()
+	{
+		m_currentScene->OnStart();
+		m_currentScene->OnScriptStart();
+		m_currentScene->OnPhysicsStart();
+
+		//m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+		if (m_currentScene)
+		{
+			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
+		}
+	}
+
+	void TraceEditor::stop_current_scene()
+	{
+		m_currentScene->OnPhysicsStop();
+		m_currentScene->OnScriptStop();
+		m_currentScene->OnStop();
 	}
 
 	bool TraceEditor::CreateProject(const std::string& dir, const std::string& name)

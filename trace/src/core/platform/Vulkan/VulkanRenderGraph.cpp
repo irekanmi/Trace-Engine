@@ -14,10 +14,9 @@ namespace vk {
 
 
 	bool compute_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
-	bool compute_resource_handle( trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
+	bool compute_resource_handle(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 	bool compute_frame_buffer_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
-	uint64_t get_render_graph_resource_hash(trace::RenderGraphResource& resource);
 
 	bool __BuildRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph)
 	{
@@ -60,73 +59,71 @@ namespace vk {
 			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = new trace::VKRenderGraphPass;
 			pass->GetRenderHandle()->m_internalData = pass_handle;
-			
+
 			compute_pass_handle(pass, render_graph, _device, instance);
-			for (uint32_t i = 0; i < _device->frames_in_flight; i++)
+
+			for (auto& edge : pass->GetPassEdges())
 			{
-				for (auto& edge : pass->GetPassEdges())
+				bool from, to, _from, _to;
+				from = to = _from = _to = false;
+
+				from = (edge.from != INVALID_ID);
+				to = (edge.to != INVALID_ID);
+				_from = (edge.from == pass_index);
+				_to = (edge.to == pass_index);
+
+				trace::RenderGraphResource* res = render_graph->GetResource_ptr(edge.resource);
+				bool isTexture, isSwapchainImage;
+				isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
+				isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
+
+				if (from && to)
 				{
-					bool from, to, _from, _to;
-					from = to = _from = _to = false;
-
-					from = (edge.from != INVALID_ID);
-					to = (edge.to != INVALID_ID);
-					_from = (edge.from == pass_index);
-					_to = (edge.to == pass_index);
-
-					trace::RenderGraphResource* res = render_graph->GetResource_ptr(edge.resource);
-					bool isTexture, isSwapchainImage;
-					isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
-					isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
-
-					if (from && to)
+					if (_from && isTexture)
 					{
-						if (_from && isTexture)
-						{
 
-							VkEventCreateInfo evnt_info = {};
-							evnt_info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
-							evnt_info.pNext = nullptr;
-							trace::VKEvntPair evnt_pair = { pass, res };
-							VkEvent& evnt = handle->events[i].emplace_back(evnt_pair).evnt;
+						VkEventCreateInfo evnt_info = {};
+						evnt_info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
+						evnt_info.pNext = nullptr;
+						trace::VKEvntPair evnt_pair = { pass, res };
+						VkEvent& evnt = handle->events.emplace_back(evnt_pair).evnt;
 
-							VkResult _result = VK_ERROR_UNKNOWN;
-							_result = vkCreateEvent(
-								_device->m_device,
-								&evnt_info,
-								instance->m_alloc_callback,
-								&evnt
-							);
-							VK_ASSERT(_result);
-							pass_handle->data[i].signal_events.push_back(evnt);
+						VkResult _result = VK_ERROR_UNKNOWN;
+						_result = vkCreateEvent(
+							_device->m_device,
+							&evnt_info,
+							instance->m_alloc_callback,
+							&evnt
+						);
+						VK_ASSERT(_result);
+						pass_handle->signal_events.push_back(evnt);
 
-						}
-						else if (_to && isTexture)
-						{
-							trace::VKEvntPair evnt_pair = { render_graph->GetPass_ptr(edge.from), res };
-							auto it = std::find_if(handle->events[i].begin(), handle->events[i].end(), [&evnt_pair](trace::VKEvntPair& val)
-								{
-									return val.pass == evnt_pair.pass && val.resource == evnt_pair.resource;
-								});
-							VkEvent& evnt = it->evnt;
-							pass_handle->data[i].wait_events.push_back(evnt);
-						}
 					}
-					else if (from && !to)
+					else if (_to && isTexture)
 					{
-						if (_from)
-						{
-
-						}
+						trace::VKEvntPair evnt_pair = { render_graph->GetPass_ptr(edge.from), res };
+						auto it = std::find_if(handle->events.begin(), handle->events.end(), [&evnt_pair](trace::VKEvntPair& val)
+							{
+								return val.pass == evnt_pair.pass && val.resource == evnt_pair.resource;
+							});
+						VkEvent& evnt = it->evnt;
+						pass_handle->wait_events.push_back(evnt);
 					}
-					else if (!from && to)
-					{
-						if (_to && isTexture)
-						{
-						}
-					}
-
 				}
+				else if (from && !to)
+				{
+					if (_from)
+					{
+
+					}
+				}
+				else if (!from && to)
+				{
+					if (_to && isTexture)
+					{
+					}
+				}
+
 			}
 			compute_frame_buffer_handle(pass, render_graph, _device, instance);
 		}
@@ -157,14 +154,10 @@ namespace vk {
 
 		std::vector<trace::RenderGraphResource>& resources = render_graph->GetResources();
 
-		for (uint32_t i = 0; i < _device->frames_in_flight; i++)
+		for (auto& evnt : handle->events)
 		{
-			for (auto& evnt : handle->events[i])
-			{
-				_device->frames_resources[_device->m_imageIndex]._events.push_back(evnt.evnt);
+			_device->frames_resources[_device->m_imageIndex]._events.push_back(evnt.evnt);
 
-			}
-			handle->events[i].clear();
 		}
 
 		for (auto& res : resources)
@@ -174,29 +167,26 @@ namespace vk {
 			if (isTexture)
 			{
 				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
-				for (uint32_t i = 0; i < _device->frames_in_flight; i++)
+
+				if (res_handle->resource.texture.m_view != VK_NULL_HANDLE)
 				{
-					if (res_handle->resource[i].texture.m_view != VK_NULL_HANDLE)
-					{
-						_device->frames_resources[_device->m_imageIndex]._image_views.push_back(res_handle->resource[i].texture.m_view);
-						res_handle->resource[i].texture.m_view = VK_NULL_HANDLE;
-					}
-					_device->frames_resources[_device->m_imageIndex]._images.push_back(res_handle->resource[i].texture.m_handle);
-					res_handle->resource[i].texture.m_handle = VK_NULL_HANDLE;
-					_device->frames_resources[_device->m_imageIndex]._samplers.push_back(res_handle->resource[i].texture.m_sampler);
-					res_handle->resource[i].texture.m_sampler = VK_NULL_HANDLE;
-					_device->frames_resources[_device->m_imageIndex]._memorys.push_back(res_handle->resource[i].texture.m_mem);
-					res_handle->resource[i].texture.m_mem = VK_NULL_HANDLE;
+					_device->frames_resources[_device->m_imageIndex]._image_views.push_back(res_handle->resource.texture.m_view);
+					res_handle->resource.texture.m_view = VK_NULL_HANDLE;
 				}
+				_device->frames_resources[_device->m_imageIndex]._images.push_back(res_handle->resource.texture.m_handle);
+				res_handle->resource.texture.m_handle = VK_NULL_HANDLE;
+				_device->frames_resources[_device->m_imageIndex]._samplers.push_back(res_handle->resource.texture.m_sampler);
+				res_handle->resource.texture.m_sampler = VK_NULL_HANDLE;
+
 				delete res_handle;
 				res.render_handle.m_internalData = nullptr;
 			}
 			if (isSwapchainImage)
 			{
-			
+
 			}
 
-			
+
 		}
 
 		std::vector<uint32_t>& graph_passes = render_graph->GetSubmissionPasses();
@@ -204,12 +194,10 @@ namespace vk {
 		{
 			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
-			for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-			{
-				_device->frames_resources[_device->m_imageIndex]._renderPasses.push_back(pass_handle->data[i].physical_pass.m_handle);
 
-				_device->frames_resources[_device->m_imageIndex]._framebuffers.push_back(pass_handle->data[i].frame_buffer);
-			}
+			_device->frames_resources[_device->m_imageIndex]._renderPasses.push_back(pass_handle->physical_pass.m_handle);
+
+			_device->frames_resources[_device->m_imageIndex]._framebuffers.push_back(pass_handle->frame_buffer);
 			delete pass_handle;
 			pass->GetRenderHandle()->m_internalData = nullptr;
 		}
@@ -253,7 +241,7 @@ namespace vk {
 
 			uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
 			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
-			trace::VKImage& img_handle = res_internal->resource[device->m_imageIndex].texture;
+			trace::VKImage& img_handle = res_internal->resource.texture;
 
 			if (res.create_pass == pass_index)
 			{
@@ -293,15 +281,15 @@ namespace vk {
 
 
 
-		bool wait_evnt = !pass_handle->data[device->m_imageIndex].wait_events.empty();
+		bool wait_evnt = !pass_handle->wait_events.empty();
 
 
 		if (wait_evnt)
 		{
 			vkCmdWaitEvents(
 				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
-				static_cast<uint32_t>(pass_handle->data[device->m_imageIndex].wait_events.size()),
-				pass_handle->data[device->m_imageIndex].wait_events.data(),
+				static_cast<uint32_t>(pass_handle->wait_events.size()),
+				pass_handle->wait_events.data(),
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				0,
@@ -314,7 +302,7 @@ namespace vk {
 		}
 
 
-	
+
 
 
 		uint32_t image_bar_count = 0;
@@ -330,7 +318,7 @@ namespace vk {
 			isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 
 			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
-			trace::VKImage& img_handle = res_internal->resource[device->m_imageIndex].texture;
+			trace::VKImage& img_handle = res_internal->resource.texture;
 			//if (res_internal->image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) continue;
 
 			if (isTexture)
@@ -370,7 +358,7 @@ namespace vk {
 						1,
 						&img_bar
 					);
-				
+
 					continue;
 				}
 				if (res_internal->image_layout == VK_IMAGE_LAYOUT_UNDEFINED)
@@ -410,21 +398,21 @@ namespace vk {
 
 		VkRenderPassBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		begin_info.renderPass = pass_handle->data[device->m_imageIndex].physical_pass.m_handle;
-		begin_info.renderArea.offset.x = static_cast<int32_t>(pass_handle->data[device->m_imageIndex].physical_pass.render_area->x);
-		begin_info.renderArea.offset.y = static_cast<int32_t>(pass_handle->data[device->m_imageIndex].physical_pass.render_area->y);
-		begin_info.renderArea.extent.width = static_cast<uint32_t>(pass_handle->data[device->m_imageIndex].physical_pass.render_area->z);
-		begin_info.renderArea.extent.height = static_cast<uint32_t>(pass_handle->data[device->m_imageIndex].physical_pass.render_area->w);
-		begin_info.framebuffer = pass_handle->data[device->m_imageIndex].frame_buffer;
+		begin_info.renderPass = pass_handle->physical_pass.m_handle;
+		begin_info.renderArea.offset.x = static_cast<int32_t>(pass_handle->physical_pass.render_area->x);
+		begin_info.renderArea.offset.y = static_cast<int32_t>(pass_handle->physical_pass.render_area->y);
+		begin_info.renderArea.extent.width = static_cast<uint32_t>(pass_handle->physical_pass.render_area->z);
+		begin_info.renderArea.extent.height = static_cast<uint32_t>(pass_handle->physical_pass.render_area->w);
+		begin_info.framebuffer = pass_handle->frame_buffer;
 
 		VkClearValue clear_color = {};
-		clear_color.color.float32[0] = pass_handle->data[device->m_imageIndex].physical_pass.clear_color->r;
-		clear_color.color.float32[1] = pass_handle->data[device->m_imageIndex].physical_pass.clear_color->g;
-		clear_color.color.float32[2] = pass_handle->data[device->m_imageIndex].physical_pass.clear_color->b;
-		clear_color.color.float32[3] = pass_handle->data[device->m_imageIndex].physical_pass.clear_color->a;
+		clear_color.color.float32[0] = pass_handle->physical_pass.clear_color->r;
+		clear_color.color.float32[1] = pass_handle->physical_pass.clear_color->g;
+		clear_color.color.float32[2] = pass_handle->physical_pass.clear_color->b;
+		clear_color.color.float32[3] = pass_handle->physical_pass.clear_color->a;
 
-		clear_color.depthStencil.depth = *pass_handle->data[device->m_imageIndex].physical_pass.depth_value;
-		clear_color.depthStencil.stencil = *pass_handle->data[device->m_imageIndex].physical_pass.stencil_value;
+		clear_color.depthStencil.depth = *pass_handle->physical_pass.depth_value;
+		clear_color.depthStencil.stencil = *pass_handle->physical_pass.stencil_value;
 
 		VkClearValue clear_colors[20] = {};
 
@@ -486,7 +474,7 @@ namespace vk {
 
 		for (uint32_t& res_index : pass->GetAttachmentOutputs())
 		{
-			trace::RenderGraphResource & res = render_graph->GetResource(res_index);
+			trace::RenderGraphResource& res = render_graph->GetResource(res_index);
 
 			uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
 			bool isTexture, isSwapchainImage;
@@ -494,12 +482,12 @@ namespace vk {
 			isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 
 			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
-			trace::VKImage& img_handle = res_internal->resource[device->m_imageIndex].texture;
+			trace::VKImage& img_handle = res_internal->resource.texture;
 			if (isTexture)
 			{
 				if (res.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 				{
-					
+
 					continue;
 				}
 				VkImageMemoryBarrier img_bar = {};
@@ -529,7 +517,7 @@ namespace vk {
 
 			uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
 			trace::VKRenderGraphResource* res_internal = reinterpret_cast<trace::VKRenderGraphResource*>(res.render_handle.m_internalData);
-			trace::VKImage& img_handle = res_internal->resource[device->m_imageIndex].texture;
+			trace::VKImage& img_handle = res_internal->resource.texture;
 
 			/*if (res.create_pass == pass_index)
 			{
@@ -549,8 +537,8 @@ namespace vk {
 				img_bar.subresourceRange.layerCount = 1;
 				img_bar.subresourceRange.levelCount = 1;
 				res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			
-			
+
+
 				vkCmdPipelineBarrier(
 					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
 					VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
@@ -569,7 +557,7 @@ namespace vk {
 
 		if (image_bar_count > 0)
 		{
-				vkCmdPipelineBarrier(
+			vkCmdPipelineBarrier(
 				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
 				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -584,11 +572,11 @@ namespace vk {
 
 		}
 
-		bool signal_evnt = !pass_handle->data[device->m_imageIndex].signal_events.empty();
+		bool signal_evnt = !pass_handle->signal_events.empty();
 
 		if (signal_evnt)
 		{
-			for (auto& evnt : pass_handle->data[device->m_imageIndex].signal_events)
+			for (auto& evnt : pass_handle->signal_events)
 			{
 				vkCmdSetEvent(
 					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
@@ -612,7 +600,7 @@ namespace vk {
 
 		if (!render_graph->GetRenderHandle()->m_internalData)
 		{
-			TRC_ERROR("Unable to begin render graph  please enter a valid device or render_graph, {}",  (const void*)render_graph->GetRenderHandle()->m_internalData);
+			TRC_ERROR("Unable to begin render graph  please enter a valid device or render_graph, {}", (const void*)render_graph->GetRenderHandle()->m_internalData);
 			return false;
 		}
 
@@ -644,7 +632,7 @@ namespace vk {
 		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
 
 
-		for (auto& evnt : handle->events[device->m_imageIndex])
+		for (auto& evnt : handle->events)
 		{
 			vkCmdResetEvent(
 				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
@@ -657,7 +645,7 @@ namespace vk {
 
 		return result;
 	}
-	
+
 	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
 	{
 		bool result = true;
@@ -697,22 +685,24 @@ namespace vk {
 		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
-		
+
 
 		if (resource)
 		{
 			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
-			image_info.sampler = res_handle->resource[device->m_imageIndex].texture.m_sampler;
-			image_info.imageView = res_handle->resource[device->m_imageIndex].texture.m_view;
+			image_info.sampler = res_handle->resource.texture.m_sampler;
+			image_info.imageView = res_handle->resource.texture.m_view;
 			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			//if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle) return false;
 
 			if (resource->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 			{
 				image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 			}
 
-			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource[device->m_imageIndex].texture, index);
-			
+			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource.texture, index);
+
 		}
 		else
 		{
@@ -759,7 +749,7 @@ namespace vk {
 		//	copy_count,
 		//	copies
 		//);
-		
+
 
 		return result;
 	}
@@ -770,8 +760,11 @@ namespace vk {
 		return false;
 	}
 
-	bool create_render_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance, uint32_t frame_index)
+
+	bool compute_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
 	{
+		bool result = true;
+
 		std::vector<uint32_t>& outputs = pass->GetAttachmentOutputs();
 		std::vector<uint32_t>& inputs = pass->GetAttachmentInputs();
 		uint32_t pass_index = render_graph->FindPassIndex(pass->GetPassName());
@@ -914,97 +907,15 @@ namespace vk {
 
 		trace::VKRenderGraphPass* handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 
-		handle->data[frame_index].physical_pass.m_handle = pass_handle;
-		handle->data[frame_index].physical_pass.clear_color = &pass->clearColor;
-		handle->data[frame_index].physical_pass.render_area = &pass->renderArea;
-		handle->data[frame_index].physical_pass.depth_value = &pass->depthValue;
-		handle->data[frame_index].physical_pass.stencil_value = &pass->stencilValue;
+		handle->physical_pass.m_handle = pass_handle;
+		handle->physical_pass.clear_color = &pass->clearColor;
+		handle->physical_pass.render_area = &pass->renderArea;
+		handle->physical_pass.depth_value = &pass->depthValue;
+		handle->physical_pass.stencil_value = &pass->stencilValue;
 
-
-		return (_result == VK_SUCCESS);
-	}
-
-	bool compute_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
-	{
-		bool result = true;
-
-		for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-		{
-			create_render_pass_handle(pass, render_graph, _device, instance, i);
-		}
+		result = (_result == VK_SUCCESS);
 
 		return result;
-	}
-
-	bool create_texture_resource(trace::RenderGraphResource& resource, trace::VKImage& image, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
-	{
-
-		VkImageUsageFlags image_usage = 0;
-		VkImageAspectFlags aspect_flags = 0;
-		VkMemoryPropertyFlags memory_property = 0;
-		VkImageCreateFlags flags = 0;
-		image_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
-		if (resource.resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
-		{
-			image_usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-			aspect_flags = VK_IMAGE_ASPECT_DEPTH_BIT;
-		}
-		memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-
-		vk::_CreateImage(
-			instance,
-			_device,
-			&image,
-			vk::convertFmt(resource.resource_data.texture.format),
-			VK_IMAGE_TILING_OPTIMAL,
-			image_usage,
-			memory_property,
-			aspect_flags,
-			VK_NO_FLAGS,
-			vk::convertImageType(resource.resource_data.texture.image_type),
-			resource.resource_data.texture.width,
-			resource.resource_data.texture.height,
-			1,
-			1
-		);
-
-		vk::_CreateImageView(
-			instance,
-			_device,
-			&image.m_view,
-			vk::convertFmt(resource.resource_data.texture.format),
-			aspect_flags,
-			&image.m_handle
-		);
-
-		VkSamplerCreateInfo samp_create_info = {};
-		samp_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samp_create_info.addressModeU = convertAddressMode(resource.resource_data.texture.addressModeU);
-		samp_create_info.addressModeV = convertAddressMode(resource.resource_data.texture.addressModeV);
-		samp_create_info.addressModeW = convertAddressMode(resource.resource_data.texture.addressModeW);
-		samp_create_info.anisotropyEnable = VK_TRUE;
-		samp_create_info.maxAnisotropy = 16;
-		samp_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		samp_create_info.unnormalizedCoordinates = VK_FALSE;
-		samp_create_info.minFilter = convertFilter(resource.resource_data.texture.min);
-		samp_create_info.magFilter = convertFilter(resource.resource_data.texture.mag);
-		/// TODO Check Docs for more info
-		samp_create_info.compareEnable = VK_FALSE;
-		samp_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
-		samp_create_info.maxLod = 1.0f;
-		samp_create_info.minLod = 0.0f;
-		samp_create_info.mipLodBias = 0.0f;
-		samp_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-		VkResult _result = vkCreateSampler(
-			_device->m_device,
-			&samp_create_info,
-			instance->m_alloc_callback,
-			&image.m_sampler
-		);
-
-		return true;
 	}
 
 	bool compute_resource_handle(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
@@ -1022,7 +933,7 @@ namespace vk {
 			{
 				trace::VKRenderGraphResource* res_handle = new trace::VKRenderGraphResource;
 				res.render_handle.m_internalData = res_handle;
-				/*VkImageUsageFlags image_usage = 0;
+				VkImageUsageFlags image_usage = 0;
 				VkImageAspectFlags aspect_flags = 0;
 				VkMemoryPropertyFlags memory_property = 0;
 				VkImageCreateFlags flags = 0;
@@ -1034,7 +945,7 @@ namespace vk {
 					aspect_flags = VK_IMAGE_ASPECT_DEPTH_BIT;
 				}
 				memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-				
+
 
 				VkSamplerCreateInfo samp_create_info = {};
 				samp_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1055,7 +966,7 @@ namespace vk {
 				samp_create_info.mipLodBias = 0.0f;
 				samp_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
-				
+
 
 				VkImageCreateInfo img_create_info = {};
 				img_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1083,7 +994,7 @@ namespace vk {
 				graph_handle->memory_type_bits = res_handle->tex_mem_req.memoryTypeBits;
 
 
-				
+
 
 				VkResult _result = vkCreateSampler(
 					_device->m_device,
@@ -1091,12 +1002,9 @@ namespace vk {
 					instance->m_alloc_callback,
 					&res_handle->resource.texture.m_sampler
 				);
-				VK_ASSERT(_result);*/
+				VK_ASSERT(_result);
 
-				for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-				{
-					create_texture_resource(res, res_handle->resource[i].texture, _device, instance);
-				}
+
 
 			}
 		}
@@ -1104,7 +1012,7 @@ namespace vk {
 		return result;
 	}
 
-	bool create_frame_buffer_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance, uint32_t frame_index)
+	bool compute_frame_buffer_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
 	{
 		bool result = true;
 
@@ -1117,7 +1025,7 @@ namespace vk {
 		create_info.layers = 1;
 		create_info.width = static_cast<uint32_t>(pass->renderArea.z);
 		create_info.height = static_cast<uint32_t>(pass->renderArea.w);
-		create_info.renderPass = handle->data[frame_index].physical_pass.m_handle;
+		create_info.renderPass = handle->physical_pass.m_handle;
 
 		VkResult _result = VK_ERROR_UNKNOWN;
 
@@ -1129,24 +1037,24 @@ namespace vk {
 			if (isTexture)
 			{
 				trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(res->render_handle.m_internalData);
-				attachments.push_back(res_handle->resource[frame_index].texture.m_view);
+				attachments.push_back(res_handle->resource.texture.m_view);
 			}
 			if (isSwapchainImage)
 			{
 				trace::VKSwapChain* swapchain = reinterpret_cast<trace::VKSwapChain*>(res->render_handle.m_internalData);
-				attachments.push_back(swapchain->m_imageViews[frame_index]);
+				attachments.push_back(swapchain->m_imageViews[_device->m_imageIndex]);
 			}
 		}
 
 		if (pass->GetDepthStencilOutput() != INVALID_ID)
 		{
 			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilOutput()).render_handle.m_internalData);
-			attachments.push_back(res_handle->resource[frame_index].texture.m_view);
+			attachments.push_back(res_handle->resource.texture.m_view);
 		}
 		else if (pass->GetDepthStencilInput() != INVALID_ID)
 		{
 			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(render_graph->GetResource(pass->GetDepthStencilInput()).render_handle.m_internalData);
-			attachments.push_back(res_handle->resource[frame_index].texture.m_view);
+			attachments.push_back(res_handle->resource.texture.m_view);
 		}
 
 		create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -1156,24 +1064,11 @@ namespace vk {
 			_device->m_device,
 			&create_info,
 			instance->m_alloc_callback,
-			&handle->data[frame_index].frame_buffer
+			&handle->frame_buffer
 		);
 		VK_ASSERT(_result);
 
 		attachments.clear();
-
-
-		return result;
-	}
-
-	bool compute_frame_buffer_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
-	{
-		bool result = true;
-
-		for (uint32_t i = 0; i < _device->frames_in_flight; i++)
-		{
-			create_frame_buffer_handle(pass, render_graph, _device, instance, i);
-		}
 
 
 		return result;
@@ -1185,7 +1080,7 @@ namespace vk {
 
 		trace::VKRenderGraph* graph_handle = reinterpret_cast<trace::VKRenderGraph*>(render_graph->GetRenderHandle()->m_internalData);
 
-		/*VkMemoryAllocateInfo alloc_info = {};
+		VkMemoryAllocateInfo alloc_info = {};
 		alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		alloc_info.allocationSize = graph_handle->memory_size;
 		alloc_info.memoryTypeIndex = FindMemoryIndex(_device, graph_handle->memory_type_bits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -1198,7 +1093,7 @@ namespace vk {
 		if (graph_handle->memory_size > _device->frame_mem_size)
 		{
 
-			if(_device->frame_memory) _device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
+			if (_device->frame_memory) _device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
 			_device->frame_memory = VK_NULL_HANDLE;
 
 			VK_ASSERT(vkAllocateMemory(
@@ -1270,25 +1165,7 @@ namespace vk {
 				VK_ASSERT(_result);
 
 			}
-		}*/
+		}
 	}
 
-	uint64_t get_render_graph_resource_hash(trace::RenderGraphResource& resource)
-	{
-		uint64_t result = 0;
-
-		result = 0x000000AF00000000 << (uint64_t)resource.resource_type;
-		result *= (uint64_t)resource.resource_data.texture.attachment_type;
-
-		result += 4 * (uint64_t)resource.resource_data.texture.addressModeU;
-		result += 4 * (uint64_t)resource.resource_data.texture.addressModeV;
-		result += 4 * (uint64_t)resource.resource_data.texture.addressModeW;
-
-		result += 3 * (uint64_t)resource.resource_data.texture.min;
-		result += 3 * (uint64_t)resource.resource_data.texture.mag;
-
-		result += trace::getFmtSize(resource.resource_data.texture.format);
-
-		return result;
-	}
 }

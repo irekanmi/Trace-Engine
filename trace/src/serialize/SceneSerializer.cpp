@@ -106,7 +106,7 @@ namespace trace {
 			emit << YAML::Key << "Near" << YAML::Value << cam._camera.GetNear();
 			emit << YAML::Key << "Far" << YAML::Value << cam._camera.GetFar();
 			emit << YAML::Key << "Fov" << YAML::Value << cam._camera.GetFov();
-			emit << YAML::Key << "Aspect Ratio" << YAML::Value << cam._camera.GetAspectRatio();
+			//emit << YAML::Key << "Aspect Ratio" << YAML::Value << cam._camera.GetAspectRatio();
 			emit << YAML::Key << "Orthographic Size" << YAML::Value << cam._camera.GetOrthographicSize();
 
 			emit << YAML::EndMap;
@@ -408,7 +408,7 @@ namespace trace {
 			cam._camera.SetNear(comp["Near"].as<float>());
 			cam._camera.SetFar(comp["Far"].as<float>());
 			cam._camera.SetFov(comp["Fov"].as<float>());
-			cam._camera.SetAspectRatio(comp["Aspect Ratio"].as<float>());
+			//cam._camera.SetAspectRatio(comp["Aspect Ratio"].as<float>());
 			cam._camera.SetOrthographicSize(comp["Orthographic Size"].as<float>());
 		}},
 		{"MeshComponent", [](Entity entity, YAML::detail::iterator_value& value) {

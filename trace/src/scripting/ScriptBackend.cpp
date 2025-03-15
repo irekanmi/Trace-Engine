@@ -10,6 +10,7 @@
 #include "core/input/Input.h"
 #include "scripting/ScriptEngine.h"
 #include "backends/Physicsutils.h"
+#include "external_utils.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -1074,7 +1075,7 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 	Entity entity = s_MonoData.scene->GetEntity(id);
 	if (!entity)
 	{
-		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}, Function, {}", s_MonoData.scene->GetName(), __FUNCTION__);
 		return nullptr;
 	}
 
@@ -1249,6 +1250,21 @@ void Maths_Quat_Slerp(glm::quat* a, glm::quat* b, float lerp_value, glm::quat* o
 
 #pragma endregion
 
+#pragma region Application
+
+bool Application_LoadAndSetScene(MonoString* filename)
+{
+	char* c_str = mono_string_to_utf8(filename);
+
+	bool result = LoadAndSetScene(c_str);
+
+	mono_free(c_str);
+	return result;
+}
+
+
+#pragma endregion
+
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
 
 void BindInternalFuncs()
@@ -1300,6 +1316,8 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(Maths_Quat_LookDirection);
 	ADD_INTERNAL_CALL(Maths_Quat_Slerp);
+
+	ADD_INTERNAL_CALL(Application_LoadAndSetScene);
 
 }
 

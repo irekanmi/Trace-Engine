@@ -76,6 +76,7 @@
   <ItemGroup>
     <Compile Include="Source\Action.cs" />
     <Compile Include="Source\Components.cs" />
+    <Compile Include="Source\Core\Application.cs" />
     <Compile Include="Source\Core\Debug.cs" />
     <Compile Include="Source\Core\EntityObject.cs" />
     <Compile Include="Source\Core\Input\Input.cs" />

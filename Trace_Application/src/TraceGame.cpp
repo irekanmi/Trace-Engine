@@ -52,14 +52,23 @@ namespace trace {
 
 		m_currentScene = SceneManager::get_instance()->LoadScene_Runtime(m_startScene);
 
-		m_currentScene->OnStart();
-		m_currentScene->OnScriptStart();
+		start_current_scene();
 
-		m_currentScene->OnViewportChange(static_cast<float>(Renderer::get_instance()->GetFrameWidth()), static_cast<float>(Renderer::get_instance()->GetFrameHeight()));
+		
 	}
 
 	void TraceGame::Update(float deltaTime)
 	{
+		if (m_nextScene)
+		{
+			stop_current_scene();
+			m_currentScene.free();
+
+			m_currentScene = m_nextScene;
+			start_current_scene();
+			m_nextScene.free();
+		}
+
 		m_currentScene->BeginFrame();
 
 		m_currentScene->OnAnimationUpdate(deltaTime);
@@ -77,9 +86,9 @@ namespace trace {
 
 	void TraceGame::End()
 	{
-		m_currentScene->OnStop();
-		m_currentScene->OnScriptStop();
+		stop_current_scene();
 
+		m_nextScene.free();
 		m_currentScene.free();
 	}
 
@@ -159,6 +168,18 @@ namespace trace {
 
 	}
 
+	bool TraceGame::SetNextScene(Ref<Scene> scene)
+	{
+		if (!scene)
+		{
+			return false;
+		}
+
+		m_nextScene = scene;
+
+		return true;
+	}
+
 	TraceGame* TraceGame::get_instance()
 	{
 		static TraceGame* s_instance = new TraceGame;//TODO: Use custom allocator
@@ -204,6 +225,25 @@ namespace trace {
 			TRC_ERROR("Unable to load assets db");
 		}
 
+	}
+
+	void TraceGame::start_current_scene()
+	{
+		m_currentScene->OnStart();
+		m_currentScene->OnScriptStart();
+		m_currentScene->OnPhysicsStart();
+
+		if (m_currentScene)
+		{
+			m_currentScene->OnViewportChange(static_cast<float>(Renderer::get_instance()->GetFrameWidth()), static_cast<float>(Renderer::get_instance()->GetFrameHeight()));
+		}
+	}
+
+	void TraceGame::stop_current_scene()
+	{
+		m_currentScene->OnPhysicsStop();
+		m_currentScene->OnScriptStop();
+		m_currentScene->OnStop();
 	}
 
 	

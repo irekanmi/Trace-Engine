@@ -405,7 +405,10 @@ namespace trace {
 					}
 					prefab_popup = false;
 				}
-				else prefab_popup = false;
+			}
+			else
+			{
+				prefab_popup = false;
 			}
 		}
 

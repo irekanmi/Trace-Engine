@@ -34,9 +34,10 @@ namespace trace {
 		virtual bool PreFrame(RenderGraph& frame_graph,RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0);
 		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0);
 
-		virtual void Render(float deltaTime);
+		virtual void Render(float deltaTime, FrameSettings frame_settings);
 		virtual bool ComposeGraph(FrameSettings frame_settings);
 		virtual bool ReComposeGraph(FrameSettings frame_settings);
+		virtual void DestroyGraphs();
 
 	protected:
 		virtual bool recompose_graph(uint32_t index, FrameSettings frame_settings);

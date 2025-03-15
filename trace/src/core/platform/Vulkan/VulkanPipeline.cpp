@@ -981,7 +981,7 @@ namespace vk {
 
 		if (!pipeline || !texture)
 		{
-			TRC_ERROR("Please input valid pointer -> {}, tex ->{}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			TRC_ERROR("Please input valid pointer -> {}, tex ->{}, Function -> {}", (const void*)pipeline, (const void*)texture, __FUNCTION__);
 			return false;
 		}
 

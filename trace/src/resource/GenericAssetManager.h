@@ -38,6 +38,7 @@ namespace trace {
 			}
 
 			result = Ref(GetNextValidHandle<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			result->m_path = name;
 			return result;
 		}
 

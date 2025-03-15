@@ -89,6 +89,7 @@ namespace trace {
 		Camera& GetEditorCamera() { return m_editorCamera; }
 		EditorState GetEditorState() { return m_currentState; }
 		glm::vec2 GetViewportSize() { return m_viewportSize; }
+		bool SetNextScene(Ref<Scene> scene);
 
 
 		
@@ -113,12 +114,18 @@ namespace trace {
 		Ref<Scene> m_currentScene;
 		Ref<Scene> m_editScene;
 		Ref<Scene> m_editSceneDuplicate;
+		Ref<Scene> m_nextScene;
 		Ref<Project> m_currentProject;
 		int gizmo_mode = -1;
 		EditorState m_currentState = EditorState::SceneEdit;
 		
 
 		std::string m_currentScenePath;
+
+	private:
+		void start_current_scene();
+		void stop_current_scene();
+
 
 	private:
 		bool CreateProject(const std::string& dir, const std::string& name);

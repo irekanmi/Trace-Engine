@@ -223,11 +223,6 @@ namespace trace {
 
 					}
 
-					/*for (uint32_t i = (graph_data->num_shadowed_sun_lights); i < MAX_SHADOW_SUN_LIGHTS; i++)
-					{
-						RenderFunc::SetPipelineTextureData(, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
-						
-					}*/
 
 					RenderFunc::SetPipelineData(pipeline, "spot_shadow_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, shadow_data->spot_view_proj_matrices.data(), sizeof(glm::mat4) * graph_data->num_shadowed_spot_lights);
 					for (uint32_t i = 0; i < graph_data->num_shadowed_spot_lights; i++)
@@ -240,11 +235,11 @@ namespace trace {
 				}
 				else
 				{
-					/*for (uint32_t i = 0; i < MAX_SHADOW_SUN_LIGHTS; i++)
+					//HACK: It crashes because the binded texture has been destroyed due to the use of frame graph
+					for (uint32_t i = 0; i < MAX_SHADOW_SUN_LIGHTS; i++)
 					{
-						RenderFunc::SetPipelineTextureData(, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
-
-					}*/
+						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
+					}
 				}
 
 				// --------------------------------------------------------

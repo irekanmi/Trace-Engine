@@ -109,6 +109,7 @@ namespace trace {
 			return;
 		}
 
+		m_hashTable.Set(scene->GetName(), INVALID_ID);
 		scene->m_id = INVALID_ID;
 		scene->Destroy();
 

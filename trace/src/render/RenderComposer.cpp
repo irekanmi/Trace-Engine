@@ -93,13 +93,15 @@ namespace trace {
 		return result;
 	}
 
-	void RenderComposer::Render(float deltaTime)
+	void RenderComposer::Render(float deltaTime, FrameSettings frame_settings)
 	{
 		for (uint32_t i = 0; i < m_graphs.size(); i++)
 		{
-			
+			RGBlackBoard black_board;
+			PreFrame(m_graphs[i], black_board, frame_settings, i);
 
 			m_graphs[i].Execute(i);
+			
 		}
 	}
 
@@ -120,6 +122,14 @@ namespace trace {
 			m_graphs[i].Destroy();
 		}
 		return ComposeGraph(frame_settings);
+	}
+
+	void RenderComposer::DestroyGraphs()
+	{
+		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		{
+			m_graphs[i].Destroy();
+		}
 	}
 
 	bool RenderComposer::recompose_graph(uint32_t index, FrameSettings frame_settings)

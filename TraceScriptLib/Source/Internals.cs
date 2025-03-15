@@ -162,6 +162,14 @@ namespace Trace
 
 
         #endregion
+        
+        #region Application
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Application_LoadAndSetScene(string scene_name);
+
+
+        #endregion
 
     }
 }

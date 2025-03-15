@@ -351,7 +351,7 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
@@ -625,7 +625,7 @@ bool __ImGui_GetDrawRenderGraphTextureHandle(trace::RenderGraphResource* texture
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
 		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(texture->render_handle.m_internalData);
-		VkDescriptorSet tex_set = ImGui_ImplVulkan_AddTexture(res_handle->resource[_device->m_imageIndex].texture.m_sampler, res_handle->resource[_device->m_imageIndex].texture.m_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VkDescriptorSet tex_set = ImGui_ImplVulkan_AddTexture(res_handle->resource.texture.m_sampler, res_handle->resource.texture.m_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		frame_rendered_textures[_device->m_imageIndex].push_back(tex_set);
 		out_handle = tex_set;
 		break;

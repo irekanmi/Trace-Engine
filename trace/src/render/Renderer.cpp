@@ -197,7 +197,6 @@ namespace trace {
 			m_composer = new RenderComposer();
 			m_composer->Init(this);
 		}
-		m_composer->ComposeGraph(frame_settings);
 
 		for (uint32_t i = 0; i < num_render_graphs; i++)
 		{
@@ -308,12 +307,10 @@ namespace trace {
 			else if (press->GetKeyCode() == KEY_N)
 			{
 				frame_settings |= RENDER_BLOOM;
-				m_composer->ReComposeGraph(frame_settings);
 			}
 			else if (press->GetKeyCode() == KEY_M)
 			{
 				frame_settings &= ~RENDER_BLOOM;
-				m_composer->ReComposeGraph(frame_settings);
 			}
 
 			break;
@@ -334,7 +331,6 @@ namespace trace {
 			_rect.right = wnd->GetWidth();
 			_rect.bottom = wnd->GetHeight();
 
-			m_composer->ReComposeGraph(frame_settings);
 			break;
 		}
 
@@ -358,7 +354,7 @@ namespace trace {
 				}
 			}
 
-			m_composer->Render(deltaTime);
+			m_composer->Render(deltaTime, frame_settings);
 
 			EndFrame();
 			RenderFunc::PresentSwapchain(&m_swapChain);
@@ -381,6 +377,7 @@ namespace trace {
 
 				graph_data.shadow_casters.clear();
 			}
+			m_composer->DestroyGraphs();
 		}
 		m_listCount = 0;
 
@@ -998,12 +995,16 @@ namespace trace {
 		Command cmd;
 		cmd.params.ptrs[0] = camera;
 		cmd.params.val[0] = render_graph_index;
-		cmd.func = [&](CommandParams& params) 
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+		graph_data._camera = camera;
+		//NOTE: Remove it because it affects render functions that doesn't send commands
+		/*cmd.func = [&](CommandParams& params) 
 		{
 			RenderGraphFrameData& graph_data = m_renderGraphsData[params.val[0]];
 			graph_data._camera = (Camera*)params.ptrs[0]; 
-		};
-		cmd_list._commands.emplace_back(cmd);
+		};*/
+		
+		//cmd_list._commands.emplace_back(cmd);
 	}
 
 	void Renderer::EndScene(CommandList& cmd_list, int32_t render_graph_index)

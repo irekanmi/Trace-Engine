@@ -17,15 +17,19 @@ namespace trace {
 		void End();
 		std::string& GetName() { return m_name; }
 		void OnEvent(Event* p_event);
+		bool SetNextScene(Ref<Scene> scene);
 
 		static TraceGame* get_instance();
 	private:
 
 		void load_appinfo();
 		void load_assetdb();
+		void start_current_scene();
+		void stop_current_scene();
 
 		std::string m_name;
 		Ref<Scene> m_currentScene;
+		Ref<Scene> m_nextScene;
 		UUID m_startScene;
 
 	protected:

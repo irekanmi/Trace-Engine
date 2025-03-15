@@ -12,6 +12,8 @@
 #include "../src/import/Importer.h"
 #include "render/SkinnedModel.h"
 #include "resource/GenericAssetManager.h"
+#include "scene/SceneManager.h"
+#include "serialize/SceneSerializer.h"
 
 #include <vector>
 
@@ -118,6 +120,30 @@ namespace trace {
 		}
 
 		return result;
+	}
+
+	bool LoadAndSetScene(const std::string& filename)
+	{
+		
+		Ref<Scene> scene = SceneManager::get_instance()->GetScene(filename);
+		if (!scene)
+		{
+			UUID id = GetUUIDFromName(filename);
+			std::string file_path = GetPathFromUUID(id).string();
+			scene = SceneSerializer::Deserialize(file_path);
+			if (!scene)
+			{
+				TRC_ERROR("Unable to load scene, Filename:{} , Function: {}", filename, __FUNCTION__);
+				return false;
+			}
+		}
+
+		TraceEditor* editor = TraceEditor::get_instance();
+		
+		editor->SetNextScene(scene);
+
+
+		return true;
 	}
 
 }

@@ -52,6 +52,14 @@ namespace trace {
 	{
 		bool result = true;
 
+		bool x_dirty = x != TraceEditor::get_instance()->GetViewportSize().x && TraceEditor::get_instance()->GetViewportSize().x > 0.0f;
+		bool y_dirty = y != TraceEditor::get_instance()->GetViewportSize().y && TraceEditor::get_instance()->GetViewportSize().y > 0.0f;
+		if (x_dirty || y_dirty)
+		{
+			x = TraceEditor::get_instance()->GetViewportSize().x;
+			y = TraceEditor::get_instance()->GetViewportSize().y;
+		}
+
 		FrameData& fd = black_board.add<FrameData>();
 		fd.frame_settings = frame_settings;
 
@@ -106,22 +114,7 @@ namespace trace {
 
 		return result;
 	}
-	void EditorRenderComposer::Render(float deltaTime)
-	{
-		bool x_dirty = x != TraceEditor::get_instance()->GetViewportSize().x && TraceEditor::get_instance()->GetViewportSize().x > 0.0f;
-		bool y_dirty = y != TraceEditor::get_instance()->GetViewportSize().y && TraceEditor::get_instance()->GetViewportSize().y > 0.0f;
-		if (x_dirty || y_dirty)
-		{
-			x = TraceEditor::get_instance()->GetViewportSize().x;
-			y = TraceEditor::get_instance()->GetViewportSize().y;
-			ReComposeGraph(current_settings);
-		}
 
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
-		{
-			m_graphs[i].Execute(i);
-		}
-	}
 	bool EditorRenderComposer::ComposeGraph(FrameSettings frame_settings)
 	{
 		for (uint32_t i = 0; i < m_graphs.size(); i++)

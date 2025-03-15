@@ -19,5 +19,6 @@ namespace trace {
 	extern Ref<Model> LoadModel(UUID uuid, std::string& model_name);
 	extern Ref<SkinnedModel> LoadSkinnedModel(UUID uuid, std::string& model_name);
 	extern Ref<GTexture> LoadTexture(UUID uuid);
+	extern bool LoadAndSetScene(const std::string& filename);
 
 }

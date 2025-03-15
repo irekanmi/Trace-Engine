@@ -87,7 +87,7 @@ namespace trace {
 	{
 		VkCommandBuffer m_handle;
 		CommandBufferState m_state;
-//		CommandBufferUsage m_usage;
+		//		CommandBufferUsage m_usage;
 	};
 
 	enum RenderPassState
@@ -104,18 +104,18 @@ namespace trace {
 	{
 		VkRenderPass m_handle;
 
-		glm::vec4* clear_color = nullptr;
-		glm::vec4* render_area = nullptr;
+		glm::vec4* clear_color;
+		glm::vec4* render_area;
 
-		float* depth_value = nullptr;
-		uint32_t* stencil_value = nullptr;
+		float* depth_value;
+		uint32_t* stencil_value;
 
 		RenderPassState m_state;
 
 		void* m_instance = nullptr;
 		void* m_device = nullptr;
 	};
-	
+
 	struct VKShader
 	{
 		VkShaderModule m_module = VK_NULL_HANDLE;
@@ -140,7 +140,7 @@ namespace trace {
 		void* m_device = nullptr;
 	};
 
-	
+
 
 	struct VKFence
 	{
@@ -148,7 +148,7 @@ namespace trace {
 		bool m_isSignaled = false;
 	};
 
-	
+
 
 	struct VKHandle
 	{
@@ -287,7 +287,7 @@ namespace trace {
 		VkDeviceMemory frame_memory;
 		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
 		uint32_t frame_mem_size = 0;
-		
+
 		std::unordered_set<VKPipeline*> pipeline_to_reset;// NOTE: These are pipelines whose internal data need to changed
 
 		VKBuffer copy_staging_buffer;
@@ -296,9 +296,9 @@ namespace trace {
 		VKHandle* instance;
 	};
 
-	
 
-	
+
+
 
 	struct VKFrameBuffer
 	{
@@ -346,7 +346,7 @@ namespace trace {
 	{
 		void* m_device = nullptr;
 		void* m_instance = nullptr;
-		std::vector<VKEvntPair> events[VK_MAX_NUM_FRAMES];
+		std::vector<VKEvntPair> events;
 		VkDeviceMemory m_memory;
 		uint32_t memory_size = 0;
 		uint32_t memory_type_bits = 0;
@@ -355,15 +355,10 @@ namespace trace {
 
 	struct VKRenderGraphPass
 	{
-		struct GraphPass
-		{
-			std::vector<VkEvent> wait_events;
-			std::vector<VkEvent> signal_events;
-			VKRenderPass physical_pass;
-			VkFramebuffer frame_buffer;
-		};
-		GraphPass data[VK_MAX_NUM_FRAMES];
-		
+		std::vector<VkEvent> wait_events;
+		std::vector<VkEvent> signal_events;
+		VKRenderPass physical_pass;
+		VkFramebuffer frame_buffer;
 	};
 
 	struct VKRenderGraphResource
@@ -371,7 +366,7 @@ namespace trace {
 		struct {
 			VKImage texture;
 			VKBuffer buffer;
-		} resource[VK_MAX_NUM_FRAMES];
+		} resource;
 		uint32_t memory_offset = 0;
 		VkMemoryRequirements tex_mem_req;
 		VkMemoryRequirements buf_mem_req;

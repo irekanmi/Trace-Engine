@@ -702,7 +702,8 @@ namespace trace {
 		for (auto entity : view)
 		{
 			auto& camera = view.get<CameraComponent>(entity);
-			camera._camera.SetAspectRatio(width / height);
+			camera._camera.SetScreenWidth(width);
+			camera._camera.SetScreenHeight(height);
 		}
 	}
 

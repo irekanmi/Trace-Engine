@@ -26,8 +26,9 @@ namespace trace {
 		REGISTER_MEMBER(Camera, m_fov);
 		REGISTER_MEMBER(Camera, m_zNear);
 		REGISTER_MEMBER(Camera, m_zFar);
-		REGISTER_MEMBER(Camera, m_aspectRatio);
 		REGISTER_MEMBER(Camera, m_orthographicSize);
+		REGISTER_MEMBER(Camera, m_screenWidth);
+		REGISTER_MEMBER(Camera, m_screenHeight);
 		REGISTER_MEMBER(Camera, m_type);
 	END_REGISTER_CLASS;
 
