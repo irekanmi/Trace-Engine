@@ -38,18 +38,6 @@ namespace trace::Animation {
 
 		StateMachine* state_machine = (StateMachine*)nodes[m_stateMachine];
 
-
-		NodeInput& input = m_inputs[0];
-		if (input.node_id == 0)
-		{
-			return;
-		}
-
-		Node* in_node = nodes[input.node_id];
-		in_node->Update(instance, deltaTime);
-		data->final_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index);
-
-
 		if (data->current_flag == StateFlag::Running)
 		{
 
@@ -67,6 +55,19 @@ namespace trace::Animation {
 
 			}
 		}
+
+		NodeInput& input = m_inputs[0];
+		if (input.node_id == 0)
+		{
+			return;
+		}
+
+		Node* in_node = nodes[input.node_id];
+		in_node->Update(instance, deltaTime);
+		data->final_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index);
+
+
+		
 		
 	}
 
@@ -104,6 +105,14 @@ namespace trace::Animation {
 		out_pose.value_index = 0;
 
 		m_outputs.push_back(out_pose);
+	}
+
+	void StateNode::Destroy(Graph* graph)
+	{
+		for (UUID& transition : m_transitions)
+		{
+			RemoveTransition(graph, transition);
+		}
 	}
 
 	void StateNode::Reset(GraphInstance* instance)
@@ -170,6 +179,8 @@ namespace trace::Animation {
 				}
 				index++;
 			}
+			m_transitions[index] = m_transitions.back();
+			m_transitions.pop_back();
 		}
 	}
 
@@ -366,8 +377,20 @@ namespace trace::Animation {
 			return;
 		}
 		
-		
-		BlendPose(&current_state_result->pose_data, &target_state_result->pose_data, &data->pose_result.pose_data, blend_weight);
+		if (!current_state_result && target_state_result)
+		{
+			BlendPose(&target_state_result->pose_data, &target_state_result->pose_data, &data->pose_result.pose_data, blend_weight);
+		}
+
+		if (current_state_result && !target_state_result)
+		{
+			BlendPose(&current_state_result->pose_data, &current_state_result->pose_data, &data->pose_result.pose_data, blend_weight);
+		}
+
+		if (current_state_result && target_state_result)
+		{
+			BlendPose(&current_state_result->pose_data, &target_state_result->pose_data, &data->pose_result.pose_data, blend_weight);
+		}
 
 		data->elapsed_time += deltaTime;
 		
@@ -502,6 +525,14 @@ namespace trace::Animation {
 
 	}
 
+	void StateMachine::Destroy(Graph* graph)
+	{
+		for (UUID& state : m_states)
+		{
+			graph->DestroyNode(state);
+		}
+	}
+
 	PoseNodeResult* StateMachine::GetFinalPose(GraphInstance* instance)
 	{
 		return (PoseNodeResult*)GetValueInternal(instance);
@@ -627,4 +658,159 @@ namespace trace::Animation {
 	}
 	
 	// ----------------------------------------------------------------------------
+
+
+	// Animation Sample Node -----------------------------------------------------------
+
+	bool RetargetAnimationNode::Instanciate(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* result = new RuntimeData;
+		instance_data_set[this] = result;
+
+		result->final_pose.pose_data.Init(&instance->GetSkeletonInstance());
+		result->animation_pose.Init(m_skeleton);
+
+		return true;
+	}
+
+	void RetargetAnimationNode::Update(GraphInstance* instance, float deltaTime)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
+		{
+			return;
+		}
+
+
+		std::vector<Ref<AnimationClip>>& animations = instance->GetGraph()->GetAnimationDataSet();
+
+		
+
+		if (data->elasped_time == 0.0f)
+		{
+			data->start_time = Application::get_instance()->GetClock().GetElapsedTime();
+		}
+
+		Ref<AnimationClip> clip = m_animation;
+		Animation::Pose& clip_pose = data->animation_pose;
+		
+
+		float next_frame_time = data->elasped_time + deltaTime;
+		if (clip->HasRootMotion())
+		{
+			AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(clip, m_skeleton, data->elasped_time, next_frame_time, &clip_pose, true);
+		}
+		else
+		{
+			AnimationEngine::get_instance()->SampleClip(clip, m_skeleton, data->elasped_time, &clip_pose, true);
+			Transform& root_motion_delta = clip_pose.GetRootMotionDelta();
+			root_motion_delta = Transform::Identity();
+		}
+
+		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
+		Ref<HumanoidRig> target_rig = skeleton->GetHumanoidRig();
+		Ref<HumanoidRig> source_rig = m_skeleton->GetHumanoidRig();
+
+		// Initialize Final Pose with the bind pose
+		skeleton->GetBindPose(data->final_pose.pose_data.GetLocalPose());
+
+		if (target_rig && source_rig)
+		{
+
+			auto& target_rig_bones = target_rig->GetHumanoidBones();
+			auto& source_rig_bones = source_rig->GetHumanoidBones();
+			
+			int32_t index = 0;
+			for (int32_t& i : source_rig_bones)
+			{
+				if (i < 0)
+				{
+					++index;
+					continue;
+				}
+
+				if (target_rig_bones[index] < 0)
+				{
+					++index;
+					continue;
+				}
+
+				int32_t source_bone_index = i;
+				int32_t target_bone_index = target_rig_bones[index];
+
+				Animation::Bone& source_bone = *m_skeleton->GetBone(source_bone_index);
+				Animation::Bone& target_bone = *skeleton->GetBone(target_bone_index);
+
+				glm::mat4 target_bind_pose = skeleton->GetBoneGlobalBindPose(target_bone_index);
+				//glm::mat4 inv_target_bind_pose = glm::inverse(target_bind_pose);
+
+				glm::mat4 source_bind_pose = m_skeleton->GetBoneGlobalBindPose(source_bone_index);
+				glm::mat4 inv_source_bind_pose = glm::inverse(source_bind_pose);
+
+				glm::mat4 offset = target_bind_pose * inv_source_bind_pose;
+
+				glm::mat4 animation_pose = clip_pose.GetBoneGlobalPose(m_skeleton, source_bone_index);
+
+				glm::mat4 pose_result = offset * animation_pose;
+
+				if (target_bone.GetParentIndex() != -1)
+				{
+					glm::mat4 target_parent_pose = data->final_pose.pose_data.GetBoneGlobalPose(target_bone.GetParentIndex());
+					pose_result = glm::inverse(target_parent_pose) * pose_result;
+				}
+
+				std::vector<Transform>& target_local_pose = data->final_pose.pose_data.GetLocalPose();
+				target_local_pose[target_bone_index] = Transform(pose_result);
+
+				++index;
+			}
+		}
+
+		data->elasped_time = next_frame_time;
+		data->definition.update_id = Application::get_instance()->GetUpdateID();
+
+	}
+
+	void* RetargetAnimationNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		switch (value_index)
+		{
+		case 0:
+		{
+			return &data->final_pose;
+			break;
+		}
+		}
+
+		return nullptr;
+	}
+
+	void RetargetAnimationNode::Init(Graph* graph)
+	{
+		NodeOutput output = {};
+		output.type = ValueType::Pose;
+		output.value_index = 0;
+
+		m_outputs.push_back(output);
+	}
+
+	PoseNodeResult* RetargetAnimationNode::GetFinalPose(GraphInstance* instance)
+	{
+		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+
+
+	// ---------------------------------------------------------------------------------------------
+
 }

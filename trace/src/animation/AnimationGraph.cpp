@@ -168,13 +168,16 @@ namespace trace::Animation {
         root_node->Update(this, deltaTime);
         PoseNodeResult* final_pose = root_node->GetFinalPose(this);
 
-        TRC_ASSERT(final_pose != nullptr, "Funtion: {}", __FUNCTION__);
+        //TRC_ASSERT(final_pose != nullptr, "Funtion: {}", __FUNCTION__);
 
-        final_pose->pose_data.SetEntityLocalPose();
-        Transform& root_motion_delta = final_pose->pose_data.GetRootMotionDelta();
-        Entity entity = scene->GetEntity(id);
-        Transform& pose = entity.GetComponent<TransformComponent>()._transform;
-        Transform::ApplyRootMotion(pose, root_motion_delta);
+        if (final_pose)
+        {
+            final_pose->pose_data.SetEntityLocalPose();
+            Transform& root_motion_delta = final_pose->pose_data.GetRootMotionDelta();
+            Entity entity = scene->GetEntity(id);
+            Transform& pose = entity.GetComponent<TransformComponent>()._transform;
+            Transform::ApplyRootMotion(pose, root_motion_delta);
+        }
         
 
 
@@ -256,6 +259,7 @@ namespace trace::Animation {
         Node* node = GetNode(node_id);
         if (node)
         {
+            node->Destroy(this);
             m_nodes.erase(node_id);
             delete node;//TODO: Use custom allocator
         }
@@ -266,6 +270,7 @@ namespace trace::Animation {
         Node* node = GetNode(node_id);
         if (node)
         {
+            node->Destroy(this);
             for (NodeInput& input : node->GetInputs())
             {
                 if (input.node_id != 0)

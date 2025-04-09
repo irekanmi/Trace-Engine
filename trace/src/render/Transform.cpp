@@ -41,6 +41,17 @@ namespace trace {
 		m_dirty = true;
 	}
 
+	Transform::Transform(glm::mat4 pose)
+	{
+		glm::vec3 position;
+		glm::vec3 rotation;
+		glm::vec3 scale;
+		DecomposeMatrix(pose, position, rotation, scale);
+		SetPosition(position);
+		SetRotationEuler(glm::degrees(rotation));
+		SetScale(scale);
+	}
+
 	Transform::~Transform()
 	{
 	}
@@ -156,6 +167,11 @@ namespace trace {
 	{
 		m_scale += (value);
 		m_dirty = true;
+	}
+
+	bool Transform::IsIdentity()
+	{
+		return ( m_position == glm::vec3(0.0f)) && (m_rotation == glm::identity<glm::quat>()) && (m_scale == glm::vec3(1.0f));
 	}
 
 	Transform Transform::CombineTransform(Transform& parent, Transform& child)

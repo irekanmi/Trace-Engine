@@ -6,6 +6,8 @@
 #include "resource/Ref.h"
 #include "reflection/TypeRegistry.h"
 #include "serialize/DataStream.h"
+#include "animation/HumanoidRig.h"
+#include "render/Transform.h"
 
 #include <string>
 #include <vector>
@@ -37,6 +39,14 @@ namespace trace::Animation {
 
 		void SetRootNode(std::string& root_node);
 
+		Ref<HumanoidRig> GetHumanoidRig() { return m_humanoidRig; }
+		void SetHumanoidRig(Ref<HumanoidRig> humanoid_rig) { m_humanoidRig = humanoid_rig; }
+
+		glm::mat4 GetBoneGlobalBindPose(int32_t bone_index);
+		glm::mat4 GetBoneGlobalBindPose(Bone& bone);
+
+		void GetBindPose(std::vector<Transform>& out_pose);
+
 	public:
 		static Ref<Skeleton> Deserialize(UUID id);
 		static Ref<Skeleton> Deserialize(DataStream* stream);
@@ -46,6 +56,7 @@ namespace trace::Animation {
 		std::vector<Bone> m_bones;
 		std::string m_rootNode = "";
 		StringID m_rootNodeID;
+		Ref<HumanoidRig> m_humanoidRig;
 
 		
 

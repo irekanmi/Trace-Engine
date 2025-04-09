@@ -22,6 +22,8 @@ namespace trace {
 		void Update(float deltaTime);
 		void Render(float deltaTime);
 		void OnEvent(Event* p_event);
+		void HandleKeyReleased(Event* p_event);
+		void HandleKeyPressed(Event* p_event);
 
 		Ref<Animation::Graph> GetCurrentGraph() { return m_currentGraph; }
 
@@ -45,6 +47,7 @@ namespace trace {
 		void handle_state_machine_pop_up();
 		void add_new_node(UUID node_id);
 		void remove_node(UUID node_id);
+
 
 		struct Link
 		{

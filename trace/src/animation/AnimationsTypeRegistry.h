@@ -10,6 +10,7 @@
 #include "animation/SequenceTrackChannel.h"
 #include "animation/Bone.h"
 #include "animation/Skeleton.h"
+#include "animation/HumanoidRig.h"
 
 #include "reflection/TypeRegistry.h"
 
@@ -126,6 +127,12 @@ namespace trace::Animation {
 		REGISTER_MEMBER(AnimationSampleNode, m_looping);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(RetargetAnimationNode)
+		REGISTER_TYPE_PARENT(RetargetAnimationNode, PoseNode);
+		REGISTER_MEMBER(RetargetAnimationNode, m_skeleton);
+		REGISTER_MEMBER(RetargetAnimationNode, m_animation);
+	END_REGISTER_CLASS;
+
 
 
 	REGISTER_TYPE_PARENT(FinalOutputNode, PoseNode);
@@ -185,6 +192,7 @@ namespace trace::Animation {
 		REGISTER_MEMBER(Bone, m_bindPose);
 		REGISTER_MEMBER(Bone, m_boneOffset);
 		REGISTER_MEMBER(Bone, m_id);
+		REGISTER_MEMBER(Bone, m_parent);
 	END_REGISTER_CLASS;
 
 	BEGIN_REGISTER_CLASS(Skeleton)
@@ -192,6 +200,7 @@ namespace trace::Animation {
 		REGISTER_MEMBER(Skeleton, m_name);
 		REGISTER_MEMBER(Skeleton, m_bones);
 		REGISTER_MEMBER(Skeleton, m_rootNodeID);
+		REGISTER_MEMBER(Skeleton, m_humanoidRig);
 	END_REGISTER_CLASS;
 
 	BEGIN_REGISTER_CLASS(SkeletonInstance)
@@ -210,7 +219,12 @@ namespace trace::Animation {
 		REGISTER_MEMBER(SequenceInstance, m_sequence);
 	END_REGISTER_CLASS;
 
-	
+	REGISTER_TYPE(HumanoidBone);
+
+	BEGIN_REGISTER_CLASS(HumanoidRig)
+		REGISTER_TYPE(HumanoidRig);
+		REGISTER_MEMBER(HumanoidRig, m_bones);
+	END_REGISTER_CLASS;
 
 	
 

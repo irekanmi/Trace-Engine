@@ -566,6 +566,44 @@ namespace trace::Reflection {
 		EndContainer(location, member_info, format);
 	}
 
+	template<typename T, size_t container_size>
+	void SerializeContainer(std::array<T, container_size>& object, void* location, void* member_info, uint16_t format)
+	{
+		uint32_t size = container_size;
+		constexpr std::string_view type_name = TypeName< std::array<T, container_size>>();
+		BeginContainer(type_name, location, member_info, format);
+		SerializeContainerSize(size, location, member_info, format);
+
+		if (size > 0)
+		{
+			uint32_t index = 1;
+			using type = remove_all_pointers_t<T>;
+			uint64_t type_id = TypeID<type>();
+
+			TypeInfo t_info = TypeRegistry::GetTypesData().data[type_id];
+
+			using value_type = std::remove_cv_t<T>;
+			for (auto& member : object)
+			{
+				value_type value_data = member;
+				if constexpr (has_get_id_v<type> && std::is_pointer_v<T>)
+				{
+					type_id = object[(index - 1)]->GetTypeID();
+					SerializeTypeID(type_id, location, nullptr, format);
+					t_info = TypeRegistry::GetTypesData().data[type_id];
+					SerializeContainerMember(*member, index, t_info, location, nullptr, format);
+				}
+				else
+				{
+					SerializeContainerMember(member, index, t_info, location, nullptr, format);
+				}
+
+				index++;
+			}
+		}
+		EndContainer(location, member_info, format);
+	}
+
 	template<typename T, typename Compare, typename Alloc>
 	void SerializeContainer(std::set<T, Compare, Alloc>& object, void* location, void* member_info, uint16_t format)
 	{
@@ -1164,6 +1202,56 @@ namespace trace::Reflection {
 
 	}
 
+	template<typename T, size_t container_size>
+	void DeserializeContainer(std::array<T, container_size>& object, void* location, void* member_info, uint16_t format)
+	{
+		void* type_location = location;
+
+		char location_data[128] = { 0 };
+		char* _location = location_data;
+		if (!member_info)
+		{
+			constexpr uint64_t container_id = TypeID< std::array<T, container_size>>();
+			TypeInfo& container_info = TypeRegistry::GetTypesData().data[container_id];
+			GetTypeMemberLocation(container_id, container_info.name, location, _location, nullptr, format);
+			type_location = (char*)_location;
+		}
+		uint32_t size = 0;
+		DeserializeContainerSize(size, type_location, member_info, format);
+		uint32_t index = 1;
+
+		if (size <= 0)
+		{
+			return;
+		}
+
+		
+
+		using type = remove_all_pointers_t<T>;
+		uint64_t type_id = TypeID<type>();
+		TypeInfo t_info = TypeRegistry::GetTypesData().data[type_id];
+
+		for (uint32_t i = index; i < (size + 1); i++)
+		{
+			if constexpr (std::is_pointer_v<T>)
+			{
+				DeserializeTypeID(type_id, type_location, nullptr, format, index);
+				t_info = TypeRegistry::GetTypesData().data[type_id];
+				++index;
+				type* member = (type*)t_info.construct();
+				DeserializeContainerMember(*member, index, t_info, type_location, member_info, format);
+				object[i - 1] = member;
+			}
+			else
+			{
+				T& member = object[i - 1];
+				DeserializeContainerMember(member, i, t_info, type_location, member_info, format);
+			}
+			index++;
+		}
+
+	}
+
 	template<typename T, typename Compare, typename Alloc>
 	void DeserializeContainer(std::set<T, Compare, Alloc>& object, void* location, void* member_info, uint16_t format)
 	{
@@ -1520,6 +1608,20 @@ namespace trace::Reflection {
 
 	template<typename T, typename Alloc>
 	void CustomMemberCallback_Container(std::vector<T, Alloc>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
+	{
+
+		uint64_t type_id = TypeID<T>();
+		if (type_id == member_type_id)
+		{
+			for (auto& member : obj)
+			{
+				callback(&member);
+			}
+		}
+	}
+
+	template<typename T, size_t container_size>
+	void CustomMemberCallback_Container(std::array<T, container_size>& obj, uint64_t member_type_id, std::function<void(void*)>& callback)
 	{
 
 		uint64_t type_id = TypeID<T>();

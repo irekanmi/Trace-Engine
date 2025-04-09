@@ -8,26 +8,39 @@
 #include "scene/Entity.h"
 
 namespace trace::Animation {
-	bool Pose::Init(SkeletonInstance* skeleton)
+	bool Pose::Init(SkeletonInstance* skeleton_instance)
 	{
 
-		if (!skeleton)
+		if (!skeleton_instance)
 		{
 			TRC_ERROR("Invalid Skeleton Instance. Function: {}", __FUNCTION__);
 			return false;
 		}
 
-		if (!skeleton->GetSkeleton())
+		if (!skeleton_instance->GetSkeleton())
 		{
 			TRC_ERROR("Invalid Skeleton Handle. Function: {}", __FUNCTION__);
 			return false;
 		}
 
-		m_skeleton = skeleton;
+		m_skeleton = skeleton_instance;
 
-		std::vector<UUID>& entities = skeleton->GetEntites();
+		std::vector<UUID>& entities = skeleton_instance->GetEntites();
 		m_localPose.clear();
 		m_localPose.resize(entities.size());
+
+		return true;
+	}
+	bool Pose::Init(Ref<Skeleton> skeleton)
+	{
+		if (!skeleton)
+		{
+			TRC_ERROR("Invalid Skeleton Handle. Function: {}", __FUNCTION__);
+			return false;
+		}
+
+		m_localPose.clear();
+		m_localPose.resize(skeleton->GetBones().size());
 
 		return true;
 	}
@@ -82,5 +95,50 @@ namespace trace::Animation {
 			i++;
 		}
 
+	}
+	glm::mat4 Pose::GetBoneGlobalPose(int32_t bone_index)
+	{
+		if (!m_skeleton)
+		{
+			TRC_ERROR("Invalid skeleton instance, Function: {}", __FUNCTION__);
+			return glm::mat4(1.0f);
+		}
+
+		Ref<Skeleton> skeleton = m_skeleton->GetSkeleton();
+
+		return GetBoneGlobalPose(skeleton, bone_index);
+	}
+	glm::mat4 Pose::GetBoneGlobalPose(Ref<Skeleton> skeleton, int32_t bone_index)
+	{
+		if (m_globalPose.empty())
+		{
+			m_globalPose.resize(skeleton->GetBones().size());
+		}
+
+		if (bone_index < 0 || bone_index > skeleton->GetBones().size())
+		{
+			TRC_ERROR("Invalid bone index, Function: {}", __FUNCTION__);
+			return glm::mat4(1.0f);
+		}
+
+		Bone& bone = skeleton->GetBones()[bone_index];
+		if (bone.GetParentIndex() != -1)
+		{
+			glm::mat4 result = GetBoneGlobalPose(skeleton, bone.GetParentIndex()) * GetBoneLocalPose(bone_index);
+			m_globalPose[bone_index] = Transform(result);
+
+			return result;
+		}
+
+		return GetBoneLocalPose(bone_index);
+	}
+	glm::mat4 Pose::GetBoneLocalPose(int32_t bone_index)
+	{
+		if (bone_index < 0 || bone_index > m_localPose.size())
+		{
+			TRC_ERROR("Invalid bone index, Function: {}", __FUNCTION__);
+			return glm::mat4(1.0f);
+		}
+		return m_localPose[bone_index].GetLocalMatrix();
 	}
 }

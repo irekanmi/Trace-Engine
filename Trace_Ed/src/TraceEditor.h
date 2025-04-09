@@ -70,6 +70,7 @@ namespace trace {
 		std::string SaveSceneAs();
 		std::string OpenScene();
 		void OpenScene(std::string& path);
+		void OpenSkeleton(std::string& path);
 		void HandleKeyPressed(KeyPressed* p_event);
 		void HandleKeyRelesed(KeyReleased* p_event);
 		void OnScenePlay();
@@ -134,6 +135,7 @@ namespace trace {
 		bool CloseProject();
 		void ReloadProjectAssembly();
 		void BuildProject();
+		void RenderUtilsWindows(float deltaTime);
 
 		void ProjectSettings();
 

@@ -33,6 +33,8 @@
 #include "animation/SequenceTrackChannel.h"
 #include "debug/Debugger.h"
 #include "external_utils.h"
+#include "animation/HumanoidRig.h"
+#include "utils/ImGui_utils.h"
 
 
 #include "glm/gtc/type_ptr.hpp"
@@ -59,6 +61,11 @@ void custom_solid();
 
 
 namespace trace {
+
+	//TEMP ---------------------------------
+	static bool show_humanoid_window = true;
+	static Ref<Animation::Skeleton> skeleton;
+	static Ref<Animation::HumanoidRig> rig;
 
 	void SerializationTest();
 	void DeserializationTest();
@@ -413,6 +420,8 @@ namespace trace {
 
 		//Project settings window
 		ProjectSettings();
+
+		RenderUtilsWindows(deltaTime);
 
 	}
 
@@ -946,6 +955,7 @@ namespace trace {
 			if (modified)
 			{
 				glm::vec3 pos, skew, scale;
+				glm::vec3 rotation;
 				glm::vec4 persp;
 				glm::quat rot;
 
@@ -960,7 +970,10 @@ namespace trace {
 
 				}
 
-				glm::decompose(transform, scale, rot, pos, skew, persp);
+				//glm::decompose(transform, scale, rot, pos, skew, persp);
+				DecomposeMatrix(transform, pos, rotation, scale);
+				rot = glm::quat((rotation));
+
 
 				switch (gizmo_mode)
 				{
@@ -1047,6 +1060,8 @@ namespace trace {
 
 		// Global Z-Coordinate
 		renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, 0.0f, line_lenght * 10.0f), glm::vec3(0.0f, 0.0f, -line_lenght * 10.0f), TRC_COL32(55, 55, 255, 255));
+
+		
 
 	}
 	void TraceEditor::CloseCurrentScene()
@@ -1135,6 +1150,15 @@ namespace trace {
 		m_currentScenePath = path;
 
 
+	}
+	void TraceEditor::OpenSkeleton(std::string& path)
+	{
+		if (Ref<Animation::Skeleton> result = AnimationsSerializer::DeserializeSkeleton(path))
+		{
+			skeleton = result;
+			rig = skeleton->GetHumanoidRig();
+			show_humanoid_window = true;
+		}
 	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
@@ -1386,7 +1410,7 @@ namespace trace {
 		m_currentScene->OnScriptStart();
 		m_currentScene->OnPhysicsStart();
 
-		//m_editorCamera.SetAspectRatio(m_viewportSize.x / m_viewportSize.y);
+		
 		if (m_currentScene)
 		{
 			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
@@ -1663,6 +1687,150 @@ project "{}"
 			}
 		}
 		
+
+	}
+
+	
+
+
+	void TraceEditor::RenderUtilsWindows(float deltaTime)
+	{
+		if (!show_humanoid_window)
+		{
+			return;
+		}
+
+		if(ImGui::Begin("Skeleton Viewer", &show_humanoid_window))
+		{
+			std::string skeleton_name = "None(Skeleton)";
+
+			if (skeleton)
+			{
+				skeleton_name = skeleton->GetName();
+			}
+
+			ImGui::Text("Skeleton: ");
+			ImGui::SameLine();
+			ImGui::Button(skeleton_name.c_str());
+
+			if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+			{
+				skeleton = new_skeleton;
+				rig = skeleton->GetHumanoidRig();
+			}
+
+			if (skeleton)
+			{
+
+				std::string rig_name = "None(Humanoid Rig)";
+				if (rig)
+				{
+					rig_name = rig->GetName();
+				}
+				ImGui::Text("Humanoid Rig: ");
+				ImGui::SameLine();
+				ImGui::Button(rig_name.c_str());
+
+				/*if (ImGui::BeginTooltip())
+				{
+					ImGui::Text("Drag and Drop Humanoid Rig Asset");
+					ImGui::EndTooltip();
+				}*/
+
+				if (Ref<Animation::HumanoidRig> new_rig = ImGuiDragDropResource<Animation::HumanoidRig>(HUMANOID_RIG_FILE_EXTENSION))
+				{
+					rig = new_rig;
+					skeleton->SetHumanoidRig(rig);
+				}
+
+				ImGui::Separator();
+				int32_t index = 0;
+				for (Animation::Bone& bone : skeleton->GetBones())
+				{
+					ImGui::PushID(index);
+					std::string& bone_name = STRING_FROM_ID(bone.GetStringID());
+					ImGui::Button(bone_name.c_str());
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload("Bone_IDX", &index, sizeof(int32_t));
+						ImGui::EndDragDropSource();
+					}
+
+					ImGui::PopID();
+
+					++index;
+				}
+			}
+			if (ImGui::Button("Save") && skeleton)
+			{
+				std::string skeleton_name = skeleton->GetName();
+				std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(skeleton_name));
+				AnimationsSerializer::SerializeSkeleton(skeleton, file_path.string());
+			}
+
+
+			
+			
+			
+
+			ImGui::End();
+		}
+
+		
+		if (!rig)
+		{
+			return;
+		}
+
+		ImGui::Begin("Humanoid Rig Modifier");
+
+		if (rig)
+		{
+			auto& rig_bones = rig->GetHumanoidBones();
+
+			int32_t index = 0;
+			for (int32_t& i : rig_bones)
+			{
+				ImGui::PushID(index);
+				ImGui::Text("%s : ", Animation::get_humanoid_bone_text((Animation::HumanoidBone)index));
+				ImGui::SameLine();
+				std::string bone_name = "None(Bone)";
+
+				if (skeleton && i != -1)
+				{
+					bone_name = STRING_FROM_ID(skeleton->GetBone(i)->GetStringID());
+				}
+
+				ImGui::Button(bone_name.c_str());
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Bone_IDX"))
+					{
+						int32_t bone_index = -1;
+						memcpy_s(&bone_index, sizeof(int32_t), payload->Data, payload->DataSize);
+						i = bone_index;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::PopID();
+
+				++index;
+			}
+			if (ImGui::Button("Save Humanoid Rig"))
+			{
+				std::string rig_name = rig->GetName();
+				std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(rig_name));
+				AnimationsSerializer::SerializeHumanoidRig(rig, file_path.string());
+			}
+
+
+		}
+
+		ImGui::End();
+
 
 	}
 

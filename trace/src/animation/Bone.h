@@ -19,8 +19,12 @@ namespace trace::Animation {
 
 		std::string& GetBoneName() { return m_name; }
 		glm::mat4 GetBindPose() { return m_bindPose; }
+		void SetBindPose(glm::mat4 bind_pose) { m_bindPose = bind_pose; }
 		glm::mat4 GetBoneOffset() { return m_boneOffset; }
 		StringID GetStringID() { return m_id; }
+
+		int32_t GetParentIndex() { return m_parent; }
+		void SetParentIndex(int32_t index) { m_parent = index; }
 
 
 	private:
@@ -28,6 +32,7 @@ namespace trace::Animation {
 		glm::mat4 m_boneOffset;
 		std::string m_name;
 		StringID m_id;
+		int32_t m_parent = -1;
 
 	protected:
 		ACCESS_CLASS_MEMBERS(Bone);

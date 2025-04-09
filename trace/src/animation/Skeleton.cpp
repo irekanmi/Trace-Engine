@@ -76,6 +76,39 @@ namespace trace::Animation {
 
 	}
 
+	glm::mat4 Skeleton::GetBoneGlobalBindPose(int32_t bone_index)
+	{
+		if (bone_index < 0 || bone_index > m_bones.size())
+		{
+			TRC_ERROR("Invalid bone index, Funtion: {}", __FUNCTION__);
+		}
+
+		Bone& bone = m_bones[bone_index];
+		return GetBoneGlobalBindPose(bone);
+	}
+
+	glm::mat4 Skeleton::GetBoneGlobalBindPose(Bone& bone)
+	{
+		if (bone.GetParentIndex() != -1)
+		{
+			Bone& parent_bone = m_bones[bone.GetParentIndex()];
+			return GetBoneGlobalBindPose(parent_bone) * bone.GetBindPose();
+		}
+
+		return bone.GetBindPose();
+	}
+
+	void Skeleton::GetBindPose(std::vector<Transform>& out_pose)
+	{
+		out_pose.resize(m_bones.size());
+
+		for (int32_t i = 0; i < m_bones.size(); i++)
+		{
+			Bone& bone = m_bones[i];
+			out_pose[i] = Transform(bone.GetBindPose());
+		}
+	}
+
 	Ref<Skeleton> Skeleton::Deserialize(UUID id)
 	{
 		Ref<Skeleton> result;

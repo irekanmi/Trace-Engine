@@ -755,6 +755,17 @@ namespace trace {
 			auto it = bones_map.find(child->mName.C_Str());
 			if (it != bones_map.end())
 			{
+				int32_t parent_index = -1;
+				auto p_it = std::find_if(bones.begin(), bones.end(), [&node, &parent_index](Animation::Bone& bone) {
+					++parent_index;
+					return bone.GetBoneName() == node->mName.C_Str();
+					});
+				if (p_it != bones.end())
+				{
+					it->second.SetParentIndex(parent_index);
+					glm::mat4 bind_pose = bones[parent_index].GetBoneOffset() * glm::inverse(it->second.GetBoneOffset());
+					it->second.SetBindPose(bind_pose);
+				}
 				bones.push_back(it->second);
 			}
 			add_bone(child, bones_map, bones);
@@ -763,8 +774,12 @@ namespace trace {
 
 	void create_skeleton(const aiScene* ass_scene, aiNode* node, std::unordered_map<std::string, Animation::Bone>& bones_map, std::string& root_node, std::string& filename, std::filesystem::path& directory, Importer* importer)
 	{
+		
 		std::vector<Animation::Bone> bones;
-		bones.push_back(bones_map[node->mName.C_Str()]);
+		Animation::Bone& bone = bones_map[node->mName.C_Str()];
+		bone.SetParentIndex(-1);
+		bone.SetBindPose(glm::inverse(bone.GetBoneOffset()));
+		bones.push_back(bone);
 		add_bone(node, bones_map, bones);
 		std::string import_filename = std::filesystem::path(filename).stem().string();
 

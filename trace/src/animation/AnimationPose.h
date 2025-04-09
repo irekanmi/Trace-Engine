@@ -14,7 +14,8 @@ namespace trace::Animation {
 
 	public:
 
-		bool Init(SkeletonInstance* skeleton);
+		bool Init(SkeletonInstance* skeleton_instance);
+		bool Init(Ref<Skeleton> skeleton);
 
 		std::vector<Transform>& GetLocalPose() { return m_localPose; }
 		std::vector<Transform>& GetGlobalPose();
@@ -23,6 +24,11 @@ namespace trace::Animation {
 		SkeletonInstance* GetSkeletonInstance() { return m_skeleton; }
 		Transform& GetRootMotionDelta() { return m_rootMotionDelta; }
 		void SetRootMotionBone(uint32_t index) { m_rootMotionBone = index; }//TODO: Ensure index is not greater than number of bones
+
+		glm::mat4 GetBoneGlobalPose(int32_t bone_index);
+		glm::mat4 GetBoneGlobalPose(Ref<Skeleton> skeleton, int32_t bone_index);
+
+		glm::mat4 GetBoneLocalPose(int32_t bone_index);
 
 	private:
 		std::vector<Transform> m_localPose;

@@ -9,6 +9,7 @@
 #include "animation/AnimationSequence.h"
 #include "FileStream.h"
 #include "AssetsInfo.h"
+#include "animation/HumanoidRig.h"
 
 #include <string>
 
@@ -46,6 +47,13 @@ namespace trace {
 		static bool SerializeSequence(Ref<Animation::Sequence> sequence, DataStream* stream);
 		static Ref<Animation::Sequence> DeserializeSequence(const std::string& file_path);
 		static Ref<Animation::Sequence> DeserializeSequence(DataStream* stream);
+
+		static bool SerializeHumanoidRig(Ref<Animation::HumanoidRig> sequence, const std::string& file_path);
+		static bool SerializeHumanoidRig(Ref<Animation::HumanoidRig> sequence, DataStream* stream);
+		static Ref<Animation::HumanoidRig> DeserializeHumanoidRig(const std::string& file_path);
+		static Ref<Animation::HumanoidRig> DeserializeHumanoidRig(DataStream* stream);
+
+		
 
 	private:
 

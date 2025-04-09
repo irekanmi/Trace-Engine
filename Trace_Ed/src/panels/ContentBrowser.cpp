@@ -174,6 +174,11 @@ namespace trace {
 				editor->OpenScene(path.string());
 			};
 
+			extensions_callbacks[SKELETON_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenSkeleton(path.string());
+			};
+
 			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
 			{
 				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
@@ -743,6 +748,7 @@ namespace trace {
 			ANIMATION_CLIP,
 			ANIMATION_GRAPH,
 			ANIMATION_SEQUENCE,
+			HUMANOID_RIG,
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -780,6 +786,10 @@ namespace trace {
 				if (ImGui::MenuItem("Animation Sequence"))
 				{
 					c_item = ANIMATION_SEQUENCE;
+				}
+				if (ImGui::MenuItem("Humanoid Rig"))
+				{
+					c_item = HUMANOID_RIG;
 				}
 				ImGui::EndMenu();
 			}
@@ -975,14 +985,44 @@ namespace trace {
 						Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_path);
 						AnimationsSerializer::SerializeSequence(sequence, sequence_path);
 						UUID new_id = UUID::GenUUID();
-						m_allFilesID[res + ANIMATION_CLIP_FILE_EXTENSION] = new_id;
+						m_allFilesID[res + SEQUENCE_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = sequence_path;
 						ProcessAllDirectory(true);
 						OnDirectoryChanged();
 					}
 					else
 					{
-						TRC_ERROR("{} has already been created", res + ANIMATION_CLIP_FILE_EXTENSION);
+						TRC_ERROR("{} has already been created", res + SEQUENCE_FILE_EXTENSION);
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case HUMANOID_RIG:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Humanoid Rig Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + HUMANOID_RIG_FILE_EXTENSION);
+
+					if (id == 0)
+					{
+						std::string rig_path = (m_currentDir / (res + HUMANOID_RIG_FILE_EXTENSION)).string();
+						Ref<Animation::HumanoidRig> rig = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(rig_path);
+						AnimationsSerializer::SerializeHumanoidRig(rig, rig_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + HUMANOID_RIG_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = rig_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + HUMANOID_RIG_FILE_EXTENSION);
 					}
 				}
 			}

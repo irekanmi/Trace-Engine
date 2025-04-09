@@ -11,6 +11,7 @@
 #include "reflection/TypeHash.h"
 #include "serialize/FileStream.h"
 #include "reflection/SerializeTypes.h"
+#include "core/defines.h"
 
 #include "imgui.h"
 #include "imgui_stdlib.h"
@@ -26,6 +27,8 @@ namespace trace {
     static int _link_id = 0x0A;
     static int link_id = 0;
     static int output_start_index = 64;
+    static bool is_window_focused = false;
+    static bool is_delete_pressed = false;
 
     uint32_t value_color[(int)Animation::ValueType::Max] =
     {
@@ -74,6 +77,10 @@ namespace trace {
             {
                 Reflection::TypeID<Animation::IfNode>(),
                 "If Node"
+            },
+            {
+                Reflection::TypeID<Animation::RetargetAnimationNode>(),
+                "Retarget Animation Node"
             }
     };
 
@@ -82,6 +89,8 @@ namespace trace {
 		//ImNodes::GetStyle().LinkLineSegmentsPerLength = 0.0f;
 
         trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
 
         type_node_render =
         {
@@ -301,7 +310,42 @@ namespace trace {
 
                     ImNodes::EndNode();
                 }
+            },
+            {
+                Reflection::TypeID<Animation::RetargetAnimationNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::RetargetAnimationNode* sample_node = (Animation::RetargetAnimationNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("Retarget Animation Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+
+                    Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+                    std::string clip_name = "None(Animation Clip)";
+
+                    if (clip)
+                    {
+                        clip_name = clip->GetName();
+                    }
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text(clip_name.c_str());
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
+
+                    ImNodes::EndNode();
+                }
             }
+
         };
 
         node_selected_render =
@@ -427,6 +471,57 @@ namespace trace {
                     }
 
                 }
+            },
+            {
+                Reflection::TypeID<Animation::RetargetAnimationNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::RetargetAnimationNode* sample_node = (Animation::RetargetAnimationNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+
+                    Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+                    std::string clip_name = "None(Animation Clip)";
+                    if (clip)
+                    {
+                        clip_name = clip->GetName();
+                    }
+
+                    ImGui::Text("Animation Clip: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(clip_name.c_str()))
+                    {
+                        
+                    }
+
+                    if (Ref<AnimationClip> new_clip = ImGuiDragDropResource<AnimationClip>(ANIMATION_CLIP_FILE_EXTENSION))
+                    {
+                        sample_node->SetAnimationClip(new_clip);
+                    }
+
+                    Ref<Animation::Skeleton> skeleton = sample_node->GetSkeleton();
+                    std::string skeleton_name = "None(Skeleton)";
+                    if (skeleton)
+                    {
+                        skeleton_name = skeleton->GetName();
+                    }
+
+                    ImGui::Text("Skeleton: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(skeleton_name.c_str()))
+                    {
+
+                    }
+
+                    if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+                    {
+                        sample_node->SetSkeleton(new_skeleton);
+                    }
+
+                    
+
+                }
             }
         };
 
@@ -457,6 +552,10 @@ namespace trace {
 
     void AnimationGraphEditor::OnEvent(Event* p_event)
     {
+        if (!is_window_focused)
+        {
+            return;
+        }
 
         switch (p_event->GetEventType())
         {
@@ -471,8 +570,47 @@ namespace trace {
 
             break;
         }
+        case EventType::TRC_KEY_RELEASED:
+        {
+            HandleKeyReleased(p_event);
+            break;
+        }
+        case EventType::TRC_KEY_PRESSED:
+        {
+            HandleKeyPressed(p_event);
+            break;
+        }
         }
 
+    }
+
+    void AnimationGraphEditor::HandleKeyReleased(Event* p_event)
+    {
+
+        KeyReleased* release = reinterpret_cast<KeyReleased*>(p_event);
+
+        switch (release->GetKeyCode())
+        {
+        case KEY_DELETE:
+        {
+            is_delete_pressed = false;
+            break;
+        }
+        }
+    }
+
+    void AnimationGraphEditor::HandleKeyPressed(Event* p_event)
+    {
+        KeyPressed* pressed = reinterpret_cast<KeyPressed*>(p_event);
+
+        switch (pressed->GetKeyCode())
+        {
+        case KEY_DELETE:
+        {
+            is_delete_pressed = true;
+            break;
+        }
+        }
     }
 
 	void AnimationGraphEditor::Render(float deltaTime)
@@ -659,6 +797,11 @@ namespace trace {
                         UUID node_id = m_currentGraph->CreateNode<Animation::IfNode>();
                         add_new_node(node_id);
                     }
+                    if (ImGui::MenuItem("Retarget Node"))
+                    {
+                        UUID node_id = m_currentGraph->CreateNode<Animation::RetargetAnimationNode>();
+                        add_new_node(node_id);
+                    }
                     ImGui::EndPopup();
                 }
             }
@@ -666,6 +809,8 @@ namespace trace {
 
 
         ImNodes::MiniMap();
+
+        is_window_focused = ImGui::IsWindowFocused() && ImGui::IsWindowHovered();
 		ImNodes::EndNodeEditor();
 
         if(m_currentGraph)
@@ -679,14 +824,32 @@ namespace trace {
             else
             {
                 int num_selected_nodes = ImNodes::NumSelectedNodes();
-                if (num_selected_nodes == 1)
+                if (num_selected_nodes > 0)
                 {
                     static std::vector<int> selected_nodes;
                     selected_nodes.resize(static_cast<size_t>(num_selected_nodes));
                     ImNodes::GetSelectedNodes(selected_nodes.data());
                     int32_t index = selected_nodes[0];
-                    m_selectedNode = new_graph ? nullptr : m_currentGraph->GetNode(m_graphIndex[index]);
-                    new_graph = false;
+                    UUID node_id = m_graphIndex[index];
+                    m_selectedNode = m_currentGraph->GetNode(node_id);
+
+                    if (is_delete_pressed)
+                    {
+                        m_selectedNode = nullptr;
+                        for (int32_t& i : selected_nodes)
+                        {
+                            node_id = m_graphIndex[i];
+                            Animation::Node* node = m_currentGraph->GetNode(node_id);
+                            if (node == m_currentNode)
+                            {
+                                continue;
+                            }
+                            m_currentGraph->DestroyNode(node_id);
+                            delete_node(node_id);
+
+                            ImNodes::ClearNodeSelection(i);
+                        }
+                    }
                 }
 
                 if (m_selectedNode)
@@ -729,27 +892,43 @@ namespace trace {
 
                 }
 
-                int32_t link_id;
-                if (ImNodes::IsLinkDestroyed(&link_id))
+                int num_selected_links = ImNodes::NumSelectedLinks();
+                if (num_selected_links > 0)
                 {
-                    Link& link = m_currentNodeLinks[link_id];
-                    int32_t mask = ~(~0 << 24);
-                    int32_t from_node_index = link.from & mask;
-                    int32_t to_node_index = link.to & mask;
+                    static std::vector<int> selected_links;
+                    selected_links.resize(static_cast<size_t>(num_selected_links));
+                    ImNodes::GetSelectedLinks(selected_links.data());
+                    int32_t link_id = selected_links[0];
+                    
+                    if (is_delete_pressed)
+                    {
+                        for (int32_t& _id : selected_links)
+                        {
+                            link_id = _id;
+                            Link& link = m_currentNodeLinks[link_id];
+                            int32_t mask = ~(~0 << 24);
+                            int32_t from_node_index = link.from & mask;
+                            int32_t to_node_index = link.to & mask;
 
-                    int32_t from_value_index = ((~mask & link.from) >> 24) - output_start_index;
-                    int32_t to_index = ((~mask & link.to) >> 24) - 1;
+                            int32_t from_value_index = ((~mask & link.from) >> 24) - output_start_index;
+                            int32_t to_index = ((~mask & link.to) >> 24) - 1;
 
-                    Animation::Node* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
-                    Animation::Node* to_node = m_currentGraph->GetNode(m_graphIndex[to_node_index]);
+                            Animation::Node* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
+                            Animation::Node* to_node = m_currentGraph->GetNode(m_graphIndex[to_node_index]);
 
-                    Animation::NodeInput& input = to_node->GetInputs()[to_index];
-                    input.node_id = 0;
-                    input.value_index = -1;
+                            Animation::NodeInput& input = to_node->GetInputs()[to_index];
+                            input.node_id = 0;
+                            input.value_index = -1;
 
-                    m_currentNodeLinks[link_id] = m_currentNodeLinks.back();
-                    m_currentNodeLinks.pop_back();
+                            m_currentNodeLinks[link_id] = m_currentNodeLinks.back();
+                            m_currentNodeLinks.pop_back();
+                            ImNodes::ClearLinkSelection(_id);
+                        }
+                        
+                    }
                 }
+
+                
 
                 
             }
@@ -1105,12 +1284,24 @@ namespace trace {
                 }
             }
         }
-        generate_current_node_children();
+        
+
+        node_index = -1;
+        auto it = std::find_if(m_currentNodeChildren.begin(), m_currentNodeChildren.end(), [&node_id, &node_index](UUID& val)
+            {
+                ++node_index;
+                return val == node_id;
+            });
+
+        
+        m_currentNodeChildren[node_index] = m_currentNodeChildren.back();
+        m_currentNodeChildren.pop_back();
 
         m_graphNodeIndex.erase(node_id);
         m_graphIndex.erase(node_index);
 
-        m_currentGraph->DestroyNode(node_id);
+        generate_current_node_links();
+        
     }
 
     int32_t AnimationGraphEditor::paramters_drop_down(int32_t id)
@@ -1346,6 +1537,63 @@ namespace trace {
                     m_selectedNode = nullptr;
                 }
             }
+
+            if (is_delete_pressed)
+            {
+                int32_t link_id = index;
+                if (link_id == start_link_id)
+                {
+                    Animation::EntryNode* entry_node = (Animation::EntryNode*)m_currentGraph->GetNode(state_machine->GetEntryNode());
+                    Animation::NodeInput& input = entry_node->GetInputs().back();
+                    input.node_id = 0;
+
+                    int32_t link_index = -1;
+                    auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link_id, &link_index](Link& link)
+                        {
+                            ++link_index;
+                            return link.id == link_id;
+                        });
+
+                    if (it != m_currentNodeLinks.end())
+                    {
+                        m_currentNodeLinks[link_index] = m_currentNodeLinks.back();
+                        m_currentNodeLinks.pop_back();
+                    }
+
+
+                }
+                else
+                {
+                    int32_t link_index = -1;
+                    auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link_id, &link_index](Link& link)
+                        {
+                            ++link_index;
+                            return link.id == link_id;
+                        });
+
+                    if (it != m_currentNodeLinks.end())
+                    {
+                        Link& link = m_currentNodeLinks[link_index];
+                        UUID transition_id = m_graphIndex[link.id];
+                        int32_t mask = ~(~0 << 24);
+                        int32_t from_node_index = link.from & mask;
+                        Animation::StateNode* from_node = (Animation::StateNode*)m_currentGraph->GetNode(m_graphIndex[from_node_index]);
+
+                        Animation::Node* transition_node = m_currentGraph->GetNode(transition_id);
+                        if (m_selectedNode == transition_node)
+                        {
+                            m_selectedNode = nullptr;
+                        }
+
+                        from_node->RemoveTransition(m_currentGraph.get(), transition_id);
+
+                        remove_node(transition_id);
+                        m_currentNodeLinks[link_index] = m_currentNodeLinks.back();
+                        m_currentNodeLinks.pop_back();
+                    }
+                }
+                ImNodes::ClearLinkSelection(link_id);
+            }
         }
 
         int32_t start_attr, end_attr;
@@ -1411,55 +1659,7 @@ namespace trace {
 
         }
 
-        int32_t link_id;
-        if (ImNodes::IsLinkDestroyed(&link_id))
-        {
-            if (link_id == start_link_id)
-            {
-                Animation::EntryNode* entry_node = (Animation::EntryNode*)m_currentGraph->GetNode(state_machine->GetEntryNode());
-                Animation::NodeInput& input = entry_node->GetInputs().back();
-                input.node_id = 0;
-
-                int32_t link_index = -1;
-                auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link_id, &link_index](Link& link) 
-                {
-                        ++link_index;
-                        return link.id == link_id;
-                });
-
-                if (it != m_currentNodeLinks.end())
-                {
-                    m_currentNodeLinks[link_index] = m_currentNodeLinks.back();
-                    m_currentNodeLinks.pop_back();
-                }
-
-
-            }
-            else
-            {
-                int32_t link_index = -1;
-                auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link_id, &link_index](Link& link)
-                    {
-                        ++link_index;
-                        return link.id == link_id;
-                    });
-
-                if (it != m_currentNodeLinks.end())
-                {
-                    Link& link = m_currentNodeLinks[link_index];
-                    UUID transition_id = m_graphIndex[link.id];
-                    int32_t mask = ~(~0 << 24);
-                    int32_t from_node_index = link.from & mask;
-                    Animation::StateNode* from_node = (Animation::StateNode*)m_currentGraph->GetNode(m_graphIndex[from_node_index]);
-
-                    from_node->RemoveTransition(m_currentGraph.get(), transition_id);
-
-                    remove_node(transition_id);
-                    m_currentNodeLinks[link_index] = m_currentNodeLinks.back();
-                    m_currentNodeLinks.pop_back();
-                }
-            }          
-        }
+        
 
         
 

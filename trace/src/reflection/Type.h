@@ -8,6 +8,7 @@
 #include <vector>
 #include <set>
 #include <unordered_set>
+#include <array>
 
 namespace trace::Reflection {
 
@@ -17,6 +18,10 @@ namespace trace::Reflection {
 
 	template<typename T, typename Alloc>
 	struct IsTypeContainer<std::vector<T, Alloc>> : std::true_type
+	{};
+
+	template<typename T, size_t container_size>
+	struct IsTypeContainer<std::array<T, container_size>> : std::true_type
 	{};
 
 	template<typename T, typename Compare, typename Alloc>
@@ -49,6 +54,12 @@ namespace trace::Reflection {
 
 	template<typename T, typename Alloc>
 	struct ContainerTraits<std::vector<T, Alloc>>
+	{
+		using type = T;
+	};
+	
+	template<typename T, size_t container_size>
+	struct ContainerTraits<std::array<T, container_size>>
 	{
 		using type = T;
 	};

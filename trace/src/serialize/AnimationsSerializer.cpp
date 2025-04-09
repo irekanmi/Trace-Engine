@@ -534,6 +534,8 @@ namespace trace {
 		delete[] data;// TODO: Use custom allocator
 	}
 
+	// Skeleton -----------------------------------------------
+
 	bool AnimationsSerializer::SerializeSkeleton(Ref<Animation::Skeleton> skeleton, const std::string& file_path)
 	{
 		if (!skeleton)
@@ -547,6 +549,10 @@ namespace trace {
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Skeleton Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Root Node" << YAML::Value << skeleton->GetRootNode();
+		if (skeleton->GetHumanoidRig())
+		{
+			emit << YAML::Key << "Humanoid Rig" << YAML::Value << GetUUIDFromName(skeleton->GetHumanoidRig()->GetName());
+		}
 
 		emit << YAML::Key << "Bones" << YAML::Value << YAML::BeginSeq;
 
@@ -558,6 +564,7 @@ namespace trace {
 			emit << YAML::Key << "Bone Name" << YAML::Value << bone.GetBoneName();
 			emit << YAML::Key << "Bind Pose" << YAML::Value << bone.GetBindPose();
 			emit << YAML::Key << "Bone Offset" << YAML::Value << bone.GetBoneOffset();
+			emit << YAML::Key << "Parent Index" << YAML::Value << bone.GetParentIndex();
 			emit << YAML::EndMap;
 		}
 
@@ -623,6 +630,8 @@ namespace trace {
 		std::string skeleton_name = p.filename().string();
 		std::string root_node = data["Root Node"].as<std::string>();
 
+		
+
 		std::vector<Animation::Bone> bones;
 		for (auto& bone : data["Bones"])
 		{
@@ -632,12 +641,28 @@ namespace trace {
 
 			Animation::Bone bone_ins;
 			bone_ins.Create(bone_name, bind_pose, bone_offset);
+			if (bone["Parent Index"])
+			{
+				int32_t parent_index = bone["Parent Index"].as<int32_t>();
+				bone_ins.SetParentIndex(parent_index);
+			}
 
 			bones.push_back(bone_ins);
 		}
 
 		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>(file_path);
 		result->Create(skeleton_name, root_node,bones);
+
+		if (data["Humanoid Rig"])
+		{
+			UUID file_id = data["Humanoid Rig"].as<UUID>();
+			if (file_id != 0)
+			{
+				std::string file_path = GetPathFromUUID(file_id).string();
+				Ref<Animation::HumanoidRig> rig = DeserializeHumanoidRig(file_path);
+				result->SetHumanoidRig(rig);
+			}
+		}
 
 		return result;
 	}
@@ -659,6 +684,8 @@ namespace trace {
 		return skeleton;
 	}
 
+
+	// Animation Graph ----------------------------------------------
 
 	bool AnimationsSerializer::SerializeAnimGraph(Ref<Animation::Graph> graph, const std::string& file_path)
 	{
@@ -751,6 +778,7 @@ namespace trace {
 		return graph;
 	}
 
+	// Sequence -------------------------------------------------------
 	bool AnimationsSerializer::SerializeSequence(Ref<Animation::Sequence> sequence, const std::string& file_path)
 	{
 		if (!sequence)
@@ -842,5 +870,99 @@ namespace trace {
 
 		return sequence;
 	}
+
+	// HumanoidRig -------------------------------------------------------
+	bool AnimationsSerializer::SerializeHumanoidRig(Ref<Animation::HumanoidRig> humanoid_rig, const std::string& file_path)
+	{
+		if (!humanoid_rig)
+		{
+			return false;
+		}
+
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "HumanoidRig Version" << YAML::Value << "0.0.0.0";
+
+		Reflection::Serialize(*humanoid_rig.get(), &emit, nullptr, Reflection::SerializationFormat::YAML);
+
+
+		emit << YAML::EndMap;
+
+		YAML::save_emitter_data(emit, file_path);
+
+		return true;
+	}
+
+	bool AnimationsSerializer::SerializeHumanoidRig(Ref<Animation::HumanoidRig> humanoid_rig, DataStream* stream)
+	{
+		if (!humanoid_rig)
+		{
+			return false;
+		}
+
+		std::string humanoid_rig_name = humanoid_rig->GetName();
+		Reflection::Serialize(humanoid_rig_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Reflection::Serialize(*humanoid_rig.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		return true;
+	}
+
+	Ref<Animation::HumanoidRig> AnimationsSerializer::DeserializeHumanoidRig(const std::string& file_path)
+	{
+		Ref<Animation::HumanoidRig> result;
+
+		std::filesystem::path p = file_path;
+		Ref<Animation::HumanoidRig> humanoid_rig = GenericAssetManager::get_instance()->Get<Animation::HumanoidRig>(p.filename().string());
+		if (humanoid_rig)
+		{
+			TRC_WARN("{} has already been loaded", p.filename().string());
+			return humanoid_rig;
+		}
+
+		YAML::Node data;
+		if (!YAML::load_yaml_data(file_path, data))
+		{
+			return result;
+		}
+
+		if (!data["Trace Version"] || !data["HumanoidRig Version"])
+		{
+			TRC_ERROR("These file is not a valid animation clip file {}", file_path);
+			return result;
+		}
+
+		std::string trace_version = data["Trace Version"].as<std::string>(); // TODO: To be used later
+		std::string humanoid_rig_version = data["HumanoidRig Version"].as<std::string>(); // TODO: To be used later
+		std::string humanoid_rig_name = p.filename().string();
+
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(file_path);
+
+		Reflection::Deserialize(*result.get(), &data, nullptr, Reflection::SerializationFormat::YAML);
+
+
+		return result;
+	}
+
+	Ref<Animation::HumanoidRig> AnimationsSerializer::DeserializeHumanoidRig(DataStream* stream)
+	{
+		std::string humanoid_rig_name;
+		Reflection::Deserialize(humanoid_rig_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		Ref<Animation::HumanoidRig> humanoid_rig = GenericAssetManager::get_instance()->Get<Animation::HumanoidRig>(humanoid_rig_name);
+		if (humanoid_rig)
+		{
+			TRC_WARN("{} has already been loaded", humanoid_rig_name);
+			return humanoid_rig;
+		}
+
+
+		humanoid_rig = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(humanoid_rig_name);
+
+		Reflection::Deserialize(*humanoid_rig.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		return humanoid_rig;
+	}
+
 
 }

@@ -50,6 +50,7 @@ namespace trace::Animation {
 
 		virtual void Update(GraphInstance* instance, float deltaTime) = 0;
 		virtual void Init(Graph* graph) = 0;
+		virtual void Destroy(Graph* graph) {};
 
 		// NOTE: Used to reset a node to it's start runtime values
 		// Also reseting a node will reset all input nodes connected to it

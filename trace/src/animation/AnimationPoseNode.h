@@ -48,6 +48,7 @@ namespace trace::Animation {
 		virtual void Update(GraphInstance* instance, float deltaTime) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
+		virtual void Destroy(Graph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 		
 		UUID CreateState(Graph* graph, StringID state_name);
@@ -97,6 +98,7 @@ namespace trace::Animation {
 		virtual void Update(GraphInstance* instance, float deltaTime) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
+		virtual void Destroy(Graph* graph) override;
 		void SetName(StringID name) { m_name = name; }
 		StringID GetName() { return m_name; }
 		virtual void Reset(GraphInstance* instance);
@@ -238,4 +240,44 @@ namespace trace::Animation {
 		GET_TYPE_ID;
 
 	};
+
+	class RetargetAnimationNode : public PoseNode
+	{
+
+	public:
+
+		struct RuntimeData
+		{
+			float start_time = 0.0f;
+			float elasped_time = 0.0f;
+			PoseNodeResult final_pose;
+			Pose animation_pose;
+			Node::Definition definition;
+		};
+
+
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
+
+		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
+		void SetSkeleton(Ref<Skeleton> skeleton) { m_skeleton = skeleton; }
+
+		Ref<AnimationClip> GetAnimationClip() { return m_animation; }
+		void SetAnimationClip(Ref<AnimationClip> animation) { m_animation = animation; }
+
+
+	private:
+		Ref<Skeleton> m_skeleton;
+		Ref<AnimationClip> m_animation;
+
+	protected:
+
+		ACCESS_CLASS_MEMBERS(RetargetAnimationNode);
+		GET_TYPE_ID;
+	};
+
 }

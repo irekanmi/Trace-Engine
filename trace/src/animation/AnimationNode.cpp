@@ -198,6 +198,8 @@ namespace trace::Animation {
 			break;
 		}
 		}
+
+		return nullptr;
 	}
 
 	void IfNode::Init(Graph* graph)

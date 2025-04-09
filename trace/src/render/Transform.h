@@ -21,6 +21,7 @@ namespace trace {
 		Transform(glm::quat rotation);
 		Transform(glm::quat rotation, glm::vec3 scale);
 		Transform(float scale_x, float scale_y, float scale_z);
+		Transform(glm::mat4 pose);
 		~Transform();
 
 		// Returns value of the position
@@ -56,6 +57,7 @@ namespace trace {
 
 		bool IsDirty() { return m_dirty; }
 		void SetDirty(bool dirty) { m_dirty = dirty; }
+		bool IsIdentity();
 
 		static Transform CombineTransform(Transform& parent, Transform& child);
 		static Transform CombineTransform_Direction(Transform& parent, Transform& child);
