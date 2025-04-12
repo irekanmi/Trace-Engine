@@ -9,6 +9,7 @@
 #include "external_utils.h"
 #include "core/Coretypes.h"
 #include "resource/GenericAssetManager.h"
+#include "debug/Debugger.h"
 
 bool trace::AnimationGraph::HasAnimationClip(Ref<AnimationClip> clip)
 {
@@ -155,6 +156,8 @@ namespace trace::Animation {
         m_started = false;
     }
 
+    
+
     void GraphInstance::Update(float deltaTime, Scene* scene, UUID id)
     {
         if (!m_started)
@@ -177,6 +180,8 @@ namespace trace::Animation {
             Entity entity = scene->GetEntity(id);
             Transform& pose = entity.GetComponent<TransformComponent>()._transform;
             Transform::ApplyRootMotion(pose, root_motion_delta);
+
+           
         }
         
 

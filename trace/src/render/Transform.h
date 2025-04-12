@@ -52,6 +52,7 @@ namespace trace {
 		void Rotate(float value, glm::vec3 direction);
 		void Rotate(glm::vec3 euler);// NOTE: Used to set the rotation
 		void RotateBy(glm::vec3 euler);// NOTE: Used to rotate by certain amount
+		void Rotate(glm::quat amount);
 		void Scale(float value);
 		void Scale(glm::vec3 value);
 
@@ -65,6 +66,9 @@ namespace trace {
 		static Transform Blend(Transform& source, Transform& target, float blend_weight);
 		static void ApplyRootMotion(Transform& pose, Transform& root_motion_delta);
 
+		Transform& operator *=(Transform& rhs);
+		Transform operator *(Transform& rhs);
+
 	private:
 		void recalculate_local_matrix();
 
@@ -72,7 +76,7 @@ namespace trace {
 		glm::mat4 m_model = glm::identity<glm::mat4>();
 		glm::quat m_rotation = glm::identity<glm::quat>();
 		glm::vec3 m_position = glm::vec3(0.0f);
-		glm::vec3 m_scale = glm::vec3(0.0f);
+		glm::vec3 m_scale = glm::vec3(1.0f);
 		bool m_dirty = true;
 
 	protected:

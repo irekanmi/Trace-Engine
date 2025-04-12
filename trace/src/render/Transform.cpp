@@ -5,6 +5,7 @@
 #include "glm/gtx/quaternion.hpp"
 #include "glm/gtx/euler_angles.hpp"
 #include "core/Utils.h"
+#include "core/io/Logging.h"
 
 
 
@@ -157,6 +158,11 @@ namespace trace {
 		Rotate(rot);
 	}
 
+	void Transform::Rotate(glm::quat amount)
+	{
+		m_rotation = glm::normalize(amount * m_rotation);
+	}
+
 	void Transform::Scale(float value)
 	{
 		m_scale += glm::vec3(value);
@@ -247,8 +253,34 @@ namespace trace {
 
 	void Transform::ApplyRootMotion(Transform& pose, Transform& root_motion_delta)
 	{
+		pose.Rotate(root_motion_delta.GetRotation());
 		Transform model_space_delta = Transform::CombineTransform_Direction(pose, root_motion_delta);
+		
+		//glm::vec3 pos_delta = pose.GetRotation() * root_motion_delta.GetPosition();
 		pose.Translate(model_space_delta.GetPosition());
+		//pos_delta *= pose.GetScale();
+		//pose.Translate(pos_delta);
+
+		//pose = root_motion_delta * pose;
+
+	}
+
+	Transform& Transform::operator*=(Transform& rhs)
+	{
+		m_rotation = glm::normalize(m_rotation * rhs.m_rotation);
+		m_scale *= rhs.m_scale;
+		m_position = (rhs.m_rotation * (m_position * rhs.m_scale)) + rhs.m_position;
+		m_dirty = true;
+		
+
+		return *this;
+	}
+
+	Transform Transform::operator*(Transform& rhs)
+	{
+		Transform result = *this;
+		result *= rhs;
+		return result;
 	}
 
 	void Transform::recalculate_local_matrix()

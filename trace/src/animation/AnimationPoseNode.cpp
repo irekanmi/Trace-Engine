@@ -6,6 +6,7 @@
 #include "scene/Entity.h"
 #include "animation/AnimationBlend.h"
 #include "animation/AnimationGraph.h"
+#include "debug/Debugger.h"
 
 
 namespace trace::Animation {
@@ -660,7 +661,7 @@ namespace trace::Animation {
 	// ----------------------------------------------------------------------------
 
 
-	// Animation Sample Node -----------------------------------------------------------
+	// Retarget Animation Node -----------------------------------------------------------
 
 	bool RetargetAnimationNode::Instanciate(GraphInstance* instance)
 	{

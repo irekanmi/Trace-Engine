@@ -7,13 +7,19 @@
 #include "core/Utils.h"
 #include "scene/Components.h"
 #include "animation/AnimationPose.h"
+#include "debug/Debugger.h"
+#include "core/Utils.h"
 
 #include "glm/glm.hpp"
+#include "glm/gtx/quaternion.hpp"
 
 
 
 namespace trace {
 	
+
+
+
 
 	bool AnimationEngine::Init()
 	{
@@ -108,8 +114,9 @@ namespace trace {
 		}
 
 		Animation::SkeletonInstance* skeleton_instance = out_pose->GetSkeletonInstance();
+		Ref<Animation::Skeleton> skeleton = skeleton_instance->GetSkeleton();
 
-		SampleClipWithRootMotionDelta(clip, skeleton_instance->GetSkeleton(), from_time, to_time, out_pose, looping);
+		SampleClipWithRootMotionDelta(clip, skeleton, from_time, to_time, out_pose, looping);
 		
 	}
 
@@ -120,7 +127,8 @@ namespace trace {
 			return;
 		}
 
-
+		Transform& root_motion_delta = out_pose->GetRootMotionDelta();
+		root_motion_delta = Transform::Identity();
 		if (looping)
 		{
 
@@ -134,13 +142,13 @@ namespace trace {
 		SampleClip(clip, skeleton, to_time, out_pose, looping);
 
 		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
-		Transform& root_motion_delta = out_pose->GetRootMotionDelta();
-		root_motion_delta = Transform::Identity();
+		
 		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
 		if (!bone)
 		{
 			return;
 		}
+		Transform bind_pose(bone->GetBindPose());
 		Transform& root_pose = out_pose->GetLocalPose()[root_motion_info.root_bone_index];
 		out_pose->SetRootMotionBone(root_motion_info.root_bone_index);
 
@@ -148,16 +156,25 @@ namespace trace {
 		if (root_motion_info.Y_motion)
 		{
 			glm::vec3 curr_position = root_pose.GetPosition();
-			curr_position.y = 0.0f;
+			curr_position.y = bind_pose.GetPosition().y;
 			root_pose.SetPosition(curr_position);
 		}
 
 		if (root_motion_info.XZ_motion)
 		{
 			glm::vec3 curr_position = root_pose.GetPosition();
-			curr_position.x = 0.0f;
-			curr_position.z = 0.0f;
+			curr_position.x = bind_pose.GetPosition().x;
+			curr_position.z = bind_pose.GetPosition().z;
 			root_pose.SetPosition(curr_position);
+		}
+
+		if (root_motion_info.enable_rotation)
+		{
+			glm::quat rotation = root_pose.GetRotation();
+			glm::quat yaw_rotation = extract_yaw(rotation);
+			rotation = glm::inverse(yaw_rotation) * rotation;
+
+			root_pose.SetRotation(rotation);
 		}
 
 		root_motion_delta = GetRootMotionDelta(clip, skeleton, from_time, to_time, looping);
@@ -276,6 +293,8 @@ namespace trace {
 		}
 	}
 
+	
+
 	Transform AnimationEngine::GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float from_time, float to_time, bool looping)
 	{
 		Transform result;
@@ -301,16 +320,30 @@ namespace trace {
 			return result;
 		}
 
+		float from_elasped_time = fmod(from_time, clip->GetDuration());
+		float to_elasped_time = fmod(to_time, clip->GetDuration());
+
 		auto& channel = clip->GetTracks()[bone->GetStringID()];
 		auto& position_track = channel[AnimationDataType::POSITION];
 		auto& rotation_track = channel[AnimationDataType::ROTATION];
-		glm::vec3& _pos = *(glm::vec3*)(position_track.back().data);
-		glm::quat& _rot = *(glm::quat*)(rotation_track.back().data);
+		glm::vec3& last_pos = *(glm::vec3*)(position_track.back().data);
+		glm::quat& last_rot = *(glm::quat*)(rotation_track.back().data);
+
+		glm::vec3& first_pos = *(glm::vec3*)(position_track.front().data);
+		glm::quat& first_rot = *(glm::quat*)(rotation_track.front().data);
+
+		glm::vec3 diff_pos = last_pos - first_pos;
+		glm::quat diff_rot = last_rot * glm::inverse(first_rot);
+		diff_rot = glm::normalize(diff_rot);
+
+		
 
 		AnimatedOutput pos_output = GetFrameData(clip, channel, AnimationDataType::POSITION, from_time, looping);
 		AnimatedOutput rot_output = GetFrameData(clip, channel, AnimationDataType::ROTATION, from_time, looping);
 		glm::vec3 position = *(glm::vec3*)(&pos_output.data);
 		glm::quat rotation = *(glm::quat*)(&rot_output.data);
+
+
 
 		AnimatedOutput root_pos_output = GetFrameData(clip, channel, AnimationDataType::POSITION, to_time, looping);
 		AnimatedOutput root_rot_output = GetFrameData(clip, channel, AnimationDataType::ROTATION, to_time, looping);
@@ -320,18 +353,30 @@ namespace trace {
 		int f_times = int(from_time / clip->GetDuration());
 		int t_times = int(to_time / clip->GetDuration());
 
-		if (from_time > clip->GetDuration())
+
+		if (from_elasped_time > to_elasped_time)
 		{
-			position += (_pos * float(f_times));
+			root_position += diff_pos;
+			root_rotation = glm::normalize(root_rotation * diff_rot);
 		}
-		if (to_time > clip->GetDuration())
+
+		glm::quat rot_delta = root_rotation * glm::inverse(rotation);
+		rot_delta = glm::normalize(rot_delta);
+		glm::vec3 pos_delta = root_position - position;
+
+		if (root_motion_info.enable_rotation)
 		{
-			root_position += (_pos * float(t_times));
+
+			rot_delta = extract_yaw(rot_delta);			
+			result.SetRotation(rot_delta);
+
+			pos_delta = glm::inverse(extract_yaw(rotation)) * pos_delta;
+
+
 		}
 
 		if (root_motion_info.Y_motion)
 		{
-			glm::vec3 pos_delta = root_position - position;
 			glm::vec3 motion_delta = result.GetPosition();
 			motion_delta.y = pos_delta.y;
 			result.SetPosition(motion_delta);
@@ -340,12 +385,13 @@ namespace trace {
 
 		if (root_motion_info.XZ_motion)
 		{
-			glm::vec3 pos_delta = root_position - position;
 			glm::vec3 motion_delta = result.GetPosition();
 			motion_delta.x = pos_delta.x;
 			motion_delta.z = pos_delta.z;
-			result.SetPosition(motion_delta);
+			result.SetPosition(motion_delta); 
 		}
+
+		
 
 		return result;
 	}

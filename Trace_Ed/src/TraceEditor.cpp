@@ -63,7 +63,7 @@ void custom_solid();
 namespace trace {
 
 	//TEMP ---------------------------------
-	static bool show_humanoid_window = true;
+	static bool show_humanoid_window = false;
 	static Ref<Animation::Skeleton> skeleton;
 	static Ref<Animation::HumanoidRig> rig;
 
@@ -944,7 +944,7 @@ namespace trace {
 				glm::value_ptr(cam_view),
 				glm::value_ptr(proj),
 				(ImGuizmo::OPERATION)gizmo_mode,
-				ImGuizmo::MODE::WORLD,
+				ImGuizmo::MODE::LOCAL,
 				glm::value_ptr(transform),
 				nullptr,// TODO: Check Docs {deltaMatrix}
 				false,// snap

@@ -43,6 +43,18 @@ namespace trace {
 
 	inline uint64_t hash_string(const std::string& str);
 
+	inline glm::quat extract_yaw(glm::quat rotation)
+	{
+		glm::vec3 forward(0.0f, 0.0f, 1.0f);
+		forward = rotation * forward;
+		forward.y = 0.0f;
+		forward = glm::normalize(forward);
+		float yaw = atan2(forward.x, forward.z);
+		glm::quat result = glm::angleAxis(yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		return result;
+	}
+
 }
 
 #define STR_ID(string) trace::GetStringID(string)
