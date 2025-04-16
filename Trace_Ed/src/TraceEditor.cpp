@@ -954,9 +954,8 @@ namespace trace {
 
 			if (modified)
 			{
-				glm::vec3 pos, skew, scale;
+				glm::vec3 pos, scale;
 				glm::vec3 rotation;
-				glm::vec4 persp;
 				glm::quat rot;
 
 				if (has_parent)

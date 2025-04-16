@@ -81,6 +81,10 @@ namespace trace {
             {
                 Reflection::TypeID<Animation::RetargetAnimationNode>(),
                 "Retarget Animation Node"
+            },
+            {
+                Reflection::TypeID<Animation::WarpAnimationNode>(),
+                "Warp Animation Node"
             }
     };
 
@@ -344,6 +348,40 @@ namespace trace {
 
                     ImNodes::EndNode();
                 }
+            },
+            {
+                Reflection::TypeID<Animation::WarpAnimationNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::WarpAnimationNode* sample_node = (Animation::WarpAnimationNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("Warp Animation Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+
+                    Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+                    std::string clip_name = "None(Animation Clip)";
+
+                    if (clip)
+                    {
+                        clip_name = clip->GetName();
+                    }
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text(clip_name.c_str());
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
+
+                    ImNodes::EndNode();
+                }
             }
 
         };
@@ -522,6 +560,35 @@ namespace trace {
                     
 
                 }
+            },
+            {
+                Reflection::TypeID<Animation::WarpAnimationNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::WarpAnimationNode* sample_node = (Animation::WarpAnimationNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+
+                    Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+                    std::string clip_name = "None(Animation Clip)";
+                    if (clip)
+                    {
+                        clip_name = clip->GetName();
+                    }
+
+                    ImGui::Text("Animation Clip: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(clip_name.c_str()))
+                    {
+
+                    }
+
+                    if (Ref<AnimationClip> new_clip = ImGuiDragDropResource<AnimationClip>(ANIMATION_CLIP_FILE_EXTENSION))
+                    {
+                        sample_node->SetAnimationClip(new_clip);
+                    }
+
+                }
             }
         };
 
@@ -626,7 +693,7 @@ namespace trace {
             
 
             ImGui::Button(graph_name.c_str());
-            Ref<Animation::Graph> result = ImGuiDragDropResource<Animation::Graph>(".trcag");
+            Ref<Animation::Graph> result = ImGuiDragDropResource<Animation::Graph>(ANIMATION_GRAPH_FILE_EXTENSION);
             if (result)
             {
                 SetAnimationGraph(result);
@@ -800,6 +867,11 @@ namespace trace {
                     if (ImGui::MenuItem("Retarget Node"))
                     {
                         UUID node_id = m_currentGraph->CreateNode<Animation::RetargetAnimationNode>();
+                        add_new_node(node_id);
+                    }
+                    if (ImGui::MenuItem("Warp Node"))
+                    {
+                        UUID node_id = m_currentGraph->CreateNode<Animation::WarpAnimationNode>();
                         add_new_node(node_id);
                     }
                     ImGui::EndPopup();

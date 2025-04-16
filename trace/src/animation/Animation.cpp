@@ -42,6 +42,40 @@ namespace trace {
 		return true;
 	}
 
+	
+
+	bool AnimationClip::GetRootMotionData(std::vector<Transform>& out_data, Ref<Animation::Skeleton> skeleton)
+	{
+		if (!HasRootMotion())
+		{
+			return false;
+		}
+
+		AnimationClip* clip = this;
+
+
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+		auto& channel = clip->GetTracks()[bone->GetStringID()];
+		auto& position_track = channel[AnimationDataType::POSITION];
+		auto& rotation_track = channel[AnimationDataType::ROTATION];
+
+		out_data.clear();
+		out_data.resize(position_track.size());
+
+		for (int32_t i = 0; i < position_track.size(); i++)
+		{
+
+			glm::vec3& pos = *(glm::vec3*)(position_track[i].data);
+			glm::quat& rot = *(glm::quat*)(rotation_track[i].data);
+
+			out_data[i] = Transform(pos, rot);
+		}
+
+		return true;
+	}
+
 	Ref<AnimationClip> AnimationClip::Deserialize(UUID id)
 	{
 		Ref<AnimationClip> result;

@@ -5,6 +5,7 @@
 #include "core/Utils.h"
 #include "scene/Entity.h"
 #include "scene/Scene.h"
+#include "render/Transform.h"
 
 #include "glm/glm.hpp"
 
@@ -36,16 +37,23 @@ namespace trace::Animation {
 
 		for (uint32_t i = 0; i < source_pose.size(); i++)
 		{
-			glm::vec3 position = trace::lerp(source_pose[i].GetPosition(), target_pose[i].GetPosition(), blend_weight);
-			glm::quat rotation = trace::slerp(source_pose[i].GetRotation(), target_pose[i].GetRotation(), blend_weight);
-			glm::vec3 scale = trace::lerp(source_pose[i].GetScale(), target_pose[i].GetScale(), blend_weight);
-
-			result->GetLocalPose()[i].SetPosition(position);
-			result->GetLocalPose()[i].SetRotation(rotation);
-			result->GetLocalPose()[i].SetScale(scale);
+			Transform result_pose;
+			BlendTransform(&source_pose[i], &target_pose[i], &result_pose, blend_weight);
+			result->GetLocalPose()[i] = result_pose;
 		}
 
 		res_root_motion = Transform::Blend(src_root_motion, dst_root_motion, blend_weight);
+	}
+
+	void BlendTransform(Transform* source, Transform* target, Transform* result, float blend_weight)
+	{
+		glm::vec3 position = trace::lerp(source->GetPosition(), target->GetPosition(), blend_weight);
+		glm::quat rotation = trace::slerp(source->GetRotation(), target->GetRotation(), blend_weight);
+		glm::vec3 scale = trace::lerp(source->GetScale(), target->GetScale(), blend_weight);
+
+		result->SetPosition(position);
+		result->SetRotation(rotation);
+		result->SetScale(scale);
 	}
 
 }

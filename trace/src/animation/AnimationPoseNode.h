@@ -280,4 +280,60 @@ namespace trace::Animation {
 		GET_TYPE_ID;
 	};
 
+	class WarpSection
+	{
+
+	public:
+
+		int32_t start_frame;
+		int32_t end_frame;
+
+		glm::vec3 target;
+
+	private:
+	protected:
+
+	};
+
+	class WarpAnimationNode : public PoseNode
+	{
+
+	public:
+
+		struct RuntimeData
+		{
+			float start_time = 0.0f;
+			float elasped_time = 0.0f;
+			PoseNodeResult final_pose;
+			Node::Definition definition;
+			std::vector<Transform> warped_root_motion;
+			bool update_warp = true;
+		};
+
+
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
+
+		Ref<AnimationClip> GetAnimationClip() { return m_animation; }
+		void SetAnimationClip(Ref<AnimationClip> animation) { m_animation = animation; }
+
+
+	private:
+		bool get_root_motion_delta(GraphInstance* instance);
+		bool UpdateWarp(GraphInstance* instance);
+
+	private:
+		Ref<AnimationClip> m_animation;
+		std::vector<Transform> m_deltaTransforms;
+
+	protected:
+
+		ACCESS_CLASS_MEMBERS(WarpAnimationNode);
+		GET_TYPE_ID;
+	};
+
 }

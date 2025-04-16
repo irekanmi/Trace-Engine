@@ -9,6 +9,7 @@
 #include "animation/AnimationPose.h"
 #include "debug/Debugger.h"
 #include "core/Utils.h"
+#include "animation/AnimationBlend.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtx/quaternion.hpp"
@@ -396,6 +397,113 @@ namespace trace {
 		return result;
 	}
 
+	Transform AnimationEngine::GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, std::vector<Transform>& root_motion_data, float from_time, float to_time, bool looping)
+	{
+		Transform result = Transform::Identity();
+		if (looping)
+		{
+
+		}
+		else if (!looping && (from_time > clip->GetDuration() || to_time > clip->GetDuration()))
+		{
+			return result;
+		}
+
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+		if (!bone)
+		{
+			return result;
+		}
+
+		float from_elasped_time = fmod(from_time, clip->GetDuration());
+		float to_elasped_time = fmod(to_time, clip->GetDuration());
+
+		auto& channel = clip->GetTracks()[bone->GetStringID()];
+
+		auto find_value = [&](float time) -> Transform 
+		{
+			int32_t num_frames = root_motion_data.size();
+			float lerp_value = 0.0f;
+			int32_t index = GetFrameIndex(clip, channel, AnimationDataType::POSITION, time, looping, &lerp_value);
+
+			Transform& _a = root_motion_data[index];
+
+			if (index < (num_frames - 1))
+			{
+				Transform& _b = root_motion_data[index + 1];
+				Transform result;
+				Animation::BlendTransform(&_a, &_b, &result, lerp_value);
+				return result;
+			}
+
+			return _a;
+		};
+
+		glm::vec3 last_pos = root_motion_data.back().GetPosition();
+		glm::quat last_rot = root_motion_data.back().GetRotation();
+
+		glm::vec3 first_pos = root_motion_data.front().GetPosition();
+		glm::quat first_rot = root_motion_data.front().GetRotation();
+
+		glm::vec3 diff_pos = last_pos - first_pos;
+		glm::quat diff_rot = last_rot * glm::inverse(first_rot);
+		diff_rot = glm::normalize(diff_rot);
+
+
+
+		Transform prev_pose = find_value(from_time);
+		glm::vec3 position = prev_pose.GetPosition();
+		glm::quat rotation = prev_pose.GetRotation();
+
+
+
+		Transform curr_pose = find_value(to_time);
+		glm::vec3 root_position = curr_pose.GetPosition();
+		glm::quat root_rotation = curr_pose.GetRotation();
+
+		if (from_elasped_time > to_elasped_time)
+		{
+			root_position += diff_pos;
+			root_rotation = glm::normalize(root_rotation * diff_rot);
+		}
+
+		glm::quat rot_delta = root_rotation * glm::inverse(rotation);
+		rot_delta = glm::normalize(rot_delta);
+		glm::vec3 pos_delta = root_position - position;
+
+		if (root_motion_info.enable_rotation)
+		{
+
+			rot_delta = extract_yaw(rot_delta);
+			result.SetRotation(rot_delta);
+
+			pos_delta = glm::inverse(extract_yaw(rotation)) * pos_delta;
+
+
+		}
+
+		if (root_motion_info.Y_motion)
+		{
+			glm::vec3 motion_delta = result.GetPosition();
+			motion_delta.y = pos_delta.y;
+			result.SetPosition(motion_delta);
+
+		}
+
+		if (root_motion_info.XZ_motion)
+		{
+			glm::vec3 motion_delta = result.GetPosition();
+			motion_delta.x = pos_delta.x;
+			motion_delta.z = pos_delta.z;
+			result.SetPosition(motion_delta);
+		}
+
+
+
+		return result;
+	}
+
 	AnimationEngine* AnimationEngine::get_instance()
 	{
 		static AnimationEngine* s_instance = new AnimationEngine();
@@ -703,6 +811,69 @@ namespace trace {
 		AnimationFrameData* b = curr;
 
 		return CalculateData(a, b, type, time_point);
+	}
+
+	int32_t AnimationEngine::GetFrameIndex(Ref<AnimationClip> clip, AnimationDataTrack& channel, AnimationDataType type, float time, bool looping, float* out_lerp_value)
+	{
+		float elasped_time = time;
+
+		if (looping)
+		{
+			elasped_time = fmod(elasped_time, clip->GetDuration());
+		}
+		else if (!looping && time > clip->GetDuration())
+		{
+			return -1;
+		}
+
+		auto& track = channel[type];
+
+		AnimationFrameData* curr = nullptr;
+		AnimationFrameData* prev = nullptr;
+
+		//TODO: Find a better way to find which frames to sample -----------
+		int32_t i = static_cast<int32_t>(track.size() - 1);
+		for (; i >= 0; i--)
+		{
+			curr = &track[i];
+			prev = i != 0 ? &track[i - 1] : nullptr;
+			if (elasped_time <= curr->time_point)
+			{
+				if (prev && elasped_time >= prev->time_point)
+				{
+					break;
+				}
+			}
+
+		}
+		// -----------------------------------------------------------------
+
+		if (!prev && !curr)
+		{
+			return 0;
+		}
+
+		if (prev && !curr)
+		{
+			curr = prev;
+		}
+
+		if (!prev && curr)
+		{
+			prev = curr;
+		}
+
+
+		float lerp_value = (elasped_time - prev->time_point) / (curr->time_point - prev->time_point);
+
+		lerp_value = glm::min(0.0f, lerp_value);
+
+		if (out_lerp_value)
+		{
+			*out_lerp_value = lerp_value;
+		}
+
+		return (i - 1);
 	}
 
 }

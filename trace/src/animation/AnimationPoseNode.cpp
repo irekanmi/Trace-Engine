@@ -290,7 +290,7 @@ namespace trace::Animation {
 	{
 		return (PoseNodeResult*)GetValueInternal(instance);
 	}
-
+	
 	void AnimationSampleNode::Reset(GraphInstance* instance)
 	{
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -771,6 +771,15 @@ namespace trace::Animation {
 
 				++index;
 			}
+
+			if (m_animation->HasRootMotion())
+			{
+				Transform& src_root_motion_delta = clip_pose.GetRootMotionDelta();
+				Transform& trg_root_motion_delta = data->final_pose.pose_data.GetRootMotionDelta();
+				trg_root_motion_delta = src_root_motion_delta;
+
+
+			}
 		}
 
 		data->elasped_time = next_frame_time;
@@ -806,6 +815,279 @@ namespace trace::Animation {
 	}
 
 	PoseNodeResult* RetargetAnimationNode::GetFinalPose(GraphInstance* instance)
+	{
+		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+	// Warp Animation Node -----------------------------------------------------------
+
+	bool WarpAnimationNode::Instanciate(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* result = new RuntimeData;
+		instance_data_set[this] = result;
+
+		result->final_pose.pose_data.Init(&instance->GetSkeletonInstance());
+		result->update_warp = true;
+
+		
+
+		return true;
+	}
+
+	void WarpAnimationNode::Update(GraphInstance* instance, float deltaTime)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
+		{
+			return;
+		}
+
+
+		if (data->elasped_time == 0.0f)
+		{
+			data->start_time = Application::get_instance()->GetClock().GetElapsedTime();
+		}
+
+		if (!m_animation)
+		{
+			return;
+		}
+
+		if (data->update_warp)
+		{
+			get_root_motion_delta(instance);
+			//Temp
+			UpdateWarp(instance);
+
+			data->update_warp = false;
+		}
+
+		Ref<AnimationClip> clip = m_animation;
+		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
+
+
+		float next_frame_time = data->elasped_time + deltaTime;
+		if (clip->HasRootMotion())
+		{
+			AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(clip, skeleton, data->elasped_time, next_frame_time, &data->final_pose.pose_data, false);
+			Transform actual_root_motion = AnimationEngine::get_instance()->GetRootMotionDelta(clip, skeleton, data->warped_root_motion, data->elasped_time, next_frame_time, false);
+			data->final_pose.pose_data.GetRootMotionDelta() = actual_root_motion;
+			
+		}
+
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+		auto& channel = clip->GetTracks()[bone->GetStringID()];
+		auto& position_track = channel[AnimationDataType::POSITION];
+		auto& rotation_track = channel[AnimationDataType::ROTATION];
+		
+	
+		for (int32_t i = 0; i < position_track.size(); i++)
+		{
+			if (i % 3 != 0)
+			{
+				continue;
+			}
+			
+			glm::vec3 pos = *(glm::vec3*)(position_track[i].data);
+			glm::quat& rot = *(glm::quat*)(rotation_track[i].data);
+			
+			pos *= 0.1f;
+
+			Transform pose(pos, rot);
+
+			//Debugger::get_instance()->DrawDebugSphere(0.4f, 2, pose.GetLocalMatrix(), TRC_COL32_WHITE);
+		}
+
+		int32_t index = -1;
+		for (Transform& warp_pose : data->warped_root_motion)
+		{
+			++index;
+			if (index % 3 != 0)
+			{
+				continue;
+			}
+
+			glm::vec3 pos = warp_pose.GetPosition();
+			glm::quat rot = warp_pose.GetRotation();
+
+			pos *= 0.1f;
+
+			Transform pose(pos, rot);
+
+			//Debugger::get_instance()->DrawDebugSphere(0.4f, 2, pose.GetLocalMatrix(), TRC_COL32(0, 255 , 0, 255));
+		}
+
+		
+
+		data->elasped_time = next_frame_time;
+		data->definition.update_id = Application::get_instance()->GetUpdateID();
+
+	}
+
+	bool WarpAnimationNode::get_root_motion_delta(GraphInstance* instance)
+	{
+		if (!m_animation)
+		{
+			return false;
+		}
+
+
+		Ref<AnimationClip> clip = m_animation;
+
+		if (!clip->HasRootMotion())
+		{
+			return false;
+		}
+
+		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+		auto& channel = clip->GetTracks()[bone->GetStringID()];
+		auto& position_track = channel[AnimationDataType::POSITION];
+		auto& rotation_track = channel[AnimationDataType::ROTATION];
+
+
+		std::vector<Transform>& delta_transforms = m_deltaTransforms;
+
+		delta_transforms.clear();
+		delta_transforms.resize(position_track.size());
+
+		delta_transforms[0] = Transform::Identity();
+		for (int32_t i = 1; i < position_track.size(); i++)
+		{
+			glm::vec3 prev_pos = *(glm::vec3*)(position_track[i - 1].data);
+			glm::quat& prev_rot = *(glm::quat*)(rotation_track[i - 1].data);
+
+			glm::vec3 pos = *(glm::vec3*)(position_track[i].data);
+			glm::quat& rot = *(glm::quat*)(rotation_track[i].data);
+
+			glm::vec3 delta_pos = pos - prev_pos;
+			glm::quat delta_rot = rot * glm::inverse(prev_rot);
+
+			delta_transforms[i] = Transform(delta_pos, delta_rot);
+
+		}
+
+		return true;
+	}
+
+	bool WarpAnimationNode::UpdateWarp(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		Scene* scene = instance->GetSkeletonInstance().GetScene();
+
+		Entity Target = scene->GetEntityByName("Target");
+		glm::vec3 world_pos = scene->GetEntityWorldPosition(Target);
+
+		Entity Target_0 = scene->GetEntityByName("Target_0");
+		glm::vec3 world_pos_0 = scene->GetEntityWorldPosition(Target_0);
+
+
+		WarpSection section_00 = {};
+		section_00.start_frame = 16;
+		section_00.end_frame = 24;
+		section_00.target = world_pos;
+
+		WarpSection section_0 = {};
+		section_0.start_frame = 25;
+		section_0.end_frame = 40;
+		section_0.target = world_pos_0;
+
+		std::vector<WarpSection> sections;
+		//sections.push_back(section_00);
+		sections.push_back(section_0);
+
+
+		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
+		std::vector<Transform> actual_root_motion;
+		m_animation->GetRootMotionData(actual_root_motion, skeleton);
+
+		std::vector<Transform>& warped_motion = data->warped_root_motion;
+
+		warped_motion = actual_root_motion;
+
+		Transform entity_global_pose = scene->GetEntityGlobalPose(scene->GetEntity(instance->GetEntityHandle()));
+
+		for (WarpSection& section : sections)
+		{
+
+			glm::vec3 local_target = entity_global_pose.Inverse().GetLocalMatrix() * glm::vec4(section.target, 1.0f);
+			glm::vec3 offset = local_target - warped_motion[section.end_frame].GetPosition();
+			//offset.x = 0.0f;
+			glm::vec3 scale = local_target / warped_motion[section.end_frame].GetPosition();
+
+			int32_t num_animation_frames = actual_root_motion.size();
+			int32_t num_warp_frames = section.end_frame - section.start_frame;
+
+			for (int32_t i = 0; i <= num_warp_frames; i++)
+			{
+				int32_t frame_index = i + section.start_frame;
+				float t = float(i) / float(num_warp_frames);
+				t = glm::smoothstep(0.0f, 1.0f, t);
+
+				glm::vec3 frame_offset = offset * t;
+				warped_motion[frame_index].Translate(frame_offset);
+
+			}
+
+			if (section.end_frame < (num_animation_frames - 1))
+			{
+
+				for (int32_t i = (section.end_frame + 1); i < num_animation_frames; i++)
+				{
+					glm::vec3 new_pos = warped_motion[i - 1].GetPosition() + m_deltaTransforms[i].GetPosition();
+
+					warped_motion[i].SetPosition(new_pos);
+				}
+			}
+		}
+
+		
+
+
+		return true;
+	}
+
+	void* WarpAnimationNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		switch (value_index)
+		{
+		case 0:
+		{
+			return &data->final_pose;
+			break;
+		}
+		}
+
+		return nullptr;
+	}
+
+	void WarpAnimationNode::Init(Graph* graph)
+	{
+		NodeOutput output = {};
+		output.type = ValueType::Pose;
+		output.value_index = 0;
+
+		m_outputs.push_back(output);
+	}
+
+	PoseNodeResult* WarpAnimationNode::GetFinalPose(GraphInstance* instance)
 	{
 		return (PoseNodeResult*)GetValueInternal(instance);
 	}

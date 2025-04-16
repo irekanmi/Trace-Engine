@@ -66,6 +66,8 @@ namespace trace {
 		static Transform Blend(Transform& source, Transform& target, float blend_weight);
 		static void ApplyRootMotion(Transform& pose, Transform& root_motion_delta);
 
+		Transform Inverse();
+
 		Transform& operator *=(Transform& rhs);
 		Transform operator *(Transform& rhs);
 

@@ -133,6 +133,11 @@ namespace trace::Animation {
 		REGISTER_MEMBER(RetargetAnimationNode, m_animation);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(WarpAnimationNode)
+		REGISTER_TYPE_PARENT(WarpAnimationNode, PoseNode);
+		REGISTER_MEMBER(WarpAnimationNode, m_animation);
+	END_REGISTER_CLASS;
+
 
 
 	REGISTER_TYPE_PARENT(FinalOutputNode, PoseNode);

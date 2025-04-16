@@ -265,6 +265,13 @@ namespace trace {
 
 	}
 
+	Transform Transform::Inverse()
+	{
+		glm::mat4 pose = GetLocalMatrix();
+		glm::mat4 inv_pose = glm::inverse(pose);
+		return Transform(inv_pose);
+	}
+
 	Transform& Transform::operator*=(Transform& rhs)
 	{
 		m_rotation = glm::normalize(m_rotation * rhs.m_rotation);

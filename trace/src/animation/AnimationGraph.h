@@ -199,6 +199,9 @@ namespace trace::Animation {
 		std::vector<ParameterData>& GetParametersData() { return m_parameterData; }
 		ParameterData* GetParameterData(Parameter& param);
 
+		UUID GetEntityHandle() { return m_entityHandle; }
+		void SetEntityHandle(UUID entity_handle) { m_entityHandle = entity_handle; }
+
 	private:
 		void set_parameter_data(const std::string& param_name, void* data, uint32_t size);
 
@@ -208,6 +211,7 @@ namespace trace::Animation {
 		std::unordered_map<Node*, void*> m_nodesData;//NOTE: these member has high possibility to change when custom memory allocators has been added
 		bool m_instanciated = false;
 		bool m_started = false;
+		UUID m_entityHandle;
 
 		// std::string: parameter name, uint32_t: index into parameter data index
 		std::unordered_map<std::string, uint32_t> m_parameterLUT;

@@ -82,6 +82,8 @@ namespace trace {
 		RootMotionInfo& GetRootMotionInfo() { return m_rootMotionInfo; }
 		bool HasRootMotion() { return m_hasRootMotion; }
 
+		bool GetRootMotionData(std::vector<Transform>& out_data, Ref<Animation::Skeleton> skeleton);
+
 	public:
 		static Ref<AnimationClip> Deserialize(UUID id);
 		static Ref<AnimationClip> Deserialize(DataStream* stream);

@@ -119,6 +119,7 @@ namespace trace {
 			{
 				continue;
 			}
+			anim_graph.graph.SetEntityHandle(entity.GetID());
 			anim_graph.graph.Start(this, entity.GetID());
 
 		}
@@ -1286,16 +1287,9 @@ namespace trace {
 		Transform transform;
 		if (m_running && !recompute)
 		{
-			glm::vec3 pos, skew, scale;
-			glm::vec4 persp;
-			glm::quat rot;
-
 			glm::mat4 pose = hi.transform;
 
-			glm::decompose(pose, scale, rot, pos, skew, persp);
-			transform.SetPosition(pos);
-			transform.SetRotation(rot);
-			transform.SetScale(scale);
+			transform = Transform(pose);
 
 			return transform;
 		}

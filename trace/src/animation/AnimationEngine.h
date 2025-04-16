@@ -37,6 +37,7 @@ namespace trace {
 		void SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping);
 		void SampleClip(Ref<AnimationClip> clip,Ref<Animation::Skeleton> skeleton, float time, Animation::Pose* out_pose, bool looping);
 		Transform GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float from_time, float to_time, bool looping);
+		Transform GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, std::vector<Transform>& root_motion_data, float from_time, float to_time, bool looping);
 
 		static AnimationEngine* get_instance();
 	private:
@@ -46,6 +47,8 @@ namespace trace {
 		void SetData(AnimatedOutput& data, Scene* scene, UUID id);
 		void FindFrame(std::unordered_map<StringID, UUID>& data_map, Ref<AnimationClip> clip, Scene* scene, float elasped_time, std::function<void(StringID,UUID , AnimationDataType ,AnimationFrameData* , AnimationFrameData* , float )> callback);
 		AnimatedOutput GetFrameData(Ref<AnimationClip> clip, AnimationDataTrack& channel, AnimationDataType type, float time, bool looping);
+		//NOTE: it returns the lower bound index
+		int32_t GetFrameIndex(Ref<AnimationClip> clip, AnimationDataTrack& channel, AnimationDataType type, float time, bool looping, float* out_lerp_value = nullptr);
 
 	protected:
 
