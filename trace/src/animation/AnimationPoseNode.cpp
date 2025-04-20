@@ -875,9 +875,9 @@ namespace trace::Animation {
 		float next_frame_time = data->elasped_time + deltaTime;
 		if (clip->HasRootMotion())
 		{
-			AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(clip, skeleton, data->elasped_time, next_frame_time, &data->final_pose.pose_data, false);
+			AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(clip, skeleton, data->elasped_time, next_frame_time, &data->final_pose.pose_data, true);
 			Transform actual_root_motion = AnimationEngine::get_instance()->GetRootMotionDelta(clip, skeleton, data->warped_root_motion, data->elasped_time, next_frame_time, false);
-			data->final_pose.pose_data.GetRootMotionDelta() = actual_root_motion;
+			//data->final_pose.pose_data.GetRootMotionDelta() = actual_root_motion;
 			
 		}
 
@@ -988,26 +988,20 @@ namespace trace::Animation {
 
 		Scene* scene = instance->GetSkeletonInstance().GetScene();
 
-		Entity Target = scene->GetEntityByName("Target");
-		glm::vec3 world_pos = scene->GetEntityWorldPosition(Target);
-
-		Entity Target_0 = scene->GetEntityByName("Target_0");
-		glm::vec3 world_pos_0 = scene->GetEntityWorldPosition(Target_0);
-
 
 		WarpSection section_00 = {};
 		section_00.start_frame = 16;
 		section_00.end_frame = 24;
-		section_00.target = world_pos;
+		//section_00.target = world_pos;
 
 		WarpSection section_0 = {};
 		section_0.start_frame = 25;
 		section_0.end_frame = 40;
-		section_0.target = world_pos_0;
+		//section_0.target = world_pos_0;
 
 		std::vector<WarpSection> sections;
 		//sections.push_back(section_00);
-		sections.push_back(section_0);
+		//sections.push_back(section_0);
 
 
 		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
@@ -1025,7 +1019,6 @@ namespace trace::Animation {
 
 			glm::vec3 local_target = entity_global_pose.Inverse().GetLocalMatrix() * glm::vec4(section.target, 1.0f);
 			glm::vec3 offset = local_target - warped_motion[section.end_frame].GetPosition();
-			//offset.x = 0.0f;
 			glm::vec3 scale = local_target / warped_motion[section.end_frame].GetPosition();
 
 			int32_t num_animation_frames = actual_root_motion.size();

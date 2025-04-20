@@ -34,6 +34,7 @@ namespace trace {
 		void Animate(AnimationComponent* animation_component, Scene* scene, float time_point,  bool loop);
 		void SampleClipWithRootMotionDelta(Ref<AnimationClip> clip, float from_time, float to_time, Animation::Pose* out_pose, bool looping);
 		void SampleClipWithRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float from_time, float to_time, Animation::Pose* out_pose, bool looping);
+		void SampleClipWithRootMotion(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float time, Animation::Pose* out_pose, bool looping);
 		void SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping);
 		void SampleClip(Ref<AnimationClip> clip,Ref<Animation::Skeleton> skeleton, float time, Animation::Pose* out_pose, bool looping);
 		Transform GetRootMotionDelta(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float from_time, float to_time, bool looping);

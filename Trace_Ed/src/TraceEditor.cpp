@@ -35,7 +35,9 @@
 #include "external_utils.h"
 #include "animation/HumanoidRig.h"
 #include "utils/ImGui_utils.h"
-
+#include "core/maths/Dampers.h"
+#include "core/utils/RingBuffer.h"
+ 
 
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
@@ -209,6 +211,8 @@ namespace trace {
 				m_currentScene->OnUpdate(deltaTime);
 				m_currentScene->OnRender();
 
+				//Update_Tester(deltaTime);
+
 				m_currentScene->EndFrame();
 			}
 			break;
@@ -236,6 +240,16 @@ namespace trace {
 		
 
 	}
+
+	//TEMP =============
+	static float halflife = 0.033f;
+	static float stiffness = 2.0f;
+	static float dampness = 1.0f;
+	static glm::vec3 velocity(0.0f);
+	static glm::vec3 acceleration(0.0f);
+	static glm::vec3 curr_position(0.0f);
+	static RingBuffer<glm::mat4> debug_buffer(5);
+	
 
 	void TraceEditor::Render(float deltaTime)
 	{
@@ -353,6 +367,9 @@ namespace trace {
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
 			ImGui::Checkbox("Text Verts", &Renderer::get_instance()->text_verts);
 
+			ImGui::DragFloat("half life", &halflife, 0.005f, 0.0f, 5.0f, "%.4f");
+			ImGui::DragFloat("stiffness", &stiffness, 0.05f, 0.0f, 15.0f, "%.4f");
+			ImGui::DragFloat("dampness", &dampness, 0.05f, 0.0f, 15.0f, "%.4f");
 
 		}
 		ImGui::End();
@@ -944,7 +961,7 @@ namespace trace {
 				glm::value_ptr(cam_view),
 				glm::value_ptr(proj),
 				(ImGuizmo::OPERATION)gizmo_mode,
-				ImGuizmo::MODE::LOCAL,
+				ImGuizmo::MODE::WORLD,
 				glm::value_ptr(transform),
 				nullptr,// TODO: Check Docs {deltaMatrix}
 				false,// snap
@@ -1401,6 +1418,118 @@ namespace trace {
 		m_nextScene = scene;
 
 		return true;
+	}
+
+	void TraceEditor::Update_Tester(float deltaTime)
+	{
+		if (!m_currentScene)
+		{
+			return;
+		}
+
+		glm::vec2 gamepad(0.0f);
+		if (InputSystem::get_instance()->GetKey(Keys::KEY_W))
+		{
+			gamepad.x += 1.0f;
+		}
+		if (InputSystem::get_instance()->GetKey(Keys::KEY_S))
+		{
+			gamepad.x -= 1.0f;
+		}
+		if (InputSystem::get_instance()->GetKey(Keys::KEY_A))
+		{
+			gamepad.y -= 1.0f;
+		}
+		if (InputSystem::get_instance()->GetKey(Keys::KEY_D))
+		{
+			gamepad.y += 1.0f;
+			
+		}
+
+		if (glm::length(gamepad) > 0.01f)
+		{
+			gamepad = glm::normalize(gamepad);
+		}
+
+
+		float target_x = 55.0f * gamepad.x;
+		float target_y = 55.0f * gamepad.y;
+
+		float predx[4];
+		float predxv[4];
+		float predxa[4];
+		float predy[4];
+		float predyv[4];
+		float predya[4];
+
+		Math::spring_character_update(curr_position.x, velocity.x, acceleration.x, target_x, halflife, deltaTime);
+		Math::spring_character_update(curr_position.y, velocity.y, acceleration.y, target_y, halflife, deltaTime);
+
+		float dt = 1 / 30.0f;
+
+		Math::spring_character_predict(predx, predxv, predxa, 4, curr_position.x, velocity.x, acceleration.x, target_x, halflife, dt * 4);
+		Math::spring_character_predict(predy, predyv, predya, 4, curr_position.y, velocity.y, acceleration.y, target_y, halflife, dt * 4);
+
+
+		Debugger* debugger = Debugger::get_instance();
+		
+
+		glm::vec3 pred_0 = glm::vec3(predx[0], 0.0f, predy[0]);
+		glm::vec3 pred_1 = glm::vec3(predx[1], 0.0f, predy[1]);
+		glm::vec3 pred_2 = glm::vec3(predx[2], 0.0f, predy[2]);
+		glm::vec3 pred_3 = glm::vec3(predx[3], 0.0f, predy[3]);
+		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_0));
+		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_1));
+		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_2));
+		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_3));
+
+		glm::vec3 vel;
+		glm::vec3 to;
+		glm::vec3 up = glm::vec3(0.0f, 2.25f, 0.0f);
+		
+		vel = glm::vec3(predxv[0], 0.0f, predyv[0]);
+		if (glm::length(vel) > 0.01f)
+		{
+			vel = glm::normalize(vel);
+		}
+		to = pred_0 + (vel * 2.5f);
+		debugger->AddDebugLine(pred_0 + up, to + up, TRC_COL32(0, 255, 0, 255));
+
+		vel = glm::vec3(predxv[1], 0.0f, predyv[1]);
+		if (glm::length(vel) > 0.01f)
+		{
+			vel = glm::normalize(vel);
+		}
+		to = pred_1 + (vel * 2.5f);
+		debugger->AddDebugLine(pred_1 + up, to + up, TRC_COL32(0, 255, 0, 255));
+
+		vel = glm::vec3(predxv[2], 0.0f, predyv[2]);
+		if (glm::length(vel) > 0.01f)
+		{
+			vel = glm::normalize(vel);
+		}
+		to = pred_2 + (vel * 2.5f);
+		debugger->AddDebugLine(pred_2 + up, to + up, TRC_COL32(0, 255, 0, 255));
+
+		vel = glm::vec3(predxv[3], 0.0f, predyv[3]);
+		if (glm::length(vel) > 0.01f)
+		{
+			vel = glm::normalize(vel);
+		}
+		to = pred_3 + (vel * 2.5f);
+		debugger->AddDebugLine(pred_3 + up, to + up, TRC_COL32(0, 255, 0, 255));
+		
+
+		auto debug_draw = [&](glm::mat4& transform) {
+			debugger->DrawDebugHemiSphere(0.9f, 12, transform, TRC_COL32_WHITE);
+		};
+
+		debug_buffer.iterate(debug_draw);
+
+		debug_buffer.pop_front();
+		debug_buffer.pop_front();
+		debug_buffer.pop_front();
+		debug_buffer.pop_front();
 	}
 
 	void TraceEditor::start_current_scene()

@@ -52,6 +52,9 @@ namespace trace {
 		float yaw = atan2(forward.x, forward.z);
 		glm::quat result = glm::angleAxis(yaw, glm::vec3(0.0f, 1.0f, 0.0f));
 
+		/*glm::vec3 euler = glm::eulerAngles(rotation);
+		result = glm::angleAxis(euler.y, glm::vec3(0.0f, 1.0f, 0.0f));*/
+
 		return result;
 	}
 

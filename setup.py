@@ -38,8 +38,8 @@ def install_vulkan_sdk():
 
     if os_type == "Windows":
         # Download and install Vulkan SDK for Windows
-        sdk_url = "https://sdk.lunarg.com/sdk/download/1.3.224.1/windows/VulkanSDK-1.3.224.1-Installer.exe"  # Change as needed
-        sdk_installer = "VulkanSDK-1.3.224.1-Installer.exe"
+        sdk_url = "https://sdk.lunarg.com/sdk/download/1.4.309.0/windows/VulkanSDK-1.4.309.0-Installer.exe"  # Change as needed
+        sdk_installer = "VulkanSDK-1.4.309.0-Installer.exe"
         download_file(sdk_url, sdk_installer)
 
         # Try running the installer in silent mode

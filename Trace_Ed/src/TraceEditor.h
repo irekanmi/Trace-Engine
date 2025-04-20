@@ -92,6 +92,9 @@ namespace trace {
 		glm::vec2 GetViewportSize() { return m_viewportSize; }
 		bool SetNextScene(Ref<Scene> scene);
 
+		//TEMP ========================
+		void Update_Tester(float deltaTime);
+
 
 		
 	private:

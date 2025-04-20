@@ -253,15 +253,13 @@ namespace trace {
 
 	void Transform::ApplyRootMotion(Transform& pose, Transform& root_motion_delta)
 	{
-		pose.Rotate(root_motion_delta.GetRotation());
 		Transform model_space_delta = Transform::CombineTransform_Direction(pose, root_motion_delta);
-		
-		//glm::vec3 pos_delta = pose.GetRotation() * root_motion_delta.GetPosition();
-		pose.Translate(model_space_delta.GetPosition());
-		//pos_delta *= pose.GetScale();
-		//pose.Translate(pos_delta);
 
-		//pose = root_motion_delta * pose;
+		pose.Rotate(root_motion_delta.GetRotation());
+		
+		
+		pose.Translate(model_space_delta.GetPosition());
+
 
 	}
 

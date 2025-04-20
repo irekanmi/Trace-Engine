@@ -18,7 +18,33 @@
 
 namespace trace {
 	
+	//TEMP ===============
+	// Used to project vector a onto vector b
+	glm::vec3 project(glm::vec3& a, glm::vec3& b)
+	{
+		float scalar = glm::dot(a, b) / glm::dot(b, b);
+		return b * scalar;
+	}
 
+	Transform get_root_bone_transform(Transform& hip_pose)
+	{
+		glm::vec3 forward(0.0f, 0.0f, 1.0f);
+		glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+		glm::vec3 _f = hip_pose.GetRotation() * forward;
+		glm::vec3 projected_forward = _f - project(_f, up);
+		glm::quat look_orientation = glm::quatLookAt(-projected_forward, up);
+		glm::vec3 root_position = hip_pose.GetPosition() - project(hip_pose.GetPosition(), up);
+
+		glm::quat inv_orientation = glm::normalize(glm::inverse(look_orientation));
+
+		//Apply new hip position and orientation
+		glm::vec3 hip_position = inv_orientation * (hip_pose.GetPosition() - root_position);
+		glm::quat hip_orientation = inv_orientation * hip_pose.GetRotation();
+
+		
+		return Transform(root_position, look_orientation);
+	}
 
 
 
@@ -153,11 +179,11 @@ namespace trace {
 		Transform& root_pose = out_pose->GetLocalPose()[root_motion_info.root_bone_index];
 		out_pose->SetRootMotionBone(root_motion_info.root_bone_index);
 
-
+		//TODO: Implement y motion
 		if (root_motion_info.Y_motion)
 		{
 			glm::vec3 curr_position = root_pose.GetPosition();
-			curr_position.y = bind_pose.GetPosition().y;
+			//curr_position.y = bind_pose.GetPosition().y;
 			root_pose.SetPosition(curr_position);
 		}
 
@@ -179,6 +205,70 @@ namespace trace {
 		}
 
 		root_motion_delta = GetRootMotionDelta(clip, skeleton, from_time, to_time, looping);
+	}
+
+	void AnimationEngine::SampleClipWithRootMotion(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton, float time, Animation::Pose* out_pose, bool looping)
+	{
+		if (!clip->HasRootMotion())
+		{
+			return;
+		}
+
+		Transform& root_motion_delta = out_pose->GetRootMotionDelta();
+		root_motion_delta = Transform::Identity();
+		if (looping)
+		{
+
+		}
+		else if (time > clip->GetDuration())
+		{
+			return;
+		}
+
+		SampleClip(clip, skeleton, time, out_pose, looping);
+
+		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
+
+		Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+		if (!bone)
+		{
+			return;
+		}
+		Transform bind_pose(bone->GetBindPose());
+		Transform& root_pose = out_pose->GetLocalPose()[root_motion_info.root_bone_index];
+		out_pose->SetRootMotionBone(root_motion_info.root_bone_index);
+
+		//TODO: Implement y motion
+		if (root_motion_info.Y_motion)
+		{
+			glm::vec3 curr_position = root_pose.GetPosition();
+			//curr_position.y = bind_pose.GetPosition().y;
+			root_pose.SetPosition(curr_position);
+		}
+
+		if (root_motion_info.XZ_motion)
+		{
+			glm::vec3 curr_position = root_pose.GetPosition();
+			glm::vec3 root_position = root_motion_delta.GetPosition();
+			root_position.x = curr_position.x;
+			root_position.z = curr_position.z;
+			curr_position.x = 0.0f;
+			curr_position.z = 0.0f;
+
+			root_pose.SetPosition(curr_position);
+			root_motion_delta.SetPosition(root_position);
+		}
+
+		if (root_motion_info.enable_rotation)
+		{
+			glm::quat rotation = root_pose.GetRotation();
+			glm::quat yaw_rotation = extract_yaw(rotation);
+			rotation = glm::inverse(yaw_rotation) * rotation;
+
+			root_pose.SetRotation(rotation);
+			root_motion_delta.SetRotation(yaw_rotation);
+		}
+
 	}
 
 	void AnimationEngine::SampleClip(Ref<AnimationClip> clip, float time, Animation::Pose* out_pose, bool looping)
@@ -351,6 +441,7 @@ namespace trace {
 		glm::vec3 root_position = *(glm::vec3*)(&root_pos_output.data);
 		glm::quat root_rotation = *(glm::quat*)(&root_rot_output.data);
 
+
 		int f_times = int(from_time / clip->GetDuration());
 		int t_times = int(to_time / clip->GetDuration());
 
@@ -361,25 +452,28 @@ namespace trace {
 			root_rotation = glm::normalize(root_rotation * diff_rot);
 		}
 
-		glm::quat rot_delta = root_rotation * glm::inverse(rotation);
+		glm::quat rot_delta = extract_yaw(root_rotation) * glm::inverse(extract_yaw(rotation));
 		rot_delta = glm::normalize(rot_delta);
 		glm::vec3 pos_delta = root_position - position;
 
 		if (root_motion_info.enable_rotation)
 		{
 
-			rot_delta = extract_yaw(rot_delta);			
+			rot_delta = (rot_delta);			
 			result.SetRotation(rot_delta);
 
-			pos_delta = glm::inverse(extract_yaw(rotation)) * pos_delta;
+			glm::quat inv_rot = glm::inverse(extract_yaw(rotation));
+			pos_delta = inv_rot * pos_delta;
+
 
 
 		}
 
+		//TODO: Implement y motion
 		if (root_motion_info.Y_motion)
 		{
 			glm::vec3 motion_delta = result.GetPosition();
-			motion_delta.y = pos_delta.y;
+			//motion_delta.y = pos_delta.y;
 			result.SetPosition(motion_delta);
 
 		}
@@ -389,7 +483,7 @@ namespace trace {
 			glm::vec3 motion_delta = result.GetPosition();
 			motion_delta.x = pos_delta.x;
 			motion_delta.z = pos_delta.z;
-			result.SetPosition(motion_delta); 
+			result.SetPosition(motion_delta);
 		}
 
 		
@@ -468,18 +562,20 @@ namespace trace {
 			root_rotation = glm::normalize(root_rotation * diff_rot);
 		}
 
-		glm::quat rot_delta = root_rotation * glm::inverse(rotation);
+		glm::quat rot_delta = extract_yaw(root_rotation) * glm::inverse(extract_yaw(rotation));
 		rot_delta = glm::normalize(rot_delta);
 		glm::vec3 pos_delta = root_position - position;
 
 		if (root_motion_info.enable_rotation)
 		{
 
-			rot_delta = extract_yaw(rot_delta);
+			rot_delta = (rot_delta);
 			result.SetRotation(rot_delta);
 
-			pos_delta = glm::inverse(extract_yaw(rotation)) * pos_delta;
+			glm::quat inv_rot = glm::normalize(glm::inverse(extract_yaw(rotation)));
+			pos_delta = inv_rot * pos_delta;
 
+			
 
 		}
 
