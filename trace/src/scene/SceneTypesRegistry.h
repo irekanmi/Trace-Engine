@@ -149,4 +149,12 @@ namespace trace {
 		REGISTER_MEMBER(CharacterControllerComponent, character);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(MotionMatchingComponent)
+		REGISTER_TYPE(MotionMatchingComponent);
+		REGISTER_MEMBER(MotionMatchingComponent, update_frequency);
+		REGISTER_MEMBER(MotionMatchingComponent, trajectory_weight);
+		REGISTER_MEMBER(MotionMatchingComponent, pose_weight);
+		REGISTER_MEMBER(MotionMatchingComponent, normalized_search);
+	END_REGISTER_CLASS;
+
 }

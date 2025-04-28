@@ -3,6 +3,8 @@
 #include "animation/AnimationNode.h"
 #include "animation/AnimationPose.h"
 #include "core/Coretypes.h"
+#include "motion_matching/MotionMatcher.h"
+#include "motion_matching/Inertialize.h"
 
 namespace trace::Animation {
 
@@ -280,6 +282,39 @@ namespace trace::Animation {
 		GET_TYPE_ID;
 	};
 
+	class RetargetPoseNode : public PoseNode
+	{
+
+	public:
+
+		struct RuntimeData
+		{
+			float start_time = 0.0f;
+			float elasped_time = 0.0f;
+			PoseNodeResult final_pose;
+			Node::Definition definition;
+		};
+
+
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
+
+		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
+		void SetSkeleton(Ref<Skeleton> skeleton) { m_skeleton = skeleton; }
+
+	private:
+		Ref<Skeleton> m_skeleton;
+
+	protected:
+
+		ACCESS_CLASS_MEMBERS(RetargetPoseNode);
+		GET_TYPE_ID;
+	};
+
 	class WarpSection
 	{
 
@@ -333,6 +368,58 @@ namespace trace::Animation {
 	protected:
 
 		ACCESS_CLASS_MEMBERS(WarpAnimationNode);
+		GET_TYPE_ID;
+	};
+
+
+	class MotionMatchingNode : public PoseNode
+	{
+
+	public:
+
+		struct RuntimeData
+		{
+			float start_time = 0.0f;
+			float elasped_time = 0.0f;
+			PoseNodeResult final_pose;
+			Node::Definition definition;
+			
+
+			int32_t current_index = 0;
+			float time_accummulator = 0.0f;
+			AnimationClip* current_animation = nullptr;
+			int32_t current_clip_index = 0;
+			int32_t last_frame_index = 0;
+			MotionMatching::Inertialize inertializer;
+			Pose src_prev_pose;// Used for inertialization
+			Pose trg_pose;// Used for inertialization
+			Pose trg_prev_pose;// Used for inertialization
+		};
+
+
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
+		MotionMatching::MotionMatcher& GetMotionMatcher() { return m_matcher; }
+		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
+		void SetSkeleton(Ref<Skeleton> skeleton) { m_skeleton = skeleton; }
+
+	private:
+		void FindNewPose(GraphInstance* instance, float deltaTime);
+
+	private:
+		MotionMatching::MotionMatcher m_matcher;
+		Ref<Skeleton> m_skeleton;
+
+	private:
+		
+
+	protected:
+
+		ACCESS_CLASS_MEMBERS(MotionMatchingNode);
 		GET_TYPE_ID;
 	};
 

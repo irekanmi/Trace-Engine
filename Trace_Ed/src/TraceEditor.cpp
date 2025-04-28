@@ -37,6 +37,9 @@
 #include "utils/ImGui_utils.h"
 #include "core/maths/Dampers.h"
 #include "core/utils/RingBuffer.h"
+#include "serialize/GenericSerializer.h"
+#include "orange_duck/spring.h"
+#include "core/maths/Conversion.h"
  
 
 #include "glm/gtc/type_ptr.hpp"
@@ -66,8 +69,10 @@ namespace trace {
 
 	//TEMP ---------------------------------
 	static bool show_humanoid_window = false;
+	static bool show_feature_db_window = false;
 	static Ref<Animation::Skeleton> skeleton;
 	static Ref<Animation::HumanoidRig> rig;
+	static Ref<MotionMatching::FeatureDatabase> feature_db;
 
 	void SerializationTest();
 	void DeserializationTest();
@@ -205,13 +210,15 @@ namespace trace {
 
 				m_currentScene->BeginFrame();
 
+				Update_Tester(deltaTime);
+
 				m_currentScene->OnAnimationUpdate(deltaTime);
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
 				m_currentScene->OnUpdate(deltaTime);
 				m_currentScene->OnRender();
 
-				//Update_Tester(deltaTime);
+
 
 				m_currentScene->EndFrame();
 			}
@@ -243,12 +250,13 @@ namespace trace {
 
 	//TEMP =============
 	static float halflife = 0.033f;
-	static float stiffness = 2.0f;
-	static float dampness = 1.0f;
+	static float speed = 12.0f;
 	static glm::vec3 velocity(0.0f);
+	static orange_duck::vec3 angular_velocity = {};
 	static glm::vec3 acceleration(0.0f);
 	static glm::vec3 curr_position(0.0f);
 	static RingBuffer<glm::mat4> debug_buffer(5);
+	static bool normalized_search = true;
 	
 
 	void TraceEditor::Render(float deltaTime)
@@ -368,8 +376,8 @@ namespace trace {
 			ImGui::Checkbox("Text Verts", &Renderer::get_instance()->text_verts);
 
 			ImGui::DragFloat("half life", &halflife, 0.005f, 0.0f, 5.0f, "%.4f");
-			ImGui::DragFloat("stiffness", &stiffness, 0.05f, 0.0f, 15.0f, "%.4f");
-			ImGui::DragFloat("dampness", &dampness, 0.05f, 0.0f, 15.0f, "%.4f");
+			ImGui::Checkbox("normalized_search", &normalized_search);
+			ImGui::DragFloat("Speed", &speed, 0.05f);
 
 		}
 		ImGui::End();
@@ -1176,6 +1184,14 @@ namespace trace {
 			show_humanoid_window = true;
 		}
 	}
+	void TraceEditor::OpenFeatureDB(std::string& path)
+	{
+		if (Ref<MotionMatching::FeatureDatabase> new_db = GenericSerializer::Deserialize<MotionMatching::FeatureDatabase>(path))
+		{
+			feature_db = new_db;
+			show_feature_db_window = true;
+		}
+	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
 		InputSystem* input = InputSystem::get_instance();
@@ -1430,30 +1446,40 @@ namespace trace {
 		glm::vec2 gamepad(0.0f);
 		if (InputSystem::get_instance()->GetKey(Keys::KEY_W))
 		{
-			gamepad.x += 1.0f;
+			gamepad.y -= 1.0f;
 		}
 		if (InputSystem::get_instance()->GetKey(Keys::KEY_S))
 		{
-			gamepad.x -= 1.0f;
+			gamepad.y += 1.0f;
 		}
 		if (InputSystem::get_instance()->GetKey(Keys::KEY_A))
 		{
-			gamepad.y -= 1.0f;
+			gamepad.x -= 1.0f;
 		}
 		if (InputSystem::get_instance()->GetKey(Keys::KEY_D))
 		{
-			gamepad.y += 1.0f;
+			gamepad.x += 1.0f;
 			
 		}
 
+		Entity x_bot = m_currentScene->GetEntityByName("X_bot");
+		Transform& bot_pose = x_bot.GetComponent<TransformComponent>()._transform;
+
+
+		orange_duck::quat curr_rot = glm_quat_to_org(bot_pose.GetRotation());
+		orange_duck::quat target_rot = curr_rot;
 		if (glm::length(gamepad) > 0.01f)
 		{
 			gamepad = glm::normalize(gamepad);
+			glm::quat rot = glm::quatLookAt(-glm::vec3(gamepad.x, 0.0f, gamepad.y), glm::vec3(0.0f, 1.0f, 0.0f));
+			target_rot = glm_quat_to_org(rot);
 		}
 
+		orange_duck::quat pred_rot[4];
+		orange_duck::vec3 pred_rot_vel[4];
 
-		float target_x = 55.0f * gamepad.x;
-		float target_y = 55.0f * gamepad.y;
+		float target_x = speed * gamepad.x;
+		float target_y = speed * gamepad.y;
 
 		float predx[4];
 		float predxv[4];
@@ -1462,13 +1488,70 @@ namespace trace {
 		float predyv[4];
 		float predya[4];
 
+		float dt = 1 / 60.0f;
+		curr_position.x = bot_pose.GetPosition().x;
+		curr_position.y = bot_pose.GetPosition().z;
+
 		Math::spring_character_update(curr_position.x, velocity.x, acceleration.x, target_x, halflife, deltaTime);
 		Math::spring_character_update(curr_position.y, velocity.y, acceleration.y, target_y, halflife, deltaTime);
 
-		float dt = 1 / 30.0f;
+		orange_duck::simple_spring_damper_exact(curr_rot, angular_velocity, target_rot, halflife, deltaTime);
 
-		Math::spring_character_predict(predx, predxv, predxa, 4, curr_position.x, velocity.x, acceleration.x, target_x, halflife, dt * 4);
-		Math::spring_character_predict(predy, predyv, predya, 4, curr_position.y, velocity.y, acceleration.y, target_y, halflife, dt * 4);
+		predx[0] = curr_position.x;
+		predy[0] = curr_position.y;
+		predxv[0] = velocity.x;
+		predyv[0] = velocity.y;
+		predxa[0] = acceleration.x;
+		predya[0] = acceleration.y;
+
+		Math::spring_character_update(predx[0], predxv[0], predxa[0], target_x, halflife, 20.0f * dt);
+		Math::spring_character_update(predy[0], predyv[0], predya[0], target_y, halflife, 20.0f * dt);
+
+		pred_rot[0] = curr_rot;
+		pred_rot_vel[0] = angular_velocity;
+		orange_duck::simple_spring_damper_exact(pred_rot[0], pred_rot_vel[0], target_rot, halflife, 20.0f * dt);
+
+		predx[1] = curr_position.x;
+		predy[1] = curr_position.y;
+		predxv[1] = velocity.x;
+		predyv[1] = velocity.y;
+		predxa[1] = acceleration.x;
+		predya[1] = acceleration.y;
+
+		Math::spring_character_update(predx[1], predxv[1], predxa[1], target_x, halflife, 40.0f * dt);
+		Math::spring_character_update(predy[1], predyv[1], predya[1], target_y, halflife, 40.0f * dt);
+
+		pred_rot[1] = curr_rot;
+		pred_rot_vel[1] = angular_velocity;
+		orange_duck::simple_spring_damper_exact(pred_rot[1], pred_rot_vel[1], target_rot, halflife, 40.0f * dt);
+
+		predx[2] = curr_position.x;
+		predy[2] = curr_position.y;
+		predxv[2] = velocity.x;
+		predyv[2] = velocity.y;
+		predxa[2] = acceleration.x;
+		predya[2] = acceleration.y;
+
+		Math::spring_character_update(predx[2], predxv[2], predxa[2], target_x, halflife, 60.0f * dt);
+		Math::spring_character_update(predy[2], predyv[2], predya[2], target_y, halflife, 60.0f * dt);
+
+		pred_rot[2] = curr_rot;
+		pred_rot_vel[2] = angular_velocity;
+		orange_duck::simple_spring_damper_exact(pred_rot[2], pred_rot_vel[2], target_rot, halflife, 60.0f * dt);
+
+		predx[3] = curr_position.x;
+		predy[3] = curr_position.y;
+		predxv[3] = velocity.x;
+		predyv[3] = velocity.y;
+		predxa[3] = acceleration.x;
+		predya[3] = acceleration.y;
+
+		Math::spring_character_update(predx[3], predxv[3], predxa[3], target_x, halflife, 75.0f * dt);
+		Math::spring_character_update(predy[3], predyv[3], predya[3], target_y, halflife, 75.0f * dt);
+
+		pred_rot[3] = curr_rot;
+		pred_rot_vel[3] = angular_velocity;
+		orange_duck::simple_spring_damper_exact(pred_rot[3], pred_rot_vel[3], target_rot, halflife, 75.0f * dt);
 
 
 		Debugger* debugger = Debugger::get_instance();
@@ -1483,39 +1566,40 @@ namespace trace {
 		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_2));
 		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_3));
 
+		glm::vec3 vel_0;
+		glm::vec3 vel_1;
+		glm::vec3 vel_2;
+		glm::vec3 vel_3;
+
 		glm::vec3 vel;
 		glm::vec3 to;
 		glm::vec3 up = glm::vec3(0.0f, 2.25f, 0.0f);
+		glm::vec3 forward = glm::vec3(0.0f, 0.0f, 1.0f);
 		
 		vel = glm::vec3(predxv[0], 0.0f, predyv[0]);
-		if (glm::length(vel) > 0.01f)
-		{
-			vel = glm::normalize(vel);
-		}
+
+
+		vel_0 = org_quat_to_glm(pred_rot[0]) * glm::vec3(0.0f, 0.0f, 1.0f);
+		vel = vel_0;
+
 		to = pred_0 + (vel * 2.5f);
 		debugger->AddDebugLine(pred_0 + up, to + up, TRC_COL32(0, 255, 0, 255));
 
-		vel = glm::vec3(predxv[1], 0.0f, predyv[1]);
-		if (glm::length(vel) > 0.01f)
-		{
-			vel = glm::normalize(vel);
-		}
+		vel_1 = org_quat_to_glm(pred_rot[1]) * glm::vec3(0.0f, 0.0f, 1.0f);
+		vel = vel_1;
+
 		to = pred_1 + (vel * 2.5f);
 		debugger->AddDebugLine(pred_1 + up, to + up, TRC_COL32(0, 255, 0, 255));
 
-		vel = glm::vec3(predxv[2], 0.0f, predyv[2]);
-		if (glm::length(vel) > 0.01f)
-		{
-			vel = glm::normalize(vel);
-		}
+		vel_2 = org_quat_to_glm(pred_rot[2]) * glm::vec3(0.0f, 0.0f, 1.0f);
+		vel = vel_2;
+
 		to = pred_2 + (vel * 2.5f);
 		debugger->AddDebugLine(pred_2 + up, to + up, TRC_COL32(0, 255, 0, 255));
 
-		vel = glm::vec3(predxv[3], 0.0f, predyv[3]);
-		if (glm::length(vel) > 0.01f)
-		{
-			vel = glm::normalize(vel);
-		}
+		vel_3 = org_quat_to_glm(pred_rot[3]) * glm::vec3(0.0f, 0.0f, 1.0f);
+		vel = vel_3;
+
 		to = pred_3 + (vel * 2.5f);
 		debugger->AddDebugLine(pred_3 + up, to + up, TRC_COL32(0, 255, 0, 255));
 		
@@ -1530,6 +1614,25 @@ namespace trace {
 		debug_buffer.pop_front();
 		debug_buffer.pop_front();
 		debug_buffer.pop_front();
+
+
+		Transform inv_bot_pose = bot_pose.Inverse();
+		glm::mat4 inv_pose = inv_bot_pose.GetLocalMatrix();
+		MotionMatchingComponent& m_comp = x_bot.GetComponent<MotionMatchingComponent>();
+		m_comp.normalized_search = normalized_search;
+		m_comp.trajectory_positions.resize(3);
+		m_comp.trajectory_positions[0] = inv_pose * glm::vec4(pred_0, 1.0f);
+		m_comp.trajectory_positions[1] = inv_pose * glm::vec4(pred_1, 1.0f);
+		m_comp.trajectory_positions[2] = inv_pose * glm::vec4(pred_2, 1.0f);
+
+		m_comp.trajectory_orientations.resize(3);
+		m_comp.trajectory_orientations[0] = glm::normalize(glm::vec3(inv_pose * glm::vec4(vel_0, 0.0f)));
+		m_comp.trajectory_orientations[1] = glm::normalize(glm::vec3(inv_pose * glm::vec4(vel_1, 0.0f)));
+		m_comp.trajectory_orientations[2] = glm::normalize(glm::vec3(inv_pose * glm::vec4(vel_2, 0.0f)));
+
+		/*curr_position.x = bot_pose.GetPosition().x;
+		curr_position.y = bot_pose.GetPosition().z;*/
+
 	}
 
 	void TraceEditor::start_current_scene()
@@ -1823,142 +1926,208 @@ project "{}"
 
 	void TraceEditor::RenderUtilsWindows(float deltaTime)
 	{
-		if (!show_humanoid_window)
+		if (show_humanoid_window)
 		{
-			return;
-		}
-
-		if(ImGui::Begin("Skeleton Viewer", &show_humanoid_window))
-		{
-			std::string skeleton_name = "None(Skeleton)";
-
-			if (skeleton)
+			if(ImGui::Begin("Skeleton Viewer", &show_humanoid_window))
 			{
-				skeleton_name = skeleton->GetName();
-			}
+				std::string skeleton_name = "None(Skeleton)";
 
-			ImGui::Text("Skeleton: ");
-			ImGui::SameLine();
-			ImGui::Button(skeleton_name.c_str());
-
-			if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
-			{
-				skeleton = new_skeleton;
-				rig = skeleton->GetHumanoidRig();
-			}
-
-			if (skeleton)
-			{
-
-				std::string rig_name = "None(Humanoid Rig)";
-				if (rig)
+				if (skeleton)
 				{
-					rig_name = rig->GetName();
+					skeleton_name = skeleton->GetName();
 				}
-				ImGui::Text("Humanoid Rig: ");
+
+				ImGui::Text("Skeleton: ");
 				ImGui::SameLine();
-				ImGui::Button(rig_name.c_str());
+				ImGui::Button(skeleton_name.c_str());
 
-				/*if (ImGui::BeginTooltip())
+				if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
 				{
-					ImGui::Text("Drag and Drop Humanoid Rig Asset");
-					ImGui::EndTooltip();
-				}*/
-
-				if (Ref<Animation::HumanoidRig> new_rig = ImGuiDragDropResource<Animation::HumanoidRig>(HUMANOID_RIG_FILE_EXTENSION))
-				{
-					rig = new_rig;
-					skeleton->SetHumanoidRig(rig);
+					skeleton = new_skeleton;
+					rig = skeleton->GetHumanoidRig();
 				}
 
-				ImGui::Separator();
+				if (skeleton)
+				{
+
+					std::string rig_name = "None(Humanoid Rig)";
+					if (rig)
+					{
+						rig_name = rig->GetName();
+					}
+					ImGui::Text("Humanoid Rig: ");
+					ImGui::SameLine();
+					ImGui::Button(rig_name.c_str());
+
+					/*if (ImGui::BeginTooltip())
+					{
+						ImGui::Text("Drag and Drop Humanoid Rig Asset");
+						ImGui::EndTooltip();
+					}*/
+
+					if (Ref<Animation::HumanoidRig> new_rig = ImGuiDragDropResource<Animation::HumanoidRig>(HUMANOID_RIG_FILE_EXTENSION))
+					{
+						rig = new_rig;
+						skeleton->SetHumanoidRig(rig);
+					}
+
+					ImGui::Separator();
+					int32_t index = 0;
+					for (Animation::Bone& bone : skeleton->GetBones())
+					{
+						ImGui::PushID(index);
+						std::string& bone_name = STRING_FROM_ID(bone.GetStringID());
+						ImGui::Button(bone_name.c_str());
+
+						if (ImGui::BeginDragDropSource())
+						{
+							ImGui::SetDragDropPayload("Bone_IDX", &index, sizeof(int32_t));
+							ImGui::EndDragDropSource();
+						}
+
+						ImGui::PopID();
+
+						++index;
+					}
+				}
+				if (ImGui::Button("Save") && skeleton)
+				{
+					std::string skeleton_name = skeleton->GetName();
+					std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(skeleton_name));
+					AnimationsSerializer::SerializeSkeleton(skeleton, file_path.string());
+				}
+
+
+			
+			
+			
+
+				ImGui::End();
+			}
+
+		
+			if (!rig)
+			{
+				return;
+			}
+
+			ImGui::Begin("Humanoid Rig Modifier");
+
+			if (rig)
+			{
+				auto& rig_bones = rig->GetHumanoidBones();
+
 				int32_t index = 0;
-				for (Animation::Bone& bone : skeleton->GetBones())
+				for (int32_t& i : rig_bones)
 				{
 					ImGui::PushID(index);
-					std::string& bone_name = STRING_FROM_ID(bone.GetStringID());
+					ImGui::Text("%s : ", Animation::get_humanoid_bone_text((Animation::HumanoidBone)index));
+					ImGui::SameLine();
+					std::string bone_name = "None(Bone)";
+
+					if (skeleton && i != -1)
+					{
+						bone_name = STRING_FROM_ID(skeleton->GetBone(i)->GetStringID());
+					}
+
 					ImGui::Button(bone_name.c_str());
 
-					if (ImGui::BeginDragDropSource())
+					if (ImGui::BeginDragDropTarget())
 					{
-						ImGui::SetDragDropPayload("Bone_IDX", &index, sizeof(int32_t));
-						ImGui::EndDragDropSource();
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Bone_IDX"))
+						{
+							int32_t bone_index = -1;
+							memcpy_s(&bone_index, sizeof(int32_t), payload->Data, payload->DataSize);
+							i = bone_index;
+						}
+						ImGui::EndDragDropTarget();
 					}
 
 					ImGui::PopID();
 
 					++index;
 				}
-			}
-			if (ImGui::Button("Save") && skeleton)
-			{
-				std::string skeleton_name = skeleton->GetName();
-				std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(skeleton_name));
-				AnimationsSerializer::SerializeSkeleton(skeleton, file_path.string());
-			}
+				if (ImGui::Button("Save Humanoid Rig"))
+				{
+					std::string rig_name = rig->GetName();
+					std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(rig_name));
+					AnimationsSerializer::SerializeHumanoidRig(rig, file_path.string());
+				}
 
 
-			
-			
-			
+			}
 
 			ImGui::End();
 		}
 
-		
-		if (!rig)
+		if (show_feature_db_window)
 		{
-			return;
-		}
-
-		ImGui::Begin("Humanoid Rig Modifier");
-
-		if (rig)
-		{
-			auto& rig_bones = rig->GetHumanoidBones();
-
-			int32_t index = 0;
-			for (int32_t& i : rig_bones)
+			if (ImGui::Begin("Feature Database", &show_feature_db_window))
 			{
-				ImGui::PushID(index);
-				ImGui::Text("%s : ", Animation::get_humanoid_bone_text((Animation::HumanoidBone)index));
+				std::string db_name = "None(Feature DB)";
+
+				if (feature_db)
+				{
+					db_name = feature_db->GetName();
+				}
+
+				ImGui::Text("FeatureDB: ");
 				ImGui::SameLine();
-				std::string bone_name = "None(Bone)";
+				ImGui::Button(db_name.c_str());
 
-				if (skeleton && i != -1)
+				if (Ref<MotionMatching::FeatureDatabase> new_feature_db = ImGuiDragDropResource<MotionMatching::FeatureDatabase>(FEATURE_DB_FILE_EXTENSION))
 				{
-					bone_name = STRING_FROM_ID(skeleton->GetBone(i)->GetStringID());
+					feature_db = new_feature_db;
 				}
 
-				ImGui::Button(bone_name.c_str());
-
-				if (ImGui::BeginDragDropTarget())
+				if (feature_db)
 				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Bone_IDX"))
+
+					int32_t index = 0;
+					for (auto& [idx, clip] : feature_db->GetAnimations())
 					{
-						int32_t bone_index = -1;
-						memcpy_s(&bone_index, sizeof(int32_t), payload->Data, payload->DataSize);
-						i = bone_index;
+						ImGui::PushID(index);
+						std::string clip_name = clip->GetName();
+						ImGui::Button(clip_name.c_str());
+
+						
+						ImGui::PopID();
+
+						++index;
 					}
-					ImGui::EndDragDropTarget();
+				}
+				if (ImGui::Button("Add Animation") && feature_db)
+				{
+					
 				}
 
-				ImGui::PopID();
+				Ref<AnimationClip> new_clip = ImGuiDragDropResource<AnimationClip>(ANIMATION_CLIP_FILE_EXTENSION);
+				if (new_clip && feature_db && skeleton)
+				{
+					feature_db->ExtractPoseData(new_clip, skeleton);
+					feature_db->NormalizeDatabase();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Clear") && feature_db)
+				{
+					feature_db->Clear();
 
-				++index;
+				}
+				if (ImGui::Button("Save") && feature_db)
+				{
+					std::string feature_db_name = feature_db->GetName();
+					std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(feature_db_name));
+					GenericSerializer::Serialize<MotionMatching::FeatureDatabase>(feature_db, file_path.string());
+				}
+
+
+
+
+
+
+				ImGui::End();
 			}
-			if (ImGui::Button("Save Humanoid Rig"))
-			{
-				std::string rig_name = rig->GetName();
-				std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(rig_name));
-				AnimationsSerializer::SerializeHumanoidRig(rig, file_path.string());
-			}
-
-
 		}
-
-		ImGui::End();
-
 
 	}
 

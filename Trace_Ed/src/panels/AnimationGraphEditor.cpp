@@ -85,6 +85,14 @@ namespace trace {
             {
                 Reflection::TypeID<Animation::WarpAnimationNode>(),
                 "Warp Animation Node"
+            },
+            {
+                Reflection::TypeID<Animation::MotionMatchingNode>(),
+                "Motion Matching Node"
+            },
+            {
+                Reflection::TypeID<Animation::RetargetPoseNode>(),
+                "Retarget Pose Node"
             }
     };
 
@@ -382,6 +390,72 @@ namespace trace {
 
                     ImNodes::EndNode();
                 }
+            },
+            {
+                Reflection::TypeID<Animation::MotionMatchingNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::MotionMatchingNode* sample_node = (Animation::MotionMatchingNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("Motion Matching Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+
+                    std::string _name = "Out Pose";
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text(_name.c_str());
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
+
+                    ImNodes::EndNode();
+                }
+            },
+            {
+                Reflection::TypeID<Animation::RetargetPoseNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::RetargetPoseNode* sample_node = (Animation::RetargetPoseNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("Retarget Pose Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeInput& input_0 = node->GetInputs()[0];
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)input_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)input_0.type]);
+                    ImNodes::BeginInputAttribute((1 << 24) | node_index, ImNodesPinShape_Quad);
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+
+                    
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text("Out Pose");
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
+
+                    ImNodes::EndNode();
+                }
             }
 
         };
@@ -587,6 +661,86 @@ namespace trace {
                     {
                         sample_node->SetAnimationClip(new_clip);
                     }
+
+                }
+            },
+            {
+                Reflection::TypeID<Animation::MotionMatchingNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::MotionMatchingNode* sample_node = (Animation::MotionMatchingNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+
+                    Ref<MotionMatching::FeatureDatabase> db = sample_node->GetMotionMatcher().GetDatabase();
+                    std::string db_name = "None(Feature Database)";
+                    if (db)
+                    {
+                        db_name = db->GetName();
+                    }
+
+                    ImGui::Text("Database: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(db_name.c_str()))
+                    {
+
+                    }
+
+                    if (Ref<MotionMatching::FeatureDatabase> new_db = ImGuiDragDropResource<MotionMatching::FeatureDatabase>(FEATURE_DB_FILE_EXTENSION))
+                    {
+                        sample_node->GetMotionMatcher().SetDatabase(new_db);
+                    }
+
+                    Ref<Animation::Skeleton> skeleton = sample_node->GetSkeleton();
+                    std::string skeleton_name = "None(Skeleton)";
+                    if (skeleton)
+                    {
+                        skeleton_name = skeleton->GetName();
+                    }
+
+                    ImGui::Text("Skeleton: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(skeleton_name.c_str()))
+                    {
+
+                    }
+
+                    if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+                    {
+                        sample_node->SetSkeleton(new_skeleton);
+                    }
+
+                }
+            },
+            {
+                Reflection::TypeID<Animation::RetargetPoseNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::RetargetPoseNode* sample_node = (Animation::RetargetPoseNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+
+                    Ref<Animation::Skeleton> skeleton = sample_node->GetSkeleton();
+                    std::string skeleton_name = "None(Skeleton)";
+                    if (skeleton)
+                    {
+                        skeleton_name = skeleton->GetName();
+                    }
+
+                    ImGui::Text("Skeleton: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(skeleton_name.c_str()))
+                    {
+
+                    }
+
+                    if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+                    {
+                        sample_node->SetSkeleton(new_skeleton);
+                    }
+
+
 
                 }
             }
@@ -872,6 +1026,16 @@ namespace trace {
                     if (ImGui::MenuItem("Warp Node"))
                     {
                         UUID node_id = m_currentGraph->CreateNode<Animation::WarpAnimationNode>();
+                        add_new_node(node_id);
+                    }
+                    if (ImGui::MenuItem("Motion Matching Node"))
+                    {
+                        UUID node_id = m_currentGraph->CreateNode<Animation::MotionMatchingNode>();
+                        add_new_node(node_id);
+                    }
+                    if (ImGui::MenuItem("Retarget Pose Node"))
+                    {
+                        UUID node_id = m_currentGraph->CreateNode<Animation::RetargetPoseNode>();
                         add_new_node(node_id);
                     }
                     ImGui::EndPopup();

@@ -25,6 +25,8 @@
 #include "external_utils.h"
 #include "core/defines.h"
 #include "scene/SceneManager.h"
+#include "serialize/GenericSerializer.h"
+#include "motion_matching/MotionMatchDatabase.h"
 
 
 #include "imgui.h"
@@ -151,7 +153,7 @@ namespace trace {
 					});
 			};
 
-			extensions_callbacks[".trprf"] = [editor](std::filesystem::path& path)
+			extensions_callbacks[PREFAB_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
 					{
@@ -177,6 +179,11 @@ namespace trace {
 			extensions_callbacks[SKELETON_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->OpenSkeleton(path.string());
+			};
+
+			extensions_callbacks[FEATURE_DB_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenFeatureDB(path.string());
 			};
 
 			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
@@ -247,6 +254,7 @@ namespace trace {
 			};
 
 			extensions_callbacks[".fbx"] = mesh_lambda;
+			extensions_callbacks[".bvh"] = mesh_lambda;
 			extensions_callbacks[".blend"] = mesh_lambda;
 			extensions_callbacks[".obj"] = mesh_lambda;
 			extensions_callbacks[".gltf"] = mesh_lambda;
@@ -749,6 +757,7 @@ namespace trace {
 			ANIMATION_GRAPH,
 			ANIMATION_SEQUENCE,
 			HUMANOID_RIG,
+			FEATURE_DB,
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -790,6 +799,10 @@ namespace trace {
 				if (ImGui::MenuItem("Humanoid Rig"))
 				{
 					c_item = HUMANOID_RIG;
+				}
+				if (ImGui::MenuItem("Feature Database"))
+				{
+					c_item = FEATURE_DB;
 				}
 				ImGui::EndMenu();
 			}
@@ -1023,6 +1036,36 @@ namespace trace {
 					else
 					{
 						TRC_ERROR("{} has already been created", res + HUMANOID_RIG_FILE_EXTENSION);
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case FEATURE_DB:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Database Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + FEATURE_DB_FILE_EXTENSION);
+
+					if (id == 0)
+					{
+						std::string db_path = (m_currentDir / (res + FEATURE_DB_FILE_EXTENSION)).string();
+						Ref<MotionMatching::FeatureDatabase> db = GenericAssetManager::get_instance()->CreateAssetHandle_<MotionMatching::FeatureDatabase>(db_path);
+						GenericSerializer::Serialize<MotionMatching::FeatureDatabase>(db, db_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + FEATURE_DB_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = db_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + FEATURE_DB_FILE_EXTENSION);
 					}
 				}
 			}

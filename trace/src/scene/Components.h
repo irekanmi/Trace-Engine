@@ -332,6 +332,16 @@ namespace trace {
 		CharacterController character;
 	};
 
+	struct MotionMatchingComponent
+	{
+		float update_frequency = 0.083f;
+		float pose_weight = 1.0f;
+		float trajectory_weight = 1.0f;
+		bool normalized_search = true;
+		std::vector<glm::vec3> trajectory_positions;
+		std::vector<glm::vec3> trajectory_orientations;
+	};
+
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -341,6 +351,6 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent>;
+		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent, MotionMatchingComponent>;
 
 }

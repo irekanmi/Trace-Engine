@@ -20,6 +20,7 @@ namespace trace::Animation {
 		std::string& GetBoneName() { return m_name; }
 		glm::mat4 GetBindPose() { return m_bindPose; }
 		void SetBindPose(glm::mat4 bind_pose) { m_bindPose = bind_pose; }
+		void SetBoneOffest(glm::mat4 bone_offset) { m_boneOffset = bone_offset; }
 		glm::mat4 GetBoneOffset() { return m_boneOffset; }
 		StringID GetStringID() { return m_id; }
 

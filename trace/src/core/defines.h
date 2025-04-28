@@ -16,3 +16,4 @@
 #define SEQUENCE_FILE_EXTENSION ".trcsq"
 #define SCENE_FILE_EXTENSION ".trscn"
 #define HUMANOID_RIG_FILE_EXTENSION ".trhrig"
+#define FEATURE_DB_FILE_EXTENSION ".trmmft"

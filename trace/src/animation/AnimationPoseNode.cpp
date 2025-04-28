@@ -683,6 +683,11 @@ namespace trace::Animation {
 
 		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
 
+		if (!m_animation)
+		{
+			return;
+		}
+
 		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
 		{
 			return;
@@ -713,6 +718,8 @@ namespace trace::Animation {
 			Transform& root_motion_delta = clip_pose.GetRootMotionDelta();
 			root_motion_delta = Transform::Identity();
 		}
+
+		
 
 		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
 		Ref<HumanoidRig> target_rig = skeleton->GetHumanoidRig();
@@ -754,11 +761,15 @@ namespace trace::Animation {
 				glm::mat4 source_bind_pose = m_skeleton->GetBoneGlobalBindPose(source_bone_index);
 				glm::mat4 inv_source_bind_pose = glm::inverse(source_bind_pose);
 
-				glm::mat4 offset = target_bind_pose * inv_source_bind_pose;
+				glm::mat4 offset = inv_source_bind_pose * target_bind_pose;
 
 				glm::mat4 animation_pose = clip_pose.GetBoneGlobalPose(m_skeleton, source_bone_index);
+				Transform debug_pose(animation_pose);
+				debug_pose.SetPosition( debug_pose.GetPosition() * 0.1f);
+				Debugger::get_instance()->DrawDebugSphere(0.8f, 4, debug_pose.GetLocalMatrix(), TRC_COL32(0, 255, 0, 255));
 
-				glm::mat4 pose_result = offset * animation_pose;
+				//glm::mat4 pose_result = offset * animation_pose;
+				glm::mat4 pose_result = animation_pose * offset;
 
 				if (target_bone.GetParentIndex() != -1)
 				{
@@ -818,6 +829,173 @@ namespace trace::Animation {
 	{
 		return (PoseNodeResult*)GetValueInternal(instance);
 	}
+	
+	// -----------------------------------------------------------------------------------
+
+	// Retarget Pose Node -----------------------------------------------------------
+
+	bool RetargetPoseNode::Instanciate(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* result = new RuntimeData;
+		instance_data_set[this] = result;
+
+		result->final_pose.pose_data.Init(&instance->GetSkeletonInstance());
+
+		return true;
+	}
+
+	void RetargetPoseNode::Update(GraphInstance* instance, float deltaTime)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+
+		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
+		{
+			return;
+		}
+
+		NodeInput& input = m_inputs[0];
+		if (input.node_id == 0)
+		{
+			return;
+		}
+
+		if (!m_skeleton)
+		{
+			return;
+		}
+
+		Node* in_node = nodes[input.node_id];
+		in_node->Update(instance, deltaTime);
+
+
+		if (data->elasped_time == 0.0f)
+		{
+			data->start_time = Application::get_instance()->GetClock().GetElapsedTime();
+		}
+
+		Animation::Pose& clip_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index)->pose_data;
+
+
+		
+
+
+
+		Ref<Animation::Skeleton> skeleton = instance->GetGraph()->GetSkeleton();
+		Ref<HumanoidRig> target_rig = skeleton->GetHumanoidRig();
+		Ref<HumanoidRig> source_rig = m_skeleton->GetHumanoidRig();
+
+		// Initialize Final Pose with the bind pose
+		skeleton->GetBindPose(data->final_pose.pose_data.GetLocalPose());
+
+		if (target_rig && source_rig)
+		{
+
+			auto& target_rig_bones = target_rig->GetHumanoidBones();
+			auto& source_rig_bones = source_rig->GetHumanoidBones();
+
+			int32_t index = 0;
+			for (int32_t& i : source_rig_bones)
+			{
+				if (i < 0)
+				{
+					++index;
+					continue;
+				}
+
+				if (target_rig_bones[index] < 0)
+				{
+					++index;
+					continue;
+				}
+
+				int32_t source_bone_index = i;
+				int32_t target_bone_index = target_rig_bones[index];
+
+				Animation::Bone& source_bone = *m_skeleton->GetBone(source_bone_index);
+				Animation::Bone& target_bone = *skeleton->GetBone(target_bone_index);
+
+				glm::mat4 target_bind_pose = skeleton->GetBoneGlobalBindPose(target_bone_index);
+				//glm::mat4 inv_target_bind_pose = glm::inverse(target_bind_pose);
+
+				glm::mat4 source_bind_pose = m_skeleton->GetBoneGlobalBindPose(source_bone_index);
+				glm::mat4 inv_source_bind_pose = glm::inverse(source_bind_pose);
+
+				glm::mat4 offset = inv_source_bind_pose * target_bind_pose;
+
+				glm::mat4 animation_pose = clip_pose.GetBoneGlobalPose(m_skeleton, source_bone_index);
+				
+				//glm::mat4 pose_result = offset * animation_pose;
+				glm::mat4 pose_result = animation_pose * offset;
+
+				if (target_bone.GetParentIndex() != -1)
+				{
+					glm::mat4 target_parent_pose = data->final_pose.pose_data.GetBoneGlobalPose(target_bone.GetParentIndex());
+					pose_result = glm::inverse(target_parent_pose) * pose_result;
+				}
+
+				std::vector<Transform>& target_local_pose = data->final_pose.pose_data.GetLocalPose();
+				target_local_pose[target_bone_index] = Transform(pose_result);
+
+				++index;
+			}
+
+			Transform& src_root_motion_delta = clip_pose.GetRootMotionDelta();
+			Transform& trg_root_motion_delta = data->final_pose.pose_data.GetRootMotionDelta();
+			trg_root_motion_delta = src_root_motion_delta;
+
+		}
+
+		data->elasped_time += deltaTime;
+		data->definition.update_id = Application::get_instance()->GetUpdateID();
+
+	}
+
+	void* RetargetPoseNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		switch (value_index)
+		{
+		case 0:
+		{
+			return &data->final_pose;
+			break;
+		}
+		}
+
+		return nullptr;
+	}
+
+	void RetargetPoseNode::Init(Graph* graph)
+	{
+		NodeInput input = {};
+		input.type = ValueType::Pose;
+		input.value_index = 0;
+		input.node_id = 0;
+
+		m_inputs.push_back(input);
+
+		NodeOutput output = {};
+		output.type = ValueType::Pose;
+		output.value_index = 0;
+
+		m_outputs.push_back(output);
+	}
+
+	PoseNodeResult* RetargetPoseNode::GetFinalPose(GraphInstance* instance)
+	{
+		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+	// -----------------------------------------------------------------------------------
 
 	// Warp Animation Node -----------------------------------------------------------
 
@@ -1085,8 +1263,242 @@ namespace trace::Animation {
 		return (PoseNodeResult*)GetValueInternal(instance);
 	}
 
-
+	
 
 	// ---------------------------------------------------------------------------------------------
+
+	
+	// Motion Matching node -------------------------------------------
+
+	bool MotionMatchingNode::Instanciate(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* result = new RuntimeData;
+		instance_data_set[this] = result;
+
+		result->final_pose.pose_data.Init(m_skeleton);
+		result->src_prev_pose.Init(m_skeleton);
+		result->trg_pose.Init(m_skeleton);
+		result->trg_prev_pose.Init(m_skeleton);
+
+		result->time_accummulator = 1.5f;//NOTE: So as to ensure that there will a pose search at the first frame
+		result->inertializer.Initialize(m_skeleton.get());
+
+		return true;
+	}
+
+	void MotionMatchingNode::Update(GraphInstance* instance, float deltaTime)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
+		{
+			return;
+		}
+
+
+		if (data->elasped_time == 0.0f)
+		{
+			data->start_time = Application::get_instance()->GetClock().GetElapsedTime();
+		}
+
+		if (!m_skeleton)
+		{
+			return;
+		}
+		
+		FindNewPose(instance, deltaTime);
+
+		Ref<Animation::Skeleton> skeleton = m_skeleton;
+		
+		if (data->current_animation)
+		{
+			RootMotionInfo& root_motion_info = data->current_animation->GetRootMotionInfo();
+			Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+			auto& channel = data->current_animation->GetTracks()[bone->GetStringID()];
+
+			float next_frame_time = data->elasped_time + deltaTime;
+
+			AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(data->last_frame_index, data->current_animation, skeleton, data->elasped_time, next_frame_time, &data->trg_pose, true);
+			data->current_index = data->current_clip_index + AnimationEngine::get_instance()->GetFrameIndex(data->last_frame_index, data->current_animation, channel, AnimationDataType::POSITION, next_frame_time, true);
+			int32_t frame_in_clip = data->current_index - data->current_clip_index;
+			data->last_frame_index = frame_in_clip;
+			data->elasped_time = next_frame_time;
+
+			data->inertializer.Update(deltaTime, &data->final_pose.pose_data, &data->trg_pose, skeleton.get());
+			data->final_pose.pose_data.GetRootMotionDelta() = data->trg_pose.GetRootMotionDelta();
+		}
+
+
+		
+
+		
+		
+		data->time_accummulator += deltaTime;
+		data->definition.update_id = Application::get_instance()->GetUpdateID();
+
+	}
+
+	void* MotionMatchingNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		switch (value_index)
+		{
+		case 0:
+		{
+			return &data->final_pose;
+			break;
+		}
+		}
+
+		return nullptr;
+	}
+
+	void MotionMatchingNode::Init(Graph* graph)
+	{
+		NodeOutput output = {};
+		output.type = ValueType::Pose;
+		output.value_index = 0;
+
+		m_outputs.push_back(output);
+	}
+
+	PoseNodeResult* MotionMatchingNode::GetFinalPose(GraphInstance* instance)
+	{
+		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+	void MotionMatchingNode::FindNewPose(GraphInstance* instance, float deltaTime)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		Scene* scene = instance->GetSkeletonInstance().GetScene();
+		Entity obj = scene->GetEntity(instance->GetEntityHandle());
+
+		if (!obj.HasComponent<MotionMatchingComponent>())
+		{
+			TRC_ERROR("Entity must have a motion matching component, entity name: {}, Function: {}", obj.GetComponent<TagComponent>().GetTag(), __FUNCTION__);
+			return;
+		}
+
+		MotionMatchingComponent& comp = obj.GetComponent<MotionMatchingComponent>();
+
+		if (data->time_accummulator > comp.update_frequency)
+		{
+			// Get current pose feature
+			MotionMatching::FeatureData* feature = m_matcher.GetDatabase()->GetData(data->current_index);
+
+			// Generate query vector
+			MotionMatching::FeatureData query_vector = *feature;
+			query_vector.future_root_positions = comp.trajectory_positions;
+			query_vector.future_root_orientation = comp.trajectory_orientations;
+
+			// Search for pose;
+			int32_t pose_index = m_matcher.SearchPose(query_vector, comp.trajectory_weight, comp.pose_weight, comp.normalized_search);
+			MotionMatching::FeatureData* pose_feature = m_matcher.GetDatabase()->GetData(pose_index);
+
+			const int32_t ignore_surrounding_frames = 15;
+			if (pose_index != data->current_index && abs(pose_index - data->current_index) > ignore_surrounding_frames)
+			{
+				AnimationClip* new_clip = m_matcher.GetDatabase()->GetAnimation(pose_feature->clip_index).get();
+				if (data->current_animation)
+				{
+					float dt = 1.0f / float(data->current_animation->GetSampleRate());
+					{
+						int32_t frame_in_clip = data->current_index - data->current_clip_index;
+						int32_t prev_frame = frame_in_clip - 1;
+						if (frame_in_clip == 0)
+						{
+							prev_frame = 0;//TODO: Allow the prev frame index to wrap around the number of frames avaliable in the clip
+						}
+
+						Ref<Animation::Skeleton> skeleton = m_skeleton;
+						RootMotionInfo& root_motion_info = data->current_animation->GetRootMotionInfo();
+						Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+						auto& channel = data->current_animation->GetTracks()[bone->GetStringID()];
+						auto& position_track = channel[AnimationDataType::POSITION];
+						AnimationFrameData& frame_data = position_track[frame_in_clip];
+						AnimationFrameData& prev_frame_data = position_track[prev_frame];
+
+						AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(data->last_frame_index, data->current_animation, skeleton, prev_frame_data.time_point - dt, prev_frame_data.time_point, &data->src_prev_pose, true);
+						AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(data->last_frame_index, data->current_animation, skeleton, frame_data.time_point, frame_data.time_point + dt, &data->final_pose.pose_data, true);
+					};
+
+					{
+						int32_t frame_in_clip = pose_index - pose_feature->clip_index;
+
+						int32_t prev_frame = frame_in_clip - 1;
+						if (frame_in_clip == 0)
+						{
+							prev_frame = 0;//TODO: Allow the prev frame index to wrap around the number of frames avaliable in the clip
+						}
+
+						Ref<Animation::Skeleton> skeleton = m_skeleton;
+						RootMotionInfo& root_motion_info = new_clip->GetRootMotionInfo();
+						Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+						auto& channel = new_clip->GetTracks()[bone->GetStringID()];
+						auto& position_track = channel[AnimationDataType::POSITION];
+
+						AnimationFrameData& frame_data = position_track[frame_in_clip];
+						AnimationFrameData& prev_frame_data = position_track[prev_frame];
+
+						AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(prev_frame, new_clip, skeleton, prev_frame_data.time_point - dt, prev_frame_data.time_point, &data->trg_prev_pose, true);
+
+						AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(frame_in_clip, new_clip, skeleton, frame_data.time_point, frame_data.time_point + dt, &data->trg_pose, true);
+						
+
+						data->inertializer.Init(&data->src_prev_pose, &data->final_pose.pose_data, &data->trg_prev_pose, &data->trg_pose, skeleton.get(), dt);
+					};
+
+				}
+
+
+				{
+					// Set current pose data
+					data->current_index = pose_index;
+					data->current_clip_index = pose_feature->clip_index;
+					data->current_animation = new_clip;
+
+					int32_t frame_in_clip = data->current_index - data->current_clip_index;
+					Ref<Animation::Skeleton> skeleton = m_skeleton;
+					RootMotionInfo& root_motion_info = data->current_animation->GetRootMotionInfo();
+					Animation::Bone* bone = skeleton->GetBone(root_motion_info.root_bone_index);
+
+					auto& channel = data->current_animation->GetTracks()[bone->GetStringID()];
+					auto& position_track = channel[AnimationDataType::POSITION];
+
+					AnimationFrameData& frame_data = position_track[frame_in_clip];
+					data->last_frame_index = frame_in_clip;
+					data->elasped_time = frame_data.time_point;
+				};
+			}
+			else
+			{
+
+			}
+
+
+			data->time_accummulator = 0.0f;
+		}
+	}
+
+	// ------------------------------------------
+
+
+	// --------------------------------------------------------------
+
 
 }

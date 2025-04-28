@@ -22,6 +22,9 @@
 #include "resource/GenericAssetManager.h"
 #include "serialize/AnimationsSerializer.h"
 #include "resource/AnimationsManager.h"
+#include "core/defines.h"
+#include "animation/AnimationEngine.h"
+#include "animation/AnimationPose.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
@@ -578,6 +581,11 @@ namespace trace {
 			uint32_t mesh_index = node->mMeshes[i];
 			aiMesh* mesh = ass_scene->mMeshes[mesh_index];
 			std::string mesh_name = mesh->mName.C_Str();
+			if (mesh_name.empty())
+			{
+				TRC_ERROR("Node mesh doesn't have a name, Node Name: {}, Function: {}", node->mName.C_Str(), __FUNCTION__);
+				continue;
+			}
 
 			UUID parent_id = 0;
 			if (parent)
@@ -814,17 +822,28 @@ namespace trace {
 	void find_and_create_skeletons(const aiScene* ass_scene, aiNode* node, std::unordered_map<std::string, Animation::Bone>& bones_map, std::string& filename, std::filesystem::path& directory, Importer* importer)
 	{
 		std::string root_node;
-		for (uint32_t i = 0; i < node->mNumChildren; i++)
+
+		auto root_it = bones_map.find(node->mName.C_Str());
+		if (root_it != bones_map.end())
 		{
-			aiNode* child = node->mChildren[i];
-			auto it = bones_map.find(child->mName.C_Str());
-			if (it != bones_map.end())
+			root_node = node->mName.C_Str();
+			create_skeleton(ass_scene, node, bones_map, root_node, filename, directory, importer);
+		}
+		else
+		{
+
+			for (uint32_t i = 0; i < node->mNumChildren; i++)
 			{
-				root_node = node->mName.C_Str();
-				create_skeleton(ass_scene, child, bones_map, root_node, filename, directory, importer);
-				continue;
+				aiNode* child = node->mChildren[i];
+				auto it = bones_map.find(child->mName.C_Str());
+				if (it != bones_map.end())
+				{
+					root_node = node->mName.C_Str();
+					create_skeleton(ass_scene, child, bones_map, root_node, filename, directory, importer);
+					continue;
+				}
+				find_and_create_skeletons(ass_scene, child, bones_map, filename, directory, importer);
 			}
-			find_and_create_skeletons(ass_scene, child, bones_map, filename, directory, importer);
 		}
 	}
 
@@ -899,7 +918,7 @@ namespace trace {
 			aiAnimation* animation = ass_scene->mAnimations[i];
 
 			std::string anim_name = animation->mName.C_Str();
-			anim_name += ".trcac";
+			anim_name += ANIMATION_CLIP_FILE_EXTENSION;
 
 			float duration = (float)animation->mDuration / (float)animation->mTicksPerSecond;
 			int frames_per_second = (int)animation->mTicksPerSecond;
@@ -941,6 +960,7 @@ namespace trace {
 					frame_data.time_point = duration * (float)(key.mTime / animation->mDuration);
 
 					glm::quat val = aiQuatToGlm(key.mValue);
+					
 					memcpy(frame_data.data, &val, sizeof(glm::quat));
 
 					rotation_track.channel_data.emplace_back(frame_data);
@@ -973,6 +993,44 @@ namespace trace {
 
 			AnimationsSerializer::SerializeAnimationClip(clip, (directory / anim_name).string());
 			content_browser->ProcessAllDirectory(true);
+
+			if ((directory / filename).extension() == ".bvh")
+			{
+				Ref<Animation::Skeleton> skeleton = importer->GetImportedSkeletons()[filename][0];
+				Animation::Pose pose_0;
+				pose_0.Init(skeleton);
+				AnimationEngine::get_instance()->SampleClip(clip, skeleton, 0.0f, &pose_0, false);
+				for (int32_t j = 0; j < skeleton->GetBones().size(); j++)
+				{
+					Animation::Bone& bone = skeleton->GetBones()[j];
+					Transform& local_pose = pose_0.GetLocalPose()[j];
+					glm::vec3 foward = local_pose.GetRotation() * glm::vec3(0.0f, 0.0f, 1.0f);
+					Transform _pose(bone.GetBindPose());
+					_pose.SetPosition(local_pose.GetPosition());
+					_pose.SetRotation(local_pose.GetRotation());
+
+					bone.SetBindPose(_pose.GetLocalMatrix());
+
+					int32_t parent_index = bone.GetParentIndex();
+
+					glm::mat4 bone_offset(1.0f);
+					while (parent_index >= 0)
+					{
+						Animation::Bone& parent_bone = skeleton->GetBones()[parent_index];
+
+						bone_offset = parent_bone.GetBindPose() * bone_offset;
+
+						parent_index = parent_bone.GetParentIndex();
+					}
+
+					bone_offset = bone_offset * bone.GetBindPose();
+
+ 					bone.SetBoneOffest(glm::inverse(bone_offset));
+
+					AnimationsSerializer::SerializeSkeleton(skeleton, (directory / skeleton->GetName()).string());
+				}
+			}
+
 		}
 
 	}
@@ -997,6 +1055,8 @@ namespace trace {
 			TRC_ERROR("Failed to import mesh, filename: {}", file_path);
 			return false;
 		}
+
+		
 
 		m_loadedFiles[filename] = result;
 		content_browser->ProcessAllDirectory();// Refresh file id's

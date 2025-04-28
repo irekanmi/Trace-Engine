@@ -1,7 +1,10 @@
 #pragma once
 
+#include "glm/glm.hpp"
 
 namespace trace::Math {
+
+    /* https://theorangeduck.com/page/spring-roll-call#controllers */
 
 	inline float fast_negexp(float x)
 	{

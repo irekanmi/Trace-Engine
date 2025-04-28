@@ -361,6 +361,11 @@ namespace trace {
 				entity.AddComponent<CharacterControllerComponent>();
 				comp_dirty = true;
 			}
+			if (ImGui::MenuItem("Motion Matching Component"))
+			{
+				entity.AddComponent<MotionMatchingComponent>();
+				comp_dirty = true;
+			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
@@ -1223,6 +1228,25 @@ namespace trace {
 			return dirty;
 			});
 
+		comp_dirty = comp_dirty || DrawComponent<MotionMatchingComponent>(entity, "Motion Matching", [&](Entity obj, MotionMatchingComponent& comp) -> bool {
+
+			static bool show_collider = true;
+
+			bool dirty = false;
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Update Frequency", &comp.update_frequency, 0.0003f, 0.0001f, 0.75f, "%.5f"), UpdateFrequency)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Trajectory Weight", &comp.trajectory_weight, 0.005f, 0.0f, 1.0f, "%.5f"), TrajectoryWeight)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Pose Weight", &comp.pose_weight, 0.005f, 0.0f, 1.0f, "%.5f"), PoseWeight)
+			{}
+
+						
+
+			return dirty;
+			});
 
 		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
 

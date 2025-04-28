@@ -91,21 +91,21 @@ namespace trace {
 	glm::vec3 Transform::GetForward()
 	{
 		glm::mat4 rot = glm::toMat4(m_rotation);
-		glm::vec3 result = rot * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		glm::vec3 result = rot * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
 		return glm::normalize(result);
 	}
 
 	glm::vec3 Transform::GetRight()
 	{
 		glm::mat4 rot = glm::toMat4(m_rotation);
-		glm::vec3 result = rot * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		glm::vec3 result = rot * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 		return glm::normalize(result);
 	}
 
 	glm::vec3 Transform::GetUp()
 	{
 		glm::mat4 rot = glm::toMat4(m_rotation);
-		glm::vec3 result = rot * glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		glm::vec3 result = rot * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
 		return glm::normalize(result);
 	}
 
