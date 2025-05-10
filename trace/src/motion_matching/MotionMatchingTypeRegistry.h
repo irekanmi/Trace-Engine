@@ -33,4 +33,11 @@ namespace trace::MotionMatching {
 		REGISTER_MEMBER(MotionMatcher, m_database);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(MotionMatchingInfo)
+		REGISTER_TYPE(MotionMatchingInfo);
+	REGISTER_MEMBER(MotionMatchingInfo, pose_features);
+	REGISTER_MEMBER(MotionMatchingInfo, trajectory_features);
+	REGISTER_MEMBER(MotionMatchingInfo, frames_per_second);
+	END_REGISTER_CLASS;
+
 }

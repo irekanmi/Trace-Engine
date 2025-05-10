@@ -155,6 +155,13 @@ namespace trace {
 		REGISTER_MEMBER(MotionMatchingComponent, trajectory_weight);
 		REGISTER_MEMBER(MotionMatchingComponent, pose_weight);
 		REGISTER_MEMBER(MotionMatchingComponent, normalized_search);
+		REGISTER_MEMBER(MotionMatchingComponent, motion_matching_info);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(SpringMotionMatchingController)
+		REGISTER_TYPE(SpringMotionMatchingController);
+		REGISTER_MEMBER(SpringMotionMatchingController, position_halflife);
+		REGISTER_MEMBER(SpringMotionMatchingController, rotation_halflife);
 	END_REGISTER_CLASS;
 
 }

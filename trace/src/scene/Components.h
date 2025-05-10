@@ -16,6 +16,9 @@
 #include "core/Coretypes.h"
 #include "animation/AnimationSequence.h"
 #include "reflection/TypeRegistry.h"
+#include "motion_matching/MotionMatchDatabase.h"
+#include "orange_duck/vec.h"
+#include "orange_duck/quat.h"
 
 
 #include <string>
@@ -334,12 +337,29 @@ namespace trace {
 
 	struct MotionMatchingComponent
 	{
-		float update_frequency = 0.083f;
+		float update_frequency = 0.1f;
 		float pose_weight = 1.0f;
 		float trajectory_weight = 1.0f;
 		bool normalized_search = true;
 		std::vector<glm::vec3> trajectory_positions;
 		std::vector<glm::vec3> trajectory_orientations;
+		Ref<MotionMatching::MotionMatchingInfo> motion_matching_info;
+	};
+
+	struct SpringMotionMatchingController
+	{
+		float position_halflife = 0.1f;
+		float rotation_halflife = 0.1f;
+		glm::vec3 target_dir;
+		std::vector<glm::vec3> predict_positions;
+		std::vector<glm::vec3> predict_velocities;
+		std::vector<glm::vec3> predict_accelerations;
+		std::vector<orange_duck::quat> predict_orientations;
+		std::vector<orange_duck::vec3> predict_angular_velocities;
+		glm::vec3 velocity = {};
+		orange_duck::vec3 angular_velocity = {};
+		glm::vec3 acceleration = {};
+		glm::vec3 curr_position = {};
 	};
 
 	template<typename... Component>
@@ -351,6 +371,6 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent, MotionMatchingComponent>;
+		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent, MotionMatchingComponent, SpringMotionMatchingController>;
 
 }

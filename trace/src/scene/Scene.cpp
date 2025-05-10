@@ -13,6 +13,11 @@
 #include "animation/AnimationPose.h"
 #include "core/Coretypes.h"
 #include "core/Utils.h"
+#include "orange_duck/quat.h"
+#include "orange_duck/spring.h"
+#include "core/maths/Conversion.h"
+#include "core/maths/Dampers.h"
+#include "debug/Debugger.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -137,6 +142,42 @@ namespace trace {
 
 			seq.sequence.Start(this, entity.GetID());
 
+		}
+		
+		
+		auto mmt_comp = m_registry.view<MotionMatchingComponent>();
+		for (auto i : mmt_comp)
+		{
+			auto [mmt] = mmt_comp.get(i);
+
+			Entity entity(i, this);
+			if (!mmt.motion_matching_info)
+			{
+				continue;
+			}
+
+			mmt.trajectory_positions.resize(mmt.motion_matching_info->trajectory_features.size());
+			mmt.trajectory_orientations.resize(mmt.motion_matching_info->trajectory_features.size());
+
+		}
+
+		auto spring_mmt = m_registry.view<SpringMotionMatchingController, MotionMatchingComponent>();
+		for (auto i : spring_mmt)
+		{
+			auto [spring, mmt] = spring_mmt.get(i);
+
+			if (!mmt.motion_matching_info)
+			{
+				continue;
+			}
+
+			int32_t _size = static_cast<int32_t>(mmt.motion_matching_info->trajectory_features.size());
+
+			spring.predict_accelerations.resize(_size);
+			spring.predict_angular_velocities.resize(_size);
+			spring.predict_orientations.resize(_size);
+			spring.predict_positions.resize(_size);
+			spring.predict_velocities.resize(_size);
 		}
 
 	}
@@ -517,6 +558,71 @@ namespace trace {
 			}
 			Entity entity(i, this);
 			seq.sequence.Update(this, deltaTime);
+
+		}
+
+		auto spring_mmt = m_registry.view<SpringMotionMatchingController, MotionMatchingComponent, ActiveComponent>();
+		for (auto i : spring_mmt)
+		{
+			auto [spring, mmt, active] = spring_mmt.get(i);
+			
+			if (!mmt.motion_matching_info)
+			{
+				continue;
+			}
+
+			Entity entity(i, this);
+			
+			Transform& _pose = entity.GetComponent<TransformComponent>()._transform;
+			orange_duck::quat curr_rot = glm_quat_to_org(_pose.GetRotation());
+			orange_duck::quat target_rot = curr_rot;
+
+			if (glm::length(spring.target_dir) > 0.01f)
+			{
+				glm::vec3 gamepad = glm::normalize(spring.target_dir);
+				glm::quat rot = glm::quatLookAt(-gamepad, glm::vec3(0.0f, 1.0f, 0.0f));
+				target_rot = glm_quat_to_org(rot);
+			}
+
+			float fps = float(mmt.motion_matching_info->frames_per_second);
+			float dt = 1.0f / fps;
+			spring.curr_position.x = _pose.GetPosition().x;
+			spring.curr_position.z = _pose.GetPosition().z;
+
+			Math::spring_character_update(spring.curr_position.x, spring.velocity.x, spring.acceleration.x, spring.target_dir.x, spring.position_halflife, deltaTime);
+			Math::spring_character_update(spring.curr_position.z, spring.velocity.z, spring.acceleration.z, spring.target_dir.z, spring.position_halflife, deltaTime);
+
+			orange_duck::simple_spring_damper_exact(curr_rot, spring.angular_velocity, target_rot, spring.rotation_halflife, deltaTime);
+
+			Transform _inv_pose = _pose.Inverse();
+			glm::mat4 inv_pose = _inv_pose.GetLocalMatrix();
+			glm::vec3 forward = glm::vec3(0.0f, 0.0f, 1.0f);
+			for (int32_t i = 0; i < mmt.motion_matching_info->trajectory_features.size(); i++)
+			{
+				spring.predict_positions[i] = spring.curr_position;
+				float _frame_x = float(mmt.motion_matching_info->trajectory_features[i]) * dt;
+
+				Math::spring_character_update(spring.predict_positions[i].x, spring.predict_velocities[i].x, spring.predict_accelerations[i].x, spring.target_dir.x, spring.position_halflife, _frame_x);
+				Math::spring_character_update(spring.predict_positions[i].z, spring.predict_velocities[i].z, spring.predict_accelerations[i].z, spring.target_dir.z, spring.position_halflife, _frame_x);
+				mmt.trajectory_positions[i] = inv_pose * glm::vec4(spring.predict_positions[i], 1.0f);
+
+				spring.predict_orientations[i] = curr_rot;
+				spring.predict_angular_velocities[i] = spring.angular_velocity;
+				orange_duck::simple_spring_damper_exact(spring.predict_orientations[i], spring.predict_angular_velocities[i], target_rot, spring.rotation_halflife, _frame_x);
+				glm::vec3 _vel = org_quat_to_glm(spring.predict_orientations[i]) * forward;
+				mmt.trajectory_orientations[i] = glm::normalize(glm::vec3(inv_pose * glm::vec4(_vel, 0.0f)));
+
+				// TEMP ----------------------------------------------
+				Debugger* debugger = Debugger::get_instance();
+				glm::mat4 transform = glm::translate(glm::mat4(1.0f), spring.predict_positions[i]);
+				
+				debugger->DrawDebugHemiSphere(0.9f, 12, transform, TRC_COL32_WHITE);
+
+				glm::vec3 to;
+				glm::vec3 up = glm::vec3(0.0f, 2.25f, 0.0f);
+				to = spring.predict_positions[i] + (_vel * 4.5f);
+				debugger->AddDebugLine(spring.predict_positions[i] + up, to + up, TRC_COL32(0, 255, 0, 255));
+			}
 
 		}
 

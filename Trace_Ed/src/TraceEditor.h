@@ -95,6 +95,7 @@ namespace trace {
 		void Update_Tester(float deltaTime);
 		void OpenSkeleton(std::string& path);
 		void OpenFeatureDB(std::string& path);
+		void OpenMMTInfo(std::string& path);
 
 
 		

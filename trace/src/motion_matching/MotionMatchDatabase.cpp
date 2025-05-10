@@ -40,35 +40,19 @@ namespace trace::MotionMatching {
 			return false;
 		}
 
+		if (!m_motionMatchingInfo)
+		{
+			TRC_ERROR("Invalid Motion Matching Info Handle, Function: {}", __FUNCTION__);
+			return false;
+		}
+
 		//TODO: Check if there is a better way to save animation clip index
 		int32_t clip_index = m_poseData.size();
 		m_animationIndex[clip_index] = clip;
 
 		RootMotionInfo& root_motion_info = clip->GetRootMotionInfo();
 		Ref<Animation::HumanoidRig> rig = skeleton->GetHumanoidRig();
-
-		// TODO: let bone selection be automatic
-		int32_t hip_bone_index = rig->GetHumanoidBones()[(int32_t)Animation::HumanoidBone::Hips];
-		if (hip_bone_index < 0)
-		{
-			TRC_ERROR("Rig must have a hip bone -> humanoid rig name: {}, Function: {}", rig->GetName(), __FUNCTION__);
-			return false;
-		}
-
-		int32_t left_foot_bone_index = rig->GetHumanoidBones()[(int32_t)Animation::HumanoidBone::LeftFoot];
-		if (left_foot_bone_index < 0)
-		{
-			TRC_ERROR("Rig must have a left foot bone -> humanoid rig name: {}, Function: {}", rig->GetName(), __FUNCTION__);
-			return false;
-		}
-
-		int32_t right_foot_bone_index = rig->GetHumanoidBones()[(int32_t)Animation::HumanoidBone::RightFoot];
-		if (right_foot_bone_index < 0)
-		{
-			TRC_ERROR("Rig must have a right foot bone -> humanoid rig name: {}, Function: {}", rig->GetName(), __FUNCTION__);
-			return false;
-		}
-		
+				
 		Animation::Bone* root_bone = skeleton->GetBone(root_motion_info.root_bone_index);
 		auto& channel = clip->GetTracks()[root_bone->GetStringID()];
 
@@ -77,10 +61,6 @@ namespace trace::MotionMatching {
 		float clip_duration = clip->GetDuration();
 		float dt = 1.0f / float(clip->GetSampleRate());
 
-		float frame_per_sec = 60.0f;
-		float frame_20 = 20.0f / frame_per_sec;
-		float frame_40 = 40.0f / frame_per_sec;
-		float frame_60 = 60.0f / frame_per_sec;
 
 		
 		//First animation frame
@@ -103,66 +83,44 @@ namespace trace::MotionMatching {
 			// Pose Features =====================================================
 			frame_feature.root_velocity = (root_data.GetPosition() - prev_root_data.GetPosition()) / dt;
 
-			Transform hip_transform = frame_pose.GetBoneGlobalPose(skeleton, hip_bone_index);
-			Transform prev_hip_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, hip_bone_index);
-			JointData hip_data = {};
-			hip_data.position = hip_transform.GetPosition();
-			hip_data.velocity = (hip_transform.GetPosition() - prev_hip_transform.GetPosition()) / dt;
+			for (auto& bone : m_motionMatchingInfo->pose_features)
+			{
+				if ((int32_t)bone < 0)
+				{
+					continue;
+				}
 
-			Transform left_foot_transform = frame_pose.GetBoneGlobalPose(skeleton, left_foot_bone_index);
-			Transform prev_left_foot_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, left_foot_bone_index);
-			JointData left_foot_data = {};
-			left_foot_data.position = left_foot_transform.GetPosition();
-			left_foot_data.velocity = (left_foot_transform.GetPosition() - prev_left_foot_transform.GetPosition()) / dt;
+				Transform _transform = frame_pose.GetBoneGlobalPose(skeleton, (int32_t)bone);
+				Transform _prev_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, (int32_t)bone);
 
-			Transform right_foot_transform = frame_pose.GetBoneGlobalPose(skeleton, right_foot_bone_index);
-			Transform prev_right_foot_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, right_foot_bone_index);
-			JointData right_foot_data = {};
-			right_foot_data.position = right_foot_transform.GetPosition();
-			right_foot_data.velocity = (right_foot_transform.GetPosition() - prev_right_foot_transform.GetPosition()) / dt;
+				JointData _data = {};
+				_data.position = _transform.GetPosition();
+				_data.velocity = (_transform.GetPosition() - _prev_transform.GetPosition()) / dt;
 
-			frame_feature.joints.push_back(hip_data);
-			frame_feature.joints.push_back(left_foot_data);
-			frame_feature.joints.push_back(right_foot_data);
+				frame_feature.joints.push_back(_data);
+			}
 
 			// ================================================
 
 			// Tracjectory features ----------------------------------------------------------
-			Animation::Pose frame_pose_20;
-			frame_pose_20.Init(skeleton);
-			AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + frame_20, &frame_pose_20, true);
-			Transform& root_data_20 = frame_pose_20.GetRootMotionDelta();
 
-			glm::vec3 position_20 = root_data_20.GetPosition() - root_data.GetPosition();
-			position_20 = glm::inverse(root_data.GetRotation()) * position_20;
-			frame_feature.future_root_positions.push_back(position_20);
+			for (int32_t& _frame_index : m_motionMatchingInfo->trajectory_features)
+			{
+				Animation::Pose _frame_pose_x;
+				_frame_pose_x.Init(skeleton);
 
-			glm::vec3 orientation_20 = glm::inverse(root_data.GetRotation()) * (root_data_20.GetForward());
-			frame_feature.future_root_orientation.push_back(orientation_20);
+				float _frame_x = float(_frame_index) / float(m_motionMatchingInfo->frames_per_second);
+				AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + _frame_x, &_frame_pose_x, true);
 
-			Animation::Pose frame_pose_40;
-			frame_pose_40.Init(skeleton);
-			AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + frame_40, &frame_pose_40, true);
-			Transform& root_data_40 = frame_pose_40.GetRootMotionDelta();
+				Transform& root_data_x = _frame_pose_x.GetRootMotionDelta();
 
-			glm::vec3 position_40 = root_data_40.GetPosition() - root_data.GetPosition();
-			position_40 = glm::inverse(root_data.GetRotation()) * position_40;
-			frame_feature.future_root_positions.push_back(position_40);
+				glm::vec3 position_x = root_data_x.GetPosition() - root_data.GetPosition();
+				position_x = glm::inverse(root_data.GetRotation()) * position_x;
+				frame_feature.future_root_positions.push_back(position_x);
 
-			glm::vec3 orientation_40 = glm::inverse(root_data.GetRotation()) * (root_data_40.GetForward());
-			frame_feature.future_root_orientation.push_back(orientation_40);
-
-			Animation::Pose frame_pose_60;
-			frame_pose_60.Init(skeleton);
-			AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + frame_60, &frame_pose_60, true);
-			Transform& root_data_60 = frame_pose_60.GetRootMotionDelta();
-
-			glm::vec3 position_60 = root_data_60.GetPosition() - root_data.GetPosition();
-			position_60 = glm::inverse(root_data.GetRotation()) * position_60;
-			frame_feature.future_root_positions.push_back(position_60);
-
-			glm::vec3 orientation_60 = glm::inverse(root_data.GetRotation()) * (root_data_60.GetForward());
-			frame_feature.future_root_orientation.push_back(orientation_60);
+				glm::vec3 orientation_x = glm::inverse(root_data.GetRotation()) * (root_data_x.GetForward());
+				frame_feature.future_root_orientation.push_back(orientation_x);
+			}
 
 			// ---------------------------------------------------------------------------
 
@@ -191,67 +149,45 @@ namespace trace::MotionMatching {
 
 			// Pose Features =====================================================
 			frame_feature.root_velocity = (root_data.GetPosition() - prev_root_data.GetPosition()) / dt;
+
+			for (auto& bone : m_motionMatchingInfo->pose_features)
+			{
+				if ((int32_t)bone < 0)
+				{
+					continue;
+				}
+
+				Transform _transform = frame_pose.GetBoneGlobalPose(skeleton, (int32_t)bone);
+				Transform _prev_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, (int32_t)bone);
+
+				JointData _data = {};
+				_data.position = _transform.GetPosition();
+				_data.velocity = (_transform.GetPosition() - _prev_transform.GetPosition()) / dt;
+
+				frame_feature.joints.push_back(_data);
+			}
 			
-			Transform hip_transform = frame_pose.GetBoneGlobalPose(skeleton, hip_bone_index);
-			Transform prev_hip_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, hip_bone_index);
-			JointData hip_data = {};
-			hip_data.position = hip_transform.GetPosition();
-			hip_data.velocity = (hip_transform.GetPosition() - prev_hip_transform.GetPosition()) / dt;
-
-			Transform left_foot_transform = frame_pose.GetBoneGlobalPose(skeleton, left_foot_bone_index);
-			Transform prev_left_foot_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, left_foot_bone_index);
-			JointData left_foot_data = {};
-			left_foot_data.position = left_foot_transform.GetPosition();
-			left_foot_data.velocity = (left_foot_transform.GetPosition() - prev_left_foot_transform.GetPosition()) / dt;
-
-			Transform right_foot_transform = frame_pose.GetBoneGlobalPose(skeleton, right_foot_bone_index);
-			Transform prev_right_foot_transform = prev_frame_pose.GetBoneGlobalPose(skeleton, right_foot_bone_index);
-			JointData right_foot_data = {};
-			right_foot_data.position = right_foot_transform.GetPosition();
-			right_foot_data.velocity = (right_foot_transform.GetPosition() - prev_right_foot_transform.GetPosition()) / dt;
-			
-			frame_feature.joints.push_back(hip_data);
-			frame_feature.joints.push_back(left_foot_data);
-			frame_feature.joints.push_back(right_foot_data);
-
 			// ================================================
 
 			// Tracjectory features ----------------------------------------------------------
-			Animation::Pose frame_pose_20;
-			frame_pose_20.Init(skeleton);
-			AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + frame_20, &frame_pose_20, true);
-			Transform& root_data_20 = frame_pose_20.GetRootMotionDelta();
 
-			glm::vec3 position_20 = root_data_20.GetPosition() - root_data.GetPosition();
-			position_20 = glm::inverse(root_data.GetRotation()) * position_20;
-			frame_feature.future_root_positions.push_back(position_20);
+			for (int32_t& _frame_index : m_motionMatchingInfo->trajectory_features)
+			{
+				Animation::Pose _frame_pose_x;
+				_frame_pose_x.Init(skeleton);
 
-			glm::vec3 orientation_20 = glm::inverse(root_data.GetRotation()) * ( root_data_20.GetForward());
-			frame_feature.future_root_orientation.push_back(orientation_20);
+				float _frame_x = float(_frame_index) / float(m_motionMatchingInfo->frames_per_second);
+				AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + _frame_x, &_frame_pose_x, true);
 
-			Animation::Pose frame_pose_40;
-			frame_pose_40.Init(skeleton);
-			AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + frame_40, &frame_pose_40, true);
-			Transform& root_data_40 = frame_pose_40.GetRootMotionDelta();
+				Transform& root_data_x = _frame_pose_x.GetRootMotionDelta();
 
-			glm::vec3 position_40 = root_data_40.GetPosition() - root_data.GetPosition();
-			position_40 = glm::inverse(root_data.GetRotation()) * position_40;
-			frame_feature.future_root_positions.push_back(position_40);
+				glm::vec3 position_x = root_data_x.GetPosition() - root_data.GetPosition();
+				position_x = glm::inverse(root_data.GetRotation()) * position_x;
+				frame_feature.future_root_positions.push_back(position_x);
 
-			glm::vec3 orientation_40 = glm::inverse(root_data.GetRotation()) * (root_data_40.GetForward());
-			frame_feature.future_root_orientation.push_back(orientation_40);
-
-			Animation::Pose frame_pose_60;
-			frame_pose_60.Init(skeleton);
-			AnimationEngine::get_instance()->SampleClipWithRootMotion(clip, skeleton, frame_data.time_point + frame_60, &frame_pose_60, true);
-			Transform& root_data_60 = frame_pose_60.GetRootMotionDelta();
-
-			glm::vec3 position_60 = root_data_60.GetPosition() - root_data.GetPosition();
-			position_60 = glm::inverse(root_data.GetRotation()) * position_60;
-			frame_feature.future_root_positions.push_back(position_60);
-
-			glm::vec3 orientation_60 = glm::inverse(root_data.GetRotation()) * (root_data_60.GetForward());
-			frame_feature.future_root_orientation.push_back(orientation_60);
+				glm::vec3 orientation_x = glm::inverse(root_data.GetRotation()) * (root_data_x.GetForward());
+				frame_feature.future_root_orientation.push_back(orientation_x);
+			}
 
 			// ---------------------------------------------------------------------------
 
@@ -532,6 +468,36 @@ namespace trace::MotionMatching {
 	Ref<FeatureDatabase> FeatureDatabase::Deserialize(DataStream* stream)
 	{
 		return GenericSerializer::Deserialize<FeatureDatabase>(stream);
+	}
+
+	Ref<MotionMatchingInfo> MotionMatchingInfo::Deserialize(UUID id)
+	{
+		Ref<MotionMatchingInfo> result;
+
+		if (AppSettings::is_editor)
+		{
+			std::string file_path = GetPathFromUUID(id).string();
+			if (!file_path.empty())
+			{
+				result = GenericSerializer::Deserialize<MotionMatchingInfo>(file_path);
+			}
+		}
+		else
+		{
+			return GenericAssetManager::get_instance()->Load_Runtime<MotionMatchingInfo>(id);
+		}
+
+		return result;
+	}
+
+	void MotionMatchingInfo::Destroy()
+	{
+		
+	}
+
+	Ref<MotionMatchingInfo> MotionMatchingInfo::Deserialize(DataStream* stream)
+	{
+		return GenericSerializer::Deserialize<MotionMatchingInfo>(stream);
 	}
 
 }

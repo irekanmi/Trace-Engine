@@ -366,6 +366,11 @@ namespace trace {
 				entity.AddComponent<MotionMatchingComponent>();
 				comp_dirty = true;
 			}
+			if (ImGui::MenuItem("Spring Motion Matching Controller"))
+			{
+				entity.AddComponent<SpringMotionMatchingController>();
+				comp_dirty = true;
+			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
@@ -1159,7 +1164,7 @@ namespace trace {
 			ImGui::SameLine();
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()), Resource)
 			{}
-			graph = ImGuiDragDropResource<Animation::Graph>(".trcag");
+			graph = ImGuiDragDropResource<Animation::Graph>(ANIMATION_GRAPH_FILE_EXTENSION);
 			if (graph)
 			{
 				comp.graph.DestroyInstance();
@@ -1243,8 +1248,37 @@ namespace trace {
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Pose Weight", &comp.pose_weight, 0.005f, 0.0f, 1.0f, "%.5f"), PoseWeight)
 			{}
 
-						
+			Ref<MotionMatching::MotionMatchingInfo> mmt_info = comp.motion_matching_info;
+			std::string name = "None (Motion Matching Info)";
+			if (mmt_info)
+			{
+				name = mmt_info->GetName();
+			}
 
+			ImGui::Text("MMT Info: ");
+			ImGui::SameLine();
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()), Resource)
+			{}
+			mmt_info = ImGuiDragDropResource<MotionMatching::MotionMatchingInfo>(MMT_INFO_FILE_EXTENSION);
+			if (mmt_info)
+			{
+				comp.motion_matching_info = mmt_info;
+			}
+
+			return dirty;
+			});
+		
+		comp_dirty = comp_dirty || DrawComponent<SpringMotionMatchingController>(entity, "Spring Motion Matching Controller", [&](Entity obj, SpringMotionMatchingController& comp) -> bool {
+
+
+			bool dirty = false;
+
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Position Halflife", &comp.position_halflife, 0.005f, 0.0f, 1.0f, "%.5f"), PositionHalflife)
+			{}
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Rotation Halflife", &comp.rotation_halflife, 0.005f, 0.0f, 1.0f, "%.5f"), RotationHalflife)
+			{}
 			return dirty;
 			});
 

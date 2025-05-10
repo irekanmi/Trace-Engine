@@ -927,6 +927,7 @@ namespace trace::Animation {
 				glm::mat4 inv_source_bind_pose = glm::inverse(source_bind_pose);
 
 				glm::mat4 offset = inv_source_bind_pose * target_bind_pose;
+				//glm::mat4 offset = target_bind_pose * inv_source_bind_pose;
 
 				glm::mat4 animation_pose = clip_pose.GetBoneGlobalPose(m_skeleton, source_bone_index);
 				

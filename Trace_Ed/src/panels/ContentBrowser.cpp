@@ -185,6 +185,11 @@ namespace trace {
 			{
 				editor->OpenFeatureDB(path.string());
 			};
+			
+			extensions_callbacks[MMT_INFO_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenMMTInfo(path.string());
+			};
 
 			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
 			{
@@ -758,6 +763,7 @@ namespace trace {
 			ANIMATION_SEQUENCE,
 			HUMANOID_RIG,
 			FEATURE_DB,
+			MMT_INFO,
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -803,6 +809,10 @@ namespace trace {
 				if (ImGui::MenuItem("Feature Database"))
 				{
 					c_item = FEATURE_DB;
+				}
+				if (ImGui::MenuItem("Motion Matching Info"))
+				{
+					c_item = MMT_INFO;
 				}
 				ImGui::EndMenu();
 			}
@@ -1066,6 +1076,36 @@ namespace trace {
 					else
 					{
 						TRC_ERROR("{} has already been created", res + FEATURE_DB_FILE_EXTENSION);
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case MMT_INFO:
+		{
+			std::string res;
+			if (editor->InputTextPopup("MMT Info Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + MMT_INFO_FILE_EXTENSION);
+
+					if (id == 0)
+					{
+						std::string info_path = (m_currentDir / (res + MMT_INFO_FILE_EXTENSION)).string();
+						Ref<MotionMatching::MotionMatchingInfo> info = GenericAssetManager::get_instance()->CreateAssetHandle_<MotionMatching::MotionMatchingInfo>(info_path);
+						GenericSerializer::Serialize<MotionMatching::MotionMatchingInfo>(info, info_path);
+						UUID new_id = UUID::GenUUID();
+						m_allFilesID[res + MMT_INFO_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = info_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + MMT_INFO_FILE_EXTENSION);
 					}
 				}
 			}

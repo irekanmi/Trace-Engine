@@ -14,11 +14,21 @@
 
 namespace trace::MotionMatching {
 
-	struct MotionMatchingInfo
+	class MotionMatchingInfo : public Resource
 	{
+	public:
 		std::vector<Animation::HumanoidBone> pose_features;
 		std::vector<int32_t> trajectory_features;
-		int32_t frames_per_second;
+		int32_t frames_per_second = 60;
+
+		virtual void Destroy() override;
+
+		static Ref<MotionMatchingInfo> Deserialize(UUID id);
+		static Ref<MotionMatchingInfo> Deserialize(DataStream* stream);
+
+	protected:
+		ACCESS_CLASS_MEMBERS(FeatureDatabase);
+		GET_TYPE_ID;
 	};
 
 	struct JointData
@@ -60,6 +70,9 @@ namespace trace::MotionMatching {
 		FeatureData NormalizeFeature(FeatureData& feature);
 		FeatureData DenormalizeFeature(FeatureData& feature);
 
+		Ref<MotionMatchingInfo> GetMotionMatchingInfo() { return m_motionMatchingInfo; }
+		void SetMotionMatchingInfo(Ref<MotionMatchingInfo> mmt_info) { m_motionMatchingInfo = mmt_info; }
+
 
 		static Ref<FeatureDatabase> Deserialize(UUID id);
 		static Ref<FeatureDatabase> Deserialize(DataStream* stream);
@@ -69,6 +82,7 @@ namespace trace::MotionMatching {
 		std::unordered_map<int32_t, Ref<AnimationClip>> m_animationIndex;
 		FeatureData m_mean;
 		FeatureData m_std;
+		Ref<MotionMatchingInfo> m_motionMatchingInfo;
 
 	protected:
 		ACCESS_CLASS_MEMBERS(FeatureDatabase);

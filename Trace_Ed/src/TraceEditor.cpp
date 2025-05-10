@@ -70,9 +70,11 @@ namespace trace {
 	//TEMP ---------------------------------
 	static bool show_humanoid_window = false;
 	static bool show_feature_db_window = false;
+	static bool show_mmt_info_window = false;
 	static Ref<Animation::Skeleton> skeleton;
 	static Ref<Animation::HumanoidRig> rig;
 	static Ref<MotionMatching::FeatureDatabase> feature_db;
+	static Ref<MotionMatching::MotionMatchingInfo> mmt_info;
 
 	void SerializationTest();
 	void DeserializationTest();
@@ -288,7 +290,7 @@ namespace trace {
 
 			ImGuiStyle& style = ImGui::GetStyle();
 			float min_window_size = style.WindowMinSize.x;
-			style.WindowMinSize.x = 265.0f;
+			style.WindowMinSize.x = 165.0f;
 			ImGuiID dockspace_id = ImGui::GetID("DockSpace");
 			ImGui::DockSpace(dockspace_id);
 			style.WindowMinSize.x = min_window_size;
@@ -1192,6 +1194,14 @@ namespace trace {
 			show_feature_db_window = true;
 		}
 	}
+	void TraceEditor::OpenMMTInfo(std::string& path)
+	{
+		if (Ref<MotionMatching::MotionMatchingInfo> new_info = GenericSerializer::Deserialize<MotionMatching::MotionMatchingInfo>(path))
+		{
+			mmt_info = new_info;
+			show_mmt_info_window = true;
+		}
+	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
 		InputSystem* input = InputSystem::get_instance();
@@ -1463,175 +1473,10 @@ namespace trace {
 		}
 
 		Entity x_bot = m_currentScene->GetEntityByName("X_bot");
-		Transform& bot_pose = x_bot.GetComponent<TransformComponent>()._transform;
+		SpringMotionMatchingController& spring_ctrl = x_bot.GetComponent<SpringMotionMatchingController>();
+		spring_ctrl.target_dir = glm::vec3(gamepad.x * speed, 0.0f, gamepad.y * speed);
 
-
-		orange_duck::quat curr_rot = glm_quat_to_org(bot_pose.GetRotation());
-		orange_duck::quat target_rot = curr_rot;
-		if (glm::length(gamepad) > 0.01f)
-		{
-			gamepad = glm::normalize(gamepad);
-			glm::quat rot = glm::quatLookAt(-glm::vec3(gamepad.x, 0.0f, gamepad.y), glm::vec3(0.0f, 1.0f, 0.0f));
-			target_rot = glm_quat_to_org(rot);
-		}
-
-		orange_duck::quat pred_rot[4];
-		orange_duck::vec3 pred_rot_vel[4];
-
-		float target_x = speed * gamepad.x;
-		float target_y = speed * gamepad.y;
-
-		float predx[4];
-		float predxv[4];
-		float predxa[4];
-		float predy[4];
-		float predyv[4];
-		float predya[4];
-
-		float dt = 1 / 60.0f;
-		curr_position.x = bot_pose.GetPosition().x;
-		curr_position.y = bot_pose.GetPosition().z;
-
-		Math::spring_character_update(curr_position.x, velocity.x, acceleration.x, target_x, halflife, deltaTime);
-		Math::spring_character_update(curr_position.y, velocity.y, acceleration.y, target_y, halflife, deltaTime);
-
-		orange_duck::simple_spring_damper_exact(curr_rot, angular_velocity, target_rot, halflife, deltaTime);
-
-		predx[0] = curr_position.x;
-		predy[0] = curr_position.y;
-		predxv[0] = velocity.x;
-		predyv[0] = velocity.y;
-		predxa[0] = acceleration.x;
-		predya[0] = acceleration.y;
-
-		Math::spring_character_update(predx[0], predxv[0], predxa[0], target_x, halflife, 20.0f * dt);
-		Math::spring_character_update(predy[0], predyv[0], predya[0], target_y, halflife, 20.0f * dt);
-
-		pred_rot[0] = curr_rot;
-		pred_rot_vel[0] = angular_velocity;
-		orange_duck::simple_spring_damper_exact(pred_rot[0], pred_rot_vel[0], target_rot, halflife, 20.0f * dt);
-
-		predx[1] = curr_position.x;
-		predy[1] = curr_position.y;
-		predxv[1] = velocity.x;
-		predyv[1] = velocity.y;
-		predxa[1] = acceleration.x;
-		predya[1] = acceleration.y;
-
-		Math::spring_character_update(predx[1], predxv[1], predxa[1], target_x, halflife, 40.0f * dt);
-		Math::spring_character_update(predy[1], predyv[1], predya[1], target_y, halflife, 40.0f * dt);
-
-		pred_rot[1] = curr_rot;
-		pred_rot_vel[1] = angular_velocity;
-		orange_duck::simple_spring_damper_exact(pred_rot[1], pred_rot_vel[1], target_rot, halflife, 40.0f * dt);
-
-		predx[2] = curr_position.x;
-		predy[2] = curr_position.y;
-		predxv[2] = velocity.x;
-		predyv[2] = velocity.y;
-		predxa[2] = acceleration.x;
-		predya[2] = acceleration.y;
-
-		Math::spring_character_update(predx[2], predxv[2], predxa[2], target_x, halflife, 60.0f * dt);
-		Math::spring_character_update(predy[2], predyv[2], predya[2], target_y, halflife, 60.0f * dt);
-
-		pred_rot[2] = curr_rot;
-		pred_rot_vel[2] = angular_velocity;
-		orange_duck::simple_spring_damper_exact(pred_rot[2], pred_rot_vel[2], target_rot, halflife, 60.0f * dt);
-
-		predx[3] = curr_position.x;
-		predy[3] = curr_position.y;
-		predxv[3] = velocity.x;
-		predyv[3] = velocity.y;
-		predxa[3] = acceleration.x;
-		predya[3] = acceleration.y;
-
-		Math::spring_character_update(predx[3], predxv[3], predxa[3], target_x, halflife, 75.0f * dt);
-		Math::spring_character_update(predy[3], predyv[3], predya[3], target_y, halflife, 75.0f * dt);
-
-		pred_rot[3] = curr_rot;
-		pred_rot_vel[3] = angular_velocity;
-		orange_duck::simple_spring_damper_exact(pred_rot[3], pred_rot_vel[3], target_rot, halflife, 75.0f * dt);
-
-
-		Debugger* debugger = Debugger::get_instance();
 		
-
-		glm::vec3 pred_0 = glm::vec3(predx[0], 0.0f, predy[0]);
-		glm::vec3 pred_1 = glm::vec3(predx[1], 0.0f, predy[1]);
-		glm::vec3 pred_2 = glm::vec3(predx[2], 0.0f, predy[2]);
-		glm::vec3 pred_3 = glm::vec3(predx[3], 0.0f, predy[3]);
-		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_0));
-		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_1));
-		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_2));
-		debug_buffer.push_back(glm::translate(glm::mat4(1.0f), pred_3));
-
-		glm::vec3 vel_0;
-		glm::vec3 vel_1;
-		glm::vec3 vel_2;
-		glm::vec3 vel_3;
-
-		glm::vec3 vel;
-		glm::vec3 to;
-		glm::vec3 up = glm::vec3(0.0f, 2.25f, 0.0f);
-		glm::vec3 forward = glm::vec3(0.0f, 0.0f, 1.0f);
-		
-		vel = glm::vec3(predxv[0], 0.0f, predyv[0]);
-
-
-		vel_0 = org_quat_to_glm(pred_rot[0]) * glm::vec3(0.0f, 0.0f, 1.0f);
-		vel = vel_0;
-
-		to = pred_0 + (vel * 2.5f);
-		debugger->AddDebugLine(pred_0 + up, to + up, TRC_COL32(0, 255, 0, 255));
-
-		vel_1 = org_quat_to_glm(pred_rot[1]) * glm::vec3(0.0f, 0.0f, 1.0f);
-		vel = vel_1;
-
-		to = pred_1 + (vel * 2.5f);
-		debugger->AddDebugLine(pred_1 + up, to + up, TRC_COL32(0, 255, 0, 255));
-
-		vel_2 = org_quat_to_glm(pred_rot[2]) * glm::vec3(0.0f, 0.0f, 1.0f);
-		vel = vel_2;
-
-		to = pred_2 + (vel * 2.5f);
-		debugger->AddDebugLine(pred_2 + up, to + up, TRC_COL32(0, 255, 0, 255));
-
-		vel_3 = org_quat_to_glm(pred_rot[3]) * glm::vec3(0.0f, 0.0f, 1.0f);
-		vel = vel_3;
-
-		to = pred_3 + (vel * 2.5f);
-		debugger->AddDebugLine(pred_3 + up, to + up, TRC_COL32(0, 255, 0, 255));
-		
-
-		auto debug_draw = [&](glm::mat4& transform) {
-			debugger->DrawDebugHemiSphere(0.9f, 12, transform, TRC_COL32_WHITE);
-		};
-
-		debug_buffer.iterate(debug_draw);
-
-		debug_buffer.pop_front();
-		debug_buffer.pop_front();
-		debug_buffer.pop_front();
-		debug_buffer.pop_front();
-
-
-		Transform inv_bot_pose = bot_pose.Inverse();
-		glm::mat4 inv_pose = inv_bot_pose.GetLocalMatrix();
-		MotionMatchingComponent& m_comp = x_bot.GetComponent<MotionMatchingComponent>();
-		m_comp.normalized_search = normalized_search;
-		m_comp.trajectory_positions.resize(3);
-		m_comp.trajectory_positions[0] = inv_pose * glm::vec4(pred_0, 1.0f);
-		m_comp.trajectory_positions[1] = inv_pose * glm::vec4(pred_1, 1.0f);
-		m_comp.trajectory_positions[2] = inv_pose * glm::vec4(pred_2, 1.0f);
-
-		m_comp.trajectory_orientations.resize(3);
-		m_comp.trajectory_orientations[0] = glm::normalize(glm::vec3(inv_pose * glm::vec4(vel_0, 0.0f)));
-		m_comp.trajectory_orientations[1] = glm::normalize(glm::vec3(inv_pose * glm::vec4(vel_1, 0.0f)));
-		m_comp.trajectory_orientations[2] = glm::normalize(glm::vec3(inv_pose * glm::vec4(vel_2, 0.0f)));
-
-		/*curr_position.x = bot_pose.GetPosition().x;
-		curr_position.y = bot_pose.GetPosition().z;*/
 
 	}
 
@@ -2080,6 +1925,25 @@ project "{}"
 					feature_db = new_feature_db;
 				}
 
+				// MMT Info --------------------------------------
+				std::string mmt_info_name = "None(Motion Matching Info)";
+
+				if (feature_db->GetMotionMatchingInfo())
+				{
+					mmt_info_name = feature_db->GetMotionMatchingInfo()->GetName();
+				}
+
+				ImGui::Text("Motion Matching Info: ");
+				ImGui::SameLine();
+				ImGui::Button(mmt_info_name.c_str());
+
+				if (Ref<MotionMatching::MotionMatchingInfo> new_mmt_info = ImGuiDragDropResource<MotionMatching::MotionMatchingInfo>(MMT_INFO_FILE_EXTENSION))
+				{
+					feature_db->SetMotionMatchingInfo(new_mmt_info);
+				}
+
+				// --------------------------------------------------
+
 				if (feature_db)
 				{
 
@@ -2124,6 +1988,123 @@ project "{}"
 
 
 
+
+				ImGui::End();
+			}
+		}
+
+		if (show_mmt_info_window)
+		{
+			if (ImGui::Begin("Motion Matching Info", &show_mmt_info_window))
+			{
+				std::string info_name = "None(Motion Matching Info)";
+
+				if (mmt_info)
+				{
+					info_name = mmt_info->GetName();
+				}
+
+				ImGui::Text("Motion Matching Info: ");
+				ImGui::SameLine();
+				ImGui::Button(info_name.c_str());
+
+				if (Ref<MotionMatching::MotionMatchingInfo> new_info = ImGuiDragDropResource<MotionMatching::MotionMatchingInfo>(MMT_INFO_FILE_EXTENSION))
+				{
+					mmt_info = new_info;
+				}
+
+				if (mmt_info && skeleton)
+				{
+					ImGui::Text("Pose Features");
+
+					int32_t index_to_remove = -1;
+					int32_t i = 1;
+					for (auto& bone : mmt_info->pose_features)
+					{
+						std::string bone_name = "None(Bone)";
+						int32_t _index = (int32_t)bone;
+
+						if (skeleton && _index != -1)
+						{
+							bone_name = STRING_FROM_ID(skeleton->GetBone(_index)->GetStringID());
+						}
+
+						ImGui::PushID(i);
+						ImGui::Button(bone_name.c_str());
+
+						if (ImGui::BeginDragDropTarget())
+						{
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Bone_IDX"))
+							{
+								int32_t bone_index = -1;
+								memcpy_s(&bone_index, sizeof(int32_t), payload->Data, payload->DataSize);
+								bone = (Animation::HumanoidBone)bone_index;
+							}
+							ImGui::EndDragDropTarget();
+						}
+
+						ImGui::SameLine();
+						if (ImGui::Button("-"))
+						{
+							index_to_remove = i - 1;
+						}
+						ImGui::PopID();
+
+						++i;
+					}
+
+					if (index_to_remove >= 0)
+					{
+						mmt_info->pose_features[index_to_remove] = mmt_info->pose_features.back();
+						mmt_info->pose_features.pop_back();
+					}
+
+					if (ImGui::Button("Add Bone"))
+					{
+						mmt_info->pose_features.emplace_back((Animation::HumanoidBone)-1);
+					}
+
+
+					ImGui::Text("Trajectory Features");
+
+					index_to_remove = -1;
+					i = 1;
+					for (int32_t& data : mmt_info->trajectory_features)
+					{
+						ImGui::PushID(i);
+						
+						ImGui::InputInt("##Track_Data", &data);
+
+						ImGui::SameLine();
+						if (ImGui::Button("--"))
+						{
+							index_to_remove = i - 1;
+						}
+						ImGui::PopID();
+
+						++i;
+					}
+
+					if (index_to_remove >= 0)
+					{
+						mmt_info->trajectory_features[index_to_remove] = mmt_info->trajectory_features.back();
+						mmt_info->trajectory_features.pop_back();
+					}
+
+					if (ImGui::Button("+"))
+					{
+						mmt_info->trajectory_features.emplace_back(0);
+					}
+
+					ImGui::InputInt("Frames Per Second", &mmt_info->frames_per_second);
+				}
+
+				if (ImGui::Button("Save Motion Matching Info"))
+				{
+					std::string info_name = mmt_info->GetName();
+					std::filesystem::path file_path = GetPathFromUUID(GetUUIDFromName(info_name));
+					GenericSerializer::Serialize<MotionMatching::MotionMatchingInfo>(mmt_info, file_path.string());
+				}
 
 				ImGui::End();
 			}
