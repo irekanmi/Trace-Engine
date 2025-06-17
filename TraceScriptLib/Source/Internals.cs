@@ -177,5 +177,49 @@ namespace Trace
 
         #endregion
 
+        #region Stream
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteInt(UInt64 stream_handle, int value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteFloat(UInt64 stream_handle, float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteVec2(UInt64 stream_handle, ref Vec2 value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteVec3(UInt64 stream_handle, ref Vec3 value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_ReadInt(UInt64 stream_handle, out int value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_ReadFloat(UInt64 stream_handle, out float value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_ReadVec2(UInt64 stream_handle, out Vec2 value);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_ReadVec3(UInt64 stream_handle, out Vec3 value);
+
+
+        #endregion
+
+        #region Networking
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Networking_IsServer();
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Networking_IsClient();
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Networking_InvokeRPC(ulong uuid, Trace.Action src, UInt64 func_name_id, RPCType type);
+
+
+
+        #endregion
+
     }
 }

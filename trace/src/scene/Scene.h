@@ -9,6 +9,10 @@
 #include "Components.h"
 #include "core/Coretypes.h"
 
+namespace trace::Network {
+	class NetworkStream;
+}
+
 namespace trace {
 
 	class Entity;
@@ -28,17 +32,22 @@ namespace trace {
 		void OnStart();
 		void OnScriptStart();
 		void OnPhysicsStart();
+		void OnNetworkStart();
 		void OnStop();
 		void OnScriptStop();
 		void OnPhysicsStop();
+		void OnNetworkStop();
 		void OnUpdate(float deltaTime);
 		void OnScriptUpdate(float deltaTime);
 		void OnPhysicsUpdate(float deltaTime);
+		void OnNetworkUpdate(float deltaTime);
 		void OnAnimationUpdate(float deltaTime);
 		void OnRender();
 		void OnRender(CommandList& cmd_list);
 		void OnViewportChange(float width, float height);
 		bool InitializeSceneComponents();
+		void OnPacketReceive_Client(Network::NetworkStream* data, uint32_t source_handle);
+		void OnPacketReceive_Server(Network::NetworkStream* data, uint32_t source_handle);
 
 		void EnableEntity(Entity entity);
 		void DisableEntity(Entity entity);
@@ -145,8 +154,12 @@ namespace trace {
 
 		void enable_child_entity(Entity entity);
 		void disable_child_entity(Entity entity);
-		void destroy_entity(Entity entity);
+		//NOTE: force_destroy to be set to true if client has recieved a destroy packet from the packet
+		void destroy_entity(Entity entity, bool force_destroy = false);
 		void duplicate_entity(Entity entity, Entity res);
+		//INFO: called when an entity is to be create at runtime
+		Entity instanciate_entity_net(Entity entity);
+		bool can_destroy_entity(Entity entity);
 
 
 		void OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);

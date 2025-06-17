@@ -75,6 +75,8 @@ namespace trace {
 		void OnScenePlay();
 		void OnSceneStimulate();
 		void OnSceneStop();
+		void OnGameStart();
+		void OnGameStop();
 
 		HierachyPanel* GetHierachyPanel() { return m_hierachyPanel; }
 		InspectorPanel* GetInspectorPanel() { return m_inspectorPanel; }

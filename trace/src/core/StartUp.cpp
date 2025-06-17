@@ -15,6 +15,7 @@
 #include "core/Coretypes.h"
 #include "animation/AnimationEngine.h"
 #include "debug/Debugger.h"
+#include "networking/NetworkManager.h"
 
 
 namespace trace {
@@ -54,6 +55,7 @@ namespace trace {
 
 		return 0;
 	}
+
 	bool INIT()
 	{
 		if (Logger::get_instance() == nullptr)
@@ -94,6 +96,19 @@ namespace trace {
 			TRC_ERROR("Input System failed to initialize");
 			return false;
 		}
+
+		if (Network::NetworkManager::get_instance() == nullptr)
+		{
+			TRC_ERROR("Failed to create Network Manager instance");
+			return false;
+		}
+
+		if (!Network::NetworkManager::get_instance()->Init())
+		{
+			TRC_ERROR("Network Manager failed to initialize");
+			return false;
+		}
+
 
 
 		return true;
@@ -188,6 +203,9 @@ namespace trace {
 		{
 			Debugger::get_instance()->Shutdown();
 		}
+
+		Network::NetworkManager::get_instance()->Shutdown();
+		SAFE_DELETE(Network::NetworkManager::get_instance(), NetworkManager);
 
 		ScriptEngine::get_instance()->Shutdown();
 

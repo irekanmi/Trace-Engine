@@ -21,6 +21,7 @@
 #include "orange_duck/quat.h"
 
 
+
 #include <string>
 #include <unordered_map>
 #include <algorithm>
@@ -362,6 +363,18 @@ namespace trace {
 		glm::vec3 curr_position = {};
 	};
 
+
+	struct NetObject
+	{
+		uint32_t owner_id = 0;
+	};
+
+	//NOTE: This component has to be one in the scene
+	struct NetworkController
+	{
+		uint32_t instance_id = 0;//INFO: It specifies the Id of the currently running instance
+	};
+
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -371,6 +384,9 @@ namespace trace {
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
 		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
-		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent, MotionMatchingComponent, SpringMotionMatchingController>;
+		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent, 
+		MotionMatchingComponent, SpringMotionMatchingController, NetObject, NetworkController>;
+
+	using PhysicsComponents = ComponentGroup<RigidBodyComponent, BoxColliderComponent, SphereColliderComponent, CharacterControllerComponent>;
 
 }

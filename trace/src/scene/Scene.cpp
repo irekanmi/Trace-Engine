@@ -18,6 +18,7 @@
 #include "core/maths/Conversion.h"
 #include "core/maths/Dampers.h"
 #include "debug/Debugger.h"
+#include "networking/NetworkManager.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -77,16 +78,16 @@ namespace trace {
 	}
 	void Scene::BeginFrame()
 	{
+		if (!m_entityToDestroy.empty())
+		{
+			for (Entity& entity : m_entityToDestroy)
+			{
+				destroy_entity(entity);
+			}
+			m_entityToDestroy.clear();
+		}
 		if (m_running)
 		{
-			if (!m_entityToDestroy.empty())
-			{
-				for (Entity& entity : m_entityToDestroy)
-				{
-					destroy_entity(entity);
-				}
-				m_entityToDestroy.clear();
-			}
 		}
 	}
 	void Scene::EndFrame()
@@ -342,6 +343,10 @@ namespace trace {
 			}
 		}
 	}
+	void Scene::OnNetworkStart()
+	{
+		Network::NetworkManager::get_instance()->OnSceneStart(this);
+	}
 	void Scene::OnStop()
 	{
 		auto sequences = m_registry.view<SequencePlayer>();
@@ -432,6 +437,10 @@ namespace trace {
 			PhysicsFunc::DestroyScene3D(m_physics3D);
 		}
 	}
+	void Scene::OnNetworkStop()
+	{
+		Network::NetworkManager::get_instance()->OnSceneStop(this);
+	}
 	void Scene::OnUpdate(float deltaTime)
 	{
 		ResolveHierachyTransforms();
@@ -515,8 +524,89 @@ namespace trace {
 		}
 	}
 
+	void Scene::OnNetworkUpdate(float deltaTime)
+	{
+		Network::NetType net_type = Network::NetworkManager::get_instance()->GetNetType();
+
+		if (net_type == Network::NetType::UNKNOWN)
+		{
+			return;
+		}
+
+		uint32_t net_id = Network::NetworkManager::get_instance()->GetInstanceID();
+
+		Network::NetworkManager::get_instance()->OnFrameStart();
+
+		Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+		Network::NetworkStream* rpc_stream = Network::NetworkManager::get_instance()->GetRPCNetworkStream();
+
+		
+		auto client_send_lambda = [](UUID id, Script* script, ScriptInstance* instance)
+		{
+			ScriptMethod* on_client_send = script->GetMethod("OnClientSend");
+			if (on_client_send)
+			{
+				// Generate method parameters .....
+				InvokeScriptMethod_Instance(*on_client_send, *instance, nullptr);
+
+			}
+		};
+
+		auto server_lambda = [](UUID id, Script* script, ScriptInstance* instance)
+		{
+			ScriptMethod* on_server_send = script->GetMethod("OnServerSend");
+			if (on_server_send)
+			{
+				// Generate method parameters .....
+				InvokeScriptMethod_Instance(*on_server_send, *instance, nullptr);
+
+			}
+		};
+
+		// uint32_t num_net_objects = 1;
+		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
+		for (auto i : net_objects)
+		{
+			Entity entity(i, this);
+			auto [net, active] = net_objects.get(i);
+
+			switch (net_type)
+			{
+			case Network::NetType::CLIENT:
+			{
+				if (net.owner_id == net_id)
+				{
+					// Write entity id
+					// run client_send_lambda()
+
+					//TODO: Determine where it should be called
+					m_scriptRegistry.Iterate(entity.GetID(), client_send_lambda);
+
+					// ++num_net_objects;
+				}
+				break;
+			}
+			case Network::NetType::LISTEN_SERVER:
+			{
+				// Write entity id
+				// run client_send_lambda()
+
+				//TODO: Determine where it should be called
+				m_scriptRegistry.Iterate(entity.GetID(), server_lambda);
+
+				// ++num_net_objects;
+				break;
+			}
+			}
+
+		}
+
+		Network::NetworkManager::get_instance()->OnFrameEnd();
+	}
+
 	void Scene::OnAnimationUpdate(float deltaTime)
 	{
+
 		auto animations = m_registry.view<AnimationComponent, ActiveComponent>();
 		for (auto i : animations)
 		{
@@ -526,6 +616,7 @@ namespace trace {
 			{
 				continue;
 			}
+			
 			anim_comp.Update(deltaTime, this);
 		}
 
@@ -544,7 +635,7 @@ namespace trace {
 			}
 
 			Entity entity(i, this);
-
+			
 			anim_graph.graph.Update(deltaTime, this, entity.GetID());
 		}
 
@@ -557,6 +648,7 @@ namespace trace {
 				continue;
 			}
 			Entity entity(i, this);
+			
 			seq.sequence.Update(this, deltaTime);
 
 		}
@@ -572,6 +664,7 @@ namespace trace {
 			}
 
 			Entity entity(i, this);
+			
 			
 			Transform& _pose = entity.GetComponent<TransformComponent>()._transform;
 			orange_duck::quat curr_rot = glm_quat_to_org(_pose.GetRotation());
@@ -817,6 +910,15 @@ namespace trace {
 	bool Scene::InitializeSceneComponents()
 	{
 		
+		// NOTE: No network entity should be present on scene load
+		auto net_objects = m_registry.view<NetObject>();
+		for (auto i : net_objects)
+		{
+			auto [net_instance] = net_objects.get(i);
+			Entity entity(i, this);
+
+			m_entityToDestroy.push_back(entity);
+		}
 
 		for (UUID& id : m_rootNode->children)
 		{
@@ -860,6 +962,66 @@ namespace trace {
 		}
 
 		return true;
+	}
+
+	void Scene::OnPacketReceive_Client(Network::NetworkStream* data, uint32_t source_handle)
+	{
+		auto client_recieve_lambda = [](UUID id, Script* script, ScriptInstance* instance)
+		{
+			ScriptMethod* on_client_recieve = script->GetMethod("OnClientRecieve");
+			if (on_client_recieve)
+			{
+				// Generate method parameters .....
+				InvokeScriptMethod_Instance(*on_client_recieve, *instance, nullptr);
+
+			}
+		};
+
+		// Read num entities in packet
+		// for each entity:
+		//   run client_receive_lambda()
+
+		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
+		for (auto i : net_objects)
+		{
+			Entity entity(i, this);
+			auto [net, active] = net_objects.get(i);
+			//TODO: Determine where it should be called
+			m_scriptRegistry.Iterate(entity.GetID(), client_recieve_lambda);
+
+			
+		}
+	}
+
+	void Scene::OnPacketReceive_Server(Network::NetworkStream* data, uint32_t source_handle)
+	{
+		auto server_receive_lambda = [](UUID id, Script* script, ScriptInstance* instance)
+		{
+			ScriptMethod* on_server_receive = script->GetMethod("OnServerReceive");
+			if (on_server_receive)
+			{
+				// Generate method parameters .....
+				InvokeScriptMethod_Instance(*on_server_receive, *instance, nullptr);
+
+			}
+		};
+
+		// Read num entities in packet
+		// for each entity:
+		//   run server_receive_lambda()
+
+		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
+		for (auto i : net_objects)
+		{
+			Entity entity(i, this);
+			auto [net, active] = net_objects.get(i);
+			//TODO: Determine where it should be called
+			if (net.owner_id == source_handle)
+			{
+				m_scriptRegistry.Iterate(entity.GetID(), server_receive_lambda);
+			}
+
+		}
 	}
 
 	void Scene::EnableEntity(Entity entity)
@@ -1230,6 +1392,12 @@ namespace trace {
 		Entity result = DuplicateEntity(handle);
 		result.AddComponent<PrefabComponent>(prefab);
 		EnableEntity(result);
+
+		if (m_running)
+		{
+			result = instanciate_entity_net(result);
+		}
+
 		return result;
 	}
 
@@ -1263,6 +1431,8 @@ namespace trace {
 		duplicate_entity(source, result);
 
 		EnableEntity(result);
+
+		result = instanciate_entity_net(result);
 
 		return result;
 	}
@@ -1959,8 +2129,13 @@ namespace trace {
 		}
 	}
 
-	void Scene::destroy_entity(Entity entity)
+	void Scene::destroy_entity(Entity entity, bool force_destroy)
 	{
+		if (!force_destroy && !can_destroy_entity(entity))
+		{
+			return;
+		}
+
 		if (this != entity.GetScene())
 		{
 			TRC_WARN("Can't destory an entity that is not a member of a scene, scene name: {}", GetName());
@@ -2070,6 +2245,78 @@ namespace trace {
 			Entity d_child = scene->GetEntity(i);
 			duplicate_entity_hierachy(this, d_child, res);
 		}
+	}
+
+	Entity Scene::instanciate_entity_net(Entity entity)
+	{
+		Network::NetType type = Network::NetworkManager::get_instance()->GetNetType();
+
+		Entity result;
+
+		switch (type)
+		{
+		case Network::NetType::UNKNOWN:
+		{
+			result = entity;
+			break;
+		}
+		case Network::NetType::CLIENT:
+		{
+			if (entity.HasComponent<NetObject>())
+			{
+				TRC_ERROR("You can't instanciate a network object on the client, Function: {}", __FUNCTION__);
+				entity.RemoveComponent<NetObject>();
+				DestroyEntity(entity);
+			}
+			break;
+		}
+		case Network::NetType::LISTEN_SERVER:
+		{
+			if (entity.HasComponent<NetObject>())
+			{
+				uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
+
+				// Generate create object data and broadcast to all clients....
+			}
+			break;
+		}
+		}
+
+		return result;
+	}
+
+	bool Scene::can_destroy_entity(Entity entity)
+	{
+		if (entity.HasComponent<NetObject>())
+		{
+			return true;
+		}
+
+		Network::NetType type = Network::NetworkManager::get_instance()->GetNetType();
+
+
+		switch (type)
+		{
+		case Network::NetType::UNKNOWN:
+		{
+			return true;
+			break;
+		}
+		case Network::NetType::CLIENT:
+		{
+			TRC_ERROR("You can't destroy a network object on the client, Function: {}", __FUNCTION__);
+			return false;
+			break;
+		}
+		case Network::NetType::LISTEN_SERVER:
+		{
+			// Generate destroy object data and broadcast to all clients .....
+			return true;
+			break;
+		}
+		}
+
+		return true;
 	}
 
 	void Scene::OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent)

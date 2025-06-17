@@ -40,6 +40,7 @@
 #include "serialize/GenericSerializer.h"
 #include "orange_duck/spring.h"
 #include "core/maths/Conversion.h"
+#include "networking/NetworkManager.h"
  
 
 #include "glm/gtc/type_ptr.hpp"
@@ -182,8 +183,10 @@ namespace trace {
 			renderer->BeginScene(cmd_list, &m_editorCamera);
 			if (m_currentScene)
 			{
+				m_currentScene->BeginFrame();
 				m_currentScene->ResolveHierachyTransforms();
 				m_currentScene->OnRender(cmd_list);
+				m_currentScene->EndFrame();
 			}
 			DrawGrid(cmd_list);
 			renderer->EndScene(cmd_list);
@@ -544,17 +547,19 @@ namespace trace {
 				if (playing)
 				{
 					OnSceneStop();
+					OnGameStop();
 					m_currentState = EditorState::SceneEdit;
 				}
 				else
 				{
+					OnGameStart();
 					OnScenePlay();
 					m_currentState = EditorState::ScenePlay;
 				}
 			}
 		}
 		ImGui::SameLine();
-		if (ImGui::Button(!stimulating ? "Stimulate" : "Stop Stimulation"))
+		/*if (ImGui::Button(!stimulating ? "Stimulate" : "Stop Stimulation"))
 		{
 			if (m_currentScene)
 			{
@@ -569,7 +574,7 @@ namespace trace {
 					m_currentState = EditorState::SceneStimulate;
 				}
 			}
-		}
+		}*/
 
 		ImGui::End();
 	}
@@ -1396,7 +1401,10 @@ namespace trace {
 	}
 	void TraceEditor::OnScenePlay()
 	{
-		if ((m_currentState == EditorState::ScenePlay)) return;
+		if ((m_currentState == EditorState::ScenePlay))
+		{
+			return;
+		}
 
 		Scene::Copy(m_editScene, m_editSceneDuplicate);
 		m_currentScene = m_editSceneDuplicate;
@@ -1410,7 +1418,10 @@ namespace trace {
 	}
 	void TraceEditor::OnSceneStimulate()
 	{
-		if ((m_currentState == EditorState::SceneStimulate)) return;
+		if ((m_currentState == EditorState::SceneStimulate))
+		{
+			return;
+		}
 
 		Scene::Copy(m_editScene, m_editSceneDuplicate);
 		m_currentScene = m_editSceneDuplicate;
@@ -1432,6 +1443,16 @@ namespace trace {
 		}*/
 		m_currentScene = m_editScene;
 		m_nextScene.free();
+	}
+
+	void TraceEditor::OnGameStart()
+	{
+		Network::NetworkManager::get_instance()->OnGameStart();
+	}
+
+	void TraceEditor::OnGameStop()
+	{
+		Network::NetworkManager::get_instance()->OnGameStop();
 	}
 
 	bool TraceEditor::SetNextScene(Ref<Scene> scene)
@@ -1473,9 +1494,13 @@ namespace trace {
 		}
 
 		Entity x_bot = m_currentScene->GetEntityByName("X_bot");
-		SpringMotionMatchingController& spring_ctrl = x_bot.GetComponent<SpringMotionMatchingController>();
-		spring_ctrl.target_dir = glm::vec3(gamepad.x * speed, 0.0f, gamepad.y * speed);
-
+		if (x_bot)
+		{
+			if (SpringMotionMatchingController* spring_ctrl = x_bot.TryGetComponent<SpringMotionMatchingController>())
+			{
+				spring_ctrl->target_dir = glm::vec3(gamepad.x * speed, 0.0f, gamepad.y * speed);
+			}
+		}
 		
 
 	}

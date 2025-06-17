@@ -199,7 +199,10 @@ namespace trace {
 					callback(id, i.second.script, &i.second.instances[it->second]);
 				}
 			}
-			else callback(id, i.second.script, nullptr);
+			else
+			{
+				callback(id, i.second.script, nullptr);
+			}
 		}
 
 	}

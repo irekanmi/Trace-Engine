@@ -2,6 +2,7 @@
 
 
 #include "reflection/TypeRegistry.h"
+#include "core/Coretypes.h"
 
 #include <string>
 #include <map>
@@ -188,22 +189,23 @@ namespace trace {
 
 		ScriptInstance CreateInstance();
 		ScriptMethod* GetMethod(const std::string& method);
+		ScriptMethod* GetMethod(StringID method);
 		uintptr_t GetID();
 
 		void* GetInternal() { return m_internal; }
-		std::unordered_map<std::string, ScriptMethod>& GetMethods() { return m_methods; }
+		std::unordered_map<StringID, ScriptMethod>& GetMethods() { return m_methods; }
 		std::unordered_map<std::string, ScriptField>& GetFields() { return m_fields; }
 		std::string& GetScriptName() { return m_scriptName; }
 
 		void SetInternal(void* internal_data) { m_internal = internal_data; }
-		void SetMethods(std::unordered_map<std::string, ScriptMethod>& methods) { m_methods = methods; }
+		void SetMethods(std::unordered_map<StringID, ScriptMethod>& methods) { m_methods = methods; }
 		void SetFields(std::unordered_map<std::string, ScriptField>& fields) { m_fields = fields; }
 		void SetScriptName(const std::string& name) { m_scriptName = name; }
 
 
 	private:
 		void* m_internal = nullptr;
-		std::unordered_map<std::string, ScriptMethod> m_methods;
+		std::unordered_map<StringID, ScriptMethod> m_methods;
 		std::unordered_map<std::string, ScriptField> m_fields;
 		std::string m_scriptName;
 

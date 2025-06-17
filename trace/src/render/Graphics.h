@@ -270,7 +270,7 @@ namespace trace {
 		RENDER_SETTING_MAX
 	};
 
-	enum LightType
+	enum class LightType
 	{
 		UNKNOWN = -1,
 		DIRECTIONAL,

@@ -11,6 +11,8 @@
 #include "scripting/ScriptEngine.h"
 #include "backends/Physicsutils.h"
 #include "external_utils.h"
+#include "core/Utils.h"
+#include "networking/NetworkTypes.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -275,8 +277,8 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 	void* method_iter = nullptr;
 	while (MonoMethod* method = mono_class_get_methods(out_class, &method_iter))
 	{
-		std::string method_name = mono_method_get_name(method);
-		script.GetMethods()[method_name].m_internal = method;
+		std::string method_name = mono_method_get_name(method);		
+		script.GetMethods()[STR_ID(method_name)].m_internal = method;
 	}
 
 	uint32_t field_count = mono_class_num_fields(out_class);
@@ -546,7 +548,7 @@ char* ReadBytes(const std::string& filepath, uint32_t* outSize)
 	
 	uint32_t size;
 	FileSystem::read_all_bytes(in_file, nullptr, size);
-	char* result = new char[size];
+	char* result = new char[size];//TODO: Use custom allocator
 	*outSize = size;
 
 	FileSystem::read_all_bytes(in_file, result, size);
@@ -1305,6 +1307,62 @@ bool Application_LoadAndSetScene(MonoString* filename)
 
 #pragma endregion
 
+#pragma region Stream
+
+void Stream_WriteInt(uint64_t stream_handle, int value)
+{
+}
+
+void Stream_WriteFloat(uint64_t stream_handle, float value)
+{
+}
+
+void Stream_WriteVec2(uint64_t stream_handle, glm::vec2* value)
+{
+}
+
+void Stream_WriteVec3(uint64_t stream_handle, glm::vec3 value)
+{
+}
+
+void Stream_ReadInt(uint64_t stream_handle, int* value)
+{
+}
+
+void Stream_ReadFloat(uint64_t stream_handle, float* value)
+{
+}
+
+void Stream_ReadVec2(uint64_t stream_handle, glm::vec2* value)
+{
+}
+
+void Stream_ReadVec3(uint64_t stream_handle, glm::vec3* value)
+{
+}
+
+
+#pragma endregion
+
+#pragma region Networking
+
+bool Networking_IsServer()
+{
+	return false;
+}
+
+bool Networking_IsClient()
+{
+	return false;
+}
+
+void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id, Network::RPCType type)
+{
+}
+
+
+#pragma endregion
+
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
 
 void BindInternalFuncs()
@@ -1360,6 +1418,19 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Maths_Quat_Slerp);
 
 	ADD_INTERNAL_CALL(Application_LoadAndSetScene);
+
+	ADD_INTERNAL_CALL(Stream_WriteInt);
+	ADD_INTERNAL_CALL(Stream_WriteFloat);
+	ADD_INTERNAL_CALL(Stream_WriteVec2);
+	ADD_INTERNAL_CALL(Stream_WriteVec3);
+	ADD_INTERNAL_CALL(Stream_ReadInt);
+	ADD_INTERNAL_CALL(Stream_ReadFloat);
+	ADD_INTERNAL_CALL(Stream_ReadVec2);
+	ADD_INTERNAL_CALL(Stream_ReadVec3);
+
+	ADD_INTERNAL_CALL(Networking_IsServer);
+	ADD_INTERNAL_CALL(Networking_IsClient);
+	ADD_INTERNAL_CALL(Networking_InvokeRPC);
 
 }
 

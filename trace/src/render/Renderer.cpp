@@ -1184,7 +1184,7 @@ namespace trace {
 	void Renderer::AddLight(CommandList& cmd_list, Light& _light, LightType light_type, int32_t render_graph_index)
 	{
 		Command cmd;
-		cmd.params.val[0] = light_type;
+		cmd.params.val[0] = (uint32_t)light_type;
 		cmd.params.val[1] = render_graph_index;
 		cmd.params.val[2] = static_cast<uint32_t>(_light.params2.z);
 		cmd.params.data = (char*)MemoryManager::get_instance()->FrameAlloc(sizeof(Light));
@@ -1197,7 +1197,7 @@ namespace trace {
 
 			uint32_t light_type_ = params.val[0];
 			Light* _light = (Light*)params.data;
-			if (light_type_ == LightType::DIRECTIONAL)
+			if (light_type_ == (uint32_t)LightType::DIRECTIONAL)
 			{
 				
 				if (cast_shadows && graph_data.num_shadowed_sun_lights < MAX_SHADOW_SUN_LIGHTS)
@@ -1213,7 +1213,7 @@ namespace trace {
 					graph_data.num_non_shadowed_sun_lights++;
 				}
 			}
-			else if (light_type_ == LightType::POINT)
+			else if (light_type_ == (uint32_t)LightType::POINT)
 			{
 
 				if (cast_shadows && graph_data.num_shadowed_point_lights < MAX_SHADOW_POINT_LIGHTS)
@@ -1229,7 +1229,7 @@ namespace trace {
 					graph_data.num_non_shadowed_point_lights++;
 				}
 			}
-			else if (light_type_ == LightType::SPOT)
+			else if (light_type_ == (uint32_t)LightType::SPOT)
 			{
 
 				if (cast_shadows && graph_data.num_shadowed_spot_lights < MAX_SHADOW_SPOT_LIGHTS)

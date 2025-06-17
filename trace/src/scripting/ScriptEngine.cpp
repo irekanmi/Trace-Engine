@@ -32,6 +32,7 @@ namespace trace {
 		//----------------------------------
 
 		CreateScript("Action", Action, "Trace", true);
+		CreateScript("Network", Network, "Trace", true);
 		LoadComponents();
 
 		// BuiltIn Types ======================
@@ -61,6 +62,7 @@ namespace trace {
 		//----------------------------------
 
 		CreateScript("Action", Action, "Trace", true);
+		CreateScript("Network", Network, "Trace", true);
 		LoadComponents();
 
 		ReloadFieldInstances();

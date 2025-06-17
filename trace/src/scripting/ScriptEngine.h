@@ -31,6 +31,7 @@ namespace trace {
 		std::unordered_map<Script*, FieldManager>& GetFieldInstances() { return m_fieldInstance; }
 		Scene* GetCurrentScene() { return m_currentScene; }
 		Script* GetBuiltInScript(const std::string script_name);
+		Script* GetNetworkScript() { return &Network; }
 
 		ScriptInstance* GetEntityActionClass(UUID entity_id);
 		void RemoveEnityActionClass(UUID entity_id);
@@ -41,6 +42,7 @@ namespace trace {
 
 
 		Script Action;
+		Script Network;
 		ScriptMethod Action_Construtor;
 		std::unordered_map<Script*, FieldManager> m_fieldInstance;
 		Scene* m_currentScene = nullptr;

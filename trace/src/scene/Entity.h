@@ -24,6 +24,12 @@ namespace trace {
 			return m_scene->m_registry.get<T>(m_handle);
 		}
 
+		template<typename T>
+		T* TryGetComponent()
+		{
+			return m_scene->m_registry.try_get<T>(m_handle);
+		}
+
 		template<typename T,typename ...Args>
 		T& AddComponent(Args ...args)
 		{

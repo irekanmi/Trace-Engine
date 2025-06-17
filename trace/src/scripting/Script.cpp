@@ -2,6 +2,7 @@
 
 #include "Script.h"
 #include "ScriptBackend.h"
+#include "core/Utils.h"
 
 namespace trace {
 
@@ -83,6 +84,11 @@ namespace trace {
 	}
 
 	ScriptMethod* Script::GetMethod(const std::string& method)
+	{
+		return GetMethod(STR_ID(method));
+	}
+
+	ScriptMethod* Script::GetMethod(StringID method)
 	{
 		if (m_methods.find(method) != m_methods.end())
 		{
