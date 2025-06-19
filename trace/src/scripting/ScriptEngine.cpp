@@ -107,6 +107,14 @@ namespace trace {
 
 		return nullptr;
 	}
+	
+	Script* ScriptEngine::GetScript(const std::string script_name)
+	{
+		auto it = m_scripts.find(script_name);
+		if (it != m_scripts.end()) return &it->second;
+
+		return nullptr;
+	}
 
 	ScriptInstance* ScriptEngine::GetEntityActionClass(UUID entity_id)
 	{

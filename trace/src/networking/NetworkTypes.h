@@ -1,5 +1,9 @@
 #pragma once
 
+#include "networking/NetworkStream.h"
+
+#include <cinttypes>
+
 namespace trace::Network {
 
 #define SERVER_PORT 2367
@@ -19,5 +23,68 @@ namespace trace::Network {
 		SERVER
 	};
 
+	enum class PacketMessageType : uint8_t
+	{
+		UNKNOWN,
+		CREATE_ENTITY,
+		DESTROY_ENTITY,
+		ENTIITES_UPDATE,
+		RPC,
+		CUSTOM_DATA
+	};
 
+	typedef int SocketHandle;
+
+	enum class PacketType : uint8_t
+	{
+		NONE,
+		CONNECTION_REQUEST,
+		CONNECTION_CHALLENGE,
+		CHALLENGE_RESPONSE,
+		CONNECTION_ACCEPTED,
+		CONNECTION_ACKNOWLEGDED,
+		DISCONNECT,
+		INCOMING_DATA
+	};
+
+	enum class PacketSendMode
+	{
+		NONE,
+		RELIABLE,
+		UNRELIABLE
+	};
+	
+	struct Packet
+	{
+		NetworkStream data;
+		uint32_t connection_handle = 0;
+	};
+
+	struct NetworkStateInfo
+	{
+		uint32_t max_num_connections = 32;
+	};
+
+	enum class HostType
+	{
+		NONE,
+		SERVER,
+		CLIENT
+	};
+
+	struct HostInfo
+	{
+		uint32_t host_id = 0;
+		void* internal_handle = nullptr;
+		HostType type = HostType::NONE;
+		SocketHandle lan_socket;//NOTE: Used for LAN connection
+	};
+
+	struct Connection
+	{
+		uint32_t handle = 0;
+		uint32_t host = 0;
+		uint32_t port = 0;
+		void* internal_handle = nullptr;
+	};
 }

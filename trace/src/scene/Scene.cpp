@@ -538,32 +538,19 @@ namespace trace {
 		Network::NetworkManager::get_instance()->OnFrameStart();
 
 		Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
-		Network::NetworkStream* rpc_stream = Network::NetworkManager::get_instance()->GetRPCNetworkStream();
 
 		
-		auto client_send_lambda = [](UUID id, Script* script, ScriptInstance* instance)
-		{
-			ScriptMethod* on_client_send = script->GetMethod("OnClientSend");
-			if (on_client_send)
-			{
-				// Generate method parameters .....
-				InvokeScriptMethod_Instance(*on_client_send, *instance, nullptr);
 
-			}
-		};
+		Network::PacketMessageType message_type = Network::PacketMessageType::ENTIITES_UPDATE;
+		data_stream->Write(message_type);
 
-		auto server_lambda = [](UUID id, Script* script, ScriptInstance* instance)
-		{
-			ScriptMethod* on_server_send = script->GetMethod("OnServerSend");
-			if (on_server_send)
-			{
-				// Generate method parameters .....
-				InvokeScriptMethod_Instance(*on_server_send, *instance, nullptr);
+		uint32_t num_net_objects = 0;
+		uint32_t num_position = data_stream->GetPosition();
+		data_stream->Write(num_net_objects);
 
-			}
-		};
 
-		// uint32_t num_net_objects = 1;
+		
+
 		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
 		for (auto i : net_objects)
 		{
@@ -576,30 +563,116 @@ namespace trace {
 			{
 				if (net.owner_id == net_id)
 				{
+					uint32_t start_position = data_stream->GetPosition();
 					// Write entity id
-					// run client_send_lambda()
+					data_stream->Write(entity.GetID());
+					uint32_t comp_pos = data_stream->GetPosition();
+					uint8_t num_comp = 0;
+					data_stream->Write(num_comp);
+					uint32_t entity_data_position = data_stream->GetPosition();
 
+					auto client_send_lambda = [&data_stream, &num_comp](UUID id, Script* script, ScriptInstance* instance)
+					{
+						ScriptMethod* on_client_send = script->GetMethod("OnClientSend");
+						if (on_client_send)
+						{
+							uint32_t start_position = data_stream->GetPosition();
+							// Write class id
+							data_stream->Write(script->GetScriptName());
+							// run client_send_lambda()
+							uint32_t entity_data_position = data_stream->GetPosition();
+
+							// Generate method parameters .....
+							InvokeScriptMethod_Instance(*on_client_send, *instance, nullptr);
+
+							uint32_t current_position = data_stream->GetPosition();
+							if (current_position <= entity_data_position)
+							{
+								data_stream->MemSet(start_position, entity_data_position, 0x00);
+								data_stream->SetPosition(start_position);
+							}
+							else
+							{
+								++num_comp;
+							}
+
+						}
+					};
 					//TODO: Determine where it should be called
-					m_scriptRegistry.Iterate(entity.GetID(), client_send_lambda);
+					m_scriptRegistry.Iterate(entity.GetID(), client_send_lambda);				
 
-					// ++num_net_objects;
+					uint32_t current_position = data_stream->GetPosition();
+					if (current_position <= entity_data_position)
+					{
+						data_stream->MemSet(start_position, entity_data_position, 0x00);
+						data_stream->SetPosition(start_position);
+					}
+					else
+					{
+						data_stream->Write(comp_pos, num_comp);
+						++num_net_objects;
+					}
 				}
 				break;
 			}
 			case Network::NetType::LISTEN_SERVER:
 			{
+				uint32_t start_position = data_stream->GetPosition();
 				// Write entity id
-				// run client_send_lambda()
+				data_stream->Write(entity.GetID());
+				uint32_t comp_pos = data_stream->GetPosition();
+				uint8_t num_comp = 0;
+				data_stream->Write(num_comp);
+				uint32_t entity_data_position = data_stream->GetPosition();
 
+				auto server_send_lambda = [&data_stream, &num_comp](UUID id, Script* script, ScriptInstance* instance)
+				{
+					ScriptMethod* on_server_send = script->GetMethod("OnServerSend");
+					if (on_server_send)
+					{
+						uint32_t start_position = data_stream->GetPosition();
+						// Write class id
+						data_stream->Write(script->GetScriptName());
+						// run server_send_lambda()
+						uint32_t entity_data_position = data_stream->GetPosition();
+
+						// Generate method parameters .....
+						InvokeScriptMethod_Instance(*on_server_send, *instance, nullptr);
+
+						uint32_t current_position = data_stream->GetPosition();
+						if (current_position <= entity_data_position)
+						{
+							data_stream->MemSet(start_position, entity_data_position, 0x00);
+							data_stream->SetPosition(start_position);
+						}
+						else
+						{
+							++num_comp;
+						}
+
+					}
+				};
 				//TODO: Determine where it should be called
-				m_scriptRegistry.Iterate(entity.GetID(), server_lambda);
+				m_scriptRegistry.Iterate(entity.GetID(), server_send_lambda);
 
-				// ++num_net_objects;
+				uint32_t current_position = data_stream->GetPosition();
+				if (current_position <= entity_data_position)
+				{
+					data_stream->MemSet(start_position, entity_data_position, 0x00);
+					data_stream->SetPosition(start_position);
+				}
+				else
+				{
+					data_stream->Write(comp_pos, num_comp);
+					++num_net_objects;
+				}
 				break;
 			}
 			}
 
 		}
+
+		data_stream->Write(num_position, num_net_objects);
 
 		Network::NetworkManager::get_instance()->OnFrameEnd();
 	}
@@ -966,62 +1039,105 @@ namespace trace {
 
 	void Scene::OnPacketReceive_Client(Network::NetworkStream* data, uint32_t source_handle)
 	{
-		auto client_recieve_lambda = [](UUID id, Script* script, ScriptInstance* instance)
-		{
-			ScriptMethod* on_client_recieve = script->GetMethod("OnClientRecieve");
-			if (on_client_recieve)
-			{
-				// Generate method parameters .....
-				InvokeScriptMethod_Instance(*on_client_recieve, *instance, nullptr);
-
-			}
-		};
 
 		// Read num entities in packet
+		uint32_t num_entities = 0;
+		data->Read(num_entities);
 		// for each entity:
+		for (uint32_t i = 0; i < num_entities; i++)
+		{
+			UUID id = 0;
+			data->Read(id);
+			Entity entity = GetEntity(id);
+			if (!entity)
+			{
+				// Generate an error or just assume the packet is invalid
+				TRC_ASSERT(false, "This not suppose to happen");
+				continue;
+			}
+			uint8_t num_comp = 0;
+			data->Read(num_comp);
+			for (uint8_t j = 0; j < num_comp; j++)
+			{
+				std::string script_name;
+				data->Read(script_name);
+				ScriptInstance* instance = entity.GetScript(script_name);
+				if (!instance)
+				{
+					// Generate an error or just assume the packet is invalid
+					TRC_ASSERT(false, "This not suppose to happen");
+					continue;
+				}
+
+				ScriptMethod* on_client_recieve = instance->GetScript()->GetMethod("OnClientRecieve");
+				if (on_client_recieve)
+				{
+					// Generate method parameters .....
+					InvokeScriptMethod_Instance(*on_client_recieve, *instance, nullptr);
+
+				}
+				else
+				{
+					TRC_ASSERT(false, "A call to OnServerSend Most have a corresponding client receive");
+				}
+			}
+		}
 		//   run client_receive_lambda()
 
-		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
-		for (auto i : net_objects)
-		{
-			Entity entity(i, this);
-			auto [net, active] = net_objects.get(i);
-			//TODO: Determine where it should be called
-			m_scriptRegistry.Iterate(entity.GetID(), client_recieve_lambda);
-
-			
-		}
 	}
 
 	void Scene::OnPacketReceive_Server(Network::NetworkStream* data, uint32_t source_handle)
 	{
-		auto server_receive_lambda = [](UUID id, Script* script, ScriptInstance* instance)
-		{
-			ScriptMethod* on_server_receive = script->GetMethod("OnServerReceive");
-			if (on_server_receive)
-			{
-				// Generate method parameters .....
-				InvokeScriptMethod_Instance(*on_server_receive, *instance, nullptr);
-
-			}
-		};
-
 		// Read num entities in packet
+		uint32_t num_entities = 0;
+		data->Read(num_entities);
 		// for each entity:
-		//   run server_receive_lambda()
-
-		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
-		for (auto i : net_objects)
+		for (uint32_t i = 0; i < num_entities; i++)
 		{
-			Entity entity(i, this);
-			auto [net, active] = net_objects.get(i);
-			//TODO: Determine where it should be called
-			if (net.owner_id == source_handle)
+			UUID id = 0;
+			data->Read(id);
+			Entity entity = GetEntity(id);
+			if (!entity)
 			{
-				m_scriptRegistry.Iterate(entity.GetID(), server_receive_lambda);
+				// Generate an error or just assume the packet is invalid
+				TRC_ASSERT(false, "This not suppose to happen");
+				continue;
 			}
+			uint32_t net_id = entity.GetComponent<NetObject>().owner_id;
+			if (net_id != source_handle)
+			{
+				// Generate an error or just assume the packet is invalid
+				TRC_ASSERT(false, "This not suppose to happen");
+				continue;
+			}
+			uint8_t num_comp = 0;
+			data->Read(num_comp);
+			for (uint8_t j = 0; j < num_comp; j++)
+			{
+				std::string script_name;
+				data->Read(script_name);
+				ScriptInstance* instance = entity.GetScript(script_name);
+				if (!instance)
+				{
+					// Generate an error or just assume the packet is invalid
+					TRC_ASSERT(false, "This not suppose to happen");
+					continue;
+				}
 
+				ScriptMethod* on_server_recieve = instance->GetScript()->GetMethod("OnServerRecieve");
+				if (on_server_recieve)
+				{
+					// Generate method parameters .....
+					InvokeScriptMethod_Instance(*on_server_recieve, *instance, nullptr);
+
+				}
+				else
+				{
+					TRC_ASSERT(false, "A call to OnClientSend Most have a corresponding server receive");
+				}
+			}
 		}
+		//   run server_receive_lambda()
 	}
 
 	void Scene::EnableEntity(Entity entity)
@@ -2277,6 +2393,15 @@ namespace trace {
 				uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
 
 				// Generate create object data and broadcast to all clients....
+				Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+				Network::PacketMessageType message_type = Network::PacketMessageType::CREATE_ENTITY;
+				data_stream->Write(message_type);
+				data_stream->Write(entity.GetID());
+				TransformComponent& transform = entity.GetComponent<TransformComponent>();
+				data_stream->Write(transform._transform.GetPosition());
+				data_stream->Write(transform._transform.GetRotation());
+				data_stream->Write(transform._transform.GetScale());
+				data_stream->Write(entity.GetParentID());
 			}
 			break;
 		}
@@ -2311,6 +2436,10 @@ namespace trace {
 		case Network::NetType::LISTEN_SERVER:
 		{
 			// Generate destroy object data and broadcast to all clients .....
+			Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+			Network::PacketMessageType message_type = Network::PacketMessageType::DESTROY_ENTITY;
+			data_stream->Write(message_type);
+			data_stream->Write(entity.GetID());
 			return true;
 			break;
 		}

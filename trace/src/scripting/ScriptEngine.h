@@ -2,6 +2,7 @@
 
 #include "Script.h"
 #include "scene/UUID.h"
+#include "core/Coretypes.h"
 
 namespace trace {
 
@@ -31,6 +32,7 @@ namespace trace {
 		std::unordered_map<Script*, FieldManager>& GetFieldInstances() { return m_fieldInstance; }
 		Scene* GetCurrentScene() { return m_currentScene; }
 		Script* GetBuiltInScript(const std::string script_name);
+		Script* GetScript(const std::string script_name);
 		Script* GetNetworkScript() { return &Network; }
 
 		ScriptInstance* GetEntityActionClass(UUID entity_id);

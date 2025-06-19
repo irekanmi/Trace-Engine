@@ -15,6 +15,10 @@ namespace trace::Network {
 		return s_instance;
 	}
 
+	NetworkManager::NetworkManager()
+	{
+	}
+
 	bool NetworkManager::Init()
 	{
 		return true;

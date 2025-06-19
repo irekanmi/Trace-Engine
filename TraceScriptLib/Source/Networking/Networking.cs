@@ -12,27 +12,35 @@ namespace Trace
 
     static public class Network
     {
-        // static Event on_client_connect
-        // static Event on_client_disconnect
-        // static Event on_server_connect
-        // static Event on_server_disconnect
+        public static event Action<uint> on_client_connect;
+        public static event Action<uint> on_client_disconnect;
+        public static event Action<uint> on_server_connect;
+        public static event Action<uint> on_server_disconnect;
 
         static void OnClientConnect(uint handle)
         {
-            // Event on_client_connect()
+            on_client_connect?.Invoke(handle);
         }
         static void OnClientDisconnect(uint handle)
         {
-            // Event on_client_disconnect()
+            on_client_disconnect?.Invoke(handle);
         }
         static void OnServerConnect(uint handle)
         {
-            // Event on_server_connect()
+            on_server_connect?.Invoke(handle);
         }
         
         static void OnServerDisconnect(uint handle)
         {
-            // Event on_server_disconnect()
+           on_server_disconnect?.Invoke(handle);
+        }
+
+        static void ReleaseEventObject()
+        {
+            on_client_connect = null;
+            on_client_disconnect = null;
+            on_server_connect = null;
+            on_server_disconnect = null;
         }
 
         public static bool IsServer()

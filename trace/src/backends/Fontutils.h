@@ -2,9 +2,10 @@
 
 #include "core/Core.h"
 #include "core/Enums.h"
-#include <string>
 
 #include "glm/glm.hpp"
+#include <string>
+#include <vector>
 
 
 namespace trace {

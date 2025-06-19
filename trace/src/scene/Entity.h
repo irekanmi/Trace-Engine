@@ -3,6 +3,8 @@
 #include "Scene.h"
 #include "core/io/Logging.h"
 
+#include <string>
+
 namespace trace {
 
 	class Entity
@@ -64,6 +66,7 @@ namespace trace {
 		}
 
 		UUID GetID();
+		std::string& GetName();
 
 		Scene* GetScene() { return m_scene; }
 
@@ -81,6 +84,7 @@ namespace trace {
 
 		bool HasParent();
 		Entity GetParent();
+		UUID GetParentID();
 
 		operator entt::entity() { return m_handle; }
 		operator uint32_t() { return (uint32_t)m_handle; }

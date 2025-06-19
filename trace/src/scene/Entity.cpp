@@ -8,6 +8,10 @@ namespace trace {
 	{
 		return GetComponent<IDComponent>()._id;
 	}
+	std::string& Entity::GetName()
+	{
+		return GetComponent<TagComponent>().GetTag();
+	}
 	bool Entity::HasScript(const std::string& script_name)
 	{
 		return m_scene->m_scriptRegistry.HasScript(GetID(), script_name);
@@ -52,5 +56,9 @@ namespace trace {
 		}
 
 		return Entity();
+	}
+	UUID Entity::GetParentID()
+	{
+		return GetComponent<HierachyComponent>().parent;
 	}
 }

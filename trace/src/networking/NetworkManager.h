@@ -18,6 +18,7 @@ namespace trace::Network {
 	{
 
 	public:
+		NetworkManager();
 		bool Init();
 		void Shutdown();
 
