@@ -367,6 +367,7 @@ namespace trace {
 	struct NetObject
 	{
 		uint32_t owner_id = 0;
+		bool is_owner = false;
 	};
 
 	//NOTE: This component has to be one in the scene

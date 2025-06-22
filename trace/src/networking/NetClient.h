@@ -25,7 +25,7 @@ namespace trace::Network {
 
 
 		void SetServerConnectCallback(std::function<void(uint32_t connection_handle)> server_connect) { on_server_connect = server_connect; }
-		void SetServerDisConnectCallback(std::function<void(uint32_t connection_handle)> server_disconnect) { on_server_disconnect = server_disconnect; }
+		void SetServerDisconnectCallback(std::function<void(uint32_t connection_handle)> server_disconnect) { on_server_disconnect = server_disconnect; }
 
 	private:
 		uint32_t solve_challenge(uint32_t challenge);

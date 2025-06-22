@@ -65,11 +65,15 @@ namespace trace {
 		Entity FindEnityInHierachy(Entity entity, StringID name);
 		Entity GetParentWithAnimation(Entity entity);
 		Entity DuplicateEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity, UUID id);
 		bool CopyEntity(Entity entity, Entity src);
-		void DestroyEntity(Entity entity);
-		Entity InstanciatePrefab(Ref<Prefab> prefab);
+		void DestroyEntity(Entity entity, bool force_destroy = false);
+		//NOTE: force_destroy to be set to true if client has recieved a destroy packet from the server
+		Entity InstanciatePrefab(Ref<Prefab> prefab, uint32_t net_handle = 0, bool forced = false);
+		Entity InstanciatePrefab(Ref<Prefab> prefab, UUID id, uint32_t net_handle = 0, bool forced = false);
 		Entity InstanciatePrefab(Ref<Prefab> prefab, Entity parent);
-		Entity InstanciateEntity(Entity source, glm::vec3 position);
+		Entity InstanciateEntity(Entity source, glm::vec3 position, uint32_t net_handle = 0, bool forced = false);
+		Entity InstanciateEntity(Entity source, UUID id, glm::vec3 position, uint32_t net_handle = 0, bool forced = false);
 		bool ApplyPrefabChanges(Ref<Prefab> prefab);
 
 		bool ApplyPrefabChangesOnSceneLoad();
@@ -154,11 +158,11 @@ namespace trace {
 
 		void enable_child_entity(Entity entity);
 		void disable_child_entity(Entity entity);
-		//NOTE: force_destroy to be set to true if client has recieved a destroy packet from the packet
-		void destroy_entity(Entity entity, bool force_destroy = false);
+		//NOTE: force_destroy to be set to true if client has recieved a destroy packet from the server
+		void destroy_entity(Entity entity);
 		void duplicate_entity(Entity entity, Entity res);
-		//INFO: called when an entity is to be create at runtime
-		Entity instanciate_entity_net(Entity entity);
+		//INFO: called when an entity is to be created at runtime
+		Entity instanciate_entity_net(Entity entity, Entity source, Ref<Prefab> prefab, uint32_t net_id = 0, bool forced = false);
 		bool can_destroy_entity(Entity entity);
 
 

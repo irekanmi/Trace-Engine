@@ -17,6 +17,30 @@ namespace Trace
         public static event Action<uint> on_server_connect;
         public static event Action<uint> on_server_disconnect;
 
+        readonly public static uint DEAFAULT_SERVER_PORT = 2367;
+        readonly public static uint DEAFAULT_DISCOVERY_PORT = 6932;
+
+
+        public static bool CreateListenServer(uint port)
+        {
+            return InternalCalls.Networking_CreateListenServer(port);
+        }
+
+        public static bool CreateClient(bool LAN)
+        {
+            return InternalCalls.Networking_CreateClient(LAN);
+        }
+
+        public static bool ConnectTo(string server, uint port)
+        {
+            return InternalCalls.Networking_ConnectTo(server, port);
+        }
+
+        public static bool ConnectToLAN(string server)
+        {
+            return InternalCalls.Networking_ConnectToLAN(server);
+        }
+
         static void OnClientConnect(uint handle)
         {
             on_client_connect?.Invoke(handle);

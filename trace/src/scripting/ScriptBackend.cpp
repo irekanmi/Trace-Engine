@@ -13,6 +13,8 @@
 #include "external_utils.h"
 #include "core/Utils.h"
 #include "networking/NetworkTypes.h"
+#include "networking/NetworkManager.h"
+#include "serialize/DataStream.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -1311,34 +1313,50 @@ bool Application_LoadAndSetScene(MonoString* filename)
 
 void Stream_WriteInt(uint64_t stream_handle, int value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Write(value);
 }
 
 void Stream_WriteFloat(uint64_t stream_handle, float value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Write(value);
 }
 
 void Stream_WriteVec2(uint64_t stream_handle, glm::vec2* value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Write(*value);
 }
 
-void Stream_WriteVec3(uint64_t stream_handle, glm::vec3 value)
+void Stream_WriteVec3(uint64_t stream_handle, glm::vec3* value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Write(*value);
 }
 
 void Stream_ReadInt(uint64_t stream_handle, int* value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Read(*value);
 }
 
 void Stream_ReadFloat(uint64_t stream_handle, float* value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Read(*value);
 }
 
 void Stream_ReadVec2(uint64_t stream_handle, glm::vec2* value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Read(*value);
 }
 
 void Stream_ReadVec3(uint64_t stream_handle, glm::vec3* value)
 {
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Read(*value);
 }
 
 
@@ -1360,6 +1378,44 @@ void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id,
 {
 }
 
+bool Networking_CreateListenServer(uint32_t port)
+{
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+
+	return net_manager->CreateListenServer(port);
+
+}
+
+bool Networking_CreateClient(bool LAN)
+{
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+
+	return net_manager->CreateClient(LAN);
+}
+
+bool Networking_ConnectTo(MonoString* server, uint32_t port)
+{
+	std::string txt;
+
+	char* c_str = mono_string_to_utf8(server);
+	txt = c_str;
+	mono_free(c_str);
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->ConnectTo(txt, port);
+}
+
+bool Networking_ConnectToLAN(MonoString* server)
+{
+	std::string txt;
+
+	char* c_str = mono_string_to_utf8(server);
+	txt = c_str;
+	mono_free(c_str);
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->ConnectToLAN(txt);
+}
 
 #pragma endregion
 
@@ -1431,6 +1487,10 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Networking_IsServer);
 	ADD_INTERNAL_CALL(Networking_IsClient);
 	ADD_INTERNAL_CALL(Networking_InvokeRPC);
+	ADD_INTERNAL_CALL(Networking_CreateListenServer);
+	ADD_INTERNAL_CALL(Networking_CreateClient);
+	ADD_INTERNAL_CALL(Networking_ConnectTo);
+	ADD_INTERNAL_CALL(Networking_ConnectToLAN);
 
 }
 

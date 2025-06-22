@@ -214,8 +214,12 @@ namespace trace::Network {
 		PacketType type = PacketType::INCOMING_DATA;
 		data.Write(type);
 		data.Write(m_connection.handle);
+		data.MemSet(data.GetPosition(), data.GetSize(), 0x00);
 		result.data = data;
 		result.connection_handle = m_connection.handle;
+
+
+
 		return result;
 	}
 	void NetClient::SendPacketToServer(Packet& packet, PacketSendMode mode)

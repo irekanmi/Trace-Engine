@@ -13,6 +13,7 @@
 #include "memory/memory.h"
 #include "resource/ResourceSystem.h"
 #include "core/memory/MemoryManager.h"
+#include "networking/NetworkManager.h"
 
 //Temp==================
 #include "render/Graphics.h"
@@ -157,6 +158,7 @@ namespace trace
 		InputSystem* input = InputSystem::get_instance();
 		Renderer* renderer = Renderer::get_instance();
 		MemoryManager* mem_manager = MemoryManager::get_instance();
+		Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
 		
 		
 		
@@ -192,6 +194,9 @@ namespace trace
 				Layer* layer = m_LayerStack->GetLayers()[i];
 				layer->Update(deltaTime);
 			}
+			// Networking -------------------
+			net_manager->Update(deltaTime);
+			// --------------------------------
 
 			//------CLIENT-------//
 

@@ -217,6 +217,18 @@ namespace Trace
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Networking_InvokeRPC(ulong uuid, Trace.Action src, UInt64 func_name_id, RPCType type);
 
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Networking_CreateListenServer(uint port);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Networking_CreateClient(bool LAN);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Networking_ConnectTo(string server, uint port);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Networking_ConnectToLAN(string server);
+
 
 
         #endregion

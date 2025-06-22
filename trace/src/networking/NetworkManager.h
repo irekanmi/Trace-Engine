@@ -19,8 +19,10 @@ namespace trace::Network {
 
 	public:
 		NetworkManager();
+		~NetworkManager();
 		bool Init();
 		void Shutdown();
+		void Update(float deltaTime);
 
 		void OnSceneStart(Scene* scene);
 		void OnSceneStop(Scene* scene);
@@ -29,14 +31,14 @@ namespace trace::Network {
 		void OnFrameStart();
 		void OnFrameEnd();
 		bool CreateListenServer(uint32_t port = SERVER_PORT);
+		bool CreateClient(bool LAN = false);
 		bool ConnectTo(const std::string server, uint32_t port = SERVER_PORT);
-		bool ConnectToLAN(uint32_t port = DISCOVERY_PORT);
+		bool ConnectToLAN(const std::string& server);
 		void DestroyNetInstance();
 		NetServer* GetServerInstance();
 		NetClient* GetClientInstance();
 		NetworkStream* GetSendNetworkStream();
-		NetworkStream* GetRPCNetworkStream();
-		void Send(NetworkStream* packet, uint16_t mode);
+		void Send(NetworkStream* packet, PacketSendMode mode);
 		NetType GetNetType() { return m_type; }
 		uint32_t GetInstanceID() { return m_instanceId; }
 		void OnClientConnect(uint32_t handle);
@@ -56,8 +58,10 @@ namespace trace::Network {
 			NetServer server;
 			NetClient client;
 		};
-		NetworkStream m_sendPacket;
-		NetworkStream m_rpcPacket;
+		Packet m_sendPacket;
+		Packet m_receivePacket;
+		NetworkStateInfo m_info;
+		uint32_t m_sendStartPos = 0;
 
 	protected:
 

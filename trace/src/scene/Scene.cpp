@@ -19,6 +19,7 @@
 #include "core/maths/Dampers.h"
 #include "debug/Debugger.h"
 #include "networking/NetworkManager.h"
+#include "external_utils.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -583,7 +584,12 @@ namespace trace {
 							uint32_t entity_data_position = data_stream->GetPosition();
 
 							// Generate method parameters .....
-							InvokeScriptMethod_Instance(*on_client_send, *instance, nullptr);
+							uint64_t stream_handle = (uint64_t)data_stream;
+							void* params[] =
+							{
+								&stream_handle
+							};
+							InvokeScriptMethod_Instance(*on_client_send, *instance, params);
 
 							uint32_t current_position = data_stream->GetPosition();
 							if (current_position <= entity_data_position)
@@ -637,7 +643,12 @@ namespace trace {
 						uint32_t entity_data_position = data_stream->GetPosition();
 
 						// Generate method parameters .....
-						InvokeScriptMethod_Instance(*on_server_send, *instance, nullptr);
+						uint64_t stream_handle = (uint64_t)data_stream;
+						void* params[] =
+						{
+							&stream_handle
+						};
+						InvokeScriptMethod_Instance(*on_server_send, *instance, params);
 
 						uint32_t current_position = data_stream->GetPosition();
 						if (current_position <= entity_data_position)
@@ -1039,105 +1050,292 @@ namespace trace {
 
 	void Scene::OnPacketReceive_Client(Network::NetworkStream* data, uint32_t source_handle)
 	{
+		uint32_t max_loop_count = 256;// TODO: Configurable
 
-		// Read num entities in packet
-		uint32_t num_entities = 0;
-		data->Read(num_entities);
-		// for each entity:
-		for (uint32_t i = 0; i < num_entities; i++)
+		for (uint32_t i = 0; i < max_loop_count; i++)
 		{
-			UUID id = 0;
-			data->Read(id);
-			Entity entity = GetEntity(id);
-			if (!entity)
+			Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
+			uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
+			bool end_of_packet = false;
+			switch (message_type)
 			{
-				// Generate an error or just assume the packet is invalid
-				TRC_ASSERT(false, "This not suppose to happen");
-				continue;
+			case Network::PacketMessageType::UNKNOWN:
+			{
+				end_of_packet = true;
+				break;
 			}
-			uint8_t num_comp = 0;
-			data->Read(num_comp);
-			for (uint8_t j = 0; j < num_comp; j++)
+			case Network::PacketMessageType::CREATE_ENTITY:
 			{
-				std::string script_name;
-				data->Read(script_name);
-				ScriptInstance* instance = entity.GetScript(script_name);
-				if (!instance)
+				UUID src_id = 0;
+				data->Read(src_id);
+				UUID id = 0;
+				data->Read(id);
+				Entity obj = GetEntity(src_id);
+				if (!obj)
 				{
-					// Generate an error or just assume the packet is invalid
-					TRC_ASSERT(false, "This not suppose to happen");
-					continue;
+					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+				}
+				glm::vec3 position(0.0f);
+				data->Read(position);
+				glm::quat rotation;
+				data->Read(rotation);
+				glm::vec3 scale(0.0f);
+				data->Read(scale);
+
+				UUID parent_id = 0;
+				data->Read(parent_id);
+				uint32_t net_id = 0;
+				data->Read(net_id);
+
+				Entity entity = InstanciateEntity(obj, id, position, net_id, true);
+				if (!entity)
+				{
+					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+				}
+				TransformComponent& comp = entity.GetComponent<TransformComponent>();
+				comp._transform.SetRotation(rotation);
+				comp._transform.SetScale(scale);
+				NetObject& net_instance = entity.GetComponent<NetObject>();
+				net_instance.owner_id = net_id;
+				net_instance.is_owner = (net_id == instance_id);
+
+				if (parent_id != 0)
+				{
+					SetParent(entity, GetEntity(parent_id));
 				}
 
-				ScriptMethod* on_client_recieve = instance->GetScript()->GetMethod("OnClientRecieve");
-				if (on_client_recieve)
+			
+				break;
+			}
+			case Network::PacketMessageType::INSTANCIATE_PREFAB:
+			{
+				UUID prefab_id = 0;
+				data->Read(prefab_id);
+				UUID id = 0;
+				data->Read(id);
+				Ref<Prefab> obj = PrefabManager::get_instance()->Get(GetNameFromUUID(prefab_id));
+				if (!obj)
 				{
-					// Generate method parameters .....
-					InvokeScriptMethod_Instance(*on_client_recieve, *instance, nullptr);
+					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+				}
+				glm::vec3 position(0.0f);
+				data->Read(position);
+				glm::quat rotation;
+				data->Read(rotation);
+				glm::vec3 scale(0.0f);
+				data->Read(scale);
 
-				}
-				else
+				UUID parent_id = 0;
+				data->Read(parent_id);
+				uint32_t net_id = 0;
+				data->Read(net_id);
+
+				Entity entity = InstanciatePrefab(obj, id, net_id, true);
+				if (!entity)
 				{
-					TRC_ASSERT(false, "A call to OnServerSend Most have a corresponding client receive");
+					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
 				}
+				TransformComponent& comp = entity.GetComponent<TransformComponent>();
+				comp._transform.SetRotation(rotation);
+				comp._transform.SetScale(scale);
+				NetObject& net_instance = entity.GetComponent<NetObject>();
+				net_instance.owner_id = net_id;
+				net_instance.is_owner = (net_id == instance_id);
+
+				if (parent_id != 0)
+				{
+					SetParent(entity, GetEntity(parent_id));
+				}
+
+			
+				break;
+			}
+			case Network::PacketMessageType::DESTROY_ENTITY:
+			{
+				UUID id = 0;
+				data->Read(id);
+				Entity obj = GetEntity(id);
+				if (!obj)
+				{
+					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+				}
+				DestroyEntity(obj, true);
+				break;
+			}
+			case Network::PacketMessageType::ENTIITES_UPDATE:
+			{
+				// Read num entities in packet
+				uint32_t num_entities = 0;
+				data->Read(num_entities);
+				// for each entity:
+				for (uint32_t i = 0; i < num_entities; i++)
+				{
+					UUID id = 0;
+					data->Read(id);
+					Entity entity = GetEntity(id);
+					if (!entity)
+					{
+						// Generate an error or just assume the packet is invalid
+						TRC_ASSERT(false, "This not suppose to happen");
+						continue;
+					}
+					uint8_t num_comp = 0;
+					data->Read(num_comp);
+					for (uint8_t j = 0; j < num_comp; j++)
+					{
+						std::string script_name;
+						data->Read(script_name);
+						ScriptInstance* instance = entity.GetScript(script_name);
+						if (!instance)
+						{
+							// Generate an error or just assume the packet is invalid
+							TRC_ASSERT(false, "This not suppose to happen");
+							continue;
+						}
+
+						ScriptMethod* on_client_recieve = instance->GetScript()->GetMethod("OnClientRecieve");
+						if (on_client_recieve)
+						{
+							// Generate method parameters .....
+							uint64_t stream_handle = (uint64_t)data;
+							void* params[] =
+							{
+								&stream_handle
+							};
+							InvokeScriptMethod_Instance(*on_client_recieve, *instance, params);
+
+						}
+						else
+						{
+							TRC_ASSERT(false, "A call to OnServerSend Most have a corresponding client receive");
+						}
+					}
+				}
+				//   run client_receive_lambda()
+				break;
+			}
+			case Network::PacketMessageType::RPC:
+			{
+				break;
+			}
+			}
+
+			if (end_of_packet)
+			{
+				return;
 			}
 		}
-		//   run client_receive_lambda()
+
+		TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+		
 
 	}
 
 	void Scene::OnPacketReceive_Server(Network::NetworkStream* data, uint32_t source_handle)
 	{
-		// Read num entities in packet
-		uint32_t num_entities = 0;
-		data->Read(num_entities);
-		// for each entity:
-		for (uint32_t i = 0; i < num_entities; i++)
+		uint32_t max_loop_count = 256;// TODO: Configurable
+
+		for (uint32_t i = 0; i < max_loop_count; i++)
 		{
-			UUID id = 0;
-			data->Read(id);
-			Entity entity = GetEntity(id);
-			if (!entity)
+			Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
+			uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
+			bool end_of_packet = false;
+			switch (message_type)
 			{
-				// Generate an error or just assume the packet is invalid
-				TRC_ASSERT(false, "This not suppose to happen");
-				continue;
+			case Network::PacketMessageType::UNKNOWN:
+			{
+				end_of_packet = true;
+				break;
 			}
-			uint32_t net_id = entity.GetComponent<NetObject>().owner_id;
-			if (net_id != source_handle)
+			case Network::PacketMessageType::CREATE_ENTITY:
 			{
-				// Generate an error or just assume the packet is invalid
-				TRC_ASSERT(false, "This not suppose to happen");
-				continue;
+				TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+				break;
 			}
-			uint8_t num_comp = 0;
-			data->Read(num_comp);
-			for (uint8_t j = 0; j < num_comp; j++)
+			case Network::PacketMessageType::INSTANCIATE_PREFAB:
 			{
-				std::string script_name;
-				data->Read(script_name);
-				ScriptInstance* instance = entity.GetScript(script_name);
-				if (!instance)
-				{
-					// Generate an error or just assume the packet is invalid
-					TRC_ASSERT(false, "This not suppose to happen");
-					continue;
-				}
+				TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
 
-				ScriptMethod* on_server_recieve = instance->GetScript()->GetMethod("OnServerRecieve");
-				if (on_server_recieve)
+				break;
+			}
+			case Network::PacketMessageType::DESTROY_ENTITY:
+			{
+				TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+				break;
+			}
+			case Network::PacketMessageType::ENTIITES_UPDATE:
+			{
+				// Read num entities in packet
+				uint32_t num_entities = 0;
+				data->Read(num_entities);
+				// for each entity:
+				for (uint32_t i = 0; i < num_entities; i++)
 				{
-					// Generate method parameters .....
-					InvokeScriptMethod_Instance(*on_server_recieve, *instance, nullptr);
+					UUID id = 0;
+					data->Read(id);
+					Entity entity = GetEntity(id);
+					if (!entity)
+					{
+						// Generate an error or just assume the packet is invalid
+						TRC_ASSERT(false, "This not suppose to happen");
+						continue;
+					}
+					uint32_t net_id = entity.GetComponent<NetObject>().owner_id;
+					if (net_id != source_handle)
+					{
+						// Generate an error or just assume the packet is invalid
+						TRC_ASSERT(false, "This not suppose to happen");
+						continue;
+					}
+					uint8_t num_comp = 0;
+					data->Read(num_comp);
+					for (uint8_t j = 0; j < num_comp; j++)
+					{
+						std::string script_name;
+						data->Read(script_name);
+						ScriptInstance* instance = entity.GetScript(script_name);
+						if (!instance)
+						{
+							// Generate an error or just assume the packet is invalid
+							TRC_ASSERT(false, "This not suppose to happen");
+							continue;
+						}
 
+						ScriptMethod* on_server_recieve = instance->GetScript()->GetMethod("OnServerRecieve");
+						if (on_server_recieve)
+						{
+							// Generate method parameters .....
+							uint64_t stream_handle = (uint64_t)data;
+							void* params[] =
+							{
+								&stream_handle
+							};
+							InvokeScriptMethod_Instance(*on_server_recieve, *instance, params);
+
+						}
+						else
+						{
+							TRC_ASSERT(false, "A call to OnClientSend Most have a corresponding server receive");
+						}
+					}
 				}
-				else
-				{
-					TRC_ASSERT(false, "A call to OnClientSend Most have a corresponding server receive");
-				}
+				//   run server_receive_lambda()
+				break;
+			}
+			case Network::PacketMessageType::RPC:
+			{
+				break;
+			}
+			}
+
+			if (end_of_packet)
+			{
+				return;
 			}
 		}
-		//   run server_receive_lambda()
+
+		TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+		
 	}
 
 	void Scene::EnableEntity(Entity entity)
@@ -1454,7 +1652,12 @@ namespace trace {
 	//TODO: Update this function to initialize components
 	Entity Scene::DuplicateEntity(Entity entity)
 	{
-		Entity res = CreateEntity_UUID(UUID::GenUUID(), entity.GetComponent<TagComponent>().GetTag());		
+		return DuplicateEntity(entity, UUID::GenUUID());
+	}
+
+	Entity Scene::DuplicateEntity(Entity entity, UUID id)
+	{
+		Entity res = CreateEntity_UUID(id, entity.GetComponent<TagComponent>().GetTag());
 
 		res.RemoveComponent<TransformComponent>();
 		duplicate_entity(entity, res);
@@ -1490,10 +1693,14 @@ namespace trace {
 
 
 
-	void Scene::DestroyEntity(Entity entity)
+	void Scene::DestroyEntity(Entity entity, bool force_destroy)
 	{
 		if (m_running)
 		{
+			if (!force_destroy && !can_destroy_entity(entity))
+			{
+				return;
+			}
 			m_entityToDestroy.push_back(entity);
 		}
 		else
@@ -1502,7 +1709,12 @@ namespace trace {
 		}
 	}
 
-	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab)
+	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab, uint32_t net_handle, bool forced)
+	{		
+		return InstanciatePrefab(prefab, UUID::GenUUID(), net_handle, forced);
+	}
+
+	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab, UUID id, uint32_t net_handle, bool forced)
 	{
 		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
 		Entity result = DuplicateEntity(handle);
@@ -1511,7 +1723,7 @@ namespace trace {
 
 		if (m_running)
 		{
-			result = instanciate_entity_net(result);
+			result = instanciate_entity_net(result, Entity(), prefab, net_handle, forced);
 		}
 
 		return result;
@@ -1532,23 +1744,28 @@ namespace trace {
 
 
 
-	Entity Scene::InstanciateEntity(Entity source, glm::vec3 position)
+	Entity Scene::InstanciateEntity(Entity source, glm::vec3 position, uint32_t net_handle, bool forced)
+	{
+		return InstanciateEntity(source, UUID::GenUUID(), position, net_handle, forced);
+	}
+
+	Entity Scene::InstanciateEntity(Entity source, UUID id, glm::vec3 position, uint32_t net_handle, bool forced)
 	{
 		if (!m_running)
 		{
 			return Entity();
 		}
 
-		Entity result = CreateEntity_UUID(UUID::GenUUID(), source.GetComponent<TagComponent>().GetTag());
+		Entity result = CreateEntity_UUID(id, source.GetComponent<TagComponent>().GetTag());
 
 		TransformComponent& pose = result.AddOrReplaceComponent<TransformComponent>(source.GetComponent<TransformComponent>());
 		pose._transform.SetPosition(position);
-		
+
 		duplicate_entity(source, result);
 
 		EnableEntity(result);
 
-		result = instanciate_entity_net(result);
+		result = instanciate_entity_net(result, source, Ref<Prefab>(), net_handle, forced);
 
 		return result;
 	}
@@ -2245,12 +2462,9 @@ namespace trace {
 		}
 	}
 
-	void Scene::destroy_entity(Entity entity, bool force_destroy)
+	void Scene::destroy_entity(Entity entity)
 	{
-		if (!force_destroy && !can_destroy_entity(entity))
-		{
-			return;
-		}
+		
 
 		if (this != entity.GetScene())
 		{
@@ -2363,7 +2577,7 @@ namespace trace {
 		}
 	}
 
-	Entity Scene::instanciate_entity_net(Entity entity)
+	Entity Scene::instanciate_entity_net(Entity entity, Entity source, Ref<Prefab> prefab, uint32_t net_id, bool forced)
 	{
 		Network::NetType type = Network::NetworkManager::get_instance()->GetNetType();
 
@@ -2378,6 +2592,10 @@ namespace trace {
 		}
 		case Network::NetType::CLIENT:
 		{
+			if (forced)
+			{
+				return entity;
+			}
 			if (entity.HasComponent<NetObject>())
 			{
 				TRC_ERROR("You can't instanciate a network object on the client, Function: {}", __FUNCTION__);
@@ -2394,14 +2612,28 @@ namespace trace {
 
 				// Generate create object data and broadcast to all clients....
 				Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
-				Network::PacketMessageType message_type = Network::PacketMessageType::CREATE_ENTITY;
-				data_stream->Write(message_type);
+				Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
+				if (prefab)
+				{
+					message_type = Network::PacketMessageType::INSTANCIATE_PREFAB;
+					data_stream->Write(message_type);
+					data_stream->Write(prefab->GetUUID());
+					
+				}
+				else
+				{
+					message_type = Network::PacketMessageType::CREATE_ENTITY;
+					data_stream->Write(message_type);
+					data_stream->Write(source.GetID());
+				}
 				data_stream->Write(entity.GetID());
 				TransformComponent& transform = entity.GetComponent<TransformComponent>();
 				data_stream->Write(transform._transform.GetPosition());
 				data_stream->Write(transform._transform.GetRotation());
 				data_stream->Write(transform._transform.GetScale());
 				data_stream->Write(entity.GetParentID());
+				data_stream->Write(net_id);
+				
 			}
 			break;
 		}

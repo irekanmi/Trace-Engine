@@ -27,6 +27,7 @@ namespace trace::Network {
 	{
 		UNKNOWN,
 		CREATE_ENTITY,
+		INSTANCIATE_PREFAB,
 		DESTROY_ENTITY,
 		ENTIITES_UPDATE,
 		RPC,
