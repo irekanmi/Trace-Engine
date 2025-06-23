@@ -20,6 +20,8 @@
 #include "debug/Debugger.h"
 #include "networking/NetworkManager.h"
 #include "external_utils.h"
+#include "serialize/SceneSerializeFunctions.h"
+#include "scene/SceneUtils.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
@@ -346,7 +348,25 @@ namespace trace {
 	}
 	void Scene::OnNetworkStart()
 	{
-		Network::NetworkManager::get_instance()->OnSceneStart(this);
+		Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+		auto net_objects = m_registry.view<NetObject>();
+		for (auto i : net_objects)
+		{
+			auto [net_instance] = net_objects.get(i);
+			Entity entity(i, this);
+
+			if (net_manager->IsServer() && net_instance.type != Network::NetObjectType::SERVER)
+			{
+				//m_entityToDestroy.push_back(entity);
+			}
+			else if(net_manager->IsClient())
+			{
+				m_entityToDestroy.push_back(entity);
+
+			}
+
+		}
+		net_manager->OnSceneStart(this);
 	}
 	void Scene::OnStop()
 	{
@@ -994,16 +1014,6 @@ namespace trace {
 	bool Scene::InitializeSceneComponents()
 	{
 		
-		// NOTE: No network entity should be present on scene load
-		auto net_objects = m_registry.view<NetObject>();
-		for (auto i : net_objects)
-		{
-			auto [net_instance] = net_objects.get(i);
-			Entity entity(i, this);
-
-			m_entityToDestroy.push_back(entity);
-		}
-
 		for (UUID& id : m_rootNode->children)
 		{
 			Entity entity = GetEntity(id);
@@ -1055,6 +1065,7 @@ namespace trace {
 		for (uint32_t i = 0; i < max_loop_count; i++)
 		{
 			Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
+			data->Read(message_type);
 			uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
 			bool end_of_packet = false;
 			switch (message_type)
@@ -1074,7 +1085,7 @@ namespace trace {
 				if (!obj)
 				{
 					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
-				}
+				}	
 				glm::vec3 position(0.0f);
 				data->Read(position);
 				glm::quat rotation;
@@ -1104,7 +1115,7 @@ namespace trace {
 					SetParent(entity, GetEntity(parent_id));
 				}
 
-			
+				remove_entity_physics_components(entity);
 				break;
 			}
 			case Network::PacketMessageType::INSTANCIATE_PREFAB:
@@ -1147,7 +1158,7 @@ namespace trace {
 					SetParent(entity, GetEntity(parent_id));
 				}
 
-			
+				remove_entity_physics_components(entity);
 				break;
 			}
 			case Network::PacketMessageType::DESTROY_ENTITY:
@@ -1193,7 +1204,7 @@ namespace trace {
 							continue;
 						}
 
-						ScriptMethod* on_client_recieve = instance->GetScript()->GetMethod("OnClientRecieve");
+						ScriptMethod* on_client_recieve = instance->GetScript()->GetMethod("OnClientReceive");
 						if (on_client_recieve)
 						{
 							// Generate method parameters .....
@@ -1238,6 +1249,7 @@ namespace trace {
 		for (uint32_t i = 0; i < max_loop_count; i++)
 		{
 			Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
+			data->Read(message_type);
 			uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
 			bool end_of_packet = false;
 			switch (message_type)
@@ -1336,6 +1348,46 @@ namespace trace {
 
 		TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
 		
+	}
+
+	void Scene::WriteSceneState_Server(Network::NetworkStream* data)
+	{
+		uint32_t num_entity = 0;
+		uint32_t num_pos = data->GetPosition();
+		data->Write(num_entity);
+
+		auto net_objects = m_registry.view<NetObject>();
+		for (auto i : net_objects)
+		{
+			auto [net_instance] = net_objects.get(i);
+			Entity entity(i, this);
+
+			serialize_entity_components_binary(entity, data, this);
+			serialize_entity_scripts_binary(entity, data, this);
+
+			++num_entity;
+		}
+
+		data->Write(num_pos, num_entity);
+	}
+
+	void Scene::ReadSceneState_Client(Network::NetworkStream* data)
+	{
+		uint32_t num_entity = 0;
+		data->Read(num_entity);
+
+		for (uint32_t i = 0; i < num_entity; ++i)
+		{
+			Entity new_entity = deserialize_entity_components_binary(this, data);
+			deserialize_entity_scripts_binary(new_entity, this, data);
+
+			remove_entity_physics_components(new_entity);
+
+			if (new_entity.GetComponent<HierachyComponent>().is_enabled)
+			{
+				EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
+			}
+		}
 	}
 
 	void Scene::EnableEntity(Entity entity)

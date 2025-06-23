@@ -19,6 +19,20 @@ namespace trace::Network {
 		return s_instance;
 	}
 
+	void NetworkManager::process_new_client(uint32_t handle)
+	{
+		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
+		ScriptMethod* on_client_connect = network_script->GetMethod("OnClientConnect");
+		if (on_client_connect)
+		{
+			void* params[] =
+			{
+				&handle
+			};
+			InvokeScriptMethod_Class(*on_client_connect, *network_script, params);
+		}
+	}
+
 	NetworkManager::NetworkManager()
 	{
 	}
@@ -29,12 +43,17 @@ namespace trace::Network {
 
 	bool NetworkManager::Init()
 	{
+		if (!NetFuncLoader::Load_ENet_Func())
+		{
+			return false;
+		}
+
 		bool result = NetFunc::Initialize(m_info);
 
 		m_receivePacket.data = NetworkStream(KB);
 		m_type = NetType::UNKNOWN;
 
-		return true;// result;
+		return result;
 	}
 
 	void NetworkManager::Shutdown()
@@ -69,6 +88,14 @@ namespace trace::Network {
 			if (server.Listen(m_receivePacket))
 			{
 				OnPacketRecieve(&m_receivePacket.data, m_receivePacket.connection_handle);
+			}
+
+			if (m_info.state_sync && !new_clients.empty())
+			{
+				for (uint32_t& i : new_clients)
+				{
+					process_new_client(i);
+				}
 			}
 			break;
 		}
@@ -113,7 +140,7 @@ namespace trace::Network {
 			return;
 		}
 
-		bool has_data = (m_sendPacket.data.GetPosition() <= m_sendStartPos);
+		bool has_data = !(m_sendPacket.data.GetPosition() <= m_sendStartPos);
 
 		if (!has_data)
 		{
@@ -152,6 +179,7 @@ namespace trace::Network {
 			m_type = NetType::LISTEN_SERVER;
 			m_sendPacket = server.CreateSendPacket(KB);
 			m_sendStartPos = m_sendPacket.data.GetPosition();
+			m_instanceId = 100;//TODO: Generate a server id
 
 			server.SetClientConnectCallback(BIND_EVENT_FN(NetworkManager::OnClientConnect));
 			server.SetClientDisconnectCallback(BIND_EVENT_FN(NetworkManager::OnClientDisconnect));
@@ -175,9 +203,8 @@ namespace trace::Network {
 
 		if (result)
 		{
-			m_type = NetType::LISTEN_SERVER;
-			m_sendPacket = client.CreateSendPacket(KB);
-			m_sendStartPos = m_sendPacket.data.GetPosition();
+			m_type = NetType::CLIENT;
+			
 
 			client.SetServerConnectCallback(BIND_EVENT_FN(NetworkManager::OnServerConnect));
 			client.SetServerDisconnectCallback(BIND_EVENT_FN(NetworkManager::OnServerDisconnect));
@@ -232,6 +259,7 @@ namespace trace::Network {
 		m_type = NetType::UNKNOWN;
 		m_sendPacket.data.Destroy();
 		m_sendPacket.connection_handle = 0;
+		m_instanceId = 0;
 	}
 
 	NetServer* NetworkManager::GetServerInstance()
@@ -284,16 +312,26 @@ namespace trace::Network {
 			return;
 		}
 
-		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
-		ScriptMethod* on_client_connect = network_script->GetMethod("OnClientConnect");
-		if (on_client_connect)
+		if (m_info.state_sync)
 		{
-			void* params[] =
+			// Write scene state and send
+			new_clients.push_back(handle);
+
+			if (m_scene)
 			{
-				&handle
-			};
-			InvokeScriptMethod_Class(*on_client_connect, *network_script, params);
+				Packet scene_state = server.CreateSendPacket(KB);// TODO: Implement custom allocator{ as soon as possible}. it affects resizing of network stream
+				PacketMessageType message_type = PacketMessageType::SCENE_STATE;
+				scene_state.data.Write(message_type);
+				m_scene->WriteSceneState_Server(&scene_state.data);
+				server.SendTo(handle, scene_state, PacketSendMode::RELIABLE);
+			}
+
 		}
+		else
+		{			
+			process_new_client(handle);
+		}
+
 	}
 
 	void NetworkManager::OnClientDisconnect(uint32_t handle)
@@ -322,6 +360,10 @@ namespace trace::Network {
 			return;
 		}
 
+		m_instanceId = handle;
+		m_sendPacket = client.CreateSendPacket(KB);
+		m_sendStartPos = m_sendPacket.data.GetPosition();
+
 		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
 		ScriptMethod* on_server_connect = network_script->GetMethod("OnServerConnect");
 		if (on_server_connect)
@@ -340,6 +382,8 @@ namespace trace::Network {
 		{
 			return;
 		}
+
+		m_instanceId = 0;
 
 		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
 		ScriptMethod* on_server_disconnect = network_script->GetMethod("OnServerDisconnect");
@@ -366,7 +410,21 @@ namespace trace::Network {
 			{
 			case NetType::CLIENT:
 			{
-				m_scene->OnPacketReceive_Client(data, handle);
+				if (m_info.state_sync && !world_state_packet_received && m_scene)
+				{
+					PacketMessageType message_type = PacketMessageType::UNKNOWN;
+					data->Read(message_type);
+					if (message_type == PacketMessageType::SCENE_STATE)
+					{
+						// Process entites...
+						m_scene->ReadSceneState_Client(data);
+						world_state_packet_received = true;
+					}
+				}
+				else
+				{
+					m_scene->OnPacketReceive_Client(data, handle);
+				}
 				break;
 			}
 			case NetType::LISTEN_SERVER:
@@ -376,6 +434,16 @@ namespace trace::Network {
 			}
 			}
 		}
+	}
+
+	bool NetworkManager::IsServer()
+	{
+		return m_type == NetType::LISTEN_SERVER;
+	}
+
+	bool NetworkManager::IsClient()
+	{
+		return m_type == NetType::CLIENT;
 	}
 
 }

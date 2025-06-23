@@ -48,6 +48,8 @@ namespace trace {
 		bool InitializeSceneComponents();
 		void OnPacketReceive_Client(Network::NetworkStream* data, uint32_t source_handle);
 		void OnPacketReceive_Server(Network::NetworkStream* data, uint32_t source_handle);
+		void WriteSceneState_Server(Network::NetworkStream* data);
+		void ReadSceneState_Client(Network::NetworkStream* data);
 
 		void EnableEntity(Entity entity);
 		void DisableEntity(Entity entity);

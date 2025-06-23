@@ -166,3 +166,48 @@ class FollowYBot : Trace.Action
     }
 
 }
+
+
+class NetController : Trace.Action
+{
+
+
+
+    public void OnUpdate(float deltaTime)
+    {
+        if(Input.GetKeyReleased(Keys.KEY_H))
+        {
+            Network.CreateListenServer(Network.DEAFAULT_SERVER_PORT);
+            Application.LoadAndSetScene("Networked_Balls.trscn");
+        }
+
+        if(Input.GetKeyReleased(Keys.KEY_J))
+        {
+            Network.CreateClient(false);
+            Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
+            Application.LoadAndSetScene("Networked_Balls.trscn");
+        }
+    }
+
+}
+
+class TransformSync : Trace.Action
+{
+
+
+    public override void OnServerSend(UInt64 stream_handle)
+    {
+        TransformComponent pose = GetComponent<TransformComponent>();
+        Stream.WriteVec3(stream_handle, pose.Position);
+
+    }
+
+    public override void OnClientReceive(UInt64 stream_handle)
+    {
+        Vec3 new_pos = Stream.ReadVec3(stream_handle);
+        TransformComponent pose = GetComponent<TransformComponent>();
+        pose.Position = new_pos;
+    }
+
+
+}

@@ -110,6 +110,16 @@ namespace Trace
 
         }
 
+        public virtual void OnServerSend(UInt64 stream_handle)
+        {
+
+        }
+
+        public virtual void OnClientReceive(UInt64 stream_handle)
+        {
+
+        }
+
 
     }
 }

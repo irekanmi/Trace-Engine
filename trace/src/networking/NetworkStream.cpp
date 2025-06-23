@@ -129,6 +129,7 @@ namespace trace::Network {
 		if (m_copied && !m_destroyed)
 		{
 			delete[] m_data;//TODO: Use custom allocator
+			m_destroyed = true;
 		}
 	}
 

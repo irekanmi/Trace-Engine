@@ -164,4 +164,11 @@ namespace trace {
 		REGISTER_MEMBER(SpringMotionMatchingController, rotation_halflife);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(NetObject)
+		REGISTER_TYPE(NetObject);
+		REGISTER_MEMBER(NetObject, owner_id);
+		REGISTER_MEMBER(NetObject, is_owner);
+		REGISTER_MEMBER(NetObject, type);
+	END_REGISTER_CLASS;
+
 }

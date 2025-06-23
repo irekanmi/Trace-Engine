@@ -16,6 +16,14 @@ namespace trace::Network {
 		LISTEN_SERVER
 	};
 
+	enum class NetObjectType
+	{
+		UNKNOWN,
+		SERVER,
+		CLIENT,
+		BOTH
+	};
+
 	enum class RPCType
 	{
 		UNKNOW,
@@ -30,6 +38,7 @@ namespace trace::Network {
 		INSTANCIATE_PREFAB,
 		DESTROY_ENTITY,
 		ENTIITES_UPDATE,
+		SCENE_STATE,
 		RPC,
 		CUSTOM_DATA
 	};
@@ -64,6 +73,7 @@ namespace trace::Network {
 	struct NetworkStateInfo
 	{
 		uint32_t max_num_connections = 32;
+		bool state_sync = true;
 	};
 
 	enum class HostType

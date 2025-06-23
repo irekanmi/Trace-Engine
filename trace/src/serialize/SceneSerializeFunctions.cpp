@@ -13,7 +13,7 @@ namespace trace {
 		([&]() {
 			if (entity.HasComponent<Component>())
 			{
-				components_type_id.emplace_back(UUID(Reflection::TypeID<Component>()));
+				components_type_id.push_back(UUID(Reflection::TypeID<Component>()));
 			}
 			}(), ...);
 

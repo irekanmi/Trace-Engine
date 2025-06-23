@@ -371,6 +371,11 @@ namespace trace {
 				entity.AddComponent<SpringMotionMatchingController>();
 				comp_dirty = true;
 			}
+			if (ImGui::MenuItem("Net Object"))
+			{
+				entity.AddComponent<NetObject>();
+				comp_dirty = true;
+			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
@@ -1280,6 +1285,35 @@ namespace trace {
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Rotation Halflife", &comp.rotation_halflife, 0.005f, 0.0f, 1.0f, "%.5f"), RotationHalflife)
 			{}
 			return dirty;
+			});
+
+		comp_dirty = comp_dirty || DrawComponent<NetObject>(entity, "Net Object", [](Entity obj, NetObject& comp) -> bool {
+			bool dirty = false;
+
+			
+			const char* type_string[] = { "Unknown", "Server", "Client", "Both"};
+			const char* current_type = type_string[(int)comp.type];
+			if (ImGui::BeginCombo("Object Type", current_type))
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					bool selected = (current_type == type_string[i]);
+					if (ImGui::Selectable(type_string[i], selected))
+					{
+						comp.type = (Network::NetObjectType)i;
+						dirty = true;
+					}
+
+					if (selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			return true;
 			});
 
 		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;

@@ -16,6 +16,7 @@ using namespace trace::Network;
 
 
 bool __ENet_Initialize(NetworkStateInfo & info);
+bool __ENet_Shutdown();
 bool __ENet_CreateHost(HostType type, NetworkStateInfo * network_info, HostInfo * out_result, bool LAN, uint32_t port);
 bool __ENet_DestroyHost(HostInfo * host, bool LAN);
 bool __ENet_ConnectTo_C(HostInfo * host, Connection * out_handle, const std::string & server, uint32_t port);
@@ -32,6 +33,8 @@ namespace trace {
 
 	bool NetFuncLoader::Load_ENet_Func()
 	{
+		NetFunc::_initialize = __ENet_Initialize;
+		NetFunc::_shutdown = __ENet_Shutdown;
 		NetFunc::_createHost = __ENet_CreateHost;
 		NetFunc::_destroyHost = __ENet_DestroyHost;
 		NetFunc::_connectTo_C = __ENet_ConnectTo_C;
@@ -142,59 +145,523 @@ namespace trace {
 
 }
 
+#include "enet/enet.h"
+
 bool __ENet_Initialize(NetworkStateInfo& info)
 {
+	int result = enet_initialize();
 
+	if (result != 0)
+	{
+		TRC_ERROR("Failed to initiaize ENet, Function: {} ", __FUNCTION__);
+		return false;
+	}
 	return true;
 }
 
 bool __ENet_Shutdown()
 {
-
+	enet_deinitialize();
 	return true;
 }
 
 bool __ENet_CreateHost(HostType type, NetworkStateInfo* network_info, HostInfo* out_result, bool LAN, uint32_t port)
 {
+	if (!out_result)
+	{
+		TRC_ERROR("Pass in a valid pointer to store created host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	switch (type)
+	{
+	case HostType::SERVER:
+	{
+		if (!network_info)
+		{
+			return false;
+		}
+
+		ENetAddress address;
+		ENetHost* host = nullptr;
+
+		address.host = ENET_HOST_ANY;
+		address.port = port;
+
+		host = enet_host_create(
+			&address,
+			network_info->max_num_connections,
+			1,
+			0,
+			0
+		);
+
+		if (!host)
+		{
+			TRC_ERROR("Unable to create host, Function: {}", __FUNCTION__);
+			return false;
+		}
+
+		out_result->internal_handle = host;
+
+		if (LAN)
+		{
+			address.port += 24;
+			ENetSocket socket = enet_socket_create(ENetSocketType::ENET_SOCKET_TYPE_DATAGRAM);
+			int result = enet_socket_set_option(socket, ENetSocketOption::ENET_SOCKOPT_NONBLOCK, 1);
+			result = enet_socket_set_option(socket, ENetSocketOption::ENET_SOCKOPT_BROADCAST, 1);
+			result = enet_socket_bind(socket, &address);
+
+			out_result->lan_socket = socket;
+
+		}
+
+
+		break;
+	}
+	case HostType::CLIENT:
+	{
+
+		ENetHost* host = nullptr;
+
+		host = enet_host_create(
+			nullptr,
+			1,
+			1,
+			0,
+			0
+		);
+
+		if (!host)
+		{
+			TRC_ERROR("Unable to create host, Function: {}", __FUNCTION__);
+			return false;
+		}
+
+		out_result->internal_handle = host;
+
+		if (LAN)
+		{
+
+			ENetAddress address;
+			address.host = ENET_HOST_ANY;
+			address.port = 0;
+			ENetSocket socket = enet_socket_create(ENetSocketType::ENET_SOCKET_TYPE_DATAGRAM);
+			int result = enet_socket_set_option(socket, ENetSocketOption::ENET_SOCKOPT_NONBLOCK, 1);
+			result = enet_socket_set_option(socket, ENetSocketOption::ENET_SOCKOPT_BROADCAST, 1);
+			result = enet_socket_bind(socket, &address);
+
+			out_result->lan_socket = socket;
+		}
+
+		break;
+	}
+	}
+
+	out_result->type = type;
+
 	return true;
 }
 bool __ENet_DestroyHost(HostInfo* host, bool LAN)
 {
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (LAN)
+	{
+		enet_socket_destroy(host->lan_socket);
+	}
+
+	ENetHost* handle = (ENetHost*)host->internal_handle;
+
+	enet_host_destroy(handle);
+	host->internal_handle = nullptr;
+
 	return true;
 }
 bool __ENet_ConnectTo_C(HostInfo* host, Connection* out_handle, const std::string& server, uint32_t port)
 {
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!out_handle)
+	{
+		TRC_ERROR("Pass in a valid pointer to store the connection, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetAddress address;
+	ENetEvent event;
+	ENetPeer* peer;
+
+	enet_address_set_host(&address, server.c_str());
+	address.port = port;
+
+	/* Initiate the connection, allocating the two channels 0 and 1. */
+	peer = enet_host_connect((ENetHost*)host->internal_handle, &address, 1, 0);
+
+	if (!peer)
+	{
+		TRC_ERROR("Unable to connect to {}, Function: {}", server, __FUNCTION__);
+		return false;
+	}
+
+
+	///* Wait up to 5 seconds for the connection attempt to succeed. */
+	//if (enet_host_service((ENetHost*)host->internal_handle, &event, 5000) > 0 &&
+	//	event.type == ENET_EVENT_TYPE_CONNECT)
+	//{
+	//}
+	//else
+	//{
+	//	/* Either the 5 seconds are up or a disconnect event was */
+	//	/* received. Reset the peer in the event the 5 seconds   */
+	//	/* had run out without any significant event.            */
+	//	enet_peer_reset(peer);
+
+	//	TRC_ERROR("Unable to connect to " << server << " , Function: {}", __FUNCTION__);
+	//	return false;
+	//}
+
+	//out_handle->internal_handle = peer;
+
+
 	return true;
 }
 bool __ENet_ConnectTo__C(HostInfo* host, Connection* out_handle, Connection* server)
 {
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!out_handle)
+	{
+		TRC_ERROR("Pass in a valid pointer to store the connection, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetAddress address;
+	ENetEvent event;
+	ENetPeer* peer;
+
+	address.host = server->host;
+	address.port = server->port;
+
+	/* Initiate the connection, allocating the two channels 0 and 1. */
+	peer = enet_host_connect((ENetHost*)host->internal_handle, &address, 1, 0);
+
+	if (!peer)
+	{
+		TRC_ERROR("Unable to connect, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+
 	return true;
 }
 bool __ENet_Disconnect_C(HostInfo* host, Connection* connection)
 {
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!connection)
+	{
+		TRC_ERROR("Pass in a valid pointer to connection, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetEvent event;
+	ENetPeer* peer = (ENetPeer*)connection->internal_handle;
+	ENetHost* client = (ENetHost*)host->internal_handle;
+
+	enet_peer_disconnect(peer, 0);
+
+	///* Allow up to 3 seconds for the disconnect to succeed
+	// * and drop any packets received packets.
+	// */
+	//while (enet_host_service(client, &event, 3000) > 0)
+	//{
+	//	switch (event.type)
+	//	{
+	//	case ENET_EVENT_TYPE_RECEIVE:
+	//		enet_packet_destroy(event.packet);
+	//		break;
+
+	//	case ENET_EVENT_TYPE_DISCONNECT:
+	//		TRC_ERROR("Disconnection succeeded." << std::endl;
+	//		return true;
+	//	}
+	//}
+
+	///* We've arrived here, so the disconnect attempt didn't */
+	///* succeed yet.  Force the connection down.             */
+	//enet_peer_reset(peer);
+
 	return true;
 }
 bool __ENet_Disconnect_S(HostInfo* host, Connection* connection)
 {
-	return true;
+	return __ENet_Disconnect_C(host, connection);
 }
 bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection)
 {
-	return true;
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetEvent event;
+	ENetHost* client = (ENetHost*)host->internal_handle;
+
+	while (enet_host_service(client, &event, 0) > 0)
+	{
+		switch (event.type)
+		{
+		case ENET_EVENT_TYPE_CONNECT:
+		{
+			out_source_connection->host = event.peer->address.host;
+			out_source_connection->port = event.peer->address.port;
+			out_source_connection->internal_handle = event.peer;
+
+			return false;
+			break;
+		}
+
+		case ENET_EVENT_TYPE_RECEIVE:
+		{
+			out_source_connection->host = event.peer->address.host;
+			out_source_connection->port = event.peer->address.port;
+			out_source_connection->internal_handle = event.peer;
+
+			packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
+
+			/* Clean up the packet now that we're done using it. */
+			enet_packet_destroy(event.packet);
+
+			return true;
+			break;
+		}
+
+		case ENET_EVENT_TYPE_DISCONNECT:
+		{
+			out_source_connection->host = event.peer->address.host;
+			out_source_connection->port = event.peer->address.port;
+			out_source_connection->internal_handle = event.peer;
+			//TODO: Handle server disconnection
+
+			return true;
+			break;
+		}
+		}
+	}
+
+
+	return false;
 }
 bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection)
 {
-	return true;
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetEvent event;
+	ENetHost* server = (ENetHost*)host->internal_handle;
+
+	while (enet_host_service(server, &event, 0) > 0)
+	{
+		switch (event.type)
+		{
+		case ENET_EVENT_TYPE_CONNECT:
+		{
+			out_source_connection->host = event.peer->address.host;
+			out_source_connection->port = event.peer->address.port;
+			out_source_connection->internal_handle = event.peer;
+
+
+			NetworkStream out_data(sizeof(PacketType));
+			PacketType type = PacketType::CONNECTION_REQUEST;
+			out_data.Write(type);
+
+			packet_data = out_data;
+			packet_data.SetPosition(0);
+
+			return true;
+			break;
+		}
+
+		case ENET_EVENT_TYPE_RECEIVE:
+		{
+			out_source_connection->host = event.peer->address.host;
+			out_source_connection->port = event.peer->address.port;
+			out_source_connection->internal_handle = event.peer;
+			packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
+
+			/* Clean up the packet now that we're done using it. */
+			enet_packet_destroy(event.packet);
+
+
+			return true;
+			break;
+		}
+
+		case ENET_EVENT_TYPE_DISCONNECT:
+		{
+			out_source_connection->host = event.peer->address.host;
+			out_source_connection->port = event.peer->address.port;
+			out_source_connection->internal_handle = event.peer;
+
+			NetworkStream out_data(sizeof(PacketType));
+			PacketType type = PacketType::DISCONNECT;
+			out_data.Write(type);
+
+			packet_data = out_data;
+			packet_data.SetPosition(0);
+
+			return true;
+			break;
+		}
+		}
+	}
+
+	return false;
 }
 bool __ENet_SendPacket(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode)
 {
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag::ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+
+	ENetPacket* packet = enet_packet_create(packet_data.GetData(), packet_data.GetSize(), flag);
+
+	ENetPeer* peer = (ENetPeer*)connection->internal_handle;
+
+	enet_peer_send(peer, 0, packet);
+
 	return true;
 }
 bool __ENet_ReceiveSocketData(HostInfo* host, NetworkStream& packet_data, Connection* source)
 {
-	return true;
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetAddress address;
+	ENetBuffer buffer;
+	buffer.data = packet_data.GetData();
+	buffer.dataLength = packet_data.GetSize();
+	int len = enet_socket_receive(host->lan_socket, &address, &buffer, 1);
+
+	if (len > 0)
+	{
+		packet_data = NetworkStream(buffer.data, buffer.dataLength, true);
+		source->host = address.host;
+		source->port = address.port;
+		return true;
+	}
+
+	return false;
 }
 bool __ENet_SendSocketData(HostInfo* host, NetworkStream& packet_data, Connection* source, uint32_t port)
 {
+	if (!host)
+	{
+		TRC_ERROR("Pass in a valid pointer to host, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	if (!host->internal_handle)
+	{
+		TRC_ERROR("Invalid host handle, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	ENetAddress address;
+	int result;
+	if (source)
+	{
+		address.host = source->host;
+		address.port = source->port;
+	}
+	else
+	{
+		address.host = ENET_HOST_BROADCAST;
+		//result = enet_address_set_host(&address, "192.168.0.255");
+		address.port = port;
+	}
+
+	ENetBuffer buffer;
+	buffer.data = packet_data.GetData();
+	buffer.dataLength = packet_data.GetSize();
+
+	result = enet_socket_send(host->lan_socket, &address, &buffer, 1);
+
 	return true;
 }

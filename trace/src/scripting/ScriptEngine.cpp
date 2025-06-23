@@ -4,6 +4,8 @@
 #include "ScriptBackend.h"
 #include "core/Coretypes.h"
 #include "core/Utils.h"
+#include "resource/PrefabManager.h"
+
 #include <filesystem>
 
 namespace trace {
@@ -71,6 +73,9 @@ namespace trace {
 		CreateScript("TriggerPair", m_builtTypes["TriggerPair"], "Trace", true);
 
 		// ====================================
+
+		// Update prefab scene
+		PrefabManager::get_instance()->GetScene()->GetScriptRegistry().ReloadScripts();
 
 		return true;
 	}

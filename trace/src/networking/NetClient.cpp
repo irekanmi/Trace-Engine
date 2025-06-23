@@ -12,7 +12,7 @@ namespace trace::Network {
 		found_connections.reserve(max_found_connections);
 		listen_port = lan_listen_port;
 
-		//lan_data = NetworkStream(1024);//TODO: size should be configurable
+		lan_data = NetworkStream(1024);//TODO: size should be configurable
 
 		return result;
 	}
@@ -27,6 +27,7 @@ namespace trace::Network {
 		}
 
 		bool result = NetFunc::DestroyHost(&m_info, m_LAN);
+		m_info.internal_handle = nullptr;
 
 		return result;
 	}

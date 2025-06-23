@@ -6,6 +6,7 @@
 #include "networking/NetworkStream.h"
 
 #include <string>
+#include <vector>
 
 namespace trace {
 	class Scene;
@@ -46,22 +47,27 @@ namespace trace::Network {
 		void OnServerConnect(uint32_t handle);
 		void OnServerDisconnect(uint32_t handle);
 		void OnPacketRecieve(NetworkStream* data, uint32_t handle);
+		bool IsServer();
+		bool IsClient();
 
 
 		static NetworkManager* get_instance();
+
+	private:
+		void process_new_client(uint32_t handle);
+
 	private:
 		uint32_t m_instanceId = 0;//INFO: It specifies the Id of the currently running instance
 		Scene* m_scene = nullptr;
 		NetType m_type = NetType::UNKNOWN;
-		union
-		{
-			NetServer server;
-			NetClient client;
-		};
+		NetServer server;
+		NetClient client;
 		Packet m_sendPacket;
 		Packet m_receivePacket;
 		NetworkStateInfo m_info;
 		uint32_t m_sendStartPos = 0;
+		bool world_state_packet_received = false;
+		std::vector<uint32_t> new_clients;
 
 	protected:
 

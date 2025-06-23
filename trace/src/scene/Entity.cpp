@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "Components.h"
 
+
 namespace trace {
 	UUID Entity::GetID()
 	{
@@ -11,6 +12,15 @@ namespace trace {
 	std::string& Entity::GetName()
 	{
 		return GetComponent<TagComponent>().GetTag();
+	}
+	bool Entity::IsOwner()
+	{
+		if (NetObject* net = TryGetComponent<NetObject>())
+		{
+			return net->is_owner;
+		}
+
+		return true;
 	}
 	bool Entity::HasScript(const std::string& script_name)
 	{

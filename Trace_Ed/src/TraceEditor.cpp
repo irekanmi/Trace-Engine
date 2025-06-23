@@ -220,6 +220,7 @@ namespace trace {
 				m_currentScene->OnAnimationUpdate(deltaTime);
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
+				m_currentScene->OnNetworkUpdate(deltaTime);
 				m_currentScene->OnUpdate(deltaTime);
 				m_currentScene->OnRender();
 
@@ -1510,6 +1511,7 @@ namespace trace {
 		m_currentScene->OnStart();
 		m_currentScene->OnScriptStart();
 		m_currentScene->OnPhysicsStart();
+		m_currentScene->OnNetworkStart();
 
 		
 		if (m_currentScene)
@@ -1520,6 +1522,7 @@ namespace trace {
 
 	void TraceEditor::stop_current_scene()
 	{
+		m_currentScene->OnNetworkStop();
 		m_currentScene->OnPhysicsStop();
 		m_currentScene->OnScriptStop();
 		m_currentScene->OnStop();

@@ -19,6 +19,7 @@
 #include "motion_matching/MotionMatchDatabase.h"
 #include "orange_duck/vec.h"
 #include "orange_duck/quat.h"
+#include "networking/NetworkTypes.h"
 
 
 
@@ -368,6 +369,7 @@ namespace trace {
 	{
 		uint32_t owner_id = 0;
 		bool is_owner = false;
+		Network::NetObjectType type = Network::NetObjectType::UNKNOWN;
 	};
 
 	//NOTE: This component has to be one in the scene

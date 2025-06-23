@@ -1366,12 +1366,14 @@ void Stream_ReadVec3(uint64_t stream_handle, glm::vec3* value)
 
 bool Networking_IsServer()
 {
-	return false;
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->IsServer();
 }
 
 bool Networking_IsClient()
 {
-	return false;
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->IsClient();
 }
 
 void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id, Network::RPCType type)
