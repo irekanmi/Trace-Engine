@@ -39,6 +39,7 @@ namespace trace::Network {
 		DESTROY_ENTITY,
 		ENTIITES_UPDATE,
 		SCENE_STATE,
+		SCENE_STATE_RECEIVED,
 		RPC,
 		CUSTOM_DATA
 	};

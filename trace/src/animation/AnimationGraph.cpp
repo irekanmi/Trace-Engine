@@ -10,6 +10,7 @@
 #include "core/Coretypes.h"
 #include "resource/GenericAssetManager.h"
 #include "debug/Debugger.h"
+#include "networking/NetworkStream.h"
 
 bool trace::AnimationGraph::HasAnimationClip(Ref<AnimationClip> clip)
 {
@@ -105,6 +106,8 @@ namespace trace::Animation {
         
         std::vector<Parameter>& parameters = graph->GetParameters();
         m_parameterData.resize(parameters.size());
+        m_parameterDirty.resize(parameters.size());
+        std::fill(m_parameterDirty.begin(), m_parameterDirty.end(), true);
 
         uint32_t i = 0;
         for (Parameter& param : parameters)
@@ -158,7 +161,7 @@ namespace trace::Animation {
 
     
 
-    void GraphInstance::Update(float deltaTime, Scene* scene, UUID id)
+    void GraphInstance::Update(float deltaTime, Scene* scene, UUID id, Network::NetworkStream* data_stream)
     {
         if (!m_started)
         {
@@ -196,6 +199,142 @@ namespace trace::Animation {
         return &m_parameterData[index];
     }
 
+    void GraphInstance::OnStateWrite_Server(Network::NetworkStream* data_stream)
+    {
+        uint16_t parameter_count = static_cast<uint16_t>(m_parameterData.size());
+        data_stream->Write(parameter_count);
+        for (auto& param : m_parameterLUT)
+        {
+            std::string param_name = param.first;
+            data_stream->Write(param_name);
+            ParameterData& param_data = m_parameterData[param.second];
+            data_stream->Write(param_data.data, 16);
+        }
+
+        // Write nodes data
+        uint32_t nodes_pos = data_stream->GetPosition();
+        uint32_t num_nodes = 0;
+        data_stream->Write(num_nodes);
+
+        for (auto& node : m_graph->GetNodes())
+        {
+            uint32_t start_position = data_stream->GetPosition();
+            UUID node_id = node.first;
+            data_stream->Write(node_id);
+            uint32_t node_start_position = data_stream->GetPosition();
+
+            node.second->OnStateWrite_Server(this, data_stream);
+
+            uint32_t current_position = data_stream->GetPosition();
+
+            if (current_position <= node_start_position)
+            {
+                data_stream->SetPosition(start_position);
+                data_stream->MemSet(start_position, current_position, 0x00);
+            }
+            else
+            {
+                ++num_nodes;
+            }
+        }
+
+        data_stream->Write(nodes_pos, num_nodes);
+
+    }
+
+    void GraphInstance::OnStateRead_Client(Network::NetworkStream* data_stream)
+    {
+        uint16_t parameter_count = 0;
+        data_stream->Read(parameter_count);
+        for (uint16_t i = 0; i < parameter_count; i++)
+        {
+            std::string param_name;
+            data_stream->Read(param_name);
+            
+            auto it = m_parameterLUT.find(param_name);
+            if (it == m_parameterLUT.end())
+            {
+                TRC_ASSERT(false, "These is not suppose to happen");
+            }
+            ParameterData& param_data = m_parameterData[it->second];
+            data_stream->Read(param_data.data, 16);
+        }
+
+        uint32_t num_nodes = 0;
+        data_stream->Read(num_nodes);
+
+        for (uint32_t i = 0; i < num_nodes; i++)
+        {
+            UUID node_id = 0;
+            data_stream->Read(node_id);
+            Node* node = m_graph->GetNode(node_id);
+            TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
+            node->OnStateRead_Client(this, data_stream);
+        }
+
+    }
+
+    void GraphInstance::BeginNetworkWrite_Server(Network::NetworkStream* data_stream)
+    {
+        uint32_t param_pos = data_stream->GetPosition();
+        uint16_t parameter_count = 0;
+        data_stream->Write(parameter_count);
+
+        for (auto& param : m_parameterLUT)
+        {
+            if (m_parameterDirty[param.second])
+            {
+                std::string param_name = param.first;
+                data_stream->Write(param_name);
+                data_stream->Write(m_parameterData[param.second].data, 16);
+                m_parameterDirty[param.second] = false;
+                ++parameter_count;
+            }
+        }
+        data_stream->Write(param_pos, parameter_count);
+
+        nodes_pos = data_stream->GetPosition();
+        num_nodes = 0;
+    }
+
+    void GraphInstance::EndNetworkWrite_Server(Network::NetworkStream* data_stream)
+    {
+        data_stream->Write(nodes_pos, num_nodes);
+    }
+
+    void GraphInstance::OnNetworkRead_Client(Network::NetworkStream* data_stream)
+    {
+        uint16_t parameter_count = 0;
+        data_stream->Read(parameter_count);
+
+        for (uint16_t i = 0; i < parameter_count; i++)
+        {
+            std::string param_name;
+            data_stream->Read(param_name);
+
+            auto it = m_parameterLUT.find(param_name);
+            if (it == m_parameterLUT.end())
+            {
+                TRC_ASSERT(false, "These is not suppose to happen");
+            }
+            ParameterData& param_data = m_parameterData[it->second];
+            data_stream->Read(param_data.data, 16);
+        }
+
+        uint32_t num_nodes = 0;
+        data_stream->Read(num_nodes);
+
+        for (uint32_t i = 0; i < num_nodes; i++)
+        {
+            UUID node_id = 0;
+            data_stream->Read(node_id);
+            Node* node = m_graph->GetNode(node_id);
+            TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
+            node->OnNetworkRead_Client(this, data_stream);
+        }
+
+    }
+
     void GraphInstance::set_parameter_data(const std::string& param_name, void* data, uint32_t size)
     {
         auto it = m_parameterLUT.find(param_name);
@@ -206,8 +345,10 @@ namespace trace::Animation {
         }
 
         ParameterData& param_data = m_parameterData[it->second];
+
         
         memcpy(param_data.data, data, size);
+        m_parameterDirty[it->second] = true;
 
         //.. Check for Transitions
     }

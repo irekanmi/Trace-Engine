@@ -7,6 +7,8 @@
 #include "animation/AnimationBlend.h"
 #include "animation/AnimationGraph.h"
 #include "debug/Debugger.h"
+#include "networking/NetworkStream.h"
+#include "reflection/SerializeTypes.h"
 
 
 namespace trace::Animation {
@@ -23,7 +25,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void StateNode::Update(GraphInstance* instance, float deltaTime)
+	void StateNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
@@ -49,7 +51,7 @@ namespace trace::Animation {
 				if (transition->ResolveConditions(instance, deltaTime))
 				{
 					state_machine->SetCurrentNode(instance, transition_uuid);
-					transition->Update(instance, deltaTime);
+					transition->Update(instance, deltaTime, data_stream);
 					data->current_flag = StateFlag::InTransition;
 					return;
 				}
@@ -64,7 +66,7 @@ namespace trace::Animation {
 		}
 
 		Node* in_node = nodes[input.node_id];
-		in_node->Update(instance, deltaTime);
+		in_node->Update(instance, deltaTime, data_stream);
 		data->final_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index);
 
 
@@ -214,7 +216,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void AnimationSampleNode::Update(GraphInstance* instance, float deltaTime)
+	void AnimationSampleNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -252,6 +254,13 @@ namespace trace::Animation {
 			AnimationEngine::get_instance()->SampleClip(clip, data->elasped_time, &data->final_pose.pose_data, m_looping);
 			Transform& root_motion_delta = data->final_pose.pose_data.GetRootMotionDelta();
 			root_motion_delta = Transform::Identity();
+		}
+
+		if (data_stream)
+		{
+			uint32_t begin_pos = BeginNetworkWrite_Server(instance, data_stream);
+			OnNetworkWrite_Server(instance, data_stream);
+			EndNetworkWrite_Server(instance, data_stream, begin_pos);
 		}
 
 		data->elasped_time = next_frame_time;
@@ -319,6 +328,48 @@ namespace trace::Animation {
 
 	}
 
+	void AnimationSampleNode::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->start_time);
+		data_stream->Write(data->elasped_time);
+	}
+
+	void AnimationSampleNode::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->start_time);
+		data_stream->Read(data->elasped_time);
+	}
+	
+	void AnimationSampleNode::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->elasped_time);
+	}
+
+	void AnimationSampleNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->elasped_time);
+	}
+
 	// ---------------------------------------------------------------------------------------------
 
 	// Transition Node -----------------------------------------------------------------------------
@@ -335,7 +386,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void TransitionNode::Update(GraphInstance* instance, float deltaTime)
+	void TransitionNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -359,13 +410,18 @@ namespace trace::Animation {
 		StateMachine* state_machine = (StateMachine*)nodes[current_state->GetStateMachine()];
 
 		float blend_weight = data->elapsed_time / m_duration;
-		current_state->Update(instance, deltaTime);
+		current_state->Update(instance, deltaTime, data_stream);
 		PoseNodeResult* current_state_result = current_state->GetFinalPose(instance);
 
-		target_state->Update(instance, deltaTime);
+		target_state->Update(instance, deltaTime, data_stream);
 		PoseNodeResult* target_state_result = target_state->GetFinalPose(instance);
 
-		
+		if (data_stream)
+		{
+			uint32_t begin_pos = BeginNetworkWrite_Server(instance, data_stream);
+			OnNetworkWrite_Server(instance, data_stream);
+			EndNetworkWrite_Server(instance, data_stream, begin_pos);
+		}
 
 		if (data->elapsed_time >= m_duration)
 		{
@@ -454,6 +510,46 @@ namespace trace::Animation {
 		return *result;
 	}
 
+	void TransitionNode::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->elapsed_time);
+	}
+	
+	void TransitionNode::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->elapsed_time);
+	}
+	
+	void TransitionNode::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->elapsed_time);
+	}
+	
+	void TransitionNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->elapsed_time);
+	}
+
 	// -------------------------------------------------------------------------------------
 
 	// State Machine Node ---------------------------------------------------------------
@@ -468,7 +564,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void StateMachine::Update(GraphInstance* instance, float deltaTime)
+	void StateMachine::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -488,8 +584,15 @@ namespace trace::Animation {
 
 		TRC_ASSERT(data->current_node != nullptr, "Function: {}", __FUNCTION__);
 
-		data->current_node->Update(instance, deltaTime);
+		data->current_node->Update(instance, deltaTime, data_stream);
 		data->pose_result = data->current_node->GetFinalPose(instance);
+
+		if (data_stream)
+		{
+			uint32_t begin_pos = BeginNetworkWrite_Server(instance, data_stream);
+			OnNetworkWrite_Server(instance, data_stream);
+			EndNetworkWrite_Server(instance, data_stream, begin_pos);
+		}
 
 		
 	}
@@ -537,6 +640,60 @@ namespace trace::Animation {
 	PoseNodeResult* StateMachine::GetFinalPose(GraphInstance* instance)
 	{
 		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+	void StateMachine::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		TRC_ASSERT(data->current_node, "This pointer should be valid, Function: {}", __FUNCTION__);
+		data_stream->Write(data->current_node->GetUUID());
+	}
+
+	void StateMachine::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		UUID current_node_id = 0;
+		data_stream->Read(current_node_id);
+
+		Node* node = instance->GetGraph()->GetNode(current_node_id);
+		TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
+		data->current_node = (PoseNode*)node;
+
+	}
+	
+	void StateMachine::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		TRC_ASSERT(data->current_node, "This pointer should be valid, Function: {}", __FUNCTION__);
+		data_stream->Write(data->current_node->GetUUID());
+	}
+
+	void StateMachine::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		UUID current_node_id = 0;
+		data_stream->Read(current_node_id);
+
+		Node* node = instance->GetGraph()->GetNode(current_node_id);
+		TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
+		data->current_node = (PoseNode*)node;
+
 	}
 
 	UUID StateMachine::CreateState(Graph* graph, StringID state_name)
@@ -599,7 +756,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void FinalOutputNode::Update(GraphInstance* instance, float deltaTime)
+	void FinalOutputNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -619,7 +776,7 @@ namespace trace::Animation {
 		}
 
 		Node* in_node = nodes[input.node_id];
-		in_node->Update(instance, deltaTime);
+		in_node->Update(instance, deltaTime, data_stream);
 		data->pose_result = in_node->GetValue<PoseNodeResult>(instance, input.value_index);
 	}
 
@@ -676,7 +833,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void RetargetAnimationNode::Update(GraphInstance* instance, float deltaTime)
+	void RetargetAnimationNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -793,6 +950,13 @@ namespace trace::Animation {
 			}
 		}
 
+		if (data_stream)
+		{
+			uint32_t begin_pos = BeginNetworkWrite_Server(instance, data_stream);
+			OnNetworkWrite_Server(instance, data_stream);
+			EndNetworkWrite_Server(instance, data_stream, begin_pos);
+		}
+
 		data->elasped_time = next_frame_time;
 		data->definition.update_id = Application::get_instance()->GetUpdateID();
 
@@ -829,6 +993,48 @@ namespace trace::Animation {
 	{
 		return (PoseNodeResult*)GetValueInternal(instance);
 	}
+
+	void RetargetAnimationNode::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->start_time);
+		data_stream->Write(data->elasped_time);
+	}
+
+	void RetargetAnimationNode::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->start_time);
+		data_stream->Read(data->elasped_time);
+	}
+	
+	void RetargetAnimationNode::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->elasped_time);
+	}
+
+	void RetargetAnimationNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->elasped_time);
+	}
 	
 	// -----------------------------------------------------------------------------------
 
@@ -846,7 +1052,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void RetargetPoseNode::Update(GraphInstance* instance, float deltaTime)
+	void RetargetPoseNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -871,7 +1077,7 @@ namespace trace::Animation {
 		}
 
 		Node* in_node = nodes[input.node_id];
-		in_node->Update(instance, deltaTime);
+		in_node->Update(instance, deltaTime, data_stream);
 
 
 		if (data->elasped_time == 0.0f)
@@ -1015,7 +1221,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void WarpAnimationNode::Update(GraphInstance* instance, float deltaTime)
+	void WarpAnimationNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -1104,7 +1310,12 @@ namespace trace::Animation {
 			//Debugger::get_instance()->DrawDebugSphere(0.4f, 2, pose.GetLocalMatrix(), TRC_COL32(0, 255 , 0, 255));
 		}
 
-		
+		if (data_stream)
+		{
+			uint32_t begin_pos = BeginNetworkWrite_Server(instance, data_stream);
+			OnNetworkWrite_Server(instance, data_stream);
+			EndNetworkWrite_Server(instance, data_stream, begin_pos);
+		}
 
 		data->elasped_time = next_frame_time;
 		data->definition.update_id = Application::get_instance()->GetUpdateID();
@@ -1264,7 +1475,53 @@ namespace trace::Animation {
 		return (PoseNodeResult*)GetValueInternal(instance);
 	}
 
+	void WarpAnimationNode::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->start_time);
+		data_stream->Write(data->elasped_time);
+		data_stream->Write(data->update_warp);
+		Reflection::SerializeContainer(data->warped_root_motion, data_stream, nullptr, Reflection::SerializationFormat::BINARY);
+	}
+
+	void WarpAnimationNode::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->start_time);
+		data_stream->Read(data->elasped_time);
+		data_stream->Read(data->update_warp);
+		Reflection::DeserializeContainer(data->warped_root_motion, data_stream, nullptr, Reflection::SerializationFormat::BINARY);
+	}
 	
+	void WarpAnimationNode::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->elasped_time);
+		data_stream->Write(data->update_warp);
+	}
+
+	void WarpAnimationNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->elasped_time);
+		data_stream->Read(data->update_warp);
+	}
 
 	// ---------------------------------------------------------------------------------------------
 
@@ -1289,7 +1546,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void MotionMatchingNode::Update(GraphInstance* instance, float deltaTime)
+	void MotionMatchingNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();

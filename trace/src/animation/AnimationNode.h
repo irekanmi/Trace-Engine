@@ -5,6 +5,11 @@
 #include "core/Enums.h"
 #include "reflection/TypeRegistry.h"
 
+namespace trace::Network {
+
+	class NetworkStream;
+}
+
 namespace trace::Animation {
 
 	class GraphInstance;
@@ -48,9 +53,17 @@ namespace trace::Animation {
 			return reinterpret_cast<T*>(GetValueInternal(instance, value_index));
 		}
 
-		virtual void Update(GraphInstance* instance, float deltaTime) = 0;
+		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) = 0;
 		virtual void Init(Graph* graph) = 0;
 		virtual void Destroy(Graph* graph) {};
+		
+		// Networking ------------------------------
+		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) {};
+		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) {};
+		virtual uint32_t BeginNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream);
+		virtual void EndNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream, uint32_t begin_pos);
+		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) {};
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) {};
 
 		// NOTE: Used to reset a node to it's start runtime values
 		// Also reseting a node will reset all input nodes connected to it
@@ -84,7 +97,7 @@ namespace trace::Animation {
 	{
 	public:
 		virtual bool Instanciate(GraphInstance* instance) override;
-		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
 
@@ -104,7 +117,7 @@ namespace trace::Animation {
 	{
 	public:
 		virtual bool Instanciate(GraphInstance* instance) override;
-		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
 
@@ -124,7 +137,7 @@ namespace trace::Animation {
 	{
 	public:
 		virtual bool Instanciate(GraphInstance* instance) override;
-		virtual void Update(GraphInstance* instance, float deltaTime) override;
+		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
 		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
 		virtual void Init(Graph* graph) override;
 

@@ -170,19 +170,19 @@ namespace trace
 		float _time = m_clock.GetInternalElapsedTime();
 
 		// TEMP --------------------------------
-		bool* is_running = &m_isRunning;
-		std::thread network_job([&net_manager, &is_running]() {
-			void* thread_info = nullptr;
-			while (*is_running)
-			{
-				AttachThread(thread_info);
-				// Networking -------------------
-				net_manager->Update(0.16f);
-				// --------------------------------
-			}
+		//bool* is_running = &m_isRunning;
+		//std::thread network_job([&net_manager, &is_running]() {
+		//	void* thread_info = nullptr;
+		//	while (*is_running)
+		//	{
+		//		AttachThread(thread_info);
+		//		// Networking -------------------
+		//		net_manager->Update(0.16f);
+		//		// --------------------------------
+		//	}
 
-			DetachThread(thread_info);
-			});
+		//	DetachThread(thread_info);
+		//	});
 		// --------------------------------------
 
 		while (m_isRunning)
@@ -214,7 +214,7 @@ namespace trace
 				layer->Update(deltaTime);
 			}
 			// Networking -------------------
-			//net_manager->Update(deltaTime);
+			net_manager->Update(deltaTime);
 			// --------------------------------
 
 			//------CLIENT-------//
@@ -248,7 +248,7 @@ namespace trace
 		}
 
 		// TEMP --------------------------------
-		network_job.join();
+		//network_job.join();
 		// --------------------------------------
 	}
 

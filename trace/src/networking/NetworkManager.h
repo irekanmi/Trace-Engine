@@ -70,6 +70,7 @@ namespace trace::Network {
 		NetworkStream rpc_send_stream;
 		bool world_state_packet_received = false;
 		std::vector<uint32_t> new_clients;
+		std::vector<uint32_t> connected_clients;
 
 	protected:
 

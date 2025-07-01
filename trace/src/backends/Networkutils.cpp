@@ -596,7 +596,7 @@ bool __ENet_SendPacket(HostInfo* host, Connection* connection, NetworkStream& pa
 		return false;
 	}
 
-	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE;
+	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag::ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
 
 	ENetPacket* packet = enet_packet_create(packet_data.GetData(), packet_data.GetSize(), flag);
 

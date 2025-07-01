@@ -355,9 +355,9 @@ namespace trace {
 			auto [net_instance] = net_objects.get(i);
 			Entity entity(i, this);
 
-			if (net_manager->IsServer() && net_instance.type != Network::NetObjectType::SERVER)
+			if (net_manager->IsServer())
 			{
-				//m_entityToDestroy.push_back(entity);
+				net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
 			}
 			else if(net_manager->IsClient())
 			{
@@ -555,21 +555,6 @@ namespace trace {
 
 		uint32_t net_id = Network::NetworkManager::get_instance()->GetInstanceID();
 		Network::NetType net_type = Network::NetworkManager::get_instance()->GetNetType();
-		Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
-		uint32_t stream_start_position = data_stream->GetPosition();
-
-		
-
-		Network::PacketMessageType message_type = Network::PacketMessageType::ENTIITES_UPDATE;
-		data_stream->Write(message_type);
-
-		uint32_t num_net_objects = 0;
-		uint32_t num_position = data_stream->GetPosition();
-		data_stream->Write(num_net_objects);
-		uint32_t write_start_position = data_stream->GetPosition();
-
-
-		
 
 		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
 		for (auto i : net_objects)
@@ -583,38 +568,37 @@ namespace trace {
 			{
 				if (net.owner_id == net_id)
 				{
-					uint32_t start_position = data_stream->GetPosition();
-					// Write entity id
-					data_stream->Write(entity.GetID());
-					uint32_t comp_pos = data_stream->GetPosition();
+					Network::NetworkStream* obj_stream = &net.data_stream;
+					uint32_t start_position = obj_stream->GetPosition();
+					uint32_t comp_pos = obj_stream->GetPosition();
 					uint8_t num_comp = 0;
-					data_stream->Write(num_comp);
-					uint32_t entity_data_position = data_stream->GetPosition();
+					obj_stream->Write(num_comp);
+					uint32_t entity_data_position = obj_stream->GetPosition();
 
-					auto client_send_lambda = [&data_stream, &num_comp](UUID id, Script* script, ScriptInstance* instance)
+					auto client_send_lambda = [&obj_stream, &num_comp](UUID id, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_client_send = script->GetMethod("OnClientSend");
 						if (on_client_send)
 						{
-							uint32_t start_position = data_stream->GetPosition();
+							uint32_t start_position = obj_stream->GetPosition();
 							// Write class id
-							data_stream->Write(script->GetScriptName());
+							obj_stream->Write(script->GetScriptName());
 							// run client_send_lambda()
-							uint32_t entity_data_position = data_stream->GetPosition();
+							uint32_t entity_data_position = obj_stream->GetPosition();
 
 							// Generate method parameters .....
-							uint64_t stream_handle = (uint64_t)data_stream;
+							uint64_t stream_handle = (uint64_t)obj_stream;
 							void* params[] =
 							{
 								&stream_handle
 							};
 							InvokeScriptMethod_Instance(*on_client_send, *instance, params);
 
-							uint32_t current_position = data_stream->GetPosition();
+							uint32_t current_position = obj_stream->GetPosition();
 							if (current_position <= entity_data_position)
 							{
-								data_stream->MemSet(start_position, entity_data_position, 0x00);
-								data_stream->SetPosition(start_position);
+								obj_stream->MemSet(start_position, entity_data_position, 0x00);
+								obj_stream->SetPosition(start_position);
 							}
 							else
 							{
@@ -626,62 +610,56 @@ namespace trace {
 					//TODO: Determine where it should be called
 					m_scriptRegistry.Iterate(entity.GetID(), client_send_lambda);				
 
-					uint32_t current_position = data_stream->GetPosition();
-					if (current_position <= entity_data_position)
+					uint32_t current_position = obj_stream->GetPosition();
+					if (num_comp == 0)
 					{
-						data_stream->MemSet(start_position, entity_data_position, 0x00);
-						data_stream->SetPosition(start_position);
+						obj_stream->MemSet(start_position, entity_data_position, 0x00);
+						obj_stream->SetPosition(start_position);
 					}
 					else
 					{
-						data_stream->Write(comp_pos, num_comp);
-						++num_net_objects;
+						obj_stream->Write(comp_pos, num_comp);
 					}
 				}
 				break;
 			}
 			case Network::NetType::LISTEN_SERVER:
 			{
-				if (num_net_objects >= 22)
-				{
-					int x = 0;
-				}
-				uint32_t start_position = data_stream->GetPosition();
-				// Write entity id
-				data_stream->Write(entity.GetID());
+				Network::NetworkStream* obj_stream = &net.data_stream;
+				uint32_t start_position = obj_stream->GetPosition();
 				if (entity.GetID() == 0)
 				{
 					TRC_ASSERT(false, "This is not supposed to happen");
 				}
-				uint32_t comp_pos = data_stream->GetPosition();
+				uint32_t comp_pos = obj_stream->GetPosition();
 				uint8_t num_comp = 0;
-				data_stream->Write(num_comp);
-				uint32_t entity_data_position = data_stream->GetPosition();
+				obj_stream->Write(num_comp);
+				uint32_t entity_data_position = obj_stream->GetPosition();
 
-				auto server_send_lambda = [&data_stream, &num_comp](UUID id, Script* script, ScriptInstance* instance)
+				auto server_send_lambda = [&obj_stream, &num_comp](UUID id, Script* script, ScriptInstance* instance)
 				{
 					ScriptMethod* on_server_send = script->GetMethod("OnServerSend");
 					if (on_server_send)
 					{
-						uint32_t start_position = data_stream->GetPosition();
+						uint32_t start_position = obj_stream->GetPosition();
 						// Write class id
-						data_stream->Write(script->GetScriptName());
+						obj_stream->Write(script->GetScriptName());
 						// run server_send_lambda()
-						uint32_t entity_data_position = data_stream->GetPosition();
+						uint32_t entity_data_position = obj_stream->GetPosition();
 
 						// Generate method parameters .....
-						uint64_t stream_handle = (uint64_t)data_stream;
+						uint64_t stream_handle = (uint64_t)obj_stream;
 						void* params[] =
 						{
 							&stream_handle
 						};
 						InvokeScriptMethod_Instance(*on_server_send, *instance, params);
 
-						uint32_t current_position = data_stream->GetPosition();
+						uint32_t current_position = obj_stream->GetPosition();
 						if (current_position <= entity_data_position)
 						{
-							data_stream->MemSet(start_position, entity_data_position, 0x00);
-							data_stream->SetPosition(start_position);
+							obj_stream->MemSet(start_position, entity_data_position, 0x00);
+							obj_stream->SetPosition(start_position);
 						}
 						else
 						{
@@ -693,22 +671,76 @@ namespace trace {
 				//TODO: Determine where it should be called
 				m_scriptRegistry.Iterate(entity.GetID(), server_send_lambda);
 
-				uint32_t current_position = data_stream->GetPosition();
-				if (current_position <= entity_data_position)
+				uint32_t current_position = obj_stream->GetPosition();
+				if (num_comp == 0)
 				{
-					data_stream->MemSet(start_position, entity_data_position, 0x00);
-					data_stream->SetPosition(start_position);
+					obj_stream->MemSet(start_position, entity_data_position, 0x00);
+					obj_stream->SetPosition(start_position);
 				}
 				else
 				{
-					data_stream->Write(comp_pos, num_comp);
-					++num_net_objects;
+					obj_stream->Write(comp_pos, num_comp);
 				}
 				break;
 			}
 			}
 
 		}
+
+		Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+		uint32_t stream_start_position = data_stream->GetPosition();
+		Network::PacketMessageType message_type = Network::PacketMessageType::ENTIITES_UPDATE;
+		data_stream->Write(message_type);
+
+		uint32_t num_net_objects = 0;
+		uint32_t num_position = data_stream->GetPosition();
+		data_stream->Write(num_net_objects);
+		uint32_t write_start_position = data_stream->GetPosition();
+
+		// TODO: Move this logic to somewhere at the end of the frame ..........................
+		for (auto i : net_objects)
+		{
+			Entity entity(i, this);
+			auto [net, active] = net_objects.get(i);
+
+			switch (net_type)
+			{
+			case Network::NetType::CLIENT:
+			{
+				if (net.owner_id == net_id)
+				{
+					if (net.data_stream.GetPosition() > 0)
+					{
+						data_stream->Write(entity.GetID());
+						data_stream->Write(net.data_stream.GetData(), net.data_stream.GetPosition());
+						net.data_stream.SetPosition(0);
+						net.data_stream.MemSet(0, net.data_stream.GetSize(), 0x00);
+
+						++num_net_objects;
+
+					}
+					
+				}
+				break;
+			}
+			case Network::NetType::LISTEN_SERVER:			
+			{
+				if (net.data_stream.GetPosition() > 0)
+				{
+					data_stream->Write(entity.GetID());
+					data_stream->Write(net.data_stream.GetData(), net.data_stream.GetPosition());
+					net.data_stream.SetPosition(0);
+					net.data_stream.MemSet(0, net.data_stream.GetSize(), 0x00);
+
+					++num_net_objects;
+
+				}
+				break;
+			}
+			}
+		}
+
+		// ....................................................
 
 		uint32_t stream_current_position = data_stream->GetPosition();
 
@@ -1101,6 +1133,13 @@ namespace trace {
 				if (new_entity.GetComponent<HierachyComponent>().is_enabled)
 				{
 					EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
+				}
+				
+
+				NetObject& net_instance = new_entity.GetComponent<NetObject>();
+				if (net_instance.owner_id == instance_id)
+				{
+					net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
 				}
 				break;
 			}
@@ -1864,6 +1903,20 @@ namespace trace {
 
 		result = instanciate_entity_net(result, source, Ref<Prefab>(), net_handle, forced);
 
+		if (result && result.HasComponent<AnimationGraphController>())
+		{
+			//TODO: Move to a place where the component can be properly initialized
+			AnimationGraphController& controller = result.GetComponent<AnimationGraphController>();
+			controller.graph.DestroyInstance();
+			controller.graph.CreateInstance(controller.graph.GetGraph(), this, result.GetID());
+
+			if (controller.play_on_start)
+			{
+				controller.graph.SetEntityHandle(result.GetID());
+				controller.graph.Start(this, result.GetID());
+			}
+		}
+
 		return result;
 	}
 
@@ -2486,10 +2539,11 @@ namespace trace {
 
 	void Scene::OnConstructAnimationGraphController(entt::registry& reg, entt::entity ent)
 	{
-		/*Entity entity(ent, this);
-		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
-		controller.graph.DestroyInstance();
-		controller.graph.CreateInstance(controller.graph.GetGraph(), this, entity.GetID());*/
+		if (m_running)
+		{
+			Entity entity(ent, this);
+			
+		}
 	}
 
 	void Scene::OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent)
@@ -2691,6 +2745,7 @@ namespace trace {
 		{
 			if (forced)
 			{
+
 				return entity;
 			}
 			if (entity.HasComponent<NetObject>())
@@ -2733,7 +2788,8 @@ namespace trace {
 				
 
 				result = entity;
-				
+				NetObject& net_instance = entity.GetComponent<NetObject>();
+				net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
 			}
 			break;
 		}

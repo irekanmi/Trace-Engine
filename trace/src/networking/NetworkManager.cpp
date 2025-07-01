@@ -94,15 +94,6 @@ namespace trace::Network {
 				OnPacketRecieve(&m_receivePacket.data, m_receivePacket.connection_handle);
 			}
 
-			if (m_info.state_sync && !new_clients.empty())
-			{
-				for (uint32_t& i : new_clients)
-				{
-					process_new_client(i);
-				}
-
-				new_clients.clear();
-			}
 			break;
 		}
 		}
@@ -190,7 +181,17 @@ namespace trace::Network {
 		}
 		case NetType::LISTEN_SERVER:
 		{
-			server.BroadcastToAll(m_sendPacket);
+			if (m_info.state_sync)
+			{
+				for (uint32_t& handle : connected_clients)
+				{
+					server.SendTo(handle, m_sendPacket);
+				}
+			}
+			else
+			{
+				server.BroadcastToAll(m_sendPacket);
+			}
 			break;
 		}
 		}
@@ -280,8 +281,9 @@ namespace trace::Network {
 
 	void NetworkManager::DestroyNetInstance()
 	{
+		NetType net_type = m_type;
 		m_type = NetType::UNKNOWN;
-		switch (m_type)
+		switch (net_type)
 		{
 		case NetType::CLIENT:
 		{
@@ -299,6 +301,7 @@ namespace trace::Network {
 		m_sendStartPos = 0;
 		m_instanceId = 0;
 		world_state_packet_received = false;
+		connected_clients.clear();
 		new_clients.clear();
 	}
 
@@ -388,6 +391,16 @@ namespace trace::Network {
 
 		TRC_INFO("Client Disconnect: {}", handle);
 
+		if (m_info.state_sync)
+		{
+			auto c_it = std::find(connected_clients.begin(), connected_clients.end(), handle);
+			if (c_it != connected_clients.end())
+			{
+				connected_clients.erase(c_it);
+			}
+			
+		}
+
 		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
 		ScriptMethod* on_client_disconnect = network_script->GetMethod("OnClientDisconnect");
 		if (on_client_disconnect)
@@ -468,9 +481,13 @@ namespace trace::Network {
 						if (message_type == PacketMessageType::SCENE_STATE)
 						{
 							// Process entites...
-							Platform::Sleep(500.0f);// TEMP: Added to make it work on another thread, because the might be loaded before the packet is processed
+							//Platform::Sleep(500.0f);// TEMP: Added to make it work on another thread, because the might be loaded before the packet is processed
 							m_scene->ReadSceneState_Client(data);
 							world_state_packet_received = true;
+							Packet scene_state = client.CreateSendPacket(12);// TODO: Implement custom allocator{ as soon as possible}. it affects resizing of network stream
+							PacketMessageType message_type = PacketMessageType::SCENE_STATE_RECEIVED;
+							scene_state.data.Write(message_type);
+							client.SendPacketToServer(scene_state, PacketSendMode::RELIABLE);
 						}
 					}
 					else
@@ -486,6 +503,27 @@ namespace trace::Network {
 			}
 			case NetType::LISTEN_SERVER:
 			{
+				if (m_info.state_sync)
+				{
+					uint32_t prev_pos = data->GetPosition();
+					PacketMessageType message_type = PacketMessageType::UNKNOWN;
+					data->Read(message_type);
+					if (message_type == PacketMessageType::SCENE_STATE_RECEIVED)
+					{
+						auto c_it = std::find(connected_clients.begin(), connected_clients.end(), handle);
+						if (c_it == connected_clients.end())
+						{
+							process_new_client(handle);
+							connected_clients.push_back(handle);
+						}
+						return;
+					}
+					else
+					{
+						data->SetPosition(prev_pos);
+					}
+
+				}
 				m_scene->OnPacketReceive_Server(data, handle);
 				break;
 			}

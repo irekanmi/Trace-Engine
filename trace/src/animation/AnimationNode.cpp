@@ -2,6 +2,7 @@
 
 #include "animation/AnimationNode.h"
 #include "animation/AnimationGraph.h"
+#include "networking/NetworkStream.h"
 
 namespace trace::Animation {
 	bool EntryNode::Instanciate(GraphInstance* instance)
@@ -18,7 +19,7 @@ namespace trace::Animation {
 
 	// EntryNode -------------------------------------------------------------
 
-	void EntryNode::Update(GraphInstance* instance, float deltaTime)
+	void EntryNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -68,7 +69,7 @@ namespace trace::Animation {
 	{
 		return true;
 	}
-	void GetParameterNode::Update(GraphInstance* instance, float deltaTime)
+	void GetParameterNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 	}
 	void* GetParameterNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
@@ -150,7 +151,7 @@ namespace trace::Animation {
 		return true;
 	}
 
-	void IfNode::Update(GraphInstance* instance, float deltaTime)
+	void IfNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -164,7 +165,7 @@ namespace trace::Animation {
 		}
 
 		Node* in_node = nodes[input.node_id];
-		in_node->Update(instance, deltaTime);
+		in_node->Update(instance, deltaTime, data_stream);
 
 		bool& node_result = *in_node->GetValue<bool>(instance, input.value_index);
 		if (node_result)
@@ -221,6 +222,25 @@ namespace trace::Animation {
 
 		m_outputs.push_back(out_1);
 		m_outputs.push_back(out_2);
+	}
+
+	uint32_t Node::BeginNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		data_stream->Write(m_uuid);
+		return data_stream->GetPosition();
+	}
+
+	void Node::EndNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream, uint32_t begin_pos)
+	{
+		uint32_t current_pos = data_stream->GetPosition();
+		if (current_pos <= begin_pos)
+		{
+			data_stream->SetPosition( begin_pos - sizeof(m_uuid));
+		}
+		else
+		{
+			instance->IncrementNumNodes();
+		}
 	}
 
 	// --------------------------------------------------------------------

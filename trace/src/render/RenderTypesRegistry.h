@@ -17,6 +17,7 @@ namespace trace {
 	END_REGISTER_CLASS;
 
 	REGISTER_TYPE(CameraType);
+	REGISTER_CONTAINER(std::vector, Transform);
 
 	BEGIN_REGISTER_CLASS(Camera)
 		REGISTER_TYPE(Camera);

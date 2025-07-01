@@ -100,6 +100,11 @@ class FollowEntity : Trace.Action
             position += diff;
             transform.Position = position;
         }
+
+        if(Input.GetKeyPressed(Keys.KEY_F))
+        {
+            Scene.InstanciateEntity(Scene.GetEntityByName("Sad Idle"), new Vec3(0.0f, 0.0f, 0.0f));
+        }
     }
 
 }
@@ -219,6 +224,7 @@ class NetController : Trace.Action
     void TestServerRPC()
     {
         Debug.Log("A Server RPC from a client");
+        Scene.InstanciateEntity(Scene.GetEntityByName("Sphere_Ball"), new Vec3(1.0f, 22.0f, 0.0f));
     }
 
 }

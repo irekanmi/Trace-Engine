@@ -49,6 +49,10 @@ namespace trace {
 
 }
 
+namespace trace::Network {
+
+	class NetworkStream;
+}
 
 namespace trace::Animation {
 
@@ -182,7 +186,7 @@ namespace trace::Animation {
 
 		void Start(Scene* scene, UUID id);
 		void Stop(Scene* scene, UUID id);
-		void Update(float deltaTime, Scene* scene, UUID id);
+		void Update(float deltaTime, Scene* scene, UUID id, Network::NetworkStream* data_stream = nullptr);
 		bool HasStarted() { return m_started; }
 
 		template<typename T>
@@ -202,6 +206,14 @@ namespace trace::Animation {
 		UUID GetEntityHandle() { return m_entityHandle; }
 		void SetEntityHandle(UUID entity_handle) { m_entityHandle = entity_handle; }
 
+		//Networking ----------
+		void OnStateWrite_Server(Network::NetworkStream* data_stream);
+		void OnStateRead_Client(Network::NetworkStream* data_stream);
+		void BeginNetworkWrite_Server(Network::NetworkStream* data_stream);
+		void EndNetworkWrite_Server(Network::NetworkStream* data_stream);
+		void OnNetworkRead_Client(Network::NetworkStream* data_stream);
+		void IncrementNumNodes() { ++num_nodes; }
+
 	private:
 		void set_parameter_data(const std::string& param_name, void* data, uint32_t size);
 
@@ -216,6 +228,11 @@ namespace trace::Animation {
 		// std::string: parameter name, uint32_t: index into parameter data index
 		std::unordered_map<std::string, uint32_t> m_parameterLUT;
 		std::vector<ParameterData> m_parameterData;
+
+		//Networking ------------
+		std::vector<bool> m_parameterDirty;
+		uint32_t nodes_pos = 0;
+		uint32_t num_nodes = 0;
 		
 
 	protected:

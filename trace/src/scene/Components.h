@@ -370,8 +370,10 @@ namespace trace {
 		uint32_t owner_id = 0;
 		bool is_owner = false;
 		Network::NetObjectType type = Network::NetObjectType::UNKNOWN;
+		Network::NetworkStream data_stream;
 	};
 
+	
 	//NOTE: This component has to be one in the scene
 	struct NetworkController
 	{
