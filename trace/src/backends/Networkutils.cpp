@@ -411,26 +411,29 @@ bool __ENet_Disconnect_C(HostInfo* host, Connection* connection)
 
 	enet_peer_disconnect(peer, 0);
 
-	///* Allow up to 3 seconds for the disconnect to succeed
-	// * and drop any packets received packets.
-	// */
-	//while (enet_host_service(client, &event, 3000) > 0)
-	//{
-	//	switch (event.type)
-	//	{
-	//	case ENET_EVENT_TYPE_RECEIVE:
-	//		enet_packet_destroy(event.packet);
-	//		break;
+	/* Allow up to 16 milliseconds for the disconnect to succeed
+	 * and drop any packets received packets.
+	 */
+	while (enet_host_service(client, &event, 16) > 0)
+	{
+		switch (event.type)
+		{
+		case ENET_EVENT_TYPE_RECEIVE:
+			enet_packet_destroy(event.packet);
+			break;
 
-	//	case ENET_EVENT_TYPE_DISCONNECT:
-	//		TRC_ERROR("Disconnection succeeded." << std::endl;
-	//		return true;
-	//	}
-	//}
+		case ENET_EVENT_TYPE_DISCONNECT:
+			connection->internal_handle = nullptr;
+			TRC_ERROR("Disconnection succeeded.");
+			return true;
+		}
+	}
 
-	///* We've arrived here, so the disconnect attempt didn't */
-	///* succeed yet.  Force the connection down.             */
-	//enet_peer_reset(peer);
+	/* We've arrived here, so the disconnect attempt didn't */
+	/* succeed yet.  Force the connection down.             */
+	enet_peer_reset(peer);
+
+	connection->internal_handle = nullptr;
 
 	return true;
 }
@@ -475,7 +478,9 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->port = event.peer->address.port;
 			out_source_connection->internal_handle = event.peer;
 
-			packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
+			//packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
+			packet_data.Write(0, event.packet->data, event.packet->dataLength);
+			packet_data.SetPosition(0);
 
 			/* Clean up the packet now that we're done using it. */
 			enet_packet_destroy(event.packet);
@@ -544,7 +549,9 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->host = event.peer->address.host;
 			out_source_connection->port = event.peer->address.port;
 			out_source_connection->internal_handle = event.peer;
-			packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
+			//packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
+			packet_data.Write(0, event.packet->data, event.packet->dataLength);
+			packet_data.SetPosition(0);
 
 			/* Clean up the packet now that we're done using it. */
 			enet_packet_destroy(event.packet);
@@ -589,7 +596,7 @@ bool __ENet_SendPacket(HostInfo* host, Connection* connection, NetworkStream& pa
 		return false;
 	}
 
-	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag::ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE;
 
 	ENetPacket* packet = enet_packet_create(packet_data.GetData(), packet_data.GetSize(), flag);
 

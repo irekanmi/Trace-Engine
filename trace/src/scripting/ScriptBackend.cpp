@@ -19,6 +19,7 @@
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
 #include "mono/metadata/attrdefs.h"
+#include "mono/metadata/threads.h"
 #include <iostream>
 #include <map>
 #include <unordered_map>
@@ -44,7 +45,7 @@ struct MonoData
 	MonoAssembly* mainAssembly = nullptr;
 	MonoImage* mainImage = nullptr;
 
-
+	bool reload_assembly = false;//NOTE: This variable is needed so that threads can release their attachment to the app domain
 	Scene* scene = nullptr;
 	/*MonoMethod* component_ctor = nullptr;
 	std::unordered_map<MonoType*, ComponentMap> get_components;*/
@@ -153,6 +154,8 @@ bool InitializeInternal(const std::string& bin_dir)
 
 	BindInternalFuncs();
 
+	
+
 	return true;
 }
 bool ShutdownInternal()
@@ -222,9 +225,12 @@ bool LoadAllScripts(std::unordered_map<std::string, Script>& out_data)
 
 bool ReloadAssemblies(const std::string& core_assembly, const std::string& main_assembly)
 {
+	MonoDomain* app_domain = s_MonoData.appDomain;
+	s_MonoData.appDomain = nullptr;
+	s_MonoData.reload_assembly = true;
 	mono_domain_set(mono_get_root_domain(), false);
 
-	mono_domain_unload(s_MonoData.appDomain);
+	mono_domain_unload(app_domain);
 
 	s_MonoData.appDomain = mono_domain_create_appdomain("TraceAppDomain", nullptr);
 	mono_domain_set(s_MonoData.appDomain, true);
@@ -236,6 +242,8 @@ bool ReloadAssemblies(const std::string& core_assembly, const std::string& main_
 	s_MonoData.mainImage = mono_assembly_get_image(s_MonoData.mainAssembly);
 
 	PrintAssemblyTypes(s_MonoData.mainAssembly);
+
+	s_MonoData.reload_assembly = false;
 
 	return true;
 }
@@ -459,6 +467,28 @@ bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* v
 	mono_field_set_value(obj, (MonoClassField*)field.m_internal, value);
 
 	return true;
+}
+
+void AttachThread(void*& thread_info)
+{
+	if (s_MonoData.reload_assembly)
+	{
+		if (thread_info)
+		{
+			DetachThread(thread_info);
+			thread_info = nullptr;
+		}
+
+	}
+	else if (!thread_info && s_MonoData.appDomain)
+	{
+		thread_info = mono_thread_attach(s_MonoData.appDomain);
+	}
+}
+
+void DetachThread(void* thread_info)
+{
+	mono_thread_detach((MonoThread*)thread_info);
 }
 
 
@@ -1023,7 +1053,7 @@ MonoObject* Scene_GetEntity(uint64_t entity_id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -1031,7 +1061,7 @@ MonoObject* Scene_GetEntity(uint64_t entity_id)
 	Entity entity = s_MonoData.scene->GetEntity(entity_id);
 	if (!entity)
 	{
-		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
+		TRC_ERROR("Entity is not present in the current scene. Scene Name: {}, Function: {}", s_MonoData.scene->GetName(), __FUNCTION__);
 		return nullptr;
 	}
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
@@ -1378,6 +1408,96 @@ bool Networking_IsClient()
 
 void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id, Network::RPCType type)
 {
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(uuid);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is not present in the current scene. Scene Name: {}, Function: {}", s_MonoData.scene->GetName(), __FUNCTION__);
+		return;
+	}
+
+	ScriptEngine* engine = ScriptEngine::get_instance();
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	Network::NetType net_type = net_manager->GetNetType();
+	uint32_t instance_id = net_manager->GetInstanceID();
+
+	MonoType* class_type = mono_class_get_type(mono_object_get_class(src));
+
+	ScriptInstance* instance = entity.GetScript((uintptr_t)class_type);
+	if (!instance)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	auto lambda = [&]()
+	{
+		
+		trace::StringID string_id;
+		string_id.value = func_name_id;
+		ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+
+		if (!method)
+		{
+			TRC_ASSERT(false, "These is not suppose to happen");
+		}
+
+		InvokeScriptMethod_Instance(*method, *instance, nullptr);
+	};
+
+	auto send_lambda = [&]()
+	{
+		Network::NetworkStream* data_stream = net_manager->GetRPCSendNetworkStream();
+		Network::PacketMessageType message_type = Network::PacketMessageType::RPC;
+		data_stream->Write(message_type);
+		data_stream->Write(uuid);
+		data_stream->Write(instance->GetScript()->GetScriptName());
+		data_stream->Write(func_name_id);
+		data_stream->Write(type);
+		data_stream->Write(instance_id);
+	};
+
+	switch (net_type)
+	{
+	
+	case Network::NetType::UNKNOWN:
+	{
+		lambda();
+		break;
+	}
+	case Network::NetType::CLIENT:
+	{
+		if (type == Network::RPCType::CLIENT)
+		{
+			lambda();
+		}
+
+		send_lambda();
+		break;
+	}
+	case Network::NetType::LISTEN_SERVER:
+	{
+		if (type == Network::RPCType::CLIENT)
+		{
+			lambda();
+			send_lambda();
+		}
+		
+		if (type == Network::RPCType::SERVER)
+		{
+			lambda();
+		}
+		break;
+	}
+	}
+
+
+	
+
 }
 
 bool Networking_CreateListenServer(uint32_t port)

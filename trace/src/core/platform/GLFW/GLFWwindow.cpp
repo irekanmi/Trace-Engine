@@ -337,6 +337,7 @@ namespace trace {
 				Keys _key = translateGLFW_Trace(key);
 				KeyPressed keypress(_key);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_KEY_PRESSED, &keypress);
+				trace::InputSystem::get_instance()->SetKey(_key, 1);
 				break;
 			}
 			case GLFW_RELEASE:
@@ -344,6 +345,7 @@ namespace trace {
 				Keys _key = translateGLFW_Trace(key);
 				KeyReleased keyrelease(_key);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_KEY_RELEASED, &keyrelease);
+				trace::InputSystem::get_instance()->SetKey(_key, 0);
 				break;
 			}
 			}
@@ -383,6 +385,7 @@ namespace trace {
 			{
 				Buttons _button = translateButtonGLFW(button);
 				MouseReleased mouse(_button);
+				InputSystem::get_instance()->SetButton(_button, 0);
 				EventsSystem::get_instance()->DispatchEvent(EventType::TRC_BUTTON_RELEASED, &mouse);
 				break;
 			}
@@ -411,7 +414,7 @@ namespace trace {
 	{
 
 		InputSystem* input = InputSystem::get_instance();
-		for (int i = 0; i < GLFW_KEY_LAST + 1; i++)
+		/*for (int i = 0; i < GLFW_KEY_LAST + 1; i++)
 		{
 			Keys _key = translateGLFW_Trace(i);
 			switch (glfwGetKey(m_pWindow, i))
@@ -435,10 +438,10 @@ namespace trace {
 				break;
 			}
 			}
-		}
+		}*/
 
 
-		glfwPollEvents();
+		/*glfwPollEvents();*/
 	}
 	void GLFW_Window::ShutDown()
 	{
@@ -474,5 +477,9 @@ namespace trace {
 	void* GLFW_Window::GetHandle()
 	{
 		return m_pWindow;
+	}
+	void GLFW_Window::PollAndUpdateEvents()
+	{
+		glfwPollEvents();
 	}
 }

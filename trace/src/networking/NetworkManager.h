@@ -29,7 +29,7 @@ namespace trace::Network {
 		void OnSceneStop(Scene* scene);
 		void OnGameStart();
 		void OnGameStop();
-		void OnFrameStart();
+		bool OnFrameStart();
 		void OnFrameEnd();
 		bool CreateListenServer(uint32_t port = SERVER_PORT);
 		bool CreateClient(bool LAN = false);
@@ -39,6 +39,7 @@ namespace trace::Network {
 		NetServer* GetServerInstance();
 		NetClient* GetClientInstance();
 		NetworkStream* GetSendNetworkStream();
+		NetworkStream* GetRPCSendNetworkStream();
 		void Send(NetworkStream* packet, PacketSendMode mode);
 		NetType GetNetType() { return m_type; }
 		uint32_t GetInstanceID() { return m_instanceId; }
@@ -66,6 +67,7 @@ namespace trace::Network {
 		Packet m_receivePacket;
 		NetworkStateInfo m_info;
 		uint32_t m_sendStartPos = 0;
+		NetworkStream rpc_send_stream;
 		bool world_state_packet_received = false;
 		std::vector<uint32_t> new_clients;
 

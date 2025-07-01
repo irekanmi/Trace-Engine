@@ -175,18 +175,50 @@ class NetController : Trace.Action
 
     public void OnUpdate(float deltaTime)
     {
-        if(Input.GetKeyReleased(Keys.KEY_H))
+        if (!Network.IsServer() && !Network.IsClient())
         {
-            Network.CreateListenServer(Network.DEAFAULT_SERVER_PORT);
-            Application.LoadAndSetScene("Networked_Balls.trscn");
+
+            if (Input.GetKeyReleased(Keys.KEY_H))
+            {
+                Network.CreateListenServer(Network.DEAFAULT_SERVER_PORT);
+                Application.LoadAndSetScene("Networked_Balls.trscn");
+            }
+
+            if (Input.GetKeyReleased(Keys.KEY_J))
+            {
+                Network.CreateClient(false);
+                Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
+                Application.LoadAndSetScene("Networked_Balls.trscn");
+            }
         }
 
-        if(Input.GetKeyReleased(Keys.KEY_J))
+
+        if(Network.IsServer() && Input.GetKeyPressed(Keys.KEY_G))
         {
-            Network.CreateClient(false);
-            Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
-            Application.LoadAndSetScene("Networked_Balls.trscn");
+            Scene.InstanciateEntity(Scene.GetEntityByName("Sphere_Ball"), new Vec3(0.0f, 18.0f, 0.0f));
         }
+
+        if (Network.IsClient() && Input.GetKeyPressed(Keys.KEY_F))
+        {
+            Network.InvokeRPC( this ,"TestServerRPC", RPCType.SERVER);
+        }
+
+        if (Network.IsServer() && Input.GetKeyPressed(Keys.KEY_F))
+        {
+            Network.InvokeRPC(this, "TestClientRPC", RPCType.CLIENT);
+        }
+
+
+    }
+
+    void TestClientRPC()
+    {
+        Debug.Log("A Client RPC from a server");
+    }
+    
+    void TestServerRPC()
+    {
+        Debug.Log("A Server RPC from a client");
     }
 
 }
@@ -211,3 +243,5 @@ class TransformSync : Trace.Action
 
 
 }
+
+

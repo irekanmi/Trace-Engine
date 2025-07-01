@@ -39,8 +39,8 @@ namespace trace {
 
 				std::string& str = static_cast<std::string&>(obj);
 
-				size_t str_size = str.length() + 1;
-				stream->Write<size_t>(str_size);
+				uint32_t str_size = static_cast<uint32_t>(str.size());
+				stream->Write<uint32_t>(str_size);
 				stream->Write(str.data(), static_cast<uint32_t>(str_size));
 			}
 			else if constexpr (std::is_same_v<T, char>)
@@ -189,11 +189,10 @@ namespace trace {
 			{
 				std::string& str = static_cast<std::string&>(obj);
 
-				size_t str_size;
-				stream->Read<size_t>(str_size);
-				str.reserve(str_size);
-				str.resize(str_size - 1);
-				stream->Read(str.data(), static_cast<uint32_t>(str_size));
+				uint32_t str_size;
+				stream->Read<uint32_t>(str_size);
+				str.resize(str_size);
+				stream->Read(str.data(), str_size);
 			}
 			else if constexpr (std::is_same_v<T, char>)
 			{

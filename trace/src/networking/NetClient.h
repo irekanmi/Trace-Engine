@@ -22,6 +22,7 @@ namespace trace::Network {
 		Packet CreateSendPacket(uint32_t size);
 		void SendPacketToServer(Packet& packet, PacketSendMode mode = PacketSendMode::UNRELIABLE);
 		std::unordered_map<std::string, Connection>& GetFoundConnections() { return found_connections; }
+		bool HasConnection();
 
 
 		void SetServerConnectCallback(std::function<void(uint32_t connection_handle)> server_connect) { on_server_connect = server_connect; }

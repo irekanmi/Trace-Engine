@@ -22,6 +22,7 @@ namespace trace {
 		virtual void SetVsync(bool enable) override;
 		virtual void* GetNativeHandle() override;
 		virtual void* GetHandle() override;
+		virtual void PollAndUpdateEvents() override;
 
 
 	private:

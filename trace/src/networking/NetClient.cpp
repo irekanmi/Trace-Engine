@@ -28,6 +28,7 @@ namespace trace::Network {
 
 		bool result = NetFunc::DestroyHost(&m_info, m_LAN);
 		m_info.internal_handle = nullptr;
+		found_connections.clear();
 
 		return result;
 	}
@@ -86,20 +87,18 @@ namespace trace::Network {
 
 				uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
 
-				if (size == (1024 - sizeof(PacketType)))
-				{
-					uint32_t challenge = 0;
-					out_packet_data.data.Read<uint32_t>(challenge);
-					uint32_t solution = solve_challenge(challenge);
+				uint32_t challenge = 0;
+				out_packet_data.data.Read<uint32_t>(challenge);
+				uint32_t solution = solve_challenge(challenge);
 
-					// ... Send Solution
-					NetworkStream response(1024);
-					PacketType response_type = PacketType::CHALLENGE_RESPONSE;
-					response.Write(response_type);
-					response.Write(solution);
+				// ... Send Solution
+				NetworkStream response(1024);
+				PacketType response_type = PacketType::CHALLENGE_RESPONSE;
+				response.Write(response_type);
+				response.Write(solution);
 
-					NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
-				}
+				NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
+
 
 				result = false;
 				break;
@@ -113,29 +112,27 @@ namespace trace::Network {
 
 				uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
 
-				if (size == (1024 - sizeof(PacketType)))
+				uint32_t connection_handle = 0;
+				out_packet_data.data.Read<uint32_t>(connection_handle);
+				m_connection.handle = connection_handle;
+				m_connection.host = source.host;
+				m_connection.port = source.port;
+				m_connection.internal_handle = source.internal_handle;
+
+				// ... Send Acknowlegdement
+				NetworkStream response(512);
+				PacketType response_type = PacketType::CONNECTION_ACKNOWLEGDED;
+				response.Write(response_type);
+				response.Write(connection_handle);
+
+				NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
+
+
+				if (on_server_connect)
 				{
-					uint32_t connection_handle = 0;
-					out_packet_data.data.Read<uint32_t>(connection_handle);
-					m_connection.handle = connection_handle;
-					m_connection.host = source.host;
-					m_connection.port = source.port;
-					m_connection.internal_handle = source.internal_handle;
-
-					// ... Send Acknowlegdement
-					NetworkStream response(512);
-					PacketType response_type = PacketType::CONNECTION_ACKNOWLEGDED;
-					response.Write(response_type);
-					response.Write(connection_handle);
-
-					NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
-
-
-					if (on_server_connect)
-					{
-						on_server_connect(connection_handle);
-					}
+					on_server_connect(connection_handle);
 				}
+
 
 
 				result = false;
@@ -232,6 +229,14 @@ namespace trace::Network {
 		}
 
 		NetFunc::SendPacket(&m_info, &m_connection, packet.data, mode);
+	}
+	bool NetClient::HasConnection()
+	{
+		if (m_connection.internal_handle)
+		{
+			return true;
+		}
+		return false;
 	}
 	uint32_t NetClient::solve_challenge(uint32_t challenge)
 	{

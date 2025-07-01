@@ -357,7 +357,7 @@ namespace trace {
 				auto& field_manager = fields_instances[script];
 				auto field_it = field_manager.find(uuid);
 
-				uint32_t script_str_count = static_cast<uint32_t>(script->GetScriptName().size() + 1);
+				uint32_t script_str_count = static_cast<uint32_t>(script->GetScriptName().size());
 				stream->Write<uint32_t>(script_str_count);
 				stream->Write((void*)script->GetScriptName().data(), script_str_count);
 
@@ -375,7 +375,7 @@ namespace trace {
 					stream->Write<uint32_t>(field_count);
 					for (auto& [name, field] : ins.GetFields())
 					{
-						uint32_t str_count = static_cast<uint32_t>(name.size() + 1);
+						uint32_t str_count = static_cast<uint32_t>(name.size());
 						stream->Write<uint32_t>(str_count);
 						stream->Write((void*)name.data(), str_count);
 						switch (field.type)
@@ -646,8 +646,7 @@ namespace trace {
 				uint32_t script_str_count = 0;
 				std::string script_name;
 				stream->Read<uint32_t>(script_str_count);
-				script_name.reserve(script_str_count);
-				script_name.resize(script_str_count - 1);
+				script_name.resize(script_str_count);
 				stream->Read((void*)script_name.data(), script_str_count);
 				auto it = g_Scripts.find(script_name);
 				if (it == g_Scripts.end())
@@ -676,8 +675,7 @@ namespace trace {
 					uint32_t field_str_count = 0;
 					std::string field_name;
 					stream->Read<uint32_t>(field_str_count);
-					field_name.reserve(field_str_count);
-					field_name.resize(field_str_count - 1);
+					field_name.resize(field_str_count);
 					stream->Read((void*)field_name.data(), field_str_count);
 					auto f_it = ins.GetFields().find(field_name);
 					if (f_it == ins.GetFields().end())

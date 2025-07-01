@@ -23,6 +23,7 @@ namespace trace::Network {
 		virtual uint32_t GetPosition() override;
 		void Write(uint32_t position, void* data, uint32_t size);
 		uint32_t GetSize() { return m_size; };
+		bool HasData() { return m_data != nullptr; }
 
 		template<typename T>
 		void Read(T& value)
@@ -58,7 +59,7 @@ namespace trace::Network {
 		void allocate_mem(uint32_t size);
 
 	private:
-		void* m_data = nullptr;
+		char* m_data = nullptr;
 		uint32_t m_size = 0;
 		uint32_t m_memSize = 0;
 		uint32_t m_position = 0;

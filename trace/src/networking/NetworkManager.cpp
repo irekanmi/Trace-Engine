@@ -8,6 +8,7 @@
 #include "backends/Networkutils.h"
 #include "core/Enums.h"
 #include "core/io/Logging.h"
+#include "core/Platform.h"
 
 
 namespace trace::Network {
@@ -52,6 +53,7 @@ namespace trace::Network {
 
 		m_receivePacket.data = NetworkStream(KB);
 		m_type = NetType::UNKNOWN;
+		rpc_send_stream = NetworkStream(KB);
 
 		return result;
 	}
@@ -62,6 +64,7 @@ namespace trace::Network {
 		{
 			DestroyNetInstance();
 		}
+		rpc_send_stream.Destroy();
 		m_receivePacket.data.Destroy();
 		NetFunc::Shutdown();
 	}
@@ -80,6 +83,7 @@ namespace trace::Network {
 			if (client.Listen(m_receivePacket))
 			{
 				OnPacketRecieve(&m_receivePacket.data, m_receivePacket.connection_handle);
+				m_receivePacket.data.MemSet(0, m_receivePacket.data.GetSize(), 0x00);
 			}
 			break;
 		}
@@ -96,6 +100,8 @@ namespace trace::Network {
 				{
 					process_new_client(i);
 				}
+
+				new_clients.clear();
 			}
 			break;
 		}
@@ -124,13 +130,28 @@ namespace trace::Network {
 		}
 	}
 
-	void NetworkManager::OnFrameStart()
+	bool NetworkManager::OnFrameStart()
 	{
-		if (m_type == NetType::UNKNOWN)
+
+		switch (m_type)
 		{
-			return;
+		case NetType::UNKNOWN:
+		{
+			return false;
+			break;
 		}
-		m_sendPacket.data.SetPosition(m_sendStartPos);
+		case NetType::CLIENT:
+		{
+			if (!client.HasConnection() || !m_sendPacket.data.HasData())
+			{
+				return false;
+			}
+
+			break;
+		}
+		}
+
+		return true;
 	}
 
 	void NetworkManager::OnFrameEnd()
@@ -139,6 +160,16 @@ namespace trace::Network {
 		{
 			return;
 		}
+
+		// Check if rpc stream can be read ...
+		// if so rpc it and add it to the send stream
+		if (rpc_send_stream.GetPosition() > 0)
+		{
+			m_sendPacket.data.Write(rpc_send_stream.GetData(), rpc_send_stream.GetPosition());
+			rpc_send_stream.SetPosition(0);
+			rpc_send_stream.MemSet(0, rpc_send_stream.GetSize(), 0x00);
+		}
+
 
 		bool has_data = !(m_sendPacket.data.GetPosition() <= m_sendStartPos);
 
@@ -151,7 +182,10 @@ namespace trace::Network {
 		{
 		case NetType::CLIENT:
 		{
-			client.SendPacketToServer(m_sendPacket);
+			if (client.HasConnection())
+			{
+				client.SendPacketToServer(m_sendPacket);
+			}
 			break;
 		}
 		case NetType::LISTEN_SERVER:
@@ -160,6 +194,9 @@ namespace trace::Network {
 			break;
 		}
 		}
+
+		m_sendPacket.data.SetPosition(m_sendStartPos);
+		m_sendPacket.data.MemSet(m_sendStartPos, m_sendPacket.data.GetSize(), 0x00);
 	}
 
 	bool NetworkManager::CreateListenServer(uint32_t port)
@@ -243,6 +280,7 @@ namespace trace::Network {
 
 	void NetworkManager::DestroyNetInstance()
 	{
+		m_type = NetType::UNKNOWN;
 		switch (m_type)
 		{
 		case NetType::CLIENT:
@@ -256,10 +294,12 @@ namespace trace::Network {
 			break;
 		}
 		}
-		m_type = NetType::UNKNOWN;
 		m_sendPacket.data.Destroy();
 		m_sendPacket.connection_handle = 0;
+		m_sendStartPos = 0;
 		m_instanceId = 0;
+		world_state_packet_received = false;
+		new_clients.clear();
 	}
 
 	NetServer* NetworkManager::GetServerInstance()
@@ -300,6 +340,11 @@ namespace trace::Network {
 		return &m_sendPacket.data;
 	}
 
+	NetworkStream* NetworkManager::GetRPCSendNetworkStream()
+	{
+		return &rpc_send_stream;
+	}
+
 	void NetworkManager::Send(NetworkStream* packet, PacketSendMode mode)
 	{
 		//TODO: Implement Later
@@ -316,7 +361,7 @@ namespace trace::Network {
 		{
 			// Write scene state and send
 			new_clients.push_back(handle);
-
+			TRC_INFO("New client: {}", handle);
 			if (m_scene)
 			{
 				Packet scene_state = server.CreateSendPacket(KB);// TODO: Implement custom allocator{ as soon as possible}. it affects resizing of network stream
@@ -341,6 +386,8 @@ namespace trace::Network {
 			return;
 		}
 
+		TRC_INFO("Client Disconnect: {}", handle);
+
 		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
 		ScriptMethod* on_client_disconnect = network_script->GetMethod("OnClientDisconnect");
 		if (on_client_disconnect)
@@ -363,6 +410,8 @@ namespace trace::Network {
 		m_instanceId = handle;
 		m_sendPacket = client.CreateSendPacket(KB);
 		m_sendStartPos = m_sendPacket.data.GetPosition();
+
+		TRC_WARN("Instance ID: {}", m_instanceId);
 
 		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
 		ScriptMethod* on_server_connect = network_script->GetMethod("OnServerConnect");
@@ -404,21 +453,29 @@ namespace trace::Network {
 			return;
 		}
 
-		if (m_scene)
+		if (m_scene && m_scene->IsRunning())
 		{
 			switch (m_type)
 			{
 			case NetType::CLIENT:
 			{
-				if (m_info.state_sync && !world_state_packet_received && m_scene)
+				if (m_info.state_sync)
 				{
-					PacketMessageType message_type = PacketMessageType::UNKNOWN;
-					data->Read(message_type);
-					if (message_type == PacketMessageType::SCENE_STATE)
+					if (!world_state_packet_received)
 					{
-						// Process entites...
-						m_scene->ReadSceneState_Client(data);
-						world_state_packet_received = true;
+						PacketMessageType message_type = PacketMessageType::UNKNOWN;
+						data->Read(message_type);
+						if (message_type == PacketMessageType::SCENE_STATE)
+						{
+							// Process entites...
+							Platform::Sleep(500.0f);// TEMP: Added to make it work on another thread, because the might be loaded before the packet is processed
+							m_scene->ReadSceneState_Client(data);
+							world_state_packet_received = true;
+						}
+					}
+					else
+					{
+						m_scene->OnPacketReceive_Client(data, handle);
 					}
 				}
 				else

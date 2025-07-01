@@ -19,7 +19,7 @@ namespace trace::Network {
 		{
 			m_copied = false;
 			m_destroyed = true;
-			m_data = data;
+			m_data = (char*)data;
 			m_size = size;
 			m_position = 0;
 		}
@@ -80,9 +80,10 @@ namespace trace::Network {
 		{
 			if(m_copied)
 			{ 
-				uint32_t new_size = m_size * 2;
-				char* new_data = new char[size];//TODO: Use custom allocator
+				uint32_t new_size = (m_size * 2) + size;
+				char* new_data = new char[new_size];//TODO: Use custom allocator
 				memcpy(new_data, m_data, m_size);
+				memset(m_data, 0x00, m_size);
 				m_memSize = new_size;
 				m_size = new_size;
 				delete[] m_data;//TODO: Use custom allocator
@@ -130,6 +131,7 @@ namespace trace::Network {
 		{
 			delete[] m_data;//TODO: Use custom allocator
 			m_destroyed = true;
+			m_data = nullptr;
 		}
 	}
 

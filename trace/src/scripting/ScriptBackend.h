@@ -41,6 +41,9 @@ bool InvokeScriptMethod_Class(ScriptMethod& method, Script& script, void** param
 bool GetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* out_value, uint32_t val_size);
 bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* value, uint32_t val_size);
 
+void AttachThread(void*& thread_info);
+void DetachThread(void* thread_info);
+
 
 template<typename T>
 void* GetValueInternal(T* value);

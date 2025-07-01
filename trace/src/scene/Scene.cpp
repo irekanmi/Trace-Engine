@@ -547,18 +547,16 @@ namespace trace {
 
 	void Scene::OnNetworkUpdate(float deltaTime)
 	{
-		Network::NetType net_type = Network::NetworkManager::get_instance()->GetNetType();
 
-		if (net_type == Network::NetType::UNKNOWN)
+		if (!Network::NetworkManager::get_instance()->OnFrameStart())
 		{
 			return;
 		}
 
 		uint32_t net_id = Network::NetworkManager::get_instance()->GetInstanceID();
-
-		Network::NetworkManager::get_instance()->OnFrameStart();
-
+		Network::NetType net_type = Network::NetworkManager::get_instance()->GetNetType();
 		Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+		uint32_t stream_start_position = data_stream->GetPosition();
 
 		
 
@@ -568,6 +566,7 @@ namespace trace {
 		uint32_t num_net_objects = 0;
 		uint32_t num_position = data_stream->GetPosition();
 		data_stream->Write(num_net_objects);
+		uint32_t write_start_position = data_stream->GetPosition();
 
 
 		
@@ -643,9 +642,17 @@ namespace trace {
 			}
 			case Network::NetType::LISTEN_SERVER:
 			{
+				if (num_net_objects >= 22)
+				{
+					int x = 0;
+				}
 				uint32_t start_position = data_stream->GetPosition();
 				// Write entity id
 				data_stream->Write(entity.GetID());
+				if (entity.GetID() == 0)
+				{
+					TRC_ASSERT(false, "This is not supposed to happen");
+				}
 				uint32_t comp_pos = data_stream->GetPosition();
 				uint8_t num_comp = 0;
 				data_stream->Write(num_comp);
@@ -703,7 +710,17 @@ namespace trace {
 
 		}
 
-		data_stream->Write(num_position, num_net_objects);
+		uint32_t stream_current_position = data_stream->GetPosition();
+
+		if (stream_current_position <= write_start_position)
+		{
+			data_stream->SetPosition(stream_start_position);
+			data_stream->MemSet(stream_start_position, data_stream->GetSize(), 0x00);
+		}
+		else
+		{
+			data_stream->Write(num_position, num_net_objects);
+		}
 
 		Network::NetworkManager::get_instance()->OnFrameEnd();
 	}
@@ -1077,45 +1094,14 @@ namespace trace {
 			}
 			case Network::PacketMessageType::CREATE_ENTITY:
 			{
-				UUID src_id = 0;
-				data->Read(src_id);
-				UUID id = 0;
-				data->Read(id);
-				Entity obj = GetEntity(src_id);
-				if (!obj)
-				{
-					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
-				}	
-				glm::vec3 position(0.0f);
-				data->Read(position);
-				glm::quat rotation;
-				data->Read(rotation);
-				glm::vec3 scale(0.0f);
-				data->Read(scale);
+				Entity new_entity = deserialize_entity_components_binary(this, data);
 
-				UUID parent_id = 0;
-				data->Read(parent_id);
-				uint32_t net_id = 0;
-				data->Read(net_id);
+				remove_entity_physics_components(new_entity);
 
-				Entity entity = InstanciateEntity(obj, id, position, net_id, true);
-				if (!entity)
+				if (new_entity.GetComponent<HierachyComponent>().is_enabled)
 				{
-					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
+					EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
 				}
-				TransformComponent& comp = entity.GetComponent<TransformComponent>();
-				comp._transform.SetRotation(rotation);
-				comp._transform.SetScale(scale);
-				NetObject& net_instance = entity.GetComponent<NetObject>();
-				net_instance.owner_id = net_id;
-				net_instance.is_owner = (net_id == instance_id);
-
-				if (parent_id != 0)
-				{
-					SetParent(entity, GetEntity(parent_id));
-				}
-
-				remove_entity_physics_components(entity);
 				break;
 			}
 			case Network::PacketMessageType::INSTANCIATE_PREFAB:
@@ -1182,13 +1168,13 @@ namespace trace {
 				for (uint32_t i = 0; i < num_entities; i++)
 				{
 					UUID id = 0;
-					data->Read(id);
+					data->Read(&id, 8);
 					Entity entity = GetEntity(id);
-					if (!entity)
+					if (id == 0)
 					{
 						// Generate an error or just assume the packet is invalid
 						TRC_ASSERT(false, "This not suppose to happen");
-						continue;
+						return;
 					}
 					uint8_t num_comp = 0;
 					data->Read(num_comp);
@@ -1227,6 +1213,35 @@ namespace trace {
 			}
 			case Network::PacketMessageType::RPC:
 			{
+				UUID id = 0;
+				data->Read(id);
+				TRC_ASSERT(id != 0, "This is not suppose to happen");
+				Entity entity = GetEntity(id);
+				TRC_ASSERT(entity, "This is not suppose to happen");
+				std::string script_name;
+				data->Read(script_name);
+				ScriptInstance* instance = entity.GetScript(script_name);
+				TRC_ASSERT(instance, "This is not suppose to happen");
+				uint64_t func_id = 0;
+				data->Read(func_id);
+				TRC_ASSERT(func_id != 0, "This is not suppose to happen");
+				Network::RPCType rpc_type = Network::RPCType::UNKNOW;
+				data->Read(rpc_type);
+				uint32_t src_instance_id = 0;
+				data->Read(src_instance_id);
+
+				if (rpc_type == Network::RPCType::CLIENT && instance_id != src_instance_id)
+				{
+					trace::StringID string_id;
+					string_id.value = func_id;
+					ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+					TRC_ASSERT(method, "These is not suppose to happen");
+
+
+					InvokeScriptMethod_Instance(*method, *instance, nullptr);
+				}
+				
+
 				break;
 			}
 			}
@@ -1336,6 +1351,38 @@ namespace trace {
 			}
 			case Network::PacketMessageType::RPC:
 			{
+				UUID id = 0;
+				data->Read(id);
+				TRC_ASSERT(id != 0, "This is not suppose to happen");
+				Entity entity = GetEntity(id);
+				TRC_ASSERT(entity, "This is not suppose to happen");
+				std::string script_name;
+				data->Read(script_name);
+				ScriptInstance* instance = entity.GetScript(script_name);
+				TRC_ASSERT(instance, "This is not suppose to happen");
+				uint64_t func_id = 0;
+				data->Read(func_id);
+				TRC_ASSERT(func_id != 0, "This is not suppose to happen");
+				Network::RPCType rpc_type = Network::RPCType::UNKNOW;
+				data->Read(rpc_type);
+				uint32_t src_instance_id = 0;
+				data->Read(src_instance_id);
+
+
+				if (rpc_type == Network::RPCType::SERVER)
+				{
+					trace::StringID string_id;
+					string_id.value = func_id;
+					ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+					TRC_ASSERT(method, "These is not suppose to happen");
+
+
+					InvokeScriptMethod_Instance(*method, *instance, nullptr);
+				}
+				else if (rpc_type == Network::RPCType::CLIENT)
+				{
+					// Send RPC to other clients
+				}
 				break;
 			}
 			}
@@ -1363,7 +1410,6 @@ namespace trace {
 			Entity entity(i, this);
 
 			serialize_entity_components_binary(entity, data, this);
-			serialize_entity_scripts_binary(entity, data, this);
 
 			++num_entity;
 		}
@@ -1379,7 +1425,6 @@ namespace trace {
 		for (uint32_t i = 0; i < num_entity; ++i)
 		{
 			Entity new_entity = deserialize_entity_components_binary(this, data);
-			deserialize_entity_scripts_binary(new_entity, this, data);
 
 			remove_entity_physics_components(new_entity);
 
@@ -2660,6 +2705,7 @@ namespace trace {
 		{
 			if (entity.HasComponent<NetObject>())
 			{
+				//TODO: Ensure that these packet is a reliable packet and that it also comes before ENTITES_UPDATE
 				uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
 
 				// Generate create object data and broadcast to all clients....
@@ -2670,21 +2716,23 @@ namespace trace {
 					message_type = Network::PacketMessageType::INSTANCIATE_PREFAB;
 					data_stream->Write(message_type);
 					data_stream->Write(prefab->GetUUID());
-					
+					data_stream->Write(entity.GetID());
+					TransformComponent& transform = entity.GetComponent<TransformComponent>();
+					data_stream->Write(transform._transform.GetPosition());
+					data_stream->Write(transform._transform.GetRotation());
+					data_stream->Write(transform._transform.GetScale());
+					data_stream->Write(entity.GetParentID());
+					data_stream->Write(net_id);
 				}
 				else
 				{
 					message_type = Network::PacketMessageType::CREATE_ENTITY;
 					data_stream->Write(message_type);
-					data_stream->Write(source.GetID());
+					serialize_entity_components_binary(entity, data_stream, this);
 				}
-				data_stream->Write(entity.GetID());
-				TransformComponent& transform = entity.GetComponent<TransformComponent>();
-				data_stream->Write(transform._transform.GetPosition());
-				data_stream->Write(transform._transform.GetRotation());
-				data_stream->Write(transform._transform.GetScale());
-				data_stream->Write(entity.GetParentID());
-				data_stream->Write(net_id);
+				
+
+				result = entity;
 				
 			}
 			break;
@@ -2696,7 +2744,7 @@ namespace trace {
 
 	bool Scene::can_destroy_entity(Entity entity)
 	{
-		if (entity.HasComponent<NetObject>())
+		if (!entity.HasComponent<NetObject>())
 		{
 			return true;
 		}

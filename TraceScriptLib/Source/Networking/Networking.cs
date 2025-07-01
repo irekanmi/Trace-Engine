@@ -81,5 +81,10 @@ namespace Trace
         {
             InternalCalls.Networking_InvokeRPC( src.GetID(), src, func_name_id, type);
         }
+        
+        public static void InvokeRPC(Trace.Action src, string func_name, RPCType type)
+        {
+            InvokeRPC(src, Utils.HashString(func_name), type);
+        }
     }
 }

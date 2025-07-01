@@ -111,25 +111,25 @@ namespace trace {
 
 		MSG msg;
 
-		if (!IsWindowEnabled(m_handle))
+		/*if (!IsWindowEnabled(m_handle))
 		{
 			TRC_TRACE("Window diabled");
-		}
+		}*/
 
-		for (int i = 0; i < Keys::KEYS_MAX_KEYS; i++)
+		/*for (int i = 0; i < Keys::KEYS_MAX_KEYS; i++)
 		{
 			InputSystem::get_instance()->SetKey((Keys)i, GetAsyncKeyState(i) & 0x8000f);
 		}
 		for (int i = 0; i < 5; i++)
 		{
 			InputSystem::get_instance()->SetButton((Buttons)i, GetAsyncKeyState(i) & 0x8000f);
-		}
+		}*/
 
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		/*while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-		}
+		}*/
 
 		
 	}
@@ -151,6 +151,21 @@ namespace trace {
 	void* Win32Window::GetHandle()
 	{
 		return m_handle;
+	}
+
+	void Win32Window::PollAndUpdateEvents()
+	{
+		if (!IsWindowEnabled(m_handle))
+		{
+			TRC_TRACE("Window diabled");
+		}
+
+		MSG msg;
+		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 
 }
@@ -226,7 +241,7 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 		trace::KeyReleased release(_key);
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_KEY_RELEASED, &release);
 
-
+		trace::InputSystem::get_instance()->SetKey(_key, 0);
 		break;
 	}
 	
@@ -307,7 +322,7 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_BUTTON_RELEASED, &release);
 
 
-
+		trace::InputSystem::get_instance()->SetButton(trace::Buttons::BUTTON_LEFT, 0);
 		break;
 	}
 	case WM_LBUTTONDOWN:
@@ -326,6 +341,7 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 		trace::MouseReleased release(trace::Buttons::BUTTON_RIGHT);
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_BUTTON_RELEASED, &release);
 
+		trace::InputSystem::get_instance()->SetButton(trace::Buttons::BUTTON_RIGHT, 0);
 		break;
 	}
 	case WM_RBUTTONDOWN:
@@ -342,6 +358,8 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 	{
 		trace::MouseReleased release(trace::Buttons::BUTTON_MIDDLE);
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_BUTTON_RELEASED, &release);
+
+		trace::InputSystem::get_instance()->SetButton(trace::Buttons::BUTTON_MIDDLE, 0);
 		break;
 	}
 	case WM_MBUTTONDOWN:

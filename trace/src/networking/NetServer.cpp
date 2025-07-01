@@ -30,6 +30,9 @@ namespace trace::Network {
 			}
 		}
 
+		m_connections.clear();
+		m_pendingChallenge.clear();
+		m_pendingConnections.clear();
 		if (m_LAN)
 		{
 			lan_data.Destroy();
@@ -111,32 +114,29 @@ namespace trace::Network {
 
 				uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
 
-				if (size == (1024 - sizeof(PacketType)))
+				uint32_t src_id = source.host ^ source.port;
+				uint32_t challenge_result = 0;
+				out_packet_data.data.Read<uint32_t>(challenge_result);
+
+				if (check_challenge_response(challenge_result, m_pendingChallenge[src_id]))
 				{
-					uint32_t src_id = source.host ^ source.port;
-					uint32_t challenge_result = 0;
-					out_packet_data.data.Read<uint32_t>(challenge_result);
+					uint32_t connection_handle = challenge_result ^ source.port;
 
-					if (check_challenge_response(challenge_result, m_pendingChallenge[src_id]))
-					{
-						uint32_t connection_handle = challenge_result ^ source.port;
+					// ... Send Handle
+					NetworkStream response(1024);
+					PacketType response_type = PacketType::CONNECTION_ACCEPTED;
+					response.Write(response_type);
+					response.Write(connection_handle);
 
-						// ... Send Handle
-						NetworkStream response(1024);
-						PacketType response_type = PacketType::CONNECTION_ACCEPTED;
-						response.Write(response_type);
-						response.Write(connection_handle);
+					NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
 
-						NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
-
-						m_pendingConnections[src_id].handle = connection_handle;
-						m_connections.push_back(m_pendingConnections[src_id]);
-						m_pendingChallenge.erase(src_id);
-						m_pendingConnections.erase(src_id);
-
-					}
+					m_pendingConnections[src_id].handle = connection_handle;
+					m_connections.push_back(m_pendingConnections[src_id]);
+					m_pendingChallenge.erase(src_id);
+					m_pendingConnections.erase(src_id);
 
 				}
+
 
 
 				result = false;
