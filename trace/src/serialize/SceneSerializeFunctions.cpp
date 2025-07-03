@@ -794,4 +794,72 @@ namespace trace {
 			}
 		}
 	}
+
+	static void SerializeEntity_Binary(Entity entity, DataStream* stream, uint32_t& entity_count)
+	{
+
+		serialize_entity_components_binary(entity, stream, entity.GetScene());
+
+		for (auto& i : entity.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = entity.GetScene()->GetEntity(i);
+			SerializeEntity_Binary(child, stream, entity_count);
+			entity_count++;
+		}
+
+	}
+
+	void SerializeEntity(Entity entity, DataStream* stream)
+	{
+		if (!entity || !stream)
+		{
+			TRC_ERROR("Pass in valid parameters, Function: {}", __FUNCTION__);
+			return;
+		}
+
+		uint32_t pos_1 = stream->GetPosition();
+		uint32_t entity_count = 0;
+		stream->Write<uint32_t>(entity_count);
+
+		Scene* scene = entity.GetScene();
+		Entity handle = entity;
+		serialize_entity_components_binary(handle, stream, handle.GetScene());
+
+
+		for (auto& i : handle.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = handle.GetScene()->GetEntity(i);
+			SerializeEntity_Binary(child, stream, entity_count);
+			entity_count++;
+		}
+
+		uint32_t pos_2 = stream->GetPosition();
+		stream->SetPosition(pos_1);
+		stream->Write<uint32_t>(entity_count);
+		stream->SetPosition(pos_2);
+	}
+
+	Entity DeserializeEntity(Scene* scene, DataStream* stream)
+	{
+		if (!scene || !stream)
+		{
+			TRC_ERROR("Pass in valid parameters, Function: {}", __FUNCTION__);
+			return Entity();
+		}
+
+		uint32_t entity_count = 0;
+		stream->Read<uint32_t>(entity_count);
+		Entity obj;
+
+		obj = deserialize_entity_components_binary(scene, stream);
+
+
+		for (uint32_t i = 0; i < entity_count; i++)
+		{
+			deserialize_entity_components_binary(scene, stream);
+		}
+
+		return obj;
+	}
+
 }

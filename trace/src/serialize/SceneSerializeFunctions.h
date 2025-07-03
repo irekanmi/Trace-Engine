@@ -17,5 +17,6 @@ namespace trace {
 	void deserialize_entity_scripts(Entity obj, Scene* scene, YAML::detail::iterator_value& entity);
 	void deserialize_entity_scripts_binary(Entity obj, Scene* scene, DataStream* stream);
 
-
+	void SerializeEntity(Entity entity, DataStream* stream);
+	Entity DeserializeEntity(Scene* scene, DataStream* stream);
 }

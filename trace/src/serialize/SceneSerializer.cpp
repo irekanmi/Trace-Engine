@@ -898,7 +898,7 @@ namespace trace {
 
 	bool SceneSerializer::SerializePrefab(Ref<Prefab> prefab, DataStream* stream)
 	{
-		uint32_t prefab_str_count = static_cast<uint32_t>(prefab->GetName().size() + 1);
+		uint32_t prefab_str_count = static_cast<uint32_t>(prefab->GetName().size());
 		stream->Write<uint32_t>(prefab_str_count);
 		stream->Write((void*)prefab->GetName().data(), prefab_str_count);
 		
@@ -1029,8 +1029,7 @@ namespace trace {
 		uint32_t prefab_str_count = 0;
 		std::string prefab_name;
 		stream->Read<uint32_t>(prefab_str_count);
-		prefab_name.reserve(prefab_str_count);
-		prefab_name.resize(prefab_str_count - 1);
+		prefab_name.resize(prefab_str_count);
 		stream->Read((void*)prefab_name.data(), prefab_str_count);
 		uint32_t entity_count = 0;
 		stream->Read<uint32_t>(entity_count);
@@ -1241,7 +1240,7 @@ namespace trace {
 
 	bool SceneSerializer::Serialize(Ref<Scene> scene, DataStream* stream)
 	{
-		uint32_t scene_str_count = static_cast<uint32_t>(scene->GetName().size() + 1);
+		uint32_t scene_str_count = static_cast<uint32_t>(scene->GetName().size());
 		stream->Write<uint32_t>(scene_str_count);
 		stream->Write((void*)scene->GetName().data(), scene_str_count);
 
@@ -1269,8 +1268,7 @@ namespace trace {
 		uint32_t scene_str_count = 0;
 		std::string scene_name;
 		stream->Read<uint32_t>(scene_str_count);
-		scene_name.reserve(scene_str_count);
-		scene_name.resize(scene_str_count - 1);
+		scene_name.resize(scene_str_count);
 		stream->Read((void*)scene_name.data(), scene_str_count);
 		Ref<Scene> scene = SceneManager::get_instance()->GetScene(scene_name);
 		if (scene)

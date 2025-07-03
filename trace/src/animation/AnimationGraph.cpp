@@ -171,7 +171,7 @@ namespace trace::Animation {
 
         PoseNode* root_node = m_graph->GetRootNode();
 
-        root_node->Update(this, deltaTime);
+        root_node->Update(this, deltaTime, data_stream);
         PoseNodeResult* final_pose = root_node->GetFinalPose(this);
 
         //TRC_ASSERT(final_pose != nullptr, "Funtion: {}", __FUNCTION__);
@@ -295,6 +295,7 @@ namespace trace::Animation {
 
         nodes_pos = data_stream->GetPosition();
         num_nodes = 0;
+        data_stream->Write(num_nodes);
     }
 
     void GraphInstance::EndNetworkWrite_Server(Network::NetworkStream* data_stream)

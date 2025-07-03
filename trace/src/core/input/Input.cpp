@@ -27,8 +27,8 @@ namespace trace {
 		keyboard_prev = keyboard_curr;
 		mouse_prev = mouse_curr;
 
-		keyboard_curr = { 0 };
-		mouse_curr = { 0 };
+		//keyboard_curr = { 0 };
+		//mouse_curr = { 0 };
 	}
 
 	KeyState InputSystem::GetKeyState(Keys key)

@@ -547,14 +547,58 @@ namespace trace {
 
 	void Scene::OnNetworkUpdate(float deltaTime)
 	{
+		Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+		Network::NetType net_type = net_manager->GetNetType();
+		uint32_t net_id = net_manager->GetInstanceID();
 
+		auto animation_graphs = m_registry.view<AnimationGraphController, NetObject, ActiveComponent>();
+		for (auto i : animation_graphs)
+		{
+			auto [anim_graph, net, active] = animation_graphs.get(i);
+			if (!anim_graph.graph.GetGraph())
+			{
+				continue;
+			}
+
+			if (!anim_graph.graph.HasStarted())
+			{
+				continue;
+			}
+
+			Entity entity(i, this);
+
+
+			switch (net_type)
+			{
+			case Network::NetType::UNKNOWN:
+			{
+				anim_graph.graph.Update(deltaTime, this, entity.GetID());
+				break;
+			}
+			case Network::NetType::CLIENT:
+			{				
+				anim_graph.graph.Update(deltaTime, this, entity.GetID());
+				break;
+			}
+			case Network::NetType::LISTEN_SERVER:
+			{
+				anim_graph.graph.BeginNetworkWrite_Server(&net.data_stream);
+				anim_graph.graph.Update(deltaTime, this, entity.GetID(), &net.data_stream);
+				anim_graph.graph.EndNetworkWrite_Server(&net.data_stream);
+
+				break;
+			}
+			}
+		}
+
+		
 		if (!Network::NetworkManager::get_instance()->OnFrameStart())
 		{
 			return;
 		}
 
-		uint32_t net_id = Network::NetworkManager::get_instance()->GetInstanceID();
-		Network::NetType net_type = Network::NetworkManager::get_instance()->GetNetType();
+		
+		
 
 		auto net_objects = m_registry.view<NetObject, ActiveComponent>();
 		for (auto i : net_objects)
@@ -672,22 +716,14 @@ namespace trace {
 				m_scriptRegistry.Iterate(entity.GetID(), server_send_lambda);
 
 				uint32_t current_position = obj_stream->GetPosition();
-				if (num_comp == 0)
-				{
-					obj_stream->MemSet(start_position, entity_data_position, 0x00);
-					obj_stream->SetPosition(start_position);
-				}
-				else
-				{
-					obj_stream->Write(comp_pos, num_comp);
-				}
+				obj_stream->Write(comp_pos, num_comp);
 				break;
 			}
 			}
 
 		}
 
-		Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+		Network::NetworkStream* data_stream = net_manager->GetSendNetworkStream();
 		uint32_t stream_start_position = data_stream->GetPosition();
 		Network::PacketMessageType message_type = Network::PacketMessageType::ENTIITES_UPDATE;
 		data_stream->Write(message_type);
@@ -754,7 +790,7 @@ namespace trace {
 			data_stream->Write(num_position, num_net_objects);
 		}
 
-		Network::NetworkManager::get_instance()->OnFrameEnd();
+		net_manager->OnFrameEnd();
 	}
 
 	void Scene::OnAnimationUpdate(float deltaTime)
@@ -773,7 +809,7 @@ namespace trace {
 			anim_comp.Update(deltaTime, this);
 		}
 
-		auto animation_graphs = m_registry.view<AnimationGraphController, ActiveComponent>();
+		auto animation_graphs = m_registry.view<AnimationGraphController, ActiveComponent>(entt::exclude<NetObject>);
 		for (auto i : animation_graphs)
 		{
 			auto [anim_graph, active] = animation_graphs.get(i);
@@ -1126,7 +1162,7 @@ namespace trace {
 			}
 			case Network::PacketMessageType::CREATE_ENTITY:
 			{
-				Entity new_entity = deserialize_entity_components_binary(this, data);
+				Entity new_entity = DeserializeEntity(this, data);
 
 				remove_entity_physics_components(new_entity);
 
@@ -1135,6 +1171,7 @@ namespace trace {
 					EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
 				}
 				
+				OnEntityCreate_Runtime(new_entity);
 
 				NetObject& net_instance = new_entity.GetComponent<NetObject>();
 				if (net_instance.owner_id == instance_id)
@@ -1207,7 +1244,7 @@ namespace trace {
 				for (uint32_t i = 0; i < num_entities; i++)
 				{
 					UUID id = 0;
-					data->Read(&id, 8);
+					data->Read(id);
 					Entity entity = GetEntity(id);
 					if (id == 0)
 					{
@@ -1215,6 +1252,14 @@ namespace trace {
 						TRC_ASSERT(false, "This not suppose to happen");
 						return;
 					}
+					TRC_ASSERT(entity, "The entity should be valid");
+
+					if (entity.HasComponent<AnimationGraphController>())
+					{
+						AnimationGraphController& graph_controller = entity.GetComponent<AnimationGraphController>();
+						graph_controller.graph.OnNetworkRead_Client(data);
+					}
+
 					uint8_t num_comp = 0;
 					data->Read(num_comp);
 					for (uint8_t j = 0; j < num_comp; j++)
@@ -1448,7 +1493,13 @@ namespace trace {
 			auto [net_instance] = net_objects.get(i);
 			Entity entity(i, this);
 
-			serialize_entity_components_binary(entity, data, this);
+			SerializeEntity(entity, data);
+
+			if (entity.HasComponent<AnimationGraphController>())
+			{
+				AnimationGraphController& graph_controller = entity.GetComponent<AnimationGraphController>();
+				graph_controller.graph.OnStateWrite_Server(data);
+			}
 
 			++num_entity;
 		}
@@ -1463,13 +1514,21 @@ namespace trace {
 
 		for (uint32_t i = 0; i < num_entity; ++i)
 		{
-			Entity new_entity = deserialize_entity_components_binary(this, data);
+			Entity new_entity = DeserializeEntity(this, data);
 
 			remove_entity_physics_components(new_entity);
 
 			if (new_entity.GetComponent<HierachyComponent>().is_enabled)
 			{
 				EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
+			}
+
+			OnEntityCreate_Runtime(new_entity);
+
+			if (new_entity.HasComponent<AnimationGraphController>())
+			{
+				AnimationGraphController& graph_controller = new_entity.GetComponent<AnimationGraphController>();
+				graph_controller.graph.OnStateRead_Client(data);
 			}
 		}
 	}
@@ -1903,19 +1962,7 @@ namespace trace {
 
 		result = instanciate_entity_net(result, source, Ref<Prefab>(), net_handle, forced);
 
-		if (result && result.HasComponent<AnimationGraphController>())
-		{
-			//TODO: Move to a place where the component can be properly initialized
-			AnimationGraphController& controller = result.GetComponent<AnimationGraphController>();
-			controller.graph.DestroyInstance();
-			controller.graph.CreateInstance(controller.graph.GetGraph(), this, result.GetID());
-
-			if (controller.play_on_start)
-			{
-				controller.graph.SetEntityHandle(result.GetID());
-				controller.graph.Start(this, result.GetID());
-			}
-		}
+		OnEntityCreate_Runtime(result);
 
 		return result;
 	}
@@ -2233,6 +2280,20 @@ namespace trace {
 	}
 
 
+
+	void Scene::IterateEntityChildren(Entity entity, std::function<void(Entity)> callback)
+	{
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+		for (UUID& id : hi.children)
+		{
+			Entity child = GetEntity(id);
+			TRC_ASSERT(child, "These is not suppose to happen");
+			IterateEntityChildren(child, callback);
+		}
+
+		callback(entity);
+	}
 
 	void Scene::Copy(Ref<Scene> from, Ref<Scene> to)
 	{
@@ -2567,6 +2628,41 @@ namespace trace {
 		player.sequence.DestroyInstance();
 	}
 
+	void Scene::OnEntityCreate_Runtime(Entity entity)
+	{
+		if (!m_running)
+		{
+			return;
+		}
+
+		auto lamda = [](Entity obj)
+		{
+			if (obj.HasComponent<AnimationGraphController>())
+			{
+				//TODO: Move to a place where the component can be properly initialized
+				AnimationGraphController& controller = obj.GetComponent<AnimationGraphController>();
+				controller.graph.DestroyInstance();
+				controller.graph.CreateInstance(controller.graph.GetGraph(), obj.GetScene(), obj.GetID());
+
+				if (controller.play_on_start)
+				{
+					controller.graph.SetEntityHandle(obj.GetID());
+					controller.graph.Start(obj.GetScene(), obj.GetID());
+				}
+			}
+
+			if (obj.HasComponent<SkinnedModelRenderer>())
+			{
+				SkinnedModelRenderer& obj_renderer = obj.GetComponent<SkinnedModelRenderer>();
+
+				obj_renderer.SetSkeleton(obj_renderer.GetSkeleton(), obj.GetScene(), obj.GetID());
+			}
+		};
+
+		IterateEntityChildren(entity, lamda);
+
+	}
+
 	void Scene::enable_child_entity(Entity entity)
 	{
 		if (entity.HasComponent<ActiveComponent>())
@@ -2726,6 +2822,7 @@ namespace trace {
 			Entity d_child = scene->GetEntity(i);
 			duplicate_entity_hierachy(this, d_child, res);
 		}
+
 	}
 
 	Entity Scene::instanciate_entity_net(Entity entity, Entity source, Ref<Prefab> prefab, uint32_t net_id, bool forced)
@@ -2783,7 +2880,7 @@ namespace trace {
 				{
 					message_type = Network::PacketMessageType::CREATE_ENTITY;
 					data_stream->Write(message_type);
-					serialize_entity_components_binary(entity, data_stream, this);
+					SerializeEntity(entity, data_stream);
 				}
 				
 

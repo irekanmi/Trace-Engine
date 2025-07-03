@@ -1211,8 +1211,8 @@ namespace trace {
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
 		InputSystem* input = InputSystem::get_instance();
-		bool control = input->GetKey(KEY_LCONTROL) || input->GetKey(KEY_RCONTROL);
-		bool shift = input->GetKey(KEY_LSHIFT) || input->GetKey(KEY_RSHIFT);
+		bool control = input->GetKey(KEY_LCONTROL) || input->GetKey(KEY_RCONTROL) || input->GetKey(Keys::KEY_CONTROL);
+		bool shift = input->GetKey(KEY_LSHIFT) || input->GetKey(KEY_RSHIFT) || input->GetKey(Keys::KEY_SHIFT);
 		switch (p_event->GetKeyCode())
 		{
 		case KEY_Q:

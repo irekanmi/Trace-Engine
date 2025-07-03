@@ -137,6 +137,7 @@ namespace trace {
 			}
 		}
 
+		void IterateEntityChildren(Entity entity, std::function<void(Entity)> callback);
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
 
 	private:
@@ -157,6 +158,8 @@ namespace trace {
 		void OnDestroyAnimationGraphController(entt::registry& reg, entt::entity ent);
 		void OnConstructSequencePlayer(entt::registry& reg, entt::entity ent);
 		void OnDestroySequencePlayer(entt::registry& reg, entt::entity ent);
+
+		void OnEntityCreate_Runtime(Entity entity);
 
 		void enable_child_entity(Entity entity);
 		void disable_child_entity(Entity entity);
