@@ -360,14 +360,20 @@ namespace trace::Animation {
 		data_stream->Write(data->elasped_time);
 	}
 
-	void AnimationSampleNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	void AnimationSampleNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
 
 		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
 
-		data_stream->Read(data->elasped_time);
+		float elapsed_time = 0.0f;
+		data_stream->Read(elapsed_time);
+
+		if (accept_packet)
+		{
+			data->elasped_time = elapsed_time;
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -540,14 +546,20 @@ namespace trace::Animation {
 		data_stream->Write(data->elapsed_time);
 	}
 	
-	void TransitionNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	void TransitionNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
 
 		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
 
-		data_stream->Read(data->elapsed_time);
+		float elapsed_time = 0.0f;
+		data_stream->Read(elapsed_time);
+
+		if (accept_packet)
+		{
+			data->elapsed_time = elapsed_time;
+		}
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -680,7 +692,7 @@ namespace trace::Animation {
 		data_stream->Write(data->current_node->GetUUID());
 	}
 
-	void StateMachine::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	void StateMachine::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
@@ -690,9 +702,12 @@ namespace trace::Animation {
 		UUID current_node_id = 0;
 		data_stream->Read(current_node_id);
 
-		Node* node = instance->GetGraph()->GetNode(current_node_id);
-		TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
-		data->current_node = (PoseNode*)node;
+		if (accept_packet)
+		{
+			Node* node = instance->GetGraph()->GetNode(current_node_id);
+			TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
+			data->current_node = (PoseNode*)node;
+		}
 
 	}
 
@@ -1026,14 +1041,20 @@ namespace trace::Animation {
 		data_stream->Write(data->elasped_time);
 	}
 
-	void RetargetAnimationNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	void RetargetAnimationNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
 
 		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
 
-		data_stream->Read(data->elasped_time);
+		float elapsed_time = 0.0f;
+		data_stream->Read(elapsed_time);
+
+		if (accept_packet)
+		{
+			data->elasped_time = elapsed_time;
+		}
 	}
 	
 	// -----------------------------------------------------------------------------------
@@ -1512,15 +1533,23 @@ namespace trace::Animation {
 		data_stream->Write(data->update_warp);
 	}
 
-	void WarpAnimationNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	void WarpAnimationNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
 	{
 		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
 		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
 
 		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
 
-		data_stream->Read(data->elasped_time);
-		data_stream->Read(data->update_warp);
+		float elapsed_time = 0.0f;
+		data_stream->Read(elapsed_time);
+		bool update_warp = false;
+		data_stream->Read(update_warp);
+
+		if (accept_packet)
+		{
+			data->elasped_time = elapsed_time;
+			data->update_warp = update_warp;
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------

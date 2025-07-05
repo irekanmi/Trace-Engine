@@ -358,10 +358,13 @@ namespace trace {
 			if (net_manager->IsServer())
 			{
 				net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
+				net_instance.owner_id = net_manager->GetInstanceID();
+				net_instance.is_owner = true;
 			}
 			else if(net_manager->IsClient())
 			{
-				m_entityToDestroy.push_back(entity);
+				//m_entityToDestroy.push_back(entity);
+				destroy_entity(entity);
 
 			}
 
@@ -573,11 +576,22 @@ namespace trace {
 			case Network::NetType::UNKNOWN:
 			{
 				anim_graph.graph.Update(deltaTime, this, entity.GetID());
+				
 				break;
 			}
 			case Network::NetType::CLIENT:
-			{				
-				anim_graph.graph.Update(deltaTime, this, entity.GetID());
+			{
+				if (net.owner_id == net_id)
+				{
+					// TODO: Find a way to determine if the should override the server data
+					anim_graph.graph.BeginNetworkWrite_Client(&net.data_stream);
+					anim_graph.graph.Update(deltaTime, this, entity.GetID(), &net.data_stream);
+					anim_graph.graph.EndNetworkWrite_Client(&net.data_stream);
+				}
+				else
+				{
+					anim_graph.graph.Update(deltaTime, this, entity.GetID());
+				}
 				break;
 			}
 			case Network::NetType::LISTEN_SERVER:
@@ -1147,6 +1161,7 @@ namespace trace {
 	{
 		uint32_t max_loop_count = 256;// TODO: Configurable
 
+
 		for (uint32_t i = 0; i < max_loop_count; i++)
 		{
 			Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
@@ -1166,10 +1181,6 @@ namespace trace {
 
 				remove_entity_physics_components(new_entity);
 
-				if (new_entity.GetComponent<HierachyComponent>().is_enabled)
-				{
-					EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
-				}
 				
 				OnEntityCreate_Runtime(new_entity);
 
@@ -1177,6 +1188,13 @@ namespace trace {
 				if (net_instance.owner_id == instance_id)
 				{
 					net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
+				}
+
+				on_network_create(new_entity);
+
+				if (new_entity.GetComponent<HierachyComponent>().is_enabled)
+				{
+					EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
 				}
 				break;
 			}
@@ -1252,12 +1270,19 @@ namespace trace {
 						TRC_ASSERT(false, "This not suppose to happen");
 						return;
 					}
-					TRC_ASSERT(entity, "The entity should be valid");
+					
+					if (!entity)
+					{
+						TRC_WARN("Entity does exists in the scene, Function: {}", __FUNCTION__);
+						return;
+					}
 
 					if (entity.HasComponent<AnimationGraphController>())
 					{
 						AnimationGraphController& graph_controller = entity.GetComponent<AnimationGraphController>();
-						graph_controller.graph.OnNetworkRead_Client(data);
+						// TODO: Find a way to determine if the should accept the server data
+						bool accept_packet = !entity.IsOwner();
+						graph_controller.graph.OnNetworkRead_Client(data, accept_packet);
 					}
 
 					uint8_t num_comp = 0;
@@ -1398,6 +1423,15 @@ namespace trace {
 						TRC_ASSERT(false, "This not suppose to happen");
 						continue;
 					}
+
+
+					if (entity.HasComponent<AnimationGraphController>())
+					{
+						// TODO: Find a way to determine if the should override the server data
+						AnimationGraphController& graph_controller = entity.GetComponent<AnimationGraphController>();
+						graph_controller.graph.OnNetworkRead_Server(data);
+					}
+
 					uint8_t num_comp = 0;
 					data->Read(num_comp);
 					for (uint8_t j = 0; j < num_comp; j++)
@@ -1412,7 +1446,7 @@ namespace trace {
 							continue;
 						}
 
-						ScriptMethod* on_server_recieve = instance->GetScript()->GetMethod("OnServerRecieve");
+						ScriptMethod* on_server_recieve = instance->GetScript()->GetMethod("OnServerReceive");
 						if (on_server_recieve)
 						{
 							// Generate method parameters .....
@@ -1530,6 +1564,8 @@ namespace trace {
 				AnimationGraphController& graph_controller = new_entity.GetComponent<AnimationGraphController>();
 				graph_controller.graph.OnStateRead_Client(data);
 			}
+
+			on_network_create(new_entity);
 		}
 	}
 
@@ -2842,7 +2878,6 @@ namespace trace {
 		{
 			if (forced)
 			{
-
 				return entity;
 			}
 			if (entity.HasComponent<NetObject>())
@@ -2857,11 +2892,19 @@ namespace trace {
 		{
 			if (entity.HasComponent<NetObject>())
 			{
+				result = entity;
 				//TODO: Ensure that these packet is a reliable packet and that it also comes before ENTITES_UPDATE
 				uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
 
+				NetObject& net_instance = entity.GetComponent<NetObject>();
+				net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
+				net_instance.owner_id = net_id != 0 ? net_id : instance_id;
+				net_instance.is_owner = instance_id == net_id;
+
+
 				// Generate create object data and broadcast to all clients....
-				Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetSendNetworkStream();
+				Network::NetworkManager::get_instance()->AcquireRPCStream();
+				Network::NetworkStream* data_stream = Network::NetworkManager::get_instance()->GetRPCSendNetworkStream();
 				Network::PacketMessageType message_type = Network::PacketMessageType::UNKNOWN;
 				if (prefab)
 				{
@@ -2883,10 +2926,7 @@ namespace trace {
 					SerializeEntity(entity, data_stream);
 				}
 				
-
-				result = entity;
-				NetObject& net_instance = entity.GetComponent<NetObject>();
-				net_instance.data_stream = Network::NetworkStream(KB / 6);//TODO: Configurable
+				Network::NetworkManager::get_instance()->ReleaseRPCStream();
 			}
 			break;
 		}
@@ -2931,6 +2971,29 @@ namespace trace {
 		}
 
 		return true;
+	}
+
+	void Scene::on_network_create(Entity entity)
+	{
+		Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+		uint32_t instance_id = net_manager->GetInstanceID();
+
+		NetObject* net_obj = entity.TryGetComponent<NetObject>();
+		TRC_ASSERT(net_obj, "These is not suppose to happen");
+		net_obj->is_owner = instance_id == net_obj->owner_id;
+
+		auto network_create_lambda = [](UUID id, Script* script, ScriptInstance* instance)
+		{
+			ScriptMethod* on_network_create = script->GetMethod("OnNetworkCreate");
+			if (on_network_create)
+			{
+				InvokeScriptMethod_Instance(*on_network_create, *instance, nullptr);
+
+			}
+		};
+		m_scriptRegistry.Iterate(entity.GetID(), network_create_lambda);
+
+
 	}
 
 	void Scene::OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent)

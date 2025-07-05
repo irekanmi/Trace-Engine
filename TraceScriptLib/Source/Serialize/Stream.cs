@@ -25,6 +25,11 @@ namespace Trace
         {
             InternalCalls.Stream_WriteVec3(stream_handle, ref value);
         }
+        
+        public static void WriteQuat(UInt64 stream_handle, Quat value)
+        {
+            InternalCalls.Stream_WriteQuat(stream_handle, ref value);
+        }
 
         public static int ReadInt(UInt64 stream_handle)
         {
@@ -46,6 +51,11 @@ namespace Trace
         public static Vec3 ReadVec3(UInt64 stream_handle)
         {
             InternalCalls.Stream_ReadVec3(stream_handle, out Vec3 value);
+            return value;
+        }
+        public static Quat ReadQuat(UInt64 stream_handle)
+        {
+            InternalCalls.Stream_ReadQuat(stream_handle, out Quat value);
             return value;
         }
 

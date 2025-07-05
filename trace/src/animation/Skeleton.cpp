@@ -162,7 +162,7 @@ namespace trace::Animation {
 			std::vector<UUID> bone_entites;
 			get_bone_entites(scene, bone_entites, id);
 
-			for (uint32_t i = 0; i < bones.size(); i++)
+			for (uint32_t i = 0; i < bone_entites.size(); i++)
 			{
 				Bone& bone = bones[i];
 				Entity obj = scene->GetEntity(bone_entites[i]);
@@ -191,6 +191,11 @@ namespace trace::Animation {
 	}
 	void SkeletonInstance::get_bone_entites(Scene* scene, std::vector<UUID>& bone_entites, UUID id)
 	{
+
+		if (!scene)
+		{
+			return;
+		}
 
 		Entity obj = scene->GetEntity(id);
 		if (!obj)

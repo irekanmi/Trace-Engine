@@ -432,6 +432,10 @@ bool InvokeScriptMethod_Instance(ScriptMethod& method, ScriptInstance& instance,
 }
 bool InvokeScriptMethod_Class(ScriptMethod& method, Script& script, void** params)
 {
+	MonoObject* exp = nullptr;
+	MonoObject* obj = nullptr;
+	mono_runtime_invoke((MonoMethod*)method.m_internal, obj, params, &exp);
+	if (exp) mono_print_unhandled_exception(exp);
 	return true;
 }
 
@@ -818,6 +822,27 @@ MonoString* Action_GetName(UUID uuid)
 
 }
 
+bool Action_IsOwner(UUID uuid)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(uuid);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return nullptr;
+	}
+
+
+	return entity.IsOwner();
+
+}
+
 #pragma endregion
 
 #pragma region TransformComponent
@@ -1120,6 +1145,32 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+MonoObject* Scene_InstanciateEntity_Position_NetID(UUID id, glm::vec3* position, uint32_t owner_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is presented in scene. Scene Name: {}, Function, {}", s_MonoData.scene->GetName(), __FUNCTION__);
+		return nullptr;
+	}
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	uint32_t instance_id = net_manager->GetInstanceID();
+
+	Entity result = s_MonoData.scene->InstanciateEntity(entity, *position, owner_id);
+	TRC_ASSERT(result, "Unable to Instaciate Entity, Funciton: {}", __FUNCTION__);
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 void Scene_DestroyEntity(UUID id)
 {
 	if (!s_MonoData.scene)
@@ -1365,6 +1416,12 @@ void Stream_WriteVec3(uint64_t stream_handle, glm::vec3* value)
 	stream->Write(*value);
 }
 
+void Stream_WriteQuat(uint64_t stream_handle, glm::quat* value)
+{
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Write(*value);
+}
+
 void Stream_ReadInt(uint64_t stream_handle, int* value)
 {
 	DataStream* stream = (DataStream*)stream_handle;
@@ -1384,6 +1441,12 @@ void Stream_ReadVec2(uint64_t stream_handle, glm::vec2* value)
 }
 
 void Stream_ReadVec3(uint64_t stream_handle, glm::vec3* value)
+{
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Read(*value);
+}
+
+void Stream_ReadQuat(uint64_t stream_handle, glm::quat* value)
 {
 	DataStream* stream = (DataStream*)stream_handle;
 	stream->Read(*value);
@@ -1557,6 +1620,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Action_RemoveComponent);
 	ADD_INTERNAL_CALL(Action_RemoveScript);
 	ADD_INTERNAL_CALL(Action_GetName);
+	ADD_INTERNAL_CALL(Action_IsOwner);
 
 
 	ADD_INTERNAL_CALL(TransformComponent_GetPosition);
@@ -1580,6 +1644,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetEntity);
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position);
+	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position_NetID);
 	ADD_INTERNAL_CALL(Scene_DestroyEntity);
 	ADD_INTERNAL_CALL(Scene_EnableEntity);
 	ADD_INTERNAL_CALL(Scene_DisableEntity);
@@ -1601,10 +1666,12 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Stream_WriteFloat);
 	ADD_INTERNAL_CALL(Stream_WriteVec2);
 	ADD_INTERNAL_CALL(Stream_WriteVec3);
+	ADD_INTERNAL_CALL(Stream_WriteQuat);
 	ADD_INTERNAL_CALL(Stream_ReadInt);
 	ADD_INTERNAL_CALL(Stream_ReadFloat);
 	ADD_INTERNAL_CALL(Stream_ReadVec2);
 	ADD_INTERNAL_CALL(Stream_ReadVec3);
+	ADD_INTERNAL_CALL(Stream_ReadQuat);
 
 	ADD_INTERNAL_CALL(Networking_IsServer);
 	ADD_INTERNAL_CALL(Networking_IsClient);

@@ -242,6 +242,12 @@ namespace trace::Animation {
 
     }
 
+    void GraphInstance::OnStateWrite_Client(Network::NetworkStream* data_stream)
+    {
+        //TODO: Write the proper implementation of this function
+        OnStateWrite_Server(data_stream);
+    }
+
     void GraphInstance::OnStateRead_Client(Network::NetworkStream* data_stream)
     {
         uint16_t parameter_count = 0;
@@ -274,6 +280,12 @@ namespace trace::Animation {
 
     }
 
+    void GraphInstance::OnStateRead_Server(Network::NetworkStream* data_stream)
+    {
+        //TODO: Write the proper implementation of this function
+        OnStateRead_Client(data_stream);
+    }
+
     void GraphInstance::BeginNetworkWrite_Server(Network::NetworkStream* data_stream)
     {
         uint32_t param_pos = data_stream->GetPosition();
@@ -298,12 +310,24 @@ namespace trace::Animation {
         data_stream->Write(num_nodes);
     }
 
+    void GraphInstance::BeginNetworkWrite_Client(Network::NetworkStream* data_stream)
+    {
+        //TODO: Write the proper implementation of this function
+        BeginNetworkWrite_Server(data_stream);
+    }
+
     void GraphInstance::EndNetworkWrite_Server(Network::NetworkStream* data_stream)
     {
         data_stream->Write(nodes_pos, num_nodes);
     }
 
-    void GraphInstance::OnNetworkRead_Client(Network::NetworkStream* data_stream)
+    void GraphInstance::EndNetworkWrite_Client(Network::NetworkStream* data_stream)
+    {
+        //TODO: Write the proper implementation of this function
+        EndNetworkWrite_Server(data_stream);
+    }
+
+    void GraphInstance::OnNetworkRead_Client(Network::NetworkStream* data_stream, bool accept_packet)
     {
         uint16_t parameter_count = 0;
         data_stream->Read(parameter_count);
@@ -331,9 +355,15 @@ namespace trace::Animation {
             data_stream->Read(node_id);
             Node* node = m_graph->GetNode(node_id);
             TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
-            node->OnNetworkRead_Client(this, data_stream);
+            node->OnNetworkRead_Client(this, data_stream, accept_packet);
         }
 
+    }
+
+    void GraphInstance::OnNetworkRead_Server(Network::NetworkStream* data_stream)
+    {
+        //TODO: Write the proper implementation of this function
+        OnNetworkRead_Client(data_stream, true);
     }
 
     void GraphInstance::set_parameter_data(const std::string& param_name, void* data, uint32_t size)

@@ -169,6 +169,7 @@ namespace trace {
 		//INFO: called when an entity is to be created at runtime
 		Entity instanciate_entity_net(Entity entity, Entity source, Ref<Prefab> prefab, uint32_t net_id = 0, bool forced = false);
 		bool can_destroy_entity(Entity entity);
+		void on_network_create(Entity entity);
 
 
 		void OnConstructSkinnedModelRendererComponent(entt::registry& reg, entt::entity ent);

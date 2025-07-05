@@ -30,6 +30,9 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static string Action_GetName(ulong id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Action_IsOwner(ulong id);
         #endregion
 
         #region TransformComponent
@@ -121,6 +124,9 @@ namespace Trace
         extern public static object Scene_InstanciateEntity_Position(ulong id, ref Vec3 position);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_InstanciateEntity_Position_NetID(ulong id, ref Vec3 position, uint owner_handle);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Scene_DestroyEntity(ulong id);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -192,6 +198,9 @@ namespace Trace
         extern public static void Stream_WriteVec3(UInt64 stream_handle, ref Vec3 value);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteQuat(UInt64 stream_handle, ref Quat value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_ReadInt(UInt64 stream_handle, out int value);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -202,6 +211,9 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_ReadVec3(UInt64 stream_handle, out Vec3 value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_ReadQuat(UInt64 stream_handle, out Quat value);
 
 
         #endregion

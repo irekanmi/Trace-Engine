@@ -91,34 +91,39 @@ namespace Trace
         }
 
         public virtual void OnCollisionEnter(CollisionData collision_data)
-        {
-            
-        }
+        {}
 
         public virtual void OnCollisionExit(CollisionData collision_data)
-        {
-
-        }
+        {}
         
         public virtual void OnTriggerEnter(TriggerPair pair)
-        {
-
-        }
+        {}
         
         public virtual void OnTriggerExit(TriggerPair pair)
         {
 
         }
 
+        //Networking ----------------------------------
+        public virtual void OnNetworkCreate()
+        {}
         public virtual void OnServerSend(UInt64 stream_handle)
-        {
-
-        }
-
+        {}
+        
+        public virtual void OnServerReceive(UInt64 stream_handle)
+        {}
         public virtual void OnClientReceive(UInt64 stream_handle)
-        {
+        {}
+        
+        public virtual void OnClientSend(UInt64 stream_handle)
+        {}
 
+        public bool IsOwner()
+        {
+            return InternalCalls.Action_IsOwner(Id);
         }
+
+        // -----------------------------------------------------
 
 
     }

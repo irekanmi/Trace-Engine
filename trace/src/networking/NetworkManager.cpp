@@ -54,6 +54,7 @@ namespace trace::Network {
 		m_receivePacket.data = NetworkStream(KB);
 		m_type = NetType::UNKNOWN;
 		rpc_send_stream = NetworkStream(KB);
+		send_stream = NetworkStream(KB);
 
 		return result;
 	}
@@ -64,6 +65,7 @@ namespace trace::Network {
 		{
 			DestroyNetInstance();
 		}
+		send_stream.Destroy();
 		rpc_send_stream.Destroy();
 		m_receivePacket.data.Destroy();
 		NetFunc::Shutdown();
@@ -92,6 +94,7 @@ namespace trace::Network {
 			if (server.Listen(m_receivePacket))
 			{
 				OnPacketRecieve(&m_receivePacket.data, m_receivePacket.connection_handle);
+				m_receivePacket.data.MemSet(0, m_receivePacket.data.GetSize(), 0x00);
 			}
 
 			break;
@@ -154,11 +157,22 @@ namespace trace::Network {
 
 		// Check if rpc stream can be read ...
 		// if so rpc it and add it to the send stream
-		if (rpc_send_stream.GetPosition() > 0)
+		PacketSendMode mode = PacketSendMode::UNRELIABLE;
+		if (rpc_handle == 0 &&  rpc_send_stream.GetPosition() > 0)
 		{
+			mode = PacketSendMode::RELIABLE;
 			m_sendPacket.data.Write(rpc_send_stream.GetData(), rpc_send_stream.GetPosition());
+
 			rpc_send_stream.SetPosition(0);
 			rpc_send_stream.MemSet(0, rpc_send_stream.GetSize(), 0x00);
+		}
+
+		if (send_stream.GetPosition() > 0)
+		{
+			m_sendPacket.data.Write(send_stream.GetData(), send_stream.GetPosition());
+
+			send_stream.SetPosition(0);
+			send_stream.MemSet(0, send_stream.GetSize(), 0x00);
 		}
 
 
@@ -175,7 +189,7 @@ namespace trace::Network {
 		{
 			if (client.HasConnection())
 			{
-				client.SendPacketToServer(m_sendPacket);
+				client.SendPacketToServer(m_sendPacket, mode);
 			}
 			break;
 		}
@@ -185,12 +199,12 @@ namespace trace::Network {
 			{
 				for (uint32_t& handle : connected_clients)
 				{
-					server.SendTo(handle, m_sendPacket);
+					server.SendTo(handle, m_sendPacket, mode);
 				}
 			}
 			else
 			{
-				server.BroadcastToAll(m_sendPacket);
+				server.BroadcastToAll(m_sendPacket, mode);
 			}
 			break;
 		}
@@ -340,7 +354,7 @@ namespace trace::Network {
 			return nullptr;
 		}
 
-		return &m_sendPacket.data;
+		return &send_stream;
 	}
 
 	NetworkStream* NetworkManager::GetRPCSendNetworkStream()
@@ -539,6 +553,16 @@ namespace trace::Network {
 	bool NetworkManager::IsClient()
 	{
 		return m_type == NetType::CLIENT;
+	}
+
+	void NetworkManager::AcquireRPCStream()
+	{
+		++rpc_handle;
+	}
+
+	void NetworkManager::ReleaseRPCStream()
+	{
+		--rpc_handle;
 	}
 
 }

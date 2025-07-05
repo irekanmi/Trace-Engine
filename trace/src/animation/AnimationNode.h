@@ -63,7 +63,7 @@ namespace trace::Animation {
 		virtual uint32_t BeginNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream);
 		virtual void EndNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream, uint32_t begin_pos);
 		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) {};
-		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) {};
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet = true) {};
 
 		// NOTE: Used to reset a node to it's start runtime values
 		// Also reseting a node will reset all input nodes connected to it

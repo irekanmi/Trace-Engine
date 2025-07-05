@@ -208,10 +208,15 @@ namespace trace::Animation {
 
 		//Networking ----------
 		void OnStateWrite_Server(Network::NetworkStream* data_stream);
+		void OnStateWrite_Client(Network::NetworkStream* data_stream);
 		void OnStateRead_Client(Network::NetworkStream* data_stream);
+		void OnStateRead_Server(Network::NetworkStream* data_stream);
 		void BeginNetworkWrite_Server(Network::NetworkStream* data_stream);
+		void BeginNetworkWrite_Client(Network::NetworkStream* data_stream);
 		void EndNetworkWrite_Server(Network::NetworkStream* data_stream);
-		void OnNetworkRead_Client(Network::NetworkStream* data_stream);
+		void EndNetworkWrite_Client(Network::NetworkStream* data_stream);
+		void OnNetworkRead_Client(Network::NetworkStream* data_stream, bool accept_packet);
+		void OnNetworkRead_Server(Network::NetworkStream* data_stream);
 		void IncrementNumNodes() { ++num_nodes; }
 
 	private:

@@ -175,8 +175,33 @@ class FollowYBot : Trace.Action
 
 class NetController : Trace.Action
 {
+    uint client_handle = 0;
+    public void OnStart()
+    {
+        if(Network.IsClient())
+        {
+            Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
+        }
 
+        if (!Network.IsServer())
+        {
+            return;
+        }
 
+        Network.on_client_connect += OnClientConnect;
+        Debug.Log("Client Connect Action Added");
+    }
+
+    void OnClientConnect(uint connection_handle)
+    {
+        
+        if(!Network.IsServer())
+        {
+            return;
+        }
+        client_handle = connection_handle;
+        //Scene.InstanciateEntity_Net(Scene.GetEntityByName("X_bot"), new Vec3(1.0f, 0.0f, 1.0f), connection_handle);
+    }
 
     public void OnUpdate(float deltaTime)
     {
@@ -192,16 +217,10 @@ class NetController : Trace.Action
             if (Input.GetKeyReleased(Keys.KEY_J))
             {
                 Network.CreateClient(false);
-                Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
                 Application.LoadAndSetScene("Networked_Balls.trscn");
             }
         }
 
-
-        if(Network.IsServer() && Input.GetKeyPressed(Keys.KEY_G))
-        {
-            Scene.InstanciateEntity(Scene.GetEntityByName("Sphere_Ball"), new Vec3(0.0f, 18.0f, 0.0f));
-        }
 
         if (Network.IsClient() && Input.GetKeyPressed(Keys.KEY_F))
         {
@@ -210,7 +229,8 @@ class NetController : Trace.Action
 
         if (Network.IsServer() && Input.GetKeyPressed(Keys.KEY_F))
         {
-            Network.InvokeRPC(this, "TestClientRPC", RPCType.CLIENT);
+            //Network.InvokeRPC(this, "TestClientRPC", RPCType.CLIENT);
+            Scene.InstanciateEntity_Net(Scene.GetEntityByName("X_bot"), new Vec3(1.0f, 0.0f, 1.0f), client_handle);
         }
 
 
@@ -224,27 +244,68 @@ class NetController : Trace.Action
     void TestServerRPC()
     {
         Debug.Log("A Server RPC from a client");
-        Scene.InstanciateEntity(Scene.GetEntityByName("Sphere_Ball"), new Vec3(1.0f, 22.0f, 0.0f));
+        //Scene.InstanciateEntity(Scene.GetEntityByName("Sphere_Ball"), new Vec3(1.0f, 22.0f, 0.0f));
     }
 
 }
 
 class TransformSync : Trace.Action
 {
-
+    bool override_data = false;
 
     public override void OnServerSend(UInt64 stream_handle)
     {
         TransformComponent pose = GetComponent<TransformComponent>();
         Stream.WriteVec3(stream_handle, pose.Position);
+        Stream.WriteQuat(stream_handle, pose.Rotation);
+
+    }
+    
+    public override void OnClientSend(UInt64 stream_handle)
+    {
+
+        TransformComponent pose = GetComponent<TransformComponent>();
+        Stream.WriteVec3(stream_handle, pose.Position);
+        Stream.WriteQuat(stream_handle, pose.Rotation);
 
     }
 
     public override void OnClientReceive(UInt64 stream_handle)
     {
+
         Vec3 new_pos = Stream.ReadVec3(stream_handle);
-        TransformComponent pose = GetComponent<TransformComponent>();
-        pose.Position = new_pos;
+        Quat new_rot = Stream.ReadQuat(stream_handle);
+        
+        
+        if (IsOwner())
+        {
+            return;
+        }
+        else
+        {
+            TransformComponent pose = GetComponent<TransformComponent>();
+            pose.Position = new_pos;
+            pose.Rotation = new_rot;
+        }
+
+    }
+    
+    public override void OnServerReceive(UInt64 stream_handle)
+    {
+
+        Vec3 new_pos = Stream.ReadVec3(stream_handle);
+        Quat new_rot = Stream.ReadQuat(stream_handle);
+        
+        
+        if (!IsOwner())
+        {
+            TransformComponent pose = GetComponent<TransformComponent>();
+            pose.Position = new_pos;
+            pose.Rotation = new_rot;
+            return;
+        }
+
+
     }
 
 

@@ -43,6 +43,7 @@ namespace Trace
 
         static void OnClientConnect(uint handle)
         {
+            Debug.Log("New Client");
             on_client_connect?.Invoke(handle);
         }
         static void OnClientDisconnect(uint handle)

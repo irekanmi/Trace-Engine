@@ -56,7 +56,7 @@ namespace trace::Animation {
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
-		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
 
 		UUID CreateState(Graph* graph, StringID state_name);
 		void Start(GraphInstance* instance);
@@ -156,7 +156,7 @@ namespace trace::Animation {
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
-		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
 
 		bool ResolveConditions(GraphInstance* instance, float deltaTime);
 		void SetDuration(float duration) { m_duration = duration; }
@@ -207,7 +207,7 @@ namespace trace::Animation {
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
-		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
 
 		void SetAnimationClip(int32_t clip_index, Graph* graph);
 
@@ -283,7 +283,7 @@ namespace trace::Animation {
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
-		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
 
 		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
 		void SetSkeleton(Ref<Skeleton> skeleton) { m_skeleton = skeleton; }
@@ -376,7 +376,7 @@ namespace trace::Animation {
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
 		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
-		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
 
 		Ref<AnimationClip> GetAnimationClip() { return m_animation; }
 		void SetAnimationClip(Ref<AnimationClip> animation) { m_animation = animation; }

@@ -50,6 +50,8 @@ namespace trace::Network {
 		void OnPacketRecieve(NetworkStream* data, uint32_t handle);
 		bool IsServer();
 		bool IsClient();
+		void AcquireRPCStream();
+		void ReleaseRPCStream();
 
 
 		static NetworkManager* get_instance();
@@ -64,6 +66,7 @@ namespace trace::Network {
 		NetServer server;
 		NetClient client;
 		Packet m_sendPacket;
+		NetworkStream send_stream;
 		Packet m_receivePacket;
 		NetworkStateInfo m_info;
 		uint32_t m_sendStartPos = 0;
@@ -71,6 +74,7 @@ namespace trace::Network {
 		bool world_state_packet_received = false;
 		std::vector<uint32_t> new_clients;
 		std::vector<uint32_t> connected_clients;
+		uint32_t rpc_handle = 0;
 
 	protected:
 

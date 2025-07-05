@@ -181,6 +181,8 @@ namespace trace {
 					m_hashtable.Set(name, i);
 					_asset = (T*)asset;
 					_asset->m_id = i;
+					//Temp ======
+					_asset->m_refCount++;
 					break;
 				}
 			}
