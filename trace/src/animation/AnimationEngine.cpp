@@ -57,37 +57,6 @@ namespace trace {
 	{
 	}
 
-	void AnimationEngine::Animate(AnimationState& state, Scene* scene, std::unordered_map<StringID, UUID>& data_map)
-	{
-
-		if (!state.IsPlaying()) return;
-
-		Ref<AnimationClip> clip = state.GetAnimationClip();
-
-		float elasped_animation_time = Application::get_instance()->GetClock().GetElapsedTime() - state.GetStartTime();
-
-		if (elasped_animation_time > clip->GetDuration())
-		{
-			if (!state.GetLoop())
-			{
-				state.Stop();
-				return;
-			}
-			else elasped_animation_time = fmod(elasped_animation_time, clip->GetDuration());
-		}
-		state.SetElaspedTime(elasped_animation_time);
-
-
-
-
-		auto lambda = [&](StringID, UUID id, AnimationDataType type, AnimationFrameData* a, AnimationFrameData* b, float time_point)
-		{
-			CalculateAndSetData(a, b, scene, id, type, time_point);
-		};
-		FindFrame(data_map, clip, scene, elasped_animation_time,  lambda);
-
-	}
-
 	void AnimationEngine::Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, bool loop, std::unordered_map<StringID, UUID>& data_map)
 	{
 		float elasped_time = time_point;

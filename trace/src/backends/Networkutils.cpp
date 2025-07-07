@@ -457,18 +457,18 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 		return false;
 	}
 
-	ENetEvent event;
+	ENetEvent network_event;
 	ENetHost* client = (ENetHost*)host->internal_handle;
 
-	while (enet_host_service(client, &event, 0) > 0)
+	while (enet_host_service(client, &network_event, 0) > 0)
 	{
-		switch (event.type)
+		switch (network_event.type)
 		{
 		case ENET_EVENT_TYPE_CONNECT:
 		{
-			out_source_connection->host = event.peer->address.host;
-			out_source_connection->port = event.peer->address.port;
-			out_source_connection->internal_handle = event.peer;
+			out_source_connection->host = network_event.peer->address.host;
+			out_source_connection->port = network_event.peer->address.port;
+			out_source_connection->internal_handle = network_event.peer;
 
 			return false;
 			break;
@@ -476,17 +476,17 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 
 		case ENET_EVENT_TYPE_RECEIVE:
 		{
-			out_source_connection->host = event.peer->address.host;
-			out_source_connection->port = event.peer->address.port;
-			out_source_connection->internal_handle = event.peer;
+			out_source_connection->host = network_event.peer->address.host;
+			out_source_connection->port = network_event.peer->address.port;
+			out_source_connection->internal_handle = network_event.peer;
 
-			//packet_data = NetworkStream(event.packet->data, event.packet->dataLength, true);
-			packet_data.Write(0, event.packet->data, event.packet->dataLength);
+			//packet_data = NetworkStream(network_event.packet->data, network_event.packet->dataLength, true);
+			packet_data.Write(0, network_event.packet->data, network_event.packet->dataLength);
 			packet_data.SetPosition(0);
-			packet_data.MemSet(event.packet->dataLength, packet_data.GetSize(), 0x00);
+			packet_data.MemSet(network_event.packet->dataLength, packet_data.GetSize(), 0x00);
 
 			/* Clean up the packet now that we're done using it. */
-			enet_packet_destroy(event.packet);
+			enet_packet_destroy(network_event.packet);
 
 			return true;
 			break;
@@ -494,9 +494,9 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 
 		case ENET_EVENT_TYPE_DISCONNECT:
 		{
-			out_source_connection->host = event.peer->address.host;
-			out_source_connection->port = event.peer->address.port;
-			out_source_connection->internal_handle = event.peer;
+			out_source_connection->host = network_event.peer->address.host;
+			out_source_connection->port = network_event.peer->address.port;
+			out_source_connection->internal_handle = network_event.peer;
 			//TODO: Handle server disconnection
 			TRC_ERROR("Lost Connection to Server");
 
@@ -523,18 +523,18 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 		return false;
 	}
 
-	ENetEvent event;
+	ENetEvent network_event;
 	ENetHost* server = (ENetHost*)host->internal_handle;
 
-	while (enet_host_service(server, &event, 0) > 0)
+	while (enet_host_service(server, &network_event, 0) > 0)
 	{
-		switch (event.type)
+		switch (network_event.type)
 		{
 		case ENET_EVENT_TYPE_CONNECT:
 		{
-			out_source_connection->host = event.peer->address.host;
-			out_source_connection->port = event.peer->address.port;
-			out_source_connection->internal_handle = event.peer;
+			out_source_connection->host = network_event.peer->address.host;
+			out_source_connection->port = network_event.peer->address.port;
+			out_source_connection->internal_handle = network_event.peer;
 
 
 			NetworkStream out_data(sizeof(PacketType));
@@ -550,15 +550,15 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 
 		case ENET_EVENT_TYPE_RECEIVE:
 		{
-			out_source_connection->host = event.peer->address.host;
-			out_source_connection->port = event.peer->address.port;
-			out_source_connection->internal_handle = event.peer;
-			packet_data.Write(0, event.packet->data, event.packet->dataLength);
+			out_source_connection->host = network_event.peer->address.host;
+			out_source_connection->port = network_event.peer->address.port;
+			out_source_connection->internal_handle = network_event.peer;
+			packet_data.Write(0, network_event.packet->data, network_event.packet->dataLength);
 			packet_data.SetPosition(0);
-			packet_data.MemSet(event.packet->dataLength, packet_data.GetSize(), 0x00);
+			packet_data.MemSet(network_event.packet->dataLength, packet_data.GetSize(), 0x00);
 
 			/* Clean up the packet now that we're done using it. */
-			enet_packet_destroy(event.packet);
+			enet_packet_destroy(network_event.packet);
 
 
 			return true;
@@ -567,9 +567,9 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 
 		case ENET_EVENT_TYPE_DISCONNECT:
 		{
-			out_source_connection->host = event.peer->address.host;
-			out_source_connection->port = event.peer->address.port;
-			out_source_connection->internal_handle = event.peer;
+			out_source_connection->host = network_event.peer->address.host;
+			out_source_connection->port = network_event.peer->address.port;
+			out_source_connection->internal_handle = network_event.peer;
 
 			NetworkStream out_data(sizeof(PacketType));
 			PacketType type = PacketType::DISCONNECT;

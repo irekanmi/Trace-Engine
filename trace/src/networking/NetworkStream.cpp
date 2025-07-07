@@ -142,6 +142,12 @@ namespace trace::Network {
 
 	void NetworkStream::operator=(NetworkStream& other)
 	{
+
+		if (!other.m_data)
+		{
+			return;
+		}
+
 		if (m_data)
 		{
 			if (m_memSize >= other.m_size)

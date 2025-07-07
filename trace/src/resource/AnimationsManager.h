@@ -4,7 +4,6 @@
 #include "core/Enums.h"
 #include "HashTable.h"
 #include "animation/Animation.h"
-#include "animation/AnimationGraph.h"
 #include "Ref.h"
 #include "serialize/AssetsInfo.h"
 
@@ -28,22 +27,12 @@ namespace trace {
 		void UnloadClip(Resource* clip);
 		Ref<AnimationClip> LoadClip_Runtime(UUID id);
 
-		Ref<AnimationGraph> CreateGraph(const std::string& name);
-		Ref<AnimationGraph> LoadGraph(const std::string& name);
-		Ref<AnimationGraph> LoadGraph_(const std::string& path);
-		Ref<AnimationGraph> GetGraph(const std::string& name);
-		void UnloadGraph(Resource* graph);
-		Ref<AnimationGraph> LoadGraph_Runtime(UUID id);
 
 		void SetClipsAssetMap(std::unordered_map<UUID, AssetHeader> map)
 		{
 			m_clipAssetMap = map;
 		}
 
-		void SetGraphsAssetMap(std::unordered_map<UUID, AssetHeader> map)
-		{
-			m_graphAssetMap = map;
-		}
 
 		void RenameAsset(Ref<AnimationClip> asset, const std::string& new_name);
 
@@ -51,13 +40,9 @@ namespace trace {
 
 	private:
 		std::vector<AnimationClip> m_clips;
-		std::vector<AnimationGraph> m_graphs;
 		HashTable<uint32_t> hashTable;
-		HashTable<uint32_t> graphHashTable;
 		uint32_t m_numEntries;
-		uint32_t m_numGraphEntries;
 		std::unordered_map<UUID, AssetHeader> m_clipAssetMap;
-		std::unordered_map<UUID, AssetHeader> m_graphAssetMap;
 
 
 	protected:

@@ -1552,12 +1552,13 @@ namespace trace {
 
 			remove_entity_physics_components(new_entity);
 
+			OnEntityCreate_Runtime(new_entity);
+
 			if (new_entity.GetComponent<HierachyComponent>().is_enabled)
 			{
 				EnableEntity(new_entity);//TODO: Just add Active Component instead of calling EnableEntity()
 			}
 
-			OnEntityCreate_Runtime(new_entity);
 
 			if (new_entity.HasComponent<AnimationGraphController>())
 			{

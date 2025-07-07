@@ -255,14 +255,8 @@ namespace trace {
 	}
 
 	//TEMP =============
-	static float halflife = 0.033f;
-	static float speed = 12.0f;
-	static glm::vec3 velocity(0.0f);
-	static orange_duck::vec3 angular_velocity = {};
-	static glm::vec3 acceleration(0.0f);
-	static glm::vec3 curr_position(0.0f);
+	static float speed = 10.0f;
 	static RingBuffer<glm::mat4> debug_buffer(5);
-	static bool normalized_search = true;
 	
 
 	void TraceEditor::Render(float deltaTime)
@@ -381,8 +375,6 @@ namespace trace {
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
 			ImGui::Checkbox("Text Verts", &Renderer::get_instance()->text_verts);
 
-			ImGui::DragFloat("half life", &halflife, 0.005f, 0.0f, 5.0f, "%.4f");
-			ImGui::Checkbox("normalized_search", &normalized_search);
 			ImGui::DragFloat("Speed", &speed, 0.05f);
 
 		}

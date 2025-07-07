@@ -28,10 +28,6 @@ namespace trace {
 		static Ref<AnimationClip> DeserializeAnimationClip(DataStream* stream);
 		static void DeserializeAnimationClip(Ref<AnimationClip> clip, FileStream& stream, AssetHeader& header);
 
-		static bool SerializeAnimationGraph(Ref<AnimationGraph> graph, const std::string& file_path);
-		static bool SerializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, std::vector<std::pair<UUID, AssetHeader>>& map);
-		static Ref<AnimationGraph> DeserializeAnimationGraph(const std::string& file_path);
-		static void DeserializeAnimationGraph(Ref<AnimationGraph> graph, FileStream& stream, AssetHeader& header);
 
 		static bool SerializeSkeleton(Ref<Animation::Skeleton> skeleton, const std::string& file_path);
 		static bool SerializeSkeleton(Ref<Animation::Skeleton> skeleton, DataStream* stream);

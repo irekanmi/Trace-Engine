@@ -438,7 +438,6 @@ namespace trace::Network {
 		m_sendPacket = client.CreateSendPacket(KB);
 		m_sendStartPos = m_sendPacket.data.GetPosition();
 
-		TRC_WARN("Instance ID: {}", m_instanceId);
 
 		Script* network_script = ScriptEngine::get_instance()->GetNetworkScript();
 		ScriptMethod* on_server_connect = network_script->GetMethod("OnServerConnect");
@@ -495,10 +494,9 @@ namespace trace::Network {
 						if (message_type == PacketMessageType::SCENE_STATE)
 						{
 							// Process entites...
-							//Platform::Sleep(500.0f);// TEMP: Added to make it work on another thread, because the might be loaded before the packet is processed
 							m_scene->ReadSceneState_Client(data);
 							world_state_packet_received = true;
-							Packet scene_state = client.CreateSendPacket(12);// TODO: Implement custom allocator{ as soon as possible}. it affects resizing of network stream
+							Packet scene_state = client.CreateSendPacket(12);// TODO: Implement custom allocator{ as soon as possible}.
 							PacketMessageType message_type = PacketMessageType::SCENE_STATE_RECEIVED;
 							scene_state.data.Write(message_type);
 							client.SendPacketToServer(scene_state, PacketSendMode::RELIABLE);

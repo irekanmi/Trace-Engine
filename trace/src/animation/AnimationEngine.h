@@ -1,8 +1,8 @@
 #pragma once
 
-#include "AnimationState.h"
 #include "core/Coretypes.h"
 #include "render/Transform.h"
+#include "animation/Animation.h"
 
 
 
@@ -29,7 +29,6 @@ namespace trace {
 		bool Init();
 		void Shutdown();
 
-		void Animate(AnimationState& state, Scene* scene, std::unordered_map<StringID, UUID>& data_map);
 		void Animate(Ref<AnimationClip> clip, Scene* scene, float time_point, bool loop, std::unordered_map<StringID, UUID>& data_map);
 		void Animate(AnimationComponent* animation_component, Scene* scene, float time_point,  bool loop);
 		void SampleClipWithRootMotionDelta(Ref<AnimationClip> clip, float from_time, float to_time, Animation::Pose* out_pose, bool looping);

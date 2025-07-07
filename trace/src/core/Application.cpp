@@ -21,8 +21,6 @@
 #include "backends/Renderutils.h"
 #include "render/ShaderParser.h"
 #include "serialize/FileStream.h"
-#include <thread>
-#include "scripting/ScriptBackend.h"
 //======================
 
 
@@ -169,21 +167,7 @@ namespace trace
 		m_lastTime = m_clock.GetElapsedTime();
 		float _time = m_clock.GetInternalElapsedTime();
 
-		// TEMP --------------------------------
-		bool* is_running = &m_isRunning;
-		std::thread network_job([&net_manager, &is_running]() {
-			void* thread_info = nullptr;
-			while (*is_running)
-			{
-				AttachThread(thread_info);
-				// Networking -------------------
-				net_manager->Update(0.16f);
-				// --------------------------------
-			}
-
-			DetachThread(thread_info);
-			});
-		// --------------------------------------
+		
 
 		while (m_isRunning)
 		{
@@ -214,7 +198,7 @@ namespace trace
 				layer->Update(deltaTime);
 			}
 			// Networking -------------------
-			//net_manager->Update(deltaTime);
+			net_manager->Update(deltaTime);
 			// --------------------------------
 
 			//------CLIENT-------//
@@ -246,10 +230,6 @@ namespace trace
 			m_updateID++;
 			
 		}
-
-		// TEMP --------------------------------
-		network_job.join();
-		// --------------------------------------
 	}
 
 	void Application::End()
