@@ -150,6 +150,7 @@ namespace trace {
 		bool p_projectSettings = false;
 
 		bool m_fullScreen = false;
+		bool m_stopCurrentScene = false;
 
 	protected:
 	};

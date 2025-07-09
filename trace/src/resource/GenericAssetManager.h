@@ -182,7 +182,7 @@ namespace trace {
 					_asset = (T*)asset;
 					_asset->m_id = i;
 					//Temp ======
-					_asset->m_refCount++;
+					//_asset->m_refCount++;
 					break;
 				}
 			}

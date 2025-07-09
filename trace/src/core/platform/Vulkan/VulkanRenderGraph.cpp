@@ -931,7 +931,7 @@ namespace vk {
 			bool isSwapchainImage = res.resource_type == trace::RenderGraphResourceType::SwapchainImage;
 			if (isTexture)
 			{
-				trace::VKRenderGraphResource* res_handle = new trace::VKRenderGraphResource;
+				trace::VKRenderGraphResource* res_handle = new trace::VKRenderGraphResource;//TODO: Use custom allocator
 				res.render_handle.m_internalData = res_handle;
 				VkImageUsageFlags image_usage = 0;
 				VkImageAspectFlags aspect_flags = 0;
@@ -946,6 +946,10 @@ namespace vk {
 				}
 				memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
+				VkFormatProperties fmt_prop;
+				vkGetPhysicalDeviceFormatProperties(_device->m_physicalDevice, vk::convertFmt(res.resource_data.texture.format), &fmt_prop);
+
+				bool can_sample_linear = TRC_HAS_FLAG(fmt_prop.optimalTilingFeatures, VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
 
 				VkSamplerCreateInfo samp_create_info = {};
 				samp_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -964,7 +968,9 @@ namespace vk {
 				samp_create_info.maxLod = 1.0f;
 				samp_create_info.minLod = 0.0f;
 				samp_create_info.mipLodBias = 0.0f;
-				samp_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+				samp_create_info.mipmapMode = can_sample_linear ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+				
 
 
 

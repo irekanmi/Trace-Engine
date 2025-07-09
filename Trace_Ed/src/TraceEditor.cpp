@@ -167,6 +167,14 @@ namespace trace {
 
 	void TraceEditor::Update(float deltaTime)
 	{
+		if (m_stopCurrentScene)
+		{
+			OnSceneStop();
+			OnGameStop();
+			m_currentState = EditorState::SceneEdit;
+
+			m_stopCurrentScene = false;
+		}
 
 		switch (m_currentState)
 		{
@@ -539,9 +547,7 @@ namespace trace {
 			{
 				if (playing)
 				{
-					OnSceneStop();
-					OnGameStop();
-					m_currentState = EditorState::SceneEdit;
+					m_stopCurrentScene = true;
 				}
 				else
 				{

@@ -18,13 +18,6 @@ layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
     vec3 _view_position;
 };
 
-
-// INSTANCE_UNIFORM_BUFFER_SLOT(BoneMatrix,
-// {
-//     mat4 _bone_matrices[MAX_BONES_PER_MESH];
-// },
-// 5);
-
 struct BoneMatrix
 {
     mat4 _bone_matrices[MAX_BONES_PER_MESH];

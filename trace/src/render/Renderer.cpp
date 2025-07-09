@@ -82,7 +82,6 @@ namespace trace {
 
 		RenderFunc::CreateContext(&g_context);
 		result = RenderFunc::CreateDevice(&g_device);
-		RenderFunc::CreateDevice(&g_device);
 		RenderFunc::CreateSwapchain(&m_swapChain, &g_device, &g_context);
 		{
 			_viewPort.width = 800.0f;
@@ -284,7 +283,7 @@ namespace trace {
 
 		switch (p_event->GetEventType())
 		{
-		case trace::EventType::TRC_KEY_PRESSED:
+		case EventType::TRC_KEY_PRESSED:
 		{
 			KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
 

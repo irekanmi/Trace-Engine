@@ -316,7 +316,7 @@ namespace vk {
 
 		uint32_t queue_count = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device->m_physicalDevice, &queue_count, nullptr);
-		eastl::vector<VkQueueFamilyProperties> queue_props(queue_count);
+		std::vector<VkQueueFamilyProperties> queue_props(queue_count);
 		vkGetPhysicalDeviceQueueFamilyProperties(device->m_physicalDevice, &queue_count, queue_props.data());
 
 
@@ -378,7 +378,7 @@ namespace vk {
 
 				
 
-		eastl::vector<uint32_t> indices(index_count);
+		std::vector<uint32_t> indices(index_count);
 		for (uint32_t i = 0; i < index_count; i++)
 		{
 			indices[i] = i;
@@ -436,7 +436,7 @@ namespace vk {
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->m_physicalDevice, instance->m_surface, &device->m_swapchainInfo.surface_capabilities);
 
 
-		eastl::vector<VkDeviceQueueCreateInfo> device_queue_infos(index_count);
+		std::vector<VkDeviceQueueCreateInfo> device_queue_infos(index_count);
 
 		n = 0;
 		float queue_priority = 1.0f;
@@ -456,10 +456,13 @@ namespace vk {
 			VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 		};
 
-		//phy_feat = {};
-		phy_feat.samplerAnisotropy = VK_TRUE;
-		phy_feat.geometryShader = VK_TRUE;
-		phy_feat.wideLines = VK_TRUE;
+		//Disabled features ........
+		phy_feat2.features.robustBufferAccess = VK_FALSE;
+
+		//Required features ........
+		phy_feat2.features.samplerAnisotropy = VK_TRUE;
+		phy_feat2.features.geometryShader = VK_TRUE;
+		phy_feat2.features.wideLines = VK_TRUE;
 
 		VkDeviceCreateInfo device_info = {};
 		device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -2249,14 +2252,12 @@ namespace vk {
 
 		std::vector<VkDescriptorSetLayoutBinding> Instance_bindings;
 
-		//std::vector<VkDescriptorSetLayoutBinding> Local_bindings;
 
-		const uint32_t pool_sizes_count = 4;
+		const uint32_t pool_sizes_count = 3;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8192},
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 2048},
-			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2048},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, KB * VK_MAX_NUM_FRAMES},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 12)}
 		};
 
@@ -2292,7 +2293,7 @@ namespace vk {
 				bind.descriptorCount = i.count;
 				bind.descriptorType = convertDescriptorType(i.resource_type);
 				bind.stageFlags = convertShaderStage(i.shader_stage);
-				bind.descriptorCount = 2048;
+				bind.descriptorCount = is_structure ? KB / 2 : KB;
 				Instance_bindings.push_back(bind);
 				bindings_count++;
 				break;
@@ -2332,7 +2333,7 @@ namespace vk {
 			binds_flag.pBindingFlags = binds_flags.data();
 
 
-			if (SceneGlobalData_bindings.empty() == false)
+			if (!SceneGlobalData_bindings.empty())
 			{
 				VkDescriptorSetLayoutCreateInfo _info = {};
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -2369,7 +2370,7 @@ namespace vk {
 
 				//===============================================================
 			}
-			if (Instance_bindings.empty() == false)
+			if (!Instance_bindings.empty())
 			{
 				pipeline->bindless = true;
 				VkDescriptorSetLayoutCreateInfo _info = {};
