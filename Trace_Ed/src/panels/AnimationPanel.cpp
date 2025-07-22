@@ -4,7 +4,7 @@
 #include "../TraceEditor.h"
 #include "scene/Entity.h"
 #include "serialize/AnimationsSerializer.h"
-#include "resource/AnimationsManager.h"
+#include "resource/GenericAssetManager.h"
 #include "animation/AnimationEngine.h"
 #include "../utils/ImGui_utils.h"
 #include "core/events/EventsSystem.h"
@@ -158,7 +158,7 @@ namespace trace {
                     static char buf[1024] = { 0 };
                     memcpy_s(buf, 1024, payload->Data, payload->DataSize);
                     std::filesystem::path p = buf;
-                    Ref<AnimationClip> ac = AnimationsManager::get_instance()->GetClip(p.filename().string());
+                    Ref<AnimationClip> ac = GenericAssetManager::get_instance()->Get<AnimationClip>(p.filename().string());
                     if (!ac)
                     {
                         ac = AnimationsSerializer::DeserializeAnimationClip(p.string());
@@ -296,7 +296,7 @@ namespace trace {
                         {
                             path = std::filesystem::path(result += ".trcac");
                         }
-                        Ref<AnimationClip> clip = AnimationsManager::get_instance()->CreateClip(path.filename().string());
+                        Ref<AnimationClip> clip = GenericAssetManager::get_instance()->CreateAssetHandle<AnimationClip>(path.filename().string());
                         AnimationsSerializer::SerializeAnimationClip(clip, path.string());
                         clip.free();
                     }

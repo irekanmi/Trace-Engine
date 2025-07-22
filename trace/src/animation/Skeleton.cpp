@@ -28,6 +28,10 @@ namespace trace::Animation {
 
 		return true;
 	}
+	bool Skeleton::Create()
+	{
+		return true;
+	}
 	void Skeleton::Destroy()
 	{
 	}

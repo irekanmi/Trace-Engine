@@ -64,7 +64,10 @@ namespace trace {
 	{
 
 	public:
-		~AnimationClip(){}
+		bool Create();
+		virtual void Destroy() override;
+
+		virtual ~AnimationClip() override {};
 
 		std::unordered_map<StringID, AnimationDataTrack>& GetTracks() { return m_tracks; }
 		float GetDuration() { return m_duration; }

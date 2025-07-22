@@ -5,7 +5,8 @@
 #include "backends/Renderutils.h"
 #include "core/Coretypes.h"
 #include "external_utils.h"
-#include "resource/ModelManager.h"
+#include "resource/GenericAssetManager.h"
+
 
 
 #include "glm/ext.hpp"
@@ -27,6 +28,17 @@ namespace trace {
 	{
 		
 
+	}
+
+	bool Model::Create(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices)
+	{
+		Init(data, indices);
+		return true;
+	}
+
+	void Model::Destroy()
+	{
+		Release();
 	}
 
 	void Model::Init(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices)
@@ -71,9 +83,27 @@ namespace trace {
 		}
 		else
 		{
-			result = ModelManager::get_instance()->LoadModel_Runtime(id);
+			result = GenericAssetManager::get_instance()->Load_Runtime<Model>(id);
 		}
 		return result;
+	}
+
+	Ref<Model> Model::Deserialize(DataStream* stream)
+	{
+		std::string model_name;
+		Reflection::Deserialize(model_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+
+		Ref<Model> model = GenericAssetManager::get_instance()->TryGet<Model>(model_name);
+		if (model)
+		{
+			TRC_WARN("{} model has already been loaded");
+			return model;
+		}
+		Model mdl;
+		Reflection::Deserialize(mdl, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		model = GenericAssetManager::get_instance()->CreateAssetHandle<Model>(model_name, mdl.GetVertices(), mdl.GetIndices());
+
+		return model;
 	}
 
 	void generateDefaultCube(std::vector<Vertex>& data, std::vector<uint32_t>& indices)

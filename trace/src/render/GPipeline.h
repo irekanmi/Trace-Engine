@@ -5,7 +5,10 @@
 #include "Graphics.h"
 #include "resource/HashTable.h"
 #include "resource/Resource.h"
+#include "resource/Ref.h"
 #include "GHandle.h"
+#include "serialize/DataStream.h"
+#include "scene/UUID.h"
 
 namespace trace {
 
@@ -16,7 +19,11 @@ namespace trace {
 
 	public:
 		GPipeline();
-		~GPipeline();
+		virtual ~GPipeline();
+
+		bool Create(PipelineStateDesc desc, bool auto_fill = true);
+		virtual void Destroy() override;
+		bool RecreatePipeline(PipelineStateDesc desc);
 
 		PipelineStateDesc& GetDesc() { return m_desc; }
 
@@ -44,6 +51,9 @@ namespace trace {
 		void SetSceneStructs(std::vector<std::pair<uint32_t, uint32_t>>& structs) { m_scenceStruct = std::move(structs); }
 		void SetPipelineType(uint32_t pipeline_type) { m_pipelineType = pipeline_type; }
 		void SetDesc(PipelineStateDesc& desc) { m_desc = desc; }
+
+		static Ref<GPipeline> Deserialize(UUID id);
+		static Ref<GPipeline> Deserialize(DataStream* stream);
 
 	private:
 		HashTable<uint32_t> m_hashTable;

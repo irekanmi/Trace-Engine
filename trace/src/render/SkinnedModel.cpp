@@ -18,6 +18,7 @@ namespace trace {
 	SkinnedModel::SkinnedModel(const std::vector<SkinnedVertex>& data, const std::vector<uint32_t> indices)
 	{
 		Init(data, indices);
+
 	}
 
 	SkinnedModel::~SkinnedModel()
@@ -57,6 +58,13 @@ namespace trace {
 		RenderFunc::DestroyBuffer(&m_indexBuffer);
 	}
 
+	bool SkinnedModel::Create(std::vector<SkinnedVertex>& data, std::vector<uint32_t>& indices)
+	{
+		Init(data, indices);
+
+		return true;
+	}
+
 	void SkinnedModel::Destroy()
 	{
 		Release();
@@ -89,9 +97,9 @@ namespace trace {
 			return model;
 		}
 
-		model = GenericAssetManager::get_instance()->CreateAssetHandle<SkinnedModel>(model_name);
-		Reflection::Deserialize(*model.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
-		model->Init(model->GetVertices(), model->GetIndices());
+		SkinnedModel mdl;
+		Reflection::Deserialize(mdl, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		model = GenericAssetManager::get_instance()->CreateAssetHandle<SkinnedModel>(model_name, mdl.GetVertices(), mdl.GetIndices());
 
 		return model;
 	}

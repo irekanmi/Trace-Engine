@@ -26,6 +26,7 @@ namespace trace::Animation {
 
 	public:
 		bool Create(const std::string& name, const std::string& root_node, std::vector<Bone>& bones);
+		bool Create();
 		virtual void Destroy() override;
 
 		std::string& GetSkeletonName() { return m_name; }

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef TRC_REMOVE
+
 #include "Entity.h"
 #include "Scene.h"
 #include "resource/Ref.h"
@@ -41,3 +43,5 @@ namespace trace {
 	};
 
 }
+
+#endif

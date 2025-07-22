@@ -14,12 +14,12 @@
 #include "RenderComposer.h"
 #include "render_graph/RenderGraph.h"
 #include "backends/UIutils.h"
-#include "resource/MaterialManager.h"
-#include "resource/PipelineManager.h"
+#include "resource/GenericAssetManager.h"
 #include "core/memory/MemoryManager.h"
 #include "debug/Debugger.h"
 #include "core/defines.h"
 #include "render/SkinnedModel.h"
+#include "resource/DefaultAssetsManager.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -653,7 +653,7 @@ namespace trace {
 
 			glm::mat4* M_model = &data.transform;
 			Model* _model = data.object;
-			MaterialInstance* _mi = data.material? data.material : MaterialManager::get_instance()->GetMaterial("default").get();
+			MaterialInstance* _mi = data.material? data.material : DefaultAssetsManager::default_material.get();
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
@@ -715,7 +715,7 @@ namespace trace {
 
 	void Renderer::RenderLights()
 	{
-		Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("light_pipeline");
+		//Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("light_pipeline");
 		//glm::mat4 view_proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
 		/*for (int i = 0; i < m_meshLightSize; i++)
@@ -780,7 +780,7 @@ namespace trace {
 
 	void Renderer::RenderQuads(int32_t render_graph_index)
 	{
-		quadBatchPipeline = PipelineManager::get_instance()->GetPipeline("quad_batch_pipeline");
+		quadBatchPipeline = DefaultAssetsManager::quad_pipeline;
 
 		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
 
@@ -811,7 +811,7 @@ namespace trace {
 	
 	void Renderer::RenderTexts()
 	{
-		textBatchPipeline = PipelineManager::get_instance()->GetPipeline("text_batch_pipeline");
+		textBatchPipeline = DefaultAssetsManager::text_batch_pipeline;
 		/*glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (uint32_t i = 0; i < num_avalible_text_batch; i++)
 		{
@@ -841,7 +841,7 @@ namespace trace {
 		uint32_t offset = 0;
 		uint32_t start_vertex = 0;
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
-		text_pipeline = PipelineManager::get_instance()->GetPipeline("text_pipeline");
+		text_pipeline = DefaultAssetsManager::text_pipeline;
 
 		for (GTexture*& i : graph_data.text_atlases)
 		{
@@ -875,7 +875,7 @@ namespace trace {
 		{
 			Debugger::DebugRenderData& render_data = debugger->GetRenderData();
 			if (render_data.vert_count <= 0) return;
-			Ref<GPipeline> render_pipeline = PipelineManager::get_instance()->GetPipeline("debug_line_pipeline");
+			Ref<GPipeline> render_pipeline = DefaultAssetsManager::debug_line_pipeline;
 
 			glm::mat4 proj = graph_data->_camera->GetProjectionMatix() * graph_data->_camera->GetViewMatrix();
 			RenderFunc::OnDrawStart(&g_device, render_pipeline.get());

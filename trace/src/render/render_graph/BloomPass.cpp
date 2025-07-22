@@ -5,8 +5,8 @@
 #include "backends/Renderutils.h"
 #include "render/ShaderParser.h"
 #include "FrameData.h"
-#include "resource/PipelineManager.h"
-#include "resource/ShaderManager.h"
+
+#include "resource/GenericAssetManager.h"
 #include "render/GShader.h"
 #include "RenderGraph.h"
 
@@ -59,13 +59,23 @@ namespace trace {
 			m_renderer->GetAvaliableRenderPasses()["BLOOM_UPSAMPLE_PASS"] = &m_upSamplePass;
 		};
 
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
+
 		if (AppSettings::is_editor)
 		{
 
+
 			{
 
-				Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-				Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
+				Ref<GShader> VertShader;
+				Ref<GShader> FragShader;
+
+				Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("fullscreen.vert.glsl", "fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+				Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("bloom_prefilter.frag.glsl", "bloom_prefilter.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				VertShader = vert_shader;
+				FragShader = frag_shader;
 
 				ShaderResources s_res = {};
 				ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -87,7 +97,7 @@ namespace trace {
 				_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-				m_prefilterPipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_prefilter_pass_pipeline");
+				m_prefilterPipeline = asset_manager->CreateAssetHandle<GPipeline>("bloom_prefilter_pass_pipeline", _ds2);
 				if (!m_prefilterPipeline)
 				{
 					TRC_ERROR("Failed to initialize or create bloom_prefilter_pass_pipeline");
@@ -98,8 +108,16 @@ namespace trace {
 			};
 
 			{
-				Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-				Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+				Ref<GShader> VertShader;
+				Ref<GShader> FragShader;
+
+
+				Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("fullscreen.vert.glsl", "fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+				Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("bloom_downsample.frag.glsl", "bloom_downsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				VertShader = vert_shader;
+				FragShader = frag_shader;
 
 				ShaderResources s_res = {};
 				ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -122,7 +140,7 @@ namespace trace {
 				_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-				m_downSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_downsample_pass_pipeline");
+				m_downSamplePipeline = asset_manager->CreateAssetHandle<GPipeline>("bloom_downsample_pass_pipeline", _ds2);
 				if (!m_downSamplePipeline)
 				{
 					TRC_ERROR("Failed to initialize or create bloom_downsample_pass_pipeline");
@@ -133,8 +151,15 @@ namespace trace {
 			};
 
 			{
-				Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-				Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+				Ref<GShader> VertShader;
+				Ref<GShader> FragShader;
+
+				Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("fullscreen.vert.glsl", "fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+				Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("bloom_upsample.frag.glsl", "bloom_upsample.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				VertShader = vert_shader;
+				FragShader = frag_shader;
 
 				ShaderResources s_res = {};
 				ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -164,7 +189,7 @@ namespace trace {
 				_ds2.blend_state = clr_bld;
 
 
-				m_upSamplePipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "bloom_upsample_pass_pipeline");
+				m_upSamplePipeline = asset_manager->CreateAssetHandle<GPipeline>("bloom_upsample_pass_pipeline", _ds2);
 				if (!m_upSamplePipeline)
 				{
 					TRC_ERROR("Failed to initialize or create bloom_upsample_pass_pipeline");
@@ -176,11 +201,11 @@ namespace trace {
 		else
 		{
 		UUID id = GetUUIDFromName("bloom_prefilter_pass_pipeline");
-		m_prefilterPipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		m_prefilterPipeline = asset_manager->Load_Runtime<GPipeline>(id);
 		id = GetUUIDFromName("bloom_downsample_pass_pipeline");
-		m_downSamplePipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		m_downSamplePipeline = asset_manager->Load_Runtime<GPipeline>(id);
 		id = GetUUIDFromName("bloom_upsample_pass_pipeline");
-		m_upSamplePipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+		m_upSamplePipeline = asset_manager->Load_Runtime<GPipeline>(id);
 
 		}
 

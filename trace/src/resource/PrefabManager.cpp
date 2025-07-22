@@ -12,24 +12,22 @@ namespace trace {
 
 
 
-	bool PrefabManager::Init(uint32_t num_units)
+	bool PrefabManager::Init()
 	{
-		bool result = AssetManager::Init(num_units);
 
 		m_prefabScene = new Scene;// TODO: Use custom allocator
 		m_prefabScene->Create();
 		m_prefabScene->SetName("PreFab Edit");
-		return result;
+		return true;
 	}
 
 	void PrefabManager::Shutdown()
 	{
-		AssetManager::Shutdown();
 		m_prefabScene->Destroy();
 		delete m_prefabScene; //TODO: Use custom allocator
 	}
 
-	Ref<Prefab> PrefabManager::Create(const std::string& name)
+	/*Ref<Prefab> PrefabManager::Create(const std::string& name)
 	{
 		Ref<Prefab> result;
 		result = Get(name);
@@ -108,7 +106,7 @@ namespace trace {
 	void PrefabManager::SetAssetMap(std::unordered_map<UUID, AssetHeader>& map)
 	{
 		m_assetsMap = map;
-	}
+	}*/
 
 	PrefabManager* PrefabManager::get_instance()
 	{

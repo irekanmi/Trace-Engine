@@ -6,9 +6,23 @@
 #include "serialize/AnimationsSerializer.h"
 #include "core/Coretypes.h"
 #include "external_utils.h"
-#include "resource/AnimationsManager.h"
+#include "resource/GenericAssetManager.h"
 
 namespace trace {
+	bool AnimationClip::Create()
+	{
+		m_tracks.clear();
+		m_duration = 1.0f;
+		m_sampleRate = 30;
+
+		return true;
+	}
+
+	void AnimationClip::Destroy()
+	{
+		m_tracks.clear();
+	}
+
 
 	bool AnimationClip::Compare(AnimationClip* other)
 	{
@@ -90,7 +104,7 @@ namespace trace {
 		}
 		else
 		{
-			return AnimationsManager::get_instance()->LoadClip_Runtime(id);
+			return GenericAssetManager::get_instance()->Load_Runtime<AnimationClip>(id);
 		}
 
 		return result;

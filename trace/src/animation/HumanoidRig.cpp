@@ -47,6 +47,16 @@ namespace trace::Animation {
 		m_bones.fill(-1);
 	}
 
+	bool HumanoidRig::Create()
+	{
+		return true;
+	}
+
+	bool HumanoidRig::Create(void* null_init)
+	{
+		return true;
+	}
+
 	void HumanoidRig::Destroy()
 	{
 	}

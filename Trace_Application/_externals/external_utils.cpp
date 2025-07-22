@@ -4,7 +4,7 @@
 #include "scene/UUID.h"
 #include "render/Model.h"
 #include "render/SkinnedModel.h"
-#include "scene/SceneManager.h"
+
 #include "../src/TraceGame.h"
 
 namespace trace {

@@ -6,19 +6,17 @@
 #include "core/FileSystem.h"
 #include "spirv_cross/spirv_reflect.h"
 #include "render/GShader.h"
-#include "resource/ShaderManager.h"
+
 #include "scene/UUID.h"
 #include "spdlog/fmt/fmt.h"
 #include "core/Utils.h"
+#include "external_utils.h"
+#include "resource/DefaultAssetsManager.h"
 
 #include <filesystem>
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
 
-namespace trace {
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
-}
 // Interface that determines how include files in shader will be processed
 class IncludeInterface : public shaderc::CompileOptions::IncluderInterface
 {
@@ -29,7 +27,7 @@ public:
 		const char* requesting_source,
 		size_t include_depth) override
 	{
-		std::string shader_res_path = trace::ShaderManager::get_instance()->GetShaderResourcePath();
+		std::string shader_res_path = trace::DefaultAssetsManager::assets_path + "/shaders";
 		std::filesystem::path path(shader_res_path);
 		path /= requested_source;
 

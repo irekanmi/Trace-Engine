@@ -1,9 +1,7 @@
 #include "pch.h"
 
 #include "MaterialSerializer.h"
-#include "resource/MaterialManager.h"
-#include "resource/PipelineManager.h"
-#include "resource/TextureManager.h"
+#include "resource/GenericAssetManager.h"
 #include "core/FileSystem.h"
 #include "backends/Renderutils.h"
 #include "scene/UUID.h"
@@ -290,7 +288,7 @@ namespace trace {
 		Ref<MaterialInstance> result;
 
 		std::filesystem::path p = file_path;
-		result = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+		result = GenericAssetManager::get_instance()->TryGet<MaterialInstance>(p.filename().string());
 		if (result)
 		{
 			TRC_WARN("{} has already been loaded", p.filename().string());
@@ -410,7 +408,7 @@ namespace trace {
 
 		std::filesystem::path pipe_path = GetPathFromUUID(data["Pipeline ID"].as<uint64_t>());
 		std::string pipe_name = pipe_path.filename().string();
-		Ref<GPipeline> pipeline = PipelineManager::get_instance()->GetPipeline(pipe_name);
+		Ref<GPipeline> pipeline = GenericAssetManager::get_instance()->Get<GPipeline>(pipe_name);
 
 		if (!pipeline)
 		{
@@ -423,7 +421,7 @@ namespace trace {
 			return result;
 		}
 
-		result = MaterialManager::get_instance()->CreateMaterial(material_name, pipeline);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle<MaterialInstance>(material_name, pipeline);
 		YAML::Node res = data["Data"];
 		if (res)
 		{
@@ -438,7 +436,7 @@ namespace trace {
 				}
 			}
 		}
-		RenderFunc::PostInitializeMaterial(result.get(), pipeline);
+		//result->RecreateMaterial(pipeline);
 
 		return result;
 	}
@@ -449,7 +447,7 @@ namespace trace {
 
 		Ref<MaterialInstance> result;
 
-		result = MaterialManager::get_instance()->GetMaterial(material_name);
+		result = GenericAssetManager::get_instance()->TryGet<MaterialInstance>(material_name);
 		if (result)
 		{
 			TRC_WARN("{} has already been loaded", material_name);
@@ -458,7 +456,7 @@ namespace trace {
 
 		uint64_t pipeline_id = 0;
 		stream->Read<uint64_t>(pipeline_id);
-		Ref<GPipeline> pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(pipeline_id);
+		Ref<GPipeline> pipeline = GenericAssetManager::get_instance()->Load_Runtime<GPipeline>(pipeline_id);
 
 		if (!pipeline)
 		{
@@ -466,7 +464,7 @@ namespace trace {
 			return result;
 		}
 
-		result = MaterialManager::get_instance()->CreateMaterial(material_name, pipeline);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle<MaterialInstance>(material_name, pipeline);
 		MaterialInstance* material = result.get();
 
 		int32_t data_count = 0;
@@ -541,7 +539,7 @@ namespace trace {
 			{
 				UUID tex_id = 0;
 				stream->Read<UUID>(tex_id);
-				Ref<GTexture> tex = TextureManager::get_instance()->LoadTexture_Runtime(tex_id);
+				Ref<GTexture> tex = GenericAssetManager::get_instance()->Load_Runtime<GTexture>(tex_id);
 				dst = tex;
 				break;
 			}
@@ -585,6 +583,8 @@ namespace trace {
 			}
 
 		}
+
+		//result->RecreateMaterial(pipeline);
 
 		return result;
 	}
@@ -662,7 +662,7 @@ namespace trace {
 			{
 				UUID tex_id = 0;
 				stream.Read<UUID>(tex_id);
-				Ref<GTexture> tex = TextureManager::get_instance()->LoadTexture_Runtime(tex_id);
+				Ref<GTexture> tex = GenericAssetManager::get_instance()->Load_Runtime<GTexture>(tex_id);
 				dst = tex;
 				break;
 			}

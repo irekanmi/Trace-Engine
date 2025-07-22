@@ -5,8 +5,8 @@
 #include "RenderGraph.h"
 #include "backends/Renderutils.h"
 #include "render/GPipeline.h"
-#include "resource/PipelineManager.h"
-#include "resource/ShaderManager.h"
+
+#include "resource/GenericAssetManager.h"
 #include "FrameData.h"
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
@@ -56,10 +56,12 @@ namespace trace {
 			m_renderer->GetAvaliableRenderPasses()["SPOT_SHADOW_MAP_PASS"] = &m_renderPass;
 		};
 
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
+
 		if (AppSettings::is_editor)
 		{
-			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("sun_shadow.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("empty.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = asset_manager->CreateAssetHandle<GShader>("sun_shadow.vert.glsl", "sun_shadow.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = asset_manager->CreateAssetHandle<GShader>("empty.frag.glsl", "empty.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -79,7 +81,7 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-			m_sun_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "sun_shadow_map_pass_pipeline");
+			m_sun_pipeline = asset_manager->CreateAssetHandle<GPipeline>("sun_shadow_map_pass_pipeline", _ds2);
 			if (!m_sun_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create sun_shadow_map_pass_pipeline");
@@ -88,7 +90,7 @@ namespace trace {
 
 			// Skinned Models -------------------
 
-			VertShader = ShaderManager::get_instance()->CreateShader("sun_shadow_skinned.vert.glsl", ShaderStage::VERTEX_SHADER);
+			VertShader = asset_manager->CreateAssetHandle<GShader>("sun_shadow_skinned.vert.glsl", "sun_shadow_skinned.vert.glsl", ShaderStage::VERTEX_SHADER);
 
 			ShaderResources sun_skinned_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), sun_skinned_res);
@@ -99,7 +101,7 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 			_ds2.input_layout = SkinnedVertex::get_input_layout();
 
-			m_sun_skinned_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "sun_shadow_skinned_map_pass_pipeline");
+			m_sun_skinned_pipeline = asset_manager->CreateAssetHandle<GPipeline>("sun_shadow_skinned_map_pass_pipeline", _ds2);
 			if (!m_sun_skinned_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create sun_shadow_skinned_map_pass_pipeline");
@@ -108,7 +110,7 @@ namespace trace {
 
 			_ds2.rasteriser_state = { CullMode::BACK, FillMode::SOLID };
 
-			m_spot_skinned_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "spot_shadow_skinned_map_pass_pipeline");
+			m_spot_skinned_pipeline = asset_manager->CreateAssetHandle<GPipeline>("spot_shadow_skinned_map_pass_pipeline", _ds2);
 			if (!m_spot_skinned_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create spot_shadow_skinned_map_pass_pipeline");
@@ -117,7 +119,7 @@ namespace trace {
 
 			// -----------------------------------
 
-			VertShader = ShaderManager::get_instance()->CreateShader("spot_shadow.vert.glsl", ShaderStage::VERTEX_SHADER);
+			VertShader = asset_manager->CreateAssetHandle<GShader>("spot_shadow.vert.glsl", "spot_shadow.vert.glsl", ShaderStage::VERTEX_SHADER);
 
 			ShaderResources spot_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), spot_res);
@@ -128,7 +130,7 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::BACK, FillMode::SOLID };
 			_ds2.input_layout = Vertex::get_input_layout();
 
-			m_spot_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "spot_shadow_map_pass_pipeline");
+			m_spot_pipeline = asset_manager->CreateAssetHandle<GPipeline>("spot_shadow_map_pass_pipeline", _ds2);
 			if (!m_spot_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create spot_shadow_map_pass_pipeline");
@@ -139,16 +141,16 @@ namespace trace {
 		else
 		{
 			UUID id = GetUUIDFromName("sun_shadow_map_pass_pipeline");
-			m_sun_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_sun_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 
 			id = GetUUIDFromName("spot_shadow_map_pass_pipeline");
-			m_spot_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_spot_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 
 			id = GetUUIDFromName("sun_shadow_skinned_map_pass_pipeline");
-			m_sun_skinned_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_sun_skinned_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 
 			id = GetUUIDFromName("spot_shadow_skinned_map_pass_pipeline");
-			m_spot_skinned_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_spot_skinned_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 		}
 
 	}

@@ -21,6 +21,7 @@ namespace trace::MotionMatching {
 		std::vector<int32_t> trajectory_features;
 		int32_t frames_per_second = 60;
 
+		bool Create() { return true; };
 		virtual void Destroy() override;
 
 		static Ref<MotionMatchingInfo> Deserialize(UUID id);
@@ -59,13 +60,15 @@ namespace trace::MotionMatching {
 
 	public:
 
+		bool Create() { return true; }
+		virtual void Destroy() override;
+
 		bool ExtractPoseData(Ref<AnimationClip> clip, Ref<Animation::Skeleton> skeleton);
 		void NormalizeDatabase();
 		std::vector<FeatureData>& GetFeaturesData() { return m_poseData; }
 		FeatureData* GetData(int32_t index);
 		Ref<AnimationClip> GetAnimation(int32_t animation_index);
 		std::unordered_map<int32_t, Ref<AnimationClip>>& GetAnimations() { return m_animationIndex; }
-		virtual void Destroy() override;
 		void Clear();
 		FeatureData NormalizeFeature(FeatureData& feature);
 		FeatureData DenormalizeFeature(FeatureData& feature);

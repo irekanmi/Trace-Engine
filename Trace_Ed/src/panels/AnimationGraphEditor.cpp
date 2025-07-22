@@ -1,7 +1,7 @@
 
 #include "AnimationGraphEditor.h"
 #include "animation/Animation.h"
-#include "resource/AnimationsManager.h"
+
 #include "resource/GenericAssetManager.h"
 #include "serialize/AnimationsSerializer.h"
 #include "../utils/ImGui_utils.h"

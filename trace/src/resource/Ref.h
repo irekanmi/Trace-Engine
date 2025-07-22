@@ -25,7 +25,7 @@ public:
 
 		if (is_valid())
 		{
-			_ptr->m_refCount--;
+			_ptr->Decrement();
 			if (_ptr->m_refCount <= 0)
 			{
 				Unload(_ptr);
@@ -33,7 +33,7 @@ public:
 		}
 
 		TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<{}>", _STR(T));
-		other.get()->m_refCount++;
+		other.get()->Increment();
 		_ptr = other._ptr;
 		Unload = other.Unload;
 	}
@@ -41,7 +41,7 @@ public:
 	{
 		if (is_valid())
 		{
-			_ptr->m_refCount--;
+			_ptr->Decrement();
 			if (_ptr->m_refCount <= 0)
 			{
 				Unload(_ptr);
@@ -51,7 +51,7 @@ public:
 		//TRC_ASSERT(other.get() != nullptr, "Ensure to assign a vaild Reference Ref<{}>", _STR(T));
 		_ptr = other._ptr;
 		Unload = other.Unload;
-		if(_ptr) other.get()->m_refCount++;
+		if(_ptr) other.get()->Increment();
 	}
 
 
@@ -60,14 +60,14 @@ public:
 		TRC_ASSERT(value != nullptr, "Can't not construct from a null pointer Ref<{}>", typeid(T).name());
 		Unload = unload;
 		_ptr = value;
-		_ptr->m_refCount++;
+		_ptr->Increment();
 	}
 
 	Ref(Ref&& other)
 	{
 		if (other.is_valid())
 		{
-			other.get()->m_refCount++;
+			other.get()->Increment();
 			_ptr = other._ptr;
 			Unload = other.Unload;
 		}
@@ -78,7 +78,7 @@ public:
 	{
 		if (other.is_valid())
 		{
-			other.get()->m_refCount++;
+			other.get()->Increment();
 			_ptr = other._ptr;
 			Unload = other.Unload;
 		}
@@ -91,7 +91,7 @@ public:
 		Unload = other.Unload;
 		if (_ptr)
 		{
-			_ptr->m_refCount++;
+			_ptr->Increment();
 		}
 	}
 
@@ -131,7 +131,7 @@ public:
 	{
 		if (_ptr != nullptr)
 		{
-			_ptr->m_refCount--;
+			_ptr->Decrement();
 			if (_ptr->m_refCount <= 0)
 			{
 				Unload(_ptr);

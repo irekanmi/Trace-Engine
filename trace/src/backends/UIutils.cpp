@@ -122,7 +122,8 @@ namespace trace {
 #include "core/platform/Vulkan/VKtypes.h"
 #include "core/platform/Vulkan/VkUtils.h"
 #include "core/events/EventsSystem.h"
-#include "resource/FontManager.h"
+
+#include "resource/DefaultAssetsManager.h"
 #include "render/GRenderPass.h"
 #include "render/render_graph/RenderGraph.h"
 #include "render/GTexture.h"
@@ -363,7 +364,7 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 	ImGui::StyleColorsDark();
 
 	// TODO: Get font path from AppSettings::exe_path
-	std::string font_path = trace::FontManager::get_instance()->GetFontResourcePath() + "/Ruda-Bold.ttf";
+	std::string font_path = trace::DefaultAssetsManager::assets_path + "/fonts" + "/Ruda-Bold.ttf";
 	io.FontDefault = io.Fonts->AddFontFromFileTTF(font_path.c_str(), 13.0f);
 
 

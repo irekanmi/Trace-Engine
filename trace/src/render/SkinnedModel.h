@@ -20,6 +20,9 @@ namespace trace {
 		SkinnedModel(const std::vector<SkinnedVertex>& data, const std::vector<uint32_t> indices);
 		~SkinnedModel();
 
+		bool Create(std::vector<SkinnedVertex>& data, std::vector<uint32_t>& indices);
+		virtual void Destroy() override;
+
 		void Init(const std::vector<SkinnedVertex>& data, const std::vector<uint32_t>& indices);
 		uint32_t GetIndexCount() { return static_cast<uint32_t>(m_indices.size()); }
 		GBuffer* GetIndexBuffer() { return &m_indexBuffer; }
@@ -27,7 +30,6 @@ namespace trace {
 		std::vector<SkinnedVertex>& GetVertices() { return m_vertices; }
 		std::vector<uint32_t>& GetIndices() { return m_indices; }
 		void Release();
-		virtual void Destroy() override;
 
 		static Ref<SkinnedModel> Deserialize(UUID id);
 		static Ref<SkinnedModel> Deserialize(DataStream* stream);

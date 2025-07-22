@@ -2,17 +2,14 @@
 #include "../src/TraceEditor.h"
 #include "../src/panels/ContentBrowser.h"
 #include "scene/UUID.h"
-#include "resource/ModelManager.h"
-#include "resource/MeshManager.h"
 #include "scene/Components.h"
 #include "serialize/yaml_util.h"
 #include "render/GTexture.h"
 #include "resource/Ref.h"
-#include "resource/TextureManager.h"
 #include "../src/import/Importer.h"
 #include "render/SkinnedModel.h"
 #include "resource/GenericAssetManager.h"
-#include "scene/SceneManager.h"
+
 #include "serialize/SceneSerializer.h"
 
 #include <vector>
@@ -45,7 +42,7 @@ namespace trace {
 		ContentBrowser* content_browser = editor->GetContentBrowser();
 		Importer* importer = editor->GetImporter();
 
-		Ref<Model> model = ModelManager::get_instance()->GetModel(model_name);
+		Ref<Model> model = GenericAssetManager::get_instance()->Get<Model>(model_name);
 		std::filesystem::path p = GetPathFromUUID(uuid);
 
 		if (model)
@@ -104,10 +101,10 @@ namespace trace {
 
 		Ref<GTexture> result;
 		std::filesystem::path p = GetPathFromUUID(uuid);
-		result = TextureManager::get_instance()->GetTexture(p.filename().string());
+		result = GenericAssetManager::get_instance()->Get<GTexture>(p.filename().string());
 		if (!result && !p.string().empty())
 		{
-			result = TextureManager::get_instance()->LoadTexture_(p.string());
+			result = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
 		}
 		else if (!result && p.string().empty())
 		{
@@ -125,7 +122,7 @@ namespace trace {
 	bool LoadAndSetScene(const std::string& filename)
 	{
 		
-		Ref<Scene> scene = SceneManager::get_instance()->GetScene(filename);
+		Ref<Scene> scene = GenericAssetManager::get_instance()->Get<Scene>(filename);
 		if (!scene)
 		{
 			UUID id = GetUUIDFromName(filename);

@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "SkyBox.h"
-#include "resource/MeshManager.h"
+#include "resource/DefaultAssetsManager.h"
 
 namespace trace{
 
@@ -13,7 +13,7 @@ namespace trace{
 
 	SkyBox::SkyBox(Texture_Ref cube_map)
 	{
-		Cube = MeshManager::get_instance()->GetDefault("Cube");
+		//Cube = DefaultAssetsManager::Cube;
 		CubeMap = cube_map;
 	}
 

@@ -15,8 +15,10 @@ namespace trace {
 	}
 	void GenericAssetManager::Shutdown()
 	{
-		for (Resource* asset : m_assets)
+
+		for (int32_t i = (m_numUnits - 1); i >= 0 ; i--)
 		{
+			Resource* asset = m_assets[i];
 			if (!asset)
 			{
 				continue;
@@ -25,8 +27,11 @@ namespace trace {
 			{
 				continue;
 			}
-			UnLoad(asset);
 			TRC_TRACE("Asset was still in use, name : {}, RefCount : {}", asset->GetName(), asset->m_refCount);
+			asset->m_refCount = 0;
+			asset->Destroy();
+
+			delete asset;//TODO: Use custom memory allocator
 		}
 	}
 	void GenericAssetManager::UnLoad(Resource* asset)

@@ -1,29 +1,25 @@
 
 #include "InspectorPanel.h"
 #include "scene/Components.h"
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "imgui_stdlib.h"
-#include "glm/gtc/type_ptr.hpp"
 #include "backends/Renderutils.h"
 #include "backends/UIutils.h"
-#include "resource/MaterialManager.h"
-#include "resource/ModelManager.h"
-#include "resource/MeshManager.h"
-#include "resource/FontManager.h"
 #include "resource/PrefabManager.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
 #include "scripting/ScriptEngine.h"
 #include "../TraceEditor.h"
-#include "resource/AnimationsManager.h"
-#include "resource/TextureManager.h"
+#include "resource/GenericAssetManager.h"
 #include "AnimationPanel.h"
 #include "../utils/ImGui_utils.h"
 #include "HierachyPanel.h"
 #include "ContentBrowser.h"
 #include "external_utils.h"
+#include "resource/DefaultAssetsManager.h"
 
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_stdlib.h"
+#include "glm/gtc/type_ptr.hpp"
 
 namespace trace {
 
@@ -293,7 +289,7 @@ namespace trace {
 			if (ImGui::MenuItem("Model Renderer"))
 			{
 				ModelRendererComponent& i = entity.AddComponent<ModelRendererComponent>();
-				i._material = MaterialManager::get_instance()->GetMaterial("default");
+				i._material = DefaultAssetsManager::default_material;
 				comp_dirty = true;
 			}
 			if (ImGui::MenuItem("Skinned Model Renderer"))
@@ -608,12 +604,13 @@ namespace trace {
 			if (!model_res.empty())
 			{
 				std::filesystem::path p = model_res;
-				Ref<Model> md_res = ModelManager::get_instance()->GetModel(p.filename().string());
-				if (!md_res)
+				Ref<Model> md_res = GenericAssetManager::get_instance()->Get<Model>(p.filename().string());
+				// TODO: Implement Model loading
+				/*if (!md_res)
 				{
 					Ref<Mesh> mesh = MeshManager::get_instance()->LoadMeshOnly_(p.parent_path().string());
 					md_res = ModelManager::get_instance()->GetModel(p.filename().string());
-				}
+				}*/
 				if (md_res)
 				{
 					comp._model = md_res;
@@ -654,7 +651,7 @@ namespace trace {
 					static char buf[1024] = { 0 };
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
-					Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+					Ref<MaterialInstance> mt_res = GenericAssetManager::get_instance()->Get<MaterialInstance>(p.filename().string());
 					if (mt_res);
 					else mt_res = MaterialSerializer::Deserialize(p.string());
 					if (mt_res)
@@ -740,7 +737,7 @@ namespace trace {
 			if (!mat_res.empty())
 			{
 				std::filesystem::path p = mat_res;
-				Ref<MaterialInstance> mt_res = MaterialManager::get_instance()->GetMaterial(p.filename().string());
+				Ref<MaterialInstance> mt_res = GenericAssetManager::get_instance()->Get<MaterialInstance>(p.filename().string());
 				if (mt_res);
 				else mt_res = MaterialSerializer::Deserialize(p.string());
 				if (mt_res)
@@ -808,9 +805,9 @@ namespace trace {
 					static char buf[1024] = { 0 };
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
-					Ref<Font> ft = FontManager::get_instance()->GetFont(p.filename().string());
+					Ref<Font> ft = GenericAssetManager::get_instance()->Get<Font>(p.filename().string());
 					if (ft);
-					else ft = FontManager::get_instance()->LoadFont_(p.string());
+					else ft = GenericAssetManager::get_instance()->CreateAssetHandle_<Font>(p.string(), p.string());
 					if (ft)
 					{
 						comp.font = ft;
@@ -822,9 +819,9 @@ namespace trace {
 					static char buf[1024] = { 0 };
 					memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 					std::filesystem::path p = buf;
-					Ref<Font> ft = FontManager::get_instance()->GetFont(p.filename().string());
+					Ref<Font> ft = GenericAssetManager::get_instance()->Get<Font>(p.filename().string());
 					if (ft);
-					else ft = FontManager::get_instance()->LoadFont_(p.string());
+					else ft = GenericAssetManager::get_instance()->CreateAssetHandle_<Font>(p.string(), p.string());
 					if (ft)
 					{
 						comp.font = ft;
@@ -996,9 +993,9 @@ namespace trace {
 				{
 					ImageComponent& comp = entity.GetComponent<ImageComponent>();
 					std::filesystem::path p = buf;
-					Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+					Ref<GTexture> tex = GenericAssetManager::get_instance()->TryGet<GTexture>(p.filename().string());
 					if (tex) {}
-					else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+					else tex = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
 
 					if (tex)
 					{

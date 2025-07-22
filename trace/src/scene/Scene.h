@@ -8,6 +8,7 @@
 #include "scripting/ScriptRegistry.h"
 #include "Components.h"
 #include "core/Coretypes.h"
+#include "serialize/DataStream.h"
 
 namespace trace::Network {
 	class NetworkStream;
@@ -23,10 +24,12 @@ namespace trace {
 	public:
 		Scene(){}
 		Scene(const Scene& other) {/*TODO: Implement*/ };
-		~Scene(){}
+		virtual ~Scene(){}
 
-		void Create();
-		void Destroy();
+		bool Create();
+		virtual void Destroy() override;
+
+
 		void BeginFrame();
 		void EndFrame();
 		void OnStart();
@@ -139,6 +142,9 @@ namespace trace {
 
 		void IterateEntityChildren(Entity entity, std::function<void(Entity)> callback);
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
+
+		static Ref<Scene> Deserialize(UUID id);
+		static Ref<Scene> Deserialize(DataStream* stream);
 
 	private:
 		void ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool skip_inactive = true, bool child_first = false);

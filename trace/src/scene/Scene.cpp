@@ -21,12 +21,15 @@
 #include "networking/NetworkManager.h"
 #include "external_utils.h"
 #include "serialize/SceneSerializeFunctions.h"
+#include "serialize/SceneSerializer.h"
 #include "scene/SceneUtils.h"
+#include "multithreading/JobSystem.h"
+#include "resource/GenericAssetManager.h"
 
 #include "glm/gtx/matrix_decompose.hpp"
 
 namespace trace {
-	void Scene::Create()
+	bool Scene::Create()
 	{
 		m_scriptRegistry.Init(this);
 		m_rootNode = new HierachyComponent(); // TODO: Use Custom Allocator
@@ -52,6 +55,7 @@ namespace trace {
 		m_registry.on_construct<CharacterControllerComponent>().connect<&Scene::OnConstructCharacterControllerComponent>(*this);
 		m_registry.on_destroy<CharacterControllerComponent>().connect<&Scene::OnDestroyCharacterControllerComponent>(*this);
 
+		return true;
 	}
 	void Scene::Destroy()
 	{
@@ -96,8 +100,14 @@ namespace trace {
 	void Scene::EndFrame()
 	{
 	}
+
+	//TEMP --------
+	Counter* animations_counter = nullptr;
+
 	void Scene::OnStart()
 	{
+		animations_counter = JobSystem::get_instance()->CreateCounter();
+
 		ResolveHierachyTransforms();
 
 		
@@ -807,8 +817,13 @@ namespace trace {
 		net_manager->OnFrameEnd();
 	}
 
+	
+
 	void Scene::OnAnimationUpdate(float deltaTime)
 	{
+
+		JobSystem* job_system = JobSystem::get_instance();
+
 
 		auto animations = m_registry.view<AnimationComponent, ActiveComponent>();
 		for (auto i : animations)
@@ -837,9 +852,20 @@ namespace trace {
 				continue;
 			}
 
-			Entity entity(i, this);
 			
-			anim_graph.graph.Update(deltaTime, this, entity.GetID());
+			
+			Job anim_graph_job;
+			anim_graph_job.job_func = [i, deltaTime, this](void* param)
+			{
+				Entity entity(i, this);
+				AnimationGraphController* anim_graph = (AnimationGraphController*)param;
+				anim_graph->graph.Update(deltaTime, this, entity.GetID());
+			};
+			anim_graph_job.job_params = &anim_graph;
+			anim_graph_job.flags = JobFlagBit::GENERAL;
+
+			job_system->RunJob(anim_graph_job, animations_counter);
+
 		}
 
 		auto sequences = m_registry.view<SequencePlayer, ActiveComponent>();
@@ -922,6 +948,8 @@ namespace trace {
 
 		}
 
+
+		job_system->WaitForCounter(animations_counter);
 	}
 
 
@@ -1204,7 +1232,7 @@ namespace trace {
 				data->Read(prefab_id);
 				UUID id = 0;
 				data->Read(id);
-				Ref<Prefab> obj = PrefabManager::get_instance()->Get(GetNameFromUUID(prefab_id));
+				Ref<Prefab> obj = GenericAssetManager::get_instance()->Get<Prefab>(GetNameFromUUID(prefab_id));
 				if (!obj)
 				{
 					TRC_ASSERT(false, "These is not suppose to happen, Function: {}", __FUNCTION__);
@@ -2398,6 +2426,26 @@ namespace trace {
 
 		to->InitializeSceneComponents();
 
+	}
+
+	Ref<Scene> Scene::Deserialize(UUID id)
+	{
+		Ref<Scene> result;
+		if (AppSettings::is_editor)
+		{
+			std::string name = GetPathFromUUID(id).string();
+			result = SceneSerializer::Deserialize(name);
+		}
+		else
+		{
+			result = GenericAssetManager::get_instance()->Load_Runtime<Scene>(id);
+		}
+		return result;
+	}
+
+	Ref<Scene> Scene::Deserialize(DataStream* stream)
+	{
+		return SceneSerializer::Deserialize(stream);
 	}
 
 	void Scene::ProcessEntityHierachy(HierachyComponent& hierachy, std::function<void(Entity, UUID, Scene*)>& callback, bool skip_inactive, bool child_first)

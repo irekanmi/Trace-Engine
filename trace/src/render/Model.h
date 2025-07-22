@@ -9,6 +9,7 @@
 #include "resource/Ref.h"
 #include "scene/UUID.h"
 #include "reflection/TypeRegistry.h"
+#include "serialize/DataStream.h"
 
 namespace trace {
 
@@ -18,7 +19,10 @@ namespace trace {
 	public:
 		Model();
 		Model(const std::vector<Vertex>& data, const std::vector<uint32_t> indices);
-		~Model();
+		virtual ~Model();
+
+		bool Create(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices);
+		virtual void Destroy();
 
 		void Init(const std::vector<Vertex>& data, const std::vector<uint32_t>& indices);
 		uint32_t GetIndexCount() { return static_cast<uint32_t>(m_indices.size()); }
@@ -29,6 +33,7 @@ namespace trace {
 		void Release();
 
 		static Ref<Model> Deserialize(UUID id);
+		static Ref<Model> Deserialize(DataStream* stream);
 
 	private:
 		std::vector<Vertex> m_vertices;

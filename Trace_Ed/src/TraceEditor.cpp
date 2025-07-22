@@ -1,13 +1,8 @@
 #include "TraceEditor.h"
 #include "imgui.h"
 #include "backends/UIutils.h"
-#include "scene/SceneManager.h"
-#include "resource/ModelManager.h"
-#include "resource/MeshManager.h"
-#include "resource/PipelineManager.h"
 #include "resource/GenericAssetManager.h"
-#include "resource/AnimationsManager.h"
-#include "scene/SceneManager.h"
+
 #include "scene/Components.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
@@ -111,7 +106,7 @@ namespace trace {
 			trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_MOUSE_WHEEL, BIND_EVENT_FN(TraceEditor::OnEvent));
 		};
 
-		m_editSceneDuplicate = SceneManager::get_instance()->CreateScene("Duplicate Edit Scene");
+		m_editSceneDuplicate = GenericAssetManager::get_instance()->CreateAssetHandle<Scene>("Duplicate Edit Scene");
 		m_editorCamera.SetCameraType(CameraType::PERSPECTIVE);
 		m_editorCamera.SetPosition(glm::vec3(109.72446f, 95.70557f, -10.92075f));
 		m_editorCamera.SetLookDir(glm::vec3(-0.910028f, -0.4126378f, 0.039738327f));
@@ -1136,7 +1131,7 @@ namespace trace {
 	bool TraceEditor::CreateScene(const std::string& file_path)
 	{
 		std::filesystem::path p = file_path;
-		Ref<Scene> res = SceneManager::get_instance()->CreateScene(p.filename().string());
+		Ref<Scene> res = GenericAssetManager::get_instance()->CreateAssetHandle<Scene>(p.filename().string());
 		SceneSerializer::Serialize(res, file_path);
 		return true;
 	}

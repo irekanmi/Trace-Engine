@@ -56,6 +56,9 @@ namespace trace::Animation {
 	public:
 
 		HumanoidRig();
+		bool Create();
+		//This is to prevent it Asset Manager(GenericAssetManager::CreateAssetHandle) to call the actual Create Function when using the reflection library
+		bool Create(void* null_init);
 		virtual void Destroy() override;
 		
 		std::array<int32_t, (int)HumanoidBone::Count>& GetHumanoidBones() { return m_bones; }

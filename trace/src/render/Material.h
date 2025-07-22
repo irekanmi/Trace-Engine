@@ -6,6 +6,7 @@
 #include "render/GTexture.h"
 #include "render/GPipeline.h"
 #include "scene/UUID.h"
+#include "serialize/DataStream.h"
 
 #include <any>
 #include <variant>
@@ -22,10 +23,11 @@ namespace trace {
 
 	public:
 		MaterialInstance();
-		~MaterialInstance();
+		virtual ~MaterialInstance();
 
-		bool Init(Ref<GPipeline> pipeline) { return false; };
-		void Apply() {};
+		bool Create(Ref<GPipeline> pipeline);
+		virtual void Destroy() override;
+		bool RecreateMaterial(Ref<GPipeline> pipeline);
 
 		Ref<GPipeline> GetRenderPipline() {	return m_renderPipeline; }
 		MaterialData& GetMaterialData() { return m_data; }
@@ -37,6 +39,7 @@ namespace trace {
 
 
 		static Ref<MaterialInstance> Deserialize(UUID id);
+		static Ref<MaterialInstance> Deserialize(DataStream* stream);
 
 	private:
 		Ref<GPipeline> m_renderPipeline;

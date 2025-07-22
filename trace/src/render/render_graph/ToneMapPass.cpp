@@ -5,8 +5,8 @@
 #include "RenderGraph.h"
 #include "backends/Renderutils.h"
 #include "render/GPipeline.h"
-#include "resource/PipelineManager.h"
-#include "resource/ShaderManager.h"
+
+#include "resource/GenericAssetManager.h"
 #include "FrameData.h"
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
@@ -51,10 +51,12 @@ namespace trace {
 			m_renderer->GetAvaliableRenderPasses()["TONEMAP_PASS"] = &m_renderPass;
 		};
 
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
+
 		if(AppSettings::is_editor)
 		{
-			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("tone_map.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader = asset_manager->CreateAssetHandle<GShader>("fullscreen.vert.glsl", "fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			Ref<GShader> FragShader = asset_manager->CreateAssetHandle<GShader>("tone_map.frag.glsl", "tone_map.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -76,7 +78,7 @@ namespace trace {
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-			m_pipeline = PipelineManager::get_instance()->CreatePipeline(_ds2, "tone_map_pass_pipeline");
+			m_pipeline = asset_manager->CreateAssetHandle<GPipeline>("tone_map_pass_pipeline", _ds2);
 			if (!m_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create tone_map_pass_pipeline");
@@ -87,7 +89,7 @@ namespace trace {
 		else
 		{
 			UUID id = GetUUIDFromName("tone_map_pass_pipeline");
-			m_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 		}
 
 	}

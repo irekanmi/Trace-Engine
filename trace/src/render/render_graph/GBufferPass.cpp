@@ -6,8 +6,8 @@
 #include "FrameData.h"
 #include "render/ShaderParser.h"
 #include "render/GShader.h"
-#include "resource/PipelineManager.h"
-#include "resource/ShaderManager.h"
+
+
 #include "RenderGraph.h"
 
 namespace trace {

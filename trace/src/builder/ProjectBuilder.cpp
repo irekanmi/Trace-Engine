@@ -4,20 +4,11 @@
 #include "serialize/FileStream.h"
 #include "serialize/AssetsInfo.h"
 #include "serialize/SceneSerializer.h"
-#include "scene/Entity.h"
-#include "resource/PipelineManager.h"
-#include "resource/AnimationsManager.h" 
-#include "resource/FontManager.h" 
-#include "resource/MaterialManager.h" 
-#include "resource/MeshManager.h" 
-#include "resource/ModelManager.h" 
-#include "resource/ShaderManager.h" 
-#include "resource/TextureManager.h" 
+#include "scene/Entity.h" 
 #include "resource/PrefabManager.h" 
 #include "resource/GenericAssetManager.h"
 #include "core/Coretypes.h"
 #include "core/Utils.h"
-#include "scene/SceneManager.h"
 #include "reflection/SerializeTypes.h"
 
 #include "serialize/yaml_util.h"
@@ -195,7 +186,7 @@ namespace trace {
 		//TRC_GENERIC_ASSETS_ID
 		Reflection::DeserializeContainer(generic_assets_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		SceneManager::get_instance()->SetAssetMap(scn_map);
+		/*SceneManager::get_instance()->SetAssetMap(scn_map);
 		TextureManager::get_instance()->SetAssetMap(tex_map);
 		AnimationsManager::get_instance()->SetClipsAssetMap(animc_map);
 		ShaderManager::get_instance()->SetAssetMap(shd_map);
@@ -203,7 +194,7 @@ namespace trace {
 		ModelManager::get_instance()->SetAssetMap(mdl_map);
 		PipelineManager::get_instance()->SetAssetMap(pip_map);
 		MaterialManager::get_instance()->SetAssetMap(mat_map);
-		PrefabManager::get_instance()->SetAssetMap(prefab_map);
+		PrefabManager::get_instance()->SetAssetMap(prefab_map);*/
 		GenericAssetManager::get_instance()->SetAssetMap(generic_assets_map);
 
 
@@ -289,9 +280,9 @@ namespace trace {
 
 
 		}
-		PipelineManager::get_instance()->BuildDefaultPipelines(pip_bin, pip_map);
+		/*PipelineManager::get_instance()->BuildDefaultPipelines(pip_bin, pip_map);
 		PipelineManager::get_instance()->BuildDefaultPipelineShaders(shd_bin, shd_map);
-		ModelManager::get_instance()->BuildDefaultModels(mdl_bin, mdl_map);
+		ModelManager::get_instance()->BuildDefaultModels(mdl_bin, mdl_map);*/
 
 		/*
 		* buildpck.trbin

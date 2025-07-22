@@ -2,7 +2,6 @@
 
 #include "AnimationsSerializer.h"
 #include "core/FileSystem.h"
-#include "resource/AnimationsManager.h"
 #include "MemoryStream.h"
 #include "resource/GenericAssetManager.h"
 #include "core/Utils.h"
@@ -168,7 +167,7 @@ namespace trace {
 		Ref<AnimationClip> result;
 
 		std::filesystem::path p = file_path;
-		Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(p.filename().string());
+		Ref<AnimationClip> clip = GenericAssetManager::get_instance()->TryGet<AnimationClip>(p.filename().string());
 		if (clip)
 		{
 			TRC_WARN("{} has already been loaded", p.filename().string());
@@ -197,7 +196,7 @@ namespace trace {
 		std::string clip_name = p.filename().string();
 		
 		
-		clip = AnimationsManager::get_instance()->LoadClip_(file_path);
+		clip = GenericAssetManager::get_instance()->CreateAssetHandle_<AnimationClip>(file_path);
 
 		float duration = data["Duration"].as<float>();
 		int rate = data["Sample Rate"].as<int>();
@@ -255,14 +254,14 @@ namespace trace {
 		std::string clip_name;
 		Reflection::Deserialize(clip_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(clip_name);
+		Ref<AnimationClip> clip = GenericAssetManager::get_instance()->TryGet<AnimationClip>(clip_name);
 		if (clip)
 		{
 			TRC_WARN("{} has already been loaded", clip_name);
 			return clip;
 		}
 
-		clip = AnimationsManager::get_instance()->LoadClip_(clip_name);
+		clip = GenericAssetManager::get_instance()->CreateAssetHandle<AnimationClip>(clip_name);
 		Reflection::Deserialize(*clip.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		return clip;
@@ -443,8 +442,7 @@ namespace trace {
 			bones.push_back(bone_ins);
 		}
 
-		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>(file_path);
-		result->Create(skeleton_name, root_node,bones);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>(file_path, skeleton_name, root_node, bones);
 
 		if (data["Humanoid Rig"])
 		{
@@ -546,8 +544,7 @@ namespace trace {
 		std::string graph_version = data["Anim_Graph Version"].as<std::string>(); // TODO: To be used later
 		std::string graph_name = p.filename().string();
 
-		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(file_path);
-
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(file_path, nullptr);
 		Reflection::Deserialize(*result.get(), &data, nullptr, Reflection::SerializationFormat::YAML);
 
 
@@ -565,7 +562,7 @@ namespace trace {
 			return graph;
 		}
 
-		graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(graph_name);
+		graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(graph_name, nullptr);
 		Reflection::Deserialize(*graph.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		return graph;
@@ -637,7 +634,7 @@ namespace trace {
 		std::string sequence_version = data["Anim_Sequence Version"].as<std::string>(); // TODO: To be used later
 		std::string sequence_name = p.filename().string();
 
-		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(file_path);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(file_path, nullptr);
 
 		Reflection::Deserialize(*result.get(), &data, nullptr, Reflection::SerializationFormat::YAML);
 
@@ -657,7 +654,7 @@ namespace trace {
 		}
 
 
-		sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_name);
+		sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_name, nullptr);
 
 		Reflection::Deserialize(*sequence.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
 
@@ -730,7 +727,7 @@ namespace trace {
 		std::string humanoid_rig_version = data["HumanoidRig Version"].as<std::string>(); // TODO: To be used later
 		std::string humanoid_rig_name = p.filename().string();
 
-		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(file_path);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(file_path, nullptr);
 
 		Reflection::Deserialize(*result.get(), &data, nullptr, Reflection::SerializationFormat::YAML);
 
@@ -750,7 +747,7 @@ namespace trace {
 		}
 
 
-		humanoid_rig = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(humanoid_rig_name);
+		humanoid_rig = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(humanoid_rig_name, nullptr);
 
 		Reflection::Deserialize(*humanoid_rig.get(), stream, nullptr, Reflection::SerializationFormat::BINARY);
 

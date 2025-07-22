@@ -1,21 +1,14 @@
 
 #include "ContentBrowser.h"
 #include "../TraceEditor.h"
-#include "resource/TextureManager.h"
-#include "resource/MeshManager.h"
-#include "resource/MaterialManager.h"
-#include "resource/PipelineManager.h"
 #include "resource/GenericAssetManager.h"
-#include "resource/ShaderManager.h"
-#include "resource/TextureManager.h"
-#include "resource/FontManager.h"
 #include "resource/PrefabManager.h"
 #include "backends/UIutils.h"
 #include "scene/UUID.h"
 #include "serialize/MaterialSerializer.h"
 #include "serialize/PipelineSerializer.h"
 #include "InspectorPanel.h"
-#include "resource/AnimationsManager.h"
+
 #include "serialize/AnimationsSerializer.h"
 #include "serialize/SceneSerializer.h"
 #include "core/Utils.h"
@@ -24,9 +17,10 @@
 #include "../import/Importer.h"
 #include "external_utils.h"
 #include "core/defines.h"
-#include "scene/SceneManager.h"
+
 #include "serialize/GenericSerializer.h"
 #include "motion_matching/MotionMatchDatabase.h"
+#include "resource/DefaultAssetsManager.h"
 
 
 #include "imgui.h"
@@ -52,8 +46,8 @@ namespace trace {
 		TraceEditor* editor = TraceEditor::get_instance();
 		if(editor->GetCurrentProject()) m_currentDir = editor->GetCurrentProject()->GetAssetsDirectory();
 
-		directory_icon = TextureManager::get_instance()->LoadTexture("directory.png");
-		default_icon = TextureManager::get_instance()->LoadTexture("default_file_icon.png");
+		directory_icon = GenericAssetManager::get_instance()->CreateAssetHandle<GTexture>("directory.png", DefaultAssetsManager::assets_path + "/textures" + "/directory.png");
+		default_icon = GenericAssetManager::get_instance()->CreateAssetHandle<GTexture>("default_file_icon.png", DefaultAssetsManager::assets_path + "/textures" + "/default_file_icon.png");
 
 
 		//Process callbacks
@@ -120,7 +114,7 @@ namespace trace {
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
 						std::string filename = assets_edit.editMaterialPath.filename().string();
-						assets_edit.editMaterial = MaterialManager::get_instance()->GetMaterial(filename);
+						assets_edit.editMaterial = GenericAssetManager::get_instance()->Get<MaterialInstance>(filename);
 						if (!assets_edit.editMaterial)
 						{
 							assets_edit.editMaterial = MaterialSerializer::Deserialize(assets_edit.editMaterialPath.string());
@@ -139,7 +133,7 @@ namespace trace {
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
 						if (assets_edit.editMaterialPipeChanged)
 						{
-							MaterialManager::get_instance()->RecreateMaterial(assets_edit.editMaterial, assets_edit.editMaterialPipe);
+							assets_edit.editMaterial->RecreateMaterial(assets_edit.editMaterialPipe);
 							assets_edit.editMaterialPipeChanged = false;
 						}
 						assets_edit.editMaterial->SetMaterialData(assets_edit.materialDataCache);
@@ -197,7 +191,7 @@ namespace trace {
 					[editor, path]()
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
-						assets_edit.editFont = FontManager::get_instance()->LoadFont_(path.string());
+						assets_edit.editFont = GenericAssetManager::get_instance()->CreateAssetHandle_<Font>(path.string(), path.string());
 					},
 					[editor]()
 					{
@@ -212,7 +206,7 @@ namespace trace {
 					[editor, path]()
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
-						assets_edit.editFont = FontManager::get_instance()->LoadFont_(path.string());
+						assets_edit.editFont = GenericAssetManager::get_instance()->CreateAssetHandle_<Font>(path.string(), path.string());
 					},
 					[editor]()
 					{
@@ -412,7 +406,7 @@ namespace trace {
 					if (id == 0)
 					{
 						std::string prefab_path = (m_currentDir / (res + ".trprf")).string();
-						Ref<Prefab> prefab = PrefabManager::get_instance()->Create(res + ".trprf", prefab_entity);
+						Ref<Prefab> prefab = GenericAssetManager::get_instance()->CreateAssetHandle<Prefab>(res + ".trprf", prefab_entity);
 						SceneSerializer::SerializePrefab(prefab, prefab_path);
 						OnDirectoryChanged();
 						ProcessAllDirectory();
@@ -850,8 +844,8 @@ namespace trace {
 					UUID id = GetUUIDFromName(res + MATERIAL_FILE_EXTENSION);
 					if (id == 0)
 					{
-						Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline");
-						Ref<MaterialInstance> mat = MaterialManager::get_instance()->CreateMaterial(res + MATERIAL_FILE_EXTENSION, sp);
+						Ref<GPipeline> sp = GenericAssetManager::get_instance()->Get<GPipeline>("gbuffer_pipeline");
+						Ref<MaterialInstance> mat = GenericAssetManager::get_instance()->CreateAssetHandle<MaterialInstance>(res + MATERIAL_FILE_EXTENSION, sp);
 						if (mat)
 						{
 							std::string path = (m_currentDir / (res + MATERIAL_FILE_EXTENSION)).string();
@@ -883,8 +877,8 @@ namespace trace {
 					UUID id = GetUUIDFromName(res + RENDER_PIPELINE_FILE_EXTENSION);
 					if (id == 0)
 					{
-						Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline");
-						Ref<GPipeline> new_pipeline = PipelineManager::get_instance()->CreatePipeline(sp->GetDesc(), res + RENDER_PIPELINE_FILE_EXTENSION, false);
+						Ref<GPipeline> sp = GenericAssetManager::get_instance()->Get<GPipeline>("gbuffer_pipeline");
+						Ref<GPipeline> new_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle<GPipeline>(res + RENDER_PIPELINE_FILE_EXTENSION, sp->GetDesc(), false);
 						new_pipeline->SetPipelineType(PipelineType::Surface_Material);
 						std::string path = (m_currentDir / (res + RENDER_PIPELINE_FILE_EXTENSION)).string();
 						PipelineSerializer::Serialize(new_pipeline, path);
@@ -944,7 +938,7 @@ namespace trace {
 					if (id == 0)
 					{
 						std::string clip_path = (m_currentDir / (res + ANIMATION_CLIP_FILE_EXTENSION)).string();
-						Ref<AnimationClip> clip = AnimationsManager::get_instance()->LoadClip_(clip_path);
+						Ref<AnimationClip> clip = GenericAssetManager::get_instance()->CreateAssetHandle_<AnimationClip>(clip_path);
 						AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
 						UUID new_id = UUID::GenUUID();
 						m_allFilesID[res + ANIMATION_CLIP_FILE_EXTENSION] = new_id;
@@ -975,7 +969,6 @@ namespace trace {
 					{
 						std::string graph_path = (m_currentDir / (res + ANIMATION_GRAPH_FILE_EXTENSION)).string();
 						Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(graph_path);
-						graph->Create();
 						AnimationsSerializer::SerializeAnimGraph(graph, graph_path);
 						UUID new_id = UUID::GenUUID();
 						m_allFilesID[res + ANIMATION_GRAPH_FILE_EXTENSION] = new_id;
@@ -1158,11 +1151,11 @@ namespace trace {
 
 		if (extension == ANIMATION_CLIP_FILE_EXTENSION)
 		{
-			Ref<AnimationClip> clip = AnimationsManager::get_instance()->GetClip(filename);
+			Ref<AnimationClip> clip = GenericAssetManager::get_instance()->Get<AnimationClip>(filename);
 
 			if (clip)
 			{
-				AnimationsManager::get_instance()->RenameAsset(clip, new_filename);
+				GenericAssetManager::get_instance()->RenameAsset(clip, new_filename);
 				clip->m_path = new_path;
 			}
 		}
@@ -1178,31 +1171,31 @@ namespace trace {
 		}
 		else if (extension == PREFAB_FILE_EXTENSION)
 		{
-			Ref<Prefab> asset = PrefabManager::get_instance()->Get(filename);
+			Ref<Prefab> asset = GenericAssetManager::get_instance()->Get<Prefab>(filename);
 
 			if (asset)
 			{
-				PrefabManager::get_instance()->RenameAsset(asset, new_filename);
+				GenericAssetManager::get_instance()->RenameAsset(asset, new_filename);
 				asset->m_path = new_path;
 			}
 		}
 		else if (extension == MATERIAL_FILE_EXTENSION)
 		{
-			Ref<MaterialInstance> asset = MaterialManager::get_instance()->GetMaterial(filename);
+			Ref<MaterialInstance> asset = GenericAssetManager::get_instance()->Get<MaterialInstance>(filename);
 
 			if (asset)
 			{
-				MaterialManager::get_instance()->RenameAsset(asset, new_filename);
+				GenericAssetManager::get_instance()->RenameAsset(asset, new_filename);
 				asset->m_path = new_path;
 			}
 		}
 		else if (extension == RENDER_PIPELINE_FILE_EXTENSION)
 		{
-			Ref<GPipeline> asset = PipelineManager::get_instance()->GetPipeline(filename);
+			Ref<GPipeline> asset = GenericAssetManager::get_instance()->Get<GPipeline>(filename);
 
 			if (asset)
 			{
-				PipelineManager::get_instance()->RenameAsset(asset, new_filename);
+				GenericAssetManager::get_instance()->RenameAsset(asset, new_filename);
 				asset->m_path = new_path;
 			}
 		}
@@ -1228,11 +1221,11 @@ namespace trace {
 		}
 		else if (extension == SCENE_FILE_EXTENSION)
 		{
-			Ref<Scene> asset = SceneManager::get_instance()->GetScene(filename);
+			Ref<Scene> asset = GenericAssetManager::get_instance()->Get<Scene>(filename);
 
 			if (asset)
 			{
-				SceneManager::get_instance()->RenameAsset(asset, new_filename);
+				GenericAssetManager::get_instance()->RenameAsset(asset, new_filename);
 				asset->m_path = new_path;
 			}
 		}
@@ -1265,12 +1258,12 @@ namespace trace {
 				if (!pipe_res.empty())
 				{
 					std::filesystem::path p = pipe_res;
-					Ref<GPipeline> p_res = PipelineManager::get_instance()->GetPipeline(p.filename().string());
+					Ref<GPipeline> p_res = GenericAssetManager::get_instance()->Get<GPipeline>(p.filename().string());
 					if (!p_res) p_res = PipelineSerializer::Deserialize(p.string());
 
 					if (p_res)
 					{
-						if (MaterialManager::get_instance()->RecreateMaterial(mat, p_res))
+						if (mat->RecreateMaterial(p_res))
 						{
 							m_assetsEdit.editMaterialPipeChanged = true;
 						}
@@ -1389,9 +1382,9 @@ namespace trace {
 					{
 						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 						std::filesystem::path p = buf;
-						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						Ref<GTexture> tex = GenericAssetManager::get_instance()->TryGet<GTexture>(p.filename().string());
 						if (tex) {}
-						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+						else tex = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
 						
 						if (tex)
 						{
@@ -1403,9 +1396,9 @@ namespace trace {
 					{
 						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 						std::filesystem::path p = buf;
-						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						Ref<GTexture> tex = GenericAssetManager::get_instance()->TryGet<GTexture>(p.filename().string());
 						if (tex) {}
-						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+						else tex = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
 
 						if (tex)
 						{
@@ -1417,9 +1410,9 @@ namespace trace {
 					{
 						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 						std::filesystem::path p = buf;
-						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						Ref<GTexture> tex = GenericAssetManager::get_instance()->TryGet<GTexture>(p.filename().string());
 						if (tex) {}
-						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+						else tex = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
 
 						if (tex)
 						{
@@ -1431,9 +1424,9 @@ namespace trace {
 					{
 						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
 						std::filesystem::path p = buf;
-						Ref<GTexture> tex = TextureManager::get_instance()->GetTexture(p.filename().string());
+						Ref<GTexture> tex = GenericAssetManager::get_instance()->TryGet<GTexture>(p.filename().string());
 						if (tex) {}
-						else tex = TextureManager::get_instance()->LoadTexture_(p.string());
+						else tex = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
 
 						if (tex)
 						{
@@ -1578,7 +1571,7 @@ namespace trace {
 			{
 				if (!shad_res.empty())
 				{
-					Ref<GShader> res = ShaderManager::get_instance()->CreateShader_(shad_res, shad_stage);
+					Ref<GShader> res = GenericAssetManager::get_instance()->CreateAssetHandle_<GShader>(shad_res, shad_res, shad_stage);
 					if (TRC_HAS_FLAG(shad_stage, ShaderStage::VERTEX_SHADER))
 						m_assetsEdit.editPipeDesc.vertex_shader = res.get();
 					if (TRC_HAS_FLAG(shad_stage, ShaderStage::PIXEL_SHADER))
@@ -1591,7 +1584,7 @@ namespace trace {
 
 		if (ImGui::Button("Apply"))
 		{
-			if (PipelineManager::get_instance()->RecreatePipeline(m_assetsEdit.editPipeline, m_assetsEdit.editPipeDesc))
+			if (m_assetsEdit.editPipeline->RecreatePipeline(m_assetsEdit.editPipeDesc))
 			{
 				m_assetsEdit.editPipeline->SetPipelineType(m_assetsEdit.editPipeType);
 				PipelineSerializer::Serialize(m_assetsEdit.editPipeline, m_assetsEdit.editPipePath.string());

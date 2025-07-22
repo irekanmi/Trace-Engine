@@ -82,7 +82,7 @@ namespace trace {
 
 #include "msdf-atlas-gen/msdf-atlas-gen.h"
 #include "msdfgen.h"
-#include "resource/TextureManager.h"
+#include "resource/GenericAssetManager.h"
 
 struct MSDF_Handle
 {
@@ -129,7 +129,8 @@ bool submitAtlasBitmapAndLayout(msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3>
 	tex_desc.m_numLayers = 1;
 	tex_desc.m_usage = trace::UsageFlag::DEFAULT;
 
-	font->SetAtlas(trace::TextureManager::get_instance()->CreateTexture(name, tex_desc));
+	Ref<trace::GTexture> atlas = trace::GenericAssetManager::get_instance()->CreateAssetHandle<trace::GTexture>(name, tex_desc);
+	font->SetAtlas(atlas);
 	TRC_ASSERT(font->GetAtlas().is_valid(), "Texture Creation Failed");
 
 	bool result = true;
@@ -178,7 +179,7 @@ static void load_font_data(msdfgen::FreetypeHandle* ft, msdfgen::FontHandle* fon
 	attributes.config.overlapSupport = true;
 
 	generator.setAttributes(attributes);
-	generator.setThreadCount(4);
+	generator.setThreadCount(1);
 	// Generate atlas bitmap
 	generator.generate(_internal->glyphs.data(), static_cast<int32_t>(_internal->glyphs.size()));
 	// The atlas bitmap can now be retrieved via atlasStorage as a BitmapConstRef.

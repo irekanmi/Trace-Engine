@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#ifdef TRC_REMOVE
+
 #include "SceneManager.h"
 #include "core/io/Logging.h"
 #include "core/Enums.h"
@@ -143,3 +145,5 @@ namespace trace {
 		return s_instance;
 	}
 }
+
+#endif

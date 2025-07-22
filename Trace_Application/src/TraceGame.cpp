@@ -5,7 +5,7 @@
 #include "core/Coretypes.h"
 #include "serialize/FileStream.h"
 #include "builder/ProjectBuilder.h"
-#include "scene/SceneManager.h"
+
 #include "scripting/ScriptEngine.h"
 #include "core/events/Events.h"
 #include "render/Renderer.h"

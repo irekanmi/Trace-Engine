@@ -9,6 +9,10 @@
 #include "serialize/FileStream.h"
 #include "scene/UUID.h"
 #include "core/Utils.h"
+//TEMP -------
+#include "render/GShader.h"
+#include "render/Material.h"
+//-----------
 
 #include <vector>
 
@@ -26,11 +30,11 @@ namespace trace {
 		virtual void Shutdown();
 		
 
-		template<typename T>
-		Ref<T> CreateAssetHandle(const std::string& name)
+		template<typename T, typename ...Args>
+		Ref<T> CreateAssetHandle(const std::string& name, Args ...args)
 		{
 			Ref<T> result;
-			result = Get<T>(name);
+			result = TryGet<T>(name);
 
 			if (result)
 			{
@@ -39,16 +43,24 @@ namespace trace {
 
 			result = Ref(GetNextValidHandle<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
 			result->m_path = name;
+
+			if (!result->Create(std::forward<Args>(args)...))
+			{
+				TRC_ERROR("Failed to create asset, Name: {}, Function: {}", name, __FUNCTION__);
+				result.free();
+				return Ref<T>();
+			}
+
 			return result;
 		}
 
-		template<typename T>
-		Ref<T> CreateAssetHandle_(const std::string& path)
+		template<typename T, typename ...Args>
+		Ref<T> CreateAssetHandle_(const std::string& path, Args... args)
 		{
 			std::filesystem::path p(path);
 			std::string name = p.filename().string();
 			Ref<T> result;
-			result = Get<T>(name);
+			result = TryGet<T>(name);
 
 			if (result)
 			{
@@ -56,26 +68,43 @@ namespace trace {
 			}
 
 			result = Ref(GetNextValidHandle<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			result->m_path = path;
+
+			if (!result->Create(std::forward<Args>(args)...))
+			{
+				TRC_ERROR("Failed to create asset, Name: {}, Function: {}", name, __FUNCTION__);
+				result.free();
+				return Ref<T>();
+			}
+
 			Resource* asset = (Resource*)result.get();
-			asset->m_path = path;
 			return result;
 		}
 
 		template<typename T>
 		Ref<T> Get(const std::string& name)
 		{
+			Ref<T> result = TryGet<T>(name);
+			if (!result)
+			{
+				TRC_WARN("These asset has not been created or has been destroyed, Name: {}, Function: {}", name, __FUNCTION__);
+			}
+			return result;
+		}
+		
+		template<typename T>
+		Ref<T> TryGet(const std::string& name)
+		{
 			Ref<T> result;
 			T* _asset = nullptr;
 			uint32_t& _id = m_hashtable.Get_Ref(name);
 			if (_id == INVALID_ID)
 			{
-				TRC_WARN("These asset has not been created , \"{}\"", name);
 				return result;
 			}
 			_asset = (T*)m_assets[_id];
 			if (_asset->m_id == INVALID_ID)
 			{
-				TRC_WARN("These asset has been destroyed , \"{}\"", name);
 				_id = INVALID_ID;
 				return result;
 			}
@@ -182,7 +211,10 @@ namespace trace {
 					_asset = (T*)asset;
 					_asset->m_id = i;
 					//Temp ======
-					//_asset->m_refCount++;
+					if constexpr (std::is_same<T, GShader>{} || std::is_same<T, MaterialInstance>{})
+					{
+						_asset->m_refCount++;
+					}
 					break;
 				}
 			}

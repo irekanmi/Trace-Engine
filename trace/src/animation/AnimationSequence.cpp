@@ -17,6 +17,11 @@ namespace trace::Animation {
 		return true;
 	}
 
+	bool Sequence::Create(void* null_init)
+	{
+		return true;
+	}
+
 	void Sequence::Destroy()
 	{
 		for (SequenceTrack* track : m_tracks)

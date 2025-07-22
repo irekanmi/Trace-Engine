@@ -7,6 +7,7 @@
 #include "resource/Ref.h"
 #include "GHandle.h"
 #include "scene/UUID.h"
+#include "serialize/DataStream.h"
 
 namespace trace {
 
@@ -16,7 +17,12 @@ namespace trace {
 
 	public:
 		GTexture(){};
-		virtual ~GTexture(){};
+		virtual ~GTexture() {};
+
+		bool Create(const std::string& path);
+		bool Create(const std::string& path, TextureDesc desc);
+		bool Create(TextureDesc desc);
+		virtual void Destroy() override;
 
 		TextureDesc& GetTextureDescription();
 		void SetTextureDescription(TextureDesc& description) { m_desc = description; }
@@ -25,6 +31,7 @@ namespace trace {
 
 
 		static Ref<GTexture> Deserialize(UUID id);
+		static Ref<GTexture> Deserialize(DataStream* stream);
 	private:
 		GHandle m_renderHandle;
 		TextureDesc m_desc;

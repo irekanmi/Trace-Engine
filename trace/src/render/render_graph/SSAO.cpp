@@ -3,12 +3,13 @@
 #include "SSAO.h"
 #include "backends/Renderutils.h"
 #include "render/Renderer.h"
+#include "render/GShader.h"
 #include "FrameData.h"
 #include "core/Utils.h"
 #include "render/GShader.h"
 #include "render/ShaderParser.h"
-#include "resource/PipelineManager.h"
-#include "resource/ShaderManager.h"
+
+#include "resource/GenericAssetManager.h"
 #include "RenderGraph.h"
 #include <random>
 
@@ -76,10 +77,19 @@ namespace trace {
 
 		};
 
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
+
 		if(AppSettings::is_editor)
 		{
-			Ref<GShader> VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			Ref<GShader> FragShader = ShaderManager::get_instance()->CreateShader("ssao_main.frag.glsl", ShaderStage::PIXEL_SHADER);
+			Ref<GShader> VertShader;
+			Ref<GShader> FragShader;
+
+			Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("fullscreen.vert.glsl", "fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+			Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("ssao_main.frag.glsl", "ssao_main.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+			VertShader = vert_shader;
+			FragShader = frag_shader;
 
 			ShaderResources sres = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), sres);
@@ -101,7 +111,7 @@ namespace trace {
 			ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
-			m_pipeline = PipelineManager::get_instance()->CreatePipeline(ds2, "ssao_main_pass_pipeline");
+			m_pipeline = asset_manager->CreateAssetHandle<GPipeline>("ssao_main_pass_pipeline", ds2);
 			if (!m_pipeline)
 			{
 				TRC_ERROR("Failed to initialize or create ssao_main_pass_pipeline");
@@ -109,8 +119,8 @@ namespace trace {
 			}
 
 
-			VertShader = ShaderManager::get_instance()->CreateShader("fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
-			FragShader = ShaderManager::get_instance()->CreateShader("ssao_blur.frag.glsl", ShaderStage::PIXEL_SHADER);
+			VertShader = asset_manager->CreateAssetHandle<GShader>("fullscreen.vert.glsl", "fullscreen.vert.glsl", ShaderStage::VERTEX_SHADER);
+			FragShader = asset_manager->CreateAssetHandle<GShader>("ssao_blur.frag.glsl", "ssao_blur.frag.glsl", ShaderStage::PIXEL_SHADER);
 
 			ShaderResources s_res = {};
 			ShaderParser::generate_shader_resources(VertShader.get(), s_res);
@@ -133,7 +143,7 @@ namespace trace {
 
 
 
-			m_blurPipe = PipelineManager::get_instance()->CreatePipeline(_ds2, "ssao_blur_pass_pipeline");
+			m_blurPipe = asset_manager->CreateAssetHandle<GPipeline>("ssao_blur_pass_pipeline", _ds2);
 			if (!m_blurPipe)
 			{
 				TRC_ERROR("Failed to initialize or create ssao_blur_pass_pipeline");
@@ -144,9 +154,9 @@ namespace trace {
 		else
 		{
 			UUID id = GetUUIDFromName("ssao_main_pass_pipeline");
-			m_pipeline = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 			id = GetUUIDFromName("ssao_blur_pass_pipeline");
-			m_blurPipe = PipelineManager::get_instance()->LoadPipeline_Runtime(id);
+			m_blurPipe = asset_manager->Load_Runtime<GPipeline>(id);
 		}
 
 		{

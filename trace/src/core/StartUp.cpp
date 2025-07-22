@@ -16,6 +16,7 @@
 #include "animation/AnimationEngine.h"
 #include "debug/Debugger.h"
 #include "networking/NetworkManager.h"
+#include "multithreading/JobSystem.h"
 
 
 namespace trace {
@@ -58,6 +59,13 @@ namespace trace {
 
 	bool INIT()
 	{
+		if (!JobSystem::get_instance()->Init())
+		{
+			printf("{ERROR} -> failed to initialize Job system");
+			return false;
+		}
+
+
 		if (Logger::get_instance() == nullptr)
 		{
 			printf("{ERROR} -> failed to initialize Logger");
@@ -73,12 +81,6 @@ namespace trace {
 #endif
 		}
 
-		if (MemoryManager::get_instance() == nullptr)
-		{
-			TRC_ERROR("failed to create Memory Manager");
-			return false;
-		}
-		
 		if (!MemoryManager::get_instance()->Init())
 		{
 			TRC_ERROR("Memory Manager failed to initialize");
@@ -97,18 +99,11 @@ namespace trace {
 			return false;
 		}
 
-		if (Network::NetworkManager::get_instance() == nullptr)
-		{
-			TRC_ERROR("Failed to create Network Manager instance");
-			return false;
-		}
-
 		if (!Network::NetworkManager::get_instance()->Init())
 		{
 			TRC_ERROR("Network Manager failed to initialize");
 			return false;
 		}
-
 
 
 		return true;
@@ -141,6 +136,7 @@ namespace trace {
 			TRC_ERROR("Failed to initialize Resource System");
 			return false;
 		}
+		
 
 		//Physics Initialization
 		//TODO: Allow physics to be dynamic
@@ -159,12 +155,6 @@ namespace trace {
 		};
 
 		//Animation Engine
-		if (AnimationEngine::get_instance() == nullptr)
-		{
-			TRC_ERROR("failed to create Animation Engine");
-			return false;
-		}
-
 		if (!AnimationEngine::get_instance()->Init())
 		{
 			TRC_ERROR("Animation Engine failed to initialize");
@@ -172,12 +162,6 @@ namespace trace {
 		}
 
 		//Script Engine
-		if (ScriptEngine::get_instance() == nullptr)
-		{
-			TRC_ERROR("failed to create Script Engine");
-			return false;
-		}
-
 		if (!ScriptEngine::get_instance()->Init())
 		{
 			TRC_ERROR("ScriptEngine failed to initialize");
@@ -224,6 +208,9 @@ namespace trace {
 
 		Logger::get_instance()->Shutdown();
 		SAFE_DELETE(Logger::get_instance(), Logger);
+		
+		JobSystem::get_instance()->Shutdown();
+		SAFE_DELETE(JobSystem::get_instance(), JobSystem);
 
 	}
 

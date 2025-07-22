@@ -5,7 +5,8 @@
 #include "render/GPipeline.h"
 #include "core/platform/Vulkan/VulkanRenderFunc.h"
 #include "render/render_graph/RenderGraph.h"
-#include "resource/TextureManager.h"
+#include "resource/GenericAssetManager.h"
+#include "resource/DefaultAssetsManager.h"
 
 
 #define RENDER_FUNC_IS_VALID(function)                           \
@@ -123,7 +124,7 @@ namespace trace {
 			case ShaderData::CUSTOM_DATA_MAT2: {dst = glm::mat2(); break; }
 			case ShaderData::CUSTOM_DATA_MAT3: {dst = glm::mat3(); break; }
 			case ShaderData::CUSTOM_DATA_MAT4: {dst = glm::mat4(); break; }
-			case ShaderData::CUSTOM_DATA_TEXTURE:{	dst = TextureManager::get_instance()->GetDefault("albedo_map"); break; }
+			case ShaderData::CUSTOM_DATA_TEXTURE:{	dst = DefaultAssetsManager::default_diffuse_map; break; }
 			case ShaderData::CUSTOM_DATA_VEC2: {dst = glm::vec2(); break; }
 			case ShaderData::CUSTOM_DATA_VEC3: {dst = glm::vec3(); break; }
 			case ShaderData::CUSTOM_DATA_VEC4: {dst = glm::vec4(); break; }

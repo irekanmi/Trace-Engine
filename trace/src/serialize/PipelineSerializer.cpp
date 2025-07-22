@@ -2,8 +2,8 @@
 
 #include "PipelineSerializer.h"
 #include "core/FileSystem.h"
-#include "resource/PipelineManager.h"
-#include "resource/ShaderManager.h"
+
+#include "resource/GenericAssetManager.h"
 #include "render/ShaderParser.h"
 #include "scene/UUID.h"
 #include "render/GShader.h"
@@ -126,14 +126,16 @@ namespace trace {
 
 	bool PipelineSerializer::Serialize(Ref<GPipeline> pipeline, DataStream* stream)
 	{
+
+
 		std::string pipeline_name = pipeline->GetName();
 		Reflection::Serialize(pipeline_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		uint32_t pip_type = pipeline->GetPipelineType();
 		stream->Write<uint32_t>(pip_type);
 		PipelineStateDesc ds = pipeline->GetDesc();
-		Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
-		Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
+		Ref<GShader> vert = GenericAssetManager::get_instance()->Get<GShader>(ds.vertex_shader->GetName());
+		Ref<GShader> frag = GenericAssetManager::get_instance()->Get<GShader>(ds.pixel_shader->GetName());
 		uint64_t vertex_shader_id = GetUUIDFromName(ds.vertex_shader->GetName());
 		uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
 		stream->Write<uint64_t>(vertex_shader_id);
@@ -203,8 +205,8 @@ namespace trace {
 			AssetHeader ast_h;
 			ast_h.offset = stream.GetPosition();
 			PipelineStateDesc ds = pipeline->GetDesc();
-			Ref<GShader> vert = ShaderManager::get_instance()->GetShader(ds.vertex_shader->GetName());
-			Ref<GShader> frag = ShaderManager::get_instance()->GetShader(ds.pixel_shader->GetName());
+			Ref<GShader> vert = GenericAssetManager::get_instance()->Get<GShader>(ds.vertex_shader->GetName());
+			Ref<GShader> frag = GenericAssetManager::get_instance()->Get<GShader>(ds.pixel_shader->GetName());
 			uint64_t vertex_shader_id = GetUUIDFromName(ds.vertex_shader->GetName());
 			uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
 			stream.Write<uint64_t>(vertex_shader_id);
@@ -385,7 +387,7 @@ namespace trace {
 		std::string shader_name;
 		Reflection::Deserialize(shader_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		result = ShaderManager::get_instance()->GetShader(shader_name);
+		result = GenericAssetManager::get_instance()->TryGet<GShader>(shader_name);
 		if (result)
 		{
 			TRC_WARN("{} shader has already been loaded", shader_name);
@@ -417,7 +419,7 @@ namespace trace {
 
 		stream->Read(code.data(), shader_size);
 
-		result = ShaderManager::get_instance()->CreateShader(code, data_index, shader_name, (ShaderStage)shader_stage);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle<GShader>(shader_name, code, data_index, (ShaderStage)shader_stage);
 
 		return result;
 	}
@@ -449,7 +451,7 @@ namespace trace {
 		std::string pipeline_version = data["Pipeline Version"].as<std::string>(); // TODO: To be used later
 		std::string pipeline_name = p.filename().string();
 
-		result = PipelineManager::get_instance()->GetPipeline(pipeline_name);
+		result = GenericAssetManager::get_instance()->TryGet<GPipeline>(pipeline_name);
 		if (result)
 		{
 			TRC_WARN("{} has already been loaded", pipeline_name);
@@ -460,8 +462,8 @@ namespace trace {
 		std::string vert_path = GetPathFromUUID(data["Vertex Shader"].as<uint64_t>()).string();
 		std::string frag_path = GetPathFromUUID(data["Pixel Shader"].as<uint64_t>()).string();
 				
-		GShader* VertShader = ShaderManager::get_instance()->CreateShader_(vert_path, ShaderStage::VERTEX_SHADER).get();
-		GShader* FragShader = ShaderManager::get_instance()->CreateShader_(frag_path, ShaderStage::PIXEL_SHADER).get();
+		GShader* VertShader = GenericAssetManager::get_instance()->CreateAssetHandle_<GShader>(vert_path, vert_path, ShaderStage::VERTEX_SHADER).get();
+		GShader* FragShader = GenericAssetManager::get_instance()->CreateAssetHandle_<GShader>(frag_path, frag_path, ShaderStage::PIXEL_SHADER).get();
 
 		ShaderResources s_res = {};
 		ShaderParser::generate_shader_resources(VertShader, s_res);
@@ -534,7 +536,7 @@ namespace trace {
 
 		_ds2.topology = (PRIMITIVETOPOLOGY)data["Topology"].as<int>();
 
-		result = PipelineManager::get_instance()->CreatePipeline(_ds2, pipeline_name, false);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle<GPipeline>(pipeline_name, _ds2, false);
 		if (result) result->SetPipelineType(type);
 
 		if (!result)
@@ -552,7 +554,7 @@ namespace trace {
 
 		Ref<GPipeline> result;
 
-		result = PipelineManager::get_instance()->GetPipeline(pipeline_name);
+		result = GenericAssetManager::get_instance()->TryGet<GPipeline>(pipeline_name);
 		if (result)
 		{
 			TRC_WARN("{} has already been loaded", pipeline_name);
@@ -567,8 +569,8 @@ namespace trace {
 		UUID frag_id = 0;
 		stream->Read<UUID>(frag_id);
 		PipelineStateDesc desc;
-		desc.vertex_shader = ShaderManager::get_instance()->LoadShader_Runtime(vert_id).get();
-		desc.pixel_shader = ShaderManager::get_instance()->LoadShader_Runtime(frag_id).get();
+		desc.vertex_shader = GenericAssetManager::get_instance()->Load_Runtime<GShader>(vert_id).get();
+		desc.pixel_shader = GenericAssetManager::get_instance()->Load_Runtime<GShader>(frag_id).get();
 
 		stream->Read<uint32_t>(desc.input_layout.stride);
 		stream->Read<InputClassification>(desc.input_layout.input_class);
@@ -599,7 +601,7 @@ namespace trace {
 		ShaderParser::generate_shader_resources(desc.pixel_shader, s_res);
 		desc.resources = s_res;
 
-		result = PipelineManager::get_instance()->CreatePipeline(desc, pipeline_name, false);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle<GPipeline>(pipeline_name, desc, false);
 		if (result)
 		{
 			result->SetPipelineType(pip_type);

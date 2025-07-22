@@ -5,23 +5,17 @@
 #include "../TraceEditor.h"
 #include "../panels/ContentBrowser.h"
 #include "serialize/MaterialSerializer.h"
-#include "resource/MaterialManager.h"
-#include "resource/PipelineManager.h"
-#include "resource/TextureManager.h"
-#include "resource/ModelManager.h"
 #include "render/Material.h"
 #include "resource/Ref.h"
 #include "resource/PrefabManager.h"
 #include "resource/Prefab.h"
 #include "scene/Scene.h"
 #include "scene/Entity.h"
-#include "scene/SceneManager.h"
 #include "serialize/SceneSerializer.h"
 #include "core/Utils.h"
 #include "render/Model.h"
 #include "resource/GenericAssetManager.h"
 #include "serialize/AnimationsSerializer.h"
-#include "resource/AnimationsManager.h"
 #include "core/defines.h"
 #include "animation/AnimationEngine.h"
 #include "animation/AnimationPose.h"
@@ -69,7 +63,7 @@ namespace trace {
 		Ref<GTexture> result;
 		TraceEditor* editor = TraceEditor::get_instance();
 		ContentBrowser* content_browser = editor->GetContentBrowser();
-		TextureManager* texture_manager = TextureManager::get_instance();
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
 
 		//NOTE: Added because "texture_path" can be a path from the asset creator device
 		std::string actual_name = std::filesystem::path(texture_path).filename().string();
@@ -114,7 +108,7 @@ namespace trace {
 				texture_desc.m_height = (uint32_t)_height;
 				texture_desc.m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(_width, _height))) / 2) + 1;
 				texture_desc.m_data.push_back(pixel_data);
-				Ref<GTexture> texture = texture_manager->CreateTexture(tex_name, texture_desc);
+				Ref<GTexture> texture = asset_manager->CreateAssetHandle<GTexture>(tex_name, texture_desc);
 				if (texture)
 				{
 					result = texture;
@@ -134,7 +128,7 @@ namespace trace {
 				texture_desc.m_data.push_back(((unsigned char*)ass_texture->pcData));
 
 
-				Ref<GTexture> texture = texture_manager->CreateTexture(tex_name, texture_desc);
+				Ref<GTexture> texture = asset_manager->CreateAssetHandle<GTexture>(tex_name, texture_desc);
 				if (texture)
 				{
 					result = texture;
@@ -157,7 +151,7 @@ namespace trace {
 
 		TraceEditor* editor = TraceEditor::get_instance();
 		ContentBrowser* content_browser = editor->GetContentBrowser();
-		TextureManager* texture_manager = TextureManager::get_instance();
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
 
 		aiString texture_path;
 		int texture_index = 0;
@@ -178,7 +172,7 @@ namespace trace {
 			else
 			{
 				std::string texture_file_path = (directory / texture_path.C_Str()).string();
-				Ref<GTexture> texture = texture_manager->LoadTexture_(texture_file_path);
+				Ref<GTexture> texture = asset_manager->CreateAssetHandle_<GTexture>(texture_file_path, texture_file_path);
 				if (texture)
 				{
 					result = texture;
@@ -192,7 +186,7 @@ namespace trace {
 
 	void load_material(const aiScene* result, Ref<MaterialInstance> material, aiMaterial* imp_material, std::string& filename, std::filesystem::path& directory)
 	{
-		TextureManager* texture_manager = TextureManager::get_instance();
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
 
 		{
 			auto it = material->GetMaterialData().find("emissive_color");
@@ -228,7 +222,7 @@ namespace trace {
 			auto roughness_map_it = material->GetMaterialData().find("ROUGHNESS_MAP");
 			if (roughness_map_it != material->GetMaterialData().end())
 			{
-				roughness_map_it->second.first = texture_manager->GetTexture("black_texture");
+				roughness_map_it->second.first = asset_manager->Get<GTexture>("black_texture");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_DIFFUSE_ROUGHNESS, directory, filename);
 				if (texture)
@@ -258,7 +252,7 @@ namespace trace {
 			auto metallic_it = material->GetMaterialData().find("METALLIC_MAP");
 			if (metallic_it != material->GetMaterialData().end())
 			{
-				metallic_it->second.first = texture_manager->GetTexture("black_texture");
+				metallic_it->second.first = asset_manager->Get<GTexture>("black_texture");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_METALNESS, directory, filename);
 				if (texture)
@@ -285,7 +279,7 @@ namespace trace {
 			auto diffuse_map_it = material->GetMaterialData().find("DIFFUSE_MAP");
 			if (diffuse_map_it != material->GetMaterialData().end())
 			{
-				diffuse_map_it->second.first = texture_manager->GetDefault("albedo_map");
+				diffuse_map_it->second.first = asset_manager->Get<GTexture>("albedo_map");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_DIFFUSE, directory, filename);
 				if (texture)
@@ -338,7 +332,7 @@ namespace trace {
 			auto it = material->GetMaterialData().find("NORMAL_MAP");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = texture_manager->GetDefault("normal_map");
+				it->second.first = asset_manager->Get<GTexture>("normal_map");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_NORMALS, directory, filename);
 				if (texture)
@@ -370,7 +364,7 @@ namespace trace {
 			auto it = material->GetMaterialData().find("HEIGHT_MAP");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = texture_manager->GetTexture("black_texture");
+				it->second.first = asset_manager->Get<GTexture>("black_texture");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_HEIGHT, directory, filename);
 				if (texture)
@@ -385,7 +379,7 @@ namespace trace {
 			auto it = material->GetMaterialData().find("OCCLUSION_MAP");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = texture_manager->GetDefault("albedo_map");
+				it->second.first = asset_manager->Get<GTexture>("albedo_map");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_AMBIENT_OCCLUSION, directory, filename);
 				if (texture)
@@ -447,7 +441,7 @@ namespace trace {
 		}
 
 		generateVertexTangent(vertices, indices);
-		result = ModelManager::get_instance()->LoadModel(vertices, indices, model_name);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle<Model>(model_name, vertices, indices);
 
 		auto it = content_browser->GetAllFilesID().find(model_name);
 		if (it == content_browser->GetAllFilesID().end())
@@ -550,8 +544,7 @@ namespace trace {
 		}
 
 		generateVertexTangent(vertices, indices);
-		result = GenericAssetManager::get_instance()->CreateAssetHandle_<SkinnedModel>(model_name);
-		result->Init(vertices, indices);
+		result = GenericAssetManager::get_instance()->CreateAssetHandle_<SkinnedModel>(model_name, vertices, indices);
 
 		auto it = content_browser->GetAllFilesID().find(model_name);
 		if (it == content_browser->GetAllFilesID().end())
@@ -629,7 +622,7 @@ namespace trace {
 
 						Ref<MaterialInstance> material = MaterialSerializer::Deserialize(material_path.string());
 
-						MaterialManager::get_instance()->RecreateMaterial(material, PipelineManager::get_instance()->GetPipeline("skinned_gbuffer_pipeline"));
+						material->RecreateMaterial(GenericAssetManager::get_instance()->Get<GPipeline>("skinned_gbuffer_pipeline"));
 
 						load_material(ass_scene, material, ass_mat, filename, directory);
 						
@@ -726,7 +719,7 @@ namespace trace {
 
 	void import_materials(const aiScene* ass_scene, std::string& filename, std::filesystem::path& directory)
 	{
-		TextureManager* texture_manager = TextureManager::get_instance();
+		GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
 
 		const aiScene* result = ass_scene;
 
@@ -745,7 +738,7 @@ namespace trace {
 			}
 			material_name += ".trmat";
 			std::string material_path = (directory / material_name).string();
-			Ref<MaterialInstance> material = MaterialManager::get_instance()->CreateMaterial(material_name, PipelineManager::get_instance()->GetPipeline("gbuffer_pipeline"));
+			Ref<MaterialInstance> material = asset_manager->CreateAssetHandle<MaterialInstance>(material_name, asset_manager->Get<GPipeline>("gbuffer_pipeline"));
 
 
 			load_material(result, material, imp_material, filename, directory);
@@ -801,8 +794,7 @@ namespace trace {
 		}
 		else
 		{
-			skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>((directory / skeleton_name).string());
-			skeleton->Create(skeleton_name, root_node, bones);
+			skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>((directory / skeleton_name).string(), skeleton_name, root_node, bones);
 
 			TraceEditor* editor = TraceEditor::get_instance();
 			ContentBrowser* content_browser = editor->GetContentBrowser();
@@ -923,7 +915,7 @@ namespace trace {
 			float duration = (float)animation->mDuration / (float)animation->mTicksPerSecond;
 			int frames_per_second = (int)animation->mTicksPerSecond;
 
-			Ref<AnimationClip> clip = AnimationsManager::get_instance()->CreateClip(anim_name);
+			Ref<AnimationClip> clip = GenericAssetManager::get_instance()->CreateAssetHandle<AnimationClip>(anim_name);
 			clip->SetDuration(duration);
 			clip->SetSampleRate(frames_per_second);
 			auto& tracks = clip->GetTracks();
@@ -1077,7 +1069,7 @@ namespace trace {
 
 		// Import Meshes
 		static int scene_count = 0;
-		Ref<Scene> temp_scene = SceneManager::get_instance()->CreateScene("Import Scene" + std::to_string(scene_count));
+		Ref<Scene> temp_scene = GenericAssetManager::get_instance()->CreateAssetHandle<Scene>("Import Scene" + std::to_string(scene_count));
 		scene_count++;
 		aiNode* root_node = result->mRootNode;
 		Entity holder = temp_scene->CreateEntity();
@@ -1092,7 +1084,7 @@ namespace trace {
 		Entity root_entity = temp_scene->GetEntity(hi.children[0]);
 		root_entity.GetComponent<TagComponent>().SetTag(import_filename);
 		std::string prefab_name = root_entity.GetComponent<TagComponent>().GetTag() + ".trprf";
-		Ref<Prefab> prefab = PrefabManager::get_instance()->Create(prefab_name, root_entity);
+		Ref<Prefab> prefab = GenericAssetManager::get_instance()->CreateAssetHandle<Prefab>(prefab_name, root_entity);
 		SceneSerializer::SerializePrefab(prefab, (directory / prefab_name).string());
 
 		content_browser->ProcessAllDirectory(true);// Refresh file id's

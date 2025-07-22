@@ -357,6 +357,11 @@ namespace trace::Animation {
         return true;
     }
 
+    bool Graph::Create(void* null_init)
+    {
+        return true;
+    }
+
     void Graph::Destroy()
     {
         for (auto& node : m_nodes)
