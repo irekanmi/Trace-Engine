@@ -22,7 +22,7 @@ namespace trace {
 
 	bool GShader::Create(const std::string& path, ShaderStage shader_stage)
 	{
-		std::filesystem::path p(DefaultAssetsManager::assets_path + "/shaders/" + path);
+		std::filesystem::path p(DefaultAssetsManager::assets_path + "shaders/" + path);
 		std::filesystem::path code_path = p;
 		code_path += ".shcode";
 		std::string name = p.filename().string();
@@ -32,7 +32,7 @@ namespace trace {
 		std::vector<std::pair<std::string, int>> data_index;
 		if (!std::filesystem::exists(code_path))
 		{
-			std::string shader_data = ShaderParser::load_shader_file(path);
+			std::string shader_data = ShaderParser::load_shader_file(p.string());
 			if (p.extension() == ".glsl")
 			{
 				code = ShaderParser::glsl_to_spirv(shader_data, shader_stage, data_index);

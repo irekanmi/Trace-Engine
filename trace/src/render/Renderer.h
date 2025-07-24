@@ -62,6 +62,13 @@ namespace trace {
 		uint32_t bone_count = 0;
 	};
 
+	struct QuadInstanceData
+	{
+		// IMPORTANT: there is a limit to number of instances in the shader
+		std::vector<glm::mat4> transforms;
+		std::vector<uint32_t> colors;
+	};	
+
 	struct RenderGraphFrameData
 	{
 		Viewport _viewPort;
@@ -87,6 +94,10 @@ namespace trace {
 		uint32_t num_avalible_quad_batch = 0;
 		// ....................................................
 
+		// Instanced Quad ............................
+		std::unordered_map<GTexture*, QuadInstanceData> quad_instances;
+		// ............................
+
 
 		//SunLights 
 		// NOTE: SunLight should not be more than one per scene for optimization reasons
@@ -108,7 +119,7 @@ namespace trace {
 		std::vector<RenderSkinnedObjectData> skinned_shadow_casters;
 	};
 
-	class TRACE_API Renderer : public Object
+	class Renderer : public Object
 	{
 	public:
 		Renderer();
@@ -168,7 +179,6 @@ namespace trace {
 		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index = 0);
 
 
-		void RenderLights();
 		void RenderTexts();
 		void RenderOpaqueObjects(int32_t render_graph_index = 0);
 		void RenderQuads(int32_t render_graph_index = 0);
@@ -219,9 +229,6 @@ namespace trace {
 		
 		uint32_t num_render_graphs = 1;// NOTE: Should be modified at render composer initialiazation
 		std::vector<RenderGraphFrameData> m_renderGraphsData;
-
-		/*std::vector<RenderObjectData> m_opaqueObjects;
-		uint32_t m_opaqueObjectsSize;*/
 
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;

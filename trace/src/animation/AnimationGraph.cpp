@@ -42,25 +42,25 @@ namespace trace::Animation {
 
         if (!graph)
         {
-            TRC_ERROR("Invalid graph handle");
+            TRC_ERROR("Invalid graph handle, Funtion: {}", __FUNCTION__);
             return false;
         }
 
         if (!graph->GetSkeleton())
         {
-            TRC_ERROR("Invalid skeleton handle");
+            TRC_ERROR("Invalid skeleton handle, Funtion: {}", __FUNCTION__);
             return false;
         }
 
         if (!scene)
         {
-            TRC_ERROR("Invalid scene handle");
+            TRC_ERROR("Invalid scene handle, Function: {}", __FUNCTION__);
             return false;
         }
 
         if (m_instanciated)
         {
-            TRC_ERROR("These Instance has already been created, Try to destroy the instance before trying again");
+            TRC_ERROR("These Instance has already been created, Try to destroy the instance before trying again, Funtion: {}", __FUNCTION__);
             return false;
         }
 

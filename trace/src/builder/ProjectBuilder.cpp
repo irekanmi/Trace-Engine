@@ -10,12 +10,11 @@
 #include "core/Coretypes.h"
 #include "core/Utils.h"
 #include "reflection/SerializeTypes.h"
+#include "external_utils.h"
 
 #include "serialize/yaml_util.h"
 
 namespace trace {
-	extern std::filesystem::path GetPathFromUUID(UUID uuid);
-	extern UUID GetUUIDFromName(const std::string& name);
 
 	bool ProjectBuilder::BuildProject(Ref<Project> project, std::string output_dir, std::unordered_set<std::filesystem::path>& scenes)
 	{

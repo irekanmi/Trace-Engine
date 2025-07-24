@@ -293,6 +293,7 @@ namespace trace {
 					_ds2,
 					false
 				);
+				_ds2.input_layout = Vertex::get_input_layout();
 				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
 				ColorBlendState clr_bld;
 				clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
@@ -349,7 +350,7 @@ namespace trace {
 				clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
 				clr_bld.src_color = BlendFactor::BLEND_SRC_ALPHA;
 				_ds2.blend_state = clr_bld;
-				_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
+				_ds2.depth_sten_state = { true, true, 0.0f, 1.0f };
 
 				text_batch_pipeline = asset_manager->CreateAssetHandle<GPipeline>("text_batch_pipeline", _ds2);
 				

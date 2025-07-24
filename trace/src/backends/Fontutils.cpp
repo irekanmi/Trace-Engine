@@ -201,7 +201,7 @@ bool __MSDF_LoadAndInitializeFont(const std::string& name, trace::Font* _font)
 		return false;
 	}
 
-	MSDF_Handle* _internal = new MSDF_Handle();
+	MSDF_Handle* _internal = new MSDF_Handle();//TODO: Use custom allocator
 	_font->SetInternal(_internal);
 
 	bool success = false;
@@ -235,7 +235,7 @@ bool __MSDF_LoadAndInitializeFont_Data(const std::string& name, trace::Font* _fo
 		return false;
 	}
 
-	MSDF_Handle* _internal = new MSDF_Handle();
+	MSDF_Handle* _internal = new MSDF_Handle();//TODO: Use custom allocator
 	_font->SetInternal(_internal);
 
 	bool success = false;

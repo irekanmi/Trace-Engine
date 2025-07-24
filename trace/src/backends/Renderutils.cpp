@@ -207,10 +207,6 @@ namespace trace {
 
 		RenderFunc::_createDevice = vk::__CreateDevice;
 		RenderFunc::_destroyDevice = vk::__DestroyDevice;
-		RenderFunc::_drawElements = vk::__DrawElements;
-		RenderFunc::_drawInstancedElements = vk::__DrawInstanceElements;
-		RenderFunc::_drawIndexed_ = vk::__DrawIndexed_;
-		RenderFunc::_drawInstancedIndexed = vk::__DrawInstanceIndexed;
 		RenderFunc::_bindViewport = vk::__BindViewport;
 		RenderFunc::_bindRect = vk::__BindRect;
 		RenderFunc::_bindLineWidth = vk::__BindLineWidth;
@@ -220,7 +216,9 @@ namespace trace {
 		RenderFunc::_bindIndexBuffer = vk::__BindIndexBuffer;
 		RenderFunc::_bindIndexBufferBatch = vk::__BindIndexBufferBatch;
 		RenderFunc::_draw = vk::__Draw;
+		RenderFunc::_drawInstanced = vk::__DrawInstanced;
 		RenderFunc::_drawIndexed = vk::__DrawIndexed;
+		RenderFunc::_drawIndexedInstanced = vk::__DrawIndexedInstanced;
 		RenderFunc::_beginRenderPass = vk::__BeginRenderPass;
 		RenderFunc::_nextSubpass = vk::__NextSubpass;
 		RenderFunc::_endRenderPass = vk::__EndRenderPass;
@@ -291,10 +289,6 @@ namespace trace {
 
 	__CreateDevice RenderFunc::_createDevice = nullptr;
 	__DestroyDevice RenderFunc::_destroyDevice = nullptr;
-	__DrawElements RenderFunc::_drawElements = nullptr;
-	__DrawInstanceElements RenderFunc::_drawInstancedElements = nullptr;
-	__DrawIndexed_ RenderFunc::_drawIndexed_ = nullptr;
-	__DrawInstanceIndexed RenderFunc::_drawInstancedIndexed = nullptr;
 	__BindViewport RenderFunc::_bindViewport = nullptr;
 	__BindRect RenderFunc::_bindRect = nullptr;
 	__BindLineWidth RenderFunc::_bindLineWidth = nullptr;
@@ -304,7 +298,9 @@ namespace trace {
 	__BindIndexBuffer RenderFunc::_bindIndexBuffer = nullptr;
 	__BindIndexBufferBatch RenderFunc::_bindIndexBufferBatch = nullptr;
 	__Draw RenderFunc::_draw = nullptr;
+	__DrawInstanced RenderFunc::_drawInstanced = nullptr;
 	__DrawIndexed RenderFunc::_drawIndexed = nullptr;
+	__DrawIndexedInstanced RenderFunc::_drawIndexedInstanced = nullptr;
 	__BeginRenderPass RenderFunc::_beginRenderPass = nullptr;
 	__NextSubpass RenderFunc::_nextSubpass = nullptr;
 	__EndRenderPass RenderFunc::_endRenderPass = nullptr;
@@ -404,46 +400,6 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_destroyDevice);
 		result = _destroyDevice(device);
-
-		return result;
-	}
-
-	bool RenderFunc::DrawElements(GDevice* device, GBuffer* vertex_buffer)
-	{
-		bool result = true;
-
-		RENDER_FUNC_IS_VALID(_drawElements);
-		result = _drawElements(device,vertex_buffer);
-
-		return result;
-	}
-
-	bool RenderFunc::DrawInstanceElements(GDevice* device, GBuffer* vertex_buffer, uint32_t instances)
-	{
-		bool result = true;
-
-		RENDER_FUNC_IS_VALID(_drawInstancedElements);
-		result = _drawInstancedElements(device, vertex_buffer, instances);
-
-		return result;
-	}
-
-	bool RenderFunc::DrawIndexed_(GDevice* device, GBuffer* index_buffer)
-	{
-		bool result = true;
-
-		RENDER_FUNC_IS_VALID(_drawIndexed_);
-		result = _drawIndexed_(device, index_buffer);
-
-		return result;
-	}
-
-	bool RenderFunc::DrawInstanceIndexed(GDevice* device, GBuffer* index_buffer, uint32_t instances)
-	{
-		bool result = true;
-
-		RENDER_FUNC_IS_VALID(_drawInstancedIndexed);
-		result = _drawInstancedIndexed(device, index_buffer, instances);
 
 		return result;
 	}
@@ -978,6 +934,16 @@ namespace trace {
 
 		return result;
 	}
+	
+	bool RenderFunc::DrawInstanced(GDevice* device, uint32_t start_vertex, uint32_t count, uint32_t num_instances)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_drawInstanced);
+		result = _drawInstanced(device, start_vertex, count, num_instances);
+
+		return result;
+	}
 
 	bool RenderFunc::DrawIndexed(GDevice* device, uint32_t first_index, uint32_t count)
 	{
@@ -985,6 +951,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_drawIndexed);
 		result = _drawIndexed(device, first_index, count);
+
+		return result;
+	}
+	
+	bool RenderFunc::DrawIndexedInstanced(GDevice* device, uint32_t first_index, uint32_t count, uint32_t num_instances)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_drawIndexedInstanced);
+		result = _drawIndexedInstanced(device, first_index, count, num_instances);
 
 		return result;
 	}

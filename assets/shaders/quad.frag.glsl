@@ -8,9 +8,7 @@
 layout(location = 0)out vec4 FragColor;
 
 layout(location = 0)in vec2 in_texCoord;
-layout(location = 1)in float in_texIndex;
 
-//layout(set = 0, binding = 1)uniform sampler2D u_textures[MAX_QUAD_TEXTURE_SLOT];
 BINDLESS_COMBINED_SAMPLER2D;
 
 

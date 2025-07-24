@@ -39,6 +39,8 @@ namespace trace {
 	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR | RENDER_BLOOM;
 	//----------------
 
+	static Model quad_model;
+
 	Renderer::Renderer()
 		: Object(_STR(Renderer))
 	{
@@ -144,7 +146,11 @@ namespace trace {
 			}
 			graph_data.boundQuadTextures.clear();
 
-
+			for (auto& tex_ins : graph_data.quad_instances)
+			{
+				tex_ins.second.transforms.clear();
+				tex_ins.second.colors.clear();
+			}
 
 			for (auto& j : graph_data.text_vertices)
 			{
@@ -174,11 +180,12 @@ namespace trace {
 	void Renderer::Start()
 	{
 
-		// Temp------------------------------------------------------------------------------------------------
 
 
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_RESIZE, BIND_EVENT_FN(Renderer::OnEvent));
+		// Temp _____
 		EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(Renderer::OnEvent));
+		//_____________
 
 					
 		text_verts = true;
@@ -239,6 +246,29 @@ namespace trace {
 			// ..................................................	
 		}
 
+		std::vector<Vertex> vertices(4);
+		vertices[0].pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+		vertices[0].texCoord = glm::vec2(0.0f, 0.0f);
+		
+		vertices[1].pos = glm::vec3(1.0f, -1.0f, 0.0f);
+		vertices[1].texCoord = glm::vec2(1.0f, 0.0f);
+		
+		vertices[2].pos = glm::vec3(1.0f, 1.0f, 0.0f);
+		vertices[2].texCoord = glm::vec2(1.0f, 1.0f);
+		
+		vertices[3].pos = glm::vec3(-1.0f, 1.0f, 0.0f);
+		vertices[3].texCoord = glm::vec2(0.0f, 1.0f);
+
+		std::vector<uint32_t> indices = {
+			0, 1, 2,
+			0, 2, 3
+		};
+
+		generateVertexTangent(vertices, indices);
+
+		quad_model.Create(vertices, indices);
+
+
 		if (AppSettings::is_editor)
 		{
 			UIFuncLoader::LoadImGuiFunc();
@@ -249,6 +279,8 @@ namespace trace {
 
 	void Renderer::End()
 	{
+		quad_model.Destroy();
+
 		//Text Rendering -------------------------
 		for (uint32_t i = 0; i < num_render_graphs; i++)
 		{
@@ -473,91 +505,11 @@ namespace trace {
 	{
 		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
 		
-		glm::mat4 final_transform = graph_data._camera->GetViewMatrix() * _transform;
-		glm::vec3 final_pos = glm::vec3(final_transform[3]);
-		uint32_t current_unit = graph_data.quadBatches[graph_data.current_quad_batch].current_unit;
-		if (!graph_data.quadBatches[graph_data.current_quad_batch].tex)
-		{
-			graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
-		}
-		else if (graph_data.quadBatches[graph_data.current_quad_batch].tex != texture.get())
-		{
-			int index = -1;
-			auto it = std::find_if(graph_data.quadBatches.begin(), graph_data.quadBatches.end(), [&texture, &index](BatchInfo& a) {
-				index++;
-				return a.tex == texture.get();
-				});
 
+		graph_data.quad_instances[texture.get()].transforms.emplace_back(_transform);
+		graph_data.quad_instances[texture.get()].colors.emplace_back(color);
 
-			if (it != graph_data.quadBatches.end())
-			{
-				graph_data.current_quad_batch = index;
-			}
-			else
-			{
-				flush_current_quad_batch(render_graph_index);
-				graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
-			}
-		}
-
-		if (graph_data.quadBatches[graph_data.current_quad_batch].current_unit >= graph_data.quadBatches[graph_data.current_quad_batch].max_units - 1)
-		{
-			flush_current_quad_batch(render_graph_index);
-			graph_data.quadBatches[graph_data.current_quad_batch].tex = texture.get();
-		}
-
-		//HACK: Used for sorting
-		uint32_t current_vert = graph_data.quadBatches[graph_data.current_quad_batch].current_unit * 6;
-		graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[current_unit] = final_pos.z;
-		for (uint32_t i = 0; i <= current_unit; i++)
-		{
-			float dis = graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[i];
-			if (final_pos.z < dis)
-			{
-				current_vert = i * 6;
-				graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[current_unit] = dis;
-				graph_data.quadBatches[graph_data.current_quad_batch].cam_distance[i] = final_pos.z;
-				glm::vec4* data = graph_data.quadBatches[graph_data.current_quad_batch].positions.data();
-				glm::vec4* from = data + (i * 6);
-				glm::vec4* to = data + (current_unit * 6);
-				memcpy(to, from, sizeof(glm::vec4) * 6);
-			}
-		}
-
-		float new_color = 0.0f;
-		memcpy(&new_color, &color, sizeof(uint32_t));
-
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
-		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		current_vert++;
-
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
-		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-		current_vert++;
-
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
-		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
-		current_vert++;
-
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
-		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(1.0f, 1.0f, 0.0f, 0.0f);
-		current_vert++;
-
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
-		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-		current_vert++;
-
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert] = _transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-		graph_data.quadBatches[graph_data.current_quad_batch].positions[current_vert].a = new_color;
-		graph_data.quadBatches[graph_data.current_quad_batch].tex_coords[current_vert] = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		current_vert++;
-
-		graph_data.quadBatches[graph_data.current_quad_batch].current_unit++;
+		return;
 	}
 
 	void Renderer::DrawString(Font* font, const std::string& text, glm::mat4 _transform, int32_t render_graph_index)
@@ -713,71 +665,6 @@ namespace trace {
 
 	}
 
-	void Renderer::RenderLights()
-	{
-		//Ref<GPipeline> sp = PipelineManager::get_instance()->GetPipeline("light_pipeline");
-		//glm::mat4 view_proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
-
-		/*for (int i = 0; i < m_meshLightSize; i++)
-		{
-			auto& data = m_meshedLights[i];
-			int index = data.first;
-			Light& _light = lights[index];
-			Model* _model = data.second;
-			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(_light.position));
-			glm::vec4 light_color = glm::vec4(glm::vec3(_light.color), _light.params2.y);
-
-
-			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::SetPipelineData(sp.get(), "_view_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "color", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &light_color, sizeof(glm::vec4));
-			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_LOCAL, &model, sizeof(glm::mat4));
-			RenderFunc::BindPipeline_(sp.get());
-			RenderFunc::BindPipeline(&g_device, sp.get());
-			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
-			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
-
-			RenderFunc::DrawIndexed(&g_device, 0, _model->GetIndexCount());
-			RenderFunc::OnDrawEnd(&g_device, sp.get());
-
-		}*/
-
-
-		//TEMP: Find vaild function to render sky box
-		/*if (current_sky_box)
-		{
-			SkyBox* sky_box = current_sky_box;
-
-			glm::mat4 proj = _camera->GetProjectionMatix();
-			glm::mat4 view = _camera->GetViewMatrix();
-			glm::vec3 view_position = _camera->GetPosition();
-
-			Ref<GPipeline> sp = PipelineManager::get_instance()->GetDefault("skybox");
-			RenderFunc::OnDrawStart(&g_device, sp.get());
-
-			RenderFunc::SetPipelineTextureData(
-				sp.get(),
-				"CubeMap",
-				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				sky_box->GetCubeMap()
-			);
-			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
-			RenderFunc::BindPipeline_(sp.get());
-
-			Ref<Model> mod = sky_box->GetCube()->GetModels()[0];
-			RenderFunc::BindPipeline(&g_device, sp.get());
-			RenderFunc::BindVertexBuffer(&g_device, mod->GetVertexBuffer());
-			RenderFunc::BindIndexBuffer(&g_device, mod->GetIndexBuffer());
-
-			RenderFunc::DrawIndexed(&g_device, 0, mod->GetIndexCount());
-			RenderFunc::OnDrawEnd(&g_device, sp.get());
-		}*/
-
-	}
-
 	void Renderer::RenderQuads(int32_t render_graph_index)
 	{
 		quadBatchPipeline = DefaultAssetsManager::quad_pipeline;
@@ -787,24 +674,22 @@ namespace trace {
 		Camera* _camera = graph_data._camera;
 
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
-		for (uint32_t i = 0; i < graph_data.num_avalible_quad_batch; i++)
+		for (auto& tex_ins : graph_data.quad_instances)
 		{
-			if (graph_data.quadBatches[i].current_unit == 0)
+			if (tex_ins.second.transforms.empty())
 			{
 				continue;
 			}
-			/*for (uint32_t j = 0; j < quadBatches[i].current_texture_unit; j++)
-			{
-				RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures" + std::to_string(j), ShaderResourceStage::RESOURCE_STAGE_GLOBAL, quadBatches[i].textures[j], j);
-			}*/
 			RenderFunc::OnDrawStart(&g_device, quadBatchPipeline.get());
-			RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, graph_data.quadBatches[i].tex);
+			RenderFunc::SetPipelineTextureData(quadBatchPipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
 			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, graph_data.quadBatches[i].positions.data(), graph_data.quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
-			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, graph_data.quadBatches[i].tex_coords.data(), graph_data.quadBatches[i].current_unit * sizeof(glm::vec4) * 6);
+			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "transforms", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.second.transforms.data(), tex_ins.second.transforms.size() * sizeof(glm::mat4));
+			RenderFunc::SetPipelineData(quadBatchPipeline.get(), "colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.second.colors.data(), tex_ins.second.colors.size() * sizeof(uint32_t));
 			RenderFunc::BindPipeline_(quadBatchPipeline.get());
 			RenderFunc::BindPipeline(&g_device, quadBatchPipeline.get());
-			RenderFunc::Draw(&g_device, 0, graph_data.quadBatches[i].current_unit * 6);
+			RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
+			RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
+			RenderFunc::DrawIndexedInstanced(&g_device, 0, quad_model.GetIndexCount(), tex_ins.second.transforms.size());
 			RenderFunc::OnDrawEnd(&g_device, quadBatchPipeline.get());
 		}
 	}

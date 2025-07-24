@@ -412,108 +412,6 @@ namespace vk {
 
 		return result;
 	}
-
-	bool __DrawElements(trace::GDevice* device, trace::GBuffer* vertex_buffer) 
-	{
-
-		bool result = true;
-
-		
-
-		if (!device || !vertex_buffer)
-		{
-			TRC_ERROR("please pass in valid pointer -> {} || {} , Function -> {}", (const void*)device, (const void*)vertex_buffer, __FUNCTION__);
-			return false;
-		}
-
-		if (!device->GetRenderHandle()->m_internalData || !vertex_buffer->GetRenderHandle()->m_internalData)
-		{
-			TRC_ERROR("These render handle is invalid -> {} || {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, (const void*)vertex_buffer->GetRenderHandle()->m_internalData, __FUNCTION__);
-			return false;
-		}
-
-		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
-
-
-		return result;
-	}
-	bool __DrawInstanceElements(trace::GDevice* device, trace::GBuffer* vertex_buffer, uint32_t instances) 
-	{ 
-		
-		bool result = true;
-
-		
-
-		if (!device)
-		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
-			return false;
-		}
-
-		if (!device->GetRenderHandle()->m_internalData)
-		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
-			return false;
-		}
-
-		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
-
-		return result; 
-	}
-	bool __DrawIndexed_(trace::GDevice* device, trace::GBuffer* index_buffer)
-	{
-
-		bool result = true;
-
-		
-
-		if (!device)
-		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
-			return false;
-		}
-
-		if (!device->GetRenderHandle()->m_internalData)
-		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
-			return false;
-		}
-
-		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
-
-		return result;
-	}
-	bool __DrawInstanceIndexed(trace::GDevice* device, trace::GBuffer* index_buffer, uint32_t instances)
-	{
-
-		bool result = true;
-
-		
-
-		if (!device)
-		{
-			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
-			return false;
-		}
-
-		if (!device->GetRenderHandle()->m_internalData)
-		{
-			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
-			return false;
-		}
-
-		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		// HACK: Find another way to get the vulkan instance
-		trace::VKHandle* _instance = &g_Vkhandle;
-
-		return result;
-	}
 	bool __BindViewport(trace::GDevice* device, trace::Viewport view_port)
 	{
 
@@ -776,6 +674,40 @@ namespace vk {
 		);
 
 		return result;
+	}	
+	bool __DrawInstanced(trace::GDevice* device, uint32_t start_vertex, uint32_t count, uint32_t num_instances)
+	{
+
+		bool result = true;
+
+		
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		
+
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vkCmdDraw(
+			command_buffer->m_handle,
+			count,
+			num_instances,
+			start_vertex,
+			0
+		);
+
+		return result;
 	}
 	bool __DrawIndexed(trace::GDevice* device, uint32_t first_index, uint32_t count)
 	{
@@ -804,6 +736,40 @@ namespace vk {
 			command_buffer->m_handle,
 			count,
 			1,
+			first_index,
+			0,
+			0
+		);
+
+		return result;
+	}
+	bool __DrawIndexedInstanced(trace::GDevice* device, uint32_t first_index, uint32_t count, uint32_t num_instances)
+	{
+
+		bool result = true;
+
+		
+
+		if (!device)
+		{
+			TRC_ERROR("please pass in valid pointer -> {}, Function -> {}", (const void*)device, __FUNCTION__);
+			return false;
+		}
+
+		if (!device->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
+		
+		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		vkCmdDrawIndexed(
+			command_buffer->m_handle,
+			count,
+			num_instances,
 			first_index,
 			0,
 			0

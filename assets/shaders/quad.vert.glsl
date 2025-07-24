@@ -1,11 +1,14 @@
 #version 450
 
+#include "globals_data.glsl"
 #include "bindless.glsl"
+
+
+DEFAULT_VERTEX_INPUT
 
 #define MAX_QUAD_VERTICES 512
 
 layout(location = 0)out vec2 out_texCoord;
-layout(location = 1)out float out_texIndex;
 
 layout(set = 0, binding = 0)uniform SceneData
 {
@@ -13,16 +16,10 @@ layout(set = 0, binding = 0)uniform SceneData
 };
 
 
-// INSTANCE_UNIFORM_BUFFER(VertexData,
-// {
-//     vec4 positions[MAX_QUAD_VERTICES];  // xyz : position, w : draw_index
-//     vec4 tex_coords[MAX_QUAD_VERTICES]; // x: tex_coord, y : tex_coord, z: tex_index
-// }
-// );
 
 struct VertexData{
-    vec4 positions[MAX_QUAD_VERTICES];  // xyz : position, w : draw_index
-    vec4 tex_coords[MAX_QUAD_VERTICES]; // x: tex_coord, y : tex_coord, z: tex_index
+    mat4 transforms[MAX_QUAD_VERTICES];
+    uint colors[MAX_QUAD_VERTICES];
 };
 
 layout(std140, set = 1, binding = 3) readonly buffer DrawData{
@@ -36,14 +33,7 @@ layout(location = 2) out Data{
 
 void main()
 {
-    vec4 current_pos;
-    vec4 current_tex;
-    //current_pos = GET_INSTANCE_PARAM(positions, VertexData)[gl_VertexIndex];
-    current_pos = objects[binding_index.draw_instance_index.x].positions[gl_VertexIndex];
-    //current_tex = GET_INSTANCE_PARAM(tex_coords, VertexData)[gl_VertexIndex];
-    current_tex = objects[binding_index.draw_instance_index.x].tex_coords[gl_VertexIndex];
-    out_texCoord = vec2(current_tex.x, current_tex.y);
-    out_texIndex = current_tex.z;
-    color = floatBitsToUint(current_pos.a);
-    gl_Position = _projection * vec4(current_pos.xyz, 1.0);
+    out_texCoord = in_texCoord;
+    color = objects[binding_index.draw_instance_index.x].colors[gl_InstanceIndex];
+    gl_Position = _projection * objects[binding_index.draw_instance_index.x].transforms[gl_InstanceIndex] * vec4(in_pos, 1.0f);
 }
