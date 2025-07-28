@@ -104,6 +104,7 @@ namespace trace {
 		std::vector<RenderGraphEdge>& GetPassEdges() { return m_edges; }
 		void SetRenderGraph(RenderGraph* render_graph) { m_renderGraph = render_graph; }
 		void SetGpuQueue(GPU_QUEUE queue) { m_queue = queue; }
+		void SetClearValues(std::vector<glm::vec4>& clear_values) { clearColor = clear_values; }
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
@@ -111,7 +112,7 @@ namespace trace {
 		RenderGraphPass(const std::string& name, RenderGraph* render_graph);
 
 	public:
-		glm::vec4 clearColor;
+		std::vector<glm::vec4> clearColor;
 		glm::vec4 renderArea;
 		float depthValue;
 		uint32_t stencilValue;

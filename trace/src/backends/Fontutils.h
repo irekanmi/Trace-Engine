@@ -19,7 +19,7 @@ namespace trace {
 	typedef bool (*__DestroyFont)(Font*);
 
 	// String Processing 
-	typedef bool (*__ComputeTextString)(Font*, const std::string& text, std::vector<glm::vec4>&, uint32_t, std::vector<glm::vec4>&, glm::mat4&, float, uint32_t&);
+	typedef bool (*__ComputeTextString)(Font*, const std::string& text, std::vector<glm::vec4>&, std::vector<glm::vec4>&, glm::mat4&, glm::vec3);
 	typedef bool (*__ComputeTextVertex)(Font*, const std::string& text, std::vector<TextVertex>&, glm::mat4&, glm::vec3&);
 
 	class FontFuncLoader
@@ -37,7 +37,7 @@ namespace trace {
 		static bool LoadAndInitializeFont(const std::string& name, Font* font);
 		static bool LoadAndInitializeFont(const std::string& name, Font* font, char* data, uint32_t size);
 		static bool DestroyFont(Font* font);
-		static bool ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, float tex_index, uint32_t& count);
+		static bool ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, glm::vec3 color);
 		static bool ComputeTextVertex(Font* font, const std::string& text, std::vector<TextVertex>& text_vertices, glm::mat4& _transform, glm::vec3& color);
 
 	private:

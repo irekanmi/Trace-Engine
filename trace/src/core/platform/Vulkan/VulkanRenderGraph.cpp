@@ -406,20 +406,35 @@ namespace vk {
 		begin_info.framebuffer = pass_handle->frame_buffer;
 
 		VkClearValue clear_color = {};
-		clear_color.color.float32[0] = pass_handle->physical_pass.clear_color->r;
-		clear_color.color.float32[1] = pass_handle->physical_pass.clear_color->g;
-		clear_color.color.float32[2] = pass_handle->physical_pass.clear_color->b;
-		clear_color.color.float32[3] = pass_handle->physical_pass.clear_color->a;
 
-		clear_color.depthStencil.depth = *pass_handle->physical_pass.depth_value;
-		clear_color.depthStencil.stencil = *pass_handle->physical_pass.stencil_value;
+		clear_color.color.float32[0] = 0.0f;
+		clear_color.color.float32[1] = 0.0f;
+		clear_color.color.float32[2] = 0.0f;
+		clear_color.color.float32[3] = 0.0f;
+
+		clear_color.depthStencil.depth = pass->depthValue;
+		clear_color.depthStencil.stencil = pass->stencilValue;
 
 		VkClearValue clear_colors[20] = {};
 
-		uint32_t clear_count = 0;
-		for (auto& tex : pass->GetAttachmentOutputs())
+		uint32_t clear_count = pass->clearColor.size();
+		for (uint32_t i = 0; i < clear_count; i++)
 		{
-			clear_colors[clear_count++] = clear_color;
+			clear_colors[i].color.float32[0] = pass->clearColor[i].r;
+			clear_colors[i].color.float32[1] = pass->clearColor[i].g;
+			clear_colors[i].color.float32[2] = pass->clearColor[i].b;
+			clear_colors[i].color.float32[3] = pass->clearColor[i].a;
+
+			clear_colors[i].depthStencil.depth = pass->depthValue;
+			clear_colors[i].depthStencil.stencil = pass->stencilValue;
+		}
+
+		if (pass->clearColor.empty())
+		{
+			for (auto& tex : pass->GetAttachmentOutputs())
+			{
+				clear_colors[clear_count++] = clear_color;
+			}
 		}
 		if (pass->GetDepthStencilOutput() != INVALID_ID)
 		{
@@ -908,7 +923,7 @@ namespace vk {
 		trace::VKRenderGraphPass* handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 
 		handle->physical_pass.m_handle = pass_handle;
-		handle->physical_pass.clear_color = &pass->clearColor;
+		//handle->physical_pass.clear_color = &pass->clearColor;
 		handle->physical_pass.render_area = &pass->renderArea;
 		handle->physical_pass.depth_value = &pass->depthValue;
 		handle->physical_pass.stencil_value = &pass->stencilValue;

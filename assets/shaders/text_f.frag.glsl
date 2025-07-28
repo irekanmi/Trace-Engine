@@ -1,10 +1,12 @@
 #version 450
 
+#include "OIT_data.glsl"
 #include "bindless.glsl"
 
-layout(location = 0)out vec4 FragColor;
+// layout(location = 0)out vec4 FragColor;
+OUT_OIT_DATA
 
-layout(location = 0)in TextData
+layout(location = 2)in TextData
 {
     vec3 Color;
     vec2 Tex_coord;
@@ -37,7 +39,8 @@ void main()
     float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
     color = mix(bgColor, fgColor, opacity);
 
-    FragColor = color;
+    //FragColor = out_color;
+    PROCESS_COLOR(color);
 }
 
 float screenPxRange(sampler2D msdf) {

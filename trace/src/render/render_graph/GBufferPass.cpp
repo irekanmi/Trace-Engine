@@ -99,7 +99,7 @@ namespace trace {
 		gPos.m_format = Format::R16G16B16A16_FLOAT;
 		gPos.m_width = 800;
 		gPos.m_height = 600;
-		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::NEAREST;
+		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
 		gPos.m_mipLevels = gPos.m_numLayers = 1;
 		gPos.m_usage = UsageFlag::DEFAULT;
 
@@ -156,6 +156,14 @@ namespace trace {
 				graph->ModifyTextureResource(graph->GetResource(depth_index).resource_name, desc);
 			});
 	}
+
+	static std::vector<glm::vec4> clear_values = {
+		glm::vec4(0.0f),
+		glm::vec4(0.0f),
+		glm::vec4(0.0f),
+		glm::vec4(0.0f)
+	};
+
 	void GBufferPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
 	{
 		GBufferData& gbuffer_data = black_board.add<GBufferData>();
@@ -168,13 +176,14 @@ namespace trace {
 
 		TextureDesc color_desc = position_desc;
 		color_desc.m_format = Format::R32G32B32A32_UINT;
+		color_desc.m_minFilterMode = color_desc.m_magFilterMode = FilterMode::NEAREST;
 		position_index = pass->CreateAttachmentOutput("gPosition", position_desc);
 		normal_index = pass->CreateAttachmentOutput("gNormal", position_desc);
 		color_index = pass->CreateAttachmentOutput("gColor", color_desc);
 		gbuffer_data.emissive_index = pass->CreateAttachmentOutput("gEmission", position_desc);
 		depth_index = pass->CreateDepthAttachmentOutput("depth", depth_desc);
 
-		pass->clearColor = glm::vec4(0.0f);
+		pass->SetClearValues(clear_values);
 		
 		gbuffer_data.position_index = position_index;
 		gbuffer_data.normal_index = normal_index;

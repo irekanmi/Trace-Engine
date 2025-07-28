@@ -294,16 +294,9 @@ namespace trace {
 					false
 				);
 				_ds2.input_layout = Vertex::get_input_layout();
-				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
-				ColorBlendState clr_bld;
-				clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.alpha_to_blend_coverage = true;
-				clr_bld.color_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.src_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
-				clr_bld.src_color = BlendFactor::BLEND_SRC_ALPHA;
-				_ds2.blend_state = clr_bld;
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("WOIT_PASS");
+				Enable_WeightedOIT(_ds2);
+				_ds2.depth_sten_state = { true, false, false, 1.0f, 0.0f };
 				_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
 
 
@@ -341,16 +334,8 @@ namespace trace {
 				);
 				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
 				_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
-				ColorBlendState clr_bld;
-				clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.alpha_to_blend_coverage = true;
-				clr_bld.color_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.src_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
-				clr_bld.src_color = BlendFactor::BLEND_SRC_ALPHA;
-				_ds2.blend_state = clr_bld;
-				_ds2.depth_sten_state = { true, true, 0.0f, 1.0f };
+				Enable_Blending(_ds2);
+				_ds2.depth_sten_state = { true, true, true, 0.0f, 1.0f };
 
 				text_batch_pipeline = asset_manager->CreateAssetHandle<GPipeline>("text_batch_pipeline", _ds2);
 				
@@ -384,19 +369,11 @@ namespace trace {
 					_ds2,
 					false
 				);
-				_ds2.input_layout = TextVertex::get_input_layout();
-				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS");
+				_ds2.input_layout = Vertex::get_input_layout();
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("WOIT_PASS");
+				Enable_WeightedOIT(_ds2);
+				_ds2.depth_sten_state = { true, false, false, 1.0f, 0.0f };
 				_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
-				ColorBlendState clr_bld;
-				clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.alpha_to_blend_coverage = true;
-				clr_bld.color_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.src_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
-				clr_bld.src_color = BlendFactor::BLEND_ONE;
-				_ds2.blend_state = clr_bld;
-				_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
 
 				text_pipeline = asset_manager->CreateAssetHandle<GPipeline>("text_pipeline", _ds2);
 				
@@ -433,16 +410,8 @@ namespace trace {
 				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("FORWARD_PASS"); // TODO: Create custom debug pass
 				_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
 				_ds2.topology = PRIMITIVETOPOLOGY::LINE_LIST;
-				ColorBlendState clr_bld;
-				clr_bld.alpha_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.alpha_to_blend_coverage = true;
-				clr_bld.color_op = BlendOp::BLEND_OP_ADD;
-				clr_bld.dst_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.src_alpha = BlendFactor::BLEND_ONE;
-				clr_bld.dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
-				clr_bld.src_color = BlendFactor::BLEND_SRC_ALPHA;
-				_ds2.blend_state = clr_bld;
-				_ds2.depth_sten_state = { true, false, 0.0f, 1.0f };
+				Enable_Blending(_ds2);
+				_ds2.depth_sten_state = { true, true, false, 0.0f, 1.0f };
 
 				debug_line_pipeline = asset_manager->CreateAssetHandle<GPipeline>("debug_line_pipeline", _ds2);
 				

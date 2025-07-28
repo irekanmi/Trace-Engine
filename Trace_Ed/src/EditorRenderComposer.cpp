@@ -24,6 +24,7 @@ namespace trace {
 		ui_pass.Init(m_renderer);
 		editor_ui_pass.Init(m_renderer);
 		shadow_pass.Init(m_renderer);
+		weightedOITPass.Init(m_renderer);
 
 		m_graphs.resize(1);
 		m_graphsBlackBoard.resize(1);
@@ -38,6 +39,7 @@ namespace trace {
 			m_graphs[i].Destroy();
 		}
 
+		weightedOITPass.ShutDown();
 		shadow_pass.ShutDown();
 		editor_ui_pass.ShutDown();
 		ui_pass.ShutDown();
@@ -92,6 +94,8 @@ namespace trace {
 		}
 		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
 		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
+		weightedOITPass.Setup(&frame_graph, black_board, render_graph_index);
+		
 		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
 		{
 			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);

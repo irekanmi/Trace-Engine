@@ -20,7 +20,7 @@
 bool __MSDF_LoadAndInitializeFont(const std::string & name, trace::Font * font);
 bool __MSDF_LoadAndInitializeFont_Data(const std::string & name, trace::Font * _font, char* data, uint32_t size);
 bool __MSDF_DestroyFont(trace::Font * font);
-bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, uint32_t pos_index, std::vector<glm::vec4>&tex_coords, glm::mat4 & _transform, float tex_index, uint32_t& count);
+bool __MSDF_ComputeTextString(trace::Font* font, const std::string & text, std::vector<glm::vec4>&positions, std::vector<glm::vec4>&tex_coords, glm::mat4 & _transform, glm::vec3 color);
 bool __MSDF_ComputeTextVertex(trace::Font* font, const std::string & text, std::vector<trace::TextVertex>&text_vertices, glm::mat4 & _transform, glm::vec3& color);
 // ----------------------------------------
 
@@ -62,10 +62,10 @@ namespace trace {
 		return _destroyFont(font);
 	}
 
-	bool FontFunc::ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, float tex_index, uint32_t& count)
+	bool FontFunc::ComputeTextString(Font* font, const std::string& text, std::vector<glm::vec4>& positions, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, glm::vec3 color)
 	{
 		FONT_FUNC_IS_VALID(_computeTextString);
-		return _computeTextString(font, text, positions, pos_index, tex_coords, _transform, tex_index, count);
+		return _computeTextString(font, text, positions, tex_coords, _transform, color);
 	}
 
 	bool FontFunc::ComputeTextVertex(Font* font, const std::string& text, std::vector<TextVertex>& text_vertices, glm::mat4& _transform, glm::vec3& color)
@@ -272,7 +272,7 @@ bool __MSDF_DestroyFont(trace::Font* font)
 	return true;
 }
 
-bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::vector<glm::vec4>& positions, uint32_t pos_index, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, float tex_index, uint32_t& count)
+bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::vector<glm::vec4>& positions, std::vector<glm::vec4>& tex_coords, glm::mat4& _transform, glm::vec3 color)
 {
 
 	if (!font->GetInternal())
@@ -294,7 +294,6 @@ bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::v
 
 	double spaceAdvance = fontGeometry.getGlyph(' ')->getAdvance();
 	
-	uint32_t current_vert = pos_index * 6;
 
 	for (uint32_t i = 0; i < text.length(); i++)
 	{
@@ -350,30 +349,30 @@ bool __MSDF_ComputeTextString(trace::Font* font ,const std::string& text, std::v
 		}
 		x += fsScale * advance;
 
-		positions[current_vert] = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
-		tex_coords[current_vert] = glm::vec4(texMin, tex_index, 0.0f);
-		current_vert++;
+		glm::vec4 world_pos = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
+		world_pos.w = color.r;
+		glm::vec4 tex_coord = glm::vec4(texMin, color.g, color.b);
+		positions.push_back(world_pos);
+		tex_coords.push_back(tex_coord);
+		
+		world_pos = _transform * glm::vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+		world_pos.w = color.r;
+		tex_coord = glm::vec4(texMax.x, texMin.y, color.g, color.b);
+		positions.push_back(world_pos);
+		tex_coords.push_back(tex_coord);
+		
 
-		positions[current_vert] = _transform * glm::vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
-		tex_coords[current_vert] = glm::vec4(texMax.x, texMin.y, tex_index, 0.0f);
-		current_vert++;
+		world_pos = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
+		world_pos.w = color.r;
+		tex_coord = glm::vec4(texMax, color.g, color.b);
+		positions.push_back(world_pos);
+		tex_coords.push_back(tex_coord);
 
-		positions[current_vert] = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
-		tex_coords[current_vert] = glm::vec4(texMax, tex_index, 0.0f);
-		current_vert++;
-
-		positions[current_vert] = _transform * glm::vec4(quadMax, 0.0f, 1.0f);
-		tex_coords[current_vert] = glm::vec4(texMax, tex_index, 0.0f);
-		current_vert++;
-
-		positions[current_vert] = _transform * glm::vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
-		tex_coords[current_vert] = glm::vec4(texMin.x, texMax.y, tex_index, 0.0f);
-		current_vert++;
-
-		positions[current_vert] = _transform * glm::vec4(quadMin, 0.0f, 1.0f);
-		tex_coords[current_vert] = glm::vec4(texMin, tex_index, 0.0f);
-		current_vert++;
-		count++;
+		world_pos = _transform * glm::vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
+		world_pos.w = color.r;
+		tex_coord = glm::vec4(texMin.x, texMax.y, color.g, color.b);
+		positions.push_back(world_pos);
+		tex_coords.push_back(tex_coord);
 	}
 	
 	return true;

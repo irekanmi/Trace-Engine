@@ -25,6 +25,8 @@ namespace trace {
 
 
 	void AutoFillPipelineDesc(PipelineStateDesc& desc, bool input_layout = true, bool raterizer_state = true, bool depth_sten_state = true, bool color_blend_state = true, bool view_port = true, bool scissor = true, bool render_pass = true, bool primitive_topology = true);
+	void Enable_WeightedOIT(PipelineStateDesc& desc);
+	void Enable_Blending(PipelineStateDesc& desc, uint32_t num_render_target = 1);
 	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline);
 
 

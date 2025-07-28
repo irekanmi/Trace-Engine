@@ -376,7 +376,6 @@ namespace trace {
 			}
 			ImGui::TextColored({ .0f, .59f, .40f, 1.0f }, "Coker Ayanfe");
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
-			ImGui::Checkbox("Text Verts", &Renderer::get_instance()->text_verts);
 
 			ImGui::DragFloat("Speed", &speed, 0.05f);
 

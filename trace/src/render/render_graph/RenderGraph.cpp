@@ -344,7 +344,7 @@ namespace trace {
 
 		if (it == m_passes.end())
 		{
-			TRC_WARN("Pass has not been added or does not exist -> {}", pass_name);
+			TRC_WARN("Pass has not been added or does not exist -> Pass Name: {}, Function: {}", pass_name, __FUNCTION__);
 			return INVALID_ID;
 		}
 
@@ -620,11 +620,6 @@ namespace trace {
 				curr_pass->renderArea.y = 0;
 				curr_pass->renderArea.z = static_cast<float>(width);
 				curr_pass->renderArea.w = static_cast<float>(height);
-
-				curr_pass->clearColor.r = 0.0001f;
-				curr_pass->clearColor.g = 0.0001f;
-				curr_pass->clearColor.b = 0.0001f;
-				curr_pass->clearColor.a = 0.0001f;
 
 				curr_pass->depthValue = 1.0f;
 				curr_pass->stencilValue = 0;

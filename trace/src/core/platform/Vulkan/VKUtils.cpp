@@ -1782,19 +1782,22 @@ namespace vk {
 		parseDepthStenState(desc.depth_sten_state, depth_sten_info);
 
 
-		VkPipelineColorBlendAttachmentState attach_state;
+		VkPipelineColorBlendAttachmentState attach_state[5];//TODO: Make it configurable for each render target
 		VkPipelineColorBlendStateCreateInfo color_blend_info = {};
 		color_blend_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		parseColorBlendState(desc.blend_state, color_blend_info, attach_state);
 		VkPipelineColorBlendAttachmentState attach_states[10] = {};
 
 
-		color_blend_info.attachmentCount = desc.render_pass->GetColorAttachmentCount();
-		for (uint32_t i = 0; i < color_blend_info.attachmentCount; i++)
+		if (desc.blend_state.num_render_target <= 1)
 		{
-			attach_states[i] = attach_state;
+			color_blend_info.attachmentCount = desc.render_pass->GetColorAttachmentCount();
+			for (uint32_t i = 0; i < color_blend_info.attachmentCount; i++)
+			{
+				attach_states[i] = attach_state[0];
+			}
+			color_blend_info.pAttachments = attach_states;
 		}
-		color_blend_info.pAttachments = attach_states;
 
 		
 		VkPipelineLayoutCreateInfo layout_info = {};
@@ -2183,7 +2186,7 @@ namespace vk {
 
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		create_info.depthTestEnable = state.depth_test_enable ? VK_TRUE : VK_FALSE;
-		create_info.depthWriteEnable = state.depth_test_enable ? VK_TRUE : VK_FALSE;
+		create_info.depthWriteEnable = state.depth_write_enable ? VK_TRUE : VK_FALSE;
 		create_info.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; // TODO
 		create_info.depthBoundsTestEnable = VK_FALSE; // TODO
 		create_info.minDepthBounds = state.minDepth; // Check docs
@@ -2194,35 +2197,39 @@ namespace vk {
 
 	}
 
-	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment)
+	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState* colorBlendAttachment)
 	{
 		// ------------------ TODO----------------------------------------
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+		colorBlendAttachment[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
 			VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
 			VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; //
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; //
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; //
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+		colorBlendAttachment[0].blendEnable = VK_FALSE;
+		colorBlendAttachment[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE; //
+		colorBlendAttachment[0].dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; //
+		colorBlendAttachment[0].colorBlendOp = VK_BLEND_OP_ADD; // Optional
+		colorBlendAttachment[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; //
+		colorBlendAttachment[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; //
+		colorBlendAttachment[0].alphaBlendOp = VK_BLEND_OP_ADD; // Optional
 		//------------------------------------------------------------------
 
 		if (state.alpha_to_blend_coverage)
 		{
-			// ------------------ TODO----------------------------------------
-			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-				VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
-				VK_COLOR_COMPONENT_A_BIT;
-			colorBlendAttachment.blendEnable = VK_TRUE;
-			colorBlendAttachment.srcColorBlendFactor = convertBlendFactor(state.src_color); //
-			colorBlendAttachment.dstColorBlendFactor = convertBlendFactor(state.dst_color); //
-			colorBlendAttachment.colorBlendOp = convertBlendOp(state.color_op); // Optional
-			colorBlendAttachment.srcAlphaBlendFactor = convertBlendFactor(state.src_alpha); //
-			colorBlendAttachment.dstAlphaBlendFactor = convertBlendFactor(state.dst_alpha); //
-			colorBlendAttachment.alphaBlendOp = convertBlendOp(state.alpha_op); // Optional
-			//------------------------------------------------------------------
+			for (uint32_t i = 0; i < state.num_render_target; i++)
+			{
+				trace::ColorBlendState::FrameInfo& _info = state.render_targets[i];
+				// ------------------ TODO----------------------------------------
+				colorBlendAttachment[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+					VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+					VK_COLOR_COMPONENT_A_BIT;
+				colorBlendAttachment[i].blendEnable = VK_TRUE;
+				colorBlendAttachment[i].srcColorBlendFactor = convertBlendFactor(_info.src_color); //
+				colorBlendAttachment[i].dstColorBlendFactor = convertBlendFactor(_info.dst_color); //
+				colorBlendAttachment[i].colorBlendOp = convertBlendOp(_info.color_op); // Optional
+				colorBlendAttachment[i].srcAlphaBlendFactor = convertBlendFactor(_info.src_alpha); //
+				colorBlendAttachment[i].dstAlphaBlendFactor = convertBlendFactor(_info.dst_alpha); //
+				colorBlendAttachment[i].alphaBlendOp = convertBlendOp(_info.alpha_op); // Optional
+				//------------------------------------------------------------------
+			}
 		}
 		
 		
@@ -2232,8 +2239,8 @@ namespace vk {
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		create_info.logicOpEnable = VK_FALSE;
 		create_info.logicOp = VK_LOGIC_OP_COPY;
-		create_info.attachmentCount = 1;
-		create_info.pAttachments = &colorBlendAttachment;
+		create_info.attachmentCount = state.num_render_target;
+		create_info.pAttachments = colorBlendAttachment;
 		create_info.blendConstants[0] = 0.0f;
 		create_info.blendConstants[1] = 0.0f;
 		create_info.blendConstants[2] = 0.0f;

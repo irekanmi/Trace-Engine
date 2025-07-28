@@ -1,11 +1,13 @@
 #version 450
 
+#include "OIT_data.glsl"
 #include "bindless.glsl"
 #include "functions.glsl"
 
 #define MAX_QUAD_TEXTURE_SLOT 16
 
-layout(location = 0)out vec4 FragColor;
+// layout(location = 0)out vec4 FragColor;
+OUT_OIT_DATA
 
 layout(location = 0)in vec2 in_texCoord;
 
@@ -24,5 +26,6 @@ void main()
     vec4 base_color = colorFromUint32(color);
     float alpha = base_color.a;
     vec4 out_color = mix(image_color, base_color, alpha);
-    FragColor = out_color;
+    //FragColor = out_color;
+    PROCESS_COLOR(out_color);
 }

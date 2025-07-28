@@ -114,7 +114,7 @@ namespace vk {
 	void parseRasterizerState(trace::RasterizerState& raterizer, VkPipelineRasterizationStateCreateInfo& create_info);
 	void parseMultiState(VkPipelineMultisampleStateCreateInfo& create_info);
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
-	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState& colorBlendAttachment);
+	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState* colorBlendAttachment);
 	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts, std::vector<VkPushConstantRange>& ranges);
 
 	VkFormat convertFmt(trace::Format format);

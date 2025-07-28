@@ -346,6 +346,7 @@ namespace trace {
 	struct DepthStencilState
 	{
 		bool depth_test_enable = false;
+		bool depth_write_enable = true;
 		bool stencil_test_enable = false;
 		float minDepth = 0.0f;
 		float maxDepth = 1.0f;
@@ -354,13 +355,19 @@ namespace trace {
 	struct ColorBlendState
 	{
 		bool alpha_to_blend_coverage = false; // TODO
-		BlendFactor src_color = BlendFactor::BLEND_NONE;
-		BlendFactor dst_color = BlendFactor::BLEND_NONE;
-		BlendOp color_op = BlendOp::BLEND_OP_NONE;
+		struct FrameInfo
+		{
+			BlendFactor src_color = BlendFactor::BLEND_NONE;
+			BlendFactor dst_color = BlendFactor::BLEND_NONE;
+			BlendOp color_op = BlendOp::BLEND_OP_NONE;
 
-		BlendFactor src_alpha = BlendFactor::BLEND_NONE;
-		BlendFactor dst_alpha = BlendFactor::BLEND_NONE;
-		BlendOp alpha_op = BlendOp::BLEND_OP_NONE;
+			BlendFactor src_alpha = BlendFactor::BLEND_NONE;
+			BlendFactor dst_alpha = BlendFactor::BLEND_NONE;
+			BlendOp alpha_op = BlendOp::BLEND_OP_NONE;
+		};
+
+		FrameInfo render_targets[5];//TODO: Make size configurable
+		uint32_t num_render_target = 1;
 
 	};
 

@@ -1,15 +1,32 @@
 #version 450
 
-layout(location = 0)in vec3 in_pos;
-layout(location = 1)in vec3 in_color;
-layout(location = 2)in vec2 in_texCoord;
+#include "globals_data.glsl"
+#include "bindless.glsl"
+
+
+DEFAULT_VERTEX_INPUT
+
+#define MAX_TEXT_VERTICES 1536
+#define NUM_QUAD_VERT 4
+
 
 layout(set = 0, binding = 0)uniform SceneData
 {
     mat4 _projection;
 };
 
-layout(location = 0)out TextData
+
+
+struct VertexData{
+    vec4 positions[MAX_TEXT_VERTICES];// w: color.r
+    vec4 tex_coords[MAX_TEXT_VERTICES]; // z: color.g w: color.b
+};
+
+layout(std140, set = 1, binding = 3) readonly buffer DrawData{
+    VertexData objects[];
+};
+
+layout(location = 2)out TextData
 {
     vec3 Color;
     vec2 Tex_coord;
@@ -17,7 +34,10 @@ layout(location = 0)out TextData
 
 void main()
 {
-    Color = in_color;
-    Tex_coord = in_texCoord;
-    gl_Position = _projection * vec4(in_pos, 1.0);
+    uint index = (gl_InstanceIndex * NUM_QUAD_VERT) + gl_VertexIndex;
+    vec4 pos = objects[binding_index.draw_instance_index.x].positions[index];
+    vec4 tex_coord = objects[binding_index.draw_instance_index.x].tex_coords[index];
+    Color = vec3(pos.w, tex_coord.z, tex_coord.w);
+    Tex_coord = tex_coord.xy;
+    gl_Position = _projection * vec4(pos.xyz, 1.0);
 }

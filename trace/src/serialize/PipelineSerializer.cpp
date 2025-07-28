@@ -85,14 +85,24 @@ namespace trace {
 			emit << YAML::Key << "ColorBlendState" << YAML::Value;
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "alpha_to_blend_coverage" << YAML::Value << desc.blend_state.alpha_to_blend_coverage;
-			emit << YAML::Key << "Src Color" << YAML::Value << (int)desc.blend_state.src_color;
-			emit << YAML::Key << "Dst Color" << YAML::Value << (int)desc.blend_state.dst_color;
-			emit << YAML::Key << "Color Op" << YAML::Value << (int)desc.blend_state.color_op;
+			emit << YAML::Key << "num_render_target" << YAML::Value << desc.blend_state.num_render_target;
+			emit << YAML::Key << "render_targets" << YAML::Value << YAML::BeginSeq;
+			for (uint32_t i = 0; i < desc.blend_state.num_render_target; i++)
+			{
+				emit << YAML::Key << "Index" << YAML::Value << i;
+				emit << YAML::Key << "Val" << YAML::Value << YAML::BeginMap;
+				emit << YAML::Key << "Src Color" << YAML::Value << (int)desc.blend_state.render_targets[0].src_color;
+				emit << YAML::Key << "Dst Color" << YAML::Value << (int)desc.blend_state.render_targets[0].dst_color;
+				emit << YAML::Key << "Color Op" << YAML::Value << (int)desc.blend_state.render_targets[0].color_op;
 
-			emit << YAML::Key << "Src Alpha" << YAML::Value << (int)desc.blend_state.src_alpha;
-			emit << YAML::Key << "Dst Alpha" << YAML::Value << (int)desc.blend_state.dst_alpha;
-			emit << YAML::Key << "Alpha Op" << YAML::Value << (int)desc.blend_state.alpha_op;
+				emit << YAML::Key << "Src Alpha" << YAML::Value << (int)desc.blend_state.render_targets[0].src_alpha;
+				emit << YAML::Key << "Dst Alpha" << YAML::Value << (int)desc.blend_state.render_targets[0].dst_alpha;
+				emit << YAML::Key << "Alpha Op" << YAML::Value << (int)desc.blend_state.render_targets[0].alpha_op;
 
+				emit << YAML::EndMap;
+			}
+
+			emit << YAML::EndSeq;
 			emit << YAML::EndMap;
 		};
 
@@ -515,12 +525,31 @@ namespace trace {
 		{
 			auto _c = data["ColorBlendState"];
 			cbs.alpha_to_blend_coverage = _c["alpha_to_blend_coverage"].as<bool>();
-			cbs.alpha_op = (BlendOp)_c["Alpha Op"].as<int>();
-			cbs.color_op = (BlendOp)_c["Color Op"].as<int>();
-			cbs.dst_alpha = (BlendFactor)_c["Dst Alpha"].as<int>();
-			cbs.dst_color = (BlendFactor)_c["Dst Color"].as<int>();
-			cbs.src_alpha = (BlendFactor)_c["Src Alpha"].as<int>();
-			cbs.src_color = (BlendFactor)_c["Src Color"].as<int>();
+			if (_c["Alpha Op"])
+			{
+				cbs.render_targets[0].alpha_op = (BlendOp)_c["Alpha Op"].as<int>();
+				cbs.render_targets[0].color_op = (BlendOp)_c["Color Op"].as<int>();
+				cbs.render_targets[0].dst_alpha = (BlendFactor)_c["Dst Alpha"].as<int>();
+				cbs.render_targets[0].dst_color = (BlendFactor)_c["Dst Color"].as<int>();
+				cbs.render_targets[0].src_alpha = (BlendFactor)_c["Src Alpha"].as<int>();
+				cbs.render_targets[0].src_color = (BlendFactor)_c["Src Color"].as<int>();
+			}
+			else if (_c["num_render_target"])
+			{
+				cbs.num_render_target = _c["num_render_target"].as<uint32_t>();
+
+				for (auto& node : _c["render_targets"])
+				{
+					uint32_t i = node["Index"].as<uint32_t>();
+					auto _n = node["Val"];
+					cbs.render_targets[i].alpha_op = (BlendOp)_n["Alpha Op"].as<int>();
+					cbs.render_targets[i].color_op = (BlendOp)_n["Color Op"].as<int>();
+					cbs.render_targets[i].dst_alpha = (BlendFactor)_n["Dst Alpha"].as<int>();
+					cbs.render_targets[i].dst_color = (BlendFactor)_n["Dst Color"].as<int>();
+					cbs.render_targets[i].src_alpha = (BlendFactor)_n["Src Alpha"].as<int>();
+					cbs.render_targets[i].src_color = (BlendFactor)_n["Src Color"].as<int>();
+				}
+			}
 		}
 		_ds2.blend_state = cbs;
 

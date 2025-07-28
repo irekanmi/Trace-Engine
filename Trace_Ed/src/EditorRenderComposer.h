@@ -1,8 +1,9 @@
 #pragma once
 
 #include "trace.h"
-#include <render/RenderComposer.h>
-#include <render/render_graph/UIPass.h>
+#include "render/RenderComposer.h"
+#include "render/render_graph/UIPass.h"
+#include "render/render_graph/WeightedOITPass.h"
 #include "passes/EditorUIPass.h"
 
 namespace trace {
@@ -32,6 +33,7 @@ namespace trace {
 		UIPass ui_pass;
 		EditorUIPass editor_ui_pass;
 		ShadowPass shadow_pass;
+		WeightedOITPass weightedOITPass;
 
 		float x = 800.0f;
 		float y = 600.0f;

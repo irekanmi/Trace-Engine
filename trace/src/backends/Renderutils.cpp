@@ -103,6 +103,54 @@ namespace trace {
 		}
 	}
 
+	void Enable_WeightedOIT(PipelineStateDesc& desc)
+	{
+
+		ColorBlendState blds = {};
+		blds.alpha_to_blend_coverage = true;
+		blds.num_render_target = 2;
+
+		blds.render_targets[0].alpha_op = BlendOp::BLEND_OP_ADD;
+		blds.render_targets[0].color_op = BlendOp::BLEND_OP_ADD;
+		blds.render_targets[0].src_color = BlendFactor::BLEND_ONE;
+		blds.render_targets[0].dst_color = BlendFactor::BLEND_ONE;
+		blds.render_targets[0].src_alpha = BlendFactor::BLEND_ONE;
+		blds.render_targets[0].dst_alpha = BlendFactor::BLEND_ONE;
+		
+		blds.render_targets[1].alpha_op = BlendOp::BLEND_OP_ADD;
+		blds.render_targets[1].color_op = BlendOp::BLEND_OP_ADD;
+		blds.render_targets[1].src_color = BlendFactor::BLEND_ZERO;
+		blds.render_targets[1].dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_COLOR;
+		blds.render_targets[1].src_alpha = BlendFactor::BLEND_ZERO;
+		blds.render_targets[1].dst_alpha = BlendFactor::BLEND_ONE_MINUS_SRC_COLOR;
+
+		desc.blend_state = blds;
+
+	}
+
+	void Enable_Blending(PipelineStateDesc& desc, uint32_t num_render_target)
+	{
+
+		ColorBlendState blds = {};
+		blds.alpha_to_blend_coverage = true;
+		blds.num_render_target = num_render_target;
+
+		for (uint32_t i = 0; i < num_render_target; i++)
+		{
+
+			blds.render_targets[i].alpha_op = BlendOp::BLEND_OP_ADD;
+			blds.render_targets[i].color_op = BlendOp::BLEND_OP_ADD;
+			blds.render_targets[i].src_color = BlendFactor::BLEND_SRC_ALPHA;
+			blds.render_targets[i].dst_color = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
+			blds.render_targets[i].src_alpha = BlendFactor::BLEND_ONE;
+			blds.render_targets[i].dst_alpha = BlendFactor::BLEND_ONE_MINUS_SRC_ALPHA;
+
+		}
+
+		desc.blend_state = blds;
+
+	}
+
 
 
 	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline)

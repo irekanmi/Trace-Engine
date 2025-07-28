@@ -31,21 +31,6 @@ namespace trace {
 	class MaterialInstance;
 	class Event;
 	class Font;
-	
-
-	struct BatchInfo
-	{
-		uint32_t max_units;
-		uint32_t max_texture_units;
-		uint32_t current_unit;
-		uint32_t current_texture_unit;
-		uint32_t current_index;
-		std::vector<GTexture*> textures;
-		std::vector<glm::vec4> positions;
-		std::vector<float> cam_distance;// HACK: used for sorting
-		std::vector<glm::vec4> tex_coords;
-		GTexture* tex;
-	};
 
 	struct RenderObjectData
 	{
@@ -67,7 +52,14 @@ namespace trace {
 		// IMPORTANT: there is a limit to number of instances in the shader
 		std::vector<glm::mat4> transforms;
 		std::vector<uint32_t> colors;
-	};	
+	};
+	
+	struct TextInstanceData
+	{
+		// IMPORTANT: there is a limit to number of instances in the shader
+		std::vector<glm::vec4> positions;
+		std::vector<glm::vec4> tex_coords;
+	};
 
 	struct RenderGraphFrameData
 	{
@@ -79,23 +71,12 @@ namespace trace {
 		std::vector<RenderSkinnedObjectData> m_opaqueSkinnedObjects;
 		uint32_t m_opaqueObjectsSize = 0;
 
-		//Text Renderering ..............................
-		std::vector<std::vector<TextVertex>> text_vertices;
-		std::vector<GTexture*> text_atlases;
-		std::unordered_set<uint32_t> bound_text_atlases;
-		GBuffer text_buffer;
-		// ..............................................
-
-		// Batch rendering quads ..............................
-		std::vector<BatchInfo> quadBatches;
-		Ref<GPipeline> quadBatchPipeline;
-		std::unordered_set<uint32_t> boundQuadTextures;
-		uint32_t current_quad_batch = 0;
-		uint32_t num_avalible_quad_batch = 0;
-		// ....................................................
-
 		// Instanced Quad ............................
 		std::unordered_map<GTexture*, QuadInstanceData> quad_instances;
+		// ............................
+		
+		// Instanced Text ............................
+		std::unordered_map<GTexture*, TextInstanceData> text_instances;
 		// ............................
 
 
@@ -175,11 +156,9 @@ namespace trace {
 		void DrawQuad(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index = 0);
 		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index = 0);
 		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color, int32_t render_graph_index = 0);
-		void DrawString(Font* font, const std::string& text, glm::mat4 _transform, int32_t render_graph_index = 0);
 		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index = 0);
 
 
-		void RenderTexts();
 		void RenderOpaqueObjects(int32_t render_graph_index = 0);
 		void RenderQuads(int32_t render_graph_index = 0);
 		void RenderTextVerts(int32_t render_graph_index = 0);
@@ -194,26 +173,12 @@ namespace trace {
 		Rect2D _rect;
 
 		float exposure;
-		bool text_verts = false;
 		//------------------------------------
 		
 		
 	private:
 		void draw_mesh(CommandParams& params, int32_t render_graph_index = 0);
 		void draw_skybox(CommandParams& params);
-		// Batch rendering quads ..............................
-		void create_quad_batch(int32_t render_graph_index = 0);
-		void flush_current_quad_batch(int32_t render_graph_index = 0);
-		void destroy_quad_batchs(int32_t render_graph_index = 0);
-		// ....................................................
-
-		// Batch rendering text ..............................
-		void create_text_batch(int32_t render_graph_index = 0);
-		void flush_current_text_batch(int32_t render_graph_index = 0);
-		void destroy_text_batchs(int32_t render_graph_index = 0);
-		// ....................................................
-
-
 		
 
 	private:
@@ -233,30 +198,6 @@ namespace trace {
 		std::vector<CommandList> m_cmdList;
 		uint32_t m_listCount;
 		std::unordered_map<std::string, void*> m_avaliablePasses;
-
-		// Batch rendering quads ..............................
-		Ref<GPipeline> quadBatchPipeline;
-		/*std::vector<BatchInfo> quadBatches;
-		std::unordered_set<uint32_t> boundQuadTextures;
-		uint32_t current_quad_batch = 0;
-		uint32_t num_avalible_quad_batch = 0;*/
-		// ....................................................
-
-		// Batch rendering text ..............................
-		Ref<GPipeline> textBatchPipeline;
-		std::vector<BatchInfo> textBatches;
-		std::unordered_set<uint32_t> boundTextTextures;
-		uint32_t current_text_batch = 0;
-		uint32_t num_avalible_text_batch = 0;
-		// ....................................................
-
-		//Text Renderering ..............................
-		/*std::vector<std::vector<TextVertex>> text_vertices;
-		std::vector<GTexture*> text_atlases;
-		std::unordered_set<uint32_t> bound_text_atlases;
-		GBuffer text_buffer;*/
-		Ref<GPipeline> text_pipeline;
-		// ..............................................
 
 		friend class RenderGraph;
 
