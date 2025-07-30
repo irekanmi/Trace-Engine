@@ -535,6 +535,7 @@ namespace trace {
 
 		for (auto& tex_ins : graph_data.text_instances)
 		{
+			
 			if (tex_ins.second.positions.empty())
 			{
 				continue;

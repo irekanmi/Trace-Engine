@@ -510,7 +510,7 @@ namespace trace::Reflection {
 			UUID id = 0;
 			if (object)
 			{
-				id = GetUUIDFromName(object->GetName());
+				id = object->GetUUID();
 			}
 
 			//HACK: the is an hack to ensure proper serialization for YAML format

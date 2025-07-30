@@ -150,6 +150,14 @@ namespace trace {
 		// NOTE: Only to be used for the editor
 		 return Debugger::get_instance()->GetString(string_id);
 	}
+	
+	std::string& GetStringFromID(UUID string_id)
+	{
+		StringID id;
+		id.value = string_id;
+		// NOTE: Only to be used for the editor
+		 return Debugger::get_instance()->GetString(id);
+	}
 
 	uint64_t hash_string(const std::string& str)
 	{

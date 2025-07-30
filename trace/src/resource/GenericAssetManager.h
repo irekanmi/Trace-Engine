@@ -14,7 +14,7 @@
 #include "render/Material.h"
 //-----------
 
-#include <vector>
+#include <unordered_map>
 
 namespace trace {
 
@@ -41,7 +41,8 @@ namespace trace {
 				return result;
 			}
 
-			result = Ref(GetNextValidHandle<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			result = Ref(GetNextValidHandle<T>((UUID)STR_ID(name)), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			//TEMP: For debug only
 			result->m_path = name;
 
 			if (!result->Create(std::forward<Args>(args)...))
@@ -67,7 +68,8 @@ namespace trace {
 				return result;
 			}
 
-			result = Ref(GetNextValidHandle<T>(name), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			result = Ref(GetNextValidHandle<T>((UUID)STR_ID(name)), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			//TEMP: For debug only
 			result->m_path = path;
 
 			if (!result->Create(std::forward<Args>(args)...))
@@ -84,10 +86,16 @@ namespace trace {
 		template<typename T>
 		Ref<T> Get(const std::string& name)
 		{
-			Ref<T> result = TryGet<T>(name);
+			return Get<T>((UUID)STR_ID(name));
+		}
+		
+		template<typename T>
+		Ref<T> Get(UUID asset_id)
+		{
+			Ref<T> result = TryGet<T>(asset_id);
 			if (!result)
 			{
-				TRC_WARN("These asset has not been created or has been destroyed, Name: {}, Function: {}", name, __FUNCTION__);
+				TRC_WARN("These asset has not been created or has been destroyed, Name: {}, Function: {}", STRING_FROM_ID(asset_id), __FUNCTION__);
 			}
 			return result;
 		}
@@ -95,19 +103,39 @@ namespace trace {
 		template<typename T>
 		Ref<T> TryGet(const std::string& name)
 		{
+			return TryGet<T>((UUID)STR_ID(name));
+		}
+		
+		template<typename T>
+		Ref<T> TryGet(UUID asset_id)
+		{
 			Ref<T> result;
 			T* _asset = nullptr;
-			uint32_t& _id = m_hashtable.Get_Ref(name);
+			/*uint32_t& _id = m_hashtable.Get_Ref(name);
 			if (_id == INVALID_ID)
 			{
 				return result;
 			}
 			_asset = (T*)m_assets[_id];
-			if (_asset->m_id == INVALID_ID)
+			if (!_asset)
 			{
 				_id = INVALID_ID;
 				return result;
 			}
+			else if (_asset->m_id == INVALID_ID)
+			{
+				_id = INVALID_ID;
+				return result;
+			}*/
+
+			auto it = m_assets.find(asset_id);
+			if (it == m_assets.end())
+			{
+				return result;
+			}
+			
+			_asset = (T*)it->second;
+
 			result = Ref{ _asset , BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad) };
 			return result;
 		}
@@ -115,9 +143,12 @@ namespace trace {
 		template<typename T>
 		void RenameAsset(Ref<T> asset, const std::string& new_name)
 		{
-			uint32_t index = m_hashtable.Get(asset->GetName());
-			m_hashtable.Set(asset->GetName(), INVALID_ID);
-			m_hashtable.Set(new_name, index);
+			UUID new_id = STR_ID(new_name);
+			UUID prev_id = asset->GetUUID();
+			Resource* asset_data = m_assets[prev_id];
+			m_assets.erase(prev_id);
+			asset_data->m_assetID = new_id;
+			m_assets[new_id] = asset_data;
 		}
 
 		virtual void UnLoad(Resource* asset);
@@ -165,58 +196,28 @@ namespace trace {
 		static GenericAssetManager* get_instance();
 	private:
 	protected:
-		std::vector<Resource*> m_assets;
-		HashTable<uint32_t> m_hashtable;
+		std::unordered_map<UUID, Resource*> m_assets;
+		//HashTable<uint32_t> m_hashtable;
 		uint32_t m_numUnits;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
 
 	protected:
 
-		template<typename T>
-		T* GetAsset(const std::string& name)
-		{
-
-			T* _asset = nullptr;
-			uint32_t& _id = m_hashtable.Get_Ref(name);
-			if (_id == INVALID_ID)
-			{
-				TRC_WARN("These asset has not been created , \"{}\"", name);
-				return _asset;
-			}
-			_asset = m_assets[_id];
-			if (_asset->m_id == INVALID_ID)
-			{
-				TRC_WARN("These asset has been destroyed , \"{}\"", name);
-				_id = INVALID_ID;
-				return nullptr;
-			}
-
-			return _asset;
-		}
 
 		template<typename T>
-		T* GetNextValidHandle(const std::string& name)
+		T* GetNextValidHandle(UUID asset_id)
 		{
 			T* _asset = nullptr;
 
-			for (uint32_t i = 0; i < m_numUnits; i++)
+			Resource* asset = nullptr;
+			asset = new T; //TODO: Use custom memory allocator
+			_asset = (T*)asset;
+			m_assets[asset_id] = asset;
+			_asset->m_assetID = asset_id;
+			if constexpr (std::is_same<T, GShader>{} || std::is_same<T, MaterialInstance>{})
 			{
-				Resource* asset = m_assets[i];
-				if (!asset)
-				{
-					asset = new T; //TODO: Use custom memory allocator
-					m_assets[i] = asset;
-					m_hashtable.Set(name, i);
-					_asset = (T*)asset;
-					_asset->m_id = i;
-					//Temp ======
-					if constexpr (std::is_same<T, GShader>{} || std::is_same<T, MaterialInstance>{})
-					{
-						_asset->m_refCount++;
-					}
-					break;
-				}
+				_asset->m_refCount++;
 			}
 
 			return _asset;

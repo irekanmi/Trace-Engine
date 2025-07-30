@@ -90,7 +90,8 @@ namespace trace {
 				Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
 				emit << YAML::BeginMap;
 				std::string filename = tex->m_path.filename().string();
-				emit << YAML::Key << "file_id" << YAML::Value << GetUUIDFromName(filename);
+				//emit << YAML::Key << "file_id" << YAML::Value << GetUUIDFromName(filename);
+				emit << YAML::Key << "file_id" << YAML::Value << tex->GetUUID();
 				emit << YAML::EndMap;
 				break;
 			}
@@ -118,7 +119,7 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Material Version" << YAML::Value << "0.0.0.0";
-		emit << YAML::Key << "Pipeline ID" << YAML::Value << GetUUIDFromName(mat->GetRenderPipline()->GetName());
+		emit << YAML::Key << "Pipeline ID" << YAML::Value << mat->GetRenderPipline()->GetUUID();
 		emit << YAML::Key << "Data" << YAML::Value << YAML::BeginSeq;
 
 		for (auto& data : mat->GetMaterialData())
@@ -169,7 +170,7 @@ namespace trace {
 		std::string material_name = material->GetName();
 		Reflection::Serialize(material_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		uint64_t pipeline_id = GetUUIDFromName(material->GetRenderPipline()->GetName());
+		uint64_t pipeline_id = material->GetRenderPipline()->GetUUID();
 		stream->Write<uint64_t>(pipeline_id);
 		uint32_t data_count = static_cast<uint32_t>(material->GetMaterialData().size());
 		stream->Write<uint32_t>(data_count);
@@ -242,7 +243,7 @@ namespace trace {
 			{
 				Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(dst);
 				uint16_t data_size = sizeof(uint64_t);
-				uint64_t data = GetUUIDFromName(tex->GetName());
+				uint64_t data = tex->GetUUID();
 				stream->Write(&data, data_size);
 				break;
 			}

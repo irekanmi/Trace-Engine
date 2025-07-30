@@ -22,8 +22,10 @@ namespace trace {
 
 	UUID Resource::GetUUID()
 	{
-		UUID result = GetUUIDFromName(GetName());
-		return result;
+		/*UUID result = GetUUIDFromName(GetName());
+		return result;*/
+
+		return m_assetID;
 	
 	}
 	void Resource::Increment()

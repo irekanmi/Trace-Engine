@@ -77,7 +77,7 @@ namespace trace {
 				_ds2
 			);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("SUN_SHADOW_MAP_PASS");
-			_ds2.depth_sten_state = { true, false };
+			_ds2.depth_sten_state = { true, true, false, 0.0f, 1.0f };
 			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 
@@ -193,7 +193,6 @@ namespace trace {
 		{
 			std::string pass_name = "SUN_SHADOW_MAP_PASS" + std::to_string(i);
 			auto sun_pass = render_graph->AddPass(pass_name, GPU_QUEUE::GRAPHICS);
-			
 			uint32_t current_light_index = i;
 			
 			sun_pass->CreateDepthAttachmentOutput(pass_name, depth);

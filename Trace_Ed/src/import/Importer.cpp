@@ -115,7 +115,8 @@ namespace trace {
 				}
 				if (generate_uuid)
 				{
-					UUID uuid = UUID::GenUUID();
+					UUID uuid = STR_ID(tex_name);
+					//UUID uuid = UUID::GenUUID();
 					content_browser->GetAllFilesID()[tex_name] = uuid;
 					content_browser->GetUUIDName()[uuid] = tex_name;
 				}
@@ -135,7 +136,7 @@ namespace trace {
 				}
 				if (generate_uuid)
 				{
-					UUID uuid = UUID::GenUUID();
+					UUID uuid = STR_ID(tex_name);
 					content_browser->GetAllFilesID()[tex_name] = uuid;
 					content_browser->GetUUIDName()[uuid] = tex_name;
 				}
@@ -446,13 +447,13 @@ namespace trace {
 		auto it = content_browser->GetAllFilesID().find(model_name);
 		if (it == content_browser->GetAllFilesID().end())
 		{
-			UUID uuid = UUID::GenUUID();
+			UUID uuid = STR_ID(model_name);
 			content_browser->GetAllFilesID()[model_name] = uuid;
 			content_browser->GetUUIDName()[uuid] = model_name;
 		}
 		else if (it->second == 0)
 		{
-			UUID uuid = UUID::GenUUID();
+			UUID uuid = STR_ID(model_name);
 			content_browser->GetAllFilesID()[model_name] = uuid;
 			content_browser->GetUUIDName()[uuid] = model_name;
 		}
@@ -549,13 +550,13 @@ namespace trace {
 		auto it = content_browser->GetAllFilesID().find(model_name);
 		if (it == content_browser->GetAllFilesID().end())
 		{
-			UUID uuid = UUID::GenUUID();
+			UUID uuid = STR_ID(model_name);
 			content_browser->GetAllFilesID()[model_name] = uuid;
 			content_browser->GetUUIDName()[uuid] = model_name;
 		}
 		else if (it->second == 0)
 		{
-			UUID uuid = UUID::GenUUID();
+			UUID uuid = STR_ID(model_name);
 			content_browser->GetAllFilesID()[model_name] = uuid;
 			content_browser->GetUUIDName()[uuid] = model_name;
 		}
@@ -841,31 +842,7 @@ namespace trace {
 
 	void import_skeletons(const aiScene* ass_scene, std::string& filename, std::filesystem::path& directory, Importer* importer)
 	{
-		/*for (uint32_t i = 0; i < ass_scene->mNumSkeletons; i++)
-		{
-			aiSkeleton* ass_skeleton = ass_scene->mSkeletons[i];
-			std::string skeleton_name = ass_skeleton->mName.C_Str();
-			skeleton_name += ".trcsk";
-
-			std::vector<Animation::Bone> bones;
-			for (uint32_t j = 0; j < ass_skeleton->mNumBones; j++)
-			{
-				aiSkeletonBone* ass_bone = ass_skeleton->mBones[j];
-				std::string bone_name = ass_bone->mNode->mName.C_Str();
-				glm::mat4 bind_pose = aiMatrixToGlm(ass_bone->mLocalMatrix);
-				glm::mat4 bone_offset = aiMatrixToGlm(ass_bone->mOffsetMatrix);
-				Bone bone;
-				bone.Create(bone_name, bind_pose, bone_offset);
-
-				bones.push_back(bone);
-			}
-
-			Ref<Animation::Skeleton> skeleton = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Skeleton>((directory / skeleton_name).string());
-			skeleton->Create(skeleton_name, bones);
-
-			AnimationsSerializer::SerializeSkeleton(skeleton, (directory / skeleton_name).string());
-		}*/
-
+		
 		std::unordered_map<std::string, Animation::Bone> bones_map;
 
 		for (uint32_t i = 0; i < ass_scene->mNumMeshes; i++)

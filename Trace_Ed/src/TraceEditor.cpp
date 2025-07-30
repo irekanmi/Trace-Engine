@@ -10,6 +10,7 @@
 #include "serialize/PipelineSerializer.h"
 #include "serialize/ProjectSerializer.h"
 #include "serialize/AnimationsSerializer.h"
+#include "serialize/MaterialSerializer.h"
 #include "core/Utils.h"
 #include "scripting/ScriptEngine.h"
 #include "scene/Scene.h"
@@ -71,6 +72,95 @@ namespace trace {
 	static Ref<Animation::HumanoidRig> rig;
 	static Ref<MotionMatching::FeatureDatabase> feature_db;
 	static Ref<MotionMatching::MotionMatchingInfo> mmt_info;
+
+	// Temp ......................
+	void RemapAssetNameToStringID(Ref<Project> project)
+	{
+		std::string project_path = project->GetAssetsDirectory();
+
+		// for all .trcscn
+		for (auto r : std::filesystem::recursive_directory_iterator(project_path))
+		{
+			if (!std::filesystem::is_regular_file(r.path()))
+			{
+				continue;
+			}
+
+			if (r.path().extension() == SCENE_FILE_EXTENSION)
+			{
+				Ref<Scene> scene = SceneSerializer::Deserialize(r.path().string());
+				SceneSerializer::Serialize(scene, r.path().string());
+			}
+			else if (r.path().extension() == MATERIAL_FILE_EXTENSION)
+			{
+				Ref<MaterialInstance> material = MaterialSerializer::Deserialize(r.path().string());
+				MaterialSerializer::Serialize(material, r.path().string());
+			}
+			else if (r.path().extension() == PREFAB_FILE_EXTENSION)
+			{
+				Ref<Prefab> asset = SceneSerializer::DeserializePrefab(r.path().string());
+				SceneSerializer::SerializePrefab(asset, r.path().string());
+			}
+			/*else if (r.path().extension() == ANIMATION_GRAPH_FILE_EXTENSION)
+			{
+				Ref<Animation::Graph> asset = AnimationsSerializer::DeserializeAnimGraph(r.path().string());
+				AnimationsSerializer::SerializeAnimGraph(asset, r.path().string());
+			}*/
+			/*else if (r.path().extension() == RENDER_PIPELINE_FILE_EXTENSION)
+			{
+				Ref<GPipeline> asset = PipelineSerializer::Deserialize(r.path().string());
+				PipelineSerializer::Serialize(asset, r.path().string());
+			}*/
+			else if (r.path().extension() == SKELETON_FILE_EXTENSION)
+			{
+				Ref<Animation::Skeleton> asset = AnimationsSerializer::DeserializeSkeleton(r.path().string());
+				AnimationsSerializer::SerializeSkeleton(asset, r.path().string());
+			}
+			else if (r.path().extension() == SEQUENCE_FILE_EXTENSION)
+			{
+				Ref<Animation::Sequence> asset = AnimationsSerializer::DeserializeSequence(r.path().string());
+				AnimationsSerializer::SerializeSequence(asset, r.path().string());
+			}
+			else if (r.path().extension() == HUMANOID_RIG_FILE_EXTENSION)
+			{
+				Ref<Animation::HumanoidRig> asset = GenericSerializer::Deserialize<Animation::HumanoidRig>(r.path().string());
+				GenericSerializer::Serialize<Animation::HumanoidRig>(asset, r.path().string());
+			}
+			else if (r.path().extension() == HUMANOID_RIG_FILE_EXTENSION)
+			{
+				Ref<Animation::HumanoidRig> asset = GenericSerializer::Deserialize<Animation::HumanoidRig>(r.path().string());
+				GenericSerializer::Serialize<Animation::HumanoidRig>(asset, r.path().string());
+			}
+			/*else if (r.path().extension() == FEATURE_DB_FILE_EXTENSION)
+			{
+				Ref<MotionMatching::FeatureDatabase> asset = GenericSerializer::Deserialize<MotionMatching::FeatureDatabase>(r.path().string());
+				GenericSerializer::Serialize<MotionMatching::FeatureDatabase>(asset, r.path().string());
+			}
+			else if (r.path().extension() == MMT_INFO_FILE_EXTENSION)
+			{
+				Ref<MotionMatching::MotionMatchingInfo> asset = GenericSerializer::Deserialize<MotionMatching::MotionMatchingInfo>(r.path().string());
+				GenericSerializer::Serialize<MotionMatching::MotionMatchingInfo>(asset, r.path().string());
+			}*/
+		}
+
+//#define ANIMATION_CLIP_FILE_EXTENSION ".trcac"
+//#define ANIMATION_GRAPH_FILE_EXTENSION ".trcag"
+//#define PREFAB_FILE_EXTENSION ".trprf"
+//#define MATERIAL_FILE_EXTENSION ".trmat"
+//#define RENDER_PIPELINE_FILE_EXTENSION ".trpip"
+//#define SKELETON_FILE_EXTENSION ".trcsk"
+//#define SEQUENCE_FILE_EXTENSION ".trcsq"
+//#define SCENE_FILE_EXTENSION ".trscn"
+//#define HUMANOID_RIG_FILE_EXTENSION ".trhrig"
+//#define FEATURE_DB_FILE_EXTENSION ".trmmft"
+//#define MMT_INFO_FILE_EXTENSION ".trmminf"
+
+		// for all .trcpip
+		// for all .trcmat
+		// for all .trcanimg
+		// for all prefabs
+	}
+	// .............................
 
 	void SerializationTest();
 	void DeserializationTest();
@@ -175,6 +265,18 @@ namespace trace {
 		{
 		case SceneEdit:
 		{
+			if (!m_sceneToOpen.empty())
+			{
+				if (m_currentScene)
+				{
+					CloseCurrentScene();
+				}
+				LoadScene(m_sceneToOpen);
+				m_currentScenePath = m_sceneToOpen;
+
+				m_sceneToOpen = "";
+			}
+
 			if (m_viewportFocused || m_viewportHovered)
 			{
 				m_editorCamera.Update(deltaTime);
@@ -1166,12 +1268,7 @@ namespace trace {
 			return;
 		}
 
-		if (m_currentScene)
-		{
-			CloseCurrentScene();
-		}
-		LoadScene(path);
-		m_currentScenePath = path;
+		m_sceneToOpen = path;
 
 
 	}
@@ -1634,6 +1731,8 @@ project "{}"
 			std::filesystem::path file_path = GetPathFromUUID(id);
 			LoadScene(file_path.string());
 		}
+		
+
 		return true;
 	}
 
@@ -1725,6 +1824,10 @@ project "{}"
 				{
 					std::filesystem::path file_path = GetPathFromUUID(id);
 					scene_name = file_path.filename().string();
+					if (scene_name.empty())
+					{
+						scene_name = "None(Scene)";
+					}
 				}
 				ImGui::Button(scene_name.c_str());
 				if (ImGui::BeginDragDropTarget())

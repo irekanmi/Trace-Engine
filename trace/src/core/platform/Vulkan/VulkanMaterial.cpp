@@ -82,10 +82,9 @@ namespace vk {
         bool result = true;
 
 
-        Ref<trace::GPipeline> pipeline = mat_instance->GetRenderPipline();
-        if (!mat_instance || !pipeline.get())
+        if (!mat_instance)
         {
-            TRC_ERROR("Please input valid pointer -> {} || {}, Function -> {}", (const void*)mat_instance, (const void*)pipeline.get(), __FUNCTION__);
+            TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)mat_instance, __FUNCTION__);
             return false;
         }
 
@@ -94,17 +93,10 @@ namespace vk {
             TRC_WARN("This material is not valid or has not been initialized, {}", (const void*)mat_instance->GetRenderHandle()->m_internalData);
             return false;
         }
-
-        if (!pipeline->GetRenderHandle()->m_internalData)
-        {
-            TRC_ERROR("Invalid render handle, {} || {}, Function -> {}", (const void*)mat_instance->GetRenderHandle()->m_internalData, (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
-            return false;
-        }
         
         //TODO: Implement destruction of descriptor sets
         delete mat_instance->GetRenderHandle()->m_internalData;
         mat_instance->GetRenderHandle()->m_internalData = nullptr;
-        mat_instance->GetRenderPipline().free();
 
         return result;
     }

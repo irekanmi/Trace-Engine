@@ -3,6 +3,8 @@
 #include "Core.h"
 #include "Enums.h"
 #include "render/Graphics.h"
+#include "scene/UUID.h"
+
 #include <string>
 
 namespace trace {
@@ -82,6 +84,8 @@ namespace trace {
 	{
 		size_t value = 0;
 		friend bool operator==(const trace::StringID& right, const trace::StringID& left);
+		operator UUID() { return static_cast<UUID>(value); }
+		operator uint64_t() { return static_cast<uint64_t>(value); }
 	};
 
 	using UpdateID = uint32_t;

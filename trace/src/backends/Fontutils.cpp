@@ -129,7 +129,7 @@ bool submitAtlasBitmapAndLayout(msdf_atlas::BitmapAtlasStorage<msdfgen::byte, 3>
 	tex_desc.m_numLayers = 1;
 	tex_desc.m_usage = trace::UsageFlag::DEFAULT;
 
-	Ref<trace::GTexture> atlas = trace::GenericAssetManager::get_instance()->CreateAssetHandle<trace::GTexture>(name, tex_desc);
+	Ref<trace::GTexture> atlas = trace::GenericAssetManager::get_instance()->CreateAssetHandle_<trace::GTexture>(name + ".trctex", tex_desc);
 	font->SetAtlas(atlas);
 	TRC_ASSERT(font->GetAtlas().is_valid(), "Texture Creation Failed");
 

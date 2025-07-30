@@ -23,6 +23,7 @@ namespace trace {
 		std::string GetName() { return m_path.filename().string(); }
 		UUID GetUUID();
 
+
 		void Increment();
 		void Decrement();
 		
@@ -31,6 +32,7 @@ namespace trace {
 		//TODO: Determine if these is the right thing to do or if it is optimal enough
 		uint32_t m_refCount;
 		uint32_t m_id;
+		UUID m_assetID;
 		//NOTE: To be used only for the editor
 		std::filesystem::path m_path;
 

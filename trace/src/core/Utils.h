@@ -25,6 +25,7 @@ namespace trace {
 	StringID GetStringID(const std::string& data);
 
 	std::string& GetStringFromID(StringID string_id);
+	std::string& GetStringFromID(UUID string_id);
 
 	inline float lerp(float a, float b, float t)
 	{

@@ -41,8 +41,11 @@ namespace trace {
 
 
 		PipelineStateDesc& desc = pipeline->GetDesc();
-		emit << YAML::Key << "Vertex Shader" << YAML::Value << GetUUIDFromName(desc.vertex_shader->GetName());
-		emit << YAML::Key << "Pixel Shader" << YAML::Value << GetUUIDFromName(desc.pixel_shader->GetName());
+		//emit << YAML::Key << "Vertex Shader" << YAML::Value << GetUUIDFromName(desc.vertex_shader->GetName());
+		//emit << YAML::Key << "Pixel Shader" << YAML::Value << GetUUIDFromName(desc.pixel_shader->GetName());
+		
+		emit << YAML::Key << "Vertex Shader" << YAML::Value << desc.vertex_shader->GetUUID();
+		emit << YAML::Key << "Pixel Shader" << YAML::Value << desc.pixel_shader->GetUUID();
 
 		// InputLayout
 		{
@@ -144,8 +147,8 @@ namespace trace {
 		uint32_t pip_type = pipeline->GetPipelineType();
 		stream->Write<uint32_t>(pip_type);
 		PipelineStateDesc ds = pipeline->GetDesc();
-		Ref<GShader> vert = GenericAssetManager::get_instance()->Get<GShader>(ds.vertex_shader->GetName());
-		Ref<GShader> frag = GenericAssetManager::get_instance()->Get<GShader>(ds.pixel_shader->GetName());
+		Ref<GShader> vert = GenericAssetManager::get_instance()->Get<GShader>(ds.vertex_shader->GetUUID());
+		Ref<GShader> frag = GenericAssetManager::get_instance()->Get<GShader>(ds.pixel_shader->GetUUID());
 		uint64_t vertex_shader_id = GetUUIDFromName(ds.vertex_shader->GetName());
 		uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
 		stream->Write<uint64_t>(vertex_shader_id);

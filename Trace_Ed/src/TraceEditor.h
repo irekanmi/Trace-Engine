@@ -129,6 +129,7 @@ namespace trace {
 		
 
 		std::string m_currentScenePath;
+		std::string m_sceneToOpen;
 
 	private:
 		void start_current_scene();

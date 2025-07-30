@@ -50,6 +50,7 @@ namespace trace {
 	void Font::Destroy()
 	{
 		// TODO: Destroy unreferenced font
+		m_atlas.free();
 	}
 
 	Ref<GTexture> Font::GetAtlas()

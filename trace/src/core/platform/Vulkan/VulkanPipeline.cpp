@@ -994,6 +994,7 @@ namespace vk {
 		if (!texture->GetRenderHandle()->m_internalData)
 		{
 			TRC_ERROR("Invalid texture handle, {}, Function -> {}", texture->GetName(), __FUNCTION__);
+			return false;
 		}
 
 		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;

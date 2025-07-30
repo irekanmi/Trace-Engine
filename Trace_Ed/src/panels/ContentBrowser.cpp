@@ -269,6 +269,34 @@ namespace trace {
 	}
 	void ContentBrowser::Shutdown()
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
+		if (editor->GetCurrentProject())
+		{
+			std::filesystem::path db_path = std::filesystem::path(editor->GetCurrentProject()->GetProjectCurrentDirectory()) / "InternalAssetsDB";
+			std::filesystem::path assetsDB_path = db_path / "assets.trdb";
+
+			YAML::Emitter emit;
+
+			emit << YAML::BeginMap;
+			emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
+			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
+			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
+
+			for (auto i : m_allFilesID)
+			{
+				emit << YAML::BeginMap;
+				emit << YAML::Key << "Name" << YAML::Value << i.first;
+				emit << YAML::Key << "UUID" << YAML::Value << i.second;
+				emit << YAML::EndMap;
+			}
+
+			emit << YAML::EndSeq;
+			emit << YAML::EndMap;
+
+
+			YAML::save_emitter_data(emit, assetsDB_path.string());
+		}
 
 		// TODO: Add a data structure that holds and releases all textures
 		directory_icon.free();
@@ -468,6 +496,41 @@ namespace trace {
 		}
 
 	}
+
+	static std::vector<std::string> built_in_assets = {
+		"albedo_map",
+		"specular_map",
+		"normal_map",
+
+		"Cube",
+		"Sphere",
+
+		"default",
+		"Plane",
+
+		"gbuffer_pipeline",
+		"skybox_pipeline",
+		"light_pipeline",
+		"quad_batch_pipeline",
+		"text_batch_pipeline",
+		"text_pipeline",
+		"debug_line_pipeline",
+		"bloom_prefilter_pass_pipeline",
+		"bloom_downsample_pass_pipeline",
+		"bloom_upsample_pass_pipeline",
+		"lighting_pass_pipeline",
+		"ssao_main_pass_pipeline",
+		"ssao_blur_pass_pipeline",
+		"tone_map_pass_pipeline",
+		"black_texture",
+		"skinned_gbuffer_pipeline",
+		"transparent_texture",
+		"sun_shadow_map_pass_pipeline",
+		"spot_shadow_map_pass_pipeline",
+		"sun_shadow_skinned_map_pass_pipeline",
+		"spot_shadow_skinned_map_pass_pipeline"
+	};
+
 	void ContentBrowser::ProcessAllDirectory(bool update_assets_db)
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
@@ -477,72 +540,12 @@ namespace trace {
 		/*m_allFilesID.clear();
 		m_allIDPath.clear();*/
 
-		//TEMP: Find a better way to identify default data
-		uint64_t def_id0 = 1;
-		uint64_t def_id1 = 1;
-		m_allFilesID["albedo_map"] = def_id0++;
-		m_allFilesID["specular_map"] = def_id0++;
-		m_allFilesID["normal_map"] = def_id0++;
-
-		m_allFilesID["Cube"] = def_id0++;
-		m_allFilesID["Sphere"] = def_id0++;
-
-		m_allFilesID["default"] = def_id0++;
-		m_allFilesID["Plane"] = def_id0++;
-
-		m_allFilesID["gbuffer_pipeline"] = def_id0++;
-		m_allFilesID["skybox_pipeline"] = def_id0++;
-		m_allFilesID["light_pipeline"] = def_id0++;
-		m_allFilesID["quad_batch_pipeline"] = def_id0++;
-		m_allFilesID["text_batch_pipeline"] = def_id0++;
-		m_allFilesID["text_pipeline"] = def_id0++;
-		m_allFilesID["debug_line_pipeline"] = def_id0++;
-		m_allFilesID["bloom_prefilter_pass_pipeline"] = def_id0++;
-		m_allFilesID["bloom_downsample_pass_pipeline"] = def_id0++;
-		m_allFilesID["bloom_upsample_pass_pipeline"] = def_id0++;
-		m_allFilesID["lighting_pass_pipeline"] = def_id0++;
-		m_allFilesID["ssao_main_pass_pipeline"] = def_id0++;
-		m_allFilesID["ssao_blur_pass_pipeline"] = def_id0++;
-		m_allFilesID["tone_map_pass_pipeline"] = def_id0++;
-		m_allFilesID["black_texture"] = def_id0++;
-		m_allFilesID["skinned_gbuffer_pipeline"] = def_id0++;
-		m_allFilesID["transparent_texture"] = def_id0++;
-		m_allFilesID["sun_shadow_map_pass_pipeline"] = def_id0++;
-		m_allFilesID["spot_shadow_map_pass_pipeline"] = def_id0++;
-		m_allFilesID["sun_shadow_skinned_map_pass_pipeline"] = def_id0++;
-		m_allFilesID["spot_shadow_skinned_map_pass_pipeline"] = def_id0++;
-
-
-		m_allIDPath[def_id1++] = "albedo_map";
-		m_allIDPath[def_id1++] = "specular_map";
-		m_allIDPath[def_id1++] = "normal_map";
-
-		m_allIDPath[def_id1++] = "Cube";
-		m_allIDPath[def_id1++] = "Sphere";
-
-		m_allIDPath[def_id1++] = "default";
-		m_allIDPath[def_id1++] = "Plane";
-		m_allIDPath[def_id1++] = "gbuffer_pipeline";
-		m_allIDPath[def_id1++] = "skybox_pipeline";
-		m_allIDPath[def_id1++] = "light_pipeline";
-		m_allIDPath[def_id1++] = "quad_batch_pipeline";
-		m_allIDPath[def_id1++] = "text_batch_pipeline";
-		m_allIDPath[def_id1++] = "text_pipeline";
-		m_allIDPath[def_id1++] = "debug_line_pipeline";
-		m_allIDPath[def_id1++] = "bloom_prefilter_pass_pipeline";
-		m_allIDPath[def_id1++] = "bloom_downsample_pass_pipeline";
-		m_allIDPath[def_id1++] = "bloom_upsample_pass_pipeline";
-		m_allIDPath[def_id1++] = "lighting_pass_pipeline";
-		m_allIDPath[def_id1++] = "ssao_main_pass_pipeline";
-		m_allIDPath[def_id1++] = "ssao_blur_pass_pipeline";
-		m_allIDPath[def_id1++] = "tone_map_pass_pipeline";
-		m_allIDPath[def_id1++] = "black_texture";
-		m_allIDPath[def_id1++] = "skinned_gbuffer_pipeline";
-		m_allIDPath[def_id1++] = "transparent_texture";
-		m_allIDPath[def_id1++] = "sun_shadow_map_pass_pipeline";
-		m_allIDPath[def_id1++] = "spot_shadow_map_pass_pipeline";
-		m_allIDPath[def_id1++] = "sun_shadow_skinned_map_pass_pipeline";
-		m_allIDPath[def_id1++] = "spot_shadow_skinned_map_pass_pipeline";
+		for (std::string& asset : built_in_assets)
+		{
+			UUID id = STR_ID(asset);
+			m_allFilesID[asset] = id;
+			m_allIDPath[id] = asset;
+		}
 
 		//::-----::
 
@@ -571,176 +574,66 @@ namespace trace {
 
 		}
 
-
-
 		bool dirty_ids = false;
 
 		// Adding builtin Shaders ================
 		std::string shader_dir;
 		FindDirectory(AppSettings::exe_path, "assets/shaders", shader_dir);
 		TraceEditor::AllProjectAssets& all_assets = TraceEditor::get_instance()->GetAllProjectAssets();
-		for (auto p : std::filesystem::directory_iterator(shader_dir))
+		for (auto r : std::filesystem::recursive_directory_iterator(shader_dir))
 		{
-			std::filesystem::path path = p.path();
-			if (std::filesystem::is_directory(path))
+			std::filesystem::path path = r.path();
+			if (std::filesystem::is_regular_file(r.path()) && path.extension().string() != ".shcode")
 			{
-				for (auto r : std::filesystem::recursive_directory_iterator(path))
-				{
-					if (std::filesystem::is_regular_file(r.path()) && path.extension().string() != ".shcode")
-					{
-						all_assets.shaders.emplace(r.path());
-						std::string filename = r.path().filename().string();
-						auto it = m_allFilesID.find(filename);
-						if (it == m_allFilesID.end())
-						{
-							dirty_ids = true;
-							m_allFilesID[filename] = UUID::GenUUID();
-						}
-						UUID id = m_allFilesID[filename];
-						m_allIDPath[id] = r.path();
-					}
-				}
+				all_assets.shaders.emplace(r.path());
+				std::string filename = r.path().filename().string();
+				UUID id = STR_ID(filename);
+				m_allFilesID[filename] = id;
+				m_allIDPath[id] = r.path();
+				dirty_ids = true;
 			}
-			else if (std::filesystem::is_regular_file(path) && path.extension().string() != ".shcode")
-			{
-				all_assets.shaders.emplace(p.path());
-				std::string filename = path.filename().string();
-				auto it = m_allFilesID.find(filename);
-				if (it == m_allFilesID.end())
-				{
-					dirty_ids = true;
-					m_allFilesID[filename] = UUID::GenUUID();
-				}
-				UUID id = m_allFilesID[filename];
-				m_allIDPath[id] = path;
-			}
-
-
 		}
-
 		// =======================================
 
-
-
-		if (!std::filesystem::exists(assetsDB_path))
+		for (auto r : std::filesystem::recursive_directory_iterator(editor->GetCurrentProject()->GetAssetsDirectory()))
 		{
-			if (!std::filesystem::exists(db_path)) std::filesystem::create_directory(db_path);
-
-			YAML::Emitter emit;
-
-			emit << YAML::BeginMap;
-			emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
-			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
-			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
-			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
-			for (auto p : std::filesystem::directory_iterator(editor->GetCurrentProject()->GetAssetsDirectory()))
+			std::filesystem::path path = r.path();
+			if (std::filesystem::is_regular_file(r.path()))
 			{
-				std::filesystem::path path = p.path();
-				if (path == db_path) continue;
-				if (std::filesystem::is_directory(path))
-				{
-					for (auto r : std::filesystem::recursive_directory_iterator(path))
-					{
-						if (std::filesystem::is_regular_file(r.path()))
-						{
-							std::string filename = r.path().filename().string();
-							emit << YAML::BeginMap;
-							emit << YAML::Key << "Name" << YAML::Value << filename;
-							emit << YAML::Key << "UUID" << YAML::Value << UUID::GenUUID();
-
-							emit << YAML::EndMap;
-						}
-					}
-				}
-				else if (std::filesystem::is_regular_file(path))
-				{
-					std::string filename = path.filename().string();
-					emit << YAML::BeginMap;
-					emit << YAML::Key << "Name" << YAML::Value << filename;
-					emit << YAML::Key << "UUID" << YAML::Value << UUID::GenUUID();
-
-					emit << YAML::EndMap;
-				}
+				std::string filename = r.path().filename().string();
+				UUID id = STR_ID(filename);
+				m_allFilesID[filename] = id;
+				m_allIDPath[id] = r.path();
 			}
-
-			emit << YAML::EndSeq;
-			emit << YAML::EndMap;
-
-			FileHandle out_handle;
-			if (FileSystem::open_file(assetsDB_path.string(), FileMode::WRITE, out_handle))
-			{
-				FileSystem::writestring(out_handle, emit.c_str());
-				FileSystem::close_file(out_handle);
-			}
-
-
-		}
-		for (auto p : std::filesystem::directory_iterator(editor->GetCurrentProject()->GetAssetsDirectory()))
-		{
-			std::filesystem::path path = p.path();
-			if (path == db_path) continue;
-			if (std::filesystem::is_directory(path))
-			{
-				for (auto r : std::filesystem::recursive_directory_iterator(path))
-				{
-					if (std::filesystem::is_regular_file(r.path()))
-					{
-						std::string filename = r.path().filename().string();
-						auto it = m_allFilesID.find(filename);
-						if (it == m_allFilesID.end())
-						{
-							dirty_ids = true;
-							m_allFilesID[filename] = UUID::GenUUID();
-						}
-						UUID id = m_allFilesID[filename];
-						m_allIDPath[id] = r.path();
-					}
-				}
-			}
-			else if (std::filesystem::is_regular_file(path))
-			{
-				std::string filename = path.filename().string();
-				auto it = m_allFilesID.find(filename);
-				if (it == m_allFilesID.end())
-				{
-					dirty_ids = true;
-					m_allFilesID[filename] = UUID::GenUUID();
-				}
-				UUID id = m_allFilesID[filename];
-				m_allIDPath[id] = path;
-			}
-		}
-
-
-		if (dirty_ids || true)
-		{
-			YAML::Emitter emit;
-
-			emit << YAML::BeginMap;
-			emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
-			emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
-			emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
-			emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
-
-			for (auto i : m_allFilesID)
-			{
-				emit << YAML::BeginMap;
-				emit << YAML::Key << "Name" << YAML::Value << i.first;
-				emit << YAML::Key << "UUID" << YAML::Value << i.second;
-				emit << YAML::EndMap;
-			}
-
-			emit << YAML::EndSeq;
-			emit << YAML::EndMap;
-
-
-			YAML::save_emitter_data(emit, assetsDB_path.string());
 		}
 
 		for (auto i : m_allFilesID)
 		{
 			m_allIDNames[i.second] = i.first;
 		}
+
+
+		YAML::Emitter emit;
+
+		emit << YAML::BeginMap;
+		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "DataBase Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "DataBase Type" << YAML::Value << "Assets";
+		emit << YAML::Key << "DATA" << YAML::Value << YAML::BeginSeq;
+
+		for (auto i : m_allFilesID)
+		{
+			emit << YAML::BeginMap;
+			emit << YAML::Key << "Name" << YAML::Value << i.first;
+			emit << YAML::Key << "UUID" << YAML::Value << i.second;
+			emit << YAML::EndMap;
+		}
+
+		emit << YAML::EndSeq;
+		emit << YAML::EndMap;
+
+
+		YAML::save_emitter_data(emit, assetsDB_path.string());
 
 	}
 	void ContentBrowser::OnWindowPopup()
@@ -850,7 +743,8 @@ namespace trace {
 						{
 							std::string path = (m_currentDir / (res + MATERIAL_FILE_EXTENSION)).string();
 							MaterialSerializer::Serialize(mat, path);
-							UUID new_id = UUID::GenUUID();
+							std::string filename = res + MATERIAL_FILE_EXTENSION;
+							UUID new_id = STR_ID(filename);
 							m_allFilesID[res + MATERIAL_FILE_EXTENSION] = new_id;
 							m_allIDPath[new_id] = path;
 							ProcessAllDirectory(true);
@@ -882,7 +776,8 @@ namespace trace {
 						new_pipeline->SetPipelineType(PipelineType::Surface_Material);
 						std::string path = (m_currentDir / (res + RENDER_PIPELINE_FILE_EXTENSION)).string();
 						PipelineSerializer::Serialize(new_pipeline, path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + RENDER_PIPELINE_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + RENDER_PIPELINE_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = path;
 						ProcessAllDirectory(true);
@@ -910,7 +805,8 @@ namespace trace {
 					{
 						std::string scene_path = (m_currentDir / (res + SCENE_FILE_EXTENSION)).string();
 						editor->CreateScene(scene_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + SCENE_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + SCENE_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = scene_path;
 						ProcessAllDirectory(true);
@@ -940,7 +836,8 @@ namespace trace {
 						std::string clip_path = (m_currentDir / (res + ANIMATION_CLIP_FILE_EXTENSION)).string();
 						Ref<AnimationClip> clip = GenericAssetManager::get_instance()->CreateAssetHandle_<AnimationClip>(clip_path);
 						AnimationsSerializer::SerializeAnimationClip(clip, clip_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + ANIMATION_CLIP_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + ANIMATION_CLIP_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = clip_path;
 						ProcessAllDirectory(true);
@@ -970,7 +867,8 @@ namespace trace {
 						std::string graph_path = (m_currentDir / (res + ANIMATION_GRAPH_FILE_EXTENSION)).string();
 						Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(graph_path);
 						AnimationsSerializer::SerializeAnimGraph(graph, graph_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + ANIMATION_GRAPH_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + ANIMATION_GRAPH_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = graph_path;
 						ProcessAllDirectory(true);
@@ -1000,7 +898,8 @@ namespace trace {
 						std::string sequence_path = (m_currentDir / (res + SEQUENCE_FILE_EXTENSION)).string();
 						Ref<Animation::Sequence> sequence = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Sequence>(sequence_path);
 						AnimationsSerializer::SerializeSequence(sequence, sequence_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + SEQUENCE_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + SEQUENCE_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = sequence_path;
 						ProcessAllDirectory(true);
@@ -1030,7 +929,8 @@ namespace trace {
 						std::string rig_path = (m_currentDir / (res + HUMANOID_RIG_FILE_EXTENSION)).string();
 						Ref<Animation::HumanoidRig> rig = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::HumanoidRig>(rig_path);
 						AnimationsSerializer::SerializeHumanoidRig(rig, rig_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + HUMANOID_RIG_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + HUMANOID_RIG_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = rig_path;
 						ProcessAllDirectory(true);
@@ -1060,7 +960,8 @@ namespace trace {
 						std::string db_path = (m_currentDir / (res + FEATURE_DB_FILE_EXTENSION)).string();
 						Ref<MotionMatching::FeatureDatabase> db = GenericAssetManager::get_instance()->CreateAssetHandle_<MotionMatching::FeatureDatabase>(db_path);
 						GenericSerializer::Serialize<MotionMatching::FeatureDatabase>(db, db_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + FEATURE_DB_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + FEATURE_DB_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = db_path;
 						ProcessAllDirectory(true);
@@ -1090,7 +991,8 @@ namespace trace {
 						std::string info_path = (m_currentDir / (res + MMT_INFO_FILE_EXTENSION)).string();
 						Ref<MotionMatching::MotionMatchingInfo> info = GenericAssetManager::get_instance()->CreateAssetHandle_<MotionMatching::MotionMatchingInfo>(info_path);
 						GenericSerializer::Serialize<MotionMatching::MotionMatchingInfo>(info, info_path);
-						UUID new_id = UUID::GenUUID();
+						std::string filename = res + MMT_INFO_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + MMT_INFO_FILE_EXTENSION] = new_id;
 						m_allIDPath[new_id] = info_path;
 						ProcessAllDirectory(true);

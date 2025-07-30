@@ -36,6 +36,7 @@ namespace trace {
 	void MaterialInstance::Destroy()
 	{
 		RenderFunc::DestroyMaterial(this);
+		m_renderPipeline.free();
 	}
 
 	bool MaterialInstance::RecreateMaterial(Ref<GPipeline> pipeline)

@@ -618,6 +618,9 @@ namespace trace {
 
 	void DefaultAssetsManager::ReleaseAssets()
 	{
+		//Temp -------------
+		default_material->Decrement();
+		// ---------
 		default_material.free();
 		Cube.free();
 		Sphere.free();
