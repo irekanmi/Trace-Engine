@@ -194,6 +194,20 @@ namespace trace {
 			spring.predict_velocities.resize(_size);
 		}
 
+		auto particle_effects = m_registry.view<ParticleEffectController>();
+		for (auto i : particle_effects)
+		{
+			auto [effect] = particle_effects.get(i);
+			Entity entity(i, this);
+			effect.particle_effect.CreateInstance(effect.particle_effect.GetParticleEffect(), entity.GetID(), this);
+			if (!effect.particle_effect.GetParticleEffect() || !effect.start_on_create || !entity.HasComponent<ActiveComponent>())
+			{
+				continue;
+			}
+			effect.particle_effect.Start();
+
+		}
+
 	}
 	void Scene::OnScriptStart()
 	{
@@ -948,6 +962,14 @@ namespace trace {
 
 		}
 
+		auto particle_effects = m_registry.view<ParticleEffectController, ActiveComponent>();
+		for (auto i : particle_effects)
+		{
+			auto [effect, active] = particle_effects.get(i);
+			Entity entity(i, this);
+			effect.particle_effect.Update(deltaTime);
+
+		}
 
 		job_system->WaitForCounter(animations_counter);
 	}

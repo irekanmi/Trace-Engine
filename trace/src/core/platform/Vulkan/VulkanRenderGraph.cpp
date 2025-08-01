@@ -424,9 +424,6 @@ namespace vk {
 			clear_colors[i].color.float32[1] = pass->clearColor[i].g;
 			clear_colors[i].color.float32[2] = pass->clearColor[i].b;
 			clear_colors[i].color.float32[3] = pass->clearColor[i].a;
-
-			clear_colors[i].depthStencil.depth = pass->depthValue;
-			clear_colors[i].depthStencil.stencil = pass->stencilValue;
 		}
 
 		if (pass->clearColor.empty())

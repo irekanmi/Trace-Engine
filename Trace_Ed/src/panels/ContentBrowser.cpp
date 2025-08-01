@@ -528,7 +528,9 @@ namespace trace {
 		"sun_shadow_map_pass_pipeline",
 		"spot_shadow_map_pass_pipeline",
 		"sun_shadow_skinned_map_pass_pipeline",
-		"spot_shadow_skinned_map_pass_pipeline"
+		"spot_shadow_skinned_map_pass_pipeline",
+		"particle_billboard_pipeline",
+		"particle_velocity_aligned_pipeline"
 	};
 
 	void ContentBrowser::ProcessAllDirectory(bool update_assets_db)

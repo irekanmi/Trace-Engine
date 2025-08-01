@@ -34,6 +34,8 @@ namespace trace {
 		static Ref<GPipeline> text_batch_pipeline;
 		static Ref<GPipeline> text_pipeline;
 		static Ref<GPipeline> quad_pipeline;
+		static Ref<GPipeline> particle_billboard_pipeline;
+		static Ref<GPipeline> particle_velocity_aligned_pipeline;
 		static Ref<GPipeline> debug_line_pipeline;
 		static Texture_Ref default_diffuse_map;
 		static Texture_Ref default_specular_map;

@@ -25,6 +25,8 @@ namespace trace {
 	Ref<GPipeline> DefaultAssetsManager::text_pipeline = Ref<GPipeline>();
 	Ref<GPipeline> DefaultAssetsManager::quad_pipeline = Ref<GPipeline>();
 	Ref<GPipeline> DefaultAssetsManager::debug_line_pipeline = Ref<GPipeline>();
+	Ref<GPipeline> DefaultAssetsManager::particle_billboard_pipeline = Ref<GPipeline>();
+	Ref<GPipeline> DefaultAssetsManager::particle_velocity_aligned_pipeline = Ref<GPipeline>();
 	Texture_Ref DefaultAssetsManager::default_diffuse_map = Ref<GTexture>();
 	Texture_Ref DefaultAssetsManager::default_specular_map = Ref<GTexture>();
 	Texture_Ref DefaultAssetsManager::default_normal_map = Ref<GTexture>();
@@ -385,6 +387,84 @@ namespace trace {
 			};
 
 			{
+				Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("particle_billboard.vert.glsl", "particle_billboard.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+				Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("particle_billboard.frag.glsl", "particle_billboard.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				VertShader = vert_shader.get();
+				FragShader = frag_shader.get();
+
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(VertShader, s_res);
+				ShaderParser::generate_shader_resources(FragShader, s_res);
+
+				PipelineStateDesc _ds2 = {};
+				_ds2.vertex_shader = VertShader;
+				_ds2.pixel_shader = FragShader;
+				_ds2.resources = s_res;
+				_ds2.input_layout = {};
+
+
+				AutoFillPipelineDesc(
+					_ds2,
+					false
+				);
+				_ds2.input_layout = Vertex::get_input_layout();
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("WOIT_PASS");
+				Enable_WeightedOIT(_ds2);
+				_ds2.depth_sten_state = { true, false, false, 1.0f, 0.0f };
+				_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+
+
+				particle_billboard_pipeline = asset_manager->CreateAssetHandle<GPipeline>("particle_billboard_pipeline", _ds2);
+
+				if (!particle_billboard_pipeline)
+				{
+					TRC_ERROR("Failed to initialize or create particle_billboard_pipeline");
+					return false;
+				}
+			};
+			
+			{
+				Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("particle_velocity_aligned.vert.glsl", "particle_velocity_aligned.vert.glsl", ShaderStage::VERTEX_SHADER);
+
+				Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("particle_billboard.frag.glsl", "particle_billboard.frag.glsl", ShaderStage::PIXEL_SHADER);
+
+				VertShader = vert_shader.get();
+				FragShader = frag_shader.get();
+
+				ShaderResources s_res = {};
+				ShaderParser::generate_shader_resources(VertShader, s_res);
+				ShaderParser::generate_shader_resources(FragShader, s_res);
+
+				PipelineStateDesc _ds2 = {};
+				_ds2.vertex_shader = VertShader;
+				_ds2.pixel_shader = FragShader;
+				_ds2.resources = s_res;
+				_ds2.input_layout = {};
+
+
+				AutoFillPipelineDesc(
+					_ds2,
+					false
+				);
+				_ds2.input_layout = Vertex::get_input_layout();
+				_ds2.render_pass = Renderer::get_instance()->GetRenderPass("WOIT_PASS");
+				Enable_WeightedOIT(_ds2);
+				_ds2.depth_sten_state = { true, false, false, 1.0f, 0.0f };
+				_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+
+
+				particle_velocity_aligned_pipeline = asset_manager->CreateAssetHandle<GPipeline>("particle_velocity_aligned_pipeline", _ds2);
+
+				if (!particle_velocity_aligned_pipeline)
+				{
+					TRC_ERROR("Failed to initialize or create particle_velocity_aligned_pipeline");
+					return false;
+				}
+			};
+
+			{
 				Ref<GShader> vert_shader = asset_manager->CreateAssetHandle<GShader>("debug_line.vert.glsl", "debug_line.vert.glsl", ShaderStage::VERTEX_SHADER);
 
 				Ref<GShader> frag_shader = asset_manager->CreateAssetHandle<GShader>("debug_line.frag.glsl", "debug_line.frag.glsl", ShaderStage::PIXEL_SHADER);
@@ -633,6 +713,7 @@ namespace trace {
 		text_pipeline.free();
 		quad_pipeline.free();
 		debug_line_pipeline.free();
+		particle_billboard_pipeline.free();
 		default_diffuse_map.free();
 		default_specular_map.free();
 		default_normal_map.free();

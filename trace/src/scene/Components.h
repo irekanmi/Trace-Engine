@@ -20,6 +20,7 @@
 #include "orange_duck/vec.h"
 #include "orange_duck/quat.h"
 #include "networking/NetworkTypes.h"
+#include "particle_effects/ParticleEffect.h"
 
 
 
@@ -373,13 +374,13 @@ namespace trace {
 		Network::NetworkStream data_stream;
 	};
 
-	
-	//NOTE: This component has to be one in the scene
-	struct NetworkController
+	struct ParticleEffectController
 	{
-		uint32_t instance_id = 0;//INFO: It specifies the Id of the currently running instance
+		ParticleEffectInstance particle_effect;
+		bool start_on_create = true;
 	};
 
+	
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -387,10 +388,10 @@ namespace trace {
 	};
 
 	using AllComponents = ComponentGroup<TagComponent, TransformComponent, CameraComponent,
-		LightComponent, MeshComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
+		LightComponent, ModelComponent, ModelRendererComponent, TextComponent, RigidBodyComponent,
 		BoxColliderComponent, SphereColliderComponent, AnimationComponent, ImageComponent, PrefabComponent, SunLight,
 		PointLight, SpotLight, SkinnedModelRenderer, SequencePlayer, AnimationGraphController, CharacterControllerComponent, 
-		MotionMatchingComponent, SpringMotionMatchingController, NetObject, NetworkController>;
+		MotionMatchingComponent, SpringMotionMatchingController, NetObject, ParticleEffectController>;
 
 	using PhysicsComponents = ComponentGroup<RigidBodyComponent, BoxColliderComponent, SphereColliderComponent, CharacterControllerComponent>;
 

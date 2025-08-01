@@ -1,5 +1,6 @@
 #pragma once
 
+#include "reflection/SerializeTypes.h"
 #include "reflection/TypeRegistry.h"
 #include "scene/Entity.h"
 #include "scene/Scene.h"
@@ -157,6 +158,7 @@ namespace trace {
 		REGISTER_MEMBER(MotionMatchingComponent, normalized_search);
 		REGISTER_MEMBER(MotionMatchingComponent, motion_matching_info);
 	END_REGISTER_CLASS;
+	
 
 	BEGIN_REGISTER_CLASS(SpringMotionMatchingController)
 		REGISTER_TYPE(SpringMotionMatchingController);
@@ -164,6 +166,7 @@ namespace trace {
 		REGISTER_MEMBER(SpringMotionMatchingController, rotation_halflife);
 	END_REGISTER_CLASS;
 
+	
 	BEGIN_REGISTER_CLASS(NetObject)
 		REGISTER_TYPE(NetObject);
 		REGISTER_MEMBER(NetObject, owner_id);
@@ -171,4 +174,9 @@ namespace trace {
 		REGISTER_MEMBER(NetObject, type);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(ParticleEffectController)
+		REGISTER_TYPE(ParticleEffectController);
+		REGISTER_MEMBER(ParticleEffectController, particle_effect);
+		REGISTER_MEMBER(ParticleEffectController, start_on_create);
+	END_REGISTER_CLASS;
 }

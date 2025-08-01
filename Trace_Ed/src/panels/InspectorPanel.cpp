@@ -372,6 +372,11 @@ namespace trace {
 				entity.AddComponent<NetObject>();
 				comp_dirty = true;
 			}
+			if (ImGui::MenuItem("Particle Effect Controller"))
+			{
+				entity.AddComponent<ParticleEffectController>();
+				comp_dirty = true;
+			}
 
 			for (auto& i : ScriptEngine::get_instance()->GetScripts())
 			{
@@ -1311,6 +1316,34 @@ namespace trace {
 			}
 
 			return true;
+			});
+
+		comp_dirty = comp_dirty || DrawComponent<ParticleEffectController>(entity, "Particle Effect Controller", [&](Entity obj, ParticleEffectController& comp) -> bool {
+
+
+			bool dirty = false;
+
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Start On Create", &comp.start_on_create), Start_On_Create)
+			{}
+
+			Ref<ParticleEffect> particle_effect = comp.particle_effect.GetParticleEffect();
+			std::string name = "None (Particle Effect)";
+			if (particle_effect)
+			{
+				name = particle_effect->GetName();
+			}
+
+			ImGui::Text("Particle Effect: ");
+			ImGui::SameLine();
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Button(name.c_str()), Resource)
+			{}
+			particle_effect = ImGuiDragDropResource<ParticleEffect>(PARTICLE_EFFECT_FILE_EXTENSION);
+			if (particle_effect)
+			{
+				comp.particle_effect.CreateInstance(particle_effect, entity.GetID(), entity.GetScene());
+			}
+
+			return dirty;
 			});
 
 		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
