@@ -5,6 +5,7 @@
 #include "core/io/Logging.h"
 #include "serialize/GenericSerializer.h"
 #include "resource/GenericAssetManager.h"
+#include "render/Camera.h"
 
 namespace trace {
 
@@ -117,13 +118,13 @@ namespace trace {
 			}
 		}
 
-		m_gen->GetSpawner()->Run(this);
+		m_gen->GetSpawner()->Run(this, deltaTime);
 
 		for (ParticleUpdate*& update : m_gen->GetUpdates())
 		{
 			for (uint32_t index = 0; index < m_numAlive; index++)
 			{
-				update->UpdateParticle(this, index);
+				update->UpdateParticle(this, index, deltaTime);
 			}
 		}
 
@@ -135,18 +136,34 @@ namespace trace {
 		m_elaspedTime = 0.0f;
 	}
 
-	void ParticleGeneratorInstance::emit_particle()
+	void ParticleGeneratorInstance::Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform)
+	{
+		for (ParticleRender*& render : m_gen->GetRenderers())
+		{
+			render->Render(this, camera, transform);
+		}
+	}
+
+	int32_t ParticleGeneratorInstance::emit_particle()
 	{
 		if (m_numAlive < m_gen->GetCapacity())
 		{
 			uint32_t index = m_numAlive++;
-			for (ParticleInitializer*& init : m_gen->GetInitializers())
-			{
-				init->InitParticle(this, index);
-			}
+
+			return index;
 		}
+
+		return -1;
 	}
 
+	void ParticleGeneratorInstance::initialize_particle(uint32_t index)
+	{
+		for (ParticleInitializer*& init : m_gen->GetInitializers())
+		{
+			init->InitParticle(this, index);
+		}
+	}
+	
 	void ParticleGeneratorInstance::kill_particle(uint32_t index)
 	{
 		uint32_t dst_index = m_numAlive - 1;

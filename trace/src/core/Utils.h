@@ -59,6 +59,8 @@ namespace trace {
 		return result;
 	}
 
+	float RandomFloat();
+
 }
 
 #define STR_ID(string) trace::GetStringID(string)

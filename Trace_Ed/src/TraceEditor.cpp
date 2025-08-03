@@ -37,6 +37,7 @@
 #include "orange_duck/spring.h"
 #include "core/maths/Conversion.h"
 #include "networking/NetworkManager.h"
+#include "particle_effects/particle_renderers/BillboardRender.h"
  
 
 #include "glm/gtc/type_ptr.hpp"
@@ -74,91 +75,47 @@ namespace trace {
 	static Ref<MotionMatching::MotionMatchingInfo> mmt_info;
 
 	// Temp ......................
-	void RemapAssetNameToStringID(Ref<Project> project)
+	void GenerateParticleEffect(Ref<Project> project)
 	{
-		std::string project_path = project->GetAssetsDirectory();
+		std::string effect_filename = "particle_effect_t0" + std::string(PARTICLE_EFFECT_FILE_EXTENSION);
+		Ref<ParticleEffect> particle_effect = GenericAssetManager::get_instance()->CreateAssetHandle<ParticleEffect>(effect_filename);
+		std::string generator_filename = "particle_generator_t0" + std::string(PARTICLE_GENERATOR_FILE_EXTENSION);
+		Ref<ParticleGenerator> particle_generator = GenericAssetManager::get_instance()->CreateAssetHandle<ParticleGenerator>(generator_filename);
 
-		// for all .trcscn
-		for (auto r : std::filesystem::recursive_directory_iterator(project_path))
-		{
-			if (!std::filesystem::is_regular_file(r.path()))
-			{
-				continue;
-			}
+		particle_effect->SetLifeTime(300.0f);
+		particle_effect->GetGenerators().push_back(particle_generator);
 
-			if (r.path().extension() == SCENE_FILE_EXTENSION)
-			{
-				Ref<Scene> scene = SceneSerializer::Deserialize(r.path().string());
-				SceneSerializer::Serialize(scene, r.path().string());
-			}
-			else if (r.path().extension() == MATERIAL_FILE_EXTENSION)
-			{
-				Ref<MaterialInstance> material = MaterialSerializer::Deserialize(r.path().string());
-				MaterialSerializer::Serialize(material, r.path().string());
-			}
-			else if (r.path().extension() == PREFAB_FILE_EXTENSION)
-			{
-				Ref<Prefab> asset = SceneSerializer::DeserializePrefab(r.path().string());
-				SceneSerializer::SerializePrefab(asset, r.path().string());
-			}
-			/*else if (r.path().extension() == ANIMATION_GRAPH_FILE_EXTENSION)
-			{
-				Ref<Animation::Graph> asset = AnimationsSerializer::DeserializeAnimGraph(r.path().string());
-				AnimationsSerializer::SerializeAnimGraph(asset, r.path().string());
-			}*/
-			/*else if (r.path().extension() == RENDER_PIPELINE_FILE_EXTENSION)
-			{
-				Ref<GPipeline> asset = PipelineSerializer::Deserialize(r.path().string());
-				PipelineSerializer::Serialize(asset, r.path().string());
-			}*/
-			else if (r.path().extension() == SKELETON_FILE_EXTENSION)
-			{
-				Ref<Animation::Skeleton> asset = AnimationsSerializer::DeserializeSkeleton(r.path().string());
-				AnimationsSerializer::SerializeSkeleton(asset, r.path().string());
-			}
-			else if (r.path().extension() == SEQUENCE_FILE_EXTENSION)
-			{
-				Ref<Animation::Sequence> asset = AnimationsSerializer::DeserializeSequence(r.path().string());
-				AnimationsSerializer::SerializeSequence(asset, r.path().string());
-			}
-			else if (r.path().extension() == HUMANOID_RIG_FILE_EXTENSION)
-			{
-				Ref<Animation::HumanoidRig> asset = GenericSerializer::Deserialize<Animation::HumanoidRig>(r.path().string());
-				GenericSerializer::Serialize<Animation::HumanoidRig>(asset, r.path().string());
-			}
-			else if (r.path().extension() == HUMANOID_RIG_FILE_EXTENSION)
-			{
-				Ref<Animation::HumanoidRig> asset = GenericSerializer::Deserialize<Animation::HumanoidRig>(r.path().string());
-				GenericSerializer::Serialize<Animation::HumanoidRig>(asset, r.path().string());
-			}
-			/*else if (r.path().extension() == FEATURE_DB_FILE_EXTENSION)
-			{
-				Ref<MotionMatching::FeatureDatabase> asset = GenericSerializer::Deserialize<MotionMatching::FeatureDatabase>(r.path().string());
-				GenericSerializer::Serialize<MotionMatching::FeatureDatabase>(asset, r.path().string());
-			}
-			else if (r.path().extension() == MMT_INFO_FILE_EXTENSION)
-			{
-				Ref<MotionMatching::MotionMatchingInfo> asset = GenericSerializer::Deserialize<MotionMatching::MotionMatchingInfo>(r.path().string());
-				GenericSerializer::Serialize<MotionMatching::MotionMatchingInfo>(asset, r.path().string());
-			}*/
-		}
+		particle_generator->SetCapacity(2000);
+		RateSpawner* spawner = new RateSpawner;
+		spawner->SetSpawnRate(250.0f);
+		PointVolume* emission_volume = new PointVolume(glm::vec3(0.0f));
+		spawner->SetEmissionVolume(emission_volume);
+		particle_generator->SetSpawner(spawner);
 
-//#define ANIMATION_CLIP_FILE_EXTENSION ".trcac"
-//#define ANIMATION_GRAPH_FILE_EXTENSION ".trcag"
-//#define PREFAB_FILE_EXTENSION ".trprf"
-//#define MATERIAL_FILE_EXTENSION ".trmat"
-//#define RENDER_PIPELINE_FILE_EXTENSION ".trpip"
-//#define SKELETON_FILE_EXTENSION ".trcsk"
-//#define SEQUENCE_FILE_EXTENSION ".trcsq"
-//#define SCENE_FILE_EXTENSION ".trscn"
-//#define HUMANOID_RIG_FILE_EXTENSION ".trhrig"
-//#define FEATURE_DB_FILE_EXTENSION ".trmmft"
-//#define MMT_INFO_FILE_EXTENSION ".trmminf"
+		VelocityInitializer* velocity_init = new VelocityInitializer(glm::vec3(7.5f, 15.0f, 5.0f), glm::vec3(-10.5f, 17.5f, -2.0f));
+		particle_generator->GetInitializers().push_back(velocity_init);
+		
+		LifetimeInitializer* lifetime_init = new LifetimeInitializer;
+		lifetime_init->SetMin(3.0f);
+		lifetime_init->SetMax(5.0f);
+		particle_generator->GetInitializers().push_back(lifetime_init);
 
-		// for all .trcpip
-		// for all .trcmat
-		// for all .trcanimg
-		// for all prefabs
+		GravityUpdate* gravity_update = new GravityUpdate;
+		particle_generator->GetUpdates().push_back(gravity_update);
+		
+		VelocityUpdate* velocity_update = new VelocityUpdate;
+		particle_generator->GetUpdates().push_back(velocity_update);
+
+		BillBoardRender* renderer = new BillBoardRender;
+		std::string texture_path = GetPathFromUUID(STR_ID("Bullet_1.png")).string();
+		Ref<GTexture> texture = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(texture_path, texture_path);
+		renderer->SetTexture(texture);
+		particle_generator->GetRenderers().push_back(renderer);
+	
+
+		std::string file_path = project->GetAssetsDirectory() + "/Particle_Effects/";
+		GenericSerializer::Serialize<ParticleEffect>(particle_effect, file_path + effect_filename);
+		GenericSerializer::Serialize<ParticleGenerator>(particle_generator, file_path + generator_filename);
 	}
 	// .............................
 
@@ -1724,6 +1681,8 @@ project "{}"
 		}
 		m_contentBrowser->SetDirectory(m_currentProject->GetAssetsDirectory());
 		ReloadProjectAssembly();
+
+		//GenerateParticleEffect(m_currentProject);
 
 		UUID id = m_currentProject->GetStartScene();
 		if (id != 0)

@@ -6,7 +6,7 @@
 
 DEFAULT_VERTEX_INPUT
 
-#define MAX_TEXT_VERTICES 1536
+#define MAX_QUAD_INSTANCE 512
 #define NUM_QUAD_VERT 4
 
 
@@ -18,8 +18,8 @@ layout(set = 0, binding = 0)uniform SceneData
 
 
 struct VertexData{
-    vec4 positions[MAX_TEXT_VERTICES];// w: color.r
-    vec4 tex_coords[MAX_TEXT_VERTICES]; // z: color.g w: color.b
+    vec4 positions[MAX_QUAD_INSTANCE];// w: color.r
+    vec4 tex_coords[MAX_QUAD_INSTANCE]; // z: color.g w: color.b
 };
 
 layout(std140, set = 1, binding = 3) readonly buffer DrawData{

@@ -653,6 +653,8 @@ namespace trace {
 			HUMANOID_RIG,
 			FEATURE_DB,
 			MMT_INFO,
+			PARTICLE_EFFECT,
+			PARTICLE_GENERATOR,
 		};
 
 		static CreateItem c_item = (CreateItem)0;
@@ -708,6 +710,11 @@ namespace trace {
 
 			ImGui::EndPopup();
 		}
+
+		static auto lambda = [&](UUID id)
+		{
+
+		};
 
 		switch (c_item)
 		{
@@ -1003,6 +1010,68 @@ namespace trace {
 					else
 					{
 						TRC_ERROR("{} has already been created", res + MMT_INFO_FILE_EXTENSION);
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case PARTICLE_EFFECT:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Particle Effect Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + PARTICLE_EFFECT_FILE_EXTENSION);
+
+					if (id == 0)
+					{
+						std::string asset_path = (m_currentDir / (res + PARTICLE_EFFECT_FILE_EXTENSION)).string();
+						Ref<ParticleEffect> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<ParticleEffect>(asset_path);
+						GenericSerializer::Serialize<ParticleEffect>(asset, asset_path);
+						std::string filename = res + PARTICLE_EFFECT_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
+						m_allFilesID[res + PARTICLE_EFFECT_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = asset_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + PARTICLE_EFFECT_FILE_EXTENSION);
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case PARTICLE_GENERATOR:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Particle Generator Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + PARTICLE_GENERATOR_FILE_EXTENSION);
+
+					if (id == 0)
+					{
+						std::string asset_path = (m_currentDir / (res + PARTICLE_GENERATOR_FILE_EXTENSION)).string();
+						Ref<ParticleGenerator> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<ParticleGenerator>(asset_path);
+						GenericSerializer::Serialize<ParticleGenerator>(asset, asset_path);
+						std::string filename = res + PARTICLE_GENERATOR_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
+						m_allFilesID[res + PARTICLE_GENERATOR_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = asset_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + PARTICLE_GENERATOR_FILE_EXTENSION);
 					}
 				}
 			}

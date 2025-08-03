@@ -31,6 +31,7 @@ namespace trace {
 	class MaterialInstance;
 	class Event;
 	class Font;
+	class ParticleEffectInstance;
 
 	struct RenderObjectData
 	{
@@ -98,6 +99,9 @@ namespace trace {
 		//Shadow Casters
 		std::vector<RenderObjectData> shadow_casters;
 		std::vector<RenderSkinnedObjectData> skinned_shadow_casters;
+
+		//Particle Effects
+		std::vector<ParticleEffectInstance*> particle_effects;
 	};
 
 	class Renderer : public Object
@@ -135,6 +139,7 @@ namespace trace {
 		void DrawString(CommandList& cmd_list, Ref<Font> font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index = 0);
 		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, int32_t render_graph_index = 0);
 		void DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color, int32_t render_graph_index = 0);
+		void DrawParticleEffect(CommandList& cmd_list, ParticleEffectInstance* particle_effect,int32_t render_graph_index = 0);
 
 
 		// Getters
@@ -147,6 +152,7 @@ namespace trace {
 		uint32_t GetFrameWidth() { return m_frameWidth; }
 		uint32_t GetFrameHeight() { return m_frameHeight; }
 		std::vector<RenderGraphFrameData>& GetRenderGraphFrameData() { return m_renderGraphsData; }
+		Model& GetQuadModel();
 
 		std::unordered_map<std::string, void*>& GetAvaliableRenderPasses() { return m_avaliablePasses; }
 
@@ -157,12 +163,14 @@ namespace trace {
 		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, int32_t render_graph_index = 0);
 		void DrawQuad_(glm::mat4 _transform, Ref<GTexture> texture, uint32_t color, int32_t render_graph_index = 0);
 		void DrawString_(Font* font, const std::string& text, glm::vec3 color, glm::mat4 _transform, int32_t render_graph_index = 0);
+		
 
 
 		void RenderOpaqueObjects(int32_t render_graph_index = 0);
 		void RenderQuads(int32_t render_graph_index = 0);
 		void RenderTextVerts(int32_t render_graph_index = 0);
 		void RenderDebugData(int32_t render_graph_index = 0);
+		void RenderParticles(int32_t render_graph_index = 0);
 
 		static Renderer* get_instance();
 

@@ -1146,6 +1146,22 @@ namespace trace {
 
 		}
 
+		auto particle_effects_view = m_registry.view<ParticleEffectController, ActiveComponent>();
+
+		for (auto entity : particle_effects_view)
+		{
+			Entity obj(entity, this);
+			auto [particle_effect_ctrl, active] = particle_effects_view.get(entity);
+
+			if (!particle_effect_ctrl.particle_effect.GetParticleEffect() || !particle_effect_ctrl.particle_effect.IsRunning())
+			{
+				continue;
+			}
+			renderer->DrawParticleEffect(cmd_list, &particle_effect_ctrl.particle_effect);
+
+
+		}
+
 	}
 
 	void Scene::OnViewportChange(float width, float height)

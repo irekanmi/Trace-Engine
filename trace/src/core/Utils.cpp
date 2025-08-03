@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include "core/Coretypes.h"
 #include "debug/Debugger.h"
+#include <random>
 
 
 #include "glm/gtx/matrix_decompose.hpp"
@@ -10,6 +11,9 @@
 
 namespace trace {
 
+	static std::random_device rand_device;
+	static std::mt19937 rand_engine(rand_device());
+	static std::uniform_real_distribution<float> rand_distributor(0.0f, 1.0f);
 
 
 	bool FindDirectory(const std::string& from, const std::string& dir, std::string& result)
@@ -169,6 +173,11 @@ namespace trace {
 			hash_value *= prime;
 		}
 		return hash_value;
+	}
+
+	float RandomFloat()
+	{
+		return rand_distributor(rand_engine);
 	}
 
 }

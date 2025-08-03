@@ -4,6 +4,9 @@
 #include "core/io/Logging.h"
 #include "serialize/GenericSerializer.h"
 #include "resource/GenericAssetManager.h"
+#include "render/Camera.h"
+#include "scene/Entity.h"
+#include "scene/Scene.h"
 
 namespace trace {
 
@@ -114,6 +117,16 @@ namespace trace {
 		for (ParticleGeneratorInstance& gen_instance : m_generatorInstance)
 		{
 			gen_instance.Stop(this);
+		}
+	}
+
+	void ParticleEffectInstance::Render(Camera* camera)
+	{
+		//Render Generators
+		glm::mat4 transform = m_scene->GetEntityWorldTransform(m_scene->GetEntity(m_ownerID)).GetLocalMatrix();
+		for (ParticleGeneratorInstance& gen_instance : m_generatorInstance)
+		{
+			gen_instance.Render(this, camera, transform);
 		}
 	}
 

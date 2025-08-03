@@ -6,7 +6,7 @@
 
 DEFAULT_VERTEX_INPUT
 
-#define MAX_QUAD_VERTICES 512
+#define MAX_QUAD_INSTANCE 512
 
 layout(location = 0)out vec2 out_texCoord;
 
@@ -18,8 +18,8 @@ layout(set = 0, binding = 0)uniform SceneData
 
 
 struct VertexData{
-    mat4 transforms[MAX_QUAD_VERTICES];
-    uint colors[MAX_QUAD_VERTICES];
+    mat4 transforms[MAX_QUAD_INSTANCE];
+    uint colors[MAX_QUAD_INSTANCE];
 };
 
 layout(std140, set = 1, binding = 3) readonly buffer DrawData{

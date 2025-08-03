@@ -12,6 +12,7 @@
 namespace trace {
 
 	class Scene;
+	class Camera;
 
 	class ParticleEffect : public Resource
 	{
@@ -53,6 +54,9 @@ namespace trace {
 		void Start();
 		void Update(float deltaTime);
 		void Stop();
+		bool IsRunning() { return m_running; }
+
+		void Render(Camera* camera);
 
 	private:
 		float m_elaspedTime = 0.0f;

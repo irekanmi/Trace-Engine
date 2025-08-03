@@ -11,12 +11,13 @@
 #include "particle_effects/ParticleData.h"
 #include "reflection/TypeRegistry.h"
 
-
+#include "glm/glm.hpp"
 
 namespace trace {
 
 	
 	class ParticleEffectInstance;
+	class Camera;
 
 	class ParticleGenerator : public Resource
 	{
@@ -67,8 +68,10 @@ namespace trace {
 		void Start(ParticleEffectInstance* effect_instance);
 		void Update(ParticleEffectInstance* effect_instance, float deltaTime);
 		void Stop(ParticleEffectInstance* effect_instance);
+		void Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform);
 
-		void emit_particle();
+		int32_t emit_particle();
+		void initialize_particle(uint32_t index);
 		void kill_particle(uint32_t index);
 
 		Ref<ParticleGenerator> GetGenerator() { return m_gen; }
@@ -76,6 +79,8 @@ namespace trace {
 
 		ParticleData& GetParticlesData() { return m_particleData; }
 		float GetElaspedTime() { return m_elaspedTime; }
+
+		uint32_t GetNumAlive() { return m_numAlive; }
 
 	private:
 		ParticleData m_particleData;

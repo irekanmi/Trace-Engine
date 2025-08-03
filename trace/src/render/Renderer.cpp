@@ -20,6 +20,7 @@
 #include "core/defines.h"
 #include "render/SkinnedModel.h"
 #include "resource/DefaultAssetsManager.h"
+#include "particle_effects/ParticleEffect.h"
 
 //Temp============
 #include "glm/gtc/matrix_transform.hpp"
@@ -146,6 +147,8 @@ namespace trace {
 				tex_ins.second.positions.clear();
 				tex_ins.second.tex_coords.clear();
 			}
+
+			graph_data.particle_effects.clear();
 		}
 
 
@@ -327,6 +330,11 @@ namespace trace {
 
 	}
 
+
+	Model& Renderer::GetQuadModel()
+	{
+		return quad_model;
+	}
 
 	void Renderer::Render(float deltaTime)
 	{
@@ -511,17 +519,30 @@ namespace trace {
 			{
 				continue;
 			}
-			RenderFunc::OnDrawStart(&g_device, DefaultAssetsManager::quad_pipeline.get());
-			RenderFunc::SetPipelineTextureData(DefaultAssetsManager::quad_pipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
-			RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "transforms", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.second.transforms.data(), tex_ins.second.transforms.size() * sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.second.colors.data(), tex_ins.second.colors.size() * sizeof(uint32_t));
-			RenderFunc::BindPipeline_(DefaultAssetsManager::quad_pipeline.get());
-			RenderFunc::BindPipeline(&g_device, DefaultAssetsManager::quad_pipeline.get());
-			RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
-			RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
-			RenderFunc::DrawIndexedInstanced(&g_device, 0, quad_model.GetIndexCount(), tex_ins.second.transforms.size());
-			RenderFunc::OnDrawEnd(&g_device, DefaultAssetsManager::quad_pipeline.get());
+
+			int32_t remaining_particles = tex_ins.second.transforms.size();
+			uint32_t offset = 0;
+
+			while (remaining_particles > 0)
+			{
+				uint32_t particles_to_render = remaining_particles > MAX_QUAD_INSTANCE ? MAX_QUAD_INSTANCE : remaining_particles;
+
+				RenderFunc::OnDrawStart(&g_device, DefaultAssetsManager::quad_pipeline.get());
+				RenderFunc::SetPipelineTextureData(DefaultAssetsManager::quad_pipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "transforms", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + tex_ins.second.transforms.data(), particles_to_render * sizeof(glm::mat4));
+				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + tex_ins.second.colors.data(), particles_to_render * sizeof(uint32_t));
+				RenderFunc::BindPipeline_(DefaultAssetsManager::quad_pipeline.get());
+				RenderFunc::BindPipeline(&g_device, DefaultAssetsManager::quad_pipeline.get());
+				RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
+				RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
+				RenderFunc::DrawIndexedInstanced(&g_device, 0, quad_model.GetIndexCount(), particles_to_render);
+				RenderFunc::OnDrawEnd(&g_device, DefaultAssetsManager::quad_pipeline.get());
+
+				remaining_particles -= MAX_QUAD_INSTANCE;
+				offset += MAX_QUAD_INSTANCE;
+			}
+
 		}
 	}
 
@@ -541,17 +562,28 @@ namespace trace {
 				continue;
 			}
 
-			RenderFunc::OnDrawStart(&g_device, DefaultAssetsManager::text_pipeline.get());
-			RenderFunc::SetPipelineTextureData(DefaultAssetsManager::text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
-			RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.second.positions.data(), tex_ins.second.positions.size() * sizeof(glm::vec4));
-			RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.second.tex_coords.data(), tex_ins.second.tex_coords.size() * sizeof(glm::vec4));
-			RenderFunc::BindPipeline_(DefaultAssetsManager::text_pipeline.get());
-			RenderFunc::BindPipeline(&g_device, DefaultAssetsManager::text_pipeline.get());
-			RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
-			RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
-			RenderFunc::DrawIndexedInstanced(&g_device, 0, quad_model.GetIndexCount(), tex_ins.second.positions.size() / 4);
-			RenderFunc::OnDrawEnd(&g_device, DefaultAssetsManager::text_pipeline.get());
+			int32_t remaining_particles = tex_ins.second.positions.size() / 4;
+			uint32_t offset = 0;
+
+			while (remaining_particles > 0)
+			{
+				uint32_t particles_to_render = remaining_particles > (MAX_QUAD_INSTANCE / 4) ? (MAX_QUAD_INSTANCE / 4): remaining_particles;
+
+				RenderFunc::OnDrawStart(&g_device, DefaultAssetsManager::text_pipeline.get());
+				RenderFunc::SetPipelineTextureData(DefaultAssetsManager::text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
+				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, (offset * 4) + tex_ins.second.positions.data(), particles_to_render * 4 * sizeof(glm::vec4));
+				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, (offset * 4) + tex_ins.second.tex_coords.data(), particles_to_render * 4 * sizeof(glm::vec4));
+				RenderFunc::BindPipeline_(DefaultAssetsManager::text_pipeline.get());
+				RenderFunc::BindPipeline(&g_device, DefaultAssetsManager::text_pipeline.get());
+				RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
+				RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
+				RenderFunc::DrawIndexedInstanced(&g_device, 0, quad_model.GetIndexCount(), particles_to_render);
+				RenderFunc::OnDrawEnd(&g_device, DefaultAssetsManager::text_pipeline.get());
+
+				remaining_particles -= (MAX_QUAD_INSTANCE / 4);
+				offset += (MAX_QUAD_INSTANCE / 4);
+			}
 		}
 
 	}
@@ -575,6 +607,16 @@ namespace trace {
 			RenderFunc::BindPipeline(&g_device, render_pipeline.get());
 			RenderFunc::Draw(&g_device, 0, render_data.vert_count);
 			RenderFunc::OnDrawEnd(&g_device, render_pipeline.get());
+		}
+	}
+
+	void Renderer::RenderParticles(int32_t render_graph_index)
+	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+
+		for (auto& i : graph_data.particle_effects)
+		{
+			i->Render(graph_data._camera);
 		}
 	}
 
@@ -963,6 +1005,13 @@ namespace trace {
 	void Renderer::DrawImage(CommandList& cmd_list, Ref<GTexture> texture, glm::mat4 _transform, uint32_t color, int32_t render_graph_index)
 	{
 		DrawQuad_(_transform, texture, color, render_graph_index);
+	}
+
+	void Renderer::DrawParticleEffect(CommandList& cmd_list, ParticleEffectInstance* particle_effect, int32_t render_graph_index)
+	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+
+		graph_data.particle_effects.push_back(particle_effect);
 	}
 
 	std::string Renderer::GetRenderPassName(GRenderPass* pass)

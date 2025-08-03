@@ -714,6 +714,7 @@ namespace trace {
 		quad_pipeline.free();
 		debug_line_pipeline.free();
 		particle_billboard_pipeline.free();
+		particle_velocity_aligned_pipeline.free();
 		default_diffuse_map.free();
 		default_specular_map.free();
 		default_normal_map.free();
