@@ -157,6 +157,14 @@ namespace trace {
 			size_t index = sm.handle_map[id];
 			if (m_scene->IsRunning())
 			{
+				for (auto [name, field] : sm.script->GetFields())
+				{
+					switch (field.field_type)
+					{
+
+					}
+				}
+
 				DestroyScriptInstance(sm.instances[index]);
 			}
 			sm.instances[index] = std::move(sm.instances.back());
@@ -246,6 +254,25 @@ namespace trace {
 		}
 
 
+	}
+
+	ScriptInstance* ScriptRegistry::CopyScriptInstance(UUID id, ScriptInstance* source)
+	{
+		auto it = m_scripts.find(source->GetScript()->GetID());
+		if (it != m_scripts.end())
+		{
+			ScriptManager& sm = it->second;
+			sm.handle_map[id] = sm.instances.size();
+			sm.entities.emplace_back(id);
+			ScriptInstance& res = sm.instances.emplace_back();
+			res.m_script = sm.script;
+
+			CloneScriptInstance(source, &res);
+
+			return &res;
+		}
+
+		return nullptr;
 	}
 
 	void ScriptRegistry::Copy(ScriptRegistry& from, ScriptRegistry& to)

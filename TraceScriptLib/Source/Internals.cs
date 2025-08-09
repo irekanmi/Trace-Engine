@@ -54,6 +54,15 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_SetRotation(ulong id, ref Quat rotation);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_Forward(ulong id, out Vec3 forward);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_Right(ulong id, out Vec3 right);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_Up(ulong id, out Vec3 up);
 
         #endregion
 
@@ -75,6 +84,9 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Debug_Critical(string message);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Debug_Sphere(ref Vec3 position, float radius, UInt32 steps, ref Vec3 color);
         #endregion
 
         #region Input
@@ -171,6 +183,15 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Maths_Quat_Slerp(ref Quat a, ref Quat b, float lerp_value, out Quat out_rotation);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Maths_Quat_Mul_Vec(ref Quat a, ref Vec3 b, out Vec3 out_direction);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Maths_Quat_Get_Euler_Angle(ref Quat a, out Vec3 out_direction);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Maths_Quat_Set_Euler_Angle(out Quat a, ref Vec3 direction);
 
 
         #endregion

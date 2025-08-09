@@ -34,6 +34,8 @@ namespace trace {
 		Script* GetBuiltInScript(const std::string script_name);
 		Script* GetScript(const std::string script_name);
 		Script* GetNetworkScript() { return &Network; }
+		Script* GetActionClass() { return &Action; }
+		ScriptField& GetIDField();
 
 		ScriptInstance* GetEntityActionClass(UUID entity_id);
 		void RemoveEnityActionClass(UUID entity_id);

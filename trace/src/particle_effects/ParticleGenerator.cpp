@@ -83,6 +83,8 @@ namespace trace {
 
 	void ParticleGeneratorInstance::Start(ParticleEffectInstance* effect_instance)
 	{
+		m_effectInstance = effect_instance;
+
 		for (ParticleInitializer*& init : m_gen->GetInitializers())
 		{
 			init->Init(this);
@@ -134,6 +136,8 @@ namespace trace {
 	{
 		m_numAlive = 0;
 		m_elaspedTime = 0.0f;
+
+		m_effectInstance = nullptr;
 	}
 
 	void ParticleGeneratorInstance::Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform)

@@ -20,6 +20,9 @@ namespace trace {
 		Ref<GTexture> GetTexture() { return m_texture; }
 		void SetTexture(Ref<GTexture> texture) { m_texture = texture; }
 
+		bool GetVelocityAligned() { return m_velocityAligned; }
+		void SetVelocityAligned(bool velocity_aligned) { m_velocityAligned = velocity_aligned; }
+
 	private:
 		Ref<GTexture> m_texture;
 		bool m_velocityAligned = false;

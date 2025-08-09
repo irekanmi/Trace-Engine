@@ -727,6 +727,7 @@ namespace physx {
 
 		PxVec3 pos = Glm3ToPx3(transform.GetPosition());
 		PxQuat orientation = GlmQuatToPxQuat(transform.GetRotation());
+		orientation.normalize();
 		PxTransform pose(pos, orientation);
 
 		PhysxShape* res = reinterpret_cast<PhysxShape*>(shape);
@@ -1053,9 +1054,9 @@ namespace physx {
 		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
 
 		PxExtendedVec3 pos = res->getPosition();
-		out_position.x = static_cast<float>(pos.x);
-		out_position.y = static_cast<float>(pos.y);
-		out_position.z = static_cast<float>(pos.z);
+		out_position.x = static_cast<float>(pos.x) - controller.offset.x;
+		out_position.y = static_cast<float>(pos.y) - controller.offset.y;
+		out_position.z = static_cast<float>(pos.z) - controller.offset.z;
 
 		return true;
 	}

@@ -20,7 +20,7 @@ public class PlayerMove : Trace.Action
     public float rotation_factor_per_frame = 15.0f;
     Vec3 move_diplacement;
 
-    void OnStart()
+    public override void OnStart()
     {
         anim_controller = GetComponent<AnimationGraphController>();
         pose = GetComponent<TransformComponent>();
@@ -34,7 +34,7 @@ public class PlayerMove : Trace.Action
         move_diplacement = Vec3.Zero;
     }
 
-    void OnUpdate(float deltaTime)
+    public override void OnUpdate(float deltaTime)
     {
         if(!IsOwner())
         {
@@ -155,8 +155,8 @@ public class PlayerMove : Trace.Action
 
         if (is_moving)
         {
-            Quat target_rotation = Quat.LookDirection(position_to_look_at);
-            Quat new_rotation = Quat.Slerp(curr_rotation, target_rotation, rotation_factor_per_frame * deltaTime);
+            Quat target_rotation = Maths.LookDirection(position_to_look_at);
+            Quat new_rotation = Maths.Slerp(curr_rotation, target_rotation, rotation_factor_per_frame * deltaTime);
             pose.Rotation = new_rotation;
         }
 

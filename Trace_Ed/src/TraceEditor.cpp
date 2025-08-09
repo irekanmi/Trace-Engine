@@ -85,9 +85,9 @@ namespace trace {
 		particle_effect->SetLifeTime(300.0f);
 		particle_effect->GetGenerators().push_back(particle_generator);
 
-		particle_generator->SetCapacity(2000);
+		particle_generator->SetCapacity(3000);
 		RateSpawner* spawner = new RateSpawner;
-		spawner->SetSpawnRate(250.0f);
+		spawner->SetSpawnRate(450.0f);
 		PointVolume* emission_volume = new PointVolume(glm::vec3(0.0f));
 		spawner->SetEmissionVolume(emission_volume);
 		particle_generator->SetSpawner(spawner);
@@ -107,6 +107,7 @@ namespace trace {
 		particle_generator->GetUpdates().push_back(velocity_update);
 
 		BillBoardRender* renderer = new BillBoardRender;
+		//renderer->SetVelocityAligned(true);
 		std::string texture_path = GetPathFromUUID(STR_ID("Bullet_1.png")).string();
 		Ref<GTexture> texture = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(texture_path, texture_path);
 		renderer->SetTexture(texture);
@@ -189,6 +190,12 @@ namespace trace {
 
 	void TraceEditor::Shutdown()
 	{
+		if (m_currentState == EditorState::ScenePlay)
+		{
+			OnSceneStop();
+			OnGameStop();
+		}
+
 		m_animSequencer->Shutdown();
 		m_animGraphEditor->Shutdown();
 		m_contentBrowser->Shutdown();
@@ -1028,7 +1035,7 @@ namespace trace {
 				glm::value_ptr(cam_view),
 				glm::value_ptr(proj),
 				(ImGuizmo::OPERATION)gizmo_mode,
-				ImGuizmo::MODE::WORLD,
+				ImGuizmo::MODE::LOCAL,
 				glm::value_ptr(transform),
 				nullptr,// TODO: Check Docs {deltaMatrix}
 				false,// snap
@@ -1370,6 +1377,36 @@ namespace trace {
 			m_editorCamera.SetNear(-100.0f);
 			m_editorCamera.SetFar(200.0f);
 			m_editorCamera.SetOrthographicSize(65.0f);
+			break;
+		}
+		case KEY_L:
+		{
+			if (!m_currentScene || m_currentState != EditorState::SceneEdit)
+			{
+				return;
+			}
+
+			Entity entity = m_currentScene->GetMainCamera();
+			if (!entity)
+			{
+				return;
+			}
+
+			Camera& camera = entity.GetComponent<CameraComponent>()._camera;
+
+			camera.SetFov(m_editorCamera.GetFov());
+			camera.SetNear(m_editorCamera.GetNear());
+			camera.SetFar(m_editorCamera.GetFar());
+			camera.SetOrthographicSize(m_editorCamera.GetOrthographicSize());
+
+			m_currentScene->SetEntityWorldPosition(entity, m_editorCamera.GetPosition());
+
+			glm::vec3 look_dir = m_editorCamera.GetLookDir();
+			glm::vec3 up_dir = m_editorCamera.GetUpDir();
+			glm::quat look_quat = glm::quatLookAt(-look_dir, glm::vec3(0.0f, 1.0f, 0.0f));
+
+			m_currentScene->SetEntityWorldRotation(entity, look_quat);
+
 			break;
 		}
 

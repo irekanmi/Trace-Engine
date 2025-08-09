@@ -301,6 +301,13 @@ namespace trace {
 							emit << YAML::Key << "Value" << YAML::Value << data;
 							break;
 						}
+						case ScriptFieldType::Action:
+						{
+							UUID data;
+							ins.GetValue(name, data);
+							emit << YAML::Key << "Value" << YAML::Value << data;
+							break;
+						}
 						case ScriptFieldType::Vec2:
 						{
 							glm::vec2 data;
@@ -461,6 +468,13 @@ namespace trace {
 							stream->Write<uint64_t>(data);
 							break;
 						}
+						case ScriptFieldType::Action:
+						{
+							UUID data;
+							ins.GetValue(name, data);
+							stream->Write<UUID>(data);
+							break;
+						}
 						case ScriptFieldType::Vec2:
 						{
 							glm::vec2 data;
@@ -603,6 +617,12 @@ namespace trace {
 					case ScriptFieldType::UInt64:
 					{
 						uint64_t data = values["Value"].as<uint64_t>();
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Action:
+					{
+						UUID data = values["Value"].as<UUID>();
 						ins.SetValue(field_name, data);
 						break;
 					}
@@ -763,6 +783,13 @@ namespace trace {
 					{
 						uint64_t data;
 						stream->Read<uint64_t>(data);
+						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Action:
+					{
+						UUID data;
+						stream->Read<UUID>(data);
 						ins.SetValue(field_name, data);
 						break;
 					}

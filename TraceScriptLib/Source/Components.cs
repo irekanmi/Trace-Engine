@@ -71,6 +71,33 @@ namespace Trace
             }
         }
 
+        public Vec3 Forward 
+        {
+            get
+            {
+                InternalCalls.TransformComponent_Forward(Id, out Vec3 result);
+                return result;
+            }
+        }
+        
+        public Vec3 Right 
+        {
+            get
+            {
+                InternalCalls.TransformComponent_Right(Id, out Vec3 result);
+                return result;
+            }
+        }
+        
+        public Vec3 Up 
+        {
+            get
+            {
+                InternalCalls.TransformComponent_Up(Id, out Vec3 result);
+                return result;
+            }
+        }
+
         public TransformComponent Create(ulong id)
         {
             TransformComponent component = new TransformComponent(id);

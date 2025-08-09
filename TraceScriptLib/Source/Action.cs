@@ -90,6 +90,15 @@ namespace Trace
             return GetChildWithName(Utils.HashString(name));
         }
 
+        public virtual void OnStart() 
+        {}
+
+        public virtual void OnUpdate(float deltaTime)
+        {}
+        
+        public virtual void OnCreate()
+        {}
+
         public virtual void OnCollisionEnter(CollisionData collision_data)
         {}
 

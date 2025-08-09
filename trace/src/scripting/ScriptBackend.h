@@ -33,6 +33,7 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance);
 bool CreateScriptInstanceNoInit(Script& script, ScriptInstance& out_instance);
 bool DestroyScriptInstance(ScriptInstance& instance);
 bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out);
+bool CloneScriptInstance(ScriptInstance* src, ScriptInstance* dst);
 
 bool GetScriptMethod(const std::string& method, ScriptMethod& out_method, Script& script, int param_count);
 bool InvokeScriptMethod_Instance(ScriptMethod& method, ScriptInstance& instance, void** params);

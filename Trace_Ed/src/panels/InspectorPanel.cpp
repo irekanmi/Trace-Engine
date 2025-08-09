@@ -1480,6 +1480,25 @@ namespace trace {
 									instance->SetFieldValue(name, data);
 								break;
 							}
+							case ScriptFieldType::Action:
+							{
+								UUID data;
+								instance->GetFieldValue(name, data);
+								std::string entity_name = "None(Entity)";
+								if (data != 0)
+								{
+									Entity data_result = entity.GetScene()->GetEntity(data);
+									if (data_result)
+									{
+										entity_name = data_result.GetComponent<TagComponent>().GetTag();
+									}
+								}
+
+								ImGui::Text("%s: ", name.c_str());
+								ImGui::SameLine();
+								ImGui::Button(entity_name.c_str());
+								break;
+							}
 							case ScriptFieldType::Vec2:
 							{
 								glm::vec2 data;
@@ -1600,6 +1619,37 @@ namespace trace {
 							{
 								IMGUI_WIDGET_MODIFIED_IF(comp_dirty, ImGui::DragScalar(name.c_str(), ImGuiDataType_U64, data.data), UInt64)
 								{}
+								break;
+							}
+							case ScriptFieldType::Action:
+							{
+								UUID data = 0;
+								memcpy(&data, i.second.data, sizeof(UUID));
+								std::string entity_name = "None(Entity)";
+								if (data != 0)
+								{
+									Entity data_result = entity.GetScene()->GetEntity(data);
+									if (data_result)
+									{
+										entity_name = data_result.GetComponent<TagComponent>().GetTag();
+									}
+								}
+
+								ImGui::Text("%s: ",name.c_str());
+								ImGui::SameLine();
+								ImGui::Button(entity_name.c_str());
+								if (ImGui::BeginDragDropTarget())
+								{
+									if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+									{
+										UUID uuid = *(UUID*)payload->Data;
+										if (editor->GetCurrentScene()->GetEntity(uuid))
+										{
+											memcpy(i.second.data, &uuid, sizeof(UUID));
+										}
+									}
+									ImGui::EndDragDropTarget();
+								}
 								break;
 							}
 							case ScriptFieldType::Vec2:

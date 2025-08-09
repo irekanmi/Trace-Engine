@@ -121,6 +121,11 @@ namespace trace {
 		return nullptr;
 	}
 
+	ScriptField& ScriptEngine::GetIDField()
+	{
+		return Action.GetFields()["Id"];
+	}
+
 	ScriptInstance* ScriptEngine::GetEntityActionClass(UUID entity_id)
 	{
 		if (!m_currentScene)

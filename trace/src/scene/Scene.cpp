@@ -234,11 +234,15 @@ namespace trace {
 						{
 							for (auto& [name, data] : field_it->second.GetFields())
 							{
-								if (data.type == ScriptFieldType::String)
+								switch (data.type)
 								{
-									continue;
+								case ScriptFieldType::String:
+								{
+									break;
 								}
-								i.SetFieldValueInternal(name, data.data, 16);
+								default:
+									i.SetFieldValueInternal(name, data.data, 16);
+								}
 							}
 						}
 					}
@@ -432,9 +436,31 @@ namespace trace {
 
 		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
 			{
+				ScriptMethod* on_destroy = manager.script->GetMethod("OnDestroy");
+				if (!on_destroy)
+				{
+					return;
+				}
 
 				for (ScriptInstance& i : manager.instances)
 				{
+					InvokeScriptMethod_Instance(*on_destroy, i, nullptr);
+				}
+
+			});
+
+		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
+			{
+
+				for (ScriptInstance& i : manager.instances)
+				{
+					for (auto [name, field] : manager.script->GetFields())
+					{
+						switch (field.field_type)
+						{
+
+						}
+					}
 					DestroyScriptInstance(i);
 				}
 
@@ -1906,35 +1932,78 @@ namespace trace {
 		}
 
 
-		scene->GetScriptRegistry().Iterate(e.GetID(), [&](UUID, Script* script, ScriptInstance* other)
+		scene->GetScriptRegistry().Iterate(e.GetID(), [&](UUID id, Script* script, ScriptInstance* other)
 			{
-				ScriptInstance* sc_ins = _res.AddScript(script->GetID());
-				*sc_ins = *other;
 
 				if (scene->IsRunning())
 				{
-					ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
-					CreateScriptInstance(*script, *sc_ins);
+					//ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
+					//CreateScriptInstance(*script, *sc_ins);
 
-					// Setting values ..............
-					for (auto& [name, data] : other->GetFields())
+					//// Setting values ..............
+					//for (auto& [name, data] : other->GetFields())
+					//{
+					//	if (data->field_type == ScriptFieldType::String)
+					//	{
+					//		continue;
+					//	}
+					//	char field_data[16];
+					//	other->GetFieldValueInternal(name, field_data, 16);
+					//	sc_ins->SetFieldValueInternal(name, field_data, 16);
+					//}
+					//// ..................................................................
+
+					//UUID id = _res.GetID();
+					//void* params[1] =
+					//{
+					//	&id
+					//};
+					//InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
+
+					ScriptInstance* result = scene->GetScriptRegistry().CopyScriptInstance(_res.GetID(), other);
+
+					for (auto [name , field] : result->GetScript()->GetFields())
 					{
-						if (data->field_type == ScriptFieldType::String)
+						switch (field.field_type)
 						{
-							continue;
+						case ScriptFieldType::Action:
+						{
+							break;
 						}
-						char field_data[16];
-						other->GetFieldValueInternal(name, field_data, 16);
-						sc_ins->SetFieldValueInternal(name, field_data, 16);
+						}
+					}
+				}
+				else
+				{
+					ScriptInstance* sc_ins = _res.AddScript(script->GetID());
+					auto& fields_instances = e.GetScene()->GetScriptRegistry().GetFieldInstances();
+					auto& dst_fields_instances = _res.GetScene()->GetScriptRegistry().GetFieldInstances();
+
+					// Setting values..............
+					auto it = fields_instances.find(script);
+					auto& dst_it = dst_fields_instances[script];
+					if (it != fields_instances.end())
+					{
+						auto field_it = it->second.find(e.GetID());
+						ScriptFieldInstance& dst_field_data = dst_it[_res.GetID()];
+						if (field_it != it->second.end())
+						{
+							for (auto& [name, data] : field_it->second.GetFields())
+							{
+								switch (data.type)
+								{
+								case ScriptFieldType::String:
+								{
+									break;
+								}
+								default:
+									dst_field_data.GetFields()[name] = data;
+								}
+							}
+						}
 					}
 					// ..................................................................
-
-					UUID id = _res.GetID();
-					void* params[1] =
-					{
-						&id
-					};
-					InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
+					
 				}
 			});
 
@@ -2090,6 +2159,23 @@ namespace trace {
 
 		}
 		return true;
+	}
+
+	Entity Scene::GetMainCamera()
+	{
+		auto view = m_registry.view<CameraComponent, TransformComponent, ActiveComponent>();
+
+		for (auto entity : view)
+		{
+			auto [camera, _transform, active] = view.get(entity);
+			if (camera.is_main)
+			{
+				Entity obj(entity, this);
+				return obj;
+			}
+		}
+
+		return Entity();
 	}
 
 	bool Scene::ApplyPrefabChangesOnSceneLoad()
@@ -2358,29 +2444,7 @@ namespace trace {
 
 	}
 
-	template<typename... Component>
-	void CopyComponent(entt::registry& from, entt::registry& to, std::unordered_map<UUID, entt::entity>& entity_map)
-	{
-		([&]()
-			{
-				auto view = from.view<Component>();
-				for (auto e : view)
-				{
-					UUID uuid = from.get<IDComponent>(e)._id;
-					auto [comp] = view.get(e);
-					entt::entity en = entity_map[uuid];
-					to.emplace_or_replace<Component>(en, comp);
-				}
-
-			}(), ...);
-
-	}
-
-	template<typename... Component>
-	void CopyComponent(ComponentGroup<Component...>, entt::registry& from, entt::registry& to, std::unordered_map<UUID, entt::entity>& entity_map)
-	{
-		CopyComponent<Component...>(from, to, entity_map);
-	}
+	
 
 
 
@@ -2398,73 +2462,7 @@ namespace trace {
 		callback(entity);
 	}
 
-	void Scene::Copy(Ref<Scene> from, Ref<Scene> to)
-	{
-
-		entt::registry& f_reg = from->m_registry;
-
-		to->Destroy();
-		to->Create();
-
-		entt::registry& t_reg = to->m_registry;
-		to->m_rootNode->children.clear();
-		to->m_entityMap.clear();
-
-		std::unordered_map<UUID, entt::entity> entity_map;
-
-		auto id_view = f_reg.view<IDComponent>();
-		for (auto e : id_view)
-		{
-			UUID uuid = id_view.get<IDComponent>(e)._id;
-			Entity en = to->CreateEntity_UUID(uuid, "");
-			entity_map[uuid] = en;
-		}
-
-		CopyComponent(AllComponents{}, f_reg, t_reg, entity_map);
-		CopyComponent(ComponentGroup<HierachyComponent>{}, f_reg, t_reg, entity_map);
-
-		auto skin_view = f_reg.view<SkinnedModelRenderer>();
-		for (auto e : skin_view)
-		{
-			Entity from_entity = Entity(e, from.get());
-			SkinnedModelRenderer& from_model = skin_view.get<SkinnedModelRenderer>(e);
-			Entity to_entity = to->GetEntity(from_entity.GetID());
-			SkinnedModelRenderer& to_model = to_entity.GetComponent<SkinnedModelRenderer>();
-			
-			to_model.SetSkeleton(from_model.GetSkeleton(), to.get(), to_entity.GetID());
-
-		}
-
-		/*auto graph_view = f_reg.view<AnimationGraphController>();
-		for (auto e : graph_view)
-		{
-			Entity from_entity = Entity(e, from.get());
-			AnimationGraphController& from_model = graph_view.get<AnimationGraphController>(e);
-			Entity to_entity = to->GetEntity(from_entity.GetID());
-			to_entity.RemoveComponent<AnimationGraphController>();
-			to_entity.AddOrReplaceComponent<AnimationGraphController>(from_model);			
-
-		}*/
-
-		auto sequence_view = f_reg.view<SequencePlayer>();
-		for (auto e : sequence_view)
-		{
-			Entity from_entity = Entity(e, from.get());
-			SequencePlayer& from_model = sequence_view.get<SequencePlayer>(e);
-			Entity to_entity = to->GetEntity(from_entity.GetID());
-			to_entity.RemoveComponent<SequencePlayer>();
-			to_entity.AddOrReplaceComponent<SequencePlayer>(from_model);
-
-		}
-
-
-		ScriptRegistry::Copy(from->m_scriptRegistry, to->m_scriptRegistry);
-
-		to->m_rootNode->children = from->m_rootNode->children;
-
-		to->InitializeSceneComponents();
-
-	}
+	
 
 	Ref<Scene> Scene::Deserialize(UUID id)
 	{
@@ -2878,6 +2876,17 @@ namespace trace {
 		m_registry.destroy(entity);
 	}
 
+	void Scene::destroy_entity_script_fields(Entity entity)
+	{
+		if (!m_running)
+		{
+			return;
+		}
+
+
+
+	}
+
 	void Scene::duplicate_entity(Entity entity, Entity res)
 	{
 		CopyComponent(AllComponents{}, entity, res);
@@ -2892,35 +2901,77 @@ namespace trace {
 
 		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
 			{
-				ScriptInstance* sc_ins = res.AddScript(script->GetID());
-				*sc_ins = *other;
-
-				if (m_running)
+				
+				if (res.GetScene()->IsRunning())
 				{
-					ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
-					CreateScriptInstance(*script, *sc_ins);
+					//ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
+					//CreateScriptInstance(*script, *sc_ins);
 
-					// Setting values ..............
-					for (auto& [name, data] : other->GetFields())
+					//// Setting values ..............
+					//for (auto& [name, data] : other->GetFields())
+					//{
+					//	if (data->field_type == ScriptFieldType::String)
+					//	{
+					//		continue;
+					//	}
+					//	char field_data[16];
+					//	other->GetFieldValueInternal(name, field_data, 16);
+					//	sc_ins->SetFieldValueInternal(name, field_data, 16);
+					//}
+					//// ..................................................................
+
+					//UUID id = _res.GetID();
+					//void* params[1] =
+					//{
+					//	&id
+					//};
+					//InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
+
+					ScriptInstance* result = res.GetScene()->GetScriptRegistry().CopyScriptInstance(res.GetID(), other);
+
+					for (auto [name, field] : result->GetScript()->GetFields())
 					{
-						if (data->field_type == ScriptFieldType::String)
+						switch (field.field_type)
 						{
-							continue;
+						case ScriptFieldType::Action:
+						{
+							break;
 						}
-						char field_data[16];
-						other->GetFieldValueInternal(name, field_data, 16);
-						sc_ins->SetFieldValueInternal(name, field_data, 16);
+						}
+					}
+				}
+				else
+				{
+					ScriptInstance* sc_ins = res.AddScript(script->GetID());
+					auto& fields_instances = entity.GetScene()->GetScriptRegistry().GetFieldInstances();
+					auto& dst_fields_instances = res.GetScene()->GetScriptRegistry().GetFieldInstances();
+
+					// Setting values..............
+					auto it = fields_instances.find(script);
+					auto& dst_it = dst_fields_instances[script];
+					if (it != fields_instances.end())
+					{
+						auto field_it = it->second.find(entity.GetID());
+						ScriptFieldInstance& dst_field_data = dst_it[res.GetID()];
+						if (field_it != it->second.end())
+						{
+							for (auto& [name, data] : field_it->second.GetFields())
+							{
+								switch (data.type)
+								{
+								case ScriptFieldType::String:
+								{
+									break;
+								}
+								default:
+									dst_field_data.GetFields()[name] = data;
+								}
+							}
+						}
 					}
 					// ..................................................................
 
-					UUID id = res.GetID();
-					void* params[1] =
-					{
-						&id
-					};
-					InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
 				}
-
 			});
 
 

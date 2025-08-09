@@ -15,6 +15,7 @@
 #include "networking/NetworkTypes.h"
 #include "networking/NetworkManager.h"
 #include "serialize/DataStream.h"
+#include "debug/Debugger.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -301,15 +302,24 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 		uint32_t flags = mono_field_get_flags(field);
 		ScriptField field_res;
 		field_res.field_name = field_name;
-		if (flags & MONO_FIELD_ATTR_PUBLIC) field_res.field_flags |= ScriptFieldFlagBit::Public;
-		if (flags & MONO_FIELD_ATTR_PRIVATE) field_res.field_flags |= ScriptFieldFlagBit::Private;
+		if ((flags & MONO_FIELD_ATTR_PUBLIC) == MONO_FIELD_ATTR_PUBLIC)
+		{
+			field_res.field_flags |= ScriptFieldFlagBit::Public;
+		}
+		if ((flags & MONO_FIELD_ATTR_PRIVATE) == MONO_FIELD_ATTR_PRIVATE)
+		{
+			field_res.field_flags |= ScriptFieldFlagBit::Private;
+		}
 		std::string field_type = mono_type_get_name(mono_field_get_type(field));
 		TRC_INFO("{} is of type {}", field_name, field_type);
 		if (s_FieldTypes.find(field_type) != s_FieldTypes.end())
 		{
 			field_res.field_type = s_FieldTypes.at(field_type);
 		}
-		else field_res.field_type = ScriptFieldType::UnKnown;
+		else
+		{
+			field_res.field_type = ScriptFieldType::UnKnown;
+		}
 
 		field_res.m_internal = field;
 
@@ -346,7 +356,7 @@ bool CreateScriptInstance(Script& script, ScriptInstance& out_instance)
 	MonoObject* out_object = mono_object_new(s_MonoData.appDomain, (MonoClass*)script.GetInternal());
 	if (!out_object)
 	{
-		std::cout << "Failed to create script instance " << std::endl;
+		TRC_ERROR("Failed to create script instance, Funtion: {} ", __FUNCTION__);
 		return false;
 	}
 	mono_runtime_object_init(out_object);
@@ -408,6 +418,24 @@ bool GetScriptInstanceHandle(ScriptInstance& instance, void*& out)
 	return true;
 }
 
+bool CloneScriptInstance(ScriptInstance* src, ScriptInstance* dst)
+{
+	MonoObject* out_object = mono_object_clone((MonoObject*)src->GetBackendHandle());
+	if (!out_object)
+	{
+		TRC_ERROR("Failed to create script instance, Funtion: {} ", __FUNCTION__);
+		return false;
+	}
+	mono_runtime_object_init(out_object);
+
+	MonoInstance* ins = new MonoInstance; //TODO: Use custom allocator
+	ins->kObject = out_object;
+	ins->kHandle = mono_gchandle_new(out_object, TRUE);
+	dst->SetInternal(ins);
+
+	return true;
+}
+
 
 bool GetScriptMethod(const std::string& method_name, ScriptMethod& out_method, Script& script, int param_count)
 {
@@ -443,15 +471,37 @@ bool GetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* o
 {
 	if (!instance.GetInternal())
 	{
-		std::cout << "Invalid instance " << __FUNCTION__ << std::endl;
-
 		return false;
 	}
 
 	MonoObject* obj = nullptr;
 	GetScriptInstanceHandle(instance, (void*&)obj);
 
-	mono_field_get_value(obj, (MonoClassField*)field.m_internal, out_value);
+	if (field.field_type == ScriptFieldType::Action)
+	{
+		MonoObject* result = nullptr;
+		mono_field_get_value(obj, (MonoClassField*)field.m_internal, &result);
+
+		if (!result)
+		{
+			return false;
+		}
+
+		ScriptField& Id_field = ScriptEngine::get_instance()->GetIDField();
+
+		UUID Id = 0;
+		mono_field_get_value(result, (MonoClassField*)Id_field.m_internal, &Id);
+		
+		if (Id != 0)
+		{
+			memcpy(out_value, &Id, sizeof(UUID));
+		}
+
+	}
+	else
+	{
+		mono_field_get_value(obj, (MonoClassField*)field.m_internal, out_value);
+	}
 
 	return true;
 }
@@ -468,7 +518,22 @@ bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* v
 	MonoObject* obj = nullptr;
 	GetScriptInstanceHandle(instance, (void*&)obj);
 
-	mono_field_set_value(obj, (MonoClassField*)field.m_internal, value);
+	if (field.field_type == ScriptFieldType::Action)
+	{
+		UUID Id = 0;
+		memcpy(&Id, value, sizeof(UUID));
+		if (Id == 0)
+		{
+			return false;
+		}
+		MonoObject* result = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(Id)->GetBackendHandle();
+		mono_field_set_value(obj, (MonoClassField*)field.m_internal, result);
+		
+	}
+	else
+	{
+		mono_field_set_value(obj, (MonoClassField*)field.m_internal, value);
+	}
 
 	return true;
 }
@@ -646,6 +711,17 @@ void Debug_Trace(MonoString* text)
 	std::string res(c_str);
 	mono_free(c_str);
 	TRC_TRACE(res);
+}
+
+void Debug_Sphere(glm::vec3* position, float radius, uint32_t steps, glm::vec3* color)
+{
+	trace::Debugger* debugger = trace::Debugger::get_instance();
+
+	glm::mat4 transform = glm::translate(glm::mat4(1.0f), *position);
+	uint32_t final_color = colorVec4ToUint(glm::vec4(*color, 1.0f));
+
+	debugger->DrawDebugSphere(radius, steps, transform, final_color);
+
 }
 
 #pragma endregion
@@ -961,6 +1037,63 @@ void TransformComponent_SetRotation(UUID id, glm::quat* rotation)
 	}
 
 	entity.GetComponent<TransformComponent>()._transform.SetRotation(*rotation);
+}
+
+void TransformComponent_Forward(UUID id, glm::vec3* forward)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*forward = entity.GetComponent<TransformComponent>()._transform.GetForward();
+}
+
+void TransformComponent_Right(UUID id, glm::vec3* right)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*right = entity.GetComponent<TransformComponent>()._transform.GetRight();
+}
+
+void TransformComponent_Up(UUID id, glm::vec3* up)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*up = entity.GetComponent<TransformComponent>()._transform.GetUp();
 }
 
 #pragma endregion
@@ -1357,21 +1490,29 @@ void AnimationGraphController_SetParameterBool(UUID id, MonoString* parameter_na
 
 void Maths_Quat_LookDirection(glm::vec3* direction, glm::quat* out_rotation)
 {
-	glm::vec3 forward = glm::normalize(*direction);
-	glm::vec3 up(0.0f, 1.0f, 0.0f);
-	glm::vec3 right = glm::normalize(glm::cross(up, forward));
+	*out_rotation = glm::quatLookAt(-(*direction), glm::vec3(0.0f, 1.0f, 0.0f));
+}
 
-	up = glm::cross(forward, right);
+void Maths_Quat_Mul_Vec(glm::quat* rotation, glm::vec3* direction, glm::vec3* out_direction)
+{
+	*out_direction = *rotation * *direction;
+}
 
-	glm::mat3 rotation_matrix(right, up, forward);
+void Maths_Quat_Get_Euler_Angle(glm::quat* rotation, glm::vec3* out_angle)
+{
+	*out_angle = glm::degrees(glm::eulerAngles(*rotation));
+}
 
-	*out_rotation = glm::quat_cast(rotation_matrix);
+void Maths_Quat_Set_Euler_Angle(glm::quat* out_rotation, glm::vec3* euler)
+{
+	*out_rotation = glm::quat(glm::radians(*euler));
 }
 
 void Maths_Quat_Slerp(glm::quat* a, glm::quat* b, float lerp_value, glm::quat* out_rotation)
 {
 	*out_rotation = glm::slerp(*a, *b, lerp_value);
 }
+
 
 #pragma endregion
 
@@ -1611,6 +1752,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Debug_Info);
 	ADD_INTERNAL_CALL(Debug_Log);
 	ADD_INTERNAL_CALL(Debug_Trace);
+	ADD_INTERNAL_CALL(Debug_Sphere);
 
 	ADD_INTERNAL_CALL(Action_GetComponent);
 	ADD_INTERNAL_CALL(Action_GetScript);
@@ -1629,6 +1771,9 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TransformComponent_SetWorldPosition);
 	ADD_INTERNAL_CALL(TransformComponent_GetRotation);
 	ADD_INTERNAL_CALL(TransformComponent_SetRotation);
+	ADD_INTERNAL_CALL(TransformComponent_Forward);
+	ADD_INTERNAL_CALL(TransformComponent_Right);
+	ADD_INTERNAL_CALL(TransformComponent_Up);
 
 	ADD_INTERNAL_CALL(Input_GetKey);
 	ADD_INTERNAL_CALL(Input_GetKeyPressed);
@@ -1659,6 +1804,9 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(Maths_Quat_LookDirection);
 	ADD_INTERNAL_CALL(Maths_Quat_Slerp);
+	ADD_INTERNAL_CALL(Maths_Quat_Mul_Vec);
+	ADD_INTERNAL_CALL(Maths_Quat_Get_Euler_Angle);
+	ADD_INTERNAL_CALL(Maths_Quat_Set_Euler_Angle);
 
 	ADD_INTERNAL_CALL(Application_LoadAndSetScene);
 

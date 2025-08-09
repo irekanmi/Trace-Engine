@@ -176,7 +176,7 @@ class FollowYBot : Trace.Action
 class NetController : Trace.Action
 {
     uint client_handle = 0;
-    public void OnStart()
+    public override void OnStart()
     {
         if(Network.IsClient())
         {
@@ -203,7 +203,7 @@ class NetController : Trace.Action
         //Scene.InstanciateEntity_Net(Scene.GetEntityByName("X_bot"), new Vec3(1.0f, 0.0f, 1.0f), connection_handle);
     }
 
-    public void OnUpdate(float deltaTime)
+    public override void OnUpdate(float deltaTime)
     {
         if (!Network.IsServer() && !Network.IsClient())
         {
@@ -251,7 +251,6 @@ class NetController : Trace.Action
 
 class TransformSync : Trace.Action
 {
-    bool override_data = false;
 
     public override void OnServerSend(UInt64 stream_handle)
     {

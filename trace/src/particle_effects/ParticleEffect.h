@@ -55,6 +55,8 @@ namespace trace {
 		void Update(float deltaTime);
 		void Stop();
 		bool IsRunning() { return m_running; }
+		Scene* GetScene() { return m_scene; }
+		UUID GetOwnerID() { return m_ownerID; }
 
 		void Render(Camera* camera);
 

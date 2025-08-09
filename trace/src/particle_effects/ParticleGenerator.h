@@ -69,6 +69,7 @@ namespace trace {
 		void Update(ParticleEffectInstance* effect_instance, float deltaTime);
 		void Stop(ParticleEffectInstance* effect_instance);
 		void Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform);
+		ParticleEffectInstance* GetEffectInstance() { return m_effectInstance; }
 
 		int32_t emit_particle();
 		void initialize_particle(uint32_t index);
@@ -87,6 +88,7 @@ namespace trace {
 		uint32_t m_numAlive = 0;
 		Ref<ParticleGenerator> m_gen;
 		float m_elaspedTime = 0.0f;
+		ParticleEffectInstance* m_effectInstance;
 
 	protected:
 		ACCESS_CLASS_MEMBERS(ParticleGeneratorInstance);

@@ -131,8 +131,19 @@ namespace trace {
 		{
 			ScriptData& data = m_fields[i.first];
 			data.type = i.second.field_type;
-			if (i.second.field_type == ScriptFieldType::String) continue;
-			ins.GetFieldValueInternal(i.first, data.data, 16);
+			switch (i.second.field_type)
+			{
+			case ScriptFieldType::String:
+			{
+				break;
+			}
+			case ScriptFieldType::Action:
+			{
+				break;
+			}
+			default:
+				ins.GetFieldValueInternal(i.first, data.data, 16);
+			}
 
 		}
 
