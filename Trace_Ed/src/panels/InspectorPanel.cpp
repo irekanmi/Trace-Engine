@@ -1499,6 +1499,22 @@ namespace trace {
 								ImGui::Button(entity_name.c_str());
 								break;
 							}
+							case ScriptFieldType::Prefab:
+							{
+								UUID data;
+								instance->GetFieldValue(name, data);
+								std::string asset_name = "None(Prefab)";
+								if (data != 0)
+								{
+									std::string filename = GetNameFromUUID(data);
+									asset_name = filename.empty() ? asset_name : filename;
+								}
+
+								ImGui::Text("%s: ", name.c_str());
+								ImGui::SameLine();
+								ImGui::Button(asset_name.c_str());
+								break;
+							}
 							case ScriptFieldType::Vec2:
 							{
 								glm::vec2 data;
@@ -1642,13 +1658,44 @@ namespace trace {
 								{
 									if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 									{
-										UUID uuid = *(UUID*)payload->Data;
-										if (editor->GetCurrentScene()->GetEntity(uuid))
+										UUID entity_uuid = *(UUID*)payload->Data;
+										if (editor->GetCurrentScene()->GetEntity(entity_uuid))
 										{
-											memcpy(i.second.data, &uuid, sizeof(UUID));
+											memcpy(i.second.data, &entity_uuid, sizeof(UUID));
 										}
 									}
 									ImGui::EndDragDropTarget();
+								}
+								break;
+							}
+							case ScriptFieldType::Prefab:
+							{
+								UUID data = 0;
+								memcpy(&data, i.second.data, sizeof(UUID));
+								std::string asset_name = "None(Prefab)";
+								if (data != 0)
+								{
+									std::string filename = GetNameFromUUID(data);
+									asset_name = filename.empty() ? asset_name : filename;
+								}
+
+								ImGui::Text("%s: ", name.c_str());
+								ImGui::SameLine();
+								ImGui::Button(asset_name.c_str());
+								Ref<Prefab> asset = ImGuiDragDropResource<Prefab>(PREFAB_FILE_EXTENSION);
+								if (asset)
+								{
+									if (data != 0)
+									{
+										Ref<Resource> prev_asset = GenericAssetManager::get_instance()->Get<Resource>(data);
+										if (prev_asset)
+										{
+											prev_asset->Decrement();
+										}
+									}
+									asset->Increment();
+									UUID asset_id = asset->GetUUID();
+									memcpy(i.second.data, &asset_id, sizeof(UUID));
 								}
 								break;
 							}

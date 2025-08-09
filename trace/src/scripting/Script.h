@@ -13,7 +13,7 @@ namespace trace {
 
 	class Script;
 
-	enum ScriptFieldType
+	enum class ScriptFieldType
 	{
 		UnKnown,
 		Float,
@@ -31,7 +31,8 @@ namespace trace {
 		Vec2,
 		Vec3,
 		Vec4,
-		Action
+		Action,
+		Prefab
 	};
 
 	enum ScriptFieldFlagBit

@@ -6,11 +6,48 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 #include "ScriptBackend.h"
+#include "resource/GenericAssetManager.h"
 
 #include <iostream>
 
 namespace trace {
 
+	static void free_asset_instance(std::unordered_map<Script*, FieldManager>& field_instances, bool increment = false)
+	{
+		for (auto [script, field] : field_instances)
+		{
+			for (auto [id, field_instance] : field)
+			{
+				for (auto [name, data] : field_instance.GetFields())
+				{
+					switch (data.type)
+					{
+					case ScriptFieldType::Prefab:
+					{
+						UUID id = 0;
+						memcpy(&id, data.data, sizeof(UUID));
+						if (id != 0)
+						{
+							Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+							if (asset)
+							{
+								if(increment)
+								{
+									asset->Increment();
+								}
+								else
+								{
+									asset->Decrement();
+								}
+							}
+						}
+						break;
+					}
+					}
+				}
+			}
+		}
+	}
 
 	ScriptRegistry::ScriptRegistry()
 	{
@@ -35,6 +72,7 @@ namespace trace {
 
 	void ScriptRegistry::Clear()
 	{
+		free_asset_instance(m_fieldInstance);
 		m_fieldInstance.clear();
 		m_scripts.clear();
 	}
@@ -161,7 +199,20 @@ namespace trace {
 				{
 					switch (field.field_type)
 					{
-
+					case ScriptFieldType::Prefab:
+					{
+						UUID id = 0;
+						sm.instances[index].GetFieldValue(name, id);
+						if (id != 0)
+						{
+							Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+							if (asset)
+							{
+								asset->Decrement();
+							}
+						}
+						break;
+					}
 					}
 				}
 
@@ -187,8 +238,10 @@ namespace trace {
 	{
 		for (auto& i : m_scripts)
 		{
-			if(HasScript(id, i.first))
+			if (HasScript(id, i.first))
+			{
 				RemoveScript(id, i.first);
+			}
 		}
 
 		return true;
@@ -269,6 +322,27 @@ namespace trace {
 
 			CloneScriptInstance(source, &res);
 
+			for (auto [name, field] : sm.script->GetFields())
+			{
+				switch (field.field_type)
+				{
+				case ScriptFieldType::Prefab:
+				{
+					UUID id = 0;
+					res.GetFieldValue(name, id);
+					if (id != 0)
+					{
+						Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+						if (asset)
+						{
+							asset->Increment();
+						}
+					}
+					break;
+				}
+				}
+			}
+
 			return &res;
 		}
 
@@ -288,6 +362,8 @@ namespace trace {
 		}
 
 		to.m_fieldInstance = from.m_fieldInstance;
+
+		free_asset_instance(to.m_fieldInstance, true);
 	}
 
 }

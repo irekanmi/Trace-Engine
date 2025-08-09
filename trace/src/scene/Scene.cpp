@@ -454,13 +454,6 @@ namespace trace {
 
 				for (ScriptInstance& i : manager.instances)
 				{
-					for (auto [name, field] : manager.script->GetFields())
-					{
-						switch (field.field_type)
-						{
-
-						}
-					}
 					DestroyScriptInstance(i);
 				}
 
@@ -1937,41 +1930,8 @@ namespace trace {
 
 				if (scene->IsRunning())
 				{
-					//ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
-					//CreateScriptInstance(*script, *sc_ins);
-
-					//// Setting values ..............
-					//for (auto& [name, data] : other->GetFields())
-					//{
-					//	if (data->field_type == ScriptFieldType::String)
-					//	{
-					//		continue;
-					//	}
-					//	char field_data[16];
-					//	other->GetFieldValueInternal(name, field_data, 16);
-					//	sc_ins->SetFieldValueInternal(name, field_data, 16);
-					//}
-					//// ..................................................................
-
-					//UUID id = _res.GetID();
-					//void* params[1] =
-					//{
-					//	&id
-					//};
-					//InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
 
 					ScriptInstance* result = scene->GetScriptRegistry().CopyScriptInstance(_res.GetID(), other);
-
-					for (auto [name , field] : result->GetScript()->GetFields())
-					{
-						switch (field.field_type)
-						{
-						case ScriptFieldType::Action:
-						{
-							break;
-						}
-						}
-					}
 				}
 				else
 				{
@@ -1994,6 +1954,21 @@ namespace trace {
 								{
 								case ScriptFieldType::String:
 								{
+									break;
+								}
+								case ScriptFieldType::Prefab:
+								{
+									dst_field_data.GetFields()[name] = data;
+									UUID id = 0;
+									memcpy(&id, data.data, sizeof(UUID));
+									if (id != 0)
+									{
+										Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+										if (asset)
+										{
+											asset->Increment();
+										}
+									}
 									break;
 								}
 								default:
@@ -2876,17 +2851,6 @@ namespace trace {
 		m_registry.destroy(entity);
 	}
 
-	void Scene::destroy_entity_script_fields(Entity entity)
-	{
-		if (!m_running)
-		{
-			return;
-		}
-
-
-
-	}
-
 	void Scene::duplicate_entity(Entity entity, Entity res)
 	{
 		CopyComponent(AllComponents{}, entity, res);
@@ -2904,41 +2868,8 @@ namespace trace {
 				
 				if (res.GetScene()->IsRunning())
 				{
-					//ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
-					//CreateScriptInstance(*script, *sc_ins);
-
-					//// Setting values ..............
-					//for (auto& [name, data] : other->GetFields())
-					//{
-					//	if (data->field_type == ScriptFieldType::String)
-					//	{
-					//		continue;
-					//	}
-					//	char field_data[16];
-					//	other->GetFieldValueInternal(name, field_data, 16);
-					//	sc_ins->SetFieldValueInternal(name, field_data, 16);
-					//}
-					//// ..................................................................
-
-					//UUID id = _res.GetID();
-					//void* params[1] =
-					//{
-					//	&id
-					//};
-					//InvokeScriptMethod_Instance(*constructor, *sc_ins, params);
 
 					ScriptInstance* result = res.GetScene()->GetScriptRegistry().CopyScriptInstance(res.GetID(), other);
-
-					for (auto [name, field] : result->GetScript()->GetFields())
-					{
-						switch (field.field_type)
-						{
-						case ScriptFieldType::Action:
-						{
-							break;
-						}
-						}
-					}
 				}
 				else
 				{
@@ -2961,6 +2892,21 @@ namespace trace {
 								{
 								case ScriptFieldType::String:
 								{
+									break;
+								}
+								case ScriptFieldType::Prefab:
+								{
+									dst_field_data.GetFields()[name] = data;
+									UUID id = 0;
+									memcpy(&id, data.data, sizeof(UUID));
+									if (id != 0)
+									{
+										Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+										if (asset)
+										{
+											asset->Increment();
+										}
+									}
 									break;
 								}
 								default:

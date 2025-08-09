@@ -136,6 +136,9 @@ namespace Trace
         extern public static object Scene_InstanciateEntity_Position(ulong id, ref Vec3 position);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_InstanciateEntity_Prefab_Position(ulong prefab_id, ref Vec3 position);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static object Scene_InstanciateEntity_Position_NetID(ulong id, ref Vec3 position, uint owner_handle);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]

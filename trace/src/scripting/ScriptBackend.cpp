@@ -16,6 +16,7 @@
 #include "networking/NetworkManager.h"
 #include "serialize/DataStream.h"
 #include "debug/Debugger.h"
+#include "resource/GenericAssetManager.h"
 
 #include "mono/jit/jit.h"
 #include "mono/metadata/assembly.h"
@@ -83,22 +84,23 @@ MonoData s_MonoData;
 
 static std::unordered_map<std::string, ScriptFieldType> s_FieldTypes = 
 {
-	{ "System.Single",Float},
-	{ "System.String",String},
-	{ "System.Int32",Int32},
-	{ "System.UInt32",UInt32},
-	{ "System.Int64",Int64},
-	{ "System.UInt64",UInt64},
-	{ "System.Double",Double},
-	{ "System.Char",Char},
-	{ "System.Int16",Int16},
-	{ "System.UInt16",UInt16},
-	{ "System.Boolean",Bool},
-	{ "System.Byte",Byte},
-	{ "Trace.Vec2",Vec2},
-	{ "Trace.Vec3",Vec3},
-	{ "Trace.Vec4",Vec4},
-	{ "Trace.Action", Action}
+	{ "System.Single",ScriptFieldType::Float},
+	{ "System.String",ScriptFieldType::String},
+	{ "System.Int32",ScriptFieldType::Int32},
+	{ "System.UInt32",ScriptFieldType::UInt32},
+	{ "System.Int64",ScriptFieldType::Int64},
+	{ "System.UInt64",ScriptFieldType::UInt64},
+	{ "System.Double",ScriptFieldType::Double},
+	{ "System.Char",ScriptFieldType::Char},
+	{ "System.Int16",ScriptFieldType::Int16},
+	{ "System.UInt16",ScriptFieldType::UInt16},
+	{ "System.Boolean",ScriptFieldType::Bool},
+	{ "System.Byte",ScriptFieldType::Byte},
+	{ "Trace.Vec2",ScriptFieldType::Vec2},
+	{ "Trace.Vec3",ScriptFieldType::Vec3},
+	{ "Trace.Vec4",ScriptFieldType::Vec4},
+	{ "Trace.Action", ScriptFieldType::Action},
+	{ "Trace.Prefab", ScriptFieldType::Prefab}
 };
 
 
@@ -1278,6 +1280,30 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+MonoObject* Scene_InstanciateEntity_Prefab_Position(UUID prefab_id, glm::vec3* position)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid");
+		return nullptr;
+	}
+
+
+	Ref<Prefab> prefab = GenericAssetManager::get_instance()->Get<Prefab>(prefab_id);
+	if (!prefab)
+	{
+		TRC_ERROR("Prefab not found. Prefab handle: {}, Function, {}", prefab_id, __FUNCTION__);
+		return nullptr;
+	}
+
+	Entity result = s_MonoData.scene->InstanciatePrefab(prefab);
+	TRC_ASSERT(result, "Unable to Instaciate Prefab, Funciton: {}", __FUNCTION__);
+	result.GetComponent<TransformComponent>()._transform.SetPosition(*position);
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 MonoObject* Scene_InstanciateEntity_Position_NetID(UUID id, glm::vec3* position, uint32_t owner_id)
 {
 	if (!s_MonoData.scene)
@@ -1789,6 +1815,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetEntity);
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position);
+	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Prefab_Position);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position_NetID);
 	ADD_INTERNAL_CALL(Scene_DestroyEntity);
 	ADD_INTERNAL_CALL(Scene_EnableEntity);

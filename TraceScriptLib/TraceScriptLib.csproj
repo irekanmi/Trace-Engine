@@ -87,6 +87,7 @@
     <Compile Include="Source\Physics\Physics.cs" />
     <Compile Include="Source\Player.cs" />
     <Compile Include="Source\PlayerMove.cs" />
+    <Compile Include="Source\Resources\Assets.cs" />
     <Compile Include="Source\Scene\Scene.cs" />
     <Compile Include="Source\Serialize\Stream.cs" />
     <Compile Include="Source\Test.cs" />

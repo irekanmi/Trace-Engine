@@ -172,7 +172,6 @@ namespace trace {
 		void disable_child_entity(Entity entity);
 		//NOTE: force_destroy to be set to true if client has recieved a destroy packet from the server
 		void destroy_entity(Entity entity);
-		void destroy_entity_script_fields(Entity entity);
 		void duplicate_entity(Entity entity, Entity res);
 		//INFO: called when an entity is to be created at runtime
 		Entity instanciate_entity_net(Entity entity, Entity source, Ref<Prefab> prefab, uint32_t net_id = 0, bool forced = false);

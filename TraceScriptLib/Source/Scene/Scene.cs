@@ -35,6 +35,11 @@ namespace Trace
             object obj = InternalCalls.Scene_InstanciateEntity_Position(entity_id, ref position);
             return obj as Action;
         }
+        static public Action InstanciatePrefab(Prefab prefab, Vec3 position)
+        {
+            object obj = InternalCalls.Scene_InstanciateEntity_Prefab_Position( prefab.GetID() , ref position);
+            return obj as Action;
+        }
         static public Action InstanciateEntity_Net(Trace.Action entity, Vec3 position, uint owner_handle)
         {
             return InstanciateEntity_Net(entity.GetID(), position,owner_handle);

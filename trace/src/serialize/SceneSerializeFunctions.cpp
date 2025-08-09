@@ -302,6 +302,7 @@ namespace trace {
 							break;
 						}
 						case ScriptFieldType::Action:
+						case ScriptFieldType::Prefab:
 						{
 							UUID data;
 							ins.GetValue(name, data);
@@ -469,6 +470,7 @@ namespace trace {
 							break;
 						}
 						case ScriptFieldType::Action:
+						case ScriptFieldType::Prefab:
 						{
 							UUID data;
 							ins.GetValue(name, data);
@@ -624,6 +626,20 @@ namespace trace {
 					{
 						UUID data = values["Value"].as<UUID>();
 						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Prefab:
+					{
+						UUID data = values["Value"].as<UUID>();
+						ins.SetValue(field_name, data);
+						if (data != 0)
+						{
+							Ref<Prefab> asset = Prefab::Deserialize(data);
+							if (asset)
+							{
+								asset->Increment();
+							}
+						}
 						break;
 					}
 					case ScriptFieldType::Vec2:
@@ -791,6 +807,21 @@ namespace trace {
 						UUID data;
 						stream->Read<UUID>(data);
 						ins.SetValue(field_name, data);
+						break;
+					}
+					case ScriptFieldType::Prefab:
+					{
+						UUID data;
+						stream->Read<UUID>(data);
+						ins.SetValue(field_name, data);
+						if (data != 0)
+						{
+							Ref<Prefab> asset = Prefab::Deserialize(data);
+							if (asset)
+							{
+								asset->Increment();
+							}
+						}
 						break;
 					}
 					case ScriptFieldType::Vec2:
