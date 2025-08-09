@@ -7,6 +7,7 @@
 #include "scene/Components.h"
 #include "scripting/ScriptEngine.h"
 #include "scripting/ScriptBackend.h"
+#include "multithreading/JobSystem.h"
 
 
 // HACK: Fix "Physx\foundation\PxPreprocessor.h(443,1): fatal error C1189: #error:  Exactly one of NDEBUG and _DEBUG needs to be defined!"
@@ -21,7 +22,29 @@
 
 namespace physx {
 	static glm::vec3 Px3ToGlm3(PxVec3& val);
+	static trace::Counter* job_counter = nullptr;
 
+	class JobDispatcher : public PxCpuDispatcher
+	{
+	public:
+		void submitTask(PxBaseTask& task) override
+		{
+			trace::Job job;
+			job.flags = trace::JobFlagBit::GENERAL;
+			job.job_func = [&task](void*)
+			{
+				task.run();
+				task.release();
+			};
+
+			trace::JobSystem::get_instance()->RunJob(job, job_counter);
+		}
+
+		uint32_t getWorkerCount() const override
+		{
+			return trace::JobSystem::get_instance()->GetThreadCount();
+		}
+	};
 
 	class SceneEventCallback : public PxSimulationEventCallback
 	{
@@ -374,7 +397,7 @@ namespace physx {
 	{
 		PxPhysics* physics = nullptr;
 		PxFoundation* foundation = nullptr;
-		PxDefaultCpuDispatcher* cpu_dispatcher = nullptr;
+		PxCpuDispatcher* cpu_dispatcher = nullptr;
 		PxPvd* pvd = nullptr;
 		Physx_ErrorCallback error_cb;
 		PxDefaultAllocator allocator;
@@ -480,17 +503,21 @@ namespace physx {
 		phy.physics = PxCreatePhysics(PX_PHYSICS_VERSION, *phy.foundation, PxTolerancesScale(), true, phy.pvd);
 
 		phy.default_material = phy.physics->createMaterial(0.5f, 0.5f, 0.6f);
-		phy.cpu_dispatcher = PxDefaultCpuDispatcherCreate(num_threads);
+		phy.cpu_dispatcher = new JobDispatcher;//TODO: Use custom allocator
 
+		job_counter = trace::JobSystem::get_instance()->CreateCounter();
 
 		return true;
 	}
 
 	bool __ShutdownPhysics3D()
 	{
+		trace::JobSystem::get_instance()->WaitForCounterAndFree(job_counter);
 
 		PX_RELEASE(phy.default_material);
-		PX_RELEASE(phy.cpu_dispatcher);
+		//PX_RELEASE(phy.cpu_dispatcher);
+		delete phy.cpu_dispatcher;//TODO: Use custom allocator
+		phy.cpu_dispatcher = nullptr;
 		PX_RELEASE(phy.physics);
 		if (phy.pvd)
 		{
@@ -589,7 +616,10 @@ namespace physx {
 
 		PxScene* scn = in_scene->scene;
 		scn->simulate(deltaTime);
+		trace::JobSystem::get_instance()->WaitForCounter(job_counter);
 		scn->fetchResults(true);
+		trace::JobSystem::get_instance()->WaitForCounter(job_counter);
+
 
 		in_scene->event_callback.CollectEvents();
 		in_scene->event_callback.SendEvents();

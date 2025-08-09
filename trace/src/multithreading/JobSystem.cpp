@@ -39,6 +39,7 @@ namespace trace {
 	bool JobSystem::Init()
 	{
 		uint32_t num_threads = std::thread::hardware_concurrency();
+		m_numThreads = num_threads;
 		num_threads -= 1;// remove main thread
 
 		const uint32_t num_flags = 8;
@@ -234,6 +235,11 @@ namespace trace {
 		std::hash<std::thread::id> hasher;
 		size_t _id = hasher(std::this_thread::get_id());
 		return _id;
+	}
+
+	uint32_t JobSystem::GetThreadCount()
+	{
+		return m_numThreads;
 	}
 
 	JobSystem* JobSystem::get_instance()

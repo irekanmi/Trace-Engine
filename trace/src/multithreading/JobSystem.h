@@ -71,6 +71,7 @@ namespace trace {
 		std::unordered_map<size_t, ThreadInfo>& GetThreadInfo() { return m_threadInfo; }
 		bool TryGetJob();
 		size_t GetThreadID();
+		uint32_t GetThreadCount();
 
 		static JobSystem* get_instance();
 	private:
@@ -78,6 +79,7 @@ namespace trace {
 		std::unordered_map<size_t, ThreadInfo> m_threadInfo;
 		ThreadRingBuffer<Job, JOB_POOL_SIZE> m_jobs;
 		bool m_active = false;
+		uint32_t m_numThreads;
 
 
 	protected:
