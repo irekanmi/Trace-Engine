@@ -85,6 +85,8 @@ namespace trace {
 	{
 		m_currentScene = scene;
 		OnSceneStartInternal(scene);
+		//NOTE: This is null class to prevent it from crashing
+		GetEntityActionClass(0);
 	}
 
 	void ScriptEngine::OnSceneStop(Scene* scene)

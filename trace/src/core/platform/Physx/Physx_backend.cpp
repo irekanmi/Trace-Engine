@@ -188,12 +188,12 @@ namespace physx {
 						Script_OnTriggerEnter(i.entity, *instance, i);
 					});
 				i.Swap();
-				scene_registry.Iterate(i.otherEntity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.entity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_enter = script->GetMethod("OnTriggerEnter");
 						if (!on_trigger_enter) return;
 
-						Script_OnTriggerEnter(i.otherEntity, *instance, i);
+						Script_OnTriggerEnter(i.entity, *instance, i);
 					});
 
 				
@@ -210,12 +210,12 @@ namespace physx {
 						Script_OnTriggerExit(i.entity, *instance, i);
 					});
 				i.Swap();
-				scene_registry.Iterate(i.otherEntity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
+				scene_registry.Iterate(i.entity, [&i](UUID uuid, Script* script, ScriptInstance* instance)
 					{
 						ScriptMethod* on_trigger_exit = script->GetMethod("OnTriggerExit");
 						if (!on_trigger_exit) return;
 
-						Script_OnTriggerExit(i.otherEntity, *instance, i);
+						Script_OnTriggerExit(i.entity, *instance, i);
 					});
 			}
 

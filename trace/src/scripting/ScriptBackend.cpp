@@ -524,9 +524,10 @@ bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* v
 	{
 		UUID Id = 0;
 		memcpy(&Id, value, sizeof(UUID));
-		if (Id == 0)
+		if (!s_MonoData.scene->GetEntity(Id))
 		{
-			return false;
+			TRC_WARN("Entity with ID: {}, is not part of the scene, Function: {}", Id, __FUNCTION__);
+			Id = 0;
 		}
 		MonoObject* result = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(Id)->GetBackendHandle();
 		mono_field_set_value(obj, (MonoClassField*)field.m_internal, result);
@@ -735,7 +736,7 @@ MonoObject* Action_GetComponent(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 	return nullptr;
@@ -745,7 +746,7 @@ MonoObject* Action_GetScript(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -763,7 +764,7 @@ MonoObject* Action_AddScript(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -781,7 +782,7 @@ bool Action_HasComponent(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return false;
 	}
 
@@ -810,7 +811,7 @@ bool Action_HasScript(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -831,7 +832,7 @@ void Action_RemoveComponent(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -861,7 +862,7 @@ void Action_RemoveScript(UUID uuid, MonoReflectionType* reflect_type)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -882,7 +883,7 @@ MonoString* Action_GetName(UUID uuid)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -904,7 +905,7 @@ bool Action_IsOwner(UUID uuid)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -929,7 +930,7 @@ void TransformComponent_GetPosition(UUID id, glm::vec3* position)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -949,7 +950,7 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -968,7 +969,7 @@ void TransformComponent_GetWorldPosition(UUID id, glm::vec3* position)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -987,7 +988,7 @@ void TransformComponent_SetWorldPosition(UUID id, glm::vec3* position)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1002,11 +1003,49 @@ void TransformComponent_SetWorldPosition(UUID id, glm::vec3* position)
 	s_MonoData.scene->SetEntityWorldPosition(entity, *position);
 }
 
+void TransformComponent_GetWorldRotation(UUID id, glm::quat* rotation)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*rotation = s_MonoData.scene->GetEntityWorldRotation(entity);
+}
+
+void TransformComponent_SetWorldRotation(UUID id, glm::quat* rotation)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	s_MonoData.scene->SetEntityWorldRotation(entity, *rotation);
+}
+
 void TransformComponent_GetRotation(UUID id, glm::quat* rotation)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1026,7 +1065,7 @@ void TransformComponent_SetRotation(UUID id, glm::quat* rotation)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1045,7 +1084,7 @@ void TransformComponent_Forward(UUID id, glm::vec3* forward)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1064,7 +1103,7 @@ void TransformComponent_Right(UUID id, glm::vec3* right)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1083,7 +1122,7 @@ void TransformComponent_Up(UUID id, glm::vec3* up)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1140,7 +1179,7 @@ MonoString* TextComponent_GetString(UUID id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return nullptr;
 	}
 
@@ -1164,7 +1203,7 @@ void TextComponent_SetString(UUID id, MonoString* string)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1192,8 +1231,8 @@ MonoObject* Scene_GetEntityByName(uint64_t string_id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
-		return nullptr;
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 	StringID s_id;
@@ -1201,8 +1240,8 @@ MonoObject* Scene_GetEntityByName(uint64_t string_id)
 	Entity entity = s_MonoData.scene->GetEntityByName(s_id);
 	if (!entity)
 	{
-		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
-		return nullptr;
+		TRC_ERROR("Entity is not present in scene, Scene Name: {}, Function: {}", s_MonoData.scene->GetName(), __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
 
@@ -1214,7 +1253,7 @@ MonoObject* Scene_GetEntity(uint64_t entity_id)
 	if (!s_MonoData.scene)
 	{
 		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
-		return nullptr;
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 
@@ -1222,7 +1261,7 @@ MonoObject* Scene_GetEntity(uint64_t entity_id)
 	if (!entity)
 	{
 		TRC_ERROR("Entity is not present in the current scene. Scene Name: {}, Function: {}", s_MonoData.scene->GetName(), __FUNCTION__);
-		return nullptr;
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
 
@@ -1233,8 +1272,8 @@ MonoObject* Scene_GetChildEntityByName(UUID id, uint64_t string_id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
-		return nullptr;
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 	StringID s_id;
@@ -1242,15 +1281,15 @@ MonoObject* Scene_GetChildEntityByName(UUID id, uint64_t string_id)
 	Entity parent = s_MonoData.scene->GetEntity(id);
 	if (!parent)
 	{
-		TRC_ERROR("Entity is presented in scene. Scene Name: {}", s_MonoData.scene->GetName());
-		return nullptr;
+		TRC_ERROR("Entity is not present in scene, Scene Name: {}, Function: {}", s_MonoData.scene->GetName(), __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 	Entity entity = s_MonoData.scene->GetChildEntityByName(parent, s_id);
 	if (!entity)
 	{
 		TRC_ERROR("Can't find child. Scene Name: {}", s_MonoData.scene->GetName());
-		return nullptr;
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID());
 
@@ -1261,8 +1300,8 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
-		return nullptr;
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 
@@ -1270,7 +1309,7 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 	if (!entity)
 	{
 		TRC_ERROR("Entity is presented in scene. Scene Name: {}, Function, {}", s_MonoData.scene->GetName(), __FUNCTION__);
-		return nullptr;
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 	Entity result = s_MonoData.scene->InstanciateEntity(entity, *position);
@@ -1284,8 +1323,8 @@ MonoObject* Scene_InstanciateEntity_Prefab_Position(UUID prefab_id, glm::vec3* p
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
-		return nullptr;
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 
@@ -1293,7 +1332,7 @@ MonoObject* Scene_InstanciateEntity_Prefab_Position(UUID prefab_id, glm::vec3* p
 	if (!prefab)
 	{
 		TRC_ERROR("Prefab not found. Prefab handle: {}, Function, {}", prefab_id, __FUNCTION__);
-		return nullptr;
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 	Entity result = s_MonoData.scene->InstanciatePrefab(prefab);
@@ -1308,8 +1347,8 @@ MonoObject* Scene_InstanciateEntity_Position_NetID(UUID id, glm::vec3* position,
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
-		return nullptr;
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 
@@ -1317,7 +1356,7 @@ MonoObject* Scene_InstanciateEntity_Position_NetID(UUID id, glm::vec3* position,
 	if (!entity)
 	{
 		TRC_ERROR("Entity is presented in scene. Scene Name: {}, Function, {}", s_MonoData.scene->GetName(), __FUNCTION__);
-		return nullptr;
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
 	}
 
 	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
@@ -1334,7 +1373,7 @@ void Scene_DestroyEntity(UUID id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1354,7 +1393,7 @@ void Scene_EnableEntity(UUID id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1374,7 +1413,7 @@ void Scene_DisableEntity(UUID id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1398,7 +1437,7 @@ void Physics_GetCollisionData(CollisionData* out_data, int64_t collision_data)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 	CollisionData* ptr = (CollisionData*)collision_data;
@@ -1421,7 +1460,7 @@ void Physics_GetTriggerData(TriggerPair* out_data, int64_t trigger_data)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 	TriggerPair* ptr = (TriggerPair*)trigger_data;
@@ -1441,7 +1480,7 @@ bool CharacterController_IsGrounded(UUID id)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return false;
 	}
 
@@ -1462,7 +1501,7 @@ void CharacterController_Move(UUID id, glm::vec3* displacement, float deltaTime)
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1488,7 +1527,7 @@ void AnimationGraphController_SetParameterBool(UUID id, MonoString* parameter_na
 {
 	if (!s_MonoData.scene)
 	{
-		TRC_WARN("Scene is not yet valid");
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
 		return;
 	}
 
@@ -1795,6 +1834,8 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TransformComponent_SetPosition);
 	ADD_INTERNAL_CALL(TransformComponent_GetWorldPosition);
 	ADD_INTERNAL_CALL(TransformComponent_SetWorldPosition);
+	ADD_INTERNAL_CALL(TransformComponent_GetWorldRotation);
+	ADD_INTERNAL_CALL(TransformComponent_SetWorldRotation);
 	ADD_INTERNAL_CALL(TransformComponent_GetRotation);
 	ADD_INTERNAL_CALL(TransformComponent_SetRotation);
 	ADD_INTERNAL_CALL(TransformComponent_Forward);

@@ -45,6 +45,19 @@ namespace Trace
                 InternalCalls.TransformComponent_SetWorldPosition(Id, ref value);
             }
         }
+        
+        public Quat WorldRotation
+        {
+            get
+            {
+                InternalCalls.TransformComponent_GetWorldRotation(Id, out Quat rotation);
+                return rotation;
+            }
+            set
+            {
+                InternalCalls.TransformComponent_SetWorldRotation(Id, ref value);
+            }
+        }
 
         public Quat Rotation
         {

@@ -351,7 +351,7 @@ namespace trace {
 				ImGui::EndDragDropTarget();
 			}
 
-			if (ImGui::IsItemClicked())
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 			{
 				if (selected)
 					m_selectedEntity = Entity();

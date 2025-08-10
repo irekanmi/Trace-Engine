@@ -1381,6 +1381,8 @@ namespace trace {
 		}
 		case KEY_L:
 		{
+			//TEMP
+			return;
 			if (!m_currentScene || m_currentState != EditorState::SceneEdit)
 			{
 				return;

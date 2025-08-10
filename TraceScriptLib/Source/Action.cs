@@ -16,6 +16,10 @@ namespace Trace
             Id = id;
         }
 
+        public bool IsValid()
+        {
+            return !(Id == 0);
+        }
         public ulong GetID()
         {
             return Id;

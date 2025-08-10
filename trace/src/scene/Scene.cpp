@@ -80,8 +80,8 @@ namespace trace {
 		m_registry.on_construct<HierachyComponent>().disconnect<&Scene::OnConstructHierachyComponent>(*this);
 		m_registry.on_destroy<HierachyComponent>().disconnect<&Scene::OnDestroyHierachyComponent>(*this);
 		delete m_rootNode; // TODO: Use Custom Allocator
-		m_registry.clear();
 		m_scriptRegistry.Clear();
+		m_registry.clear();
 	}
 	void Scene::BeginFrame()
 	{
@@ -1904,14 +1904,19 @@ namespace trace {
 		CopyComponentifExits<Component...>(from, to);
 	}
 
-	void duplicate_entity_hierachy(Scene* scene, Entity e, Entity parent)
+	Entity duplicate_entity_hierachy(Scene* scene, Entity e, Entity parent, UUID id = 0);
+	Entity duplicate_entity_hierachy(Scene* scene, Entity e, Entity parent, UUID id)
 	{
-		Entity _res = scene->CreateEntity_UUID(UUID::GenUUID(), e.GetComponent<TagComponent>().GetTag());
+
+		Entity _res = scene->CreateEntity_UUID(id == 0 ? UUID::GenUUID() : id, e.GetComponent<TagComponent>().GetTag());
 
 		_res.RemoveComponent<TransformComponent>();
 		CopyComponent(AllComponents{}, e, _res);
 		_res.AddOrReplaceComponent<HierachyComponent>();
-		scene->SetParent(_res, parent);
+		if (parent)
+		{
+			scene->SetParent(_res, parent);
+		}
 
 		if (e.HasComponent<SkinnedModelRenderer>())
 		{
@@ -1925,13 +1930,57 @@ namespace trace {
 		}
 
 
-		scene->GetScriptRegistry().Iterate(e.GetID(), [&](UUID id, Script* script, ScriptInstance* other)
+		e.GetScene()->GetScriptRegistry().Iterate(e.GetID(), [&](UUID id, Script* script, ScriptInstance* other)
 			{
 
 				if (scene->IsRunning())
 				{
 
-					ScriptInstance* result = scene->GetScriptRegistry().CopyScriptInstance(_res.GetID(), other);
+					if (e.GetScene() == _res.GetScene())
+					{
+						ScriptInstance* result = _res.GetScene()->GetScriptRegistry().CopyScriptInstance(_res.GetID(), other);
+					}
+					else
+					{
+						//This means you are spwaning a prefab
+						ScriptInstance* sc_ins = _res.AddScript(script->GetID());
+						auto& fields_instances = e.GetScene()->GetScriptRegistry().GetFieldInstances();
+						auto it = fields_instances.find(script);
+						if (it != fields_instances.end())
+						{
+							auto field_it = it->second.find(e.GetID());
+							if (field_it != it->second.end())
+							{
+								for (auto& [name, data] : field_it->second.GetFields())
+								{
+									switch (data.type)
+									{
+									case ScriptFieldType::String:
+									{
+										break;
+									}
+									case ScriptFieldType::Prefab:
+									{
+										UUID id = 0;
+										memcpy(&id, data.data, sizeof(UUID));
+										sc_ins->SetFieldValueInternal(name, data.data, 16);
+										if (id != 0)
+										{
+											Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+											if (asset)
+											{
+												asset->Increment();
+											}
+										}
+										break;
+									}
+									default:
+										sc_ins->SetFieldValueInternal(name, data.data, 16);
+									}
+								}
+							}
+						}
+					}
 				}
 				else
 				{
@@ -1989,6 +2038,173 @@ namespace trace {
 			Entity entity = _scene->GetEntity(i);
 			duplicate_entity_hierachy(scene,entity, _res);
 		}
+
+		return _res;
+	}
+
+	
+	Entity instancite_prefab_hierachy(Scene* scene, Entity handle, Entity parent, std::unordered_map<UUID, UUID>& prefab_map, UUID id)
+	{
+		Entity _res = scene->CreateEntity_UUID(id == 0 ? UUID::GenUUID() : id, handle.GetComponent<TagComponent>().GetTag());
+		prefab_map[handle.GetID()] = _res.GetID();
+
+		_res.RemoveComponent<TransformComponent>();
+		CopyComponent(AllComponents{}, handle, _res);
+		_res.AddOrReplaceComponent<HierachyComponent>();
+		if (parent)
+		{
+			scene->SetParent(_res, parent);
+		}
+
+		if (handle.HasComponent<SkinnedModelRenderer>())
+		{
+			SkinnedModelRenderer& obj_renderer = _res.AddOrReplaceComponent<SkinnedModelRenderer>();
+			SkinnedModelRenderer& skinned_renderer = handle.GetComponent<SkinnedModelRenderer>();
+
+			obj_renderer._model = skinned_renderer._model;
+			obj_renderer._material = skinned_renderer._material;
+			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
+			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), scene, _res.GetID());
+		}
+
+		HierachyComponent& hierachy = handle.GetComponent<HierachyComponent>();
+		Scene* _scene = handle.GetScene();
+		for (auto& i : hierachy.children)
+		{
+			Entity entity = _scene->GetEntity(i);
+			instancite_prefab_hierachy(scene, entity, _res, prefab_map);
+		}
+
+		handle.GetScene()->GetScriptRegistry().Iterate(handle.GetID(), [&](UUID id, Script* script, ScriptInstance* other)
+			{
+
+				if (scene->IsRunning())
+				{
+					//This means you are spwaning a prefab
+					ScriptInstance* sc_ins = _res.AddScript(script->GetID());
+					auto& fields_instances = handle.GetScene()->GetScriptRegistry().GetFieldInstances();
+					auto it = fields_instances.find(script);
+					if (it != fields_instances.end())
+					{
+						auto field_it = it->second.find(handle.GetID());
+						if (field_it != it->second.end())
+						{
+							for (auto& [name, data] : field_it->second.GetFields())
+							{
+								switch (data.type)
+								{
+								case ScriptFieldType::String:
+								{
+									break;
+								}
+								case ScriptFieldType::Action:
+								{
+									UUID id = 0;
+									memcpy(&id, data.data, sizeof(UUID));
+									auto id_it = prefab_map.find(id);
+									if (id_it != prefab_map.end())
+									{
+										id = id_it->second;
+									}
+									else
+									{
+										TRC_WARN("Couldn't find handle, Id:{}, Function:{}", id, __FUNCTION__);
+										id = 0;
+									}
+									sc_ins->SetFieldValueInternal(name, &id, sizeof(UUID));
+									
+									break;
+								}
+								case ScriptFieldType::Prefab:
+								{
+									UUID id = 0;
+									memcpy(&id, data.data, sizeof(UUID));
+									sc_ins->SetFieldValueInternal(name, data.data, 16);
+									if (id != 0)
+									{
+										Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+										if (asset)
+										{
+											asset->Increment();
+										}
+									}
+									break;
+								}
+								default:
+									sc_ins->SetFieldValueInternal(name, data.data, 16);
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					ScriptInstance* sc_ins = _res.AddScript(script->GetID());
+					auto& fields_instances = handle.GetScene()->GetScriptRegistry().GetFieldInstances();
+					auto& dst_fields_instances = _res.GetScene()->GetScriptRegistry().GetFieldInstances();
+
+					// Setting values..............
+					auto it = fields_instances.find(script);
+					auto& dst_it = dst_fields_instances[script];
+					if (it != fields_instances.end())
+					{
+						auto field_it = it->second.find(handle.GetID());
+						ScriptFieldInstance& dst_field_data = dst_it[_res.GetID()];
+						if (field_it != it->second.end())
+						{
+							for (auto& [name, data] : field_it->second.GetFields())
+							{
+								switch (data.type)
+								{
+								case ScriptFieldType::String:
+								{
+									break;
+								}
+								case ScriptFieldType::Action:
+								{
+									dst_field_data.GetFields()[name] = data;
+									UUID id = 0;
+									memcpy(&id, data.data, sizeof(UUID));
+									auto id_it = prefab_map.find(id);
+									if (id_it != prefab_map.end())
+									{
+										id = id_it->second;
+									}
+									else
+									{
+										TRC_WARN("Couldn't find handle, Id:{}, Function:{}", id, __FUNCTION__);
+										id = 0;
+									}
+									memcpy(dst_field_data.GetFields()[name].data, &id, sizeof(UUID));
+									break;
+								}
+								case ScriptFieldType::Prefab:
+								{
+									dst_field_data.GetFields()[name] = data;
+									UUID id = 0;
+									memcpy(&id, data.data, sizeof(UUID));
+									if (id != 0)
+									{
+										Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
+										if (asset)
+										{
+											asset->Increment();
+										}
+									}
+									break;
+								}
+								default:
+									dst_field_data.GetFields()[name] = data;
+								}
+							}
+						}
+					}
+					// ..................................................................
+
+				}
+			});
+
+		return _res;
 	}
 
 	//TODO: Update this function to initialize components
@@ -1999,10 +2215,7 @@ namespace trace {
 
 	Entity Scene::DuplicateEntity(Entity entity, UUID id)
 	{
-		Entity res = CreateEntity_UUID(id, entity.GetComponent<TagComponent>().GetTag());
-
-		res.RemoveComponent<TransformComponent>();
-		duplicate_entity(entity, res);
+		Entity res = duplicate_entity_hierachy(this, entity, Entity(), id);
 
 		return res;
 	}
@@ -2059,15 +2272,16 @@ namespace trace {
 	Entity Scene::InstanciatePrefab(Ref<Prefab> prefab, UUID id, uint32_t net_handle, bool forced)
 	{
 		Entity handle = PrefabManager::get_instance()->GetScene()->GetEntity(prefab->GetHandle());
-		Entity result = DuplicateEntity(handle);
-		result.AddComponent<PrefabComponent>(prefab);
-		EnableEntity(result);
+		std::unordered_map<UUID, UUID> prefab_map;
+		Entity result = instancite_prefab_hierachy(this, handle, Entity(), prefab_map, id);
+		result.AddOrReplaceComponent<PrefabComponent>().handle = prefab;
 
 		if (m_running)
 		{
 			result = instanciate_entity_net(result, Entity(), prefab, net_handle, forced);
 		}
-
+		OnEntityCreate_Runtime(result);
+		EnableEntity(result);
 		return result;
 	}
 
@@ -2098,18 +2312,15 @@ namespace trace {
 			return Entity();
 		}
 
-		Entity result = CreateEntity_UUID(id, source.GetComponent<TagComponent>().GetTag());
+		Entity result = duplicate_entity_hierachy(this, source, Entity(), id);
 
 		TransformComponent& pose = result.AddOrReplaceComponent<TransformComponent>(source.GetComponent<TransformComponent>());
 		pose._transform.SetPosition(position);
 
-		duplicate_entity(source, result);
-
-		EnableEntity(result);
-
 		result = instanciate_entity_net(result, source, Ref<Prefab>(), net_handle, forced);
 
 		OnEntityCreate_Runtime(result);
+		EnableEntity(result);
 
 		return result;
 	}
@@ -2419,10 +2630,6 @@ namespace trace {
 
 	}
 
-	
-
-
-
 	void Scene::IterateEntityChildren(Entity entity, std::function<void(Entity)> callback)
 	{
 		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
@@ -2731,7 +2938,7 @@ namespace trace {
 			return;
 		}
 
-		auto lamda = [](Entity obj)
+		auto lamda = [&](Entity obj)
 		{
 			if (obj.HasComponent<AnimationGraphController>())
 			{
@@ -2753,6 +2960,52 @@ namespace trace {
 
 				obj_renderer.SetSkeleton(obj_renderer.GetSkeleton(), obj.GetScene(), obj.GetID());
 			}
+
+			m_scriptRegistry.Iterate(obj.GetID(), [](UUID uuid, Script* script, ScriptInstance* instance)
+				{
+					ScriptMethod* on_create = script->GetMethod("OnCreate");
+					if (!on_create)
+					{
+						return;
+					}
+
+
+					InvokeScriptMethod_Instance(*on_create, *instance, nullptr);
+				});
+		};
+
+		IterateEntityChildren(entity, lamda);
+
+	}
+	
+	void Scene::OnEntityDestroy_Runtime(Entity entity)
+	{
+		if (!m_running)
+		{
+			return;
+		}
+
+		auto lamda = [&](Entity obj)
+		{
+			if (obj.HasComponent<AnimationGraphController>())
+			{
+			}
+
+			if (obj.HasComponent<SkinnedModelRenderer>())
+			{
+			}
+
+			m_scriptRegistry.Iterate(obj.GetID(), [](UUID uuid, Script* script, ScriptInstance* instance)
+				{
+					ScriptMethod* on_destroy = script->GetMethod("OnDestory");
+					if (!on_destroy)
+					{
+						return;
+					}
+
+
+					InvokeScriptMethod_Instance(*on_destroy, *instance, nullptr);
+				});
 		};
 
 		IterateEntityChildren(entity, lamda);
@@ -2843,106 +3096,13 @@ namespace trace {
 
 		if (m_running)
 		{
+			OnEntityDestroy_Runtime(entity);
 			ScriptEngine::get_instance()->RemoveEnityActionClass(entity.GetID());
 		}
 
 		m_scriptRegistry.Erase(entity.GetID());
 		m_entityMap.erase(entity.GetID());
 		m_registry.destroy(entity);
-	}
-
-	void Scene::duplicate_entity(Entity entity, Entity res)
-	{
-		CopyComponent(AllComponents{}, entity, res);
-		res.AddOrReplaceComponent<HierachyComponent>();
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-		if (GetEntity(entity.GetID()) && hi.HasParent())// The entity arguement is a member of the scene
-		{
-			Entity parent = GetEntity(entity.GetComponent<HierachyComponent>().parent);
-			SetParent(res, parent);
-		}
-
-
-		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID, Script* script, ScriptInstance* other)
-			{
-				
-				if (res.GetScene()->IsRunning())
-				{
-
-					ScriptInstance* result = res.GetScene()->GetScriptRegistry().CopyScriptInstance(res.GetID(), other);
-				}
-				else
-				{
-					ScriptInstance* sc_ins = res.AddScript(script->GetID());
-					auto& fields_instances = entity.GetScene()->GetScriptRegistry().GetFieldInstances();
-					auto& dst_fields_instances = res.GetScene()->GetScriptRegistry().GetFieldInstances();
-
-					// Setting values..............
-					auto it = fields_instances.find(script);
-					auto& dst_it = dst_fields_instances[script];
-					if (it != fields_instances.end())
-					{
-						auto field_it = it->second.find(entity.GetID());
-						ScriptFieldInstance& dst_field_data = dst_it[res.GetID()];
-						if (field_it != it->second.end())
-						{
-							for (auto& [name, data] : field_it->second.GetFields())
-							{
-								switch (data.type)
-								{
-								case ScriptFieldType::String:
-								{
-									break;
-								}
-								case ScriptFieldType::Prefab:
-								{
-									dst_field_data.GetFields()[name] = data;
-									UUID id = 0;
-									memcpy(&id, data.data, sizeof(UUID));
-									if (id != 0)
-									{
-										Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
-										if (asset)
-										{
-											asset->Increment();
-										}
-									}
-									break;
-								}
-								default:
-									dst_field_data.GetFields()[name] = data;
-								}
-							}
-						}
-					}
-					// ..................................................................
-
-				}
-			});
-
-
-
-
-		if (entity.HasComponent<SkinnedModelRenderer>())
-		{
-			SkinnedModelRenderer& obj_renderer = res.AddOrReplaceComponent<SkinnedModelRenderer>();
-			SkinnedModelRenderer& skinned_renderer = entity.GetComponent<SkinnedModelRenderer>();
-
-			obj_renderer._model = skinned_renderer._model;
-			obj_renderer._material = skinned_renderer._material;
-			obj_renderer.cast_shadow = skinned_renderer.cast_shadow;
-			obj_renderer.SetSkeleton(skinned_renderer.GetSkeleton(), this, res.GetID());
-		}
-
-
-
-		Scene* scene = entity.GetScene();
-		for (auto& i : hi.children)
-		{
-			Entity d_child = scene->GetEntity(i);
-			duplicate_entity_hierachy(this, d_child, res);
-		}
-
 	}
 
 	Entity Scene::instanciate_entity_net(Entity entity, Entity source, Ref<Prefab> prefab, uint32_t net_id, bool forced)

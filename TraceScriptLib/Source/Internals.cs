@@ -48,6 +48,12 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_SetWorldPosition(ulong id, ref Vec3 position);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_GetWorldRotation(ulong id, out Quat rotation);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_SetWorldRotation(ulong id, ref Quat rotation);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_GetRotation(ulong id, out Quat rotation);
