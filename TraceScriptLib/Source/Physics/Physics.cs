@@ -36,6 +36,11 @@ namespace Trace
     public class Physics
     {
 
+        static public void Step(float deltaTime)
+        {
+            InternalCalls.Physics_Step(deltaTime);
+        }
+
         public static void OnCollisionEnter(Trace.Action entity, Int64 collision_data)
         {
             CollisionData collision = new CollisionData();

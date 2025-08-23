@@ -575,6 +575,10 @@ namespace trace {
 			}
 
 		}
+		else if (!std::filesystem::exists(db_path))
+		{
+			std::filesystem::create_directory(db_path);
+		}
 
 		bool dirty_ids = false;
 

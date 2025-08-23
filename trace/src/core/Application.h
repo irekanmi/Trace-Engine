@@ -3,7 +3,6 @@
 #include "Core.h"
 #include "events\Events.h"
 #include "Window.h"
-#include "Layer.h"
 #include "Coretypes.h"
 #include "Clock.h"
 
@@ -35,13 +34,10 @@ namespace trace
 		virtual void OnEvent(Event* p_event);
 
 
-		virtual void PushLayer(Layer* layer);
-		virtual void PushOverLay(Layer* layer);
-		virtual void PopLayer(Layer* layer);
-		virtual void PopOverLay(Layer* layer);
 		virtual std::vector<Object*> GetEngineSystemsID();
 		virtual Window* GetWindow() { return m_Window; }
 		UpdateID GetUpdateID() { return m_updateID; }
+		uint32_t GetCurrentTick() { return m_currentTick; }
 
 		Clock& GetClock() { return m_clock; }
 
@@ -58,11 +54,11 @@ namespace trace
 		Clock m_clock;
 		float m_lastTime = 0.0f;
 		Window* m_Window;
-		LayerStack* m_LayerStack;
 		bool m_isRunning = true;
 		bool m_isMinimized = false;
 		bool m_vsync = false;
 		UpdateID m_updateID = 30;//NOTE: The value 30 is given just to allow the animation graph to have a head start
+		uint32_t m_currentTick;
 
 	};
 

@@ -14,6 +14,7 @@
 #include "resource/ResourceSystem.h"
 #include "core/memory/MemoryManager.h"
 #include "networking/NetworkManager.h"
+#include "multithreading/JobSystem.h"
 
 //Temp==================
 #include "render/Graphics.h"
@@ -48,24 +49,6 @@ namespace trace
 		return s_instance;
 	}
 
-
-	void Application::PushLayer(Layer* layer)
-	{
-		m_LayerStack->PushLayer(layer);
-	}
-	void Application::PushOverLay(Layer* layer)
-	{
-		m_LayerStack->PushOverLay(layer);
-	}
-	void Application::PopLayer(Layer* layer)
-	{
-		m_LayerStack->PopLayer(layer);
-	}
-	void Application::PopOverLay(Layer* layer)
-	{
-		m_LayerStack->PopOverLay(layer);
-	}
-
 	std::vector<Object*> Application::GetEngineSystemsID()
 	{
 		return g_SystemPtrs;
@@ -88,7 +71,6 @@ namespace trace
 
 	bool Application::Init(trc_app_data appData)
 	{
-		m_LayerStack = new LayerStack();
 		switch (appData.wintype)
 		{
 		case WindowType::GLFW_WINDOW:
@@ -122,8 +104,6 @@ namespace trace
 	void Application::Shutdown()
 	{
 		SAFE_DELETE(m_Window, Window);
-		m_LayerStack->Shutdown();
-		SAFE_DELETE(m_LayerStack, LayerStack);
 	}
 
 	void Application::Start()
@@ -159,6 +139,7 @@ namespace trace
 		Renderer* renderer = Renderer::get_instance();
 		MemoryManager* mem_manager = MemoryManager::get_instance();
 		Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+		JobSystem* job_system = JobSystem::get_instance();
 		
 		
 		
@@ -167,7 +148,7 @@ namespace trace
 		m_lastTime = m_clock.GetElapsedTime();
 		float _time = m_clock.GetInternalElapsedTime();
 
-		
+		Counter* frame_sync = job_system->CreateCounter();
 
 		while (m_isRunning)
 		{
@@ -189,16 +170,19 @@ namespace trace
 			}
 
 			m_clock.Tick(deltaTime);
-			m_Window->Update(deltaTime);//NOTE: 
+			m_Window->Update(deltaTime);//NOTE:
 
 			mem_manager->BeginFrame();
-			for (int32_t i = static_cast<int32_t>(m_LayerStack->Size() - 1); i >= 0; i--)
-			{
-				Layer* layer = m_LayerStack->GetLayers()[i];
-				layer->Update(deltaTime);
-			}
+
 			// Networking -------------------
-			net_manager->Update(deltaTime);
+			Job network_job;
+			network_job.flags = JobFlagBit::NETWORK;
+			network_job.job_params = nullptr;
+			network_job.job_func = [net_manager, deltaTime](void*)
+			{
+				net_manager->Update(deltaTime);
+			};
+			job_system->RunJob(network_job, frame_sync);
 			// --------------------------------
 
 			//------CLIENT-------//
@@ -212,6 +196,8 @@ namespace trace
 			input->Update(deltaTime);
 
 			mem_manager->EndFrame();
+
+			job_system->WaitForCounter(frame_sync);
 
 			float end_time = m_clock.GetInternalElapsedTime();
 			float total_frame_time = end_time - _time;
@@ -230,6 +216,8 @@ namespace trace
 			m_updateID++;
 			
 		}
+
+		job_system->WaitForCounterAndFree(frame_sync);
 	}
 
 	void Application::End()
@@ -248,18 +236,6 @@ namespace trace
 
 	void Application::OnEvent(Event* p_event)
 	{
-
-
-		// TODO: Maybe all event should be sent to Layers by the application or layers should register themself to the Event System
-		int i = static_cast<int32_t>(m_LayerStack->Size() - 1);
-		for (; i >= 0; --i)
-		{
-			Layer* layer = m_LayerStack->GetLayers()[i];
-			if(!p_event->IsHandled())
-			{
-				layer->OnEvent(p_event);
-			}
-		}
 
 		if (!p_event->IsHandled()) {
 			//TRC_TRACE("Event: {}", p_event->GetName());
@@ -304,7 +280,10 @@ namespace trace
 				{
 					m_isMinimized = true;
 				}
-				else m_isMinimized = false;
+				else
+				{
+					m_isMinimized = false;
+				}
 
 				break;
 			}

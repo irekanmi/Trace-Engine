@@ -49,10 +49,10 @@ struct MonoData
 
 	bool reload_assembly = false;//NOTE: This variable is needed so that threads can release their attachment to the app domain
 	Scene* scene = nullptr;
-	/*MonoMethod* component_ctor = nullptr;
-	std::unordered_map<MonoType*, ComponentMap> get_components;*/
 	std::unordered_map<MonoType*, std::function<bool(Entity&)>> has_components;
 	std::unordered_map<MonoType*, std::function<void(Entity&)>> remove_components;
+	std::unordered_map<MonoType*, std::function<void(Entity&, ScriptMethod*, ScriptInstance*)>> iterate_components;
+	std::unordered_map<MonoType*, std::function<Entity()>> get_entity_with_component;
 
 	MonoClass* physics_class = nullptr;
 	MonoMethod* on_collision_enter = nullptr;
@@ -132,6 +132,42 @@ void RegisterComponent()
 			get_comp.component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", comp_name.c_str());;*/
 			s_MonoData.has_components[res] = [](Entity& entity) -> bool { return entity.HasComponent<Component>(); };
 			s_MonoData.remove_components[res] = [](Entity& entity) { entity.RemoveComponent<Component>(); };
+			s_MonoData.iterate_components[res] = [](Entity& entity, ScriptMethod* method, ScriptInstance* src_instance)
+			{ 
+				Scene* scene = entity.GetScene();
+				scene->IterateComponent<Component>([method, src_instance](Entity obj) -> bool
+					{
+						UUID id = obj.GetID();
+						MonoObject* ins = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(id)->GetBackendHandle();
+
+						void* params[] =
+						{
+							ins,
+							&id
+						};
+
+
+						InvokeScriptMethod_Instance(*method, *src_instance, params);
+
+						return false;
+					});
+			};
+			s_MonoData.get_entity_with_component[res] = []() -> Entity
+			{ 
+				Scene* scene = s_MonoData.scene;
+				Entity result;
+				if (!scene)
+				{
+					return result;
+				}
+				scene->IterateComponent<Component>([&result](Entity obj) -> bool
+					{
+						result = obj;
+						return true;
+					});
+
+				return result;
+			};
 		}(), ...);
 
 
@@ -560,6 +596,10 @@ void AttachThread(void*& thread_info)
 
 void DetachThread(void* thread_info)
 {
+	if (thread_info == nullptr)
+	{
+		return;
+	}
 	mono_thread_detach((MonoThread*)thread_info);
 }
 
@@ -620,21 +660,26 @@ void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, S
 
 		const char* nameSpace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
 		const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
-		std::string fullName;
+		std::string full_name;
 		if (nameSpace[0] != '\0')
 		{
-			fullName = std::string(nameSpace) + std::string(".") + std::string(name);
+			full_name = std::string(nameSpace) + std::string(".") + std::string(name);
 		}
 		else
 		{
-			fullName = name;
+			full_name = name;
 		}
 
 		MonoClass* k_class =  mono_class_from_name(image, nameSpace, name);
+		if (!k_class)
+		{
+			TRC_ERROR("Couldn't find a class, Name: {}", full_name);
+			continue;
+		}
 		bool is_action = (action != k_class) && mono_class_is_subclass_of(k_class, action, false);
 		
 
-		if(is_action) CreateScript(name, data[fullName], nameSpace, core);
+		if(is_action) CreateScript(name, data[full_name], nameSpace, core);
 		
 	}
 }
@@ -906,7 +951,7 @@ bool Action_IsOwner(UUID uuid)
 	if (!s_MonoData.scene)
 	{
 		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
-		return nullptr;
+		return true;
 	}
 
 	Entity entity = s_MonoData.scene->GetEntity(uuid);
@@ -914,11 +959,32 @@ bool Action_IsOwner(UUID uuid)
 	if (!entity)
 	{
 		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
-		return nullptr;
+		return true;
 	}
 
 
 	return entity.IsOwner();
+
+}
+
+uint32_t Action_GetNetID(UUID uuid)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return 0;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(uuid);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return 0;
+	}
+
+
+	return entity.GetNetID();
 
 }
 
@@ -1343,6 +1409,30 @@ MonoObject* Scene_InstanciateEntity_Prefab_Position(UUID prefab_id, glm::vec3* p
 	return (MonoObject*)ins->GetBackendHandle();
 }
 
+MonoObject* Scene_InstanciateEntity_Prefab_Position_NetID(UUID prefab_id, glm::vec3* position, uint32_t owner_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	}
+
+
+	Ref<Prefab> prefab = GenericAssetManager::get_instance()->Get<Prefab>(prefab_id);
+	if (!prefab)
+	{
+		TRC_ERROR("Prefab not found. Prefab handle: {}, Function, {}", prefab_id, __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	}
+
+	Entity result = s_MonoData.scene->InstanciatePrefab(prefab, owner_id);
+	TRC_ASSERT(result, "Unable to Instaciate Prefab, Funciton: {}", __FUNCTION__);
+	result.GetComponent<TransformComponent>()._transform.SetPosition(*position);
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 MonoObject* Scene_InstanciateEntity_Position_NetID(UUID id, glm::vec3* position, uint32_t owner_id)
 {
 	if (!s_MonoData.scene)
@@ -1367,6 +1457,84 @@ MonoObject* Scene_InstanciateEntity_Position_NetID(UUID id, glm::vec3* position,
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
 
 	return (MonoObject*)ins->GetBackendHandle();
+}
+
+void Scene_IterateComponent(UUID id, MonoObject* src, uint64_t func_name_id, MonoReflectionType* reflect_type)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	MonoType* type = mono_reflection_type_get_type(reflect_type);
+	auto it = s_MonoData.iterate_components.find(type);
+
+	if (it == s_MonoData.iterate_components.end())
+	{
+		TRC_WARN("Component is not valid, => {}", mono_type_get_name(type));
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	MonoType* class_type = mono_class_get_type(mono_object_get_class(src));
+	ScriptInstance* instance = entity.GetScript((uintptr_t)class_type);
+	if (!instance)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	trace::StringID string_id;
+	string_id.value = func_name_id;
+	ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+	if (!method)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	it->second(entity, method, instance);
+	
+}
+
+void Scene_IterateEntityScripts(UUID entity_id, UUID id, MonoObject* src, uint64_t func_name_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+
+	Entity src_entity = s_MonoData.scene->GetEntity(id);
+
+	MonoType* class_type = mono_class_get_type(mono_object_get_class(src));
+	ScriptInstance* instance = src_entity.GetScript((uintptr_t)class_type);
+	if (!instance)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	trace::StringID string_id;
+	string_id.value = func_name_id;
+	ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+	if (!method)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	s_MonoData.scene->GetScriptRegistry().Iterate(entity_id, [method, instance](UUID, Script*, ScriptInstance* script_instance)
+		{
+			MonoObject* obj = (MonoObject*)script_instance->GetBackendHandle();
+
+			void* params[] =
+			{
+				obj
+			};
+
+			InvokeScriptMethod_Instance(*method, *instance, params);
+		});
+
 }
 
 void Scene_DestroyEntity(UUID id)
@@ -1429,6 +1597,75 @@ void Scene_DisableEntity(UUID id)
 
 }
 
+MonoObject* Scene_GetEntityWithComponent(MonoReflectionType* reflect_type)
+{
+	MonoObject* result = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return result;
+	}
+
+	MonoType* type = mono_reflection_type_get_type(reflect_type);
+	auto it = s_MonoData.get_entity_with_component.find(type);
+
+	if (it == s_MonoData.get_entity_with_component.end())
+	{
+		TRC_WARN("Component is not valid, => {}", mono_type_get_name(type));
+		return result;
+	}
+	
+	Entity entity = it->second();
+	if (entity)
+	{
+		result = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(entity.GetID())->GetBackendHandle();
+	}
+	
+	return result;
+}
+
+MonoObject* Scene_GetEntityWithScript(MonoReflectionType* reflect_type)
+{
+	MonoObject* result = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return result;
+	}
+
+	MonoType* type = mono_reflection_type_get_type(reflect_type);
+	
+	s_MonoData.scene->GetScriptRegistry().Iterate((uintptr_t)type, [&result](UUID id, Script* script, ScriptInstance* instance) 
+		{
+			result = (MonoObject*)instance->GetBackendHandle();
+			return true;
+		});
+
+	return result;
+}
+
+bool Scene_GetStimulatePhysics()
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	return s_MonoData.scene->GetStimulatePhysics();
+}
+
+void Scene_SetStimulatePhysics(bool value)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	s_MonoData.scene->SetStimulatePhysics(value);
+}
+
 #pragma endregion
 
 #pragma region Physics
@@ -1469,6 +1706,17 @@ void Physics_GetTriggerData(TriggerPair* out_data, int64_t trigger_data)
 	out_data->otherEntity = ptr->otherEntity;
 	
 
+}
+
+void Physics_Step(float deltaTime)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	s_MonoData.scene->PhysicsStep(deltaTime);
 }
 
 
@@ -1808,6 +2056,12 @@ bool Networking_ConnectToLAN(MonoString* server)
 	return net_manager->ConnectToLAN(txt);
 }
 
+uint32_t Networking_InstanceID()
+{
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->GetInstanceID();
+}
+
 #pragma endregion
 
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
@@ -1828,6 +2082,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Action_RemoveScript);
 	ADD_INTERNAL_CALL(Action_GetName);
 	ADD_INTERNAL_CALL(Action_IsOwner);
+	ADD_INTERNAL_CALL(Action_GetNetID);
 
 
 	ADD_INTERNAL_CALL(TransformComponent_GetPosition);
@@ -1857,13 +2112,21 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_GetChildEntityByName);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Prefab_Position);
+	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Prefab_Position_NetID);
 	ADD_INTERNAL_CALL(Scene_InstanciateEntity_Position_NetID);
 	ADD_INTERNAL_CALL(Scene_DestroyEntity);
 	ADD_INTERNAL_CALL(Scene_EnableEntity);
 	ADD_INTERNAL_CALL(Scene_DisableEntity);
+	ADD_INTERNAL_CALL(Scene_IterateComponent);
+	ADD_INTERNAL_CALL(Scene_IterateEntityScripts);
+	ADD_INTERNAL_CALL(Scene_GetEntityWithComponent);
+	ADD_INTERNAL_CALL(Scene_GetEntityWithScript);
+	ADD_INTERNAL_CALL(Scene_GetStimulatePhysics);
+	ADD_INTERNAL_CALL(Scene_SetStimulatePhysics);
 
 	ADD_INTERNAL_CALL(Physics_GetCollisionData);
 	ADD_INTERNAL_CALL(Physics_GetTriggerData);
+	ADD_INTERNAL_CALL(Physics_Step);
 
 	ADD_INTERNAL_CALL(CharacterController_IsGrounded);
 	ADD_INTERNAL_CALL(CharacterController_Move);
@@ -1896,6 +2159,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Networking_CreateClient);
 	ADD_INTERNAL_CALL(Networking_ConnectTo);
 	ADD_INTERNAL_CALL(Networking_ConnectToLAN);
+	ADD_INTERNAL_CALL(Networking_InstanceID);
 
 }
 

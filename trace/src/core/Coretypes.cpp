@@ -14,6 +14,7 @@ namespace trace {
 	bool         AppSettings::windowed = false;
 	bool         AppSettings::is_editor = false;
 	std::string  AppSettings::exe_path = "";
+	uint32_t AppSettings::physics_tick_rate = 30;
 
 	bool operator==(const trace::StringID& right, const trace::StringID& left)
 	{

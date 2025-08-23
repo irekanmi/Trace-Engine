@@ -249,65 +249,6 @@ class NetController : Trace.Action
 
 }
 
-class TransformSync : Trace.Action
-{
 
-    public override void OnServerSend(UInt64 stream_handle)
-    {
-        TransformComponent pose = GetComponent<TransformComponent>();
-        Stream.WriteVec3(stream_handle, pose.Position);
-        Stream.WriteQuat(stream_handle, pose.Rotation);
-
-    }
-    
-    public override void OnClientSend(UInt64 stream_handle)
-    {
-
-        TransformComponent pose = GetComponent<TransformComponent>();
-        Stream.WriteVec3(stream_handle, pose.Position);
-        Stream.WriteQuat(stream_handle, pose.Rotation);
-
-    }
-
-    public override void OnClientReceive(UInt64 stream_handle)
-    {
-
-        Vec3 new_pos = Stream.ReadVec3(stream_handle);
-        Quat new_rot = Stream.ReadQuat(stream_handle);
-        
-        
-        if (IsOwner())
-        {
-            return;
-        }
-        else
-        {
-            TransformComponent pose = GetComponent<TransformComponent>();
-            pose.Position = new_pos;
-            pose.Rotation = new_rot;
-        }
-
-    }
-    
-    public override void OnServerReceive(UInt64 stream_handle)
-    {
-
-        Vec3 new_pos = Stream.ReadVec3(stream_handle);
-        Quat new_rot = Stream.ReadQuat(stream_handle);
-        
-        
-        if (!IsOwner())
-        {
-            TransformComponent pose = GetComponent<TransformComponent>();
-            pose.Position = new_pos;
-            pose.Rotation = new_rot;
-            return;
-        }
-
-
-    }
-
-
-}
 
 

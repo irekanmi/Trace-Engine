@@ -47,7 +47,7 @@ namespace trace::Network {
 		void OnClientDisconnect(uint32_t handle);
 		void OnServerConnect(uint32_t handle);
 		void OnServerDisconnect(uint32_t handle);
-		void OnPacketRecieve(NetworkStream* data, uint32_t handle);
+		void OnPacketRecieve(Packet& packet);
 		bool IsServer();
 		bool IsClient();
 		void AcquireRPCStream();

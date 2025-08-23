@@ -78,24 +78,29 @@ namespace trace::Network {
 			return;
 		}
 
+		//NOTE: wait time for connect to receive packet is set to half the delta time
+		float wait_time = deltaTime / 2.0f;
+
 		switch (m_type)
 		{
 		case NetType::CLIENT:
 		{
-			if (client.Listen(m_receivePacket))
+			client.Listen(m_receivePacket, wait_time);
+			/*if (client.Listen(m_receivePacket, wait_time))
 			{
 				OnPacketRecieve(&m_receivePacket.data, m_receivePacket.connection_handle);
 				m_receivePacket.data.MemSet(0, m_receivePacket.data.GetSize(), 0x00);
-			}
+			}*/
 			break;
 		}
 		case NetType::LISTEN_SERVER:
 		{
-			if (server.Listen(m_receivePacket))
+			server.Listen(m_receivePacket, wait_time);
+			/*if (server.Listen(m_receivePacket, wait_time))
 			{
 				OnPacketRecieve(&m_receivePacket.data, m_receivePacket.connection_handle);
 				m_receivePacket.data.MemSet(0, m_receivePacket.data.GetSize(), 0x00);
-			}
+			}*/
 
 			break;
 		}
@@ -235,6 +240,7 @@ namespace trace::Network {
 
 			server.SetClientConnectCallback(BIND_EVENT_FN(NetworkManager::OnClientConnect));
 			server.SetClientDisconnectCallback(BIND_EVENT_FN(NetworkManager::OnClientDisconnect));
+			server.SetProcessPacketCallback(BIND_EVENT_FN(NetworkManager::OnPacketRecieve));
 		}
 
 		
@@ -260,6 +266,7 @@ namespace trace::Network {
 
 			client.SetServerConnectCallback(BIND_EVENT_FN(NetworkManager::OnServerConnect));
 			client.SetServerDisconnectCallback(BIND_EVENT_FN(NetworkManager::OnServerDisconnect));
+			client.SetProcessPacketCallback(BIND_EVENT_FN(NetworkManager::OnPacketRecieve));
 		}
 
 		return result;
@@ -472,7 +479,7 @@ namespace trace::Network {
 		}
 	}
 
-	void NetworkManager::OnPacketRecieve(NetworkStream* data, uint32_t handle)
+	void NetworkManager::OnPacketRecieve(Packet& packet)
 	{
 		if (m_type == NetType::UNKNOWN)
 		{
@@ -490,11 +497,11 @@ namespace trace::Network {
 					if (!world_state_packet_received)
 					{
 						PacketMessageType message_type = PacketMessageType::UNKNOWN;
-						data->Read(message_type);
+						packet.data.Read(message_type);
 						if (message_type == PacketMessageType::SCENE_STATE)
 						{
 							// Process entites...
-							m_scene->ReadSceneState_Client(data);
+							m_scene->ReadSceneState_Client(&packet.data);
 							world_state_packet_received = true;
 							Packet scene_state = client.CreateSendPacket(12);// TODO: Implement custom allocator{ as soon as possible}.
 							PacketMessageType message_type = PacketMessageType::SCENE_STATE_RECEIVED;
@@ -504,12 +511,12 @@ namespace trace::Network {
 					}
 					else
 					{
-						m_scene->OnPacketReceive_Client(data, handle);
+						m_scene->OnPacketReceive_Client(&packet.data, packet.connection_handle);
 					}
 				}
 				else
 				{
-					m_scene->OnPacketReceive_Client(data, handle);
+					m_scene->OnPacketReceive_Client(&packet.data, packet.connection_handle);
 				}
 				break;
 			}
@@ -517,30 +524,32 @@ namespace trace::Network {
 			{
 				if (m_info.state_sync)
 				{
-					uint32_t prev_pos = data->GetPosition();
+					uint32_t prev_pos = packet.data.GetPosition();
 					PacketMessageType message_type = PacketMessageType::UNKNOWN;
-					data->Read(message_type);
+					packet.data.Read(message_type);
 					if (message_type == PacketMessageType::SCENE_STATE_RECEIVED)
 					{
-						auto c_it = std::find(connected_clients.begin(), connected_clients.end(), handle);
+						auto c_it = std::find(connected_clients.begin(), connected_clients.end(), packet.connection_handle);
 						if (c_it == connected_clients.end())
 						{
-							process_new_client(handle);
-							connected_clients.push_back(handle);
+							process_new_client(packet.connection_handle);
+							connected_clients.push_back(packet.connection_handle);
 						}
 						return;
 					}
 					else
 					{
-						data->SetPosition(prev_pos);
+						packet.data.SetPosition(prev_pos);
 					}
 
 				}
-				m_scene->OnPacketReceive_Server(data, handle);
+				m_scene->OnPacketReceive_Server(&packet.data, packet.connection_handle);
 				break;
 			}
 			}
 		}
+
+		m_receivePacket.data.MemSet(0, m_receivePacket.data.GetSize(), 0x00);
 	}
 
 	bool NetworkManager::IsServer()

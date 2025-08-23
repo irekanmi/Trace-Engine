@@ -2,13 +2,15 @@
 
 #include "resource/Resource.h"
 #include "resource/Ref.h"
-#include "entt.hpp"
 #include "render/Commands.h"
 #include "UUID.h"
 #include "scripting/ScriptRegistry.h"
 #include "Components.h"
 #include "core/Coretypes.h"
 #include "serialize/DataStream.h"
+
+#define ENTT_USE_ATOMIC
+#include "entt.hpp"
 
 namespace trace::Network {
 	class NetworkStream;
@@ -53,6 +55,7 @@ namespace trace {
 		void OnPacketReceive_Server(Network::NetworkStream* data, uint32_t source_handle);
 		void WriteSceneState_Server(Network::NetworkStream* data);
 		void ReadSceneState_Client(Network::NetworkStream* data);
+		void PhysicsStep(float deltaTime);
 
 		void EnableEntity(Entity entity);
 		void DisableEntity(Entity entity);
@@ -106,6 +109,8 @@ namespace trace {
 		std::string& GetName() { return m_name; }
 		void SetName(const std::string& name) { m_name = name; }
 		bool IsRunning() { return m_running; }
+		bool GetStimulatePhysics() { return m_stimulatePhysics; }
+		void SetStimulatePhysics(bool value) { m_stimulatePhysics = value; }
 
 		template<typename Component>
 		Entity ParentHasComponent(Entity entity)
@@ -129,14 +134,17 @@ namespace trace {
 		}
 
 		template<typename Component>
-		void IterateComponent(std::function<void(Entity)> callback)
+		void IterateComponent(std::function<bool(Entity)> callback)
 		{
 			auto comp_group = m_registry.view<Component>();
 			for (auto i : comp_group)
 			{
 				auto [comp] = comp_group.get(i);
 				Entity entity(i, this);
-				callback(entity);
+				if (callback(entity))
+				{
+					break;
+				}
 
 			}
 		}
@@ -190,6 +198,9 @@ namespace trace {
 		HierachyComponent* m_rootNode;
 		bool m_running = false;
 		std::vector<Entity> m_entityToDestroy;
+		bool m_stimulatePhysics = true;
+		float m_accumulator = 0.0f;
+		bool m_destroyed = false;
 
 	protected:
 		friend class Entity;

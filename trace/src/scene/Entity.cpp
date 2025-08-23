@@ -22,6 +22,15 @@ namespace trace {
 
 		return true;
 	}
+	uint32_t Entity::GetNetID()
+	{
+		if (NetObject* net = TryGetComponent<NetObject>())
+		{
+			return net->owner_id;
+		}
+
+		return 0;
+	}
 	bool Entity::HasScript(const std::string& script_name)
 	{
 		return m_scene->m_scriptRegistry.HasScript(GetID(), script_name);

@@ -25,6 +25,7 @@ namespace trace {
 	{
 		m_prefabScene->Destroy();
 		delete m_prefabScene; //TODO: Use custom allocator
+		m_prefabScene = nullptr;
 	}
 
 	/*Ref<Prefab> PrefabManager::Create(const std::string& name)

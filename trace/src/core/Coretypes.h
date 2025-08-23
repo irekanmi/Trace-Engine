@@ -77,6 +77,7 @@ namespace trace {
 		static bool windowed;
 		static bool is_editor;
 		static std::string exe_path;
+		static uint32_t physics_tick_rate;
 	};
 
 

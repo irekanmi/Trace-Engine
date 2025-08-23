@@ -2,6 +2,8 @@
 
 #include "Script.h"
 #include "scene/UUID.h"
+#include "multithreading/SpinLock.h"
+
 #include <functional>
 
 namespace trace {
@@ -42,6 +44,7 @@ namespace trace {
 
 		bool Erase(UUID id);
 		void Iterate(UUID id, std::function<void(UUID, Script*, ScriptInstance*)> callback, bool has_script = true);
+		void Iterate(uintptr_t script_handle, std::function<bool(UUID, Script*, ScriptInstance*)> callback);
 		void Iterate(std::function<void(ScriptManager&)> callback);
 
 		void ReloadScripts();
@@ -50,11 +53,14 @@ namespace trace {
 
 		static void Copy(ScriptRegistry& from, ScriptRegistry& to);
 
+	private:
+		ScriptInstance* add_new_instance(UUID id, uintptr_t script_id);
 		
 	private:
 		std::unordered_map<uintptr_t, ScriptManager> m_scripts;
 		std::unordered_map<Script*, FieldManager> m_fieldInstance;
 		Scene* m_scene = nullptr;
+		SpinLock m_lock;
 
 	protected:
 		friend class Scene;

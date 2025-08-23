@@ -42,6 +42,7 @@ namespace trace {
 		emit << YAML::BeginMap;
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Scene Version" << YAML::Value << "0.0.0.0";
+		emit << YAML::Key << "Stimulate Physics" << YAML::Value << scene->GetStimulatePhysics();
 		emit << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 
 		auto process_hierachy = [&](Entity entity, UUID, Scene*)
@@ -177,6 +178,10 @@ namespace trace {
 		}
 		scene = GenericAssetManager::get_instance()->CreateAssetHandle<Scene>(scene_name);
 		scene->SetName(scene_name);
+		if (data["Stimulate Physics"])
+		{
+			scene->SetStimulatePhysics(data["Stimulate Physics"].as<bool>());
+		}
 		YAML::Node entities = data["Entities"];
 		if (entities)
 		{
@@ -299,6 +304,8 @@ namespace trace {
 		uint32_t scene_str_count = static_cast<uint32_t>(scene->GetName().size());
 		stream->Write<uint32_t>(scene_str_count);
 		stream->Write((void*)scene->GetName().data(), scene_str_count);
+		bool stimulate_physics = scene->GetStimulatePhysics();
+		stream->Write<bool>(stimulate_physics);
 
 		uint32_t pos_1 = stream->GetPosition();
 		uint32_t entity_count = 0;
@@ -326,6 +333,10 @@ namespace trace {
 		stream->Read<uint32_t>(scene_str_count);
 		scene_name.resize(scene_str_count);
 		stream->Read((void*)scene_name.data(), scene_str_count);
+
+		bool stimulate_physics;
+		stream->Read<bool>(stimulate_physics);
+
 		Ref<Scene> scene = GenericAssetManager::get_instance()->TryGet<Scene>(scene_name);
 		if (scene)
 		{
@@ -334,6 +345,8 @@ namespace trace {
 		}
 		scene = GenericAssetManager::get_instance()->CreateAssetHandle<Scene>(scene_name);
 		scene->SetName(scene_name);
+		scene->SetStimulatePhysics(stimulate_physics);
+
 		uint32_t entity_count = 0;
 		stream->Read<uint32_t>(entity_count);
 		for (uint32_t i = 0; i < entity_count; i++)
@@ -374,11 +387,11 @@ namespace trace {
 		uint32_t data_size = 0;
 
 
-		auto img_lambda = [&](Entity entity) {
+		auto img_lambda = [&](Entity entity) -> bool {
 			ImageComponent& img = entity.GetComponent<ImageComponent>();
 			if (!img.image)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(img.image->GetName());
 			auto it = map.find(id);
@@ -433,13 +446,15 @@ namespace trace {
 				ast_h.data_size = stream.GetPosition() - ast_h.offset;
 				map.emplace(std::make_pair(id, ast_h));
 			}
+
+			return false;
 		};
 
-		auto model_lambda = [&](Entity entity) {
+		auto model_lambda = [&](Entity entity) -> bool {
 			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			Ref<MaterialInstance> res = renderer._material;
 			for (auto& m_data : res->GetMaterialData())
@@ -499,13 +514,16 @@ namespace trace {
 
 				}
 			}
+
+			return false;
 		};
 
-		auto skinned_model_lambda = [&](Entity entity) {
+		auto skinned_model_lambda = [&](Entity entity) -> bool
+		{
 			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			Ref<MaterialInstance> res = renderer._material;
 			for (auto& m_data : res->GetMaterialData())
@@ -565,6 +583,8 @@ namespace trace {
 
 				}
 			}
+
+			return false;
 		};
 
 		scene->IterateComponent<ImageComponent>(img_lambda);
@@ -586,18 +606,18 @@ namespace trace {
 	bool SceneSerializer::SerializeAnimationClips(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 
-		auto anim_lambda = [&](Entity entity) 
+		auto anim_lambda = [&](Entity entity) -> bool
 		{
 			AnimationComponent& anim = entity.GetComponent<AnimationComponent>();
 			if (!anim.animation)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(anim.animation->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
@@ -606,6 +626,7 @@ namespace trace {
 
 			map.emplace(std::make_pair(id, header));
 
+			return false;
 		};
 
 		scene->IterateComponent<AnimationComponent>(anim_lambda);
@@ -627,32 +648,34 @@ namespace trace {
 			map.emplace(std::make_pair(id, header));
 		};
 
-		auto graph_lambda = [&](Entity entity) 
+		auto graph_lambda = [&](Entity entity) -> bool
 		{
 			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 			Ref<Animation::Graph> graph = anim.graph.GetGraph();
 			if (!graph)
 			{
-				return;
+				return false;
 			}
 			uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
 			Reflection::CustomMemberCallback(*graph.get(), anim_clip_type_id, anim_clip_callback);
 
+			return false;
 		};
 
 		scene->IterateComponent<AnimationGraphController>(graph_lambda);
 
-		auto sequence_lambda = [&](Entity entity)
+		auto sequence_lambda = [&](Entity entity) -> bool
 		{
 			SequencePlayer& player = entity.GetComponent<SequencePlayer>();
 			Ref<Animation::Sequence> sequence = player.sequence.GetSequence();
 			if (!sequence)
 			{
-				return;
+				return false;
 			}
 			uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
 			Reflection::CustomMemberCallback(*sequence.get(), anim_clip_type_id, anim_clip_callback);
 
+			return false;
 		};
 
 		scene->IterateComponent<SequencePlayer>(sequence_lambda);
@@ -663,20 +686,20 @@ namespace trace {
 	bool SceneSerializer::SerializeAnimationGraphs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 
-		auto graph_lambda = [&](Entity entity)
+		auto graph_lambda = [&](Entity entity) -> bool
 		{
 			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 			Ref<Animation::Graph> graph = anim.graph.GetGraph();
 			if (!graph)
 			{
-				return;
+				return false;
 			}
 			
 			UUID id = GetUUIDFromName(graph->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 
 			AssetHeader header = {};
@@ -686,6 +709,8 @@ namespace trace {
 			header.data_size = stream.GetPosition() - header.offset;
 
 			map.emplace(std::make_pair(id, header));
+
+			return false;
 
 		};
 
@@ -702,18 +727,18 @@ namespace trace {
 	bool SceneSerializer::SerializeFonts(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 		
-		auto fnt_lambda = [&](Entity entity)
+		auto fnt_lambda = [&](Entity entity) -> bool
 		{
 			TextComponent& txt = entity.GetComponent<TextComponent>();
 			if (!txt.font)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(txt.font->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 
 			std::filesystem::path p = GetPathFromUUID(id);
@@ -739,6 +764,7 @@ namespace trace {
 				TRC_ERROR("Failed to open font file, path -> {}", p.string());
 			}
 			
+			return false;
 		};
 
 		scene->IterateComponent<TextComponent>(fnt_lambda);
@@ -756,18 +782,18 @@ namespace trace {
 	bool SceneSerializer::SerializeModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 		
-		auto mdl_lambda = [&](Entity entity)
+		auto mdl_lambda = [&](Entity entity) -> bool
 		{
 			ModelComponent& comp = entity.GetComponent<ModelComponent>();
 			if (comp._model)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(comp._model->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 			Ref<Model> res = comp._model;
 			AssetHeader ast_h;
@@ -778,6 +804,8 @@ namespace trace {
 			ast_h.data_size = stream.GetPosition() - ast_h.offset;
 
 			map.emplace(std::make_pair(id, ast_h));
+
+			return false;
 		};
 
 		scene->IterateComponent<ModelComponent>(mdl_lambda);
@@ -789,46 +817,50 @@ namespace trace {
 	bool SceneSerializer::SerializeMaterials(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 
-		auto mat_lambda = [&](Entity entity)
+		auto mat_lambda = [&](Entity entity) -> bool
 		{
 			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(renderer._material->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
 			MaterialSerializer::Serialize(renderer._material, &stream);
 			header.data_size = stream.GetPosition() - header.offset;
 			map.emplace(std::make_pair(id, header));
+
+			return false;
 		};
 
 		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
 
-		auto skin_mat_lambda = [&](Entity entity)
+		auto skin_mat_lambda = [&](Entity entity) -> bool
 		{
 			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(renderer._material->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
 			MaterialSerializer::Serialize(renderer._material, &stream);
 			header.data_size = stream.GetPosition() - header.offset;
 			map.emplace(std::make_pair(id, header));
+
+			return false;
 		};
 
 		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
@@ -839,23 +871,23 @@ namespace trace {
 	bool SceneSerializer::SerializePipelines(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 		
-		auto mat_lambda = [&](Entity entity)
+		auto mat_lambda = [&](Entity entity) -> bool
 		{
 			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
 			if (!pipeline)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(pipeline->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
@@ -863,27 +895,29 @@ namespace trace {
 			PipelineSerializer::Serialize(pipeline, &stream);
 			header.data_size = stream.GetPosition() - header.offset;
 			map.emplace(std::make_pair(id, header));
+
+			return false;
 		};
 
 		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
 
-		auto skin_mat_lambda = [&](Entity entity)
+		auto skin_mat_lambda = [&](Entity entity) -> bool
 		{
 			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
 			if (!pipeline)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(pipeline->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
@@ -891,6 +925,8 @@ namespace trace {
 			PipelineSerializer::Serialize(pipeline, &stream);
 			header.data_size = stream.GetPosition() - header.offset;
 			map.emplace(std::make_pair(id, header));
+			
+			return false;
 		};
 
 		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
@@ -924,40 +960,44 @@ namespace trace {
 
 		};
 
-		auto mat_lambda = [&](Entity entity)
+		auto mat_lambda = [&](Entity entity) -> bool
 		{
 			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
 			if (!pipeline)
 			{
-				return;
+				return false;
 			}
 			PipelineStateDesc ds = pipeline->GetDesc();
 			shad_lambda(ds.vertex_shader);
 			shad_lambda(ds.pixel_shader);
+
+			return false;
 		};
 
 		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
 
-		auto skin_mat_lambda = [&](Entity entity)
+		auto skin_mat_lambda = [&](Entity entity) -> bool
 		{
 			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
 			if (!renderer._material)
 			{
-				return;
+				return false;
 			}
 			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
 			if (!pipeline)
 			{
-				return;
+				return false;
 			}
 			PipelineStateDesc ds = pipeline->GetDesc();
 			shad_lambda(ds.vertex_shader);
 			shad_lambda(ds.pixel_shader);
+
+			return false;
 		};
 
 		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
@@ -968,20 +1008,20 @@ namespace trace {
 	bool SceneSerializer::SerializePrefabs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 
-		auto prefab_lambda = [&](Entity entity)
+		auto prefab_lambda = [&](Entity entity) -> bool
 		{
 			PrefabComponent& comp = entity.GetComponent<PrefabComponent>();
 			Ref<Prefab> prefab = comp.handle;
 			if (!prefab)
 			{
-				return;
+				return false;
 			}
 
 			UUID id = GetUUIDFromName(prefab->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 
 			AssetHeader header = {};
@@ -992,6 +1032,7 @@ namespace trace {
 
 			map.emplace(std::make_pair(id, header));
 
+			return false;
 		};
 
 		scene->IterateComponent<PrefabComponent>(prefab_lambda);
@@ -1019,26 +1060,29 @@ namespace trace {
 			map.emplace(std::make_pair(id, header));
 		};
 
-		auto graph_lambda = [&](Entity entity)
+		auto graph_lambda = [&](Entity entity) -> bool
 		{
 			AnimationGraphController& anim = entity.GetComponent<AnimationGraphController>();
 			Ref<Animation::Graph> graph = anim.graph.GetGraph();
 			if (!graph)
 			{
-				return;
+				return false;
 			}
 			uint64_t skeleton_type_id = Reflection::TypeID<Ref<Animation::Skeleton>>();
 			Reflection::CustomMemberCallback(*graph.get(), skeleton_type_id, skeleton_callback);
 
+			return false;
 		};
 
 		scene->IterateComponent<AnimationGraphController>(graph_lambda);
 
-		auto skinned_model_lambda = [&](Entity entity)
+		auto skinned_model_lambda = [&](Entity entity) -> bool
 		{
 			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
 			uint64_t skeleton_type_id = Reflection::TypeID<Ref<Animation::Skeleton>>();
 			Reflection::CustomMemberCallback(renderer, skeleton_type_id, skeleton_callback);
+
+			return false;
 
 		};
 
@@ -1050,20 +1094,20 @@ namespace trace {
 
 	bool SceneSerializer::SerializeSequences(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		auto sequence_lambda = [&](Entity entity)
+		auto sequence_lambda = [&](Entity entity) -> bool
 		{
 			SequencePlayer& anim = entity.GetComponent<SequencePlayer>();
 			Ref<Animation::Sequence> sequence = anim.sequence.GetSequence();
 			if (!sequence)
 			{
-				return;
+				return false;
 			}
 
 			UUID id = GetUUIDFromName(sequence->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 
 			AssetHeader header = {};
@@ -1074,6 +1118,7 @@ namespace trace {
 
 			map.emplace(std::make_pair(id, header));
 
+			return false;
 		};
 
 		scene->IterateComponent<SequencePlayer>(sequence_lambda);
@@ -1083,18 +1128,18 @@ namespace trace {
 
 	bool SceneSerializer::SerializeSkinnedModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
-		auto skinned_model_lambda = [&](Entity entity)
+		auto skinned_model_lambda = [&](Entity entity) -> bool
 		{
 			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
 			if (!renderer._model)
 			{
-				return;
+				return false;
 			}
 			UUID id = GetUUIDFromName(renderer._model->GetName());
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return;
+				return false;
 			}
 
 			AssetHeader header = {};
@@ -1106,6 +1151,7 @@ namespace trace {
 
 			map.emplace(std::make_pair(id, header));
 
+			return false;
 		};
 
 		scene->IterateComponent<SkinnedModelRenderer>(skinned_model_lambda);

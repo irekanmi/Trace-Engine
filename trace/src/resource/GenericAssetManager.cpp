@@ -14,29 +14,12 @@ namespace trace {
 	void GenericAssetManager::Shutdown()
 	{
 
-		//for (int32_t i = (m_numUnits - 1); i >= 0 ; i--)
-		//{
-		//	Resource* asset = m_assets[i];
-		//	if (!asset)
-		//	{
-		//		continue;
-		//	}
-		//	if (asset->m_id == INVALID_ID)
-		//	{
-		//		continue;
-		//	}
-		//	TRC_TRACE("Asset was still in use, name : {}, RefCount : {}", asset->GetName(), asset->m_refCount);
-		//	asset->m_refCount = 0;
-		//	asset->Destroy();
-
-		//	delete asset;//TODO: Use custom memory allocator
-		//}
-
 		for (auto [id, asset] : m_assets)
 		{
 			TRC_TRACE("Asset was still in use, name : {}, RefCount : {}", asset->GetName(), asset->m_refCount);
 			asset->m_refCount = 0;
 			asset->Destroy();
+			m_assetMap.erase(asset->GetUUID());
 
 			delete asset;//TODO: Use custom memory allocator
 		}
@@ -60,9 +43,10 @@ namespace trace {
 		}
 
 
-		m_assets.erase(asset->GetUUID());
-		TRC_TRACE("{} is destroyed", asset->GetName());
 		asset->Destroy();
+		TRC_TRACE("{} is destroyed", asset->GetName());
+		m_assets.erase(asset->GetUUID());
+		asset->m_assetID = 0;
 
 
 		delete asset;//TODO: Use custom memory allocator

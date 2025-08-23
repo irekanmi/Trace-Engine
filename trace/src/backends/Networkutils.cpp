@@ -2,6 +2,8 @@
 
 #include "backends/Networkutils.h"
 #include "core/io/Logging.h"
+#include "networking/NetClient.h"
+#include "networking/NetServer.h"
 
 using namespace trace::Network;
 
@@ -23,8 +25,8 @@ bool __ENet_ConnectTo_C(HostInfo * host, Connection * out_handle, const std::str
 bool __ENet_ConnectTo__C(HostInfo * host, Connection * out_handle, Connection * server);
 bool __ENet_Disconnect_C(HostInfo * host, Connection * connection);
 bool __ENet_Disconnect_S(HostInfo * host, Connection * connection);
-bool __ENet_ReceivePacket_C(HostInfo * host, NetworkStream & packet_data, Connection * out_source_connection);
-bool __ENet_ReceivePacket_S(HostInfo * host, NetworkStream & packet_data, Connection * out_source_connection);
+bool __ENet_ReceivePacket_C(HostInfo * host, Packet & packet_data, Connection * out_source_connection, NetClient* client, float wait_time);
+bool __ENet_ReceivePacket_S(HostInfo * host, Packet & packet_data, Connection * out_source_connection, NetServer* server, float wait_time);
 bool __ENet_SendPacket(HostInfo * host, Connection * connection, NetworkStream & packet_data, PacketSendMode mode);
 bool __ENet_ReceiveSocketData(HostInfo * host, NetworkStream & packet_data, Connection * source);
 bool __ENet_SendSocketData(HostInfo * host, NetworkStream & packet_data, Connection * source, uint32_t port);
@@ -112,16 +114,16 @@ namespace trace {
 		return _disconnect_S(host, connection);
 	}
 
-	bool NetFunc::ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection)
+	bool NetFunc::ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetClient* client, float wait_time)
 	{
 		NET_FUNC_IS_VALID(_receivePacket_C);
-		return _receivePacket_C(host, packet_data, out_source_connection);
+		return _receivePacket_C(host, packet_data, out_source_connection, client, wait_time);
 	}
 
-	bool NetFunc::ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection)
+	bool NetFunc::ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetServer* server, float wait_time)
 	{
 		NET_FUNC_IS_VALID(_receivePacket_S);
-		return _receivePacket_S(host, packet_data, out_source_connection);
+		return _receivePacket_S(host, packet_data, out_source_connection, server, wait_time);
 	}
 
 	bool NetFunc::SendPacket(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode)
@@ -443,7 +445,7 @@ bool __ENet_Disconnect_S(HostInfo* host, Connection* connection)
 {
 	return __ENet_Disconnect_C(host, connection);
 }
-bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection)
+bool __ENet_ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetClient* net_client, float wait_time)
 {
 	if (!host)
 	{
@@ -460,7 +462,10 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 	ENetEvent network_event;
 	ENetHost* client = (ENetHost*)host->internal_handle;
 
-	while (enet_host_service(client, &network_event, 0) > 0)
+	enet_host_flush(client);
+
+	uint32_t mille_sec = uint32_t(wait_time * 1000.0f);
+	while (enet_host_service(client, &network_event, wait_time) > 0)
 	{
 		switch (network_event.type)
 		{
@@ -470,7 +475,6 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->port = network_event.peer->address.port;
 			out_source_connection->internal_handle = network_event.peer;
 
-			return false;
 			break;
 		}
 
@@ -481,14 +485,15 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->internal_handle = network_event.peer;
 
 			//packet_data = NetworkStream(network_event.packet->data, network_event.packet->dataLength, true);
-			packet_data.Write(0, network_event.packet->data, network_event.packet->dataLength);
-			packet_data.SetPosition(0);
-			packet_data.MemSet(network_event.packet->dataLength, packet_data.GetSize(), 0x00);
+			packet_data.data.Write(0, network_event.packet->data, network_event.packet->dataLength);
+			packet_data.data.SetPosition(0);
+			packet_data.data.MemSet(network_event.packet->dataLength, packet_data.data.GetSize(), 0x00);
+
+			net_client->ProcessPacket(packet_data, *out_source_connection);
 
 			/* Clean up the packet now that we're done using it. */
 			enet_packet_destroy(network_event.packet);
 
-			return true;
 			break;
 		}
 
@@ -500,16 +505,15 @@ bool __ENet_ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connecti
 			//TODO: Handle server disconnection
 			TRC_ERROR("Lost Connection to Server");
 
-			return true;
 			break;
 		}
 		}
 	}
 
 
-	return false;
+	return true;
 }
-bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection)
+bool __ENet_ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetServer* net_server, float wait_time)
 {
 	if (!host)
 	{
@@ -526,7 +530,10 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 	ENetEvent network_event;
 	ENetHost* server = (ENetHost*)host->internal_handle;
 
-	while (enet_host_service(server, &network_event, 0) > 0)
+	enet_host_flush(server);
+
+	uint32_t milli_sec = uint32_t(wait_time * 1000.0f);
+	while (enet_host_service(server, &network_event, milli_sec) > 0)
 	{
 		switch (network_event.type)
 		{
@@ -537,14 +544,12 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->internal_handle = network_event.peer;
 
 
-			NetworkStream out_data(sizeof(PacketType));
 			PacketType type = PacketType::CONNECTION_REQUEST;
-			out_data.Write(type);
 
-			packet_data = out_data;
-			packet_data.SetPosition(0);
+			packet_data.data.SetPosition(0);
+			packet_data.data.Write(type);
+			net_server->ProcessPacket(packet_data, *out_source_connection);
 
-			return true;
 			break;
 		}
 
@@ -553,15 +558,16 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->host = network_event.peer->address.host;
 			out_source_connection->port = network_event.peer->address.port;
 			out_source_connection->internal_handle = network_event.peer;
-			packet_data.Write(0, network_event.packet->data, network_event.packet->dataLength);
-			packet_data.SetPosition(0);
-			packet_data.MemSet(network_event.packet->dataLength, packet_data.GetSize(), 0x00);
+			packet_data.data.Write(0, network_event.packet->data, network_event.packet->dataLength);
+			packet_data.data.SetPosition(0);
+			packet_data.data.MemSet(network_event.packet->dataLength, packet_data.data.GetSize(), 0x00);
+
+			net_server->ProcessPacket(packet_data, *out_source_connection);
 
 			/* Clean up the packet now that we're done using it. */
 			enet_packet_destroy(network_event.packet);
 
 
-			return true;
 			break;
 		}
 
@@ -571,20 +577,19 @@ bool __ENet_ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connecti
 			out_source_connection->port = network_event.peer->address.port;
 			out_source_connection->internal_handle = network_event.peer;
 
-			NetworkStream out_data(sizeof(PacketType));
 			PacketType type = PacketType::DISCONNECT;
-			out_data.Write(type);
 
-			packet_data = out_data;
-			packet_data.SetPosition(0);
+			packet_data.data.SetPosition(0);
+			packet_data.data.Write(type);
+			net_server->ProcessPacket(packet_data, *out_source_connection);
 
-			return true;
 			break;
 		}
 		}
 	}
 
-	return false;
+
+	return true;
 }
 bool __ENet_SendPacket(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode)
 {
@@ -600,13 +605,14 @@ bool __ENet_SendPacket(HostInfo* host, Connection* connection, NetworkStream& pa
 		return false;
 	}
 
-	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : ENetPacketFlag::ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT/* | ENetPacketFlag::ENET_PACKET_FLAG_UNSEQUENCED*/;
+	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : /*ENetPacketFlag::ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT | */ENetPacketFlag::ENET_PACKET_FLAG_UNSEQUENCED;
 
 	ENetPacket* packet = enet_packet_create(packet_data.GetData(), packet_data.GetPosition(), flag);
 
 	ENetPeer* peer = (ENetPeer*)connection->internal_handle;
 
 	enet_peer_send(peer, 0, packet);
+
 
 	return true;
 }

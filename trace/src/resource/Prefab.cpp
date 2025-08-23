@@ -17,7 +17,6 @@ namespace trace {
     bool Prefab::Create(Entity handle)
     {
         Prefab* asset = this;
-        //Entity p = PrefabManager::get_instance()->GetScene()->DuplicateEntity(handle);
         std::unordered_map<UUID, UUID> prefab_map;
         Entity p = instancite_prefab_hierachy(PrefabManager::get_instance()->GetScene(), handle, Entity(), prefab_map);
         asset->SetHandle(p.GetID());

@@ -636,6 +636,7 @@ namespace physx {
 		}
 
 		PxShape* res = nullptr;
+
 		switch (geometry.type)
 		{
 		case trace::PhyShapeType::Box:
@@ -736,7 +737,9 @@ namespace physx {
 
 
 		act->attachShape(*res);
+		scn->lockWrite();
 		scn->addActor(*act);
+		scn->unlockWrite();
 		PhysxShape* result = new PhysxShape(); //TODO: use custom allocator
 		result->shp = res;
 		result->actor = act;
@@ -950,7 +953,9 @@ namespace physx {
 
 			PxScene* scn = in_scene->scene;
 			PxRigidActor* actor = reinterpret_cast<PxRigidActor*>(rigid_body.GetInternal());
+			scn->lockWrite();
 			scn->addActor(*actor);
+			scn->unlockWrite();
 			return true;
 		}
 		return false;
@@ -1028,7 +1033,9 @@ namespace physx {
 		desc.reportCallback = nullptr;
 
 		PxController* res = nullptr;
+		in_scene->scene->lockWrite();
 		res = in_scene->controller_manager->createController(desc);
+		in_scene->scene->unlockWrite();
 
 		TRC_ASSERT(res != nullptr, "Unable to Create Character Controller, Function: {}", __FUNCTION__);
 

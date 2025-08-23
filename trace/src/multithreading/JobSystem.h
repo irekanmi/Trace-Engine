@@ -12,6 +12,7 @@
 
 namespace trace {
 
+	class Event;
 
 	enum JobFlagBit
 	{
@@ -44,7 +45,7 @@ namespace trace {
 
 	struct Counter
 	{
-		std::atomic<uint32_t> index = 0;
+		std::atomic<int32_t> index = 0;
 		SpinLock lock;
 
 		void Increment();
@@ -65,6 +66,7 @@ namespace trace {
 		void WaitForCounter(Counter* counter);
 		void WaitForCounterAndFree(Counter* counter);
 		bool IsActive() { return m_active; }
+		bool AppRunning() { return !m_appShutdown; }
 
 		Counter* CreateCounter();
 
@@ -72,6 +74,7 @@ namespace trace {
 		bool TryGetJob();
 		size_t GetThreadID();
 		uint32_t GetThreadCount();
+		void OnEvent(Event* p_event);
 
 		static JobSystem* get_instance();
 	private:
@@ -79,6 +82,7 @@ namespace trace {
 		std::unordered_map<size_t, ThreadInfo> m_threadInfo;
 		ThreadRingBuffer<Job, JOB_POOL_SIZE> m_jobs;
 		bool m_active = false;
+		bool m_appShutdown = false;
 		uint32_t m_numThreads;
 
 

@@ -8,6 +8,17 @@ namespace Trace
 {
     public class Scene
     {
+        static public bool StimulatePhysics
+        {
+            get
+            {
+                return InternalCalls.Scene_GetStimulatePhysics();
+            }
+            set
+            {
+                InternalCalls.Scene_SetStimulatePhysics(value);
+            }
+        }
         static public Action GetEntityByName(ulong string_id)
         {
             object obj = InternalCalls.Scene_GetEntityByName(string_id);
@@ -24,6 +35,20 @@ namespace Trace
             object obj = InternalCalls.Scene_GetEntity(entity_id);
             return obj as Action;
         }
+        
+        static public Action GetEntityWithComponent<T>()
+        {
+            Type type = typeof(T);
+            object obj = InternalCalls.Scene_GetEntityWithComponent(type);
+            return obj as Action;
+        }
+        
+        static public Action GetEntityWithScript<T>()
+        {
+            Type type = typeof(T);
+            object obj = InternalCalls.Scene_GetEntityWithScript(type);
+            return obj as Action;
+        }
 
         static public Action InstanciateEntity(Trace.Action entity, Vec3 position)
         {
@@ -38,6 +63,12 @@ namespace Trace
         static public Action InstanciatePrefab(Prefab prefab, Vec3 position)
         {
             object obj = InternalCalls.Scene_InstanciateEntity_Prefab_Position( prefab.GetID() , ref position);
+            return obj as Action;
+        }
+        
+        static public Action InstanciatePrefab_Net(Prefab prefab, Vec3 position, uint owner_id)
+        {
+            object obj = InternalCalls.Scene_InstanciateEntity_Prefab_Position_NetID( prefab.GetID() , ref position, owner_id);
             return obj as Action;
         }
         
@@ -89,6 +120,17 @@ namespace Trace
             DisableEntity(entity.GetID());
         }
 
+
+        static public void IterateComponent<T>(Trace.Action src, string func_name)
+        {
+            Type comp_type = typeof(T);
+            InternalCalls.Scene_IterateComponent(src.GetID(), src, Utils.HashString(func_name), comp_type);
+        }
+
+        static public void IterateEntityScripts(Trace.Action entity, Trace.Action src, string func_name)
+        {
+            InternalCalls.Scene_IterateEntityScripts(entity.GetID(), src.GetID(), src, Utils.HashString(func_name));
+        }
 
 
     }

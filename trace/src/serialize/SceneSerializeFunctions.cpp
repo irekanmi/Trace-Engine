@@ -345,6 +345,16 @@ namespace trace {
 		// --------------------------------------------------
 	}
 
+#define SERIALIZE_SCRIPTS   if (scene->IsRunning())					   \
+							{										   \
+								instance->GetFieldValue(name, data);   \
+							}										   \
+							else									   \
+							{										   \
+								ins->GetValue(name, data);			   \
+							}										   \
+							stream->Write(data);				       \
+
 	void serialize_entity_scripts_binary(Entity entity, DataStream* stream, Scene* scene)
 	{
 		//Scripts ----------------------------------------
@@ -369,7 +379,7 @@ namespace trace {
 				stream->Write<uint32_t>(script_str_count);
 				stream->Write((void*)script->GetScriptName().data(), script_str_count);
 
-				bool has_fields = !(field_it == field_manager.end());
+				bool has_fields = !scene->IsRunning() ? !(field_it == field_manager.end()) : true;
 				uint32_t field_count = 0;
 				if (!has_fields)
 				{
@@ -378,15 +388,15 @@ namespace trace {
 				}
 				if (has_fields)
 				{
-					ScriptFieldInstance& ins = field_manager[uuid];
-					field_count = static_cast<uint32_t>(ins.GetFields().size());
+					ScriptFieldInstance* ins = scene->IsRunning() ? nullptr : &field_manager[uuid];
+					field_count = script->GetFields().size();
 					stream->Write<uint32_t>(field_count);
-					for (auto& [name, field] : ins.GetFields())
+					for (auto& [name, field] : script->GetFields())
 					{
 						uint32_t str_count = static_cast<uint32_t>(name.size());
 						stream->Write<uint32_t>(str_count);
 						stream->Write((void*)name.data(), str_count);
-						switch (field.type)
+						switch (field.field_type)
 						{
 						case ScriptFieldType::String:
 						{
@@ -395,107 +405,93 @@ namespace trace {
 						case ScriptFieldType::Bool:
 						{
 							bool data;
-							ins.GetValue(name, data);
-							stream->Write<bool>(data);
+							SERIALIZE_SCRIPTS;
+
 							break;
 						}
 						case ScriptFieldType::Byte:
 						{
 							char data;
-							ins.GetValue(name, data);
-							stream->Write<char>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Double:
 						{
 							double data;
-							ins.GetValue(name, data);
-							stream->Write<double>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Char:
 						{
 							char data;
-							ins.GetValue(name, data);
-							stream->Write<char>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Float:
 						{
 							float data;
-							ins.GetValue(name, data);
-							stream->Write<float>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Int16:
 						{
 							int16_t data;
-							ins.GetValue(name, data);
-							stream->Write<int16_t>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Int32:
 						{
 							int32_t data;
-							ins.GetValue(name, data);
-							stream->Write<int32_t>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Int64:
 						{
 							int64_t data;
-							ins.GetValue(name, data);
-							stream->Write<int64_t>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::UInt16:
 						{
 							uint16_t data;
-							ins.GetValue(name, data);
-							stream->Write<uint16_t>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::UInt32:
 						{
 							uint32_t data;
-							ins.GetValue(name, data);
-							stream->Write<uint32_t>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::UInt64:
 						{
 							uint64_t data;
-							ins.GetValue(name, data);
-							stream->Write<uint64_t>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Action:
 						case ScriptFieldType::Prefab:
 						{
 							UUID data;
-							ins.GetValue(name, data);
-							stream->Write<UUID>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Vec2:
 						{
 							glm::vec2 data;
-							ins.GetValue(name, data);
-							stream->Write<glm::vec2>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Vec3:
 						{
 							glm::vec3 data;
-							ins.GetValue(name, data);
-							stream->Write<glm::vec3>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 						case ScriptFieldType::Vec4:
 						{
 							glm::vec4 data;
-							ins.GetValue(name, data);
-							stream->Write<glm::vec4>(data);
+							SERIALIZE_SCRIPTS;
 							break;
 						}
 
@@ -668,6 +664,16 @@ namespace trace {
 		}
 	}
 
+#define DESERIALIZE_SCRIPT stream->Read(data);						             \
+	                       if (scene->IsRunning())                               \
+							{                                                    \
+								obj_ins->SetFieldValue(field_name, data);        \
+							}                                                    \
+							else                                                 \
+							{													 \
+								ins.SetValue(field_name, data);					 \
+							}													 \
+
 	void deserialize_entity_scripts_binary(Entity obj, Scene* scene, DataStream* stream)
 	{
 		UUID uuid = obj.GetID();
@@ -690,7 +696,7 @@ namespace trace {
 					TRC_ASSERT(false, "Script:{} does not exist in the assembly", script_name);
 					continue;
 				}
-				obj.AddScript(script_name);
+				ScriptInstance* obj_ins = obj.AddScript(script_name);
 
 				ScriptRegistry& script_registry = scene->GetScriptRegistry();
 
@@ -728,92 +734,79 @@ namespace trace {
 					case ScriptFieldType::Bool:
 					{
 						bool data;
-						stream->Read<bool>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Byte:
 					{
 						char data;
-						stream->Read<char>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Double:
 					{
 						double data;
-						stream->Read<double>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Char:
 					{
 						char data;
-						stream->Read<char>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Float:
 					{
 						float data;
-						stream->Read<float>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Int16:
 					{
 						int16_t data;
-						stream->Read<int16_t>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Int32:
 					{
 						int32_t data;
-						stream->Read<int32_t>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Int64:
 					{
 						int64_t data;
-						stream->Read<int64_t>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::UInt16:
 					{
 						uint16_t data;
-						stream->Read<uint16_t>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::UInt32:
 					{
 						uint32_t data;
-						stream->Read<uint32_t>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::UInt64:
 					{
 						uint64_t data;
-						stream->Read<uint64_t>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Action:
 					{
 						UUID data;
-						stream->Read<UUID>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Prefab:
 					{
 						UUID data;
-						stream->Read<UUID>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						if (data != 0)
 						{
 							Ref<Prefab> asset = Prefab::Deserialize(data);
@@ -827,22 +820,19 @@ namespace trace {
 					case ScriptFieldType::Vec2:
 					{
 						glm::vec2 data;
-						stream->Read<glm::vec2>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Vec3:
 					{
 						glm::vec3 data;
-						stream->Read<glm::vec3>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					case ScriptFieldType::Vec4:
 					{
 						glm::vec4 data;
-						stream->Read<glm::vec4>(data);
-						ins.SetValue(field_name, data);
+						DESERIALIZE_SCRIPT;
 						break;
 					}
 					}
@@ -909,6 +899,7 @@ namespace trace {
 		stream->Read<uint32_t>(entity_count);
 		Entity obj;
 
+		std::unordered_map<UUID, UUID> entity_map;
 		obj = deserialize_entity_components_binary(scene, stream);
 
 

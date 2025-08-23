@@ -32,7 +32,7 @@ namespace trace::Network {
 
 		return result;
 	}
-	bool NetClient::Listen(Packet& out_packet_data)
+	bool NetClient::Listen(Packet& out_packet_data, float wait_time)
 	{
 		if (m_LAN && !m_connection.internal_handle)
 		{
@@ -69,112 +69,113 @@ namespace trace::Network {
 			NetFunc::SendSocketData(&m_info, lan_data, nullptr, listen_port + 24);
 		}
 
-		bool result = false;
+		bool result = this;
 		Connection source = {};
-		if (NetFunc::ReceivePacket_C(&m_info, out_packet_data.data, &source))
-		{
-			PacketType type = PacketType::NONE;
-			out_packet_data.data.Read(type);
+		NetFunc::ReceivePacket_C(&m_info, out_packet_data, &source, this, wait_time);
+		//if (NetFunc::ReceivePacket_C(&m_info, out_packet_data.data, &source, wait_time))
+		//{
+		//	PacketType type = PacketType::NONE;
+		//	out_packet_data.data.Read(type);
 
-			switch (type)
-			{
-			case PacketType::CONNECTION_CHALLENGE:
-			{
-				if (m_connection.internal_handle)
-				{
-					return false;
-				}
+		//	switch (type)
+		//	{
+		//	case PacketType::CONNECTION_CHALLENGE:
+		//	{
+		//		if (m_connection.internal_handle)
+		//		{
+		//			return false;
+		//		}
 
-				uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
+		//		uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
 
-				uint32_t challenge = 0;
-				out_packet_data.data.Read<uint32_t>(challenge);
-				uint32_t solution = solve_challenge(challenge);
+		//		uint32_t challenge = 0;
+		//		out_packet_data.data.Read<uint32_t>(challenge);
+		//		uint32_t solution = solve_challenge(challenge);
 
-				// ... Send Solution
-				NetworkStream response(1024);
-				PacketType response_type = PacketType::CHALLENGE_RESPONSE;
-				response.Write(response_type);
-				response.Write(solution);
+		//		// ... Send Solution
+		//		NetworkStream response(1024);
+		//		PacketType response_type = PacketType::CHALLENGE_RESPONSE;
+		//		response.Write(response_type);
+		//		response.Write(solution);
 
-				NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
-
-
-				result = false;
-				break;
-			}
-			case PacketType::CONNECTION_ACCEPTED:
-			{
-				if (m_connection.internal_handle)
-				{
-					return false;
-				}
-
-				uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
-
-				uint32_t connection_handle = 0;
-				out_packet_data.data.Read<uint32_t>(connection_handle);
-				m_connection.handle = connection_handle;
-				m_connection.host = source.host;
-				m_connection.port = source.port;
-				m_connection.internal_handle = source.internal_handle;
-
-				// ... Send Acknowlegdement
-				NetworkStream response(512);
-				PacketType response_type = PacketType::CONNECTION_ACKNOWLEGDED;
-				response.Write(response_type);
-				response.Write(connection_handle);
-
-				NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
+		//		NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
 
 
-				if (on_server_connect)
-				{
-					on_server_connect(connection_handle);
-				}
+		//		result = false;
+		//		break;
+		//	}
+		//	case PacketType::CONNECTION_ACCEPTED:
+		//	{
+		//		if (m_connection.internal_handle)
+		//		{
+		//			return false;
+		//		}
+
+		//		uint32_t size = out_packet_data.data.GetSize() - out_packet_data.data.GetPosition();
+
+		//		uint32_t connection_handle = 0;
+		//		out_packet_data.data.Read<uint32_t>(connection_handle);
+		//		m_connection.handle = connection_handle;
+		//		m_connection.host = source.host;
+		//		m_connection.port = source.port;
+		//		m_connection.internal_handle = source.internal_handle;
+
+		//		// ... Send Acknowlegdement
+		//		NetworkStream response(512);
+		//		PacketType response_type = PacketType::CONNECTION_ACKNOWLEGDED;
+		//		response.Write(response_type);
+		//		response.Write(connection_handle);
+
+		//		NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
 
 
-
-				result = false;
-				break;
-			}
-			case PacketType::DISCONNECT:
-			{
-				if (m_connection.internal_handle)
-				{
-					return false;
-				}
-
-				if (on_server_disconnect)
-				{
-					on_server_disconnect(m_connection.handle);
-				}
-
-				m_connection.internal_handle = nullptr;//TODO: Let it be handle by the backend
-				m_connection.handle = 0;
-				m_connection.host = 0;
-				m_connection.port = 0;
-
-				result = false;
-				break;
-			}
-			case PacketType::INCOMING_DATA:
-			{
-				if (!m_connection.internal_handle)
-				{
-					return false;
-				}
+		//		if (on_server_connect)
+		//		{
+		//			on_server_connect(connection_handle);
+		//		}
 
 
 
-				out_packet_data.connection_handle = m_connection.handle;
+		//		result = false;
+		//		break;
+		//	}
+		//	case PacketType::DISCONNECT:
+		//	{
+		//		if (m_connection.internal_handle)
+		//		{
+		//			return false;
+		//		}
 
-				result = true;
+		//		if (on_server_disconnect)
+		//		{
+		//			on_server_disconnect(m_connection.handle);
+		//		}
 
-				break;
-			}
-			}
-		}
+		//		m_connection.internal_handle = nullptr;//TODO: Let it be handle by the backend
+		//		m_connection.handle = 0;
+		//		m_connection.host = 0;
+		//		m_connection.port = 0;
+
+		//		result = false;
+		//		break;
+		//	}
+		//	case PacketType::INCOMING_DATA:
+		//	{
+		//		if (!m_connection.internal_handle)
+		//		{
+		//			return false;
+		//		}
+
+
+
+		//		out_packet_data.connection_handle = m_connection.handle;
+
+		//		result = true;
+
+		//		break;
+		//	}
+		//	}
+		//}
 
 		return result;
 	}
@@ -237,6 +238,109 @@ namespace trace::Network {
 			return true;
 		}
 		return false;
+	}
+	void NetClient::ProcessPacket(Packet& packet, Connection source)
+	{
+		PacketType type = PacketType::NONE;
+		packet.data.Read(type);
+
+		switch (type)
+		{
+		case PacketType::CONNECTION_CHALLENGE:
+		{
+			if (m_connection.internal_handle)
+			{
+				return;
+			}
+
+			uint32_t size = packet.data.GetSize() - packet.data.GetPosition();
+
+			uint32_t challenge = 0;
+			packet.data.Read<uint32_t>(challenge);
+			uint32_t solution = solve_challenge(challenge);
+
+			// ... Send Solution
+			NetworkStream response(1024);
+			PacketType response_type = PacketType::CHALLENGE_RESPONSE;
+			response.Write(response_type);
+			response.Write(solution);
+
+			NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
+
+
+			break;
+		}
+		case PacketType::CONNECTION_ACCEPTED:
+		{
+			if (m_connection.internal_handle)
+			{
+				return;
+			}
+
+			uint32_t size = packet.data.GetSize() - packet.data.GetPosition();
+
+			uint32_t connection_handle = 0;
+			packet.data.Read<uint32_t>(connection_handle);
+			m_connection.handle = connection_handle;
+			m_connection.host = source.host;
+			m_connection.port = source.port;
+			m_connection.internal_handle = source.internal_handle;
+
+			// ... Send Acknowlegdement
+			NetworkStream response(512);
+			PacketType response_type = PacketType::CONNECTION_ACKNOWLEGDED;
+			response.Write(response_type);
+			response.Write(connection_handle);
+
+			NetFunc::SendPacket(&m_info, &source, response, PacketSendMode::RELIABLE);
+
+
+			if (on_server_connect)
+			{
+				on_server_connect(connection_handle);
+			}
+
+
+			break;
+		}
+		case PacketType::DISCONNECT:
+		{
+			if (m_connection.internal_handle)
+			{
+				return;
+			}
+
+			if (on_server_disconnect)
+			{
+				on_server_disconnect(m_connection.handle);
+			}
+
+			m_connection.internal_handle = nullptr;//TODO: Let it be handle by the backend
+			m_connection.handle = 0;
+			m_connection.host = 0;
+			m_connection.port = 0;
+
+			break;
+		}
+		case PacketType::INCOMING_DATA:
+		{
+			if (!m_connection.internal_handle)
+			{
+				return;
+			}
+
+
+
+			packet.connection_handle = m_connection.handle;
+
+			if (process_packet)
+			{
+				process_packet(packet);
+			}
+
+			break;
+		}
+		}
 	}
 	uint32_t NetClient::solve_challenge(uint32_t challenge)
 	{

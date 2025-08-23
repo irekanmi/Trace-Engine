@@ -55,10 +55,16 @@ namespace trace {
 		m_registry.on_construct<CharacterControllerComponent>().connect<&Scene::OnConstructCharacterControllerComponent>(*this);
 		m_registry.on_destroy<CharacterControllerComponent>().connect<&Scene::OnDestroyCharacterControllerComponent>(*this);
 
+		m_destroyed = false;
+
 		return true;
 	}
 	void Scene::Destroy()
 	{
+		if (m_destroyed)
+		{
+			return;
+		}
 		m_registry.on_construct<RigidBodyComponent>().disconnect<&Scene::OnConstructRigidBodyComponent>(*this);
 		m_registry.on_destroy<RigidBodyComponent>().disconnect<&Scene::OnDestroyRigidBodyComponent>(*this);
 
@@ -80,8 +86,16 @@ namespace trace {
 		m_registry.on_construct<HierachyComponent>().disconnect<&Scene::OnConstructHierachyComponent>(*this);
 		m_registry.on_destroy<HierachyComponent>().disconnect<&Scene::OnDestroyHierachyComponent>(*this);
 		delete m_rootNode; // TODO: Use Custom Allocator
+
+		for (auto& [id, entity] : m_entityMap)
+		{
+			m_scriptRegistry.Erase(id);
+		}
+
 		m_scriptRegistry.Clear();
 		m_registry.clear();
+
+		m_destroyed = true;
 	}
 	void Scene::BeginFrame()
 	{
@@ -428,6 +442,8 @@ namespace trace {
 			anim_graph.graph.Stop(this, entity.GetID());
 		}
 
+
+
 		m_entityToDestroy.clear();
 		m_running = false;
 	}
@@ -449,15 +465,10 @@ namespace trace {
 
 			});
 
-		m_scriptRegistry.Iterate([](ScriptRegistry::ScriptManager& manager)
-			{
-
-				for (ScriptInstance& i : manager.instances)
-				{
-					DestroyScriptInstance(i);
-				}
-
-			});
+		for (auto& [id, entity] : m_entityMap)
+		{
+			m_scriptRegistry.Erase(id);
+		}
 
 		ScriptEngine::get_instance()->OnSceneStop(this);
 
@@ -567,8 +578,17 @@ namespace trace {
 				PhysicsFunc::UpdateShapeTransform(sc._internal, pose._transform);
 			}
 			
+			if (m_stimulatePhysics)
+			{
+				m_accumulator += deltaTime;
+				float fixed_delta_time = 1.0f / float(AppSettings::physics_tick_rate);
+				while (m_accumulator >= fixed_delta_time)
+				{
+					PhysicsStep(fixed_delta_time);
+					m_accumulator -= fixed_delta_time;
+				}
+			}
 
-			PhysicsFunc::Stimulate(m_physics3D, deltaTime);
 			for (auto i : bodies)
 			{
 				auto [transform ,rigid] = bodies.get(i);
@@ -1264,7 +1284,7 @@ namespace trace {
 			{
 				Entity new_entity = DeserializeEntity(this, data);
 
-				remove_entity_physics_components(new_entity);
+				//remove_entity_physics_components(new_entity);
 
 				
 				OnEntityCreate_Runtime(new_entity);
@@ -1323,7 +1343,9 @@ namespace trace {
 					SetParent(entity, GetEntity(parent_id));
 				}
 
-				remove_entity_physics_components(entity);
+				//remove_entity_physics_components(entity);
+
+				on_network_create(entity);
 				break;
 			}
 			case Network::PacketMessageType::DESTROY_ENTITY:
@@ -1635,7 +1657,7 @@ namespace trace {
 		{
 			Entity new_entity = DeserializeEntity(this, data);
 
-			remove_entity_physics_components(new_entity);
+			//remove_entity_physics_components(new_entity);
 
 			OnEntityCreate_Runtime(new_entity);
 
@@ -1652,6 +1674,14 @@ namespace trace {
 			}
 
 			on_network_create(new_entity);
+		}
+	}
+
+	void Scene::PhysicsStep(float deltaTime)
+	{
+		if (m_physics3D)
+		{
+			PhysicsFunc::Stimulate(m_physics3D, deltaTime);
 		}
 	}
 
@@ -2280,8 +2310,11 @@ namespace trace {
 		{
 			result = instanciate_entity_net(result, Entity(), prefab, net_handle, forced);
 		}
-		OnEntityCreate_Runtime(result);
-		EnableEntity(result);
+		if (result)
+		{
+			OnEntityCreate_Runtime(result);
+			EnableEntity(result);
+		}
 		return result;
 	}
 
@@ -2960,6 +2993,10 @@ namespace trace {
 
 				obj_renderer.SetSkeleton(obj_renderer.GetSkeleton(), obj.GetScene(), obj.GetID());
 			}
+			if (obj.HasComponent<NetObject>())
+			{
+				//on_network_create(obj);
+			}
 
 			m_scriptRegistry.Iterate(obj.GetID(), [](UUID uuid, Script* script, ScriptInstance* instance)
 				{
@@ -3109,13 +3146,12 @@ namespace trace {
 	{
 		Network::NetType type = Network::NetworkManager::get_instance()->GetNetType();
 
-		Entity result;
 
 		switch (type)
 		{
 		case Network::NetType::UNKNOWN:
 		{
-			result = entity;
+			return entity;
 			break;
 		}
 		case Network::NetType::CLIENT:
@@ -3136,7 +3172,6 @@ namespace trace {
 		{
 			if (entity.HasComponent<NetObject>())
 			{
-				result = entity;
 				//TODO: Ensure that these packet is a reliable packet and that it also comes before ENTITES_UPDATE
 				uint32_t instance_id = Network::NetworkManager::get_instance()->GetInstanceID();
 
@@ -3170,13 +3205,18 @@ namespace trace {
 					SerializeEntity(entity, data_stream);
 				}
 				
+				on_network_create(entity);
+
 				Network::NetworkManager::get_instance()->ReleaseRPCStream();
+
+				
 			}
+			return entity;
 			break;
 		}
 		}
 
-		return result;
+		return Entity();
 	}
 
 	bool Scene::can_destroy_entity(Entity entity)
@@ -3223,15 +3263,19 @@ namespace trace {
 		uint32_t instance_id = net_manager->GetInstanceID();
 
 		NetObject* net_obj = entity.TryGetComponent<NetObject>();
-		TRC_ASSERT(net_obj, "These is not suppose to happen");
+
+		if (!net_obj)
+		{
+			return;
+		}
 		net_obj->is_owner = instance_id == net_obj->owner_id;
 
 		auto network_create_lambda = [](UUID id, Script* script, ScriptInstance* instance)
 		{
-			ScriptMethod* on_network_create = script->GetMethod("OnNetworkCreate");
-			if (on_network_create)
+			ScriptMethod* on_net_create = script->GetMethod("OnNetworkCreate");
+			if (on_net_create)
 			{
-				InvokeScriptMethod_Instance(*on_network_create, *instance, nullptr);
+				InvokeScriptMethod_Instance(*on_net_create, *instance, nullptr);
 
 			}
 		};

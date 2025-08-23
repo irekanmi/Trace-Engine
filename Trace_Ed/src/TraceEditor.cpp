@@ -199,9 +199,9 @@ namespace trace {
 		m_animSequencer->Shutdown();
 		m_animGraphEditor->Shutdown();
 		m_contentBrowser->Shutdown();
-		m_currentScene.release();
-		m_editScene.release();
-		m_editSceneDuplicate.release();
+		m_currentScene.free();
+		m_editScene.free();
+		m_editSceneDuplicate.free();
 		
 
 
@@ -223,6 +223,7 @@ namespace trace {
 			m_currentState = EditorState::SceneEdit;
 
 			m_stopCurrentScene = false;
+			
 		}
 
 		switch (m_currentState)
@@ -1594,9 +1595,9 @@ namespace trace {
 	void TraceEditor::start_current_scene()
 	{
 		m_currentScene->OnStart();
-		m_currentScene->OnScriptStart();
 		m_currentScene->OnPhysicsStart();
 		m_currentScene->OnNetworkStart();
+		m_currentScene->OnScriptStart();
 
 		
 		if (m_currentScene)

@@ -175,6 +175,77 @@ namespace Trace
 
 
     }
+    
+    public struct RigidBodyComponent : Component<RigidBodyComponent>
+    {
+        private ulong Id;
+
+        RigidBodyComponent(ulong Id)
+        {
+            this.Id = Id;
+        }
+
+        public RigidBodyComponent Create(ulong id)
+        {
+            RigidBodyComponent component = new RigidBodyComponent(id);
+            return component;
+        }
+
+
+    }
+    
+    public struct BoxColliderComponent : Component<BoxColliderComponent>
+    {
+        private ulong Id;
+
+        BoxColliderComponent(ulong Id)
+        {
+            this.Id = Id;
+        }
+
+        public BoxColliderComponent Create(ulong id)
+        {
+            BoxColliderComponent component = new BoxColliderComponent(id);
+            return component;
+        }
+
+
+    }
+    
+    public struct SphereColliderComponent : Component<SphereColliderComponent>
+    {
+        private ulong Id;
+
+        SphereColliderComponent(ulong Id)
+        {
+            this.Id = Id;
+        }
+
+        public SphereColliderComponent Create(ulong id)
+        {
+            SphereColliderComponent component = new SphereColliderComponent(id);
+            return component;
+        }
+
+
+    }
+    public struct NetObject : Component<NetObject>
+    {
+        private ulong Id;
+
+        NetObject(ulong Id)
+        {
+            this.Id = Id;
+        }
+
+        public NetObject Create(ulong id)
+        {
+            NetObject component = new NetObject(id);
+            return component;
+        }
+
+
+    }
 
     public struct AnimationGraphController : Component<AnimationGraphController>
     {

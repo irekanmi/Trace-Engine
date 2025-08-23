@@ -33,6 +33,10 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static bool Action_IsOwner(ulong id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static uint Action_GetNetID(ulong id);
+
         #endregion
 
         #region TransformComponent
@@ -145,6 +149,9 @@ namespace Trace
         extern public static object Scene_InstanciateEntity_Prefab_Position(ulong prefab_id, ref Vec3 position);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_InstanciateEntity_Prefab_Position_NetID(ulong prefab_id, ref Vec3 position, uint owner_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static object Scene_InstanciateEntity_Position_NetID(ulong id, ref Vec3 position, uint owner_handle);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -155,6 +162,24 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Scene_DisableEntity(ulong id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_IterateComponent(ulong id, Trace.Action src, UInt64 func_name_id, Type component_type);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_IterateEntityScripts(ulong entity_id, ulong id, Trace.Action src, UInt64 func_name_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_GetEntityWithComponent(Type component_type);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Scene_GetEntityWithScript(Type script_type);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Scene_GetStimulatePhysics();
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_SetStimulatePhysics(bool value);
 
         #endregion
 
@@ -165,6 +190,9 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Physics_GetTriggerData(ref TriggerPair data, Int64 trigger_data);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Physics_Step(float deltaTime);
 
         #endregion
 
@@ -270,6 +298,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static bool Networking_ConnectToLAN(string server);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static uint Networking_InstanceID();
 
 
 

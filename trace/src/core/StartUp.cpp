@@ -59,6 +59,12 @@ namespace trace {
 
 	bool INIT()
 	{
+		if (EventsSystem::get_instance() == nullptr)
+		{
+			printf("{ERROR} -> Events System failed to initialize");
+			return false;
+		}
+
 		if (!JobSystem::get_instance()->Init())
 		{
 			printf("{ERROR} -> failed to initialize Job system");
@@ -87,11 +93,6 @@ namespace trace {
 			return false;
 		}
 
-		if (EventsSystem::get_instance() == nullptr)
-		{
-			TRC_ERROR("Events System failed to initialize");
-			return false;
-		}
 
 		if (InputSystem::get_instance() == nullptr)
 		{

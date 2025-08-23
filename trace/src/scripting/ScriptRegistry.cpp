@@ -72,7 +72,7 @@ namespace trace {
 
 	void ScriptRegistry::Clear()
 	{
-		free_asset_instance(m_fieldInstance);
+		//free_asset_instance(m_fieldInstance);
 		m_fieldInstance.clear();
 		m_scripts.clear();
 	}
@@ -144,28 +144,21 @@ namespace trace {
 	{
 		if (HasScript(id, handle)) return GetScript(id, handle);
 
-		auto it = m_scripts.find(handle);
-		if (it != m_scripts.end())
+		if (ScriptInstance* res = add_new_instance(id, handle))
 		{
-			ScriptManager& sm = it->second;
-			sm.handle_map[id] = sm.instances.size();
-			sm.entities.emplace_back(id);
-			ScriptInstance& res = sm.instances.emplace_back();
-			res.m_script = sm.script;
-
 			if (m_scene->IsRunning())
 			{
 				ScriptMethod* constructor = ScriptEngine::get_instance()->GetConstructor();
-				CreateScriptInstance(*sm.script, res);
-
+				CreateScriptInstance(*res->GetScript(), *res);
+				TRC_ASSERT(id != 0, "This is not suppose to happen");
 				void* params[1] =
 				{
 					&id
 				};
-				InvokeScriptMethod_Instance(*constructor, res, params);
+				InvokeScriptMethod_Instance(*constructor, *res, params);
 			}
 
-			return &res;
+			return res;
 		}
 
 		return nullptr;
@@ -193,9 +186,9 @@ namespace trace {
 
 
 			size_t index = sm.handle_map[id];
-			if (m_scene->IsRunning())
+			if (sm.instances[index].GetInternal() != nullptr)
 			{
-				for (auto [name, field] : sm.script->GetFields())
+				for (auto& [name, field] : sm.script->GetFields())
 				{
 					switch (field.field_type)
 					{
@@ -215,18 +208,53 @@ namespace trace {
 					}
 					}
 				}
-
 				DestroyScriptInstance(sm.instances[index]);
 			}
+
+			if (!m_scene->IsRunning())
+			{
+				auto script_fields_it = m_fieldInstance.find(sm.script);
+				if (script_fields_it != m_fieldInstance.end())
+				{
+					auto field_data = script_fields_it->second.find(id);
+					if (field_data != script_fields_it->second.end())
+					{
+						for (auto [name, data] : field_data->second.GetFields())
+						{
+							switch (data.type)
+							{
+							case ScriptFieldType::Prefab:
+							{
+								UUID id = 0;
+								memcpy(&id, data.data, sizeof(UUID));
+								if (id != 0)
+								{									
+									if (Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id))
+									{
+										asset->Decrement();
+									}
+								}
+								break;
+							}
+							}
+							
+						}
+						script_fields_it->second.erase(id);
+					}
+				}
+			}
+
+			m_lock.Lock();
+
 			sm.instances[index] = std::move(sm.instances.back());
 			sm.entities[index] = std::move(sm.entities.back());
-
 			sm.handle_map[sm.entities[index]] = index;
-
 
 			sm.instances.pop_back();
 			sm.entities.pop_back();
 			sm.handle_map.erase(id);
+
+			m_lock.Unlock();
 
 			return true;
 		}
@@ -266,6 +294,26 @@ namespace trace {
 			}
 		}
 
+	}
+
+	void ScriptRegistry::Iterate(uintptr_t script_handle, std::function<bool(UUID, Script*, ScriptInstance*)> callback)
+	{
+		auto it = m_scripts.find(script_handle);
+		if (it != m_scripts.end())
+		{
+			ScriptManager& sm = it->second;
+
+			uint32_t index = 0;
+			for (auto& i : sm.instances)
+			{
+				if (callback(sm.entities[index], sm.script, &i))
+				{
+					break;
+				}
+
+				index++;
+			}
+		}
 	}
 
 	void ScriptRegistry::Iterate(std::function<void(ScriptManager&)> callback)
@@ -311,25 +359,18 @@ namespace trace {
 
 	ScriptInstance* ScriptRegistry::CopyScriptInstance(UUID id, ScriptInstance* source)
 	{
-		auto it = m_scripts.find(source->GetScript()->GetID());
-		if (it != m_scripts.end())
+		if (ScriptInstance* res = add_new_instance(id, source->GetScript()->GetID()))
 		{
-			ScriptManager& sm = it->second;
-			sm.handle_map[id] = sm.instances.size();
-			sm.entities.emplace_back(id);
-			ScriptInstance& res = sm.instances.emplace_back();
-			res.m_script = sm.script;
+			CloneScriptInstance(source, res);
 
-			CloneScriptInstance(source, &res);
-
-			for (auto [name, field] : sm.script->GetFields())
+			for (auto [name, field] : res->GetScript()->GetFields())
 			{
 				switch (field.field_type)
 				{
 				case ScriptFieldType::Prefab:
 				{
 					UUID id = 0;
-					res.GetFieldValue(name, id);
+					res->GetFieldValue(name, id);
 					if (id != 0)
 					{
 						Ref<Resource> asset = GenericAssetManager::get_instance()->Get<Resource>(id);
@@ -343,7 +384,7 @@ namespace trace {
 				}
 			}
 
-			return &res;
+			return res;
 		}
 
 		return nullptr;
@@ -364,6 +405,29 @@ namespace trace {
 		to.m_fieldInstance = from.m_fieldInstance;
 
 		free_asset_instance(to.m_fieldInstance, true);
+	}
+
+	ScriptInstance* ScriptRegistry::add_new_instance(UUID id, uintptr_t script_id)
+	{
+		auto it = m_scripts.find(script_id);
+		if (it != m_scripts.end())
+		{
+			ScriptManager& sm = it->second;
+
+			m_lock.Lock();
+
+			sm.handle_map[id] = sm.instances.size();
+			sm.entities.emplace_back(id);
+			ScriptInstance& res = sm.instances.emplace_back();
+
+			m_lock.Unlock();
+
+			res.m_script = sm.script;
+
+			return &res;//NOTE: It is dangerous to return a pointer from a dynamic array because it could resize at any time
+		}
+
+		return nullptr;
 	}
 
 }

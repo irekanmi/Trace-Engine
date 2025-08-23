@@ -2,6 +2,8 @@
 
 #include "multithreading/JobSystem.h"
 #include "core/io/Logging.h"
+#include "scripting/ScriptBackend.h"
+#include "core/events/EventsSystem.h"
 
 namespace trace {
 
@@ -15,11 +17,17 @@ namespace trace {
 
 
 		// Loop.....
+		void* script_thread_info = nullptr;
 		while (job_system->IsActive())
 		{
+			if (job_system->AppRunning())
+			{
+				AttachThread(script_thread_info);
+			}
 			if (job_system->TryGetJob())
 			{
 				Job job = _info.current_job;
+				_info.current_job = Job{};
 				Counter* job_counter = job.counter;
 				job.job_func(job.job_params);
 				if (job_counter)
@@ -29,7 +37,13 @@ namespace trace {
 			}
 			else
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(2));
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			}
+
+			if (!job_system->AppRunning())
+			{
+				DetachThread(script_thread_info);
+				script_thread_info = nullptr;
 			}
 
 		}
@@ -38,6 +52,8 @@ namespace trace {
 
 	bool JobSystem::Init()
 	{
+		EventsSystem::get_instance()->AddEventListener(EventType::TRC_WND_CLOSE, BIND_EVENT_FN(JobSystem::OnEvent));
+
 		uint32_t num_threads = std::thread::hardware_concurrency();
 		m_numThreads = num_threads;
 		num_threads -= 1;// remove main thread
@@ -144,7 +160,7 @@ namespace trace {
 		while (!counter->IsFree())
 		{
 			// check if counter is free a few more times
-			uint32_t num_tries = 12;//TODO: Configurable or change the alogrithim
+			int32_t num_tries = 12;//TODO: Configurable or change the alogrithim
 			while (num_tries > 0)
 			{
 				if (counter->IsFree())
@@ -159,6 +175,7 @@ namespace trace {
 			if (TryGetJob())
 			{
 				Job job = _info.current_job;
+				_info.current_job = Job{};
 				Counter* job_counter = job.counter;
 				job.job_func(job.job_params);
 				if (job_counter)
@@ -198,7 +215,7 @@ namespace trace {
 		Job* new_job = nullptr;
 
 		// try to get a job few times
-		uint32_t num_tries = 12;//TODO: Configurable or change the alogrithim
+		int32_t num_tries = 12;//TODO: Configurable or change the alogrithim
 		while (num_tries > 0)
 		{
 			Job* _job = m_jobs.pop_back();
@@ -213,7 +230,7 @@ namespace trace {
 				else
 				{
 					// return job to job pool if it can run on this thread
-					m_jobs.push_back(*_job);
+					m_jobs.push_front(*_job);
 				}
 			}
 
@@ -242,6 +259,19 @@ namespace trace {
 		return m_numThreads;
 	}
 
+	void JobSystem::OnEvent(Event* p_event)
+	{
+		switch (p_event->GetEventType())
+		{
+		case trace::EventType::TRC_WND_CLOSE://TODO: Listen for event APP_END also
+		{
+			trace::WindowClose* wnd_close = reinterpret_cast<trace::WindowClose*>(p_event);
+			m_appShutdown = true;
+			break;
+		}
+		}
+	}
+
 	JobSystem* JobSystem::get_instance()
 	{
 		static JobSystem* s_instance = new JobSystem;
@@ -260,11 +290,12 @@ namespace trace {
 		std::lock_guard<SpinLock> guard(lock);
 
 		index.fetch_sub(1);
+		TRC_ASSERT(index >= 0, "Dead lock");
 	}
 
 	bool Counter::IsFree()
 	{
-		uint32_t value = index.load();
+		int32_t value = index.load();
 
 		return value == 0;
 	}

@@ -68,6 +68,7 @@ namespace trace {
 		UUID GetID();
 		std::string& GetName();
 		bool IsOwner();
+		uint32_t GetNetID();
 
 		Scene* GetScene() { return m_scene; }
 

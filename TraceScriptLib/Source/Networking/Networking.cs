@@ -41,6 +41,11 @@ namespace Trace
             return InternalCalls.Networking_ConnectToLAN(server);
         }
 
+        public static uint InstanceID()
+        {
+            return InternalCalls.Networking_InstanceID();
+        }
+
         static void OnClientConnect(uint handle)
         {
             Debug.Log("New Client");

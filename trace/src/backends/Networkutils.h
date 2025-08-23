@@ -5,6 +5,11 @@
 #include "networking/NetworkTypes.h"
 #include "networking/NetworkStream.h"
 
+namespace trace::Network {
+	class NetServer;
+	class NetClient;
+}
+
 namespace trace {
 	using namespace Network;
 
@@ -16,8 +21,8 @@ namespace trace {
 	typedef bool (*__ConnectTo__C)(HostInfo* host, Connection* out_handle, Connection* server);
 	typedef bool (*__Disconnect_C)(HostInfo* host, Connection* connection);
 	typedef bool (*__Disconnect_S)(HostInfo* host, Connection* connection);
-	typedef bool (*__ReceivePacket_C)(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection);
-	typedef bool (*__ReceivePacket_S)(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection);
+	typedef bool (*__ReceivePacket_C)(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetClient* client, float wait_time);
+	typedef bool (*__ReceivePacket_S)(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetServer* server, float wait_time);
 	typedef bool (*__SendPacket)(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode);
 	typedef bool (*__ReceiveSocketData)(HostInfo* host, NetworkStream& packet_data, Connection* source);
 	typedef bool (*__SendSocketData)(HostInfo* host, NetworkStream& packet_data, Connection* source, uint32_t port);
@@ -43,8 +48,8 @@ namespace trace {
 		static bool ConnectTo_C(HostInfo* host, Connection* out_handle, Connection* server);
 		static bool Disconnect_C(HostInfo* host, Connection* connection);
 		static bool Disconnect_S(HostInfo* host, Connection* connection);
-		static bool ReceivePacket_C(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection);
-		static bool ReceivePacket_S(HostInfo* host, NetworkStream& packet_data, Connection* out_source_connection);
+		static bool ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetClient* client, float wait_time);
+		static bool ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out_source_connection, NetServer* server, float wait_time);
 		static bool SendPacket(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode);
 		static bool ReceiveSocketData(HostInfo* host, NetworkStream& packet_data, Connection* source);
 		static bool SendSocketData(HostInfo* host, NetworkStream& packet_data, Connection* source, uint32_t port);

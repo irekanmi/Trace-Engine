@@ -135,6 +135,17 @@ namespace Trace
         {
             return InternalCalls.Action_IsOwner(Id);
         }
+        
+        public uint GetNetID()
+        {
+            return InternalCalls.Action_GetNetID(Id);
+        }
+        
+        //cast controller to your custom type
+        public virtual void Stimulate(float fixed_deltaTime, uint tick, Trace.Action controller = null)
+        {
+            
+        }
 
         // -----------------------------------------------------
 

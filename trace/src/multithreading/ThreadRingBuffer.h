@@ -23,14 +23,7 @@ namespace trace {
 			tail = (tail + 1) % buffer_size;
 		}
 
-		void push_back(T& val)
-		{
-			std::lock_guard<SpinLock> guard(m_readLock);
-			head = (head - 1) % buffer_size;
-			uint32_t index = head;
-			m_data[index] = val;
-		}
-
+		
 		T* pop_back()
 		{
 			std::lock_guard<SpinLock> guard(m_readLock);

@@ -45,7 +45,7 @@ trace::trc_app_data trace::CreateApp()
 	app_data.client_end = End;
 	app_data.render_composer = TraceEditor::get_instance()->GetRenderComposer(); // TODO
 	AppSettings::is_editor = true;
-
+	AppSettings::physics_tick_rate = 30;//TODO: Configurable
 
 	return app_data;
 }

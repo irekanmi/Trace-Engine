@@ -15,7 +15,7 @@ namespace trace::Network {
 		bool Init(NetworkStateInfo& network_info, bool LAN = false, uint32_t port = SERVER_PORT);
 		bool Shutdown();
 
-		bool Listen(Packet& out_packet_data);
+		bool Listen(Packet& out_packet_data, float wait_time);
 		Connection* FindConnection(uint32_t connection_handle);
 		void BroadcastToAll(Packet packet, PacketSendMode mode = PacketSendMode::UNRELIABLE);
 		void Broadcast(uint32_t source_connection, Packet packet, PacketSendMode mode = PacketSendMode::UNRELIABLE);
@@ -24,7 +24,9 @@ namespace trace::Network {
 
 		void SetClientConnectCallback(std::function<void(uint32_t connection_id)> client_connect) { on_client_connect = client_connect; }
 		void SetClientDisconnectCallback(std::function<void(uint32_t connection_id)> client_disconnect) { on_client_disconnect = client_disconnect; }
+		void SetProcessPacketCallback(std::function<void(Packet& packet)> _process_packet) { process_packet = _process_packet; }
 
+		void ProcessPacket(Packet& packet, Connection source);
 
 	private:
 		bool check_challenge_response(uint32_t result, uint32_t challenge);
@@ -38,6 +40,7 @@ namespace trace::Network {
 		uint32_t challenge = 256;// TEMP
 		std::function<void(uint32_t connection_id)> on_client_connect;
 		std::function<void(uint32_t connection_id)> on_client_disconnect;
+		std::function<void(Packet& packet)> process_packet;
 		bool m_LAN = false;
 		NetworkStream lan_data;
 
