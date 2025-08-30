@@ -47,6 +47,7 @@ namespace trace {
 	__MoveCharacterController PhysicsFunc::_moveCharacterController = nullptr;
 	__SetControllerDataPtr PhysicsFunc::_setControllerDataPtr = nullptr;
 	__GetCharacterControllerPosition PhysicsFunc::_getCharacterControllerPosition = nullptr;
+	__SetCharacterControllerPosition PhysicsFunc::_setCharacterControllerPosition = nullptr;
 
 	// Loader ---------------------------------------
 	bool PhysicsFuncLoader::LoadPhysxFunctions()
@@ -80,6 +81,7 @@ namespace trace {
 		PhysicsFunc::_moveCharacterController = physx::__MoveCharacterController;
 		PhysicsFunc::_setControllerDataPtr = physx::__SetControllerDataPtr;
 		PhysicsFunc::_getCharacterControllerPosition = physx::__GetCharacterControllerPosition;
+		PhysicsFunc::_setCharacterControllerPosition = physx::__SetCharacterControllerPosition;
 
 
 		return true;
@@ -240,6 +242,12 @@ namespace trace {
 	{
 		PHYSICS_FUNC_IS_VALID(_getCharacterControllerPosition);
 		return _getCharacterControllerPosition(controller, out_position);
+	}
+	
+	bool PhysicsFunc::SetCharacterControllerPosition(CharacterController& controller, glm::vec3& position)
+	{
+		PHYSICS_FUNC_IS_VALID(_setCharacterControllerPosition);
+		return _setCharacterControllerPosition(controller, position);
 	}
 
 }

@@ -556,25 +556,25 @@ namespace trace {
 	{
 		if (m_physics3D)
 		{
-			auto bodies = m_registry.view<TransformComponent, RigidBodyComponent>();
+			auto bodies = m_registry.view<TransformComponent, RigidBodyComponent, ActiveComponent>();
 			for (auto i : bodies)
 			{
-				auto [transform, rigid] = bodies.get(i);
+				auto [transform, rigid, active] = bodies.get(i);
 
 				PhysicsFunc::SetRigidBodyTransform(rigid.body, transform._transform);
 			}
 
-			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent>();
+			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent, ActiveComponent>();
 			for (auto i : bcd)
 			{
-				auto [pose, bc] = bcd.get(i);
+				auto [pose, bc, active] = bcd.get(i);
 				PhysicsFunc::UpdateShapeTransform(bc._internal, pose._transform);
 			}
 
-			auto scd = m_registry.view<TransformComponent, SphereColliderComponent>();
+			auto scd = m_registry.view<TransformComponent, SphereColliderComponent, ActiveComponent>();
 			for (auto i : scd)
 			{
-				auto [pose, sc] = scd.get(i);
+				auto [pose, sc, active] = scd.get(i);
 				PhysicsFunc::UpdateShapeTransform(sc._internal, pose._transform);
 			}
 			
@@ -591,15 +591,15 @@ namespace trace {
 
 			for (auto i : bodies)
 			{
-				auto [transform ,rigid] = bodies.get(i);
+				auto [transform , rigid, active] = bodies.get(i);
 
 				PhysicsFunc::GetRigidBodyTransform(rigid.body, transform._transform);
 			}
 
-			auto controllers = m_registry.view<TransformComponent, CharacterControllerComponent>();
+			auto controllers = m_registry.view<TransformComponent, CharacterControllerComponent, ActiveComponent>();
 			for (auto i : controllers)
 			{
-				auto [pose, charac] = controllers.get(i);
+				auto [pose, charac, active] = controllers.get(i);
 
 				Entity entity(i, this);
 

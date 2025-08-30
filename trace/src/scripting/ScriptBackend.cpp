@@ -1029,6 +1029,13 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 	}
 
 	entity.GetComponent<TransformComponent>()._transform.SetPosition(*position);
+
+	//Update Physics objects internal state
+	if (CharacterControllerComponent* controller = entity.TryGetComponent<CharacterControllerComponent>())
+	{
+		PhysicsFunc::SetCharacterControllerPosition(controller->character, *position);
+	}
+
 }
 
 void TransformComponent_GetWorldPosition(UUID id, glm::vec3* position)
@@ -1526,6 +1533,7 @@ void Scene_IterateEntityScripts(UUID entity_id, UUID id, MonoObject* src, uint64
 	s_MonoData.scene->GetScriptRegistry().Iterate(entity_id, [method, instance](UUID, Script*, ScriptInstance* script_instance)
 		{
 			MonoObject* obj = (MonoObject*)script_instance->GetBackendHandle();
+			TRC_ASSERT(obj, "This is not supposed to happen");
 
 			void* params[] =
 			{
@@ -1766,6 +1774,54 @@ void CharacterController_Move(UUID id, glm::vec3* displacement, float deltaTime)
 	PhysicsFunc::MoveCharacterController(controller.character, *displacement, deltaTime);
 
 }
+
+void CharacterController_SetPosition(UUID id, glm::vec3* position)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	if (CharacterControllerComponent* controller = entity.TryGetComponent<CharacterControllerComponent>())
+	{
+		PhysicsFunc::SetCharacterControllerPosition(controller->character, *position);
+	}
+
+}
+
+void CharacterController_GetPosition(UUID id, glm::vec3* position)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	if (CharacterControllerComponent* controller = entity.TryGetComponent<CharacterControllerComponent>())
+	{
+		PhysicsFunc::GetCharacterControllerPosition(controller->character, *position);
+	}
+
+}
+
+
 
 #pragma endregion
 
@@ -2062,6 +2118,12 @@ uint32_t Networking_InstanceID()
 	return net_manager->GetInstanceID();
 }
 
+void Networking_SendScenePacket(float deltaTime)
+{
+	//Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	s_MonoData.scene->OnNetworkUpdate(deltaTime);
+}
+
 #pragma endregion
 
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
@@ -2130,6 +2192,8 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(CharacterController_IsGrounded);
 	ADD_INTERNAL_CALL(CharacterController_Move);
+	ADD_INTERNAL_CALL(CharacterController_SetPosition);
+	ADD_INTERNAL_CALL(CharacterController_GetPosition);
 
 	ADD_INTERNAL_CALL(AnimationGraphController_SetParameterBool);
 
@@ -2160,6 +2224,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Networking_ConnectTo);
 	ADD_INTERNAL_CALL(Networking_ConnectToLAN);
 	ADD_INTERNAL_CALL(Networking_InstanceID);
+	ADD_INTERNAL_CALL(Networking_SendScenePacket);
 
 }
 

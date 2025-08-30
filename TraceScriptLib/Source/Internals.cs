@@ -203,6 +203,12 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void CharacterController_Move(ulong entity_id, ref Vec3 displacement, float deltaTime);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void CharacterController_SetPosition(ulong entity_id, ref Vec3 position);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void CharacterController_GetPosition(ulong entity_id, out Vec3 position);
 
         #endregion
 
@@ -301,6 +307,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static uint Networking_InstanceID();
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Networking_SendScenePacket(float deltaTime);
 
 
 

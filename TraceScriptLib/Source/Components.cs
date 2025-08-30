@@ -172,6 +172,17 @@ namespace Trace
         {
             InternalCalls.CharacterController_Move(Id, ref displacement, deltaTime);
         }
+        
+        public void SetPosition(Vec3 position)
+        {
+            InternalCalls.CharacterController_SetPosition(Id, ref position);
+        }
+        
+        public Vec3 GetPosition()
+        {
+            InternalCalls.CharacterController_GetPosition(Id, out Vec3 position);
+            return position;
+        }
 
 
     }

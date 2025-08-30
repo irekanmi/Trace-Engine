@@ -23,6 +23,8 @@
 namespace physx {
 	static glm::vec3 Px3ToGlm3(PxVec3& val);
 	static trace::Counter* job_counter = nullptr;
+	// physx doesn't allow rigid actor creation or modification while stimulation is running, so this lock prevents that
+	static trace::SpinLock stimulation_lock;
 
 	class JobDispatcher : public PxCpuDispatcher
 	{
@@ -537,6 +539,7 @@ namespace physx {
 		desc.gravity = PxVec3(gravity.x, gravity.y, gravity.z);
 		desc.filterShader = FilterShader;
 		desc.simulationEventCallback = &out_scene->event_callback;
+		//desc.flags = PxSceneFlag::eREQUIRE_RW_LOCK;
 
 		PxScene* res = phy.physics->createScene(desc);
 		if (res)
@@ -615,10 +618,15 @@ namespace physx {
 		PhysxScene* in_scene = reinterpret_cast<PhysxScene*>(scene);
 
 		PxScene* scn = in_scene->scene;
+
+		stimulation_lock.Lock();
+
 		scn->simulate(deltaTime);
 		trace::JobSystem::get_instance()->WaitForCounter(job_counter);
 		scn->fetchResults(true);
 		trace::JobSystem::get_instance()->WaitForCounter(job_counter);
+
+		stimulation_lock.Unlock();
 
 
 		in_scene->event_callback.CollectEvents();
@@ -989,7 +997,12 @@ namespace physx {
 		PxVec3 pos = Glm3ToPx3(transform.GetPosition());
 		PxQuat orientation = GlmQuatToPxQuat(transform.GetRotation());
 		PxTransform pose(pos, orientation);
+
+		stimulation_lock.Lock();
+		body->getScene()->lockWrite();
 		body->setGlobalPose(pose);
+		body->getScene()->unlockWrite();
+		stimulation_lock.Unlock();
 
 		return true;
 	}
@@ -1003,7 +1016,13 @@ namespace physx {
 		}
 
 		PxRigidActor* body = reinterpret_cast<PxRigidActor*>(actor);
+
+		stimulation_lock.Lock();
+		body->getScene()->lockRead();
 		PxTransform pose = body->getGlobalPose();
+		body->getScene()->unlockRead();
+		stimulation_lock.Unlock();
+
 		transform.SetPosition(Px3ToGlm3(pose.p));
 		transform.SetRotation(PxQuatToGlmQuat(pose.q));
 
@@ -1033,9 +1052,10 @@ namespace physx {
 		desc.reportCallback = nullptr;
 
 		PxController* res = nullptr;
-		in_scene->scene->lockWrite();
+
+		stimulation_lock.Lock();
 		res = in_scene->controller_manager->createController(desc);
-		in_scene->scene->unlockWrite();
+		stimulation_lock.Unlock();
 
 		TRC_ASSERT(res != nullptr, "Unable to Create Character Controller, Function: {}", __FUNCTION__);
 
@@ -1060,7 +1080,11 @@ namespace physx {
 
 		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
 
+		stimulation_lock.Lock();
+		res->getScene()->lockRead();
 		PxControllerCollisionFlags collisionFlags = res->move( Glm3ToPx3(displacement), controller.min_move_distance, deltaTime, PxControllerFilters());
+		res->getScene()->unlockRead();
+		stimulation_lock.Unlock();
 
 		bool is_down = TRC_HAS_FLAG(collisionFlags, PxControllerCollisionFlag::eCOLLISION_DOWN);
 
@@ -1094,6 +1118,31 @@ namespace physx {
 		out_position.x = static_cast<float>(pos.x) - controller.offset.x;
 		out_position.y = static_cast<float>(pos.y) - controller.offset.y;
 		out_position.z = static_cast<float>(pos.z) - controller.offset.z;
+
+		return true;
+	}
+	
+	bool __SetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& position)
+	{
+		PxController* res = reinterpret_cast<PxController*>(controller.GetInternal());
+
+		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
+
+		PxExtendedVec3 pos;
+		pos.x = static_cast<float>(position.x) + controller.offset.x;
+		pos.y = static_cast<float>(position.y) + controller.offset.y;
+		pos.z = static_cast<float>(position.z) + controller.offset.z;
+
+		stimulation_lock.Lock();
+		res->getScene()->lockWrite();
+		res->setPosition(pos);
+		res->getScene()->unlockWrite();
+		stimulation_lock.Unlock();
+		/*PxControllerCollisionFlags collisionFlags = res->move(Glm3ToPx3(glm::vec3(0.0f)), controller.min_move_distance, 0.0f, PxControllerFilters());
+
+		bool is_down = TRC_HAS_FLAG(collisionFlags, PxControllerCollisionFlag::eCOLLISION_DOWN);
+
+		controller.SetIsGrounded(is_down);*/
 
 		return true;
 	}

@@ -40,6 +40,7 @@ namespace trace {
 	typedef bool (*__DestroyCharacterController)(CharacterController&, void*&);
 	typedef bool (*__MoveCharacterController)(CharacterController&, glm::vec3, float);
 	typedef bool (*__GetCharacterControllerPosition)(CharacterController&, glm::vec3&);
+	typedef bool (*__SetCharacterControllerPosition)(CharacterController&, glm::vec3&);
 	typedef bool (*__SetControllerDataPtr)(CharacterController&, void*);
 
 
@@ -83,6 +84,7 @@ namespace trace {
 		static bool MoveCharacterController(CharacterController& controller, glm::vec3 displacement, float deltaTime);
 		static bool SetControllerDataPtr(CharacterController& controller, void* ptr);
 		static bool GetCharacterControllerPosition(CharacterController& controller, glm::vec3& out_position);
+		static bool SetCharacterControllerPosition(CharacterController& controller, glm::vec3& position);
 
 
 
@@ -117,6 +119,7 @@ namespace trace {
 		static __MoveCharacterController _moveCharacterController;
 		static __SetControllerDataPtr _setControllerDataPtr;
 		static __GetCharacterControllerPosition _getCharacterControllerPosition;
+		static __SetCharacterControllerPosition _setCharacterControllerPosition;
 
 
 	protected:

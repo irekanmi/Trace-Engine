@@ -462,7 +462,7 @@ bool __ENet_ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out
 	ENetEvent network_event;
 	ENetHost* client = (ENetHost*)host->internal_handle;
 
-	enet_host_flush(client);
+	//enet_host_flush(client);
 
 	uint32_t mille_sec = uint32_t(wait_time * 1000.0f);
 	while (enet_host_service(client, &network_event, wait_time) > 0)
@@ -510,6 +510,7 @@ bool __ENet_ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out
 		}
 	}
 
+	enet_host_flush(client);
 
 	return true;
 }
@@ -530,9 +531,9 @@ bool __ENet_ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out
 	ENetEvent network_event;
 	ENetHost* server = (ENetHost*)host->internal_handle;
 
-	enet_host_flush(server);
+	//enet_host_flush(server);
 
-	uint32_t milli_sec = uint32_t(wait_time * 1000.0f);
+	uint32_t milli_sec = 5;//uint32_t(wait_time * 1000.0f);
 	while (enet_host_service(server, &network_event, milli_sec) > 0)
 	{
 		switch (network_event.type)
@@ -564,6 +565,8 @@ bool __ENet_ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out
 
 			net_server->ProcessPacket(packet_data, *out_source_connection);
 
+			//TRC_WARN("Average RTT: {}", network_event.peer->roundTripTime);
+
 			/* Clean up the packet now that we're done using it. */
 			enet_packet_destroy(network_event.packet);
 
@@ -588,6 +591,7 @@ bool __ENet_ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out
 		}
 	}
 
+	enet_host_flush(server);
 
 	return true;
 }

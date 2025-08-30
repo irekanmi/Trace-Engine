@@ -92,5 +92,10 @@ namespace Trace
         {
             InvokeRPC(src, Utils.HashString(func_name), type);
         }
+
+        public static void SendScenePacket(float deltaTime)
+        {
+            InternalCalls.Networking_SendScenePacket(deltaTime);
+        }
     }
 }

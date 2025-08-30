@@ -33,5 +33,6 @@ namespace physx {
 	bool __MoveCharacterController(trace::CharacterController& controller, glm::vec3 displacement, float deltaTime);
 	bool __SetControllerDataPtr(trace::CharacterController& controller, void* ptr);
 	bool __GetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& out_position);
+	bool __SetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& position);
 
 }

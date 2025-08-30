@@ -138,7 +138,7 @@ namespace trace {
 		serialize_component_data(ComponentGroup<IDComponent, HierachyComponent>{}, entity, stream);
 		serialize_component_data(AllComponents{}, entity, stream);
 
-		serialize_entity_scripts_binary(entity, stream, scene);
+		//serialize_entity_scripts_binary(entity, stream, scene);
 
 	}
 
@@ -181,7 +181,7 @@ namespace trace {
 			deserialize_component_data(AllComponents{}, obj, stream, components_type_id[i]);
 		}
 
-		deserialize_entity_scripts_binary(obj, scene, stream);
+		//deserialize_entity_scripts_binary(obj, scene, stream);
 
 		return obj;
 	}
@@ -843,6 +843,17 @@ namespace trace {
 		}
 	}
 
+	static void SerializeEntityScripts_Binary(Entity entity, DataStream* stream)
+	{
+		serialize_entity_scripts_binary(entity, stream, entity.GetScene());
+
+		for (auto& i : entity.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = entity.GetScene()->GetEntity(i);
+			SerializeEntityScripts_Binary(child, stream);
+		}
+	}
+
 	static void SerializeEntity_Binary(Entity entity, DataStream* stream, uint32_t& entity_count)
 	{
 
@@ -854,6 +865,8 @@ namespace trace {
 			SerializeEntity_Binary(child, stream, entity_count);
 			entity_count++;
 		}
+
+
 
 	}
 
@@ -871,20 +884,26 @@ namespace trace {
 
 		Scene* scene = entity.GetScene();
 		Entity handle = entity;
-		serialize_entity_components_binary(handle, stream, handle.GetScene());
+		
+		SerializeEntity_Binary(handle, stream, entity_count);
+		SerializeEntityScripts_Binary(handle, stream);
 
-
-		for (auto& i : handle.GetComponent<HierachyComponent>().children)
-		{
-			Entity child = handle.GetScene()->GetEntity(i);
-			SerializeEntity_Binary(child, stream, entity_count);
-			entity_count++;
-		}
 
 		uint32_t pos_2 = stream->GetPosition();
 		stream->SetPosition(pos_1);
 		stream->Write<uint32_t>(entity_count);
 		stream->SetPosition(pos_2);
+	}
+
+	static void DeserializeEntityScripts_Binary(Entity entity, DataStream* stream)
+	{
+		deserialize_entity_scripts_binary(entity, entity.GetScene(), stream);
+
+		for (auto& i : entity.GetComponent<HierachyComponent>().children)
+		{
+			Entity child = entity.GetScene()->GetEntity(i);
+			DeserializeEntityScripts_Binary(child, stream);
+		}
 	}
 
 	Entity DeserializeEntity(Scene* scene, DataStream* stream)
@@ -907,6 +926,8 @@ namespace trace {
 		{
 			deserialize_entity_components_binary(scene, stream);
 		}
+
+		DeserializeEntityScripts_Binary(obj, stream);
 
 		return obj;
 	}

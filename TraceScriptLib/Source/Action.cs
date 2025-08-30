@@ -16,6 +16,14 @@ namespace Trace
             Id = id;
         }
 
+        public TransformComponent transformComponent
+        {
+            get
+            {
+                return new TransformComponent().Create(Id);
+            }
+        }
+
         public bool IsValid()
         {
             return !(Id == 0);
@@ -102,6 +110,9 @@ namespace Trace
         
         public virtual void OnCreate()
         {}
+        
+        public virtual void OnDestroy()
+        {}
 
         public virtual void OnCollisionEnter(CollisionData collision_data)
         {}
@@ -142,10 +153,10 @@ namespace Trace
         }
         
         //cast controller to your custom type
-        public virtual void Stimulate(float fixed_deltaTime, uint tick, Trace.Action controller = null)
-        {
+        //public virtual void Stimulate(float fixed_deltaTime, uint tick, Trace.Action controller = null)
+        //{
             
-        }
+        //}
 
         // -----------------------------------------------------
 

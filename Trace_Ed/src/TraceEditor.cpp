@@ -290,7 +290,7 @@ namespace trace {
 				m_currentScene->OnAnimationUpdate(deltaTime);
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
-				m_currentScene->OnNetworkUpdate(deltaTime);
+				//m_currentScene->OnNetworkUpdate(deltaTime);
 				m_currentScene->OnUpdate(deltaTime);
 				m_currentScene->OnRender();
 

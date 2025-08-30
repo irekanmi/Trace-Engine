@@ -56,6 +56,21 @@ namespace Trace
             return a.x == b.x && a.y == b.y;
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override string ToString()
+        {
+            return "X: " + x.ToString() + " Y: " + y.ToString();
+        }
+
         static public bool operator !=(Vec2 a, Vec2 b)
         {
             return !(a == b);
@@ -178,7 +193,22 @@ namespace Trace
             return !(a == b);
         }
 
-        
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override string ToString()
+        {
+            return "X: " + x.ToString() + " Y: " + y.ToString() + " Z: " + z.ToString();
+        }
+
+
     }
 
     public struct Quat
@@ -224,6 +254,21 @@ namespace Trace
         {
             InternalCalls.Maths_Quat_Mul_Vec(ref a, ref b, out Vec3 result);
             return result;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override string ToString()
+        {
+            return "X: " + x.ToString() + " Y: " + y.ToString() + " Z: " + z.ToString() + " W: " + w.ToString();
         }
 
     }
