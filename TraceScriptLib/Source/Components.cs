@@ -92,6 +92,14 @@ namespace Trace
                 return result;
             }
         }
+
+        public Vec3 WorldForward
+        {
+            get
+            {
+                return WorldRotation * new Vec3(0.0f, 0.0f, 1.0f);
+            }
+        }
         
         public Vec3 Right 
         {

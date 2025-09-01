@@ -97,6 +97,17 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Debug_Sphere(ref Vec3 position, float radius, UInt32 steps, ref Vec3 color);
+        
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Debug_SphereTimed(float duration, ref Vec3 position, float radius, UInt32 steps, ref Vec3 color);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Debug_Line(ref Vec3 from, ref Vec3 to, ref Vec3 color);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Debug_LineTimed(float duration, ref Vec3 from, ref Vec3 to, ref Vec3 color);
+
         #endregion
 
         #region Input
@@ -193,6 +204,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Physics_Step(float deltaTime);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Physics_RayCast(ref Vec3 origin, ref Vec3 direction, float max_distance, out RaycastHit result);
 
         #endregion
 
@@ -310,6 +324,12 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Networking_SendScenePacket(float deltaTime);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Networking_GetServerAverageRTT();
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Networking_GetClientAverageRTT(uint client_id);
 
 
 

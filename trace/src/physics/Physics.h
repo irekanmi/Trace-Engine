@@ -176,6 +176,14 @@ namespace trace {
 		}
 	};
 
+	struct RaycastHit
+	{
+		UUID entity = 0;
+		glm::vec3 position = glm::vec3(0.0f);
+		glm::vec3 normal = glm::vec3(0.0f);
+		float distance = 0.0f;
+	};
+
 }
 
 namespace std {

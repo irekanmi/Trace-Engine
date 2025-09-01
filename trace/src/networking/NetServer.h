@@ -17,6 +17,7 @@ namespace trace::Network {
 
 		bool Listen(Packet& out_packet_data, float wait_time);
 		Connection* FindConnection(uint32_t connection_handle);
+		float GetAverageRTT(uint32_t connection_handle);
 		void BroadcastToAll(Packet packet, PacketSendMode mode = PacketSendMode::UNRELIABLE);
 		void Broadcast(uint32_t source_connection, Packet packet, PacketSendMode mode = PacketSendMode::UNRELIABLE);
 		void SendTo(uint32_t connection_handle, Packet packet, PacketSendMode mode = PacketSendMode::UNRELIABLE);

@@ -15,6 +15,65 @@ namespace trace {
 		return true;
 	}
 
+	void Debugger::Update(float deltaTime)
+	{
+
+
+		for (TimedDebugData& data : timed_data)
+		{
+			if (data.time_left <= 0.0f)
+			{
+				continue;
+			}
+
+			switch (data.type)
+			{
+			case DebugPrimitiveType::LINE:
+			{
+				glm::vec3 p0 = data.data_0;
+				glm::vec3 p1 = data.data_1;
+				AddDebugLine(p0, p1, data.transform, data.color);
+				break;
+			}
+			case DebugPrimitiveType::SPHERE:
+			{
+				float radius = data.data_0.x;
+				uint32_t steps = 0;
+				memcpy(&steps, &data.data_0.y, sizeof(uint32_t));
+				DrawDebugSphere(radius, steps, data.transform, data.color, data.render_graph_index);
+				break;
+			}
+			}
+			
+			data.time_left -= deltaTime;
+		}
+
+
+		int32_t prev_last_index = timed_data.size() - 1;
+		int32_t last_index = timed_data.size() - 1;
+		int32_t index = 0;
+		while (index <= last_index)
+		{
+			TimedDebugData& data = timed_data[index];
+
+			if (data.time_left <= 0.0f)
+			{
+				timed_data[index] = timed_data[last_index];
+				last_index--;
+			}
+
+			index++;
+		}
+
+		if (last_index < prev_last_index)
+		{
+			last_index = last_index < 0 ? 0 : last_index;
+			auto it = timed_data.begin() + last_index;
+			timed_data.erase(it, timed_data.end());
+		}
+
+	}
+
 	void Debugger::Shutdown()
 	{
 		if (!m_initialized)
@@ -33,6 +92,34 @@ namespace trace {
 	std::string& Debugger::GetString(StringID string_id)
 	{
 		return m_stringData[string_id];
+	}
+
+	void Debugger::DrawLine_Timed(float duration, glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
+	{
+		TimedDebugData line_data = {};
+		line_data.time_left = duration;
+		line_data.color = color;
+		line_data.render_graph_index = render_graph_index;
+		line_data.transform = transform;
+		line_data.data_0 = glm::vec4(point_0, 0.0f);
+		line_data.data_1 = glm::vec4(point_1, 0.0f);
+		line_data.type = DebugPrimitiveType::LINE;
+
+		timed_data.push_back(line_data);
+	}
+
+	void Debugger::DrawDebugSphere_Timed(float duration, float radius, uint32_t steps, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
+	{
+		TimedDebugData sphere_data = {};
+		sphere_data.time_left = duration;
+		sphere_data.color = color;
+		sphere_data.render_graph_index = render_graph_index;
+		sphere_data.transform = transform;
+		sphere_data.data_0.x = radius;
+		memcpy(&sphere_data.data_0.y, &steps, sizeof(uint32_t));
+		sphere_data.type = DebugPrimitiveType::SPHERE;
+
+		timed_data.push_back(sphere_data);
 	}
 
 	void Debugger::AddDebugLine(glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color)

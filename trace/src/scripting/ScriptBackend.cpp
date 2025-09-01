@@ -772,6 +772,40 @@ void Debug_Sphere(glm::vec3* position, float radius, uint32_t steps, glm::vec3* 
 
 }
 
+void Debug_SphereTimed(float duration, glm::vec3* position, float radius, uint32_t steps, glm::vec3* color)
+{
+	trace::Debugger* debugger = trace::Debugger::get_instance();
+
+	glm::mat4 transform = glm::translate(glm::mat4(1.0f), *position);
+	uint32_t final_color = colorVec4ToUint(glm::vec4(*color, 1.0f));
+
+	debugger->DrawDebugSphere_Timed(duration, radius, steps, transform, final_color);
+
+}
+
+void Debug_Line(glm::vec3* from, glm::vec3* to, glm::vec3* color)
+{
+	trace::Debugger* debugger = trace::Debugger::get_instance();
+
+	glm::mat4 transform = glm::mat4(1.0f);
+	uint32_t final_color = colorVec4ToUint(glm::vec4(*color, 1.0f));
+
+	debugger->AddDebugLine(*from, *to, transform, final_color);
+
+}
+
+void Debug_LineTimed(float duration, glm::vec3* from, glm::vec3* to, glm::vec3* color)
+{
+	trace::Debugger* debugger = trace::Debugger::get_instance();
+
+	glm::mat4 transform = glm::mat4(1.0f);
+	uint32_t final_color = colorVec4ToUint(glm::vec4(*color, 1.0f));
+
+	debugger->DrawLine_Timed(duration, *from, *to, transform, final_color);
+
+}
+
+
 #pragma endregion
 
 
@@ -1727,6 +1761,17 @@ void Physics_Step(float deltaTime)
 	s_MonoData.scene->PhysicsStep(deltaTime);
 }
 
+bool Physics_RayCast(glm::vec3* origin, glm::vec3* direction, float max_distance, RaycastHit* result)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return false;
+	}
+
+	return PhysicsFunc::RayCast(s_MonoData.scene->GetPhysics3D(), *origin, *direction, max_distance, *result);
+}
+
 
 #pragma endregion
 
@@ -2124,6 +2169,18 @@ void Networking_SendScenePacket(float deltaTime)
 	s_MonoData.scene->OnNetworkUpdate(deltaTime);
 }
 
+float Networking_GetServerAverageRTT()
+{
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->GetServerAverageRTT();
+}
+
+float Networking_GetClientAverageRTT(uint32_t client_id)
+{
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	return net_manager->GetClientAverageRTT(client_id);
+}
+
 #pragma endregion
 
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
@@ -2134,6 +2191,9 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Debug_Log);
 	ADD_INTERNAL_CALL(Debug_Trace);
 	ADD_INTERNAL_CALL(Debug_Sphere);
+	ADD_INTERNAL_CALL(Debug_SphereTimed);
+	ADD_INTERNAL_CALL(Debug_Line);
+	ADD_INTERNAL_CALL(Debug_LineTimed);
 
 	ADD_INTERNAL_CALL(Action_GetComponent);
 	ADD_INTERNAL_CALL(Action_GetScript);
@@ -2189,6 +2249,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Physics_GetCollisionData);
 	ADD_INTERNAL_CALL(Physics_GetTriggerData);
 	ADD_INTERNAL_CALL(Physics_Step);
+	ADD_INTERNAL_CALL(Physics_RayCast);
 
 	ADD_INTERNAL_CALL(CharacterController_IsGrounded);
 	ADD_INTERNAL_CALL(CharacterController_Move);
@@ -2225,6 +2286,8 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Networking_ConnectToLAN);
 	ADD_INTERNAL_CALL(Networking_InstanceID);
 	ADD_INTERNAL_CALL(Networking_SendScenePacket);
+	ADD_INTERNAL_CALL(Networking_GetServerAverageRTT);
+	ADD_INTERNAL_CALL(Networking_GetClientAverageRTT);
 
 }
 

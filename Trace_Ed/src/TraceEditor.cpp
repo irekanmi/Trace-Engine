@@ -444,7 +444,10 @@ namespace trace {
 			ImGui::TextColored({ .0f, .59f, .40f, 1.0f }, "Coker Ayanfe");
 			ImGui::DragFloat("Seek Time", &seek_time, 0.05f, 0.0f, 5.0f, "%.4f");
 
-			ImGui::DragFloat("Speed", &speed, 0.05f);
+			Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+			float rtt = net_manager->GetServerAverageRTT();
+
+			ImGui::DragFloat("RTT", &rtt, 0.05f);
 
 		}
 		ImGui::End();

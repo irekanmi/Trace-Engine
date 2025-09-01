@@ -97,5 +97,15 @@ namespace Trace
         {
             InternalCalls.Networking_SendScenePacket(deltaTime);
         }
+
+        public static float GetServerAverageRTT()
+        {
+            return InternalCalls.Networking_GetServerAverageRTT();
+        }
+        
+        public static float GetClientAverageRTT(uint client_id)
+        {
+            return InternalCalls.Networking_GetClientAverageRTT(client_id);
+        }
     }
 }

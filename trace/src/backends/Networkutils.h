@@ -26,6 +26,7 @@ namespace trace {
 	typedef bool (*__SendPacket)(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode);
 	typedef bool (*__ReceiveSocketData)(HostInfo* host, NetworkStream& packet_data, Connection* source);
 	typedef bool (*__SendSocketData)(HostInfo* host, NetworkStream& packet_data, Connection* source, uint32_t port);
+	typedef bool (*__GetAverageRTT)(Connection* connection, float& result);
 
 	class NetFuncLoader
 	{
@@ -53,6 +54,7 @@ namespace trace {
 		static bool SendPacket(HostInfo* host, Connection* connection, NetworkStream& packet_data, PacketSendMode mode);
 		static bool ReceiveSocketData(HostInfo* host, NetworkStream& packet_data, Connection* source);
 		static bool SendSocketData(HostInfo* host, NetworkStream& packet_data, Connection* source, uint32_t port);
+		static bool GetAverageRTT(Connection* connection, float& result);
 
 	private:
 		static __Initialize _initialize;
@@ -68,6 +70,7 @@ namespace trace {
 		static __SendPacket _sendPacket;
 		static __ReceiveSocketData _recevieSocketData;
 		static __SendSocketData _sendSocketData;
+		static __GetAverageRTT _getAverageRTT;
 
 	protected:
 		friend class NetFuncLoader;

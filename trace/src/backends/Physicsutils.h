@@ -43,6 +43,9 @@ namespace trace {
 	typedef bool (*__SetCharacterControllerPosition)(CharacterController&, glm::vec3&);
 	typedef bool (*__SetControllerDataPtr)(CharacterController&, void*);
 
+	//Queries
+	typedef bool (*__RayCast)(void*, glm::vec3, glm::vec3, float, RaycastHit&);
+
 
 	class PhysicsFuncLoader
 	{
@@ -86,6 +89,8 @@ namespace trace {
 		static bool GetCharacterControllerPosition(CharacterController& controller, glm::vec3& out_position);
 		static bool SetCharacterControllerPosition(CharacterController& controller, glm::vec3& position);
 
+		static bool RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result);
+
 
 
 	private:
@@ -120,6 +125,8 @@ namespace trace {
 		static __SetControllerDataPtr _setControllerDataPtr;
 		static __GetCharacterControllerPosition _getCharacterControllerPosition;
 		static __SetCharacterControllerPosition _setCharacterControllerPosition;
+
+		static __RayCast _rayCast;
 
 
 	protected:

@@ -6,7 +6,7 @@
 
 namespace trace {
 
-	class TRACE_API Clock
+	class Clock
 	{
 
 	public:
@@ -20,7 +20,7 @@ namespace trace {
 		float GetInternalElapsedTime();
 
 	private:
-		std::chrono::high_resolution_clock::time_point m_startTime;
+		std::chrono::steady_clock::time_point m_startTime;
 		float m_elapsedTime = 0.0f;
 		bool m_started = false;
 

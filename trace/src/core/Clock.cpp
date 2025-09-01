@@ -13,7 +13,7 @@ namespace trace {
 	{
 		if (!m_started)
 		{
-			m_startTime = std::chrono::high_resolution_clock::now();
+			m_startTime = std::chrono::steady_clock::now();
 			m_started = true;
 			m_elapsedTime = 0.0f;
 		}
@@ -33,7 +33,7 @@ namespace trace {
 		{
 			Begin();
 		}
-		std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 		//start_time = std::chrono::system_clock::now();
 		return std::chrono::duration<float>(now - m_startTime).count();

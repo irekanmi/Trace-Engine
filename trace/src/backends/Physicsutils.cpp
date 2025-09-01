@@ -49,6 +49,8 @@ namespace trace {
 	__GetCharacterControllerPosition PhysicsFunc::_getCharacterControllerPosition = nullptr;
 	__SetCharacterControllerPosition PhysicsFunc::_setCharacterControllerPosition = nullptr;
 
+	__RayCast PhysicsFunc::_rayCast = nullptr;
+
 	// Loader ---------------------------------------
 	bool PhysicsFuncLoader::LoadPhysxFunctions()
 	{
@@ -83,6 +85,7 @@ namespace trace {
 		PhysicsFunc::_getCharacterControllerPosition = physx::__GetCharacterControllerPosition;
 		PhysicsFunc::_setCharacterControllerPosition = physx::__SetCharacterControllerPosition;
 
+		PhysicsFunc::_rayCast = physx::__RayCast;
 
 		return true;
 	}
@@ -248,6 +251,12 @@ namespace trace {
 	{
 		PHYSICS_FUNC_IS_VALID(_setCharacterControllerPosition);
 		return _setCharacterControllerPosition(controller, position);
+	}
+
+	bool PhysicsFunc::RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result)
+	{
+		PHYSICS_FUNC_IS_VALID(_rayCast);
+		return _rayCast(scene, origin, direction, max_distance, result);
 	}
 
 }

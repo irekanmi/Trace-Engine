@@ -30,6 +30,7 @@ bool __ENet_ReceivePacket_S(HostInfo * host, Packet & packet_data, Connection * 
 bool __ENet_SendPacket(HostInfo * host, Connection * connection, NetworkStream & packet_data, PacketSendMode mode);
 bool __ENet_ReceiveSocketData(HostInfo * host, NetworkStream & packet_data, Connection * source);
 bool __ENet_SendSocketData(HostInfo * host, NetworkStream & packet_data, Connection * source, uint32_t port);
+bool __ENet_GetAverageRTT(Connection* connection, float& result);
 
 namespace trace {
 
@@ -48,6 +49,7 @@ namespace trace {
 		NetFunc::_sendPacket = __ENet_SendPacket;
 		NetFunc::_recevieSocketData = __ENet_ReceiveSocketData;
 		NetFunc::_sendSocketData = __ENet_SendSocketData;
+		NetFunc::_getAverageRTT = __ENet_GetAverageRTT;
 		return true;
 	}
 
@@ -64,6 +66,7 @@ namespace trace {
 	__SendPacket NetFunc::_sendPacket = nullptr;
 	__ReceiveSocketData NetFunc::_recevieSocketData = nullptr;
 	__SendSocketData NetFunc::_sendSocketData = nullptr;
+	__GetAverageRTT NetFunc::_getAverageRTT = nullptr;
 
 
 	bool NetFunc::Initialize(Network::NetworkStateInfo& info)
@@ -142,6 +145,12 @@ namespace trace {
 	{
 		NET_FUNC_IS_VALID(_sendSocketData);
 		return _sendSocketData(host, packet_data, source, port);
+	}
+
+	bool NetFunc::GetAverageRTT(Connection* connection, float& result)
+	{
+		NET_FUNC_IS_VALID(_getAverageRTT);
+		return _getAverageRTT(connection, result);
 	}
 
 
@@ -464,7 +473,7 @@ bool __ENet_ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out
 
 	//enet_host_flush(client);
 
-	uint32_t mille_sec = uint32_t(wait_time * 1000.0f);
+	uint32_t mille_sec = 5;// uint32_t(wait_time * 1000.0f);
 	while (enet_host_service(client, &network_event, wait_time) > 0)
 	{
 		switch (network_event.type)
@@ -549,6 +558,7 @@ bool __ENet_ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out
 
 			packet_data.data.SetPosition(0);
 			packet_data.data.Write(type);
+			packet_data.data.SetPosition(0);
 			net_server->ProcessPacket(packet_data, *out_source_connection);
 
 			break;
@@ -584,6 +594,7 @@ bool __ENet_ReceivePacket_S(HostInfo* host, Packet& packet_data, Connection* out
 
 			packet_data.data.SetPosition(0);
 			packet_data.data.Write(type);
+			packet_data.data.SetPosition(0);
 			net_server->ProcessPacket(packet_data, *out_source_connection);
 
 			break;
@@ -683,6 +694,19 @@ bool __ENet_SendSocketData(HostInfo* host, NetworkStream& packet_data, Connectio
 	buffer.dataLength = packet_data.GetSize();
 
 	result = enet_socket_send(host->lan_socket, &address, &buffer, 1);
+
+	return true;
+}
+bool __ENet_GetAverageRTT(Connection* connection, float& result)
+{
+	if (!connection)
+	{
+		return false;
+	}
+
+	ENetPeer* peer = (ENetPeer*)connection->internal_handle;
+
+	result = float(peer->roundTripTime) / 1000.0f;
 
 	return true;
 }

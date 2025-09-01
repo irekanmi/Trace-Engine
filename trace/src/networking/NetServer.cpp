@@ -209,6 +209,19 @@ namespace trace::Network {
 
 		return nullptr;
 	}
+	float NetServer::GetAverageRTT(uint32_t connection_handle)
+	{
+		Connection* connection = FindConnection(connection_handle);
+
+		if (connection)
+		{
+			float rtt = 0.0f;
+			NetFunc::GetAverageRTT(connection, rtt);
+			return rtt;
+		}
+
+		return 0.0f;
+	}
 	void NetServer::BroadcastToAll(Packet packet, PacketSendMode mode)
 	{
 		for (Connection& connection : m_connections)

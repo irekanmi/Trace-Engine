@@ -34,5 +34,6 @@ namespace physx {
 	bool __SetControllerDataPtr(trace::CharacterController& controller, void* ptr);
 	bool __GetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& out_position);
 	bool __SetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& position);
+	bool __RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result);
 
 }

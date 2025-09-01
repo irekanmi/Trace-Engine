@@ -572,4 +572,33 @@ namespace trace::Network {
 		--rpc_handle;
 	}
 
+	float NetworkManager::GetClientAverageRTT(uint32_t client_handle)
+	{
+
+		switch (m_type)
+		{
+		case NetType::LISTEN_SERVER:
+		{
+			return server.GetAverageRTT(client_handle);
+			break;
+		}
+		}
+
+		return 0.0f;
+	}
+
+	float NetworkManager::GetServerAverageRTT()
+	{
+		switch (m_type)
+		{
+		case NetType::CLIENT:
+		{
+			return client.GetAverageRTT();
+			break;
+		}
+		}
+
+		return 0.0f;
+	}
+
 }

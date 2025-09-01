@@ -84,6 +84,7 @@ namespace trace {
 		Entity InstanciateEntity(Entity source, UUID id, glm::vec3 position, uint32_t net_handle = 0, bool forced = false);
 		bool ApplyPrefabChanges(Ref<Prefab> prefab);
 		Entity GetMainCamera();
+		void* GetPhysics3D() { return m_physics3D; }
 
 		bool ApplyPrefabChangesOnSceneLoad();
 

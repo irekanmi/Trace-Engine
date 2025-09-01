@@ -33,6 +33,15 @@ namespace Trace
         public ContactPoint[] contacts;
 	};
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RaycastHit
+    {
+        public UInt64 entity;
+        public Vec3 position;
+        public Vec3 normal;
+        public float distance;
+    };
+
     public class Physics
     {
 
@@ -67,6 +76,11 @@ namespace Trace
             TriggerPair trigger = new TriggerPair();
             InternalCalls.Physics_GetTriggerData(ref trigger, trigger_data);
             entity.OnTriggerExit(trigger);
+        }
+
+        public static bool RayCast(Vec3 origin, Vec3 direction, float max_distance, out RaycastHit result)
+        {
+            return InternalCalls.Physics_RayCast(ref origin, ref direction, max_distance, out result);
         }
 
 

@@ -239,6 +239,17 @@ namespace trace::Network {
 		}
 		return false;
 	}
+	float NetClient::GetAverageRTT()
+	{
+		if (m_connection.internal_handle)
+		{
+			float rtt = 0.0f;
+			NetFunc::GetAverageRTT(&m_connection, rtt);
+			return rtt;
+		}
+
+		return 0.0f;
+	}
 	void NetClient::ProcessPacket(Packet& packet, Connection source)
 	{
 		PacketType type = PacketType::NONE;

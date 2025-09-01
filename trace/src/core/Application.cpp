@@ -15,6 +15,7 @@
 #include "core/memory/MemoryManager.h"
 #include "networking/NetworkManager.h"
 #include "multithreading/JobSystem.h"
+#include "debug/Debugger.h"
 
 //Temp==================
 #include "render/Graphics.h"
@@ -140,6 +141,7 @@ namespace trace
 		MemoryManager* mem_manager = MemoryManager::get_instance();
 		Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
 		JobSystem* job_system = JobSystem::get_instance();
+		Debugger* debugger = Debugger::get_instance();
 		
 		
 		
@@ -150,8 +152,10 @@ namespace trace
 
 		Counter* frame_sync = job_system->CreateCounter();
 
+
 		while (m_isRunning)
 		{
+
 			m_Window->PollAndUpdateEvents();
 
 			if (m_isMinimized)
@@ -191,6 +195,7 @@ namespace trace
 
 			//___________________//	
 
+			debugger->Update(deltaTime);
 			renderer->Render(deltaTime);
 
 			input->Update(deltaTime);

@@ -52,6 +52,8 @@ namespace trace::Network {
 		bool IsClient();
 		void AcquireRPCStream();
 		void ReleaseRPCStream();
+		float GetClientAverageRTT(uint32_t client_handle);
+		float GetServerAverageRTT();
 
 
 		static NetworkManager* get_instance();
@@ -75,6 +77,7 @@ namespace trace::Network {
 		std::vector<uint32_t> new_clients;
 		std::vector<uint32_t> connected_clients;
 		uint32_t rpc_handle = 0;
+		float latency = 0.0f;
 
 	protected:
 

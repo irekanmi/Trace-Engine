@@ -25,6 +25,7 @@ namespace physx {
 	static trace::Counter* job_counter = nullptr;
 	// physx doesn't allow rigid actor creation or modification while stimulation is running, so this lock prevents that
 	static trace::SpinLock stimulation_lock;
+	
 
 	class JobDispatcher : public PxCpuDispatcher
 	{
@@ -1145,5 +1146,28 @@ namespace physx {
 		controller.SetIsGrounded(is_down);*/
 
 		return true;
+	}
+	bool __RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result)
+	{
+
+		TRC_ASSERT(scene, "This pointer is invaild");
+
+		PhysxScene* in_scene = reinterpret_cast<PhysxScene*>(scene);
+		PxRaycastHit ray_hit;
+		PxRaycastBuffer buf(&ray_hit, 1);
+
+		bool hit_result = in_scene->scene->raycast(Glm3ToPx3(origin), Glm3ToPx3(direction), max_distance, buf);
+
+		if (hit_result)
+		{
+			result.position = Px3ToGlm3(ray_hit.position);
+			result.normal = Px3ToGlm3(ray_hit.normal);
+			result.distance = ray_hit.distance;
+			TRC_ASSERT(ray_hit.shape->userData, "Entity ptr should be assigned");
+			trace::Entity* entity = (trace::Entity*)ray_hit.shape->userData;
+			result.entity = entity->GetID();
+		}
+
+		return hit_result;
 	}
 }

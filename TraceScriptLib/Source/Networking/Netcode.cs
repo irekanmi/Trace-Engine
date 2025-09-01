@@ -129,7 +129,6 @@ namespace Trace
             {
                 HandleClientUpdate(deltaTime);
 
-                server_time += deltaTime;
                 float send_duration = 1.0f / (float)client_packet_rate;
                 if (elasped_send_time >= send_duration)
                 {
@@ -141,6 +140,7 @@ namespace Trace
             }
 
             elasped_send_time += deltaTime;
+            server_time += deltaTime;
 
         }
 
@@ -170,7 +170,10 @@ namespace Trace
             accumulator += deltaTime;
             while (accumulator >= fixed_dt)
             {
-
+                if(reconcile_client)
+                {
+                    break;
+                }
                 if (client_controller.IsValid())
                 {
                     client_controller.SampleInput(current_tick);
@@ -354,18 +357,24 @@ namespace Trace
             }
         }
 
-        public void SetServerTick(uint server_tick)
+        public void SetServerTick(uint server_tick, float _time)
         {
             if(!Network.IsClient())
             {
                 return;
             }
 
+            float server_rtt = Network.GetServerAverageRTT();
             received_server_tick = server_tick;
-            server_time = (float)server_tick * fixed_dt;// Account for latency
+            server_time = _time;// (float)server_tick * fixed_dt;// Account for latency
+            server_time += server_rtt;
+
+            Debug.Log("Server RTT: " + server_rtt.ToString());
+
 
             //Determine this number of ticks the client should be ahead of server
             float time_offset = 0.2f;// 100ms
+            time_offset += server_rtt;
             uint offset_tick = (uint)(time_offset / fixed_dt);
             current_tick = server_tick + offset_tick;
             Debug.Trace("Client Manager Current Tick:" + current_tick.ToString());
@@ -413,6 +422,7 @@ namespace Trace
             NetworkManager manager = (NetworkManager)Scene.GetEntityWithScript<NetworkManager>();
             Stream.WriteInt(stream_handle, (int)header);
             Stream.WriteInt(stream_handle, (int)manager.GetCurrentTick());
+            Stream.WriteFloat(stream_handle, manager.GetServerTime());
 
         }
 
@@ -425,8 +435,9 @@ namespace Trace
                 case NetPacketInfo.CurrentServerTick:
                     {
                         uint current_server_tick = (uint)Stream.ReadInt(stream_handle);
+                        float _time = Stream.ReadFloat(stream_handle);
                         NetworkManager manager = (NetworkManager)Scene.GetEntityWithScript<NetworkManager>();
-                        manager.SetServerTick(current_server_tick);
+                        manager.SetServerTick(current_server_tick, _time);
                         if(!IsOwner() || server_tick_received)
                         {
                             return;
@@ -486,6 +497,7 @@ namespace Trace
     public struct BasicInput
     {
         public Vec3 direction;
+        public bool shoot_pressed;
         public uint tick_frame;
     }
 
@@ -495,11 +507,13 @@ namespace Trace
         Dictionary<uint, BasicInput> outputs;
         uint buffer_size = 64;
         uint _tick = 0;
+        Dictionary<Keys, uint> key_pressed;
 
         public override void OnNetworkCreate()
         {
             base.OnNetworkCreate();
             inputs = new List<BasicInput>((int)buffer_size);
+            key_pressed = new Dictionary<Keys, uint>();
             for(int i = 0; i < (int)buffer_size; i++)
             {
                 inputs.Add(new BasicInput { direction = Vec3.Zero });
@@ -509,6 +523,8 @@ namespace Trace
             {
                 outputs = new Dictionary<uint, BasicInput>();
             }
+
+            key_pressed.Add(Keys.KEY_R, 0);
 
         }
 
@@ -547,8 +563,15 @@ namespace Trace
                 input.x -= 1.0f;
             }
 
+            bool shoot = false;
+            if(Input.GetKeyPressed(Keys.KEY_R) && ( (current_tick - 1) > key_pressed[Keys.KEY_R]))
+            {
+                key_pressed[Keys.KEY_R] = current_tick;
+                shoot = true;
+            }
+
             int index = (int)(current_tick % buffer_size);
-            inputs[index] = new BasicInput { direction = input, tick_frame = current_tick };
+            inputs[index] = new BasicInput { direction = input, tick_frame = current_tick, shoot_pressed = shoot };
 
             _tick = current_tick;
         }
@@ -654,7 +677,7 @@ namespace Trace
         protected ActionDataType[] client_state_history;
         protected int client_state_history_count = 64;
         protected RingBuffer<ActionDataType> remote_state_history;
-        protected RingBuffer<uint> remote_state_ticks;
+        protected RingBuffer<float> remote_state_timestamp;
         protected int remote_state_count = 12;
         protected NetworkManager manager;
 
@@ -670,11 +693,9 @@ namespace Trace
                 client_state_history_count = (int)(2.5f * (float)manager.GetTickRate());
                 client_state_history = new ActionDataType[client_state_history_count];
             }
-            else
-            {
-                remote_state_history = new RingBuffer<ActionDataType>(remote_state_count);
-                remote_state_ticks = new RingBuffer<uint>(remote_state_count);
-            }
+            
+            remote_state_history = new RingBuffer<ActionDataType>(client_state_history_count);
+            remote_state_timestamp = new RingBuffer<float>(client_state_history_count);
 
         }
 
@@ -687,6 +708,12 @@ namespace Trace
                 int index = (int)tick % client_state_history_count;
                 client_state_history[index] = action_state;
             }
+
+            if(Network.IsServer())
+            {
+                float time = (float)tick * manager.GetFixedDelta();
+                AddRemoteState(ref action_state, time);
+            }
         }
         public override void ApplyReconciliation()
         {
@@ -697,7 +724,7 @@ namespace Trace
         {
         }
 
-        protected void AddRemoteState(ref ActionDataType new_state, uint tick)
+        protected void AddRemoteState(ref ActionDataType new_state, float timestamp)
         {
             if(remote_state_history.Full)
             {
@@ -705,11 +732,11 @@ namespace Trace
             }
             remote_state_history.PushBack(new_state);
 
-            if(remote_state_ticks.Full)
+            if(remote_state_timestamp.Full)
             {
-                remote_state_ticks.PopFront();
+                remote_state_timestamp.PopFront();
             }
-            remote_state_ticks.PushBack(tick);
+            remote_state_timestamp.PushBack(timestamp);
         }
 
         protected bool GetRemoteState(float time, out ActionDataType a, out ActionDataType b, out float t)
@@ -719,12 +746,12 @@ namespace Trace
             a = action_state;
             b = action_state;
             t = 0.0f;
-            while(remote_state_ticks.Iterate(index, out uint value))
+            while(remote_state_timestamp.Iterate(index, out float value))
             {
-                float b_time = (float)value * manager.GetFixedDelta();
+                float b_time = value;
                 if(time <= b_time && index > 0)
                 {
-                    float a_time = (float)remote_state_ticks.Get(index - 1) * manager.GetFixedDelta();
+                    float a_time = remote_state_timestamp.Get(index - 1);
                     a = remote_state_history.Get(index - 1);
                     b = remote_state_history.Get(index);
 
