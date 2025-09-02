@@ -56,6 +56,8 @@ namespace trace::Network {
 		rpc_send_stream = NetworkStream(KB);
 		send_stream = NetworkStream(KB);
 
+		latency = 0.3f;
+
 		return result;
 	}
 
@@ -80,6 +82,67 @@ namespace trace::Network {
 
 		//NOTE: wait time for connect to receive packet is set to half the delta time
 		float wait_time = deltaTime / 2.0f;
+
+		for (LatencyPacket& data : packets)
+		{
+			data.time_left -= deltaTime;
+			if (data.time_left > 0.0f)
+			{
+				continue;
+			}
+
+			switch (m_type)
+			{
+			case NetType::CLIENT:
+			{
+				client.SendPacketToServer(data.packet, data.mode);
+				break;
+			}
+			case NetType::LISTEN_SERVER:
+			{
+				if (m_info.state_sync)
+				{
+					for (uint32_t& handle : connected_clients)
+					{
+						server.SendTo(handle, data.packet, data.mode);
+					}
+				}
+				else
+				{
+					server.BroadcastToAll(data.packet, data.mode);
+				}
+				break;
+			}
+			}
+
+		}
+
+
+		int32_t prev_last_index = packets.size() - 1;
+		int32_t last_index = packets.size() - 1;
+		int32_t index = 0;
+		while (index <= last_index)
+		{
+			LatencyPacket& data = packets[index];
+
+			if (data.time_left <= 0.0f)
+			{
+				data.packet.data.Destroy();
+				packets[index] = packets[last_index];
+				last_index--;
+			}
+
+			index++;
+		}
+
+		if (last_index < prev_last_index)
+		{
+			++last_index;
+			packets_lock.Lock();
+			auto it = packets.begin() + last_index;
+			packets.erase(it, packets.end());
+			packets_lock.Unlock();
+		}
 
 		switch (m_type)
 		{
@@ -194,13 +257,28 @@ namespace trace::Network {
 		{
 			if (client.HasConnection())
 			{
-				client.SendPacketToServer(m_sendPacket, mode);
+				LatencyPacket defer;
+				defer.packet = m_sendPacket;
+				defer.mode = mode;
+				defer.time_left = latency;
+				packets_lock.Lock();
+				packets.emplace_back(defer);
+				packets_lock.Unlock();
+				//client.SendPacketToServer(m_sendPacket, mode);
 			}
 			break;
 		}
 		case NetType::LISTEN_SERVER:
 		{
-			if (m_info.state_sync)
+			LatencyPacket defer;
+			defer.packet = m_sendPacket;
+			defer.mode = mode;
+			defer.time_left = latency;
+			packets_lock.Lock();
+			packets.emplace_back(defer);
+			packets_lock.Unlock();
+
+			/*if (m_info.state_sync)
 			{
 				for (uint32_t& handle : connected_clients)
 				{
@@ -210,7 +288,7 @@ namespace trace::Network {
 			else
 			{
 				server.BroadcastToAll(m_sendPacket, mode);
-			}
+			}*/
 			break;
 		}
 		}
@@ -579,7 +657,7 @@ namespace trace::Network {
 		{
 		case NetType::LISTEN_SERVER:
 		{
-			return server.GetAverageRTT(client_handle);
+			return server.GetAverageRTT(client_handle) + (latency + latency);
 			break;
 		}
 		}
@@ -593,7 +671,7 @@ namespace trace::Network {
 		{
 		case NetType::CLIENT:
 		{
-			return client.GetAverageRTT();
+			return client.GetAverageRTT() + (latency + latency);
 			break;
 		}
 		}

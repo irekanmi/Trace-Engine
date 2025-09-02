@@ -794,6 +794,7 @@ void Debug_Line(glm::vec3* from, glm::vec3* to, glm::vec3* color)
 
 }
 
+
 void Debug_LineTimed(float duration, glm::vec3* from, glm::vec3* to, glm::vec3* color)
 {
 	trace::Debugger* debugger = trace::Debugger::get_instance();
@@ -805,6 +806,25 @@ void Debug_LineTimed(float duration, glm::vec3* from, glm::vec3* to, glm::vec3* 
 
 }
 
+void Debug_Box(glm::vec3* half_extents, glm::mat4* transform, glm::vec3* color)
+{
+	trace::Debugger* debugger = trace::Debugger::get_instance();
+
+	uint32_t final_color = colorVec4ToUint(glm::vec4(*color, 1.0f));
+
+	debugger->DrawDebugBox(half_extents->x, half_extents->y, half_extents->z, *transform, final_color);
+
+}
+
+void Debug_BoxTimed(float duration, glm::vec3* half_extents, glm::mat4* transform, glm::vec3* color)
+{
+	trace::Debugger* debugger = trace::Debugger::get_instance();
+
+	uint32_t final_color = colorVec4ToUint(glm::vec4(*color, 1.0f));
+
+	debugger->DrawDebugBox_Timed(duration, *half_extents, *transform, final_color);
+
+}
 
 #pragma endregion
 
@@ -1061,13 +1081,18 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
 		return;
 	}
-
-	entity.GetComponent<TransformComponent>()._transform.SetPosition(*position);
+	TransformComponent& transform = entity.GetComponent<TransformComponent>();
+	transform._transform.SetPosition(*position);
 
 	//Update Physics objects internal state
 	if (CharacterControllerComponent* controller = entity.TryGetComponent<CharacterControllerComponent>())
 	{
 		PhysicsFunc::SetCharacterControllerPosition(controller->character, *position);
+	}
+
+	if (BoxColliderComponent* collider = entity.TryGetComponent<BoxColliderComponent>())
+	{
+		PhysicsFunc::UpdateShapeTransform(collider->_internal, collider->shape, transform._transform);
 	}
 
 }
@@ -1242,6 +1267,44 @@ void TransformComponent_Up(UUID id, glm::vec3* up)
 	}
 
 	*up = entity.GetComponent<TransformComponent>()._transform.GetUp();
+}
+
+void TransformComponent_MatrixTransform(UUID id, glm::mat4* result)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*result = entity.GetComponent<TransformComponent>()._transform.GetLocalMatrix();
+}
+
+void TransformComponent_WorldMatrixTransform(UUID id, glm::mat4* result)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*result = s_MonoData.scene->GetEntityGlobalPose(entity).GetLocalMatrix();
 }
 
 #pragma endregion
@@ -1536,6 +1599,48 @@ void Scene_IterateComponent(UUID id, MonoObject* src, uint64_t func_name_id, Mon
 
 	it->second(entity, method, instance);
 	
+}
+
+void Scene_IterateScript(UUID id, MonoObject* src, uint64_t func_name_id, MonoReflectionType* reflect_type)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	MonoType* type = mono_reflection_type_get_type(reflect_type);
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	MonoType* class_type = mono_class_get_type(mono_object_get_class(src));
+	ScriptInstance* instance = entity.GetScript((uintptr_t)class_type);
+	if (!instance)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	trace::StringID string_id;
+	string_id.value = func_name_id;
+	ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+	if (!method)
+	{
+		TRC_ASSERT(false, "These is not suppose to happen");
+	}
+
+	s_MonoData.scene->GetScriptRegistry().Iterate((uintptr_t)type, [method, instance](UUID id, Script* script, ScriptInstance* obj_instance)-> bool
+		{
+			MonoObject* obj = (MonoObject*)obj_instance->GetBackendHandle();
+
+			void* params[] =
+			{
+				obj
+			};
+
+			InvokeScriptMethod_Instance(*method, *instance, params);
+
+			return false;
+		});
 }
 
 void Scene_IterateEntityScripts(UUID entity_id, UUID id, MonoObject* src, uint64_t func_name_id)
@@ -1947,6 +2052,12 @@ bool Application_LoadAndSetScene(MonoString* filename)
 
 #pragma region Stream
 
+void Stream_WriteBool(uint64_t stream_handle, bool value)
+{
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Write(value);
+}
+
 void Stream_WriteInt(uint64_t stream_handle, int value)
 {
 	DataStream* stream = (DataStream*)stream_handle;
@@ -1975,6 +2086,12 @@ void Stream_WriteQuat(uint64_t stream_handle, glm::quat* value)
 {
 	DataStream* stream = (DataStream*)stream_handle;
 	stream->Write(*value);
+}
+
+void Stream_ReadBool(uint64_t stream_handle, bool* value)
+{
+	DataStream* stream = (DataStream*)stream_handle;
+	stream->Read(*value);
 }
 
 void Stream_ReadInt(uint64_t stream_handle, int* value)
@@ -2194,6 +2311,8 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Debug_SphereTimed);
 	ADD_INTERNAL_CALL(Debug_Line);
 	ADD_INTERNAL_CALL(Debug_LineTimed);
+	ADD_INTERNAL_CALL(Debug_Box);
+	ADD_INTERNAL_CALL(Debug_BoxTimed);
 
 	ADD_INTERNAL_CALL(Action_GetComponent);
 	ADD_INTERNAL_CALL(Action_GetScript);
@@ -2218,6 +2337,8 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(TransformComponent_Forward);
 	ADD_INTERNAL_CALL(TransformComponent_Right);
 	ADD_INTERNAL_CALL(TransformComponent_Up);
+	ADD_INTERNAL_CALL(TransformComponent_MatrixTransform);
+	ADD_INTERNAL_CALL(TransformComponent_WorldMatrixTransform);
 
 	ADD_INTERNAL_CALL(Input_GetKey);
 	ADD_INTERNAL_CALL(Input_GetKeyPressed);
@@ -2240,6 +2361,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Scene_EnableEntity);
 	ADD_INTERNAL_CALL(Scene_DisableEntity);
 	ADD_INTERNAL_CALL(Scene_IterateComponent);
+	ADD_INTERNAL_CALL(Scene_IterateScript);
 	ADD_INTERNAL_CALL(Scene_IterateEntityScripts);
 	ADD_INTERNAL_CALL(Scene_GetEntityWithComponent);
 	ADD_INTERNAL_CALL(Scene_GetEntityWithScript);
@@ -2266,11 +2388,14 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(Application_LoadAndSetScene);
 
+	ADD_INTERNAL_CALL(Stream_WriteBool);
 	ADD_INTERNAL_CALL(Stream_WriteInt);
 	ADD_INTERNAL_CALL(Stream_WriteFloat);
 	ADD_INTERNAL_CALL(Stream_WriteVec2);
 	ADD_INTERNAL_CALL(Stream_WriteVec3);
 	ADD_INTERNAL_CALL(Stream_WriteQuat);
+
+	ADD_INTERNAL_CALL(Stream_ReadBool);
 	ADD_INTERNAL_CALL(Stream_ReadInt);
 	ADD_INTERNAL_CALL(Stream_ReadFloat);
 	ADD_INTERNAL_CALL(Stream_ReadVec2);

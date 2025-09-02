@@ -17,7 +17,7 @@ namespace physx {
 	bool __Stimulate(void*& scene, float deltaTime);
 	bool __CreateShape(void*& shape, trace::PhyShape& geometry, bool trigger = false);
 	bool __CreateShapeWithTransform(void*& scene,void*& shape, trace::PhyShape& geometry, trace::Transform& transform, bool trigger = false);
-	bool __UpdateShapeTransform(void*& shape, trace::Transform& transform);
+	bool __UpdateShapeTransform(void*& shape, trace::PhyShape& geometry, trace::Transform& transform);
 	bool __DestroyShape(void*& shape);
 	bool __SetShapePtr(void*& shape, void* ptr);
 	bool __SetShapeMask(void*& shape, uint32_t mask0, uint32_t mask1);
@@ -35,5 +35,6 @@ namespace physx {
 	bool __GetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& out_position);
 	bool __SetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& position);
 	bool __RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result);
+	bool __RayCastBox(glm::vec3 half_extents, glm::mat4 pose, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result);
 
 }

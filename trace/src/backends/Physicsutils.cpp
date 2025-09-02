@@ -50,6 +50,7 @@ namespace trace {
 	__SetCharacterControllerPosition PhysicsFunc::_setCharacterControllerPosition = nullptr;
 
 	__RayCast PhysicsFunc::_rayCast = nullptr;
+	__RayCastBox PhysicsFunc::_rayCastBox = nullptr;
 
 	// Loader ---------------------------------------
 	bool PhysicsFuncLoader::LoadPhysxFunctions()
@@ -86,6 +87,7 @@ namespace trace {
 		PhysicsFunc::_setCharacterControllerPosition = physx::__SetCharacterControllerPosition;
 
 		PhysicsFunc::_rayCast = physx::__RayCast;
+		PhysicsFunc::_rayCastBox = physx::__RayCastBox;
 
 		return true;
 	}
@@ -169,10 +171,10 @@ namespace trace {
 		return _setShapeMask(shape, mask0, mask1);
 	}
 
-	bool PhysicsFunc::UpdateShapeTransform(void*& shape, Transform& transform)
+	bool PhysicsFunc::UpdateShapeTransform(void*& shape, trace::PhyShape& geometry, Transform& transform)
 	{
 		PHYSICS_FUNC_IS_VALID(_updateShapeTransform);
-		return _updateShapeTransform(shape, transform);
+		return _updateShapeTransform(shape, geometry, transform);
 	}
 
 	bool PhysicsFunc::AttachShape(void*& shape, void*& actor)
@@ -257,6 +259,12 @@ namespace trace {
 	{
 		PHYSICS_FUNC_IS_VALID(_rayCast);
 		return _rayCast(scene, origin, direction, max_distance, result);
+	}
+
+	bool PhysicsFunc::RayCastBox(glm::vec3 half_extents, glm::mat4 pose, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result)
+	{
+		PHYSICS_FUNC_IS_VALID(_rayCastBox);
+		return _rayCastBox(half_extents, pose, origin, direction, max_distance, result);
 	}
 
 }

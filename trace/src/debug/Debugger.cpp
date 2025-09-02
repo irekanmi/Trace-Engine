@@ -43,6 +43,12 @@ namespace trace {
 				DrawDebugSphere(radius, steps, data.transform, data.color, data.render_graph_index);
 				break;
 			}
+			case DebugPrimitiveType::BOX:
+			{
+				glm::vec3 half_extents = data.data_0;
+				DrawDebugBox(half_extents.x, half_extents.y, half_extents.z, data.transform, data.color, data.render_graph_index);
+				break;
+			}
 			}
 			
 			data.time_left -= deltaTime;
@@ -67,7 +73,7 @@ namespace trace {
 
 		if (last_index < prev_last_index)
 		{
-			last_index = last_index < 0 ? 0 : last_index;
+			++last_index;
 			auto it = timed_data.begin() + last_index;
 			timed_data.erase(it, timed_data.end());
 		}
@@ -120,6 +126,19 @@ namespace trace {
 		sphere_data.type = DebugPrimitiveType::SPHERE;
 
 		timed_data.push_back(sphere_data);
+	}
+
+	void Debugger::DrawDebugBox_Timed(float duration, glm::vec3 half_extents, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
+	{
+		TimedDebugData box_data = {};
+		box_data.time_left = duration;
+		box_data.color = color;
+		box_data.render_graph_index = render_graph_index;
+		box_data.transform = transform;
+		box_data.data_0 = glm::vec4(half_extents, 0.0f);
+		box_data.type = DebugPrimitiveType::BOX;
+
+		timed_data.push_back(box_data);
 	}
 
 	void Debugger::AddDebugLine(glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color)

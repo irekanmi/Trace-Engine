@@ -81,14 +81,15 @@ namespace Trace
             back = (back + 1) % size;
         }
 
-        public void PopFront()
+        public T PopFront()
         {
             if(Empty)
             {
-                return;
+                return default(T);
             }
-
+            T value = data[front];
             front = (front + 1) % size;
+            return value;
         }
 
         public bool Iterate(int current_index, out T index_value)

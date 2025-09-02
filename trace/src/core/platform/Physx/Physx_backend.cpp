@@ -25,6 +25,7 @@ namespace physx {
 	static trace::Counter* job_counter = nullptr;
 	// physx doesn't allow rigid actor creation or modification while stimulation is running, so this lock prevents that
 	static trace::SpinLock stimulation_lock;
+	PxBoxGeometry box_geometry;
 	
 
 	class JobDispatcher : public PxCpuDispatcher
@@ -739,16 +740,18 @@ namespace physx {
 		PhysxScene* in_scene = reinterpret_cast<PhysxScene*>(scene);
 
 		PxScene* scn = in_scene->scene;
-		PxVec3 pos = Glm3ToPx3(transform.GetPosition());
+		PxVec3 pos = Glm3ToPx3(transform.GetPosition() + geometry.offset);
 		PxQuat orientation = GlmQuatToPxQuat(transform.GetRotation());
 		PxTransform pose(pos, orientation);
 		PxRigidStatic* act = phy.physics->createRigidStatic(pose);
 
 
 		act->attachShape(*res);
+		stimulation_lock.Lock();
 		scn->lockWrite();
 		scn->addActor(*act);
 		scn->unlockWrite();
+		stimulation_lock.Unlock();
 		PhysxShape* result = new PhysxShape(); //TODO: use custom allocator
 		result->shp = res;
 		result->actor = act;
@@ -758,7 +761,7 @@ namespace physx {
 
 		return true;
 	}
-	bool __UpdateShapeTransform(void*& shape, trace::Transform& transform)
+	bool __UpdateShapeTransform(void*& shape, trace::PhyShape& geometry, trace::Transform& transform)
 	{
 		
 		if (!shape)
@@ -767,7 +770,7 @@ namespace physx {
 			return false;
 		}
 
-		PxVec3 pos = Glm3ToPx3(transform.GetPosition());
+		PxVec3 pos = Glm3ToPx3(transform.GetPosition() + geometry.offset);
 		PxQuat orientation = GlmQuatToPxQuat(transform.GetRotation());
 		orientation.normalize();
 		PxTransform pose(pos, orientation);
@@ -775,7 +778,11 @@ namespace physx {
 		PhysxShape* res = reinterpret_cast<PhysxShape*>(shape);
 		if (res->actor)
 		{
+			stimulation_lock.Lock();
+			res->actor->getScene()->lockWrite();
 			res->actor->setGlobalPose(pose);
+			res->actor->getScene()->unlockWrite();
+			stimulation_lock.Unlock();
 		}
 
 
@@ -840,7 +847,9 @@ namespace physx {
 		PxRigidActor* actor = res->actor;
 		if (actor)
 		{
+			actor->getScene()->lockWrite();
 			actor->detachShape(*res->shp);
+			actor->getScene()->unlockWrite();
 		}
 
 		res->shp->setSimulationFilterData(filterData);
@@ -848,7 +857,9 @@ namespace physx {
 
 		if (actor)
 		{
+			actor->getScene()->lockWrite();
 			actor->attachShape(*res->shp);
+			actor->getScene()->unlockWrite();
 		}
 
 		return true;
@@ -995,7 +1006,7 @@ namespace physx {
 		}
 
 		PxRigidActor* body = reinterpret_cast<PxRigidActor*>(actor);
-		PxVec3 pos = Glm3ToPx3(transform.GetPosition());
+		PxVec3 pos = Glm3ToPx3(transform.GetPosition() + rigid_body.shape_offset);
 		PxQuat orientation = GlmQuatToPxQuat(transform.GetRotation());
 		PxTransform pose(pos, orientation);
 
@@ -1024,7 +1035,7 @@ namespace physx {
 		body->getScene()->unlockRead();
 		stimulation_lock.Unlock();
 
-		transform.SetPosition(Px3ToGlm3(pose.p));
+		transform.SetPosition(Px3ToGlm3(pose.p) - rigid_body.shape_offset);
 		transform.SetRotation(PxQuatToGlmQuat(pose.q));
 
 		return true;
@@ -1169,5 +1180,10 @@ namespace physx {
 		}
 
 		return hit_result;
+	}
+	bool __RayCastBox(glm::vec3 half_extents, glm::mat4 pose, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result)
+	{
+		TRC_ASSERT(false, "Implement this function");
+		return false;
 	}
 }

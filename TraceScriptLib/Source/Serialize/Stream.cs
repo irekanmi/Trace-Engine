@@ -7,6 +7,10 @@ namespace Trace
     public static class Stream
     {
 
+        public static void WriteBool(UInt64 stream_handle, bool value)
+        {
+            InternalCalls.Stream_WriteBool(stream_handle, value);
+        }
         public static void WriteInt(UInt64 stream_handle, int value)
         {
             InternalCalls.Stream_WriteInt(stream_handle, value);
@@ -31,6 +35,12 @@ namespace Trace
             InternalCalls.Stream_WriteQuat(stream_handle, ref value);
         }
 
+        public static bool ReadBool(UInt64 stream_handle)
+        {
+            InternalCalls.Stream_ReadBool(stream_handle,out bool value);
+            return value;
+        }
+        
         public static int ReadInt(UInt64 stream_handle)
         {
             InternalCalls.Stream_ReadInt(stream_handle,out int value);

@@ -24,7 +24,7 @@ namespace trace {
 	typedef bool (*__DestroyShape)(void*&);
 	typedef bool (*__SetShapePtr)(void*&, void*);
 	typedef bool (*__SetShapeMask)(void*&, uint32_t, uint32_t);
-	typedef bool (*__UpdateShapeTransform)(void*&, Transform&);
+	typedef bool (*__UpdateShapeTransform)(void*&, trace::PhyShape& geometry, Transform&);
 	typedef bool (*__AttachShape)(void*&, void*&);
 	typedef bool (*__DetachShape)(void*&, void*&);
 
@@ -45,6 +45,7 @@ namespace trace {
 
 	//Queries
 	typedef bool (*__RayCast)(void*, glm::vec3, glm::vec3, float, RaycastHit&);
+	typedef bool (*__RayCastBox)(glm::vec3, glm::mat4, glm::vec3, glm::vec3, float, RaycastHit&);
 
 
 	class PhysicsFuncLoader
@@ -72,7 +73,7 @@ namespace trace {
 		static bool DestroyShape(void*& shape);
 		static bool SetShapePtr(void*& shape, void* ptr);
 		static bool SetShapeMask(void*& shape, uint32_t mask0, uint32_t mask1);
-		static bool UpdateShapeTransform(void*& shape, Transform& transform);
+		static bool UpdateShapeTransform(void*& shape, trace::PhyShape& geometry, Transform& transform);
 		static bool AttachShape(void*& shape, void*& actor);
 		static bool DetachShape(void*& shape, void*& actor);
 
@@ -90,6 +91,7 @@ namespace trace {
 		static bool SetCharacterControllerPosition(CharacterController& controller, glm::vec3& position);
 
 		static bool RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result);
+		static bool RayCastBox(glm::vec3 half_extents, glm::mat4 pose, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result);
 
 
 
@@ -127,6 +129,7 @@ namespace trace {
 		static __SetCharacterControllerPosition _setCharacterControllerPosition;
 
 		static __RayCast _rayCast;
+		static __RayCastBox _rayCastBox;
 
 
 	protected:

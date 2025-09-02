@@ -73,6 +73,12 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_Up(ulong id, out Vec3 up);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_MatrixTransform(ulong id, out Mat4 result);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_WorldMatrixTransform(ulong id, out Mat4 result);
 
         #endregion
 
@@ -107,6 +113,12 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Debug_LineTimed(float duration, ref Vec3 from, ref Vec3 to, ref Vec3 color);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Debug_Box(ref Vec3 half_extents, ref Mat4 transform, ref Vec3 color);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Debug_BoxTimed(float duration, ref Vec3 half_extents, ref Mat4 transform, ref Vec3 color);
 
         #endregion
 
@@ -176,6 +188,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Scene_IterateComponent(ulong id, Trace.Action src, UInt64 func_name_id, Type component_type);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Scene_IterateScript(ulong id, Trace.Action src, UInt64 func_name_id, Type script_type);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Scene_IterateEntityScripts(ulong entity_id, ulong id, Trace.Action src, UInt64 func_name_id);
@@ -264,6 +279,9 @@ namespace Trace
         #region Stream
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteBool(UInt64 stream_handle, bool value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_WriteInt(UInt64 stream_handle, int value);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -277,6 +295,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_WriteQuat(UInt64 stream_handle, ref Quat value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_ReadBool(UInt64 stream_handle, out bool value);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_ReadInt(UInt64 stream_handle, out int value);

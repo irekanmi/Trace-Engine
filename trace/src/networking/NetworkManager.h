@@ -4,6 +4,7 @@
 #include "networking/NetServer.h"
 #include "networking/NetClient.h"
 #include "networking/NetworkStream.h"
+#include "multithreading/SpinLock.h"
 
 #include <string>
 #include <vector>
@@ -14,6 +15,12 @@ namespace trace {
 
 namespace trace::Network {
 
+	struct LatencyPacket
+	{
+		float time_left = 0.0f;
+		Packet packet;
+		PacketSendMode mode;
+	};
 
 	class NetworkManager
 	{
@@ -78,6 +85,8 @@ namespace trace::Network {
 		std::vector<uint32_t> connected_clients;
 		uint32_t rpc_handle = 0;
 		float latency = 0.0f;
+		std::vector<LatencyPacket> packets;
+		SpinLock packets_lock;
 
 	protected:
 

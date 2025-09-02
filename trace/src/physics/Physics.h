@@ -99,6 +99,8 @@ namespace trace {
 
 		float mass = 1.0f;
 		float density = 10.0f;
+		//NOTE:
+		glm::vec3 shape_offset = glm::vec3(0.0f);
 
 	private:
 		RigidBodyType m_type = RigidBodyType::Static;

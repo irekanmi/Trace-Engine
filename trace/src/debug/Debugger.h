@@ -14,7 +14,8 @@ namespace trace {
 	{
 		NONE,
 		LINE,
-		SPHERE
+		SPHERE,
+		BOX
 	};
 
 	struct TimedDebugData
@@ -52,6 +53,7 @@ namespace trace {
 
 		void DrawLine_Timed(float duration, glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 		void DrawDebugSphere_Timed(float duration, float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugBox_Timed(float duration, glm::vec3 half_extents, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 
 		// Rendering ---------------------------------
 		void AddDebugLine(glm::vec3 point_0, glm::vec3 point_1, glm::mat4 transform, uint32_t color = 1);

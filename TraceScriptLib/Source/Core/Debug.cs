@@ -49,6 +49,30 @@ namespace Trace
 
             InternalCalls.Debug_LineTimed(duration, ref from, ref to, ref final_color);
         }
+        
+        public static void Box(Vec3 half_extents, Mat4 transform, Vec3? color = null)
+        {
+            Vec3 final_color = color ?? new Vec3(0.0f, 0.0f, 1.0f);
+
+            InternalCalls.Debug_Box(ref half_extents, ref transform, ref final_color);
+        }
+        
+        public static void Box(Vec3 half_extents, Mat4 transform, float duration, Vec3? color = null)
+        {
+            Vec3 final_color = color ?? new Vec3(0.0f, 0.0f, 1.0f);
+
+            InternalCalls.Debug_BoxTimed(duration, ref half_extents, ref transform, ref final_color);
+        }
+        
+        public static void Box(Vec3 half_extents, Vec3 position, float duration, Vec3? color = null)
+        {
+            Vec3 final_color = color ?? new Vec3(0.0f, 0.0f, 1.0f);
+
+            Mat4 transform = new Mat4(1.0f);
+            transform.row_3.XYZ = position;
+
+            InternalCalls.Debug_BoxTimed(duration, ref half_extents, ref transform, ref final_color);
+        }
 
     }
 }

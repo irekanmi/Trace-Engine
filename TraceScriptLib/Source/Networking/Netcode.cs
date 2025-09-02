@@ -32,6 +32,7 @@ namespace Trace
         private float elasped_send_time = 0.0f;
 
 
+
         //Client Data
         private NetworkController client_controller;
 
@@ -213,6 +214,17 @@ namespace Trace
             return server_time;
         }
 
+        public void SetServerTime(float time)
+        {
+            if(!Network.IsClient())
+            {
+                return;
+            }
+
+            float rtt = Network.GetServerAverageRTT();
+            server_time = time + (rtt / 2.0f);
+        }
+
         private void OnServerConnected(uint net_id)
         {
 
@@ -367,7 +379,7 @@ namespace Trace
             float server_rtt = Network.GetServerAverageRTT();
             received_server_tick = server_tick;
             server_time = _time;// (float)server_tick * fixed_dt;// Account for latency
-            server_time += server_rtt;
+            server_time += (server_rtt / 2.0f);
 
             Debug.Log("Server RTT: " + server_rtt.ToString());
 
@@ -375,9 +387,11 @@ namespace Trace
             //Determine this number of ticks the client should be ahead of server
             float time_offset = 0.2f;// 100ms
             time_offset += server_rtt;
-            uint offset_tick = (uint)(time_offset / fixed_dt);
+            uint offset_tick = (uint)Math.Ceiling(time_offset / fixed_dt);
             current_tick = server_tick + offset_tick;
             Debug.Trace("Client Manager Current Tick:" + current_tick.ToString());
+            Debug.Trace("Server Tick Current Tick:" + server_tick.ToString());
+            Debug.Trace("Offset Tick:" + offset_tick.ToString());
         }
 
         private uint GetStepTick()
@@ -503,20 +517,20 @@ namespace Trace
 
     public class BasicController : NetworkController
     {
-        List<BasicInput> inputs;
+        BasicInput[] inputs;
         Dictionary<uint, BasicInput> outputs;
         uint buffer_size = 64;
         uint _tick = 0;
-        Dictionary<Keys, uint> key_pressed;
+        Dictionary<Keys, RingBuffer<bool>> key_pressed;
 
         public override void OnNetworkCreate()
         {
             base.OnNetworkCreate();
-            inputs = new List<BasicInput>((int)buffer_size);
-            key_pressed = new Dictionary<Keys, uint>();
+            inputs = new BasicInput[buffer_size];
+            key_pressed = new Dictionary<Keys, RingBuffer<bool>>();
             for(int i = 0; i < (int)buffer_size; i++)
             {
-                inputs.Add(new BasicInput { direction = Vec3.Zero });
+                inputs[i] = new BasicInput { direction = Vec3.Zero };
             }
 
             if(Network.IsServer())
@@ -524,13 +538,21 @@ namespace Trace
                 outputs = new Dictionary<uint, BasicInput>();
             }
 
-            key_pressed.Add(Keys.KEY_R, 0);
+            key_pressed.Add(Keys.KEY_R, new RingBuffer<bool>(30));
 
+        }
+
+        public override void OnUpdate(float deltaTime)
+        {
+            if(Input.GetKeyPressed(Keys.KEY_R))
+            {
+                key_pressed[Keys.KEY_R].PushBack(true);
+            }
         }
 
         public override bool HasInput(uint tick)
         {
-            bool result = (tick <= _tick);
+            bool result = true;
 
             if(Network.IsServer() && !IsOwner())
             {
@@ -564,9 +586,9 @@ namespace Trace
             }
 
             bool shoot = false;
-            if(Input.GetKeyPressed(Keys.KEY_R) && ( (current_tick - 1) > key_pressed[Keys.KEY_R]))
+            if (!key_pressed[Keys.KEY_R].Empty)
             {
-                key_pressed[Keys.KEY_R] = current_tick;
+                key_pressed[Keys.KEY_R].PopFront();
                 shoot = true;
             }
 
@@ -579,7 +601,7 @@ namespace Trace
         public BasicInput GetInput(uint tick)
         {
 
-            int index = (int)(_tick % buffer_size);
+            int index = (int)(tick % buffer_size);
             if(Network.IsClient())
             {
                 return inputs[index];
@@ -618,6 +640,7 @@ namespace Trace
             {
                 Stream.WriteInt(stream_handle, (int)inputs[i].tick_frame);
                 Stream.WriteVec3(stream_handle, inputs[i].direction);
+                Stream.WriteBool(stream_handle, inputs[i].shoot_pressed);
             }
         }
 
@@ -630,10 +653,17 @@ namespace Trace
             _tick = (uint)Stream.ReadInt(stream_handle);
             buffer_size = (uint)Stream.ReadInt(stream_handle);
 
+            if(_tick <= manager.GetCurrentTick())
+            {
+                Debug.Trace("Client Tick: " + _tick.ToString());
+                Debug.Trace("Current Tick: " + manager.GetCurrentTick().ToString());
+            }
+
             for (int i = 0; i < buffer_size; i++)
             {
                 uint tick = (uint)Stream.ReadInt(stream_handle);
                 Vec3 dir = Stream.ReadVec3(stream_handle);
+                bool shot = Stream.ReadBool(stream_handle);
                 
                 if(tick <= manager.GetCurrentTick())
                 {
@@ -641,7 +671,7 @@ namespace Trace
                 }
                 if (!outputs.ContainsKey(tick))
                 {
-                    outputs.Add(tick, new BasicInput { direction = dir, tick_frame = tick });
+                    outputs.Add(tick, new BasicInput { direction = dir, tick_frame = tick, shoot_pressed = shot });
                 }
             }
 
@@ -711,8 +741,7 @@ namespace Trace
 
             if(Network.IsServer())
             {
-                float time = (float)tick * manager.GetFixedDelta();
-                AddRemoteState(ref action_state, time);
+                AddRemoteState(ref action_state, manager.GetServerTime());
             }
         }
         public override void ApplyReconciliation()

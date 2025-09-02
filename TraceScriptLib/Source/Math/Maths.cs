@@ -10,6 +10,12 @@ namespace Trace
             x = _x;
             y = _y;
         }
+        
+        public Vec2(float value)
+        {
+            x = value;
+            y = value;
+        }
 
         public Vec2(Vec2 other)
         {
@@ -30,7 +36,7 @@ namespace Trace
             }
         }
 
-        public static Vec2 Zero => new Vec2 { x = 0, y = 0 };
+        public static Vec2 Zero => new Vec2(0.0f);
 
         public float x;
         public float y;
@@ -88,6 +94,13 @@ namespace Trace
             x = _x;
             y = _y;
             z = _z;
+        }
+        
+        public Vec3(float value)
+        {
+            x = value;
+            y = value;
+            z = value;
         }
 
         public Vec3(Vec2 _xy, float _z)
@@ -155,7 +168,7 @@ namespace Trace
             }
         }
 
-        public static Vec3 Zero => new Vec3 { x = 0, y = 0, z = 0 };
+        public static Vec3 Zero => new Vec3(0.0f);
 
         public float x;
         public float y;
@@ -206,6 +219,163 @@ namespace Trace
         public override string ToString()
         {
             return "X: " + x.ToString() + " Y: " + y.ToString() + " Z: " + z.ToString();
+        }
+
+
+    }
+    
+    public struct Vec4
+    {
+
+        public Vec4(float _x, float _y, float _z, float _w)
+        {
+            x = _x;
+            y = _y;
+            z = _z;
+            w = _w;
+        }
+        
+        public Vec4(float value)
+        {
+            x = value;
+            y = value;
+            z = value;
+            w = value;
+        }
+
+        public Vec4(Vec2 _xy, float _z, float _w)
+        {
+            x = _xy.x;
+            y = _xy.y;
+            z = _z;
+            w = _w;
+        }
+
+        public Vec4(Vec4 other)
+        {
+            x = other.x;
+            y = other.y;
+            z = other.z;
+            w = other.w;
+        }
+
+        public Vec2 YX
+        {
+            get
+            {
+                return new Vec2(y, x);
+            }
+            set
+            {
+                y = value.x;
+                x = value.y;
+            }
+        }
+
+        public Vec2 XY
+        {
+            get
+            {
+                return new Vec2(x, y);
+            }
+            set
+            {
+                x = value.x;
+                y = value.y;
+            }
+        }
+        
+        public Vec2 XZ
+        {
+            get
+            {
+                return new Vec2(x, z);
+            }
+            set
+            {
+                x = value.x;
+                z = value.y;
+            }
+        }
+
+        public Vec2 YZ
+        {
+            get
+            {
+                return new Vec2(y, z);
+            }
+            set
+            {
+                y = value.x;
+                z = value.y;
+            }
+        }
+        public Vec3 XYZ
+        {
+            get
+            {
+                return new Vec3(x, y, z);
+            }
+            set
+            {
+                x = value.x;
+                y = value.y;
+                z = value.z;
+            }
+        }
+
+        public static Vec4 Zero => new Vec4(0.0f);
+
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+
+
+        static public Vec4 operator*(Vec4 a, float b)
+        {
+            return new Vec4 { x = a.x * b, y = a.y * b, z = a.z * b, w = a.w * b };
+        }
+        
+        static public Vec4 operator/(Vec4 a, float b)
+        {
+            return new Vec4 { x = a.x / b, y = a.y / b, z = a.z / b, w = a.w / b };
+        }
+
+
+        static public Vec4 operator +(Vec4 a, Vec4 b)
+        {
+            return new Vec4 { x = a.x + b.x, y = a.y + b.y, z = a.z + b.z, w = a.w + b.w };
+        }
+
+        static public Vec4 operator -(Vec4 a, Vec4 b)
+        {
+            return new Vec4 { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z, w = a.w - a.w };
+        }
+
+        static public bool operator ==(Vec4 a, Vec4 b)
+        {
+            return a.x == b.x && a.y == b.y && a.z == b.z;
+        }
+
+        static public bool operator !=(Vec4 a, Vec4 b)
+        {
+            return !(a == b);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override string ToString()
+        {
+            return "X: " + x.ToString() + " Y: " + y.ToString() + " Z: " + z.ToString() + " W: " + w.ToString();
         }
 
 
@@ -269,6 +439,49 @@ namespace Trace
         public override string ToString()
         {
             return "X: " + x.ToString() + " Y: " + y.ToString() + " Z: " + z.ToString() + " W: " + w.ToString();
+        }
+
+    }
+    
+    public struct Mat4
+    {
+        public Vec4 row_0;
+        public Vec4 row_1;
+        public Vec4 row_2;
+        public Vec4 row_3;
+
+        public Mat4(Vec4 row0, Vec4 row1, Vec4 row2, Vec4 row3)
+        {
+            row_0 = row0;
+            row_1 = row1;
+            row_2 = row2;
+            row_3 = row3;
+        }
+        
+        public Mat4(float value)
+        {
+            row_0 = new Vec4(value, 0.0f, 0.0f, 0.0f);
+            row_1 = new Vec4(0.0f, value, 0.0f, 0.0f);
+            row_2 = new Vec4(0.0f, 0.0f, value, 0.0f);
+            row_3 = new Vec4(0.0f, 0.0f, 0.0f, value);
+        }        
+
+        public static Mat4 Identity
+        {
+            get
+            {
+                return new Mat4(1.0f);
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return "Row0: " + row_0.ToString() + "\nRow1: " + row_1.ToString() + "\nRow2: " + row_2.ToString() + "\nRow3: " + row_3.ToString();
         }
 
     }

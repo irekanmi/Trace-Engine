@@ -126,6 +126,11 @@ namespace Trace
             Type comp_type = typeof(T);
             InternalCalls.Scene_IterateComponent(src.GetID(), src, Utils.HashString(func_name), comp_type);
         }
+        static public void IterateScript<T>(Trace.Action src, string func_name)
+        {
+            Type comp_type = typeof(T);
+            InternalCalls.Scene_IterateScript(src.GetID(), src, Utils.HashString(func_name), comp_type);
+        }
 
         static public void IterateEntityScripts(Trace.Action entity, Trace.Action src, string func_name)
         {

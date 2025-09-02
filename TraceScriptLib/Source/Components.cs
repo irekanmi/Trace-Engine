@@ -100,6 +100,23 @@ namespace Trace
                 return WorldRotation * new Vec3(0.0f, 0.0f, 1.0f);
             }
         }
+
+        public Mat4 MatrixTransform
+        {
+            get
+            {
+                InternalCalls.TransformComponent_MatrixTransform(Id, out Mat4 result);
+                return result;
+            }
+        }
+        public Mat4 WorldMatrixTransform
+        {
+            get
+            {
+                InternalCalls.TransformComponent_WorldMatrixTransform(Id, out Mat4 result);
+                return result;
+            }
+        }
         
         public Vec3 Right 
         {
@@ -116,6 +133,14 @@ namespace Trace
             {
                 InternalCalls.TransformComponent_Up(Id, out Vec3 result);
                 return result;
+            }
+        }
+
+        public Trace.Action Entity
+        {
+            get
+            {
+                return Scene.GetEntity(Id);
             }
         }
 
@@ -192,6 +217,14 @@ namespace Trace
             return position;
         }
 
+        public Trace.Action Entity
+        {
+            get
+            {
+                return Scene.GetEntity(Id);
+            }
+        }
+
 
     }
     
@@ -228,6 +261,13 @@ namespace Trace
             return component;
         }
 
+        public Trace.Action Entity
+        {
+            get
+            {
+                return Scene.GetEntity(Id);
+            }
+        }
 
     }
     

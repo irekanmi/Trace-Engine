@@ -316,7 +316,7 @@ namespace trace {
 				glm::vec3 extent = box.shape.box.half_extents;
 				box.shape.box.half_extents *= pose._transform.GetScale();
 				Transform local;
-				local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
+				local.SetPosition(pose._transform.GetPosition());
 				local.SetRotation(pose._transform.GetRotation());
 				PhysicsFunc::CreateShapeWithTransform(m_physics3D, box._internal, box.shape, local, box.is_trigger);
 				//Temp _______________
@@ -333,6 +333,7 @@ namespace trace {
 				if (!box.is_trigger && entity.HasComponent<RigidBodyComponent>())
 				{
 					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+					rigid.body.shape_offset = box.shape.offset;
 					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
 					PhysicsFunc::AttachShape(box._internal, rigid.body.GetInternal());
 
@@ -347,7 +348,7 @@ namespace trace {
 				float radius = sc.shape.sphere.radius;
 				sc.shape.sphere.radius *= pose._transform.GetScale().x; //TODO: Determine maybe scale in transform should be used or not
 				Transform local;
-				local.SetPosition(pose._transform.GetPosition() + sc.shape.offset);
+				local.SetPosition(pose._transform.GetPosition());
 				local.SetRotation(pose._transform.GetRotation());
 				PhysicsFunc::CreateShapeWithTransform(m_physics3D, sc._internal, sc.shape, local, sc.is_trigger);
 				sc.shape.sphere.radius = radius;
@@ -363,6 +364,7 @@ namespace trace {
 				{
 
 					RigidBodyComponent& rigid = entity.GetComponent<RigidBodyComponent>();
+					rigid.body.shape_offset = sc.shape.offset;
 					PhysicsFunc::SetRigidBodyTransform(rigid.body, local);
 					PhysicsFunc::AttachShape(sc._internal, rigid.body.GetInternal());
 
@@ -568,14 +570,14 @@ namespace trace {
 			for (auto i : bcd)
 			{
 				auto [pose, bc, active] = bcd.get(i);
-				PhysicsFunc::UpdateShapeTransform(bc._internal, pose._transform);
+				PhysicsFunc::UpdateShapeTransform(bc._internal, bc.shape, pose._transform);
 			}
 
 			auto scd = m_registry.view<TransformComponent, SphereColliderComponent, ActiveComponent>();
 			for (auto i : scd)
 			{
 				auto [pose, sc, active] = scd.get(i);
-				PhysicsFunc::UpdateShapeTransform(sc._internal, pose._transform);
+				PhysicsFunc::UpdateShapeTransform(sc._internal, sc.shape, pose._transform);
 			}
 			
 			if (m_stimulatePhysics)
@@ -1594,18 +1596,18 @@ namespace trace {
 				data->Read(src_instance_id);
 
 
+				trace::StringID string_id;
+				string_id.value = func_id;
+				ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+				TRC_ASSERT(method, "These is not suppose to happen");
 				if (rpc_type == Network::RPCType::SERVER)
 				{
-					trace::StringID string_id;
-					string_id.value = func_id;
-					ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
-					TRC_ASSERT(method, "These is not suppose to happen");
-
-
 					InvokeScriptMethod_Instance(*method, *instance, nullptr);
 				}
 				else if (rpc_type == Network::RPCType::CLIENT)
 				{
+					//TODO: Determine if it is listen server before you invoke the method
+					InvokeScriptMethod_Instance(*method, *instance, nullptr);
 					// Send RPC to other clients
 				}
 				break;
@@ -3156,16 +3158,15 @@ namespace trace {
 		}
 		case Network::NetType::CLIENT:
 		{
-			if (forced)
-			{
-				return entity;
-			}
-			if (entity.HasComponent<NetObject>())
+			bool cant_create = (net_id > 0) && !forced;
+			if (entity.HasComponent<NetObject>() && cant_create)
 			{
 				TRC_ERROR("You can't instanciate a network object on the client, Function: {}", __FUNCTION__);
 				entity.RemoveComponent<NetObject>();
 				DestroyEntity(entity);
+				return Entity();
 			}
+			return entity;
 			break;
 		}
 		case Network::NetType::LISTEN_SERVER:
