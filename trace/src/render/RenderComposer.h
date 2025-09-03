@@ -38,6 +38,9 @@ namespace trace {
 		virtual bool ComposeGraph(FrameSettings frame_settings);
 		virtual bool ReComposeGraph(FrameSettings frame_settings);
 		virtual void DestroyGraphs();
+		virtual void SetGraphsCount(uint32_t graph_count);
+		virtual RenderGraph* GetRenderGraph(uint32_t graph_index);
+		virtual std::vector<RenderGraph>& GetGraphs() { return m_graphs; }
 
 	protected:
 		virtual bool recompose_graph(uint32_t index, FrameSettings frame_settings);
@@ -58,6 +61,7 @@ namespace trace {
 		Renderer* m_renderer;
 		std::vector<RenderGraph> m_graphs;//Used for rendering
 		std::vector<RGBlackBoard> m_graphsBlackBoard;//Used for rendering
+		std::vector<bool> m_graphsBuilt;
 
 	};
 

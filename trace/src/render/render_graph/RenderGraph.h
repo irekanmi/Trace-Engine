@@ -21,11 +21,13 @@ namespace trace {
 	{
 		Texture,
 		Buffer,
-		SwapchainImage
+		SwapchainImage,
+		External_Texture
 	};
 
 	struct RenderGraphResourceData
 	{
+
 		struct
 		{
 			Format format;
@@ -48,6 +50,12 @@ namespace trace {
 			uint32_t num_layers = 1;
 			uint32_t num_mip_levels = 1;
 		} texture;
+
+		struct
+		{
+			RenderGraph* external_graph;
+			uint32_t resource_index;
+		} external_resource;
 
 	};
 
@@ -86,6 +94,7 @@ namespace trace {
 		void AddColorAttachmentOuput(const std::string& name);
 		void AddColorAttachmentOuput(uint32_t index);
 		void AddTextureInput(const std::string& name, GTexture* texture);
+		void AddTextureInput(const std::string& name, RenderGraph* source, uint32_t texture_index);
 		void AddTextureOutput(const std::string& name, GTexture* texture);
 		void SetSwapchainOutput(const std::string& name, GSwapchain* swapchain);
 		void SetDepthStencilInput(const std::string& name);
@@ -151,6 +160,7 @@ namespace trace {
 		std::vector<RenderGraphResource>& GetResources() { return m_resources; }
 		uint32_t AddTextureResource(const std::string& resource_name, const TextureDesc& desc);
 		uint32_t AddTextureResource(const std::string& resource_name, GTexture* texture);
+		uint32_t AddTextureResource(const std::string& resource_name, RenderGraph* source, uint32_t index);
 		void ModifyTextureResource(const std::string& resource_name, const TextureDesc& desc);
 		uint32_t AddSwapchainResource(const std::string& name, GSwapchain* swapchain);
 		uint32_t FindPassIndex(const std::string& pass_name);
@@ -159,12 +169,13 @@ namespace trace {
 		RenderGraphPass* GetPass_ptr(uint32_t index);
 		RenderGraphResource& GetResource(uint32_t index);
 		RenderGraphResource* GetResource_ptr(uint32_t index);
+		uint32_t GetFinalResourceOutput() { return m_finalResource; }
 		void SetFinalResourceOutput(const std::string& resource_name);
 		void SetRenderer(Renderer* renderer) { m_renderer = renderer; }
 		bool Compile();
 		bool Execute(int32_t render_graph_index = 0);
 		void Destroy();
-		void Rebuild();
+		void Rebuild(int32_t render_graph_index);
 		bool ReConstruct();
 		void Resize(uint32_t width, uint32_t height);
 

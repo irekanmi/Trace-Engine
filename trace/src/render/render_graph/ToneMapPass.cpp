@@ -98,7 +98,7 @@ namespace trace {
 	{
 	}
 
-	void ToneMapPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void ToneMapPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 
 		FrameData& frame_data = black_board.get<FrameData>();
@@ -130,7 +130,8 @@ namespace trace {
 					m_pipeline.get(),
 					"u_HdrTarget",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					render_graph->GetResource_ptr(frame_data.hdr_index)
+					render_graph->GetResource_ptr(frame_data.hdr_index),
+					render_graph_index
 				);
 
 				float exposure = m_renderer->exposure;
@@ -139,10 +140,11 @@ namespace trace {
 					"exposure",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&exposure,
-					sizeof(float)
+					sizeof(float),
+					render_graph_index
 				);
 
-				RenderFunc::BindPipeline_(m_pipeline.get());
+				RenderFunc::BindPipeline_(m_pipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 				RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_pipeline.get());

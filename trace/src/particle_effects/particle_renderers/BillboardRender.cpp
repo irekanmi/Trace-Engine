@@ -38,7 +38,7 @@ namespace trace {
 		// NOTE: Enable if particle should be spawned in local_position
 		model_pose = transform;
 
-		if (m_velocityAligned)
+		/*if (m_velocityAligned)
 		{
 			int32_t remaining_particles = num_alive;
 			uint32_t offset = 0;
@@ -96,7 +96,7 @@ namespace trace {
 				offset += MAX_QUAD_INSTANCE;
 			}
 
-		}
+		}*/
 
 	}
 

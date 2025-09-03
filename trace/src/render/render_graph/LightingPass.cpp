@@ -122,7 +122,7 @@ namespace trace {
 
 	}
 
-	void LightingPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void LightingPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 		FrameData& frame_data = black_board.get<FrameData>();
 		GBufferData* gbuffer_data = black_board.try_get<GBufferData>();
@@ -186,12 +186,12 @@ namespace trace {
 				RenderFunc::BindRect(renderer->GetDevice(), rect);
 
 
-				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->position_index), 0 );
+				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->position_index), render_graph_index, 0 );
 
-				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->normal_index), 1 );
-				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->emissive_index), 2 );
+				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->normal_index), render_graph_index, 1 );
+				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->emissive_index), render_graph_index, 2 );
 
-				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferColor", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->color_index) );
+				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "g_bufferColor", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data->color_index), render_graph_index);
 				uint32_t res = 0;
 				uint32_t ssao_index = INVALID_ID;
 				if (ssao_avaliable)
@@ -199,45 +199,45 @@ namespace trace {
 					res = 1;
 					ssao_index = ssao->ssao_blur;
 				}
-				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "ssao_blur", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(ssao_index));
+				RenderFunc::BindRenderGraphTexture( render_graph, pipeline, "ssao_blur", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(ssao_index), render_graph_index);
 
-				RenderFunc::SetPipelineData( pipeline, "_ssao_dat", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &res, sizeof(uint32_t));
+				RenderFunc::SetPipelineData( pipeline, "_ssao_dat", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &res, sizeof(uint32_t), render_graph_index);
 
 
-				RenderFunc::SetPipelineData(pipeline, "num_shadowed_sun_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_shadowed_sun_lights, sizeof(uint32_t));
-				RenderFunc::SetPipelineData(pipeline, "num_non_shadowed_sun_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_non_shadowed_sun_lights, sizeof(uint32_t));
+				RenderFunc::SetPipelineData(pipeline, "num_shadowed_sun_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_shadowed_sun_lights, sizeof(uint32_t), render_graph_index);
+				RenderFunc::SetPipelineData(pipeline, "num_non_shadowed_sun_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_non_shadowed_sun_lights, sizeof(uint32_t), render_graph_index);
 				uint32_t total_sun_lights = graph_data->num_shadowed_sun_lights + graph_data->num_non_shadowed_sun_lights;
-				RenderFunc::SetPipelineData(pipeline, "sun_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, graph_data->sun_lights.data(), sizeof(Light) * total_sun_lights);
+				RenderFunc::SetPipelineData(pipeline, "sun_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, graph_data->sun_lights.data(), sizeof(Light) * total_sun_lights, render_graph_index);
 
-				RenderFunc::SetPipelineData(pipeline, "num_shadowed_spot_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, & graph_data->num_shadowed_spot_lights, sizeof(uint32_t));
-				RenderFunc::SetPipelineData(pipeline, "num_non_shadowed_spot_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_non_shadowed_spot_lights, sizeof(uint32_t));
+				RenderFunc::SetPipelineData(pipeline, "num_shadowed_spot_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, & graph_data->num_shadowed_spot_lights, sizeof(uint32_t), render_graph_index);
+				RenderFunc::SetPipelineData(pipeline, "num_non_shadowed_spot_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_non_shadowed_spot_lights, sizeof(uint32_t), render_graph_index);
 				uint32_t total_spot_lights = graph_data->num_shadowed_spot_lights + graph_data->num_non_shadowed_spot_lights;
-				RenderFunc::SetPipelineData(pipeline, "spot_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, graph_data->spot_lights.data(), sizeof(Light) * total_spot_lights);
+				RenderFunc::SetPipelineData(pipeline, "spot_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, graph_data->spot_lights.data(), sizeof(Light) * total_spot_lights, render_graph_index);
 
-				RenderFunc::SetPipelineData(pipeline, "num_shadowed_point_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_shadowed_point_lights, sizeof(uint32_t));
-				RenderFunc::SetPipelineData(pipeline, "num_non_shadowed_point_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_non_shadowed_point_lights, sizeof(uint32_t));
+				RenderFunc::SetPipelineData(pipeline, "num_shadowed_point_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_shadowed_point_lights, sizeof(uint32_t), render_graph_index);
+				RenderFunc::SetPipelineData(pipeline, "num_non_shadowed_point_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &graph_data->num_non_shadowed_point_lights, sizeof(uint32_t), render_graph_index);
 				uint32_t total_point_lights = graph_data->num_shadowed_point_lights + graph_data->num_non_shadowed_point_lights;
-				RenderFunc::SetPipelineData(pipeline, "point_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, graph_data->point_lights.data(), sizeof(Light) * total_point_lights);
+				RenderFunc::SetPipelineData(pipeline, "point_lights", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, graph_data->point_lights.data(), sizeof(Light) * total_point_lights, render_graph_index);
 
 				
 				// Shadow Maps --------------------------------------------
 
 				if (shadow_data && shadow_data->total_shadowed_lights > 0)
 				{
-					RenderFunc::SetPipelineData(pipeline, "sun_shadow_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, shadow_data->sun_view_proj_matrices.data(), sizeof(glm::mat4) * graph_data->num_shadowed_sun_lights);
+					RenderFunc::SetPipelineData(pipeline, "sun_shadow_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, shadow_data->sun_view_proj_matrices.data(), sizeof(glm::mat4) * graph_data->num_shadowed_sun_lights, render_graph_index);
 					for (uint32_t i = 0; i < graph_data->num_shadowed_sun_lights; i++)
 					{
 						uint32_t tex_index = shadow_data->start_texture_index + i;
-						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(tex_index), i);
+						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(tex_index), render_graph_index, i);
 
 					}
 
 
-					RenderFunc::SetPipelineData(pipeline, "spot_shadow_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, shadow_data->spot_view_proj_matrices.data(), sizeof(glm::mat4) * graph_data->num_shadowed_spot_lights);
+					RenderFunc::SetPipelineData(pipeline, "spot_shadow_view_proj", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, shadow_data->spot_view_proj_matrices.data(), sizeof(glm::mat4) * graph_data->num_shadowed_spot_lights, render_graph_index);
 					for (uint32_t i = 0; i < graph_data->num_shadowed_spot_lights; i++)
 					{
 						uint32_t tex_index = shadow_data->start_texture_index + graph_data->num_shadowed_sun_lights + i;
-						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "spot_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(tex_index), i);
+						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "spot_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(tex_index), render_graph_index, i);
 
 					}
 
@@ -247,15 +247,15 @@ namespace trace {
 					//HACK: It crashes because the binded texture has been destroyed due to the use of frame graph
 					for (uint32_t i = 0; i < MAX_SHADOW_SUN_LIGHTS; i++)
 					{
-						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
+						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "sun_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, render_graph_index, i);
 					}
 				}
 				if (graph_data->num_shadowed_spot_lights <= 0)
 				{
 					//HACK: It crashes because the binded texture has been destroyed due to the use of frame graph
-					for (uint32_t i = 0; i < MAX_SHADOW_SUN_LIGHTS; i++)
+					for (uint32_t i = 0; i < MAX_SHADOW_SPOT_LIGHTS; i++)
 					{
-						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "spot_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, i);
+						RenderFunc::BindRenderGraphTexture(render_graph, pipeline, "spot_shadow_maps", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, nullptr, render_graph_index, i);
 					}
 				}
 
@@ -266,11 +266,11 @@ namespace trace {
 				glm::mat4 view = graph_data->_camera->GetViewMatrix();
 				glm::mat4 inv_view = glm::inverse(view);
 
-				RenderFunc::SetPipelineData( pipeline, "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-				RenderFunc::SetPipelineData( pipeline, "_inv_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &inv_view, sizeof(glm::mat4));
+				RenderFunc::SetPipelineData( pipeline, "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4), render_graph_index);
+				RenderFunc::SetPipelineData( pipeline, "_inv_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &inv_view, sizeof(glm::mat4), render_graph_index);
 
 
-				RenderFunc::BindPipeline_(pipeline);
+				RenderFunc::BindPipeline_(pipeline, render_graph_index);
 				RenderFunc::BindPipeline(renderer->GetDevice(), pipeline);
 				RenderFunc::Draw(renderer->GetDevice(), 0, 3);
 

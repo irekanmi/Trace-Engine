@@ -2358,8 +2358,8 @@ namespace vk {
 
 				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
 
-				VkDescriptorSetLayout test[VK_MAX_NUM_FRAMES];
-				for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
+				VkDescriptorSetLayout test[VK_MAX_DESCRIPTOR_SET];
+				for (uint32_t i = 0; i < VK_MAX_DESCRIPTOR_SET; i++)
 				{
 					test[i] = pipeline->Scene_layout;
 				}
@@ -2367,7 +2367,7 @@ namespace vk {
 				VkDescriptorSetAllocateInfo alloc_info = {};
 				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 				alloc_info.descriptorPool = pipeline->Scene_pool;
-				alloc_info.descriptorSetCount = VK_MAX_NUM_FRAMES;
+				alloc_info.descriptorSetCount = VK_MAX_DESCRIPTOR_SET;
 				alloc_info.pSetLayouts = test;
 
 

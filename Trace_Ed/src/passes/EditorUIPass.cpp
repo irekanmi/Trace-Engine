@@ -58,7 +58,7 @@ namespace trace {
 	{
 	}
 
-	void EditorUIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void EditorUIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 
 		FrameData& frame_data = black_board.get<FrameData>();
@@ -67,6 +67,19 @@ namespace trace {
 
 		pass->AddColorAttachmentInput(render_graph->GetResource(frame_data.ldr_index).resource_name);
 		pass->AddColorAttachmentOuput(render_graph->GetResource(frame_data.swapchain_index).resource_name);
+
+		if (render_graph_index == 0)
+		{
+			RenderComposer* render_composer = Renderer::get_instance()->GetRenderComposer();
+			int32_t last_index = render_composer->GetGraphs().size() - 1;
+			int32_t i = last_index;
+			while (i > 0)
+			{
+				RenderGraph* _graph = render_composer->GetRenderGraph(i);
+				pass->AddTextureInput("Index_Tex" + std::to_string(i), _graph, _graph->GetFinalResourceOutput());
+				i--;
+			}
+		}
 
 
 
@@ -77,7 +90,9 @@ namespace trace {
 
 				void* tex_render = nullptr;
 				UIFunc::GetDrawRenderGraphTextureHandle(render_graph->GetResource_ptr(frame_data.ldr_index), tex_render);
-				TraceEditor::get_instance()->RenderViewport(tex_render);
+				void* test_view = nullptr;
+				UIFunc::GetDrawRenderGraphTextureHandle(render_graph->GetResource_ptr(render_graph->FindResourceIndex("Index_Tex1")), test_view);
+				TraceEditor::get_instance()->RenderViewport(tex_render, test_view);
 
 				UIFunc::UIRenderFrame(m_renderer);
 

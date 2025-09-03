@@ -14,12 +14,12 @@ namespace trace {
 namespace vk {
 
 
-	bool __BuildRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph);
+	bool __BuildRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph, int32_t render_graph_index = 0);
 	bool __DestroyRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph);
 	bool __BeginRenderGraphPass(trace::RenderGraph* render_graph, trace::RenderGraphPass* pass);
 	bool __EndRenderGraphPass(trace::RenderGraph* render_graph, trace::RenderGraphPass* pass);
 	bool __BeginRenderGraph(trace::RenderGraph* render_graph);
 	bool __EndRenderGraph(trace::RenderGraph* render_graph);
-	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index = 0);
+	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, int32_t render_graph_index, uint32_t index = 0);
 	bool __BindRenderGraphBuffer(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index = 0);
 }

@@ -74,7 +74,7 @@ namespace trace {
 	typedef bool (*__InitializeMaterial)(MaterialInstance*, Ref<GPipeline>);
 	typedef bool (*__DestroyMaterial)(MaterialInstance*);
 	typedef bool (*__PostInitializeMaterial)(MaterialInstance*, Ref<GPipeline>);
-	typedef bool (*__ApplyMaterial)(MaterialInstance*);
+	typedef bool (*__ApplyMaterial)(MaterialInstance*, int32_t render_graph_index);
 	//-----------------------------
 
 	// Pipeline --------------------
@@ -82,9 +82,9 @@ namespace trace {
 	typedef bool (*__DestroyPipeline)(GPipeline*);
 	typedef bool (*__InitializePipeline)(GPipeline*);
 	typedef bool (*__ShutDownPipeline)(GPipeline*);
-	typedef bool (*__SetPipelineData)(GPipeline*, const std::string&, ShaderResourceStage, void*, uint32_t );
-	typedef bool (*__SetPipelineTextureData)(GPipeline*, const std::string&, ShaderResourceStage, GTexture*, uint32_t);
-	typedef bool (*__BindPipeline_)(GPipeline*);
+	typedef bool (*__SetPipelineData)(GPipeline*, const std::string&, ShaderResourceStage, void*, uint32_t, int32_t render_graph_index);
+	typedef bool (*__SetPipelineTextureData)(GPipeline*, const std::string&, ShaderResourceStage, GTexture*, int32_t render_graph_index, uint32_t);
+	typedef bool (*__BindPipeline_)(GPipeline*, int32_t render_graph_index);
 	//------------------------------
 
 	// RenderPass -------------------
@@ -115,13 +115,13 @@ namespace trace {
 	//----------------------------
 
 	// RenderGraph ----------------
-	typedef bool (*__BuildRenderGraph)(GDevice*, RenderGraph*);
+	typedef bool (*__BuildRenderGraph)(GDevice*, RenderGraph*, int32_t render_graph_index);
 	typedef bool (*__DestroyRenderGraph)(GDevice*, RenderGraph*);
 	typedef bool (*__BeginRenderGraphPass)(RenderGraph*, RenderGraphPass* );
 	typedef bool (*__EndRenderGraphPass)(RenderGraph*, RenderGraphPass* );
 	typedef bool (*__BeginRenderGraph)(RenderGraph* );
 	typedef bool (*__EndRenderGraph)(RenderGraph* );
-	typedef bool (*__BindRenderGraphTexture)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
+	typedef bool (*__BindRenderGraphTexture)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, int32_t render_graph_index, uint32_t);
 	typedef bool (*__BindRenderGraphBuffer)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
 	//------------------------------
 
@@ -183,15 +183,15 @@ namespace trace {
 		static bool InitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline);
 		static bool DestroyMaterial(MaterialInstance* mat_instance);
 		static bool PostInitializeMaterial(MaterialInstance* mat_instance, Ref<GPipeline> pipeline);
-		static bool ApplyMaterial(MaterialInstance* mat_instance);
+		static bool ApplyMaterial(MaterialInstance* mat_instance, int32_t render_graph_index = 0);
 
 		static bool CreatePipeline(GPipeline* pipeline, PipelineStateDesc desc);
 		static bool DestroyPipeline(GPipeline* pipeline);
 		static bool InitializePipeline(GPipeline* pipeline);
 		static bool ShutDownPipeline(GPipeline* pipeline);
-		static bool SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size);
-		static bool SetPipelineTextureData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, GTexture* texture, uint32_t index = 0);
-		static bool BindPipeline_(GPipeline* pipeline);
+		static bool SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index = 0);
+		static bool SetPipelineTextureData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, GTexture* texture, int32_t render_graph_index, uint32_t index = 0);
+		static bool BindPipeline_(GPipeline* pipeline, int32_t render_graph_index = 0);
 
 		static bool CreateRenderPass(GRenderPass* render_pass, RenderPassDescription desc);
 		static bool DestroyRenderPass(GRenderPass* render_pass);
@@ -213,13 +213,13 @@ namespace trace {
 		//NOTE: Ensure that the memory passed in is big enough to collect texture data
 		static bool GetTextureData(GTexture* texture, void*& out_data);
 
-		static bool BuildRenderGraph(GDevice* device, RenderGraph* render_graph);
+		static bool BuildRenderGraph(GDevice* device, RenderGraph* render_graph, int32_t render_graph_index);
 		static bool DestroyRenderGraph(GDevice* device, RenderGraph* render_graph);
 		static bool BeginRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass);
 		static bool EndRenderGraphPass(RenderGraph* render_graph, RenderGraphPass* pass);
 		static bool BeginRenderGraph(RenderGraph* render_graph);
 		static bool EndRenderGraph(RenderGraph* render_graph);
-		static bool BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
+		static bool BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, int32_t render_graph_index, uint32_t index = 0);
 		static bool BindRenderGraphBuffer(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
 
 		static bool CreateBatchBuffer(GBuffer* buffer, BufferInfo create_info);

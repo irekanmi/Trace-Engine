@@ -213,7 +213,7 @@ namespace trace {
 	void BloomPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)
 	{
 	}
-	void BloomPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void BloomPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 		prefilter(render_graph, black_board);
 		downsample(render_graph, black_board);
@@ -278,13 +278,14 @@ namespace trace {
 				m_prefilterPipeline.get(),
 				"u_srcTexture",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				render_graph->GetResource_ptr(fd.hdr_index)
+				render_graph->GetResource_ptr(fd.hdr_index),
+				render_graph_index
 			);
-			RenderFunc::SetPipelineData(m_prefilterPipeline.get(), "threshold", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &threshold, sizeof(float));
+			RenderFunc::SetPipelineData(m_prefilterPipeline.get(), "threshold", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &threshold, sizeof(float), render_graph_index);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-			RenderFunc::BindPipeline_(m_prefilterPipeline.get());
+			RenderFunc::BindPipeline_(m_prefilterPipeline.get(), render_graph_index);
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_prefilterPipeline.get());
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 			RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_prefilterPipeline.get());
@@ -351,12 +352,13 @@ namespace trace {
 					m_downSamplePipeline.get(),
 					"down",
 					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
-					render_graph->GetResource_ptr(bd.bloom_samples[i - 1])
+					render_graph->GetResource_ptr(bd.bloom_samples[i - 1]),
+					render_graph_index
 				);
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-				RenderFunc::BindPipeline_(m_downSamplePipeline.get());
+				RenderFunc::BindPipeline_(m_downSamplePipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_downSamplePipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 				RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_downSamplePipeline.get());
@@ -402,7 +404,8 @@ namespace trace {
 					m_upSamplePipeline.get(),
 					"up",
 					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
-					render_graph->GetResource_ptr(bd.bloom_samples[i + 1])
+					render_graph->GetResource_ptr(bd.bloom_samples[i + 1]),
+					render_graph_index
 				);
 				float filter_radius = 1.0f;
 				RenderFunc::SetPipelineData(
@@ -410,7 +413,8 @@ namespace trace {
 					"filterRadius",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&filter_radius,
-					sizeof(float)
+					sizeof(float),
+					render_graph_index
 				);
 
 				Viewport view_port = m_renderer->_viewPort;
@@ -424,7 +428,7 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-				RenderFunc::BindPipeline_(m_upSamplePipeline.get());
+				RenderFunc::BindPipeline_(m_upSamplePipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_upSamplePipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 				RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_upSamplePipeline.get());
@@ -450,7 +454,8 @@ namespace trace {
 				m_upSamplePipeline.get(),
 				"up",
 				ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
-				render_graph->GetResource_ptr(bd.bloom_samples[0])
+				render_graph->GetResource_ptr(bd.bloom_samples[0]),
+				render_graph_index
 			);
 			float filter_radius = 1.0f;
 			RenderFunc::SetPipelineData(
@@ -458,7 +463,8 @@ namespace trace {
 				"filterRadius",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&filter_radius,
-				sizeof(float)
+				sizeof(float),
+				render_graph_index
 			);
 
 			Viewport view_port = m_renderer->_viewPort;
@@ -472,7 +478,7 @@ namespace trace {
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-			RenderFunc::BindPipeline_(m_upSamplePipeline.get());
+			RenderFunc::BindPipeline_(m_upSamplePipeline.get(), render_graph_index);
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_upSamplePipeline.get());
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 			RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_upSamplePipeline.get());

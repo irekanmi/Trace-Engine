@@ -91,7 +91,7 @@ namespace trace {
 	{
 	}
 
-	void UIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void UIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 
 		FrameData& frame_data = black_board.get<FrameData>();

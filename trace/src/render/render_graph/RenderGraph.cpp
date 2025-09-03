@@ -110,6 +110,17 @@ namespace trace {
 
 	}
 
+	void RenderGraphPass::AddTextureInput(const std::string& name, RenderGraph* source, uint32_t texture_index)
+	{
+		uint32_t index = m_renderGraph->AddTextureResource(name, source, texture_index);
+		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
+		RenderGraphEdge edge = {};
+		edge.from = INVALID_ID;
+		edge.to = pass_index;
+		edge.resource = index;
+		m_edges.push_back(edge);
+	}
+
 	void RenderGraphPass::AddTextureOutput(const std::string& name, GTexture* texture)
 	{
 		TextureDesc& desc = texture->GetTextureDescription();
@@ -272,6 +283,33 @@ namespace trace {
 		resource.external = true;
 		resource.resource_name = resource_name;
 		resource.resource_type = RenderGraphResourceType::Texture;
+		resource.resource_data = resource_data;
+
+		uint32_t resource_index = static_cast<uint32_t>(m_resources.size());
+		m_resources.push_back(resource);
+
+		return resource_index;
+	}
+
+	uint32_t RenderGraph::AddTextureResource(const std::string& resource_name, RenderGraph* source, uint32_t index)
+	{
+		auto it = std::find_if(m_resources.begin(), m_resources.end(), [resource_name](RenderGraphResource resource) { return resource_name == resource.resource_name; });
+
+		if (it != m_resources.end())
+		{
+			//TRC_INFO("These resource exists -> {}", it->resource_name);
+			return FindResourceIndex(it->resource_name);
+		}
+
+		RenderGraphResourceData resource_data = {};
+		resource_data.external_resource.external_graph = source;
+		resource_data.external_resource.resource_index = index;
+
+
+		RenderGraphResource resource = {};
+		resource.external = true;
+		resource.resource_name = resource_name;
+		resource.resource_type = RenderGraphResourceType::External_Texture;
 		resource.resource_data = resource_data;
 
 		uint32_t resource_index = static_cast<uint32_t>(m_resources.size());
@@ -475,9 +513,9 @@ namespace trace {
 		}
 	}
 
-	void RenderGraph::Rebuild()
+	void RenderGraph::Rebuild(int32_t render_graph_index)
 	{
-		RenderFunc::BuildRenderGraph(&m_renderer->g_device, this);
+		RenderFunc::BuildRenderGraph(&m_renderer->g_device, this, render_graph_index);
 		destroyed = false;
 	}
 

@@ -6,6 +6,7 @@
 #include "EASTL/vector.h"
 #include "glm/glm.hpp"
 #include "render/Graphics.h"
+#include "core/defines.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -23,7 +24,7 @@ namespace trace {
 #define VK_NO_FLAGS 0
 #define VK_MAX_NUM_FRAMES 3
 #define VK_MAX_DESCRIPTOR_SET_PER_FRAME 12
-#define VK_MAX_DESCRIPTOR_SET (VK_MAX_DESCRIPTOR_SET_PER_FRAME * VK_MAX_NUM_FRAMES)
+#define VK_MAX_DESCRIPTOR_SET (MAX_RENDER_GRAPH * VK_MAX_NUM_FRAMES)
 #define VK_MAX_BINDLESS_DESCRIPTORS KB
 #define VK_UNIFORM_BUFFER_BINDING 6
 #define VK_COMBINED_SAMPLER2D_BINDING 7
@@ -218,7 +219,7 @@ namespace trace {
 		VkPipeline m_handle = VK_NULL_HANDLE;
 		VkPipelineLayout m_layout = VK_NULL_HANDLE;
 
-		VkDescriptorSet Scene_sets[VK_MAX_NUM_FRAMES] = {};
+		VkDescriptorSet Scene_sets[VK_MAX_DESCRIPTOR_SET] = {};
 		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
 		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
@@ -240,7 +241,7 @@ namespace trace {
 		bool bindless = false;
 
 		// Each binding should have their own resources
-		std::unordered_map<uint32_t, BufferBindingInfo> buffer_resources;//NOTE: first is the set and binding combined
+		std::unordered_map<uint32_t, BufferBindingInfo> buffer_resources;//NOTE: first(uin32_t) is the set and binding combined
 	};
 
 	struct VKDeviceHandle
@@ -284,9 +285,9 @@ namespace trace {
 		void* m_bufferPtr[VK_MAX_NUM_FRAMES];
 		char* m_bufferData[VK_MAX_NUM_FRAMES];
 		uint32_t m_bufCurrentOffset;
-		VkDeviceMemory frame_memory;
+		VkDeviceMemory frame_memory[MAX_RENDER_GRAPH];
 		VKFrameResoures frames_resources[(VK_MAX_NUM_FRAMES * 2)];
-		uint32_t frame_mem_size = 0;
+		uint32_t frame_mem_size[MAX_RENDER_GRAPH] = {0};
 
 		std::unordered_set<VKPipeline*> pipeline_to_reset;// NOTE: These are pipelines whose internal data need to changed
 

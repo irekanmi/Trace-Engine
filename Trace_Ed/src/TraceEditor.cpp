@@ -182,6 +182,8 @@ namespace trace {
 
 		m_allAssets.pipelines.emplace("gbuffer_pipeline");
 
+		Renderer::get_instance()->GetRenderComposer()->SetGraphsCount(2);
+
 		//SerializationTest();
 		//DeserializationTest();
 
@@ -216,6 +218,7 @@ namespace trace {
 
 	void TraceEditor::Update(float deltaTime)
 	{
+		Renderer* renderer = Renderer::get_instance();
 		if (m_stopCurrentScene)
 		{
 			OnSceneStop();
@@ -247,7 +250,6 @@ namespace trace {
 				m_editorCamera.Update(deltaTime);
 			}
 
-			Renderer* renderer = Renderer::get_instance();
 
 			CommandList cmd_list = renderer->BeginCommandList();
 			renderer->BeginScene(cmd_list, &m_editorCamera);
@@ -290,7 +292,6 @@ namespace trace {
 				m_currentScene->OnAnimationUpdate(deltaTime);
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
-				//m_currentScene->OnNetworkUpdate(deltaTime);
 				m_currentScene->OnUpdate(deltaTime);
 				m_currentScene->OnRender();
 
@@ -320,6 +321,15 @@ namespace trace {
 			break;
 		}
 		}
+
+		CommandList cmd_list = renderer->BeginCommandList();
+		renderer->BeginScene(cmd_list, &m_editorCamera, 1);
+		if (m_currentScene)
+		{
+			m_currentScene->OnRender(cmd_list, 1);
+		}
+		renderer->EndScene(cmd_list, 1);
+		renderer->SubmitCommandList(cmd_list);
 		
 
 	}
@@ -520,7 +530,7 @@ namespace trace {
 
 	}
 
-	void TraceEditor::RenderViewport(void* texture)
+	void TraceEditor::RenderViewport(void* texture, void* test_view)
 	{
 		if (m_fullScreen)
 		{
@@ -594,6 +604,13 @@ namespace trace {
 
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();
+
+			if (test_view)
+			{
+				ImGui::Begin("Edit Viewport");
+				ImGui::Image(test_view, ImVec2(800.0f, 600.0f));
+				ImGui::End();
+			}
 		}
 		
 	}

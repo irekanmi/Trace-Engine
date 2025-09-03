@@ -116,7 +116,7 @@ namespace trace {
 
 	static std::vector<glm::vec4> clear_values = { glm::vec4(0.0f), glm::vec4(1.0f) };
 
-	void WeightedOITPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void WeightedOITPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 
 		FrameData& frame_data = black_board.get<FrameData>();
@@ -191,17 +191,19 @@ namespace trace {
 					m_pipeline.get(),
 					"accum",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					render_graph->GetResource_ptr(accum)
+					render_graph->GetResource_ptr(accum),
+					render_graph_index
 				);
 				RenderFunc::BindRenderGraphTexture(
 					render_graph,
 					m_pipeline.get(),
 					"reveal",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					render_graph->GetResource_ptr(reveal)
+					render_graph->GetResource_ptr(reveal),
+					render_graph_index
 				);
 
-				RenderFunc::BindPipeline_(m_pipeline.get());
+				RenderFunc::BindPipeline_(m_pipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 				RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
 				RenderFunc::OnDrawEnd(m_renderer->GetDevice(), m_pipeline.get());

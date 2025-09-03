@@ -152,6 +152,7 @@ namespace trace {
 		uint32_t GetFrameWidth() { return m_frameWidth; }
 		uint32_t GetFrameHeight() { return m_frameHeight; }
 		std::vector<RenderGraphFrameData>& GetRenderGraphFrameData() { return m_renderGraphsData; }
+		RenderComposer* GetRenderComposer() { return m_composer; }
 		Model& GetQuadModel();
 
 		std::unordered_map<std::string, void*>& GetAvaliableRenderPasses() { return m_avaliablePasses; }

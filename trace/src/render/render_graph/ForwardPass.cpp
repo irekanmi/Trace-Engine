@@ -59,7 +59,7 @@ namespace trace {
 	void ForwardPass::Setup(RenderGraph* render_graph, RenderPassPacket& pass_inputs)
 	{
 	}
-	void ForwardPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void ForwardPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 		FrameData& fd = black_board.get<FrameData>();
 		GBufferData& gbuffer_data = black_board.get<GBufferData>();

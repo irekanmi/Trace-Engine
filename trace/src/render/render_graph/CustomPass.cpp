@@ -75,9 +75,10 @@ namespace trace {
 					m_pipeline.get(),
 					"color",
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-					render_graph->GetResource_ptr(color_input_index)
+					render_graph->GetResource_ptr(color_input_index),
+					render_graph_index
 				);
-				RenderFunc::BindPipeline_(m_pipeline.get());
+				RenderFunc::BindPipeline_(m_pipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 
 				m_renderer->DrawQuad();

@@ -1055,13 +1055,13 @@ namespace trace {
 
 	}
 
-	void Scene::OnRender(CommandList& cmd_list)
+	void Scene::OnRender(CommandList& cmd_list, int32_t draw_index)
 	{
 		//TODO: Optimize resolve hierachy transform by only calculating it when needed and save it for later use during that frame
 
 		Renderer* renderer = Renderer::get_instance();
 
-
+		bool use_draw_index = draw_index > -1;
 
 		auto sun_light_group = m_registry.view<SunLight, HierachyComponent, ActiveComponent>();
 
@@ -1079,7 +1079,7 @@ namespace trace {
 			light_data.params2 = glm::vec4(0.0f, light.intensity, light.cast_shadows ? 1.0f : 0.0f, 0.0f);
 
 
-			renderer->AddLight(cmd_list, light_data, LightType::DIRECTIONAL);
+			renderer->AddLight(cmd_list, light_data, LightType::DIRECTIONAL, use_draw_index ? draw_index : 0);
 		}
 
 		auto spot_light_group = m_registry.view<SpotLight, HierachyComponent, ActiveComponent>();
@@ -1098,7 +1098,7 @@ namespace trace {
 			light_data.params2 = glm::vec4(light.outerCutOff, light.intensity, light.cast_shadows ? 1.0f : 0.0f, 0.0f);
 
 
-			renderer->AddLight(cmd_list, light_data, LightType::SPOT);
+			renderer->AddLight(cmd_list, light_data, LightType::SPOT, use_draw_index ? draw_index : 0);
 		}
 
 
@@ -1119,20 +1119,9 @@ namespace trace {
 			light_data.params2 = glm::vec4(0.0f, light.intensity, light.cast_shadows ? 1.0f : 0.0f, 0.0f);
 
 
-			renderer->AddLight(cmd_list, light_data, LightType::POINT);
+			renderer->AddLight(cmd_list, light_data, LightType::POINT, use_draw_index ? draw_index : 0);
 		}
 
-
-
-		auto group = m_registry.group<MeshComponent, HierachyComponent, ActiveComponent>();
-
-		for (auto entity : group)
-		{
-			auto [mesh, transform, active] = group.get(entity);
-
-			renderer->DrawMesh(cmd_list, mesh._mesh, transform.transform); // TODO Implement Hierachies
-
-		}
 
 		auto model_view = m_registry.view<ModelComponent, ModelRendererComponent, HierachyComponent, ActiveComponent>();
 
@@ -1140,7 +1129,7 @@ namespace trace {
 		{
 			auto [model, model_renderer, transform, active] = model_view.get(entity);
 
-			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform, model_renderer.cast_shadow); // TODO Implement Hierachies
+			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform, model_renderer.cast_shadow, use_draw_index ? draw_index : 0); // TODO Implement Hierachies
 
 		}
 
@@ -1156,7 +1145,7 @@ namespace trace {
 				continue;
 			}
 			model_renderer.runtime_skeleton.GetGlobalPose(model_renderer.bone_transforms, obj.GetID());
-			renderer->DrawSkinnedModel(cmd_list, model_renderer._model, model_renderer._material, transform.transform, model_renderer.bone_transforms.data(), static_cast<uint32_t>(model_renderer.bone_transforms.size()), model_renderer.cast_shadow);
+			renderer->DrawSkinnedModel(cmd_list, model_renderer._model, model_renderer._material, transform.transform, model_renderer.bone_transforms.data(), static_cast<uint32_t>(model_renderer.bone_transforms.size()), model_renderer.cast_shadow, use_draw_index ? draw_index : 0);
 
 
 		}
@@ -1168,7 +1157,7 @@ namespace trace {
 			auto [txt, transform, active] = text_view.get(entity);
 
 			glm::vec3 color = txt.color * txt.intensity;
-			renderer->DrawString(cmd_list, txt.font, txt.text, color, transform.transform); // TODO Implement Hierachies
+			renderer->DrawString(cmd_list, txt.font, txt.text, color, transform.transform, use_draw_index ? draw_index : 0); // TODO Implement Hierachies
 
 		}
 
@@ -1180,7 +1169,7 @@ namespace trace {
 
 			if (img.image)
 			{
-				renderer->DrawImage(cmd_list, img.image, transform.transform, img.color); // TODO Implement Hierachies
+				renderer->DrawImage(cmd_list, img.image, transform.transform, img.color, use_draw_index ? draw_index : 0); // TODO Implement Hierachies
 			}
 
 
@@ -1198,7 +1187,7 @@ namespace trace {
 			{
 				continue;
 			}
-			renderer->DrawParticleEffect(cmd_list, &particle_effect_ctrl.particle_effect);
+			renderer->DrawParticleEffect(cmd_list, &particle_effect_ctrl.particle_effect, use_draw_index ? draw_index : 0);
 
 
 		}

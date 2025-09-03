@@ -164,7 +164,7 @@ namespace trace {
 		glm::vec4(0.0f)
 	};
 
-	void GBufferPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void GBufferPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 		GBufferData& gbuffer_data = black_board.add<GBufferData>();
 		FrameData& fd = black_board.get<FrameData>();

@@ -619,6 +619,13 @@ bool __ImGui_GetDrawTextureHandle(trace::GTexture* texture, void*& out_handle)
 
 bool __ImGui_GetDrawRenderGraphTextureHandle(trace::RenderGraphResource* texture, void*& out_handle)
 {
+	if (texture->resource_type == trace::RenderGraphResourceType::External_Texture)
+	{
+		trace::RenderGraph* source = texture->resource_data.external_resource.external_graph;
+		trace::RenderGraphResource* resource = source->GetResource_ptr(texture->resource_data.external_resource.resource_index);
+		return __ImGui_GetDrawRenderGraphTextureHandle(resource, out_handle);
+	}
+
 	switch (trace::AppSettings::graphics_api)
 	{
 	case trace::RenderAPI::Vulkan:

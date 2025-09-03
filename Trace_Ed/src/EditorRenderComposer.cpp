@@ -26,18 +26,15 @@ namespace trace {
 		shadow_pass.Init(m_renderer);
 		weightedOITPass.Init(m_renderer);
 
-		m_graphs.resize(1);
-		m_graphsBlackBoard.resize(1);
+
+		SetGraphsCount(1);
 
 
 		return result;
 	}
 	void EditorRenderComposer::Shutdowm()
 	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
-		{
-			m_graphs[i].Destroy();
-		}
+		DestroyGraphs();
 
 		weightedOITPass.ShutDown();
 		shadow_pass.ShutDown();
@@ -62,51 +59,104 @@ namespace trace {
 			y = TraceEditor::get_instance()->GetViewportSize().y;
 		}
 
-		FrameData& fd = black_board.add<FrameData>();
-		fd.frame_settings = frame_settings;
-
-
-		fd.hdr_index = INVALID_ID;
-		fd.swapchain_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
-		fd.frame_width = static_cast<uint32_t>(x);
-		fd.frame_height = static_cast<uint32_t>(y);
-
-		TextureDesc gPos = {};
-		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
-		gPos.m_attachmentType = AttachmentType::COLOR;
-		gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
-		gPos.m_format = Format::R8G8B8A8_UNORM;
-		gPos.m_width = fd.frame_width;
-		gPos.m_height = fd.frame_height;
-		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
-		gPos.m_mipLevels = gPos.m_numLayers = 1;
-		gPos.m_usage = UsageFlag::DEFAULT;
-
-		fd.ldr_index = frame_graph.AddTextureResource("Ldr_Target", gPos);
-
-		frame_graph.SetRenderer(m_renderer);
-
-		shadow_pass.Setup(&frame_graph, black_board, render_graph_index);
-		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index);
-		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
-		{
-			ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
-		}
-		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
-		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
-		weightedOITPass.Setup(&frame_graph, black_board, render_graph_index);
+		m_graphsBuilt[render_graph_index] = true;
 		
-		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+
+		switch (render_graph_index)
 		{
-			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
+		case 0:
+		{
+			FrameData& fd = black_board.add<FrameData>();
+			fd.frame_settings = frame_settings;
+
+
+			fd.hdr_index = INVALID_ID;
+			fd.swapchain_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
+			fd.frame_width = static_cast<uint32_t>(x);
+			fd.frame_height = static_cast<uint32_t>(y);
+
+			TextureDesc gPos = {};
+			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
+			gPos.m_attachmentType = AttachmentType::COLOR;
+			gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
+			gPos.m_format = Format::R8G8B8A8_UNORM;
+			gPos.m_width = fd.frame_width;
+			gPos.m_height = fd.frame_height;
+			gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
+			gPos.m_mipLevels = gPos.m_numLayers = 1;
+			gPos.m_usage = UsageFlag::DEFAULT;
+
+			fd.ldr_index = frame_graph.AddTextureResource("Ldr_Target", gPos);
+
+			frame_graph.SetRenderer(m_renderer);
+
+			shadow_pass.Setup(&frame_graph, black_board, render_graph_index);
+			gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index);
+			if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
+			{
+				ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
+			}
+			lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
+			forward_pass.Setup(&frame_graph, black_board, render_graph_index);
+			weightedOITPass.Setup(&frame_graph, black_board, render_graph_index);
+
+			if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+			{
+				bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
+			}
+			toneMap_pass.Setup(&frame_graph, black_board, render_graph_index);
+			editor_ui_pass.Setup(&frame_graph, black_board, render_graph_index);
+			frame_graph.SetFinalResourceOutput("swapchain");
+			break;
 		}
-		toneMap_pass.Setup(&frame_graph, black_board, render_graph_index);
-		editor_ui_pass.Setup(&frame_graph, black_board, render_graph_index);
-		frame_graph.SetFinalResourceOutput("swapchain");
+		case 1:
+		{
+			FrameData& fd = black_board.add<FrameData>();
+			fd.frame_settings = frame_settings;
+
+
+			fd.hdr_index = INVALID_ID;
+			fd.frame_width = 800;
+			fd.frame_height = 600;
+
+			TextureDesc gPos = {};
+			gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
+			gPos.m_attachmentType = AttachmentType::COLOR;
+			gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
+			gPos.m_format = Format::R8G8B8A8_UNORM;
+			gPos.m_width = fd.frame_width;
+			gPos.m_height = fd.frame_height;
+			gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
+			gPos.m_mipLevels = gPos.m_numLayers = 1;
+			gPos.m_usage = UsageFlag::DEFAULT;
+
+			fd.ldr_index = frame_graph.AddTextureResource("Ldr_Target", gPos);
+
+			frame_graph.SetRenderer(m_renderer);
+
+			shadow_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
+			{
+				ssao_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			}
+			lighting_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			forward_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			weightedOITPass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+
+			if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+			{
+				bloom_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			}
+			toneMap_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+			frame_graph.SetFinalResourceOutput("Ldr_Target");
+			break;
+		}
+		}
 
 
 		frame_graph.Compile();
-		frame_graph.Rebuild();
+		frame_graph.Rebuild(render_graph_index);
 
 		return result;
 	}
@@ -119,25 +169,6 @@ namespace trace {
 		return result;
 	}
 
-	bool EditorRenderComposer::ComposeGraph(FrameSettings frame_settings)
-	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
-		{
-			PreFrame(m_graphs[i], m_graphsBlackBoard[i], frame_settings, i);
-		}
-		current_settings = frame_settings;
-		return true;
-	}
-	bool EditorRenderComposer::ReComposeGraph(FrameSettings frame_settings)
-	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
-		{
-			m_graphs[i].Destroy();
-		}
-
-		ComposeGraph(frame_settings);
-		return true;
-	}
 }
 
 

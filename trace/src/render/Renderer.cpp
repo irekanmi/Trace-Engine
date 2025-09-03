@@ -179,7 +179,7 @@ namespace trace {
 		//_____________
 
 		exposure = 0.9f;
-
+		num_render_graphs = 2;
 		m_renderGraphsData.resize(num_render_graphs);
 
 		if (m_composer)
@@ -449,13 +449,13 @@ namespace trace {
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::ApplyMaterial(_mi);
-			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
-			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, M_model, sizeof(glm::mat4));
+			RenderFunc::ApplyMaterial(_mi, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4), render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4), render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3), render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, M_model, sizeof(glm::mat4), render_graph_index);
 			RenderFunc::BindPipeline(&g_device, sp.get());
-			RenderFunc::BindPipeline_(sp.get());
+			RenderFunc::BindPipeline_(sp.get(), render_graph_index);
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
 			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
 
@@ -489,13 +489,13 @@ namespace trace {
 			Ref<GPipeline> sp = _mi->GetRenderPipline();
 
 			RenderFunc::OnDrawStart(&g_device, sp.get());
-			RenderFunc::ApplyMaterial(_mi);
-			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3));
-			RenderFunc::SetPipelineData(sp.get(), "_bone_matrices", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data.bone_transforms, sizeof(glm::mat4) * data.bone_count);
+			RenderFunc::ApplyMaterial(_mi, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4), render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4), render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3), render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_bone_matrices", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data.bone_transforms, sizeof(glm::mat4) * data.bone_count, render_graph_index);
 			RenderFunc::BindPipeline(&g_device, sp.get());
-			RenderFunc::BindPipeline_(sp.get());
+			RenderFunc::BindPipeline_(sp.get(), render_graph_index);
 			RenderFunc::BindVertexBuffer(&g_device, _model->GetVertexBuffer());
 			RenderFunc::BindIndexBuffer(&g_device, _model->GetIndexBuffer());
 
@@ -528,11 +528,11 @@ namespace trace {
 				uint32_t particles_to_render = remaining_particles > MAX_QUAD_INSTANCE ? MAX_QUAD_INSTANCE : remaining_particles;
 
 				RenderFunc::OnDrawStart(&g_device, DefaultAssetsManager::quad_pipeline.get());
-				RenderFunc::SetPipelineTextureData(DefaultAssetsManager::quad_pipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
-				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "transforms", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + tex_ins.second.transforms.data(), particles_to_render * sizeof(glm::mat4));
-				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + tex_ins.second.colors.data(), particles_to_render * sizeof(uint32_t));
-				RenderFunc::BindPipeline_(DefaultAssetsManager::quad_pipeline.get());
+				RenderFunc::SetPipelineTextureData(DefaultAssetsManager::quad_pipeline.get(), "u_textures", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first, render_graph_index);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4), render_graph_index);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "transforms", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + tex_ins.second.transforms.data(), particles_to_render * sizeof(glm::mat4), render_graph_index);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::quad_pipeline.get(), "colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + tex_ins.second.colors.data(), particles_to_render * sizeof(uint32_t), render_graph_index);
+				RenderFunc::BindPipeline_(DefaultAssetsManager::quad_pipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(&g_device, DefaultAssetsManager::quad_pipeline.get());
 				RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
 				RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
@@ -570,11 +570,11 @@ namespace trace {
 				uint32_t particles_to_render = remaining_particles > (MAX_QUAD_INSTANCE / 4) ? (MAX_QUAD_INSTANCE / 4): remaining_particles;
 
 				RenderFunc::OnDrawStart(&g_device, DefaultAssetsManager::text_pipeline.get());
-				RenderFunc::SetPipelineTextureData(DefaultAssetsManager::text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first);
-				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, (offset * 4) + tex_ins.second.positions.data(), particles_to_render * 4 * sizeof(glm::vec4));
-				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, (offset * 4) + tex_ins.second.tex_coords.data(), particles_to_render * 4 * sizeof(glm::vec4));
-				RenderFunc::BindPipeline_(DefaultAssetsManager::text_pipeline.get());
+				RenderFunc::SetPipelineTextureData(DefaultAssetsManager::text_pipeline.get(), "u_texture", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex_ins.first, render_graph_index);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4), render_graph_index);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, (offset * 4) + tex_ins.second.positions.data(), particles_to_render * 4 * sizeof(glm::vec4), render_graph_index);
+				RenderFunc::SetPipelineData(DefaultAssetsManager::text_pipeline.get(), "tex_coords", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, (offset * 4) + tex_ins.second.tex_coords.data(), particles_to_render * 4 * sizeof(glm::vec4), render_graph_index);
+				RenderFunc::BindPipeline_(DefaultAssetsManager::text_pipeline.get(), render_graph_index);
 				RenderFunc::BindPipeline(&g_device, DefaultAssetsManager::text_pipeline.get());
 				RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
 				RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
@@ -601,9 +601,9 @@ namespace trace {
 			glm::mat4 proj = graph_data->_camera->GetProjectionMatix() * graph_data->_camera->GetViewMatrix();
 			RenderFunc::OnDrawStart(&g_device, render_pipeline.get());
 			RenderFunc::BindLineWidth(&g_device, 1.0f);
-			RenderFunc::SetPipelineData(render_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4));
-			RenderFunc::SetPipelineData(render_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, render_data.positions.data(), render_data.vert_count * sizeof(glm::vec4));
-			RenderFunc::BindPipeline_(render_pipeline.get());
+			RenderFunc::SetPipelineData(render_pipeline.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4), render_graph_index);
+			RenderFunc::SetPipelineData(render_pipeline.get(), "positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, render_data.positions.data(), render_data.vert_count * sizeof(glm::vec4), render_graph_index);
+			RenderFunc::BindPipeline_(render_pipeline.get(), render_graph_index);
 			RenderFunc::BindPipeline(&g_device, render_pipeline.get());
 			RenderFunc::Draw(&g_device, 0, render_data.vert_count);
 			RenderFunc::OnDrawEnd(&g_device, render_pipeline.get());

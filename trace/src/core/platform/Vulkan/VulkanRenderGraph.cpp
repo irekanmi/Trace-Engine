@@ -16,9 +16,9 @@ namespace vk {
 	bool compute_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 	bool compute_resource_handle(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
 	bool compute_frame_buffer_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
-	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance);
+	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance, int32_t render_graph_index);
 
-	bool __BuildRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph)
+	bool __BuildRenderGraph(trace::GDevice* device, trace::RenderGraph* render_graph, int32_t render_graph_index)
 	{
 		bool result = true;
 
@@ -52,7 +52,7 @@ namespace vk {
 		std::vector<trace::RenderGraphResource>& graph_resources = render_graph->GetResources();
 
 		compute_resource_handle(render_graph, _device, instance);
-		compute_render_graph_memory(render_graph, _device, instance);
+		compute_render_graph_memory(render_graph, _device, instance, render_graph_index);
 
 		for (auto& pass_index : graph_passes)
 		{
@@ -73,9 +73,10 @@ namespace vk {
 				_to = (edge.to == pass_index);
 
 				trace::RenderGraphResource* res = render_graph->GetResource_ptr(edge.resource);
-				bool isTexture, isSwapchainImage;
+				bool isTexture, isSwapchainImage, isExternalTexture;
 				isTexture = res->resource_type == trace::RenderGraphResourceType::Texture;
 				isSwapchainImage = res->resource_type == trace::RenderGraphResourceType::SwapchainImage;
+				isExternalTexture = res->resource_type == trace::RenderGraphResourceType::External_Texture;
 
 				if (from && to)
 				{
@@ -119,8 +120,13 @@ namespace vk {
 				}
 				else if (!from && to)
 				{
-					if (_to && isTexture)
+					if (_to && isExternalTexture)
 					{
+						trace::RenderGraph* source = res->resource_data.external_resource.external_graph;
+						trace::RenderGraphResource* res_ptr = source->GetResource_ptr(res->resource_data.external_resource.resource_index);
+						trace::RenderGraphPass* pass_ptr = source->GetPass_ptr(res_ptr->written_passes.back());
+						trace::VKRenderGraphPass* pass_ptr_handle = (trace::VKRenderGraphPass*)pass_ptr->GetRenderHandle()->m_internalData;
+						pass_handle->wait_events.push_back(pass_ptr_handle->signal_events.back());
 					}
 				}
 
@@ -128,7 +134,35 @@ namespace vk {
 			compute_frame_buffer_handle(pass, render_graph, _device, instance);
 		}
 
+		//Generate event for the final resource
+		uint32_t final_index = render_graph->GetFinalResourceOutput();
+		trace::RenderGraphResource* res_ptr = render_graph->GetResource_ptr(final_index);
+		bool isTexture, isSwapchainImage, isExternalTexture;
+		isTexture = res_ptr->resource_type == trace::RenderGraphResourceType::Texture;
+		isSwapchainImage = res_ptr->resource_type == trace::RenderGraphResourceType::SwapchainImage;
+		isExternalTexture = res_ptr->resource_type == trace::RenderGraphResourceType::External_Texture;
 
+		if (isTexture)
+		{
+			trace::RenderGraphPass* pass_ptr = render_graph->GetPass_ptr(res_ptr->written_passes.back());
+			trace::VKRenderGraphPass* pass_handle = (trace::VKRenderGraphPass*)pass_ptr->GetRenderHandle()->m_internalData;
+
+			VkEventCreateInfo evnt_info = {};
+			evnt_info.sType = VK_STRUCTURE_TYPE_EVENT_CREATE_INFO;
+			evnt_info.pNext = nullptr;
+			trace::VKEvntPair evnt_pair = { pass_ptr, res_ptr };
+			VkEvent& evnt = handle->events.emplace_back(evnt_pair).evnt;
+
+			VkResult _result = VK_ERROR_UNKNOWN;
+			_result = vkCreateEvent(
+				_device->m_device,
+				&evnt_info,
+				instance->m_alloc_callback,
+				&evnt
+			);
+			VK_ASSERT(_result);
+			pass_handle->signal_events.push_back(evnt);
+		}
 
 		return result;
 	}
@@ -644,21 +678,21 @@ namespace vk {
 		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
 
 
-		for (auto& evnt : handle->events)
+		/*for (auto& evnt : handle->events)
 		{
 			vkCmdResetEvent(
 				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
 				evnt.evnt,
 				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
 			);
-		}
+		}*/
 
 
 
 		return result;
 	}
 
-	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
+	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, int32_t render_graph_index, uint32_t index)
 	{
 		bool result = true;
 
@@ -672,6 +706,13 @@ namespace vk {
 		{
 			TRC_ERROR("Unable to bind render graph resource  please enter a valid render_graph or pipeline, {}", (const void*)render_graph->GetRenderHandle()->m_internalData, (const void*)pipeline->GetRenderHandle()->m_internalData);
 			return false;
+		}
+
+		if (resource && resource->resource_type == trace::RenderGraphResourceType::External_Texture)
+		{
+			trace::RenderGraph* source = resource->resource_data.external_resource.external_graph;
+			trace::RenderGraphResource* res_ptr = source->GetResource_ptr(resource->resource_data.external_resource.resource_index);
+			return __BindRenderGraphTexture(source, pipeline, bind_name, resource_stage, res_ptr, index);
 		}
 
 		trace::VKRenderGraph* handle = reinterpret_cast<trace::VKRenderGraph*>(render_graph->GetRenderHandle()->m_internalData);
@@ -713,12 +754,12 @@ namespace vk {
 				image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 			}
 
-			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource.texture, index);
+			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource.texture, render_graph_index, index);
 
 		}
 		else
 		{
-			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &device->nullImage, index);
+			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &device->nullImage, render_graph_index, index);
 		}
 
 		//write.descriptorCount = 1; //HACK: Fix
@@ -769,6 +810,7 @@ namespace vk {
 	bool __BindRenderGraphBuffer(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index)
 	{
 		// Binding for render graph buffer has not being implemented
+		TRC_ASSERT(false, "Implement this funtion");
 		return false;
 	}
 
@@ -1092,7 +1134,7 @@ namespace vk {
 		return result;
 	}
 
-	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
+	void compute_render_graph_memory(trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance, int32_t render_graph_index)
 	{
 		std::vector<trace::RenderGraphResource>& resources = render_graph->GetResources();
 
@@ -1108,35 +1150,35 @@ namespace vk {
 		static uint32_t mem_count = 0;
 		uint32_t previous_frame = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
 
-		if (graph_handle->memory_size > _device->frame_mem_size)
+		if (graph_handle->memory_size > _device->frame_mem_size[render_graph_index])
 		{
 
-			if (_device->frame_memory) _device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
-			_device->frame_memory = VK_NULL_HANDLE;
+			if (_device->frame_memory[render_graph_index]) _device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory[render_graph_index]);
+			_device->frame_memory[render_graph_index] = VK_NULL_HANDLE;
 
 			VK_ASSERT(vkAllocateMemory(
 				_device->m_device,
 				&alloc_info,
 				instance->m_alloc_callback,
-				&_device->frame_memory
+				&_device->frame_memory[render_graph_index]
 			));
-			_device->frame_mem_size = graph_handle->memory_size;
+			_device->frame_mem_size[render_graph_index] = graph_handle->memory_size;
 
 		}
-		else if (graph_handle->memory_size < _device->frame_mem_size)
+		else if (graph_handle->memory_size < _device->frame_mem_size[render_graph_index])
 		{
 			mem_count++;
 			if (mem_count > 30)
 			{
-				_device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory);
-				_device->frame_memory = VK_NULL_HANDLE;
+				_device->frames_resources[previous_frame]._memorys.push_back(_device->frame_memory[render_graph_index]);
+				_device->frame_memory[render_graph_index] = VK_NULL_HANDLE;
 				VK_ASSERT(vkAllocateMemory(
 					_device->m_device,
 					&alloc_info,
 					instance->m_alloc_callback,
-					&_device->frame_memory
+					&_device->frame_memory[render_graph_index]
 				));
-				_device->frame_mem_size = graph_handle->memory_size;
+				_device->frame_mem_size[render_graph_index] = graph_handle->memory_size;
 
 				mem_count = 0;
 			}
@@ -1153,7 +1195,7 @@ namespace vk {
 				vkBindImageMemory(
 					_device->m_device,
 					res_handle->resource.texture.m_handle,
-					_device->frame_memory,
+					_device->frame_memory[render_graph_index],
 					graph_handle->current_offset
 				);
 				res_handle->memory_offset = graph_handle->current_offset;

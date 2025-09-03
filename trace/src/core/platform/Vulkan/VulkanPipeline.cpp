@@ -217,12 +217,20 @@ namespace trace {
 					if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 					{
 
-						write.dstSet = _handle->Scene_sets[i];
 						write.descriptorType = vk::convertDescriptorType(_i.resource_type);
-						bufs[k].offset = 0;
-						bufs[k].buffer = _handle->buffer_resources[meta_id].resource[i].m_handle;
 						k_off += struct_size;
 						k_off = get_alignment(k_off, offset_alignment);
+
+						for (uint32_t graph_index = 0; graph_index < MAX_RENDER_GRAPH; graph_index++)
+						{
+							bufs[k].buffer = _handle->buffer_resources[meta_id].resource[i].m_handle;
+							bufs[k].offset = struct_size * graph_index;//TODO: get alignment of the offset
+							write.dstSet = _handle->Scene_sets[(i * MAX_RENDER_GRAPH) + graph_index];
+							bufs[k].range = VK_WHOLE_SIZE;
+							write.pBufferInfo = &bufs[k];
+							_writes.push_back(write);
+							k++;
+						}
 					}
 					else if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 					{
@@ -230,14 +238,15 @@ namespace trace {
 						write.dstSet = _handle->Instance_sets[i];
 						write.descriptorType = vk::convertDescriptorType(_i.resource_type);
 						bufs[k].buffer = _handle->buffer_resources[meta_id].resource[i].m_handle;
+
+						bufs[k].range = VK_WHOLE_SIZE;
+						write.pBufferInfo = &bufs[k];
+						_writes.push_back(write);
 					}
 					else if (_i.resource_stage == ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 					{
 						continue;
 					}
-					bufs[k].range = VK_WHOLE_SIZE;
-					write.pBufferInfo = &bufs[k];
-					_writes.push_back(write);
 
 				}
 				if (is_image)
@@ -369,6 +378,11 @@ bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline
 			if (resource.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE && is_storage_buffer)
 			{
 				buffer_size = total_size * 512;
+			}
+			
+			if (resource.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL && is_uniform_buffer)
+			{
+				buffer_size *= MAX_RENDER_GRAPH;
 			}
 
 			for (uint32_t i = 0; i < device->frames_in_flight; i++)
@@ -741,7 +755,7 @@ namespace vk {
 
 		return result;
 	}
-	bool __SetPipelineData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size)
+	bool __SetPipelineData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index)
 	{
 		bool result = true;		
 
@@ -772,7 +786,7 @@ namespace vk {
 
 		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
-		return __SetPipelineData_Meta(pipeline, meta_data, resource_scope, data, size);
+		return __SetPipelineData_Meta(pipeline, meta_data, resource_scope, data, size, render_graph_index);
 	}
 	bool __SetPipelineInstanceData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t count)
 	{
@@ -861,7 +875,7 @@ namespace vk {
 		return result;
 
 	}
-	bool __SetPipelineData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, void* data, uint32_t size)
+	bool __SetPipelineData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index)
 	{
 		bool result = true;
 
@@ -906,10 +920,11 @@ namespace vk {
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 		{
 			
-
+			int32_t set_index = (_device->m_imageIndex * MAX_RENDER_GRAPH) + render_graph_index;
 			void* data_point;
 			trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
-			VkDescriptorSet& set = _handle->Scene_sets[_device->m_imageIndex];
+			VkDescriptorSet& set = _handle->Scene_sets[set_index];
+			uint32_t struct_size = buffer.m_info.m_size / MAX_RENDER_GRAPH;
 
 			if (size > buffer.m_info.m_size)
 			{
@@ -919,7 +934,7 @@ namespace vk {
 
 			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
 
-			uint32_t location = meta_data._offset;
+			uint32_t location = (struct_size * render_graph_index) + meta_data._offset;
 
 			void* map_point = (char*)data_point + location;
 			memcpy(map_point, data, size);
@@ -975,7 +990,7 @@ namespace vk {
 
 		return result;
 	}
-	bool __SetPipelineTextureData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, trace::GTexture* texture, uint32_t index)
+	bool __SetPipelineTextureData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, trace::GTexture* texture, int32_t render_graph_index, uint32_t index)
 	{
 		bool result = true;
 
@@ -1014,9 +1029,9 @@ namespace vk {
 
 		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
-		return __SetPipelineTextureData_Meta(pipeline, meta_data, resource_scope, _tex, index);
+		return __SetPipelineTextureData_Meta(pipeline, meta_data, resource_scope, _tex, render_graph_index, index);
 	}
-	bool __SetPipelineTextureData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, trace::VKImage* texture, uint32_t index)
+	bool __SetPipelineTextureData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, trace::VKImage* texture, int32_t render_graph_index, uint32_t index)
 	{
 		bool result = true;
 
@@ -1066,12 +1081,13 @@ namespace vk {
 			_updated = false;
 		}
 
-		uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
+		//uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
+		uint32_t set_index = (_device->m_imageIndex * MAX_RENDER_GRAPH) + render_graph_index;
 		++meta_data._num_frame_update;
 
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
 		{
-			write.dstSet = _handle->Scene_set;
+			write.dstSet = _handle->Scene_sets[set_index];
 
 			vkUpdateDescriptorSets(
 				_device->m_device,
@@ -1092,7 +1108,7 @@ namespace vk {
 
 		return result;
 	}
-	bool __BindPipeline_(trace::GPipeline* pipeline)
+	bool __BindPipeline_(trace::GPipeline* pipeline, int32_t render_graph_index)
 	{
 		bool result = true;
 
@@ -1117,14 +1133,15 @@ namespace vk {
 
 		uint32_t set_count = 0;
 		VkDescriptorSet _sets[3];
-		uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
 		if (_handle->Scene_sets[0])
 		{
-			_sets[set_count++] = _handle->Scene_set ? _handle->Scene_set : _handle->Scene_sets[set_index];
+			uint32_t set_index = (_device->m_imageIndex * MAX_RENDER_GRAPH) + render_graph_index;
+			_sets[set_count++] = _handle->Scene_sets[set_index];
 		}
 
 		if (_handle->Instance_sets[0])
 		{
+			uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
 			_sets[set_count++] = _handle->Instance_set ? _handle->Instance_set : _handle->Instance_sets[set_index];
 		}
 

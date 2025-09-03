@@ -48,7 +48,7 @@ namespace trace {
 		void OnNetworkUpdate(float deltaTime);
 		void OnAnimationUpdate(float deltaTime);
 		void OnRender();
-		void OnRender(CommandList& cmd_list);
+		void OnRender(CommandList& cmd_list, int32_t draw_index = -1);
 		void OnViewportChange(float width, float height);
 		bool InitializeSceneComponents();
 		void OnPacketReceive_Client(Network::NetworkStream* data, uint32_t source_handle);

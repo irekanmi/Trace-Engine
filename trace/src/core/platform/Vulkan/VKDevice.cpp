@@ -374,12 +374,20 @@ namespace vk {
 		vk::_DestroyImage(_instance, _handle, &_handle->nullImage);
 
 
-		vkFreeMemory(
-			_handle->m_device,
-			_handle->frame_memory,
-			_instance->m_alloc_callback
-		);
-		_handle->frame_memory = VK_NULL_HANDLE;
+
+		for (uint32_t i = 0; i < MAX_RENDER_GRAPH; i++)
+		{
+			if (_handle->frame_memory[i])
+			{
+				vkFreeMemory(
+					_handle->m_device,
+					_handle->frame_memory[i],
+					_instance->m_alloc_callback
+				);
+				_handle->frame_memory[i] = VK_NULL_HANDLE;
+			}
+
+		}
 
 		// Sync objects
 		for (uint32_t i = 0; i < _handle->frames_in_flight; i++)

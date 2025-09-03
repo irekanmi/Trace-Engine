@@ -552,12 +552,12 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::ApplyMaterial(MaterialInstance* mat_instance)
+	bool RenderFunc::ApplyMaterial(MaterialInstance* mat_instance, int32_t render_graph_index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_applyMaterial);
-		result = _applyMaterial(mat_instance);
+		result = _applyMaterial(mat_instance, render_graph_index);
 
 		return result;
 	}
@@ -602,32 +602,32 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size)
+	bool RenderFunc::SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_setPipelineData);
-		result = _setPipelineData(pipeline, resource_name, resource_scope, data, size);
+		result = _setPipelineData(pipeline, resource_name, resource_scope, data, size, render_graph_index);
 
 		return result;
 	}
 
-	bool RenderFunc::SetPipelineTextureData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, GTexture* texture, uint32_t index)
+	bool RenderFunc::SetPipelineTextureData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, GTexture* texture, int32_t render_graph_index, uint32_t index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_setPipelineTextureData);
-		result = _setPipelineTextureData(pipeline, resource_name, resource_scope, texture, index);
+		result = _setPipelineTextureData(pipeline, resource_name, resource_scope, texture, render_graph_index, index);
 
 		return result;
 	}
 
-	bool RenderFunc::BindPipeline_(GPipeline* pipeline)
+	bool RenderFunc::BindPipeline_(GPipeline* pipeline, int32_t render_graph_index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_bindPipeline_);
-		result = _bindPipeline_(pipeline);
+		result = _bindPipeline_(pipeline, render_graph_index);
 
 		return result;
 	}
@@ -782,12 +782,12 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::BuildRenderGraph(GDevice* device, RenderGraph* render_graph)
+	bool RenderFunc::BuildRenderGraph(GDevice* device, RenderGraph* render_graph, int32_t render_graph_index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_buildRenderGraph);
-		result = _buildRenderGraph(device, render_graph);
+		result = _buildRenderGraph(device, render_graph, render_graph_index);
 
 		return result;
 	}
@@ -842,12 +842,12 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index)
+	bool RenderFunc::BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, int32_t render_graph_index, uint32_t index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_bindRenderGraphTexture);
-		result = _bindRenderGraphTexture(render_graph, pipeline, bind_name, resource_stage, resource, index);
+		result = _bindRenderGraphTexture(render_graph, pipeline, bind_name, resource_stage, resource, render_graph_index, index);
 
 		return result;
 	}

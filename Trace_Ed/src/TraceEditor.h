@@ -32,7 +32,7 @@ namespace trace {
 
 		void Update(float deltaTime);
 		void Render(float delaTime);
-		void RenderViewport(void* texture);
+		void RenderViewport(void* texture, void* test_view = nullptr);
 		void RenderSceneToolBar();
 
 		RenderComposer* GetRenderComposer();

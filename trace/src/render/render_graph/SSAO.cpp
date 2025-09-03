@@ -210,7 +210,7 @@ namespace trace {
 		};
 
 	}
-	void SSAO::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	void SSAO::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
 
 		RenderGraphPass* main_pass = render_graph->AddPass("SSAO_MAIN_PASS", GPU_QUEUE::GRAPHICS);
@@ -249,7 +249,8 @@ namespace trace {
 				"u_kernel",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				m_kernel.data(),
-				static_cast<uint32_t>(m_kernel.size() * sizeof(glm::vec4))
+				static_cast<uint32_t>(m_kernel.size() * sizeof(glm::vec4)),
+				render_graph_index
 			);
 
 			glm::vec2 frame_size(static_cast<float>(fd.frame_width), static_cast<float>(fd.frame_height));
@@ -259,7 +260,8 @@ namespace trace {
 				"frame_size",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&frame_size,
-				sizeof(glm::vec2)
+				sizeof(glm::vec2),
+				render_graph_index
 			);
 
 			glm::mat4 proj = graph_data->_camera->GetProjectionMatix();
@@ -269,19 +271,21 @@ namespace trace {
 				"_projection",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&proj,
-				sizeof(glm::mat4)
+				sizeof(glm::mat4),
+				render_graph_index
 			);
 
 			RenderFunc::SetPipelineTextureData(
 				m_pipeline.get(),
 				"u_noiseTexture",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				&noise_tex
+				&noise_tex,
+				render_graph_index
 			);
 
-			RenderFunc::BindRenderGraphTexture( render_graph, m_pipeline.get(), "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data.position_index), 0 );
+			RenderFunc::BindRenderGraphTexture( render_graph, m_pipeline.get(), "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data.position_index), render_graph_index, 0 );
 
-			RenderFunc::BindRenderGraphTexture( render_graph, m_pipeline.get(), "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data.normal_index), 1 );
+			RenderFunc::BindRenderGraphTexture( render_graph, m_pipeline.get(), "g_bufferData", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, render_graph->GetResource_ptr(gbuffer_data.normal_index), render_graph_index, 1 );
 
 			Viewport view_port = m_renderer->_viewPort;
 			Rect2D rect = m_renderer->_rect;
@@ -292,7 +296,7 @@ namespace trace {
 			rect.bottom = height;
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
-			RenderFunc::BindPipeline_(m_pipeline.get());
+			RenderFunc::BindPipeline_(m_pipeline.get(), render_graph_index);
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_pipeline.get());
 
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);
@@ -321,7 +325,8 @@ namespace trace {
 				m_blurPipe.get(),
 				"ssao_main",
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
-				render_graph->GetResource_ptr(ssao_data.ssao_main)
+				render_graph->GetResource_ptr(ssao_data.ssao_main),
+				render_graph_index
 			);
 			Viewport view_port = m_renderer->_viewPort;
 			Rect2D rect = m_renderer->_rect;
@@ -332,7 +337,7 @@ namespace trace {
 			rect.bottom = height;
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
-			RenderFunc::BindPipeline_(m_blurPipe.get());
+			RenderFunc::BindPipeline_(m_blurPipe.get(), render_graph_index);
 			RenderFunc::BindPipeline(m_renderer->GetDevice(), m_blurPipe.get());
 
 			RenderFunc::Draw(m_renderer->GetDevice(), 0, 3);

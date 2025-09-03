@@ -27,8 +27,8 @@ namespace trace {
 		ui_pass.Init(m_renderer);
 		shadow_pass.Init(m_renderer);
 
-		m_graphs.resize(1);
-		m_graphsBlackBoard.resize(1);
+
+		SetGraphsCount(1);
 
 
 		return result;
@@ -37,10 +37,7 @@ namespace trace {
 	void RenderComposer::Shutdowm()
 	{
 
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
-		{
-			m_graphs[i].Destroy();
-		}
+		DestroyGraphs();
 
 		shadow_pass.ShutDown();
 		ui_pass.ShutDown();
@@ -55,6 +52,8 @@ namespace trace {
 	bool RenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 	{
 		bool result = true;
+
+		m_graphsBuilt[render_graph_index] = true;
 
 		FrameData& fd = black_board.add<FrameData>();
 		fd.frame_settings = frame_settings;
@@ -83,7 +82,7 @@ namespace trace {
 
 
 		frame_graph.Compile();
-		frame_graph.Rebuild();
+		frame_graph.Rebuild(render_graph_index);
 
 		return result;
 	}
@@ -99,11 +98,16 @@ namespace trace {
 
 	void RenderComposer::Render(float deltaTime, FrameSettings frame_settings)
 	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		int32_t last_index = m_graphs.size() - 1;
+		for (int32_t i = last_index; i >= 0; i--)
 		{
 			RGBlackBoard black_board;
 			PreFrame(m_graphs[i], black_board, frame_settings, i);
 
+			if (!m_graphsBuilt[i])
+			{
+				continue;
+			}
 			m_graphs[i].Execute(i);
 			
 		}
@@ -111,7 +115,8 @@ namespace trace {
 
 	bool RenderComposer::ComposeGraph(FrameSettings frame_settings)
 	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		int32_t last_index = m_graphs.size() - 1;
+		for (int32_t i = last_index; i >= 0; i--)
 		{
 			PreFrame(m_graphs[i], m_graphsBlackBoard[i], frame_settings, i);
 		}
@@ -121,7 +126,8 @@ namespace trace {
 
 	bool RenderComposer::ReComposeGraph(FrameSettings frame_settings)
 	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		int32_t last_index = m_graphs.size() - 1;
+		for (int32_t i = last_index; i >= 0; i--)
 		{
 			m_graphs[i].Destroy();
 		}
@@ -130,10 +136,28 @@ namespace trace {
 
 	void RenderComposer::DestroyGraphs()
 	{
-		for (uint32_t i = 0; i < m_graphs.size(); i++)
+		int32_t last_index = m_graphs.size() - 1;
+		for (int32_t i = last_index; i >= 0; i--)
 		{
 			m_graphs[i].Destroy();
 		}
+	}
+
+	void RenderComposer::SetGraphsCount(uint32_t graph_count)
+	{
+		m_graphs.resize(graph_count);
+		m_graphsBlackBoard.resize(graph_count);
+		m_graphsBuilt.resize(graph_count);
+	}
+
+	RenderGraph* RenderComposer::GetRenderGraph(uint32_t graph_index)
+	{
+		int32_t last_index = m_graphs.size() - 1;
+		if (graph_index <= last_index)
+		{
+			return &m_graphs[graph_index];
+		}
+		return nullptr;
 	}
 
 	bool RenderComposer::recompose_graph(uint32_t index, FrameSettings frame_settings)

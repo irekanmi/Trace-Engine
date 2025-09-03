@@ -197,7 +197,7 @@ namespace vk {
 
         return result;
     }
-    bool __ApplyMaterial(trace::MaterialInstance* mat_instance)
+    bool __ApplyMaterial(trace::MaterialInstance* mat_instance, int32_t render_graph_index)
     {
         bool result = true;
 
@@ -263,7 +263,7 @@ namespace vk {
                     
                     if (data)
                     {
-                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size);
+                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size, render_graph_index);
                     }
                 }
                 if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
@@ -273,7 +273,7 @@ namespace vk {
 
                     if (tex)
                     {
-                        __SetPipelineTextureData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex);
+                        __SetPipelineTextureData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, tex, render_graph_index);
                     }
                 }
                 
