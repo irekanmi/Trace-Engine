@@ -16,8 +16,8 @@ namespace trace {
 		virtual bool Init(Renderer* renderer) override;
 		virtual void Shutdowm() override;
 
-		virtual bool PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0) override;
-		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0) override;
+		bool FinalSwapchainGraph(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0);
+		bool FullFrameGraph(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, glm::vec2 viewport_size, int32_t render_graph_index = 0);
 
 	private:
 		GBufferPass gbuffer_pass;

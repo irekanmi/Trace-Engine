@@ -8,8 +8,10 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_stdlib.h"
-#include "glm/glm.hpp"
+#include "glm/glm.hpp"/*
 #include <string>
+#include <scene/Scene.h>
+#include <animation/AnimationEngine.h>*/
 
 
 #define IMGUI_WIDGET_MODIFIED_IF(modified, func, placeholder)    \
@@ -18,9 +20,14 @@
 	modified = modified || b_##placeholder;                        \
 	if(b_##placeholder)
 
+
+
 bool DrawVec3(const char* label, glm::vec3& data, float column_width = 100.0f);
 bool DrawVec3( glm::vec3& data, const char* id,float column_width = 100.0f);
 float GetLineHeight();
+bool IsDockspaceFocused(ImGuiID dockspace_id);
+void DrawGizmo(int mode, trace::Scene* scene, trace::UUID entity_id, trace::Camera* camera);
+void DrawGrid(trace::CommandList& cmd_list, float cell_size, uint32_t num_lines, int32_t draw_index);
 
 template<typename T>
 Ref<T> ImGuiDragDropResource(const std::string & tag)

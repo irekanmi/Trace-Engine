@@ -13,12 +13,11 @@ namespace trace {
 		HierachyPanel();
 		~HierachyPanel(){}
 
-		void Render(float deltaTime);
+		void Render(Scene* scene, const std::string& tree_name, float deltaTime);
+		void RenderEntity(Entity entity, const std::string& tree_name, float deltaTime);
 
-		void DrawEntity(Entity entity);
+		void DrawEntity(Entity entity, Scene* scene);
 
-		void SetPrefabEdit(Ref<Prefab> prefab);
-		Ref<Prefab> GetPrefabEdit() { return m_editPrefab; }
 		Entity GetSelectedEntity() { return m_selectedEntity; }
 
 
@@ -27,13 +26,11 @@ namespace trace {
 	private:
 		Entity m_selectedEntity;
 		Entity m_selectedPrefabEntity;
-		Ref<Prefab> m_editPrefab;
 
-		void DrawAllEntites();
-		void DrawEntityHierachy(HierachyComponent& hierachy);
+		void DrawAllEntites(Scene* scene);
+		void DrawEntityHierachy(HierachyComponent& hierachy, Scene* scene);
 		void DrawPrefabEntityHierachy(HierachyComponent& hierachy);
 
-		void RenderPrefab(float deltaTime);
 
 	protected:
 	};

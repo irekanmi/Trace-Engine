@@ -47,7 +47,7 @@ namespace trace {
 		void OnPhysicsUpdate(float deltaTime);
 		void OnNetworkUpdate(float deltaTime);
 		void OnAnimationUpdate(float deltaTime);
-		void OnRender();
+		void OnRender(int32_t draw_index = 0);
 		void OnRender(CommandList& cmd_list, int32_t draw_index = -1);
 		void OnViewportChange(float width, float height);
 		bool InitializeSceneComponents();
@@ -57,6 +57,7 @@ namespace trace {
 		void ReadSceneState_Client(Network::NetworkStream* data);
 		void PhysicsStep(float deltaTime);
 
+		void RenderEntity(Entity entity, CommandList& cmd_list, int32_t draw_index = 0);
 		void EnableEntity(Entity entity);
 		void DisableEntity(Entity entity);
 		Entity CreateEntity(UUID parent = 0);
@@ -107,7 +108,8 @@ namespace trace {
 		void ProcessEntitiesByHierachy(std::function<void(Entity, UUID, Scene*)> callback, bool skip_inactive = true);
 		void ResolveHierachyTransforms();
 
-		std::string& GetName() { return m_name; }
+		std::string& GetSceneName() { return m_name; }
+		void SetSceneName(const std::string& name) { m_name = name; }
 		void SetName(const std::string& name) { m_name = name; }
 		bool IsRunning() { return m_running; }
 		bool GetStimulatePhysics() { return m_stimulatePhysics; }

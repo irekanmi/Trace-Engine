@@ -19,6 +19,7 @@ namespace trace {
         Prefab* asset = this;
         std::unordered_map<UUID, UUID> prefab_map;
         Entity p = instancite_prefab_hierachy(PrefabManager::get_instance()->GetScene(), handle, Entity(), prefab_map);
+        PrefabManager::get_instance()->GetScene()->EnableEntity(p);
         asset->SetHandle(p.GetID());
         return true;
     }

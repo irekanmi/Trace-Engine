@@ -1016,7 +1016,7 @@ namespace trace {
 	}
 
 
-	void Scene::OnRender()
+	void Scene::OnRender(int32_t draw_index)
 	{
 		Camera* main_camera = nullptr;
 
@@ -1044,11 +1044,11 @@ namespace trace {
 		{
 			Renderer* renderer = Renderer::get_instance();
 			CommandList cmd_list = renderer->BeginCommandList();
-			renderer->BeginScene(cmd_list, main_camera);
+			renderer->BeginScene(cmd_list, main_camera, draw_index);
 
-			OnRender(cmd_list);
+			OnRender(cmd_list, draw_index);
 
-			renderer->EndScene(cmd_list);
+			renderer->EndScene(cmd_list, draw_index);
 
 			renderer->SubmitCommandList(cmd_list);
 		}
@@ -1674,6 +1674,67 @@ namespace trace {
 		{
 			PhysicsFunc::Stimulate(m_physics3D, deltaTime);
 		}
+	}
+
+	void Scene::RenderEntity(Entity entity, CommandList& cmd_list, int32_t draw_index)
+	{
+		if (!entity)
+		{
+			return;
+		}
+
+		Renderer* renderer = Renderer::get_instance();
+		TransformComponent& transform = entity.GetComponent<TransformComponent>();
+		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
+
+		for (UUID& id : hi.children)
+		{
+			Entity child = GetEntity(id);
+			RenderEntity(child, cmd_list, draw_index);
+		}
+
+		if (ModelComponent* model = entity.TryGetComponent<ModelComponent>())
+		{
+			if (ModelRendererComponent* model_renderer = entity.TryGetComponent<ModelRendererComponent>())
+			{
+				renderer->DrawModel(cmd_list, model->_model, model_renderer->_material, hi.transform, model_renderer->cast_shadow, draw_index);
+			}
+		}
+
+		if (SkinnedModelRenderer* model_renderer = entity.TryGetComponent<SkinnedModelRenderer>())
+		{
+			if (!model_renderer->_material || !model_renderer->_model || !model_renderer->GetSkeleton())
+			{
+				model_renderer->runtime_skeleton.GetGlobalPose(model_renderer->bone_transforms, entity.GetID());
+				renderer->DrawSkinnedModel(cmd_list, model_renderer->_model, model_renderer->_material, hi.transform, model_renderer->bone_transforms.data(), static_cast<uint32_t>(model_renderer->bone_transforms.size()), model_renderer->cast_shadow, draw_index);
+			}
+		}
+
+		if (ImageComponent* img = entity.TryGetComponent<ImageComponent>())
+		{
+			if (img->image)
+			{
+				renderer->DrawImage(cmd_list, img->image, hi.transform, img->color, draw_index); // TODO Implement Hierachies
+			}
+		}
+
+		if (TextComponent* txt = entity.TryGetComponent<TextComponent>())
+		{
+			glm::vec3 color = txt->color * txt->intensity;
+			renderer->DrawString(cmd_list, txt->font, txt->text, color, hi.transform, draw_index);
+		}
+
+		if (ParticleEffectController* particle_effect_ctrl = entity.TryGetComponent<ParticleEffectController>())
+		{
+			if (!particle_effect_ctrl->particle_effect.GetParticleEffect() || !particle_effect_ctrl->particle_effect.IsRunning())
+			{
+			}
+			else
+			{
+				renderer->DrawParticleEffect(cmd_list, &particle_effect_ctrl->particle_effect, draw_index);
+			}
+		}
+
 	}
 
 	void Scene::EnableEntity(Entity entity)

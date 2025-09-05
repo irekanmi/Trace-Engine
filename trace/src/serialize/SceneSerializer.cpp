@@ -249,6 +249,7 @@ namespace trace {
 
 		prefab->SetHandle(obj.GetID());
 		prefab->m_path = file_path;
+		scene->EnableEntity(obj);
 
 		result = prefab;
 

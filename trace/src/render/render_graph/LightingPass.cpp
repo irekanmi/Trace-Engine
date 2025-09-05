@@ -172,6 +172,11 @@ namespace trace {
 			{
 				RenderGraphFrameData* graph_data = renderer->GetRenderGraphData(render_graph_index);
 
+				if (!graph_data->_camera)
+				{
+					return;
+				}
+
 				Viewport view_port = renderer->_viewPort;
 				Rect2D rect = renderer->_rect;
 				view_port.width = static_cast<float>(width);

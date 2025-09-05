@@ -13,6 +13,9 @@
 #include "render_graph/ShadowPass.h"
 #include "render_graph/RenderGraph.h"
 
+#include <functional>
+#include <unordered_map>
+
 
 namespace trace {
 
@@ -20,6 +23,18 @@ namespace trace {
 	class RenderGraph;
 	class RGBlackBoard;
 
+	struct RenderGraphController
+	{
+		std::function<bool()> should_render;
+		std::function<void(RenderGraph&, RGBlackBoard&, FrameSettings, int32_t)> build_graph;//TODO: To be used later
+		int32_t graph_index = -1;
+	};
+
+	struct RenderGraphInfo
+	{
+		RenderGraph graph;
+		bool built = false;
+	};
 
 	class RenderComposer
 	{
@@ -35,16 +50,13 @@ namespace trace {
 		virtual bool PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index = 0);
 
 		virtual void Render(float deltaTime, FrameSettings frame_settings);
-		virtual bool ComposeGraph(FrameSettings frame_settings);
-		virtual bool ReComposeGraph(FrameSettings frame_settings);
 		virtual void DestroyGraphs();
 		virtual void SetGraphsCount(uint32_t graph_count);
 		virtual RenderGraph* GetRenderGraph(uint32_t graph_index);
-		virtual std::vector<RenderGraph>& GetGraphs() { return m_graphs; }
+		virtual std::vector<RenderGraphInfo>& GetGraphs() { return m_graphs; }
 
-	protected:
-		virtual bool recompose_graph(uint32_t index, FrameSettings frame_settings);
-		virtual bool compose_graph(uint32_t index, FrameSettings frame_settings);
+		virtual int32_t BindRenderGraphController(RenderGraphController controller, const std::string& controller_name);
+		virtual bool UnBindRenderGraphController(const std::string& controller_name);
 
 	private:
 		GBufferPass gbuffer_pass;
@@ -59,9 +71,9 @@ namespace trace {
 
 	protected:
 		Renderer* m_renderer;
-		std::vector<RenderGraph> m_graphs;//Used for rendering
-		std::vector<RGBlackBoard> m_graphsBlackBoard;//Used for rendering
-		std::vector<bool> m_graphsBuilt;
+		std::vector<RenderGraphInfo> m_graphs;//Used for rendering
+		std::vector<RenderGraphController> m_controllers;
+		std::unordered_map<std::string, int32_t> m_controllersMap;
 
 	};
 

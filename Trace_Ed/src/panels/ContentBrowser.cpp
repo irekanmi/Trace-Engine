@@ -109,7 +109,7 @@ namespace trace {
 			{
 				AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
 				assets_edit.editMaterialPath = path;
-				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditMaterial(); },
+				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditMaterial(); },
 					[editor]()
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
@@ -144,12 +144,12 @@ namespace trace {
 						assets_edit.materialDataCache.clear();
 						assets_edit.editMaterialPipe.free();
 
-					});
+					});*/
 			};
 
 			extensions_callbacks[PREFAB_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
-				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
+				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
 					{
 						if (editor->GetHierachyPanel()->GetSelectedEntity())
 							editor->GetInspectorPanel()->DrawEntityComponent(editor->GetHierachyPanel()->GetSelectedEntity());
@@ -162,12 +162,17 @@ namespace trace {
 					{
 						Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
 						SceneSerializer::SerializePrefab(prefab, prefab->m_path.string());
-					});
+					});*/
 			};
 
 			extensions_callbacks[SCENE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
-				editor->OpenScene(path.string());
+				//editor->OpenScene(path.string());
+			};
+			
+			extensions_callbacks[PREFAB_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenPrefab(path.string());
 			};
 
 			extensions_callbacks[SKELETON_FILE_EXTENSION] = [editor](std::filesystem::path& path)
@@ -187,7 +192,7 @@ namespace trace {
 
 			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
 			{
-				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
+				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
 					[editor, path]()
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
@@ -197,12 +202,12 @@ namespace trace {
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
 						assets_edit.editFont.free();
-					});
+					});*/
 			};
 
 			extensions_callbacks[".TTF"] = [editor](std::filesystem::path& path)
 			{
-				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
+				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditFont(); },
 					[editor, path]()
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
@@ -212,12 +217,12 @@ namespace trace {
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
 						assets_edit.editFont.free();
-					});
+					});*/
 			};
 
 			extensions_callbacks[RENDER_PIPELINE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
-				editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditPipeline(); },
+				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditPipeline(); },
 					[editor, path]()
 					{
 						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
@@ -236,7 +241,7 @@ namespace trace {
 						assets_edit.editPipePath = "";
 						assets_edit.editPipeDesc = {};
 						assets_edit.editPipeType = PipelineType::Unknown;
-					});
+					});*/
 			};
 			auto mesh_lambda = [editor](std::filesystem::path& path)
 			{
@@ -414,9 +419,9 @@ namespace trace {
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 			{
-				UUID uuid = *(UUID*)payload->Data;
+				/*UUID uuid = *(UUID*)payload->Data;
 				prefab_entity = editor->GetCurrentScene()->GetEntity(uuid);
-				prefab_popup = true;
+				prefab_popup = true;*/
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -805,7 +810,7 @@ namespace trace {
 			else c_item = (CreateItem)0;
 			break;
 		}
-		case SCENE:
+		/*case SCENE:
 		{
 			std::string res;
 			if (editor->InputTextPopup("Scene Name", res))
@@ -833,7 +838,7 @@ namespace trace {
 			}
 			else c_item = (CreateItem)0;
 			break;
-		}
+		}*/
 		case ANIMATION_CLIP:
 		{
 			std::string res;

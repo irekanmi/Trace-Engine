@@ -28,7 +28,7 @@ namespace trace {
 		shadow_pass.Init(m_renderer);
 
 
-		SetGraphsCount(1);
+		SetGraphsCount(MAX_RENDER_GRAPH);
 
 
 		return result;
@@ -51,35 +51,22 @@ namespace trace {
 
 	bool RenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 	{
-		bool result = true;
+		bool result = false;
 
-		m_graphsBuilt[render_graph_index] = true;
 
-		FrameData& fd = black_board.add<FrameData>();
-		fd.frame_settings = frame_settings;
-
-		fd.hdr_index = INVALID_ID;
-		fd.ldr_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
-		fd.frame_width = m_renderer->GetFrameWidth();
-		fd.frame_height = m_renderer->GetFrameHeight();
-
-		frame_graph.SetRenderer(m_renderer);
-
-		shadow_pass.Setup(&frame_graph, black_board, render_graph_index);
-		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index);
-		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
+		RenderGraphController& controller = m_controllers[render_graph_index];
+		bool can_build_graph = controller.should_render && controller.build_graph && controller.graph_index >= 0;
+		if (can_build_graph)
 		{
-			ssao_pass.Setup(&frame_graph, black_board, render_graph_index);
+			result = controller.should_render();
 		}
-		lighting_pass.Setup(&frame_graph, black_board, render_graph_index);
-		forward_pass.Setup(&frame_graph, black_board, render_graph_index);
-		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+		m_graphs[render_graph_index].built = result;
+		if (!result)
 		{
-			bloom_pass.Setup(&frame_graph, black_board, render_graph_index);
+			return result;
 		}
-		toneMap_pass.Setup(&frame_graph, black_board, render_graph_index);
-		frame_graph.SetFinalResourceOutput("swapchain");
-
+		
+		controller.build_graph(frame_graph, black_board, frame_settings, render_graph_index);
 
 		frame_graph.Compile();
 		frame_graph.Rebuild(render_graph_index);
@@ -102,36 +89,15 @@ namespace trace {
 		for (int32_t i = last_index; i >= 0; i--)
 		{
 			RGBlackBoard black_board;
-			PreFrame(m_graphs[i], black_board, frame_settings, i);
+			PreFrame(m_graphs[i].graph, black_board, frame_settings, i);
 
-			if (!m_graphsBuilt[i])
+			if (!m_graphs[i].built)
 			{
 				continue;
 			}
-			m_graphs[i].Execute(i);
+			m_graphs[i].graph.Execute(i);
 			
 		}
-	}
-
-	bool RenderComposer::ComposeGraph(FrameSettings frame_settings)
-	{
-		int32_t last_index = m_graphs.size() - 1;
-		for (int32_t i = last_index; i >= 0; i--)
-		{
-			PreFrame(m_graphs[i], m_graphsBlackBoard[i], frame_settings, i);
-		}
-
-		return true;
-	}
-
-	bool RenderComposer::ReComposeGraph(FrameSettings frame_settings)
-	{
-		int32_t last_index = m_graphs.size() - 1;
-		for (int32_t i = last_index; i >= 0; i--)
-		{
-			m_graphs[i].Destroy();
-		}
-		return ComposeGraph(frame_settings);
 	}
 
 	void RenderComposer::DestroyGraphs()
@@ -139,15 +105,18 @@ namespace trace {
 		int32_t last_index = m_graphs.size() - 1;
 		for (int32_t i = last_index; i >= 0; i--)
 		{
-			m_graphs[i].Destroy();
+			m_graphs[i].graph.Destroy();
 		}
 	}
 
 	void RenderComposer::SetGraphsCount(uint32_t graph_count)
 	{
 		m_graphs.resize(graph_count);
-		m_graphsBlackBoard.resize(graph_count);
-		m_graphsBuilt.resize(graph_count);
+		m_controllers.resize(graph_count);
+		for (RenderGraphInfo& i : m_graphs)
+		{
+			i.graph.SetRenderer(m_renderer);
+		}
 	}
 
 	RenderGraph* RenderComposer::GetRenderGraph(uint32_t graph_index)
@@ -155,21 +124,45 @@ namespace trace {
 		int32_t last_index = m_graphs.size() - 1;
 		if (graph_index <= last_index)
 		{
-			return &m_graphs[graph_index];
+			return &m_graphs[graph_index].graph;
 		}
 		return nullptr;
 	}
 
-	bool RenderComposer::recompose_graph(uint32_t index, FrameSettings frame_settings)
+	int32_t RenderComposer::BindRenderGraphController(RenderGraphController controller, const std::string& controller_name)
 	{
-		m_graphs[index].Destroy();
-		return compose_graph(index, frame_settings);
-	}
+		auto it = m_controllersMap.find(controller_name);
+		if (it != m_controllersMap.end())
+		{
+			TRC_WARN("Controller: {} has already been added, Function: {}", controller_name, __FUNCTION__);
+			return -1;
+		}
 
-	bool RenderComposer::compose_graph(uint32_t index, FrameSettings frame_settings)
+		for (int32_t i = 0; i < m_controllers.size(); i++)
+		{
+			if (m_controllers[i].graph_index < 0)
+			{
+				m_controllers[i] = controller;
+				m_controllers[i].graph_index = i;
+				m_controllersMap[controller_name] = i;
+				return i;
+			}
+		}
+
+		return -1;
+	}
+	bool RenderComposer::UnBindRenderGraphController(const std::string& controller_name)
 	{
-		PreFrame(m_graphs[index], m_graphsBlackBoard[index], frame_settings, index);
+		auto it = m_controllersMap.find(controller_name);
+		if (it == m_controllersMap.end())
+		{
+			TRC_WARN("Controller: {} is not part of available controllers, Function: {}", controller_name, __FUNCTION__);
+			return false;
+		}
+
+		m_controllers[it->second].graph_index = -1;
+		m_controllersMap.erase(controller_name);
+
 		return true;
 	}
-
 }

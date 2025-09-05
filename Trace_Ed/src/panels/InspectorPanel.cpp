@@ -208,14 +208,19 @@ namespace trace {
 
 	void InspectorPanel::DrawEntityComponent(Entity entity)
 	{
+		if (!entity)
+		{
+			return;
+		}
+
 		TraceEditor* editor = TraceEditor::get_instance();
 		bool is_prefab = (entity.GetScene() == PrefabManager::get_instance()->GetScene());
-		bool recording = editor->GetAnimationPanel()->Recording();
+		/*bool recording = editor->GetAnimationPanel()->Recording();
 		if (recording)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Border, { 0.79f, 0.12f, 0.15f, 0.35f });
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.79f, 0.12f, 0.15f, 0.25f });
-		}
+		}*/
 		char anim_data[16] = { 0 };
 		AnimationDataType type = AnimationDataType::NONE;
 		bool anim_dirty = false;
@@ -238,11 +243,11 @@ namespace trace {
 			{
 				if (enabled)
 				{
-					editor->GetCurrentScene()->EnableEntity(entity);
+					entity.GetScene()->EnableEntity(entity);
 				}
 				else
 				{
-					editor->GetCurrentScene()->DisableEntity(entity);
+					entity.GetScene()->DisableEntity(entity);
 				}
 			}
 			ImGui::SameLine();
@@ -920,19 +925,7 @@ namespace trace {
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat3("Offset", glm::value_ptr(shp.offset)), Offset)
 			{}
 
-			if (show_collider)
-			{
-				Renderer* renderer = Renderer::get_instance();
-
-				Transform pose = obj.GetComponent<TransformComponent>()._transform;
-				pose.SetPosition(pose.GetPosition() + shp.offset);
-
-				CommandList cmd_list = renderer->BeginCommandList();
-				renderer->BeginScene(cmd_list, &editor->GetEditorCamera());
-				renderer->DrawDebugSphere(cmd_list, shp.sphere.radius + 0.055f, 25, pose.GetLocalMatrix(), TRC_COL32(125, 205, 105, 175));
-				renderer->EndScene(cmd_list);
-				renderer->SubmitCommandList(cmd_list);
-			}
+			
 
 			return dirty;
 			});
@@ -1346,12 +1339,12 @@ namespace trace {
 			return dirty;
 			});
 
-		ScriptRegistry& script_registry = editor->GetCurrentScene()->m_scriptRegistry;
+		ScriptRegistry& script_registry = entity.GetScene()->m_scriptRegistry;
 
-		if (recording && anim_dirty)
+		/*if (recording && anim_dirty)
 		{
 			editor->GetAnimationPanel()->SetFrameData(entity.GetID(), type, anim_data, 16);
-		}
+		}*/
 
 		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
 			{
@@ -1659,7 +1652,7 @@ namespace trace {
 									if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 									{
 										UUID entity_uuid = *(UUID*)payload->Data;
-										if (editor->GetCurrentScene()->GetEntity(entity_uuid))
+										if (entity.GetScene()->GetEntity(entity_uuid))
 										{
 											memcpy(i.second.data, &entity_uuid, sizeof(UUID));
 										}
@@ -1731,16 +1724,16 @@ namespace trace {
 
 			});
 
-		if (recording)
+		/*if (recording)
 			{
 				ImGui::PopStyleColor(2);
-			}
+			}*/
 
-		if(comp_dirty && is_prefab)
+		/*if(comp_dirty && is_prefab)
 			{
 				Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
-				editor->GetCurrentScene()->ApplyPrefabChanges(prefab);
-			}
+				entity.GetScene()->ApplyPrefabChanges(prefab);
+			}*/
 
 		if (!is_active)
 		{

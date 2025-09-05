@@ -27,7 +27,7 @@ namespace trace {
 		weightedOITPass.Init(m_renderer);
 
 
-		SetGraphsCount(1);
+		SetGraphsCount(MAX_RENDER_GRAPH);
 
 
 		return result;
@@ -46,7 +46,7 @@ namespace trace {
 		ssao_pass.ShutDown();
 		lighting_pass.ShutDown();
 		gbuffer_pass.ShutDown();
-	}
+	}/*
 	bool EditorRenderComposer::PreFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 	{
 		bool result = true;
@@ -159,14 +159,66 @@ namespace trace {
 		frame_graph.Rebuild(render_graph_index);
 
 		return result;
-	}
-	bool EditorRenderComposer::PostFrame(RenderGraph& frame_graph, RGBlackBoard& black_board, int32_t render_graph_index)
+	}*/
+
+	bool EditorRenderComposer::FinalSwapchainGraph(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 	{
-		bool result = true;
+		FrameData& fd = black_board.add<FrameData>();
+		fd.frame_settings = frame_settings;
 
 
+		fd.hdr_index = INVALID_ID;
+		fd.ldr_index = INVALID_ID;
+		fd.swapchain_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
+		editor_ui_pass.Setup(&frame_graph, black_board, render_graph_index);
+		frame_graph.SetFinalResourceOutput("swapchain");
+		return true;
+	}
 
-		return result;
+	bool EditorRenderComposer::FullFrameGraph(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, glm::vec2 viewport_size, int32_t render_graph_index)
+	{
+		FrameData& fd = black_board.add<FrameData>();
+		fd.frame_settings = frame_settings;
+
+		uint32_t x = viewport_size.x > 0.0f ? viewport_size.x : 100.0f;
+		uint32_t y = viewport_size.y > 0.0f ? viewport_size.y : 100.0f;
+
+		fd.hdr_index = INVALID_ID;
+		fd.frame_width = x;
+		fd.frame_height = y;
+
+		TextureDesc gPos = {};
+		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
+		gPos.m_attachmentType = AttachmentType::COLOR;
+		gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
+		gPos.m_format = Format::R8G8B8A8_UNORM;
+		gPos.m_width = fd.frame_width;
+		gPos.m_height = fd.frame_height;
+		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
+		gPos.m_mipLevels = gPos.m_numLayers = 1;
+		gPos.m_usage = UsageFlag::DEFAULT;
+
+		fd.ldr_index = frame_graph.AddTextureResource("Ldr_Target", gPos);
+
+		frame_graph.SetRenderer(m_renderer);
+
+		shadow_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
+		{
+			ssao_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		}
+		lighting_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		forward_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		weightedOITPass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+
+		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+		{
+			bloom_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		}
+		toneMap_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		frame_graph.SetFinalResourceOutput("Ldr_Target");
+		return true;
 	}
 
 }

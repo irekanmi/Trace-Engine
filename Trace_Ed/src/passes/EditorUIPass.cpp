@@ -65,36 +65,50 @@ namespace trace {
 
 		auto pass = render_graph->AddPass("EDITOR_UI_PASS", GPU_QUEUE::GRAPHICS);
 
-		pass->AddColorAttachmentInput(render_graph->GetResource(frame_data.ldr_index).resource_name);
+		//pass->AddColorAttachmentInput(render_graph->GetResource(frame_data.ldr_index).resource_name);
 		pass->AddColorAttachmentOuput(render_graph->GetResource(frame_data.swapchain_index).resource_name);
 
 		if (render_graph_index == 0)
 		{
 			RenderComposer* render_composer = Renderer::get_instance()->GetRenderComposer();
-			int32_t last_index = render_composer->GetGraphs().size() - 1;
-			int32_t i = last_index;
-			while (i > 0)
+			std::vector<RenderGraphInfo>& graphs = render_composer->GetGraphs();
+			
+			for(int32_t i = 1; i < graphs.size(); i++)
 			{
+				if (!graphs[i].built)
+				{
+					continue;
+				}
 				RenderGraph* _graph = render_composer->GetRenderGraph(i);
 				pass->AddTextureInput("Index_Tex" + std::to_string(i), _graph, _graph->GetFinalResourceOutput());
-				i--;
 			}
 		}
 
+		static std::vector<void*> texture_handles(MAX_RENDER_GRAPH);
+		std::vector<void*>* tex_handle = &texture_handles;
 
-
-		pass->SetRunCB([=](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
+		pass->SetRunCB([frame_data, tex_handle](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 			{
-				RenderFunc::BindViewport(m_renderer->GetDevice(), m_renderer->_viewPort);
-				RenderFunc::BindRect(m_renderer->GetDevice(), m_renderer->_rect);
+				RenderFunc::BindViewport(renderer->GetDevice(), renderer->_viewPort);
+				RenderFunc::BindRect(renderer->GetDevice(), renderer->_rect);
 
-				void* tex_render = nullptr;
-				UIFunc::GetDrawRenderGraphTextureHandle(render_graph->GetResource_ptr(frame_data.ldr_index), tex_render);
-				void* test_view = nullptr;
-				UIFunc::GetDrawRenderGraphTextureHandle(render_graph->GetResource_ptr(render_graph->FindResourceIndex("Index_Tex1")), test_view);
-				TraceEditor::get_instance()->RenderViewport(tex_render, test_view);
+				RenderComposer* render_composer = renderer->GetRenderComposer();
+				std::vector<RenderGraphInfo>& graphs = render_composer->GetGraphs();
 
-				UIFunc::UIRenderFrame(m_renderer);
+				for (int32_t i = 1; i < graphs.size(); i++)
+				{
+					if (!graphs[i].built)
+					{
+						continue;
+					}
+					RenderGraph* _graph = render_composer->GetRenderGraph(i);
+					UIFunc::GetDrawRenderGraphTextureHandle(_graph->GetResource_ptr(_graph->GetFinalResourceOutput()), (*tex_handle)[i]);
+					
+				}
+
+				TraceEditor::get_instance()->RenderViewport(*tex_handle);
+
+				UIFunc::UIRenderFrame(renderer);
 
 			});
 

@@ -179,7 +179,7 @@ namespace trace {
 		//_____________
 
 		exposure = 0.9f;
-		num_render_graphs = 2;
+		num_render_graphs = MAX_RENDER_GRAPH;
 		m_renderGraphsData.resize(num_render_graphs);
 
 		if (m_composer)
@@ -435,6 +435,11 @@ namespace trace {
 		uint32_t& m_opaqueObjectsSize = graph_data.m_opaqueObjectsSize;
 		Camera* _camera = graph_data._camera;
 
+		if (!_camera)
+		{
+			return;
+		}
+
 		glm::mat4 proj = _camera->GetProjectionMatix();
 		glm::mat4 view = _camera->GetViewMatrix();
 		glm::vec3 view_position = _camera->GetPosition();
@@ -512,6 +517,11 @@ namespace trace {
 
 		Camera* _camera = graph_data._camera;
 
+		if (!_camera)
+		{
+			return;
+		}
+
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 		for (auto& tex_ins : graph_data.quad_instances)
 		{
@@ -551,6 +561,11 @@ namespace trace {
 		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
 
 		Camera* _camera = graph_data._camera;
+
+		if (!_camera)
+		{
+			return;
+		}
 
 		glm::mat4 proj = _camera->GetProjectionMatix() * _camera->GetViewMatrix();
 
@@ -597,6 +612,11 @@ namespace trace {
 			Debugger::DebugRenderData& render_data = debugger->GetRenderData();
 			if (render_data.vert_count <= 0) return;
 			Ref<GPipeline> render_pipeline = DefaultAssetsManager::debug_line_pipeline;
+
+			if (!graph_data->_camera)
+			{
+				return;
+			}
 
 			glm::mat4 proj = graph_data->_camera->GetProjectionMatix() * graph_data->_camera->GetViewMatrix();
 			RenderFunc::OnDrawStart(&g_device, render_pipeline.get());
