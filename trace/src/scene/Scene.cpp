@@ -1703,9 +1703,10 @@ namespace trace {
 
 		if (SkinnedModelRenderer* model_renderer = entity.TryGetComponent<SkinnedModelRenderer>())
 		{
-			if (!model_renderer->_material || !model_renderer->_model || !model_renderer->GetSkeleton())
+			bool can_render = !(!model_renderer->_material || !model_renderer->_model || !model_renderer->GetSkeleton());
+			if (can_render)
 			{
-				model_renderer->runtime_skeleton.GetGlobalPose(model_renderer->bone_transforms, entity.GetID());
+				model_renderer->runtime_skeleton.GetGlobalPose(this, model_renderer->bone_transforms, entity.GetID());
 				renderer->DrawSkinnedModel(cmd_list, model_renderer->_model, model_renderer->_material, hi.transform, model_renderer->bone_transforms.data(), static_cast<uint32_t>(model_renderer->bone_transforms.size()), model_renderer->cast_shadow, draw_index);
 			}
 		}

@@ -147,32 +147,30 @@ namespace trace {
 					});*/
 			};
 
-			extensions_callbacks[PREFAB_FILE_EXTENSION] = [editor](std::filesystem::path& path)
-			{
-				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]()
-					{
-						if (editor->GetHierachyPanel()->GetSelectedEntity())
-							editor->GetInspectorPanel()->DrawEntityComponent(editor->GetHierachyPanel()->GetSelectedEntity());
-					},
-					[editor, path]()
-					{
-						editor->GetHierachyPanel()->SetPrefabEdit(SceneSerializer::DeserializePrefab(path.string()));
-					},
-						[editor]()
-					{
-						Ref<Prefab> prefab = editor->GetHierachyPanel()->GetPrefabEdit();
-						SceneSerializer::SerializePrefab(prefab, prefab->m_path.string());
-					});*/
-			};
-
+			
 			extensions_callbacks[SCENE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
-				//editor->OpenScene(path.string());
+				editor->OpenScene(path.string());
 			};
 			
 			extensions_callbacks[PREFAB_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->OpenPrefab(path.string());
+			};
+			
+			extensions_callbacks[ANIMATION_GRAPH_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenAnimationGraph(path.string());
+			};
+			
+			extensions_callbacks[SEQUENCE_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenAnimationSequence(path.string());
+			};
+			
+			extensions_callbacks[ANIMATION_CLIP_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenAnimationClip(path.string());
 			};
 
 			extensions_callbacks[SKELETON_FILE_EXTENSION] = [editor](std::filesystem::path& path)

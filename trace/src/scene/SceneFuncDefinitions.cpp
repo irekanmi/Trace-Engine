@@ -33,6 +33,12 @@ namespace trace {
 	void Scene::Copy(Ref<Scene> from, Ref<Scene> to)
 	{
 
+		Copy(from.get(), to.get());
+
+	}
+
+	void Scene::Copy(Scene* from, Scene* to)
+	{
 		entt::registry& f_reg = from->m_registry;
 
 		to->Destroy();
@@ -58,12 +64,12 @@ namespace trace {
 		auto skin_view = f_reg.view<SkinnedModelRenderer>();
 		for (auto e : skin_view)
 		{
-			Entity from_entity = Entity(e, from.get());
+			Entity from_entity = Entity(e, from);
 			SkinnedModelRenderer& from_model = skin_view.get<SkinnedModelRenderer>(e);
 			Entity to_entity = to->GetEntity(from_entity.GetID());
 			SkinnedModelRenderer& to_model = to_entity.GetComponent<SkinnedModelRenderer>();
 
-			to_model.SetSkeleton(from_model.GetSkeleton(), to.get(), to_entity.GetID());
+			to_model.SetSkeleton(from_model.GetSkeleton(), to, to_entity.GetID());
 
 		}
 
@@ -81,7 +87,7 @@ namespace trace {
 		auto sequence_view = f_reg.view<SequencePlayer>();
 		for (auto e : sequence_view)
 		{
-			Entity from_entity = Entity(e, from.get());
+			Entity from_entity = Entity(e, from);
 			SequencePlayer& from_model = sequence_view.get<SequencePlayer>(e);
 			Entity to_entity = to->GetEntity(from_entity.GetID());
 			to_entity.RemoveComponent<SequencePlayer>();
@@ -95,7 +101,6 @@ namespace trace {
 		to->m_rootNode->children = from->m_rootNode->children;
 
 		to->InitializeSceneComponents();
-
 	}
 
 }

@@ -4,6 +4,7 @@
 #include "imgui_internal.h"
 #include "ImGuizmo.h"
 #include "core/Utils.h"
+#include "../panels/AnimationPanel.h" 
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -149,11 +150,13 @@ bool IsDockspaceFocused(ImGuiID dockspace_id)
 
 }
 
-void DrawGizmo(int mode, trace::Scene* scene, trace::UUID entity_id, trace::Camera* camera)
+void DrawGizmo(int mode, trace::Scene* scene, trace::UUID entity_id, trace::Camera* camera, trace::AnimationPanel* animation_panel)
 {
 	trace::Entity selected_entity = scene->GetEntity(entity_id);
 	if (mode != -1 && selected_entity)
 	{
+
+		bool recording = animation_panel ? animation_panel->Recording() : false;
 
 		ImGuizmo::SetOrthographic(false);
 		ImGuizmo::SetDrawlist();
@@ -213,16 +216,34 @@ void DrawGizmo(int mode, trace::Scene* scene, trace::UUID entity_id, trace::Came
 			case ImGuizmo::OPERATION::TRANSLATE:
 			{
 				pose._transform.SetPosition(pos);
+				if (recording)
+				{
+					char anim_data[16] = { 0 };
+					memcpy(anim_data, glm::value_ptr(pos), sizeof(glm::vec3));
+					animation_panel->SetFrameData(scene,  entity_id, trace::AnimationDataType::POSITION, anim_data, 16);
+				}
 				break;
 			}
 			case ImGuizmo::OPERATION::ROTATE:
 			{
 				pose._transform.SetRotation(rot);
+				if (recording)
+				{
+					char anim_data[16] = { 0 };
+					memcpy(anim_data, glm::value_ptr(rot), sizeof(glm::quat));
+					animation_panel->SetFrameData(scene, entity_id, trace::AnimationDataType::ROTATION, anim_data, 16);
+				}
 				break;
 			}
 			case ImGuizmo::OPERATION::SCALE:
 			{
 				pose._transform.SetScale(scale);
+				if (recording)
+				{
+					char anim_data[16] = { 0 };
+					memcpy(anim_data, glm::value_ptr(scale), sizeof(glm::vec3));
+					animation_panel->SetFrameData(scene, entity_id, trace::AnimationDataType::SCALE, anim_data, 16);
+				}
 				break;
 			}
 			}

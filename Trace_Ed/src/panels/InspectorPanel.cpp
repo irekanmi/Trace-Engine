@@ -15,6 +15,7 @@
 #include "ContentBrowser.h"
 #include "external_utils.h"
 #include "resource/DefaultAssetsManager.h"
+#include "AnimationPanel.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -206,7 +207,7 @@ namespace trace {
 
 	}
 
-	void InspectorPanel::DrawEntityComponent(Entity entity)
+	void InspectorPanel::DrawEntityComponent(Entity entity, AnimationPanel* animation_panel)
 	{
 		if (!entity)
 		{
@@ -215,12 +216,12 @@ namespace trace {
 
 		TraceEditor* editor = TraceEditor::get_instance();
 		bool is_prefab = (entity.GetScene() == PrefabManager::get_instance()->GetScene());
-		/*bool recording = editor->GetAnimationPanel()->Recording();
+		bool recording = animation_panel ? animation_panel->Recording() : false;
 		if (recording)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Border, { 0.79f, 0.12f, 0.15f, 0.35f });
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, { 0.79f, 0.12f, 0.15f, 0.25f });
-		}*/
+		}
 		char anim_data[16] = { 0 };
 		AnimationDataType type = AnimationDataType::NONE;
 		bool anim_dirty = false;
@@ -1341,10 +1342,10 @@ namespace trace {
 
 		ScriptRegistry& script_registry = entity.GetScene()->m_scriptRegistry;
 
-		/*if (recording && anim_dirty)
+		if (recording && anim_dirty)
 		{
-			editor->GetAnimationPanel()->SetFrameData(entity.GetID(), type, anim_data, 16);
-		}*/
+			animation_panel->SetFrameData(entity.GetScene(), entity.GetID(), type, anim_data, 16);
+		}
 
 		entity.GetScene()->GetScriptRegistry().Iterate(entity.GetID(), [&](UUID uuid, Script* script, ScriptInstance* instance)
 			{
@@ -1724,10 +1725,10 @@ namespace trace {
 
 			});
 
-		/*if (recording)
-			{
-				ImGui::PopStyleColor(2);
-			}*/
+		if (recording)
+		{
+			ImGui::PopStyleColor(2);
+		}
 
 		/*if(comp_dirty && is_prefab)
 			{

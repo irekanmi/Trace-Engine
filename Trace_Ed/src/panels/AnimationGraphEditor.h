@@ -20,7 +20,7 @@ namespace trace {
 		void Shutdown();
 
 		void Update(float deltaTime);
-		void Render(float deltaTime);
+		void Render(float deltaTime, const std::string& window_name);
 		void OnEvent(Event* p_event);
 		void HandleKeyReleased(Event* p_event);
 		void HandleKeyPressed(Event* p_event);

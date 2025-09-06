@@ -100,9 +100,9 @@ namespace trace {
 	{
 		//ImNodes::GetStyle().LinkLineSegmentsPerLength = 0.0f;
 
-        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
+        /*trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
         trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
-        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
+        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));*/
 
         type_node_render =
         {
@@ -834,11 +834,11 @@ namespace trace {
         }
     }
 
-	void AnimationGraphEditor::Render(float deltaTime)
+	void AnimationGraphEditor::Render(float deltaTime, const std::string& window_name)
 	{
         TraceEditor* editor = TraceEditor::get_instance();
 
-		ImGui::Begin("Animation Graph Editor");
+		ImGui::Begin(window_name.c_str());
 		ImGui::Columns(2);
 
 		if (m_currentGraph)
@@ -847,11 +847,11 @@ namespace trace {
             
 
             ImGui::Button(graph_name.c_str());
-            Ref<Animation::Graph> result = ImGuiDragDropResource<Animation::Graph>(ANIMATION_GRAPH_FILE_EXTENSION);
+            /*Ref<Animation::Graph> result = ImGuiDragDropResource<Animation::Graph>(ANIMATION_GRAPH_FILE_EXTENSION);
             if (result)
             {
                 SetAnimationGraph(result);
-            }
+            }*/
 
             if (ImGui::TreeNode("Graph Data"))
             {
@@ -880,7 +880,7 @@ namespace trace {
             
 
 		}
-		else
+		/*else
 		{
             float column_width = ImGui::GetColumnWidth();
             ImGui::Button("None(Animation Graph)", { column_width, 0.0f });
@@ -916,7 +916,7 @@ namespace trace {
 
                 }
             }
-		}
+		}*/
 
 		ImGui::NextColumn();
         if (m_currentGraph)

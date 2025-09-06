@@ -13,7 +13,7 @@ namespace trace {
 		HierachyPanel();
 		~HierachyPanel(){}
 
-		void Render(Scene* scene, const std::string& tree_name, float deltaTime);
+		void Render(Scene* scene, const std::string& tree_name, const std::string& window_name, float deltaTime);
 		void RenderEntity(Entity entity, const std::string& tree_name, float deltaTime);
 
 		void DrawEntity(Entity entity, Scene* scene);

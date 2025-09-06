@@ -8,10 +8,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_stdlib.h"
-#include "glm/glm.hpp"/*
-#include <string>
-#include <scene/Scene.h>
-#include <animation/AnimationEngine.h>*/
+#include "glm/glm.hpp"
 
 
 #define IMGUI_WIDGET_MODIFIED_IF(modified, func, placeholder)    \
@@ -20,13 +17,15 @@
 	modified = modified || b_##placeholder;                        \
 	if(b_##placeholder)
 
-
+namespace trace {
+	class AnimationPanel;
+}
 
 bool DrawVec3(const char* label, glm::vec3& data, float column_width = 100.0f);
 bool DrawVec3( glm::vec3& data, const char* id,float column_width = 100.0f);
 float GetLineHeight();
 bool IsDockspaceFocused(ImGuiID dockspace_id);
-void DrawGizmo(int mode, trace::Scene* scene, trace::UUID entity_id, trace::Camera* camera);
+void DrawGizmo(int mode, trace::Scene* scene, trace::UUID entity_id, trace::Camera* camera, trace::AnimationPanel* animation_panel = nullptr);
 void DrawGrid(trace::CommandList& cmd_list, float cell_size, uint32_t num_lines, int32_t draw_index);
 
 template<typename T>
@@ -69,4 +68,9 @@ Ref<T> ImGuiDragDropResourceCustom(ImRect rect, ImGuiID id, const std::string& t
 		ImGui::EndDragDropTarget();
 	}
 	return result;
+}
+
+inline ImVec2 operator+(ImVec2& a, ImVec2& b)
+{
+	return ImVec2(a.x + b.x, a.y + b.y);
 }

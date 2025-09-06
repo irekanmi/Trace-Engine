@@ -73,6 +73,7 @@ namespace trace::Animation {
 
 		bool CreateInstance(Ref<Skeleton> skeleton, Scene* scene, UUID id);
 		void GetGlobalPose(std::vector<glm::mat4>& out_pose, UUID id);
+		void GetGlobalPose(Scene* scene, std::vector<glm::mat4>& out_pose, UUID id);
 		int32_t GetIndex(UUID idx);
 		std::vector<UUID>& GetEntites() { return m_boneEntites; }
 		Ref<Skeleton> GetSkeleton() { return m_skeleton; }

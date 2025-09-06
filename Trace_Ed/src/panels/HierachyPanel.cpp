@@ -17,11 +17,11 @@ namespace trace {
 	{
 		
 	}
-	void HierachyPanel::Render(Scene* scene, const std::string& tree_name, float deltaTime)
+	void HierachyPanel::Render(Scene* scene, const std::string& tree_name, const std::string& window_name, float deltaTime)
 	{
 		//TraceEditor* editor = TraceEditor::get_instance();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
-		ImGui::Begin("Scene Hierachy", 0, ImGuiWindowFlags_NoCollapse);
+		ImGui::Begin(window_name.c_str(), 0, ImGuiWindowFlags_NoCollapse);
 
 		Scene* current_active_scene = scene;
 

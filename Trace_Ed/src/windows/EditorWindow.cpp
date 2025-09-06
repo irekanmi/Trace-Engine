@@ -89,6 +89,7 @@ namespace trace {
 
 		if (open)
 		{
+			is_focused = IsDockspaceFocused(dockspace_id);
 			OnRender(deltaTime);
 		}
 		else
@@ -99,7 +100,6 @@ namespace trace {
 				OnWindowLeave();
 			}
 		}
-		is_focused = IsDockspaceFocused(dockspace_id);
 
 		m_openLastFrame = open;
 		return m_windowOpen;

@@ -23,6 +23,7 @@ namespace trace::Animation {
 
 	public:
 
+		virtual ~SequenceTrackChannel() {}
 		virtual void OnStart() {}
 		virtual void Update(SequenceInstance* sequence, Scene* scene, uint32_t track_index) {}
 		virtual void OnEnd() {}
@@ -52,6 +53,7 @@ namespace trace::Animation {
 
 		//void GetAnimationData(SequenceInstance* instance, Scene* scene, AnimationChannelData& final_data);
 
+		virtual ~AnimationChannel() {}
 		Ref<AnimationClip> GetAnimationClip() { return m_clip; }
 		void SetAnimationClip(Ref<AnimationClip> clip) { m_clip = clip; }
 
@@ -70,6 +72,7 @@ namespace trace::Animation {
 
 	public:
 		
+		virtual ~SkeletalAnimationChannel() {}
 		Ref<AnimationClip> GetAnimationClip() { return m_clip; }
 		void SetAnimationClip(Ref<AnimationClip> clip) { m_clip = clip; }
 
@@ -87,7 +90,7 @@ namespace trace::Animation {
 	{
 
 	public:
-
+		virtual ~ActivationChannel() {}
 	private:
 
 

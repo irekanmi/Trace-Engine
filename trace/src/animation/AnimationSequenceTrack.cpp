@@ -137,6 +137,11 @@ namespace trace::Animation {
 
 		AnimationGraphController& controller = entity.GetComponent<AnimationGraphController>();
 		GraphInstance& graph = controller.graph;
+		if (!graph.GetGraph())
+		{
+			TRC_ERROR("Ensure animation graph component has a animation graph asset, Name: {} Function: {}", entity.GetComponent<TagComponent>().GetTag(), __FUNCTION__);
+			return false;
+		}
 		data->skeletal_instance.CreateInstance(graph.GetGraph()->GetSkeleton(), scene, data->entity_id);
 		data->skeleton_pose.Init(&data->skeletal_instance);
 		data->blend_pose.Init(&data->skeletal_instance);
@@ -255,20 +260,15 @@ namespace trace::Animation {
 
 			if (clip->HasRootMotion() && IsTimeWithinChannel(sk_channel, instance->GetElaspedTime()))
 			{
-				if (IsPrevWithinChannel(i))
+				float blend_duration = 0.0f;
+				float blend_weight = 0.0f;
+				if (GetPrevBlend(i, instance->GetElaspedTime(), blend_weight, blend_duration))
 				{
-					float blend_duration = 0.0f;
-					float blend_weight = 0.0f;
-					GetPrevBlend(i, instance->GetElaspedTime(), blend_weight, blend_duration);
-					if (sample_time > blend_duration)
-					{
-						break;
-					}
+					break;
 				}
 				AnimationEngine::get_instance()->SampleClipWithRootMotionDelta(clip, 0.0f, sample_time, &data->skeleton_pose, true);
 
-				float blend_duration = 0.0f;
-				float blend_weight = 0.0f;
+				
 				if (GetNextBlend(i, instance->GetElaspedTime(), blend_weight, blend_duration))
 				{
 					int32_t next_index = i + 1;
@@ -287,20 +287,17 @@ namespace trace::Animation {
 			}
 			else if(!clip->HasRootMotion() && IsTimeWithinChannel(sk_channel, instance->GetElaspedTime()))
 			{
-				if (IsPrevWithinChannel(i))
-				{
-					float blend_duration = 0.0f;
-					float blend_weight = 0.0f;
-					GetPrevBlend(i, instance->GetElaspedTime(), blend_weight, blend_duration);
-					if (sample_time > blend_duration)
-					{
-						break;
-					}
-				}
-				AnimationEngine::get_instance()->SampleClip(clip, sample_time, &data->skeleton_pose, true);
-
 				float blend_duration = 0.0f;
 				float blend_weight = 0.0f;
+				if (GetPrevBlend(i, instance->GetElaspedTime(), blend_weight, blend_duration))
+				{
+					break;
+				}
+				
+
+				AnimationEngine::get_instance()->SampleClip(clip, sample_time, &data->skeleton_pose, true);
+
+				
 				if (GetNextBlend(i, instance->GetElaspedTime(), blend_weight, blend_duration))
 				{
 					int32_t next_index = i + 1;
@@ -474,7 +471,11 @@ namespace trace::Animation {
 
 		SequenceTrackChannel* channel = m_channels[channel_index];
 		int32_t next_index = channel_index + 1;
-		SequenceTrackChannel* next_channel = (AnimationChannel*)m_channels[next_index];
+		SequenceTrackChannel* next_channel = (SequenceTrackChannel*)m_channels[next_index];
+		if (next_channel->GetStartTime() > elapsed_time)
+		{
+			return false;
+		}
 		float next_sample_time = elapsed_time - m_channels[next_index]->GetStartTime();
 		float channel_end_time = channel->GetEndTime();
 		out_blend_duration = channel_end_time - next_channel->GetStartTime();
@@ -492,7 +493,11 @@ namespace trace::Animation {
 
 		SequenceTrackChannel* channel = m_channels[channel_index];
 		int32_t prev_index = channel_index - 1;
-		SequenceTrackChannel* prev_channel = (AnimationChannel*)m_channels[prev_index];
+		SequenceTrackChannel* prev_channel = m_channels[prev_index];
+		if (prev_channel->GetEndTime() < elapsed_time)
+		{
+			return false;
+		}
 		float prev_sample_time = elapsed_time - channel->GetStartTime();
 		float channel_end_time = prev_channel->GetEndTime();
 		out_blend_duration = channel_end_time - channel->GetStartTime();

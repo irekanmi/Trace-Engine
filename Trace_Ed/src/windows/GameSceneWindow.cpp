@@ -182,7 +182,7 @@ namespace trace {
 	{
 		Scene* scene = m_currentScene ? m_currentScene.get() : nullptr;
 		std::string tree_name = m_currentScene ? m_currentSceneName : "None(Scene)";
-		m_hierachyPanel->Render(scene, tree_name, deltaTime);
+		m_hierachyPanel->Render(scene, tree_name, "Scene Hierachy", deltaTime);
 
 		//Inspector
 		ImGui::Begin("Inspector");
@@ -292,7 +292,7 @@ namespace trace {
 			}
 			if (m_hierachyPanel->GetSelectedEntity())
 			{
-				DrawGizmo();
+				DrawGizmo(gizmo_mode, m_currentScene.get(), m_hierachyPanel->GetSelectedEntity().GetID(), &m_editorCamera);
 			}
 			ImGui::End();
 
@@ -387,90 +387,6 @@ namespace trace {
 
 	}
 
-	void GameSceneWindow::DrawGizmo()
-	{
-		Entity selected_entity = m_hierachyPanel->GetSelectedEntity();
-		if (gizmo_mode != -1 && selected_entity)
-		{
-
-			ImGuizmo::SetOrthographic(false);
-			ImGuizmo::SetDrawlist();
-			float windowWidth = (float)ImGui::GetWindowWidth();
-			float windowHeight = (float)ImGui::GetWindowHeight();
-			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-			glm::mat4 cam_view = m_editorCamera.GetViewMatrix();
-			glm::mat4 proj = m_editorCamera.GetProjectionMatix();
-
-			//TODO: Fix added due to vulkan viewport
-			proj[1][1] *= -1.0f;
-			HierachyComponent& hi = selected_entity.GetComponent<HierachyComponent>();
-			TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
-			bool has_parent = hi.HasParent();
-
-			Scene* scene = selected_entity.GetScene();
-
-			glm::mat4 transform = hi.transform;
-
-
-			bool modified = ImGuizmo::Manipulate(
-				glm::value_ptr(cam_view),
-				glm::value_ptr(proj),
-				(ImGuizmo::OPERATION)gizmo_mode,
-				ImGuizmo::MODE::LOCAL,
-				glm::value_ptr(transform),
-				nullptr,// TODO: Check Docs {deltaMatrix}
-				false,// snap
-				nullptr,// TODO: Check Docs {localBounds}
-				false //bounds snap
-			);
-
-			if (modified)
-			{
-				glm::vec3 pos, scale;
-				glm::vec3 rotation;
-				glm::quat rot;
-
-				if (has_parent)
-				{
-					Entity parent = scene->GetEntity(hi.parent);
-					HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
-					glm::mat4 parent_transform = scene->GetEntityGlobalPose(parent).GetLocalMatrix();
-					parent_transform = glm::inverse(parent_transform);
-
-					transform = parent_transform * transform;
-
-				}
-
-				//glm::decompose(transform, scale, rot, pos, skew, persp);
-				DecomposeMatrix(transform, pos, rotation, scale);
-				rot = glm::quat((rotation));
-
-
-				switch (gizmo_mode)
-				{
-				case ImGuizmo::OPERATION::TRANSLATE:
-				{
-					pose._transform.SetPosition(pos);
-					break;
-				}
-				case ImGuizmo::OPERATION::ROTATE:
-				{
-					pose._transform.SetRotation(rot);
-					break;
-				}
-				case ImGuizmo::OPERATION::SCALE:
-				{
-					pose._transform.SetScale(scale);
-					break;
-				}
-				}
-
-			}
-
-
-
-		}
-	}
 	void GameSceneWindow::CloseCurrentScene()
 	{
 		m_currentScene.free();

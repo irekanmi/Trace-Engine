@@ -38,9 +38,9 @@ namespace trace {
 		void OnEvent(Event* p_event);
 		
 
-		void Render(float deltaTime);
+		void Render(Scene* scene, float deltaTime);
 		bool Recording();
-		void SetFrameData(UUID id, AnimationDataType type, void* data, int size);
+		void SetFrameData(Scene* scene, UUID id, AnimationDataType type, void* data, int size);
 		void OnSceneLoad();
 
 		Ref<AnimationClip> GetAnimationClip() { return m_currentClip; }
@@ -49,7 +49,7 @@ namespace trace {
 		int32_t GetEndFrame() { return m_endFrame; }
 		int32_t GetLastSelectedFrame() { return m_lastSelectedFrame; }
 
-		void SetAnimationClip(Ref<AnimationClip> clip, UUID entity);
+		void SetAnimationClip(Scene* scene, Ref<AnimationClip> clip, UUID entity);
 
 	private:
 		void generate_tracks();

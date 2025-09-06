@@ -212,7 +212,11 @@ namespace trace {
 	}
 	void SSAO::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
-
+		RenderGraphFrameData* graph_data = m_renderer->GetRenderGraphData(render_graph_index);
+		if (!graph_data->_camera)
+		{
+			return;
+		}
 		RenderGraphPass* main_pass = render_graph->AddPass("SSAO_MAIN_PASS", GPU_QUEUE::GRAPHICS);
 
 		FrameData& fd = black_board.get<FrameData>();

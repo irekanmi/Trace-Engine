@@ -154,6 +154,7 @@ namespace trace {
 
 		void IterateEntityChildren(Entity entity, std::function<void(Entity)> callback);
 		static void Copy(Ref<Scene> from, Ref<Scene> to);
+		static void Copy(Scene* from, Scene* to);
 
 		static Ref<Scene> Deserialize(UUID id);
 		static Ref<Scene> Deserialize(DataStream* stream);

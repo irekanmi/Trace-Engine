@@ -179,6 +179,45 @@ namespace trace::Animation {
 			}
 		}
 	}
+	void SkeletonInstance::GetGlobalPose(Scene* scene, std::vector<glm::mat4>& out_pose, UUID id)
+	{
+		std::vector<Bone>& bones = m_skeleton->GetBones();
+
+		out_pose.clear();
+		out_pose.resize(bones.size());
+
+		if (!m_boneEntites.empty())
+		{
+			for (uint32_t i = 0; i < bones.size(); i++)
+			{
+				Bone& bone = bones[i];
+				Entity obj = scene->GetEntity(m_boneEntites[i]);
+				if (!obj)
+				{
+					continue;
+				}
+				glm::mat4 final_transform = obj.GetComponent<HierachyComponent>().transform;
+				out_pose[i] = final_transform * bone.GetBoneOffset();
+			}
+		}
+		else
+		{
+			std::vector<UUID> bone_entites;
+			get_bone_entites(scene, bone_entites, id);
+
+			for (uint32_t i = 0; i < bone_entites.size(); i++)
+			{
+				Bone& bone = bones[i];
+				Entity obj = scene->GetEntity(bone_entites[i]);
+				if (!obj)
+				{
+					continue;
+				}
+				glm::mat4 final_transform = obj.GetComponent<HierachyComponent>().transform;
+				out_pose[i] = final_transform * bone.GetBoneOffset();
+			}
+		}
+	}
 	int32_t SkeletonInstance::GetIndex(UUID idx)
 	{
 		int32_t i = 0;

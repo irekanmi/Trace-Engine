@@ -37,7 +37,6 @@ namespace trace {
 		virtual void RenderViewport(std::vector<void*>& texture_handles) override;
 
 		void RenderSceneToolBar();
-		void DrawGizmo();
 		void CloseCurrentScene();
 		bool CreateScene(const std::string& file_path);
 		void LoadScene(const std::string& file_path);

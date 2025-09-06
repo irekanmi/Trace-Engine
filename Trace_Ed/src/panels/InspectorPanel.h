@@ -4,7 +4,7 @@
 
 namespace trace {
 
-
+	class AnimationPanel;
 	class InspectorPanel
 	{
 
@@ -13,7 +13,7 @@ namespace trace {
 		~InspectorPanel() {}
 
 
-		void DrawEntityComponent(Entity entity);
+		void DrawEntityComponent(Entity entity, AnimationPanel* animation_panel = nullptr);
 		void SetDrawCallbackFn(std::function<void()> cb, std::function<void()> on_enter, std::function<void()> on_exit);
 
 		Entity GetSelectedEntity() { return m_selectedEntity; }

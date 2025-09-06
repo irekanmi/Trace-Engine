@@ -40,6 +40,9 @@
 #include "particle_effects/particle_renderers/BillboardRender.h"
 #include "windows/GameSceneWindow.h"
 #include "windows/PrefabWindow.h"
+#include "windows/AnimationGraphWindow.h"
+#include "windows/SequenceWindow.h"
+#include "windows/AnimationWindow.h"
 #include "resource/PrefabManager.h"
  
 
@@ -135,15 +138,9 @@ namespace trace {
 		//m_hierachyPanel = new HierachyPanel;//TODO: Use custom allocator
 		//m_inspectorPanel = new InspectorPanel;//TODO: Use custom allocator
 		m_contentBrowser = new ContentBrowser;//TODO: Use custom allocator
-		m_animPanel = new AnimationPanel;//TODO: Use custom allocator
-		m_animGraphEditor = new AnimationGraphEditor;//TODO: Use custom allocator
-		m_animSequencer = new AnimationSequencer;//TODO: Use custom allocator
 		m_importer = new Importer;//TODO: Use custom allocator
 
 		m_contentBrowser->Init();
-		m_animPanel->Init();
-		m_animGraphEditor->Init();
-		m_animSequencer->Init();
 
 		// Register Events
 		{
@@ -200,15 +197,6 @@ namespace trace {
 		};
 
 		swapchain_graph = composer->BindRenderGraphController(swapchain_controller, "FinalSwapchainGraph");
-		
-		/*RenderGraphController scene_render_controller = {};
-		scene_render_controller.should_render = []()->bool { return true; };
-		scene_render_controller.build_graph = [composer, this](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
-		{
-			composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
-		};
-
-		scene_graph = composer->BindRenderGraphController(scene_render_controller, "SceneRenderGraph");*/
 
 		scene_window = new GameSceneWindow;
 		scene_window->OnCreate(this, "Game Level Editor");
@@ -225,28 +213,12 @@ namespace trace {
 			delete i;
 		}
 
-		/*if (m_currentState == EditorState::ScenePlay)
-		{
-			OnSceneStop();
-			OnGameStop();
-		}*/
-
-		m_animSequencer->Shutdown();
-		m_animGraphEditor->Shutdown();
 		m_contentBrowser->Shutdown();
-		/*m_currentScene.free();
-		m_editScene.free();
-		m_editSceneDuplicate.free();*/
 		
 
 
 		delete m_importer;
-		/*delete m_hierachyPanel;
-		delete m_inspectorPanel;*/
 		delete m_contentBrowser;
-		delete m_animPanel;
-		delete m_animGraphEditor;
-		delete m_animSequencer;
 	}
 
 	void TraceEditor::Update(float deltaTime)
@@ -445,148 +417,55 @@ namespace trace {
 		elapsed += deltaTime;
 		
 		// -------------------/////////////////-----------------------------------
-		//m_hierachyPanel->Render(deltaTime);
 
-		////Inspector
-		//ImGui::Begin("Inspector");
-		//if (m_inspectorPanel->GetDrawCallback())
-		//{
-		//	m_inspectorPanel->GetDrawCallback()();
-		//}
-		//ImGui::End();
 
 		// Content Browser
 		m_contentBrowser->Render(deltaTime);
 
-		//RenderSceneToolBar();
-
-		//// Animation Panel
-		//m_animPanel->Render(deltaTime);
-
-		//// Animation Graph Editor
-		//m_animGraphEditor->Render(deltaTime);
-
-		//// Animation Sequencer
-		//m_animSequencer->Render(deltaTime);
-
 		//Create Project
-		//if (p_createProject)
-		//{
-		//	ImGui::Begin("Create Project", &p_createProject);
-		//	static std::string project_dir;
-		//	ImGui::InputText("Project Directory", &project_dir);
-		//	ImGui::SameLine();
-		//	if (ImGui::Button("..."))
-		//	{
-		//		std::string result = pfd::select_folder("Select Directory").result();
-		//		if (!result.empty())
-		//		{
-		//			project_dir = result;
-		//		}
-		//	}
-		//	static std::string project_name;
-		//	ImGui::InputText("Project Name", &project_name);
+		if (p_createProject)
+		{
+			ImGui::Begin("Create Project", &p_createProject);
+			static std::string project_dir;
+			ImGui::InputText("Project Directory", &project_dir);
+			ImGui::SameLine();
+			if (ImGui::Button("..."))
+			{
+				std::string result = pfd::select_folder("Select Directory").result();
+				if (!result.empty())
+				{
+					project_dir = result;
+				}
+			}
+			static std::string project_name;
+			ImGui::InputText("Project Name", &project_name);
 
-		//	if (ImGui::Button("Create Project"))
-		//	{
-		//		CreateProject(project_dir, project_name);
+			if (ImGui::Button("Create Project"))
+			{
+				CreateProject(project_dir, project_name);
 
-		//		p_createProject = false;
-		//	}
-		//	ImGui::SameLine();
-		//	if (ImGui::Button("Cancel"))
-		//	{
-		//		project_dir.clear();
-		//		project_name.clear();
-		//		p_createProject = false;
-		//	}
+				p_createProject = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				project_dir.clear();
+				project_name.clear();
+				p_createProject = false;
+			}
 
-		//	ImGui::End();
-		//}
+			ImGui::End();
+		}
 
-		////Project settings window
-		//ProjectSettings();
+		//Project settings window
+		ProjectSettings();
 
-		//RenderUtilsWindows(deltaTime);
+		RenderUtilsWindows(deltaTime);
 
 	}
 
 	void TraceEditor::RenderViewport(std::vector<void*>& texture_handles)
 	{
-		/*void* texture = texture_handles[scene_graph];
-		if (m_fullScreen)
-		{
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->WorkPos);
-			ImGui::SetNextWindowSize(viewport->WorkSize);
-			ImGui::SetNextWindowViewport(viewport->ID);
-
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::Begin("FullScreen", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-			ImVec2 view_size = ImGui::GetContentRegionAvail();
-			glm::vec2 v_size = { view_size.x, view_size.y };
-			if (m_viewportSize != v_size)
-			{
-				m_viewportSize = v_size;
-				m_editorCamera.SetScreenWidth(m_viewportSize.x);
-				m_editorCamera.SetScreenHeight(m_viewportSize.y);
-				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
-			}
-			m_viewportFocused = ImGui::IsWindowFocused();
-			m_viewportHovered = ImGui::IsWindowHovered();
-			ImGui::Image(texture, view_size);
-			if (m_currentState == SceneEdit)
-			{
-				
-			}
-			
-			ImGui::End();
-
-			ImGui::PopStyleVar(2);
-		}
-		else
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f,0.0f, 0.0f, 1.0f));
-			ImGui::Begin("Scene Viewport", 0, ImGuiWindowFlags_NoCollapse);
-			ImVec2 view_size = ImGui::GetContentRegionAvail();
-			glm::vec2 v_size = { view_size.x, view_size.y };
-			if (m_viewportSize != v_size)
-			{
-				m_viewportSize = v_size;
-				m_editorCamera.SetScreenWidth(m_viewportSize.x);
-				m_editorCamera.SetScreenHeight(m_viewportSize.y);
-				if (m_currentScene) m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
-			}
-			m_viewportFocused = ImGui::IsWindowFocused();
-			m_viewportHovered = ImGui::IsWindowHovered();
-			ImGui::Image(texture, view_size);
-			if (m_currentState == SceneEdit)
-			{
-				if (ImGui::BeginDragDropTarget())
-				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".trscn"))
-					{
-						static char buf[1024] = { 0 };
-						memcpy_s(buf, 1024, payload->Data, payload->DataSize);
-						std::string path = buf;
-						CloseCurrentScene();
-						LoadScene(path);
-						m_currentScenePath = path;
-					}
-					ImGui::EndDragDropTarget();
-				}
-			}
-			if (m_hierachyPanel->GetSelectedEntity())
-			{
-				DrawGizmo();
-			}
-			ImGui::End();
-
-			ImGui::PopStyleVar();
-			ImGui::PopStyleColor();
-		}*/
 
 		for (auto& i : m_windows)
 		{
@@ -594,50 +473,6 @@ namespace trace {
 		}
 		
 	}
-
-	//void TraceEditor::RenderSceneToolBar()
-	//{
-	//	ImGui::Begin("##Scene Toolbar", false, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-
-	//	bool playing = (m_currentState == EditorState::ScenePlay);
-	//	bool stimulating = (m_currentState == EditorState::SceneStimulate);
-
-	//	if (ImGui::Button(playing ? "Stop" : "Play"))
-	//	{
-	//		if (m_currentScene)
-	//		{
-	//			if (playing)
-	//			{
-	//				m_stopCurrentScene = true;
-	//			}
-	//			else
-	//			{
-	//				OnGameStart();
-	//				OnScenePlay();
-	//				m_currentState = EditorState::ScenePlay;
-	//			}
-	//		}
-	//	}
-	//	ImGui::SameLine();
-	//	/*if (ImGui::Button(!stimulating ? "Stimulate" : "Stop Stimulation"))
-	//	{
-	//		if (m_currentScene)
-	//		{
-	//			if (stimulating)
-	//			{
-	//				OnSceneStop();
-	//				m_currentState = EditorState::SceneEdit;
-	//			}
-	//			else
-	//			{
-	//				OnSceneStimulate();
-	//				m_currentState = EditorState::SceneStimulate;
-	//			}
-	//		}
-	//	}*/
-
-	//	ImGui::End();
-	//}
 
 	RenderComposer* TraceEditor::GetRenderComposer()
 	{
@@ -967,284 +802,14 @@ namespace trace {
 		return res;
 	}
 
-	//void TraceEditor::HandleEntityDebugDraw()
-	//{
-	//	Entity selected_entity = m_hierachyPanel->GetSelectedEntity();
-	//	if (!selected_entity)
-	//	{
-	//		return;
-	//	}
-
-	//	Debugger* debugger = Debugger::get_instance();
-
-	//	TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
-
-	//	if (selected_entity.HasComponent<CharacterControllerComponent>())
-	//	{
-	//		CharacterControllerComponent& controller = selected_entity.GetComponent<CharacterControllerComponent>();
-	//		float scale_x = pose._transform.GetScale().x;
-	//		float scale_y = pose._transform.GetScale().y;
-	//		float scale_z = pose._transform.GetScale().z;
-	//		float height = controller.character.height * pose._transform.GetScale().y;
-	//		float radius = controller.character.radius * ((scale_x + scale_z) / 2.0f);
-	//		glm::mat4 controller_transform = pose._transform.GetLocalMatrix();
-	//		controller_transform = glm::translate(controller_transform, controller.character.offset);
-	//		debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(255, 145, 255, 255));
-
-	//		radius += controller.character.contact_offset;
-	//		debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(0, 255, 255, 25));
-	//	}
-
-	//	if (selected_entity.HasComponent<BoxColliderComponent>())
-	//	{
-	//		BoxColliderComponent& box = selected_entity.GetComponent<BoxColliderComponent>();
-	//		glm::vec3 extent = box.shape.box.half_extents * pose._transform.GetScale();
-	//		extent += glm::vec3(0.00005f);//NOTE: Added offset to allow the collider visible
-	//		Transform local;
-	//		local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
-	//		local.SetRotation(pose._transform.GetRotation());
-	//		debugger->DrawDebugBox(extent.x, extent.y, extent.z, local.GetLocalMatrix(), TRC_COL32(222, 74, 247, 255));
-	//	}
-
-	//}
-
 
 	TraceEditor* TraceEditor::get_instance()
 	{
 		static TraceEditor* s_instance = new TraceEditor;
 		return s_instance;
 	}
-	//void TraceEditor::DrawGizmo()
-	//{
-	//	Entity selected_entity = m_hierachyPanel->GetSelectedEntity();
-	//	if (gizmo_mode != -1 && selected_entity)
-	//	{
-	//		bool recording = m_animPanel->Recording();
-
-	//		ImGuizmo::SetOrthographic(false);
-	//		ImGuizmo::SetDrawlist();
-	//		float windowWidth = (float)ImGui::GetWindowWidth();
-	//		float windowHeight = (float)ImGui::GetWindowHeight();
-	//		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-	//		glm::mat4 cam_view = m_editorCamera.GetViewMatrix();
-	//		glm::mat4 proj = m_editorCamera.GetProjectionMatix();
-
-	//		//TODO: Fix added due to vulkan viewport
-	//		proj[1][1] *= -1.0f;
-	//		HierachyComponent& hi = selected_entity.GetComponent<HierachyComponent>();
-	//		TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
-	//		bool has_parent = hi.HasParent();
-
-	//		Scene* scene = selected_entity.GetScene();
-
-	//		glm::mat4 transform = hi.transform;
-
-
-	//		bool modified = ImGuizmo::Manipulate(
-	//			glm::value_ptr(cam_view),
-	//			glm::value_ptr(proj),
-	//			(ImGuizmo::OPERATION)gizmo_mode,
-	//			ImGuizmo::MODE::LOCAL,
-	//			glm::value_ptr(transform),
-	//			nullptr,// TODO: Check Docs {deltaMatrix}
-	//			false,// snap
-	//			nullptr,// TODO: Check Docs {localBounds}
-	//			false //bounds snap
-	//		);
-
-	//		if (modified)
-	//		{
-	//			glm::vec3 pos, scale;
-	//			glm::vec3 rotation;
-	//			glm::quat rot;
-
-	//			if (has_parent)
-	//			{
-	//				Entity parent = scene->GetEntity(hi.parent);
-	//				HierachyComponent& parent_hi = parent.GetComponent<HierachyComponent>();
-	//				glm::mat4 parent_transform = scene->GetEntityGlobalPose(parent).GetLocalMatrix();
-	//				parent_transform = glm::inverse(parent_transform);
-
-	//				transform = parent_transform * transform;
-
-	//			}
-
-	//			//glm::decompose(transform, scale, rot, pos, skew, persp);
-	//			DecomposeMatrix(transform, pos, rotation, scale);
-	//			rot = glm::quat((rotation));
-
-
-	//			switch (gizmo_mode)
-	//			{
-	//			case ImGuizmo::OPERATION::TRANSLATE:
-	//			{
-	//				pose._transform.SetPosition(pos);
-	//				if (recording)
-	//				{
-	//					char anim_data[16] = { 0 };
-	//					memcpy(anim_data, glm::value_ptr(pos), 4 * 3);
-	//					m_animPanel->SetFrameData(m_hierachyPanel->GetSelectedEntity().GetID(), AnimationDataType::POSITION, anim_data, 16);
-	//				}
-	//				break;
-	//			}
-	//			case ImGuizmo::OPERATION::ROTATE:
-	//			{
-	//				pose._transform.SetRotation(rot);
-	//				if (recording)
-	//				{
-	//					char anim_data[16] = { 0 };
-	//					memcpy(anim_data, glm::value_ptr(rot), 4 * 4);
-	//					m_animPanel->SetFrameData(m_hierachyPanel->GetSelectedEntity().GetID(), AnimationDataType::ROTATION, anim_data, 16);
-	//				}
-	//				break;
-	//			}
-	//			case ImGuizmo::OPERATION::SCALE:
-	//			{
-	//				pose._transform.SetScale(scale);
-	//				if (recording)
-	//				{
-	//					char anim_data[16] = { 0 };
-	//					memcpy(anim_data, glm::value_ptr(scale), 4 * 3);
-	//					m_animPanel->SetFrameData(m_hierachyPanel->GetSelectedEntity().GetID(), AnimationDataType::SCALE, anim_data, 16);
-	//				}
-	//				break;
-	//			}
-	//			}
-	//			
-	//		}
-
-
-
-	//	}
-	//}
-	//void TraceEditor::DrawGrid(CommandList& cmd_list)
-	//{
-	//	float cell_size = 15.0f;
-	//	uint32_t num_line = 75;
-	//	float line_lenght = cell_size * (num_line - 1);
-
-	//	Renderer* renderer = Renderer::get_instance();
-
-	//	//Horizontal
-	//	for (uint32_t i = 0; i < num_line; i++)
-	//	{
-	//		float line_offset = line_lenght - (cell_size * 2.0f * (float)i);
-	//		glm::vec3 from(line_lenght, 0.0f, line_offset);
-	//		glm::vec3 to(-line_lenght, 0.0f, line_offset);
-
-	//		if (!(line_offset == 0.0f))
-	//		{
-	//			renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(225, 225, 225, 105));
-	//		}
-	//	}
-
-	//	//Vertical
-	//	for (uint32_t i = 0; i < num_line; i++)
-	//	{
-	//		float line_offset = line_lenght - (cell_size * 2.0f * (float)i);
-	//		glm::vec3 from( line_offset, 0.0f, line_lenght);
-	//		glm::vec3 to(line_offset, 0.0f, -line_lenght);
-
-	//		if (!(line_offset == 0.0f))
-	//		{
-	//			renderer->DrawDebugLine(cmd_list, from, to, TRC_COL32(225, 225, 225, 105));
-	//		}
-	//	}
-
-	//	// Global X-Coordinate
-	//	renderer->DrawDebugLine(cmd_list, glm::vec3(line_lenght * 10.0f, 0.0f, 0.0f), glm::vec3(-line_lenght * 10.0f, 0.0f, 0.0f), TRC_COL32(255, 55, 55, 255));
-
-	//	// Global Y-Coordinate
-	//	renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, line_lenght * 10.0f, 0.0f), glm::vec3(0.0f, -line_lenght * 10.0f, 0.0f), TRC_COL32(55, 255, 55, 255));
-
-	//	// Global Z-Coordinate
-	//	renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, 0.0f, line_lenght * 10.0f), glm::vec3(0.0f, 0.0f, -line_lenght * 10.0f), TRC_COL32(55, 55, 255, 255));
-
-	//	
-
-	//}
-	//void TraceEditor::CloseCurrentScene()
-	//{
-	//	m_currentScene.free();
-	//	m_editScene.free();
-	//	m_hierachyPanel->SetSelectedEntity(Entity());
-	//	m_currentScenePath = "";
-	//}
-	//void TraceEditor::LoadScene(const std::string& file_path)
-	//{
-	//	m_currentScene = SceneSerializer::Deserialize(file_path);
-	//	m_editScene = m_currentScene;
-	//	m_currentScenePath = file_path;
-
-	//	m_animPanel->OnSceneLoad();
-	//}
-	//void TraceEditor::NewScene()
-	//{
-	//	/*if (m_currentScene) CloseCurrentScene();
-	//	auto result = pfd::save_file("New Scene", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
-	//	if (!result.empty())
-	//	{
-	//		std::filesystem::path p = result;
-	//		m_currentScene = SceneManager::get_instance()->CreateScene(p.filename().string());
-	//		m_editScene = m_currentScene;
-	//		m_currentScenePath = result;
-	//	}*/
-	//}
-	//void TraceEditor::SaveScene()
-	//{
-	//	if (m_currentScenePath.empty())
-	//	{
-	//		m_currentScenePath = SaveSceneAs();
-	//		return;
-	//	}
-	//	if (m_currentScene)
-	//	{
-	//		SceneSerializer::Serialize(m_currentScene, m_currentScenePath);
-	//	}
-	//}
-	//bool TraceEditor::CreateScene(const std::string& file_path)
-	//{
-	//	std::filesystem::path p = file_path;
-	//	Ref<Scene> res = GenericAssetManager::get_instance()->CreateAssetHandle<Scene>(p.filename().string());
-	//	SceneSerializer::Serialize(res, file_path);
-	//	return true;
-	//}
-	//std::string TraceEditor::SaveSceneAs()
-	//{
-	//	/*if (m_currentScene)
-	//	{
-	//		auto result = pfd::save_file("Save Scene As", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }, pfd::opt::force_path).result();
-	//		if (!result.empty())
-	//		{
-	//			SceneSerializer::Serialize(m_currentScene, result);
-	//		}
-	//		return result;
-	//	}*/
-	//	return std::string();
-	//}
-	//std::string TraceEditor::OpenScene()
-	//{		
-	//	/*std::vector<std::string> result = pfd::open_file("Open Scene", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }).result();
-	//	if (!result.empty())
-	//	{
-	//		CloseCurrentScene();
-	//		LoadScene(result[0]);
-	//		m_currentScenePath = result[0];
-	//		return result[0];
-	//	}*/
-	//	return std::string();
-	//}
-	/*void TraceEditor::OpenScene(std::string& path)
-	{
-		if (m_currentState == EditorState::ScenePlay)
-		{
-			return;
-		}
-
-		m_sceneToOpen = path;
-
-
-	}*/
+	
+	
 	void TraceEditor::OpenSkeleton(std::string& path)
 	{
 		if (Ref<Animation::Skeleton> result = AnimationsSerializer::DeserializeSkeleton(path))
@@ -1273,6 +838,22 @@ namespace trace {
 	void TraceEditor::OpenPrefab(std::string& path)
 	{
 		CreateEditorWindow<PrefabWindow>(path, path);
+	}
+	void TraceEditor::OpenScene(std::string& path)
+	{
+		scene_window->LoadScene(path);
+	}
+	void TraceEditor::OpenAnimationGraph(std::string& path)
+	{
+		CreateEditorWindow<AnimationGraphWindow>(path, path);
+	}
+	void TraceEditor::OpenAnimationSequence(std::string& path)
+	{
+		CreateEditorWindow<SequenceWindow>(path, path);
+	}
+	void TraceEditor::OpenAnimationClip(std::string& path)
+	{
+		CreateEditorWindow<AnimationWindow>(path, path);
 	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
@@ -1321,61 +902,7 @@ namespace trace {
 		}
 
 	}
-	//void TraceEditor::OnScenePlay()
-	//{
-	//	if ((m_currentState == EditorState::ScenePlay))
-	//	{
-	//		return;
-	//	}
-
-	//	Scene::Copy(m_editScene, m_editSceneDuplicate);
-	//	m_currentScene = m_editSceneDuplicate;
-	//	/*if (m_hierachyPanel->GetSelectedEntity())
-	//	{
-	//		m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
-	//	}*/
-	//	m_hierachyPanel->SetSelectedEntity(Entity());
-	//	start_current_scene();
-	//	
-	//}
-	//void TraceEditor::OnSceneStimulate()
-	//{
-	//	if ((m_currentState == EditorState::SceneStimulate))
-	//	{
-	//		return;
-	//	}
-
-	//	Scene::Copy(m_editScene, m_editSceneDuplicate);
-	//	m_currentScene = m_editSceneDuplicate;
-	//	m_currentScene->OnStart();
-	//	if (m_hierachyPanel->GetSelectedEntity())
-	//	{
-	//		m_hierachyPanel->GetSelectedEntity() = m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID());
-	//	}
-	//}
-	//void TraceEditor::OnSceneStop()
-	//{
-	//	if ((m_currentState == EditorState::SceneEdit)) return;
-
-	//	stop_current_scene();
-	//	m_hierachyPanel->SetSelectedEntity(Entity());
-	//	/*if (m_hierachyPanel->GetSelectedEntity() && m_currentScene == m_editScene)
-	//	{
-	//		m_hierachyPanel->SetSelectedEntity(m_currentScene->GetEntity(m_hierachyPanel->GetSelectedEntity().GetID()));
-	//	}*/
-	//	m_currentScene = m_editScene;
-	//	m_nextScene.free();
-	//}
-
-	//void TraceEditor::OnGameStart()
-	//{
-	//	Network::NetworkManager::get_instance()->OnGameStart();
-	//}
-
-	//void TraceEditor::OnGameStop()
-	//{
-	//	Network::NetworkManager::get_instance()->OnGameStop();
-	//}
+	
 
 	bool TraceEditor::SetNextScene(Ref<Scene> scene)
 	{
@@ -1431,28 +958,6 @@ namespace trace {
 		
 
 	}
-
-	/*void TraceEditor::start_current_scene()
-	{
-		m_currentScene->OnStart();
-		m_currentScene->OnPhysicsStart();
-		m_currentScene->OnNetworkStart();
-		m_currentScene->OnScriptStart();
-
-		
-		if (m_currentScene)
-		{
-			m_currentScene->OnViewportChange(m_viewportSize.x, m_viewportSize.y);
-		}
-	}
-
-	void TraceEditor::stop_current_scene()
-	{
-		m_currentScene->OnNetworkStop();
-		m_currentScene->OnPhysicsStop();
-		m_currentScene->OnScriptStop();
-		m_currentScene->OnStop();
-	}*/
 
 	bool TraceEditor::CreateProject(const std::string& dir, const std::string& name)
 	{
@@ -1730,9 +1235,6 @@ project "{}"
 		
 
 	}
-
-	
-
 
 	void TraceEditor::RenderUtilsWindows(float deltaTime)
 	{
@@ -2075,9 +1577,7 @@ project "{}"
 			}
 		}
 
-	}
-
-	
+	}	
 
 }
 

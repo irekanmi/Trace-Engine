@@ -34,6 +34,7 @@ namespace trace::Animation {
 
 	public:
 
+		virtual ~SequenceTrack() {}
 		virtual bool Instanciate(SequenceInstance* sequence, Scene* scene, uint32_t track_index) = 0;
 		virtual void Update(SequenceInstance* sequence, Scene* scene, uint32_t track_index) = 0;
 		std::vector<SequenceTrackChannel*>& GetTrackChannels() { return m_channels; }
@@ -66,6 +67,7 @@ namespace trace::Animation {
 
 	public:
 		AnimationSequenceTrack();
+		virtual ~AnimationSequenceTrack() {}
 		virtual bool Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 		virtual void Update(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 
@@ -90,6 +92,7 @@ namespace trace::Animation {
 
 	public:
 		SkeletalAnimationTrack();
+		virtual ~SkeletalAnimationTrack() {}
 		virtual bool Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 		virtual void Update(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 
@@ -118,6 +121,7 @@ namespace trace::Animation {
 
 	public:
 		ActivationTrack();
+		virtual ~ActivationTrack() {}
 		virtual bool Instanciate(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 		virtual void Update(SequenceInstance* instance, Scene* scene, uint32_t track_index) override;
 
