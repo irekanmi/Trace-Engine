@@ -841,7 +841,11 @@ namespace trace {
 	}
 	void TraceEditor::OpenScene(std::string& path)
 	{
-		scene_window->LoadScene(path);
+		Ref<Scene> scene = SceneSerializer::Deserialize(path);
+		if (scene)
+		{
+			SetNextScene(scene);
+		}
 	}
 	void TraceEditor::OpenAnimationGraph(std::string& path)
 	{
@@ -906,12 +910,6 @@ namespace trace {
 
 	bool TraceEditor::SetNextScene(Ref<Scene> scene)
 	{
-		/*if (m_currentState != EditorState::ScenePlay || !scene)
-		{
-			return false;
-		}
-
-		m_nextScene = scene;*/
 		scene_window->SetNextScene(scene);
 		return true;
 	}

@@ -30,7 +30,7 @@ namespace trace {
     static bool is_window_focused = false;
     static bool is_delete_pressed = false;
 
-    uint32_t value_color[(int)Animation::ValueType::Max] =
+    static uint32_t value_color[(int)Animation::ValueType::Max] =
     {
         IM_COL32(255, 204, 153, 128),
         IM_COL32(51, 102, 255, 128),
@@ -39,7 +39,7 @@ namespace trace {
         IM_COL32(255, 204, 0, 128),
     };
 
-    uint32_t value_color_hovered[(int)Animation::ValueType::Max] =
+    static uint32_t value_color_hovered[(int)Animation::ValueType::Max] =
     {
         IM_COL32(255, 204, 153, 255),
         IM_COL32(51, 102, 255, 255),
@@ -48,7 +48,7 @@ namespace trace {
         IM_COL32(255, 204, 0, 255),
     };
 
-    std::unordered_map<uint64_t, std::string> type_names =
+    static std::unordered_map<uint64_t, std::string> type_names =
     {
             {
                 Reflection::TypeID<Animation::FinalOutputNode>(),
@@ -99,10 +99,6 @@ namespace trace {
 	bool AnimationGraphEditor::Init()
 	{
 		//ImNodes::GetStyle().LinkLineSegmentsPerLength = 0.0f;
-
-        /*trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_BUTTON_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
-        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_PRESSED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));
-        trace::EventsSystem::get_instance()->AddEventListener(trace::EventType::TRC_KEY_RELEASED, BIND_EVENT_FN(AnimationGraphEditor::OnEvent));*/
 
         type_node_render =
         {
@@ -880,43 +876,6 @@ namespace trace {
             
 
 		}
-		/*else
-		{
-            float column_width = ImGui::GetColumnWidth();
-            ImGui::Button("None(Animation Graph)", { column_width, 0.0f });
-            if (ImGui::BeginItemTooltip())
-            {
-                ImGui::Text("Drag and drop the animation graph on the button");
-                ImGui::EndTooltip();
-            }
-            Ref<Animation::Graph> result = ImGuiDragDropResource<Animation::Graph>(".trcag");
-            if (result)
-            {
-                SetAnimationGraph(result);
-            }
-
-            ImGui::SetCursorPosX(0.27f * column_width);
-            if (ImGui::Button("Create Animation Graph"))
-            {
-                std::string result = pfd::save_file("New Animation Graph", "", { "Trace Animation Graph", "*.trcag" }).result();
-                if (!result.empty())
-                {
-                    std::filesystem::path path = result;
-                    if (std::filesystem::exists(path))
-                    {
-                        SetAnimationGraph(result);
-                    }
-                    else
-                    {
-                        if (path.extension() != ".trcag") path = std::filesystem::path(result += ".trcag");
-                        Ref<Animation::Graph> graph = GenericAssetManager::get_instance()->CreateAssetHandle_<Animation::Graph>(path.string());
-                        AnimationsSerializer::SerializeAnimGraph(graph, path.string());
-                        SetAnimationGraph(graph);
-                    }
-
-                }
-            }
-		}*/
 
 		ImGui::NextColumn();
         if (m_currentGraph)

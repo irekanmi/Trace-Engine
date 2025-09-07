@@ -107,16 +107,13 @@ namespace trace {
 		{
 		case SceneEdit:
 		{
-			if (!m_sceneToOpen.empty())
+			if (m_nextScene)
 			{
-				if (m_currentScene)
-				{
-					CloseCurrentScene();
-				}
-				LoadScene(m_sceneToOpen);
-				m_currentScenePath = m_sceneToOpen;
+				m_hierachyPanel->SetSelectedEntity(Entity());
+				m_currentScene.free();
 
-				m_sceneToOpen = "";
+				m_currentScene = m_nextScene;
+				m_nextScene.free();
 			}
 
 			if (m_viewportFocused || m_viewportHovered)
@@ -517,7 +514,7 @@ namespace trace {
 
 	bool GameSceneWindow::SetNextScene(Ref<Scene> scene)
 	{
-		if (m_currentState != EditorState::ScenePlay || !scene)
+		if (!scene)
 		{
 			return false;
 		}
