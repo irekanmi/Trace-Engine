@@ -141,6 +141,7 @@ namespace trace {
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&exposure,
 					sizeof(float),
+					0,
 					render_graph_index
 				);
 

@@ -153,9 +153,9 @@ namespace trace {
 
 
 
-	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline)
+	std::unordered_map<std::string, InternalMaterialData> GetPipelineMaterialData(Ref<GPipeline> pipeline)
 	{
-		std::unordered_map<std::string, std::pair<std::any, uint32_t>> result;
+		std::unordered_map<std::string, InternalMaterialData> result;
 
 		PipelineStateDesc& desc = pipeline->GetDesc();
 
@@ -195,7 +195,11 @@ namespace trace {
 					std::any a;
 					lambda(mem.resource_data_type, a);
 					uint32_t hash = pipeline->GetHashTable().Get(mem.resource_name);
-					result[mem.resource_name] = std::make_pair(a, hash);
+					result[mem.resource_name].internal_data = a;
+					result[mem.resource_name].type = mem.resource_data_type;
+					result[mem.resource_name].offset = 0;
+					result[mem.resource_name].hash = hash;
+					//result[mem.resource_name] = std::make_pair(a, hash);
 				}
 
 			}
@@ -207,7 +211,11 @@ namespace trace {
 					std::any a;
 					lambda(ShaderData::CUSTOM_DATA_TEXTURE, a);
 					uint32_t hash = pipeline->GetHashTable().Get(i.resource_name);
-					result[i.resource_name] = std::make_pair(a, hash);
+					result[i.resource_name].internal_data = a;
+					result[i.resource_name].type = ShaderData::CUSTOM_DATA_TEXTURE;
+					result[i.resource_name].offset = 0;
+					result[i.resource_name].hash = hash;
+					//result[i.resource_name] = std::make_pair(a, hash);
 				}
 				
 			}
@@ -223,7 +231,11 @@ namespace trace {
 				std::any a;
 				lambda(ShaderData::CUSTOM_DATA_TEXTURE, a);
 				uint32_t hash = pipeline->GetHashTable().Get(i.first);
-				result[i.first] = std::make_pair(a, hash);
+				result[i.first].internal_data = a;
+				result[i.first].type = ShaderData::CUSTOM_DATA_TEXTURE;
+				result[i.first].offset = 0;
+				result[i.first].hash = hash;
+				//result[i.first] = std::make_pair(a, hash);
 			}
 		};
 
@@ -234,6 +246,11 @@ namespace trace {
 		if (desc.pixel_shader)
 		{
 			func(desc.pixel_shader);
+		}
+
+		for (auto& i : pipeline->GetShaderGraphVariables())
+		{
+			result[i.first] = i.second;
 		}
 
 		return result;
@@ -602,12 +619,12 @@ namespace trace {
 		return result;
 	}
 
-	bool RenderFunc::SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index)
+	bool RenderFunc::SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t offset, int32_t render_graph_index)
 	{
 		bool result = true;
 
 		RENDER_FUNC_IS_VALID(_setPipelineData);
-		result = _setPipelineData(pipeline, resource_name, resource_scope, data, size, render_graph_index);
+		result = _setPipelineData(pipeline, resource_name, resource_scope, data, size, offset, render_graph_index);
 
 		return result;
 	}

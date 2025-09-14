@@ -253,23 +253,23 @@ namespace vk {
 
             for (auto& m_data : mat_instance->GetMaterialData())
             {
-                trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[m_data.second.second];
+                trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[m_data.second.hash];
 
                 bool is_buffer = meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER || meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
                 if (is_buffer)
                 {
                     void* data = nullptr;
-                    lambda(meta_data.data_type, m_data.second.first, data);
+                    lambda(m_data.second.type, m_data.second.internal_data, data);
                     
                     if (data)
                     {
-                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size, render_graph_index);
+                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size, m_data.second.offset, render_graph_index);
                     }
                 }
                 if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)
                 {
                     trace::VKImage* tex = nullptr;
-                    lambda(meta_data.data_type, m_data.second.first, (void*&)tex);
+                    lambda(m_data.second.type, m_data.second.internal_data, (void*&)tex);
 
                     if (tex)
                     {

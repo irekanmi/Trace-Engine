@@ -146,7 +146,20 @@ namespace trace::Reflection {
 		{
 			constexpr uint64_t id = TypeID<T>();
 
-			GetTypesData().data.emplace(id, CreateTypeInfo<T>(parent_class));
+			//GetTypesData().data.emplace(id, CreateTypeInfo<T>(parent_class));
+			auto it = GetTypesData().data.find(id);
+			TypeInfo new_info = CreateTypeInfo<T>(parent_class);
+			if (it != GetTypesData().data.end())
+			{
+				if (it->second.parent_class == 0)
+				{
+					GetTypesData().data[id] = new_info;
+				}
+			}
+			else
+			{
+				GetTypesData().data[id] = new_info;
+			}
 
 			return;
 		}

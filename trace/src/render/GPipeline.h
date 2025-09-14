@@ -45,6 +45,7 @@ namespace trace {
 		std::vector<UniformMetaData>& GetSceneUniforms() { return m_sceneUniforms; }
 		std::vector<std::pair<uint32_t, uint32_t>>& GetSceneStructs() { return m_scenceStruct; }
 		uint32_t GetPipelineType() { return m_pipelineType; }
+		std::unordered_map<std::string, InternalMaterialData>& GetShaderGraphVariables() { return m_shaderGraphVariables; }
 
 
 		void SetSceneUniforms(std::vector<UniformMetaData>& uniforms) { m_sceneUniforms = std::move(uniforms); }
@@ -62,6 +63,7 @@ namespace trace {
 		PipelineStateDesc m_desc;
 		uint32_t m_pipelineType = 0;
 		GHandle m_renderHandle;
+		std::unordered_map<std::string, InternalMaterialData> m_shaderGraphVariables;
 
 	protected:
 

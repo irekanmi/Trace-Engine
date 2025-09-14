@@ -2,6 +2,9 @@
 
 #include "node_system/GenericNode.h"
 #include "core/defines.h"
+#include "core/io/Logging.h"
+
+#include "glm/glm.hpp"
 
 namespace trace {
 
@@ -16,10 +19,38 @@ namespace trace {
 		GenericValueType type = GenericValueType::Unknown;
 	};
 
-	struct GenericEdge
+	struct GenericHelper
 	{
-		UUID from_node = 0;
-		UUID to_node = 0;
+		template<typename T>
+		static void GetParamData(GenericParameterData& in_data, T& out_value)
+		{
+			TRC_ASSERT(false, "Function not implemented for this type, {}", __FUNCTION__);
+		}
+		
+		template<>
+		static void GetParamData<float>(GenericParameterData& in_data, float& out_value)
+		{
+			get_parameter_data(in_data, &out_value, sizeof(float));
+		}
+		
+		template<>
+		static void GetParamData<int>(GenericParameterData& in_data, int& out_value)
+		{
+			get_parameter_data(in_data, &out_value, sizeof(int));
+		}
+		
+		template<>
+		static void GetParamData<bool>(GenericParameterData& in_data, bool& out_value)
+		{
+			get_parameter_data(in_data, &out_value, sizeof(bool));
+		}
+
+		static std::string GetTypeString(GenericValueType type);
+		static std::string GetParameterValueString(GenericParameterData& in_data, GenericValueType type);
+
+
+	private:
+		static void get_parameter_data(GenericParameterData& in_data, void* out_value, uint32_t size);
 	};
 
 	class GenericGraph

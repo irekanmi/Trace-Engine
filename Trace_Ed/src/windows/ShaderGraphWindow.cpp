@@ -1,18 +1,13 @@
 
-
-
-#include "AnimationWindow.h"
-
-
-#include "serialize/AnimationsSerializer.h"
+#include "ShaderGraphWindow.h"
+#include "serialize/GenericSerializer.h"
 #include "render/Renderer.h"
 #include "../EditorRenderComposer.h"
-#include "../panels/HierachyPanel.h"
+#include "../panels/GenericGraphEditor.h"
 #include "../panels/InspectorPanel.h"
-#include "../panels/AnimationPanel.h"
-#include "resource/PrefabManager.h"
 #include "../utils/ImGui_utils.h"
 #include "core/input/Input.h"
+#include "resource/DefaultAssetsManager.h"
 
 
 #include "ImGuizmo.h"
@@ -22,14 +17,14 @@ namespace trace {
 
 
 
-	bool AnimationWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
+	bool ShaderGraphWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
 	{
-		Ref<AnimationClip> animation = AnimationsSerializer::DeserializeAnimationClip(file_path);
-		if (!animation)
+		Ref<ShaderGraph> graph = GenericSerializer::Deserialize<ShaderGraph>(file_path);
+		if (!graph)
 		{
 			return false;
 		}
-		std::string asset_name = animation->GetName();
+		std::string asset_name = graph->GetName();
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
 		RenderGraphController scene_render_controller = {};
@@ -42,7 +37,7 @@ namespace trace {
 		view_index = composer->BindRenderGraphController(scene_render_controller, asset_name);
 		if (view_index < 0)
 		{
-			TRC_ERROR("{} asset is already opened for editing, Function: {}", animation->GetName(), __FUNCTION__);
+			TRC_ERROR("{} asset is already opened for editing, Function: {}", graph->GetName(), __FUNCTION__);
 			return false;
 		}
 
@@ -61,37 +56,68 @@ namespace trace {
 
 
 
-		m_animation = animation;
-		m_hierachy = new HierachyPanel;//TODO: Use custom allocator
+		m_shaderGraph = graph;
+		m_editor = new GenericGraphEditor;//TODO: Use custom allocator
 		m_inspector = new InspectorPanel;//TODO: Use custom allocator
-		m_editor = new AnimationPanel;//TODO: Use custom allocator
 		m_scene = new Scene;//TODO: Use custom allocator
 		m_scene->m_path = asset_name;
 		m_scene->Create();
-		hierachy_name = "Hierachy###" + asset_name;
-		inspector_name = "Inspector###" + asset_name + std::to_string(0);
-		animation_editor_name = "Animation Editor###" + asset_name + std::to_string(1);
+
+		graph_instance.CreateInstance(m_shaderGraph);
+
+		Ref<GPipeline> pipeline = graph_instance.CompileGraph();
+
+		m_material = GenericAssetManager::get_instance()->CreateAssetHandle_<MaterialInstance>(asset_name + MATERIAL_FILE_EXTENSION, pipeline);
+
+		m_material->SetType(m_shaderGraph->GetType());
+
+		Entity model = m_scene->CreateEntity();
+		model.AddComponent<ModelComponent>()._model = DefaultAssetsManager::Sphere;
+		model.AddComponent<ModelRendererComponent>()._material = m_material;
+		visual_id = model.GetID();
+		m_scene->EnableEntity(model);
+		model.GetComponent<TransformComponent>()._transform.Scale(5.0f);
+		
+		Entity floor = m_scene->CreateEntity();
+		floor.AddComponent<ModelComponent>()._model = DefaultAssetsManager::Cube;
+		floor.AddComponent<ModelRendererComponent>()._material = DefaultAssetsManager::default_material;
+		m_scene->EnableEntity(floor);
+
+		Transform& transform = floor.GetComponent<TransformComponent>()._transform;
+		transform.SetPosition(glm::vec3(0.0f, -6.0f, 0.0f));
+		transform.SetScale(glm::vec3(100.0f, 1.0f, 100.0f));
+		
+
+		graph_editor_name = "Graph Editor###" + asset_name + std::to_string(0);
+		inspector_name = "Material Data###" + asset_name + std::to_string(1);
 		viewport_name = "Viewport###" + asset_name + std::to_string(2);
-		has_prefab = false;
 
 		m_editor->Init();
-		m_editor->SetAnimationClip(m_scene, m_animation, 0);
+		m_editor->SetGraph(m_shaderGraph.get(), asset_name);
+		if (GenericNode* final_node = m_shaderGraph->GetFragmentShaderNode())
+		{
+			m_editor->SetCurrentNode(final_node);
+		}
 
-		animation_path = file_path;
+		graph_path = file_path;
 		m_name = asset_name;
 		return true;
 	}
 
-	void AnimationWindow::OnDestroy(TraceEditor* editor)
+	void ShaderGraphWindow::OnDestroy(TraceEditor* editor)
 	{
 		m_editor->Shutdown();
 
+
+		graph_instance.DestroyInstance();
+
 		m_scene->Destroy();
-		m_animation.free();
-		delete m_hierachy;
-		delete m_inspector;
+		m_shaderGraph.free();
 		delete m_editor;
 		delete m_scene;
+
+		m_material->m_refCount = 1;
+		m_material.free();
 
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
@@ -99,7 +125,7 @@ namespace trace {
 
 	}
 
-	void AnimationWindow::OnUpdate(float deltaTime)
+	void ShaderGraphWindow::OnUpdate(float deltaTime)
 	{
 
 		if (!m_isOpen)
@@ -107,12 +133,15 @@ namespace trace {
 			return;
 		}
 
-		if (!has_prefab)
+		
+
+		m_scene->ResolveHierachyTransforms();
+		m_editor->Update(deltaTime);
+
+		if (!can_render)
 		{
 			return;
 		}
-
-		m_scene->ResolveHierachyTransforms();
 
 		glm::vec3 light_dir = glm::normalize(glm::vec3(0.5f, -0.5f, 0.0f));
 		Renderer* renderer = Renderer::get_instance();
@@ -129,7 +158,6 @@ namespace trace {
 		renderer->AddLight(cmd_list, light_data, LightType::DIRECTIONAL, view_index);
 		m_scene->OnRender(cmd_list, view_index);
 		renderer->EndScene(cmd_list, view_index);
-		DrawGrid(cmd_list, 5.0f, 50, view_index);
 
 		renderer->SubmitCommandList(cmd_list, view_index);
 
@@ -138,70 +166,36 @@ namespace trace {
 
 	}
 
-	void AnimationWindow::OnRender(float deltaTime)
+	void ShaderGraphWindow::OnRender(float deltaTime)
 	{
+		ImGui::Begin(graph_editor_name.c_str());
+		m_editor->Render(deltaTime);
 
-		if (has_prefab)
-		{
-			m_hierachy->Render(m_scene, "View", hierachy_name, deltaTime);
-		}
-		else
-		{
-			ImGui::Begin(hierachy_name.c_str());
-			ImGui::Button("Load View");
-			if (ImGui::BeginTooltip())
-			{
-				ImGui::Text("Drag and Drop Prefab/Scene Asset to be able to visualize sequence");
-				ImGui::EndTooltip();
-			}
-			if (Ref<Prefab> character = ImGuiDragDropResource<Prefab>(PREFAB_FILE_EXTENSION))
-			{
-				Entity entity = m_scene->InstanciatePrefab(character);
-				m_editor->SetAnimationClip(m_scene, m_animation, entity.GetID());
-				has_prefab = true;
-			}
-			else if (Ref<Scene> scene = ImGuiDragDropResource<Scene>(SCENE_FILE_EXTENSION))
-			{
-				Scene::Copy(scene.get(), m_scene);
-				m_editor->SetAnimationClip(m_scene, m_animation, 0);
-				has_prefab = true;
-			}
-			ImGui::End();
-
-		}
-
-		ImGui::Begin(inspector_name.c_str());
-		m_inspector->DrawEntityComponent(m_hierachy->GetSelectedEntity(), m_editor);
-		ImGui::End();
-
-
-		ImGui::Begin(animation_editor_name.c_str());
-		m_editor->Render(m_scene, deltaTime);
 		ImVec2 min = ImGui::GetWindowPos();
 		ImVec2 max = min + ImGui::GetWindowSize();
 		is_focused = is_focused || ImGui::IsMouseHoveringRect(min, max);
 		ImGui::End();
 
+		ImGui::Begin(inspector_name.c_str());
+		m_inspector->DrawEditMaterial(m_material, m_material->GetMaterialData());
+		ImGui::End();
+
 	}
 
-	void AnimationWindow::DockChildWindows()
+	void ShaderGraphWindow::DockChildWindows()
 	{
-		ImGuiID top;
-		ImGuiID bottom;
-		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Up, 0.5f, &top, &bottom);
-		ImGui::DockBuilderDockWindow(animation_editor_name.c_str(), bottom);
 		ImGuiID first_left;
 		ImGuiID first_right;
-		ImGui::DockBuilderSplitNode(top, ImGuiDir_Left, 0.15f, &first_left, &first_right);
-		ImGui::DockBuilderDockWindow(hierachy_name.c_str(), first_left);
+		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.225f, &first_left, &first_right);
+		ImGui::DockBuilderDockWindow(viewport_name.c_str(), first_left);
 		ImGuiID second_left;
 		ImGuiID second_right;
-		ImGui::DockBuilderSplitNode(first_right, ImGuiDir_Left, 0.6f, &second_left, &second_right);
+		ImGui::DockBuilderSplitNode(first_right, ImGuiDir_Left, 0.75f, &second_left, &second_right);
+		ImGui::DockBuilderDockWindow(graph_editor_name.c_str(), second_left);
 		ImGui::DockBuilderDockWindow(inspector_name.c_str(), second_right);
-		ImGui::DockBuilderDockWindow(viewport_name.c_str(), second_left);
 	}
 
-	void AnimationWindow::RenderViewport(std::vector<void*>& texture_handles)
+	void ShaderGraphWindow::RenderViewport(std::vector<void*>& texture_handles)
 	{
 		void* texture = texture_handles[view_index];
 
@@ -224,19 +218,16 @@ namespace trace {
 			m_camera.SetScreenHeight(m_viewportSize.y);
 		}
 		ImGui::Image(texture, view_size);
-		if (m_hierachy->GetSelectedEntity())
-		{
-			DrawGizmo(gizmo_mode, m_scene, m_hierachy->GetSelectedEntity().GetID(), &m_camera, m_editor);
-		}
 		ImGui::End();
 
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor();
 	}
 
-	void AnimationWindow::OnEvent(Event* p_event)
+	void ShaderGraphWindow::OnEvent(Event* p_event)
 	{
 		bool ctrl = InputSystem::get_instance()->GetKey(Keys::KEY_CONTROL) || InputSystem::get_instance()->GetKey(Keys::KEY_LCONTROL) || InputSystem::get_instance()->GetKey(Keys::KEY_RCONTROL);
+		bool shift = InputSystem::get_instance()->GetKey(Keys::KEY_SHIFT) || InputSystem::get_instance()->GetKey(Keys::KEY_LSHIFT) || InputSystem::get_instance()->GetKey(Keys::KEY_RSHIFT);
 		switch (p_event->GetEventType())
 		{
 		case EventType::TRC_KEY_PRESSED:
@@ -246,30 +237,50 @@ namespace trace {
 			{
 			case Keys::KEY_S:
 			{
-				if (ctrl)
+				if (ctrl && !shift)
 				{
-					AnimationsSerializer::SerializeAnimationClip(m_animation, animation_path);
+					GenericSerializer::Serialize<ShaderGraph>(m_shaderGraph, graph_path);
+				}
+				else if (ctrl && shift)
+				{
+					Entity entity = m_scene->GetEntity(visual_id);
+					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Sphere;
 				}
 				break;
 			}
-			case KEY_Q:
+			case Keys::KEY_B:
 			{
-				gizmo_mode = -1;
+				if (ctrl)
+				{
+					m_scene->DisableEntity(m_scene->GetEntity(visual_id));
+					graph_instance.DestroyInstance();
+					graph_instance.CreateInstance(m_shaderGraph);
+					if (Ref<GPipeline> pipeline = graph_instance.CompileGraph())
+					{
+						can_render = false;
+						m_material->RecreateMaterial(pipeline);
+						can_render = true;
+					}
+					m_scene->EnableEntity(m_scene->GetEntity(visual_id));
+				}
 				break;
 			}
-			case KEY_W:
+			case Keys::KEY_C:
 			{
-				gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
+				if (ctrl && shift)
+				{
+					Entity entity = m_scene->GetEntity(visual_id);
+					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Cube;					
+				}
 				break;
 			}
-			case KEY_E:
+			case Keys::KEY_P:
 			{
-				gizmo_mode = ImGuizmo::OPERATION::ROTATE;
-				break;
-			}
-			case KEY_R:
-			{
-				gizmo_mode = ImGuizmo::OPERATION::SCALE;
+				if (ctrl && shift)
+				{
+					Entity entity = m_scene->GetEntity(visual_id);
+					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Plane;					
+				}
 				break;
 			}
 			}

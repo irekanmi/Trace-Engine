@@ -43,6 +43,7 @@
 #include "windows/AnimationGraphWindow.h"
 #include "windows/SequenceWindow.h"
 #include "windows/AnimationWindow.h"
+#include "windows/ShaderGraphWindow.h"
 #include "resource/PrefabManager.h"
  
 
@@ -123,6 +124,15 @@ namespace trace {
 		std::string file_path = project->GetAssetsDirectory() + "/Particle_Effects/";
 		GenericSerializer::Serialize<ParticleEffect>(particle_effect, file_path + effect_filename);
 		GenericSerializer::Serialize<ParticleGenerator>(particle_generator, file_path + generator_filename);
+	}
+	
+	void GenerateShaderGraph(Ref<Project> project)
+	{
+		std::string shader_graph_filename = "shader_graph_t0" + std::string(SHADER_GRAPH_FILE_EXTENSION);
+		Ref<ShaderGraph> shader_graph = GenericAssetManager::get_instance()->CreateAssetHandle<ShaderGraph>(shader_graph_filename, MaterialType::OPAQUE_LIT);
+
+		std::string file_path = project->GetAssetsDirectory() + "/ShaderGraphs/";
+		GenericSerializer::Serialize<ShaderGraph>(shader_graph, file_path + shader_graph_filename);
 	}
 	// .............................
 
@@ -859,6 +869,10 @@ namespace trace {
 	{
 		CreateEditorWindow<AnimationWindow>(path, path);
 	}
+	void TraceEditor::OpenShaderGraph(std::string& path)
+	{
+		CreateEditorWindow<ShaderGraphWindow>(path, path);
+	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
 		InputSystem* input = InputSystem::get_instance();
@@ -1063,9 +1077,10 @@ project "{}"
 			return false;
 		}
 		m_contentBrowser->SetDirectory(m_currentProject->GetAssetsDirectory());
-		ReloadProjectAssembly();
+		ReloadProjectAssembly();//TODO: Add a function OnProjectLoad() to Editor windows of just destroy them before loading a new scene
 
 		//GenerateParticleEffect(m_currentProject);
+		//GenerateShaderGraph(m_currentProject);
 
 		UUID id = m_currentProject->GetStartScene();
 		if (id != 0)

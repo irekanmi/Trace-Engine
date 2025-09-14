@@ -96,6 +96,7 @@ namespace trace {
 		void OpenAnimationGraph(std::string& path);
 		void OpenAnimationSequence(std::string& path);
 		void OpenAnimationClip(std::string& path);
+		void OpenShaderGraph(std::string& path);
 
 
 		

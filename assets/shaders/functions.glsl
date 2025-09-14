@@ -171,6 +171,23 @@ float DistributionGGX(float NdotH, float roughness)
     return num / denom;
 }
 
+float frenselEffect(vec3 view_direction, vec3 normal, float power)
+{
+    float cos_theta = clamp(dot(view_direction, normal), 0.0f, 1.0f);
+    return pow(1.0 - cos_theta, power);
+}
+
+vec3 normal_texuture_to_world_space(vec3 in_normal, vec4 in_tangent, vec3 normal_data)
+{
+    vec3 _n = normal_data;
+    _n = _n * 2.0f - 1.0f;
+    vec3 obj_norm = normalize(in_normal); 
+    vec3 _tangent = normalize( in_tangent.xyz - (dot(in_tangent.xyz, obj_norm) * obj_norm) );
+    vec3 _bitangent = cross(obj_norm, _tangent) * in_tangent.w;
+    mat3 TBN = mat3(_tangent, _bitangent, obj_norm);
+    return normalize(TBN * _n);
+}
+
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
     float r = (roughness + 1.0);

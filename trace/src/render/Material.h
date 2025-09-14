@@ -8,15 +8,27 @@
 #include "scene/UUID.h"
 #include "serialize/DataStream.h"
 
-#include <any>
 #include <variant>
 
 
 namespace trace {
 
 	using Texture_Ref = Ref<GTexture>;
-	using MaterialData = std::unordered_map<std::string, std::pair<std::any, uint32_t>>;
+	
+
+	using MaterialData = std::unordered_map<std::string, InternalMaterialData>;
 	class GPipeline;
+
+	enum class MaterialType
+	{
+		NONE,
+		OPAQUE_LIT,
+		OPAQUE_UNLIT,
+		TRANSPARENT_LIT,
+		TRANSPARENT_UNLIT,
+		PARTICLE_LIT,
+		PARTICLE_UNLIT
+	};
 
 	class MaterialInstance : public Resource
 	{
@@ -37,6 +49,9 @@ namespace trace {
 		void SetRenderPipeline(Ref<GPipeline> pipeline) { m_renderPipeline = pipeline; }
 		void SetMaterialData(MaterialData& material_data) { m_data = std::move(material_data); }
 
+		MaterialType GetType() { return m_type; }
+		void SetType(MaterialType type) { m_type = type; }
+
 
 		static Ref<MaterialInstance> Deserialize(UUID id);
 		static Ref<MaterialInstance> Deserialize(DataStream* stream);
@@ -45,6 +60,7 @@ namespace trace {
 		Ref<GPipeline> m_renderPipeline;
 		MaterialData m_data;
 		GHandle m_renderHandle;
+		MaterialType m_type = MaterialType::OPAQUE_LIT;
 	protected:
 	};
 }

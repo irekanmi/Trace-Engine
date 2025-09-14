@@ -60,6 +60,7 @@ namespace trace {
 		REGISTER_MEMBER(Model, m_vertices);
 		REGISTER_MEMBER(Model, m_indices);
 	END_REGISTER_CLASS;
+
 		
 
 }

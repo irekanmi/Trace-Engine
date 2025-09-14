@@ -281,7 +281,7 @@ namespace trace {
 				render_graph->GetResource_ptr(fd.hdr_index),
 				render_graph_index
 			);
-			RenderFunc::SetPipelineData(m_prefilterPipeline.get(), "threshold", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &threshold, sizeof(float), render_graph_index);
+			RenderFunc::SetPipelineData(m_prefilterPipeline.get(), "threshold", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &threshold, sizeof(float), 0, render_graph_index);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
@@ -414,6 +414,7 @@ namespace trace {
 					ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 					&filter_radius,
 					sizeof(float),
+					0,
 					render_graph_index
 				);
 
@@ -464,6 +465,7 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&filter_radius,
 				sizeof(float),
+				0,
 				render_graph_index
 			);
 

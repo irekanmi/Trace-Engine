@@ -584,27 +584,27 @@ namespace trace {
 				auto it1 = default_material->GetMaterialData().find("DIFFUSE_MAP");
 				if (it1 != default_material->GetMaterialData().end())
 				{
-					it1->second.first = asset_manager->Get<GTexture>("albedo_map");
+					it1->second.internal_data = asset_manager->Get<GTexture>("albedo_map");
 				}
 				auto it2 = default_material->GetMaterialData().find("SPECULAR_MAP");
 				if (it2 != default_material->GetMaterialData().end())
 				{
-					it2->second.first = asset_manager->Get<GTexture>("specular_map");
+					it2->second.internal_data = asset_manager->Get<GTexture>("specular_map");
 				}
 				auto it3 = default_material->GetMaterialData().find("NORMAL_MAP");
 				if (it3 != default_material->GetMaterialData().end())
 				{
-					it3->second.first = asset_manager->Get<GTexture>("normal_map");
+					it3->second.internal_data = asset_manager->Get<GTexture>("normal_map");
 				}
 				auto it4 = default_material->GetMaterialData().find("diffuse_color");
 				if (it4 != default_material->GetMaterialData().end())
 				{
-					it4->second.first = glm::vec4(1.0f);
+					it4->second.internal_data = glm::vec4(1.0f);
 				}
 				auto it5 = default_material->GetMaterialData().find("shininess");
 				if (it5 != default_material->GetMaterialData().end())
 				{
-					it5->second.first = 32.0f;
+					it5->second.internal_data = 32.0f;
 				}
 			};
 			RenderFunc::PostInitializeMaterial(default_material.get(), sp);

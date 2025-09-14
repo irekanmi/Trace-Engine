@@ -458,7 +458,7 @@ namespace trace {
 				return false;
 			}
 			Ref<MaterialInstance> res = renderer._material;
-			for (auto& m_data : res->GetMaterialData())
+			/*for (auto& m_data : res->GetMaterialData())
 			{
 				trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
 				if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
@@ -514,7 +514,7 @@ namespace trace {
 					}
 
 				}
-			}
+			}*/
 
 			return false;
 		};
@@ -527,7 +527,7 @@ namespace trace {
 				return false;
 			}
 			Ref<MaterialInstance> res = renderer._material;
-			for (auto& m_data : res->GetMaterialData())
+			/*for (auto& m_data : res->GetMaterialData())
 			{
 				trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
 				if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
@@ -583,7 +583,7 @@ namespace trace {
 					}
 
 				}
-			}
+			}*/
 
 			return false;
 		};

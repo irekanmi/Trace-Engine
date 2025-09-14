@@ -4,12 +4,12 @@
 #include "globals_data.glsl"
 #include "utils.glsl"
 #include "bindless.glsl"
+#include "functions.glsl"
 
 OUT_FRAG_DATA
 IN_VERTEX_DATA
 
 
-#include "functions.glsl"
 
 // INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
 //     vec4 diffuse_color;
@@ -41,6 +41,8 @@ void main()
     INSTANCE_TEXTURE_INDEX(NORMAL_MAP, 1);
     INSTANCE_TEXTURE_INDEX(METALLIC_MAP, 2);
     INSTANCE_TEXTURE_INDEX(ROUGHNESS_MAP, 3);
+
+    vec3 view_direction = normalize(-_fragPos);
 
     vec3 normal;
     SAMPLE_NORMAL_MAP(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), _texCoord, _normal_, _tangent_, normal );

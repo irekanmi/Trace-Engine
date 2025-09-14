@@ -5,6 +5,8 @@
 #include "core/Enums.h"
 #include "reflection/TypeRegistry.h"
 
+#define MAX_NODE_INPUTS 6
+
 namespace trace {
 
 	class GenericGraph;
@@ -19,6 +21,7 @@ namespace trace {
 		Vec2,
 		Vec3,
 		Vec4,
+		Sampler2D,
 		Max
 	};
 

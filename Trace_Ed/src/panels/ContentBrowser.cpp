@@ -8,7 +8,6 @@
 #include "serialize/MaterialSerializer.h"
 #include "serialize/PipelineSerializer.h"
 #include "InspectorPanel.h"
-
 #include "serialize/AnimationsSerializer.h"
 #include "serialize/SceneSerializer.h"
 #include "core/Utils.h"
@@ -17,6 +16,7 @@
 #include "../import/Importer.h"
 #include "external_utils.h"
 #include "core/defines.h"
+#include "shader_graph/ShaderGraph.h"
 
 #include "serialize/GenericSerializer.h"
 #include "motion_matching/MotionMatchDatabase.h"
@@ -171,6 +171,11 @@ namespace trace {
 			extensions_callbacks[ANIMATION_CLIP_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->OpenAnimationClip(path.string());
+			};
+			
+			extensions_callbacks[SHADER_GRAPH_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenShaderGraph(path.string());
 			};
 
 			extensions_callbacks[SKELETON_FILE_EXTENSION] = [editor](std::filesystem::path& path)
@@ -666,6 +671,8 @@ namespace trace {
 
 		static CreateItem c_item = (CreateItem)0;
 
+		bool create_shader_graph = false;
+
 		if (ImGui::BeginPopupContextWindow("Content_Browser_Window", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 		{
 			if (ImGui::BeginMenu("Create"))
@@ -673,6 +680,11 @@ namespace trace {
 				if (ImGui::MenuItem("Material"))
 				{
 					c_item = MATERIAL;
+
+				}
+				if (ImGui::MenuItem("Shader Graph"))
+				{
+					create_shader_graph = true;
 
 				}
 				if (ImGui::MenuItem("Pipeline"))
@@ -808,7 +820,7 @@ namespace trace {
 			else c_item = (CreateItem)0;
 			break;
 		}
-		/*case SCENE:
+		case SCENE:
 		{
 			std::string res;
 			if (editor->InputTextPopup("Scene Name", res))
@@ -820,7 +832,8 @@ namespace trace {
 					if (id == 0)
 					{
 						std::string scene_path = (m_currentDir / (res + SCENE_FILE_EXTENSION)).string();
-						editor->CreateScene(scene_path);
+						Ref<Scene> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<Scene>(scene_path);
+						SceneSerializer::Serialize(asset, scene_path);
 						std::string filename = res + SCENE_FILE_EXTENSION;
 						UUID new_id = STR_ID(filename);
 						m_allFilesID[res + SCENE_FILE_EXTENSION] = new_id;
@@ -836,7 +849,7 @@ namespace trace {
 			}
 			else c_item = (CreateItem)0;
 			break;
-		}*/
+		}
 		case ANIMATION_CLIP:
 		{
 			std::string res;
@@ -1085,6 +1098,80 @@ namespace trace {
 			else c_item = (CreateItem)0;
 			break;
 		}
+		}
+
+		static MaterialType shader_graph_type = MaterialType::OPAQUE_LIT;
+
+		if (create_shader_graph)
+		{
+			ImGui::OpenPopup("Shader Graph Create");
+		}
+
+		if (ImGui::BeginPopupModal("Shader Graph Create", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			static std::string asset_name;
+			ImGui::InputText("Shader Graph Name", &asset_name);
+			
+			char* shader_type_string[] =
+			{
+				"None",
+				"Opaque Lit",
+				"Opaque UnLit",
+				"Transparent Lit",
+				"Transparent UnLit",
+			};
+
+			if (ImGui::BeginCombo("Material Type", shader_type_string[(int32_t)shader_graph_type]))
+			{
+				for (uint32_t j = 1; j < 5; j++)
+				{
+					bool selected = (shader_graph_type == (MaterialType)j);
+					if (ImGui::Selectable(shader_type_string[j], selected))
+					{
+						shader_graph_type = (MaterialType)j;
+					}
+
+					if (selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::Button("Create"))
+			{
+				UUID id = GetUUIDFromName(asset_name + SHADER_GRAPH_FILE_EXTENSION);
+
+				if (id == 0)
+				{
+					std::string asset_path = (m_currentDir / (asset_name + SHADER_GRAPH_FILE_EXTENSION)).string();
+					Ref<ShaderGraph> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<ShaderGraph>(asset_path, shader_graph_type);
+					if (asset)
+					{
+						GenericSerializer::Serialize<ShaderGraph>(asset, asset_path);
+						std::string filename = asset_name + SHADER_GRAPH_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
+						m_allFilesID[asset_name + SHADER_GRAPH_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = asset_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+				}
+				else
+				{
+					TRC_ERROR("{} has already been created", asset_name + SHADER_GRAPH_FILE_EXTENSION);
+				}
+
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
 		}
 
 	}
@@ -1446,8 +1533,8 @@ namespace trace {
 
 		for (auto& m_data : mat->GetMaterialData())
 		{
-			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
-			lambda(meta_data.data_type, m_data.second.first, m_data.first);
+			//trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[m_data.second.hash];
+			lambda(m_data.second.type, m_data.second.internal_data, m_data.first);
 		}
 
 		// Select Texture
@@ -1463,7 +1550,7 @@ namespace trace {
 					Ref<GTexture> tex_r = LoadTexture(id);
 					if (tex_r)
 					{
-						mat->GetMaterialData()[tex_name].first = tex_r;
+						mat->GetMaterialData()[tex_name].internal_data = tex_r;
 						dirty = true;
 					}
 					tex_modified = false;

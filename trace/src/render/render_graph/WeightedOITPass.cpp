@@ -160,6 +160,7 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
+				m_renderer->RenderTransparentUnLitObjects(render_graph_index);
 				m_renderer->RenderQuads(render_graph_index);
 				m_renderer->RenderTextVerts(render_graph_index);
 				m_renderer->RenderParticles(render_graph_index);

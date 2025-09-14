@@ -124,12 +124,13 @@ namespace trace {
 
 		for (auto& data : mat->GetMaterialData())
 		{
-			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[data.second.second];
+			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[data.second.hash];
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "Name" << YAML::Value << data.first;
-			emit << YAML::Key << "Type" << YAML::Value << (int)meta_data.data_type;
+			emit << YAML::Key << "Type" << YAML::Value << (int)data.second.type;
+			emit << YAML::Key << "Offset" << YAML::Value << (int)data.second.offset;
 			emit << YAML::Key << "Value" << YAML::Value;
-			lambda(emit, meta_data.data_type, data.second.first);
+			lambda(emit, meta_data.data_type, data.second.internal_data);
 
 			emit << YAML::EndMap;
 		}
@@ -274,10 +275,11 @@ namespace trace {
 		{
 			std::string name = i.first;
 			Reflection::Serialize(name, stream, nullptr, Reflection::SerializationFormat::BINARY);
-			trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.second];
-			int type = (int)meta_data.data_type;
+			//trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.hash];
+			int type = (int)i.second.type;
 			stream->Write<int>(type);
-			lambda(stream, meta_data.data_type, i.second.first);
+			stream->Write(i.second.offset);
+			lambda(stream, i.second.type, i.second.internal_data);
 		}
 		
 
@@ -431,9 +433,14 @@ namespace trace {
 				std::string name = val["Name"].as<std::string>();
 				auto it = result->GetMaterialData().find(name);
 				ShaderData type = (ShaderData)val["Type"].as<int>();
+				if (val["Offset"])
+				{
+					it->second.offset = val["Offset"].as<uint32_t>();
+				}
+				it->second.type = type;
 				if (it != result->GetMaterialData().end())
 				{
-					lambda(val, type, it->second.first);
+					lambda(val, type, it->second.internal_data);
 				}
 			}
 		}
@@ -575,12 +582,15 @@ namespace trace {
 
 			int type = -1;
 			stream->Read<int>(type);
+			uint32_t offset = 0;
+			stream->Read(offset);
 
 			auto& data = material->GetMaterialData();
 			auto it = data.find(name);
 			if (it != data.end())
 			{
-				lambda(stream, (ShaderData)type, it->second.first);
+				it->second.offset = offset;
+				lambda(stream, (ShaderData)type, it->second.internal_data);
 			}
 
 		}
@@ -700,12 +710,15 @@ namespace trace {
 			std::string name = buf;
 			int type = -1;
 			stream.Read<int>(type);
+			uint32_t offset = 0;
+			stream.Read<uint32_t>(offset);
 
 			auto& data = material->GetMaterialData();
 			auto it = data.find(name);
 			if (it != data.end())
 			{
-				lambda(stream, (ShaderData)type, it->second.first);
+				it->second.offset = offset;
+				lambda(stream, (ShaderData)type, it->second.internal_data);
 			}
 
 		}

@@ -193,7 +193,7 @@ namespace trace {
 			auto it = material->GetMaterialData().find("emissive_color");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = glm::vec4(0.0f);
+				it->second.internal_data = glm::vec4(0.0f);
 				aiColor4D color;
 				if (imp_material->Get(AI_MATKEY_COLOR_EMISSIVE, color) == AI_SUCCESS)
 				{
@@ -203,7 +203,7 @@ namespace trace {
 					emissive_color.b = color.b;
 					emissive_color.a = color.a;
 
-					it->second.first = emissive_color;
+					it->second.internal_data = emissive_color;
 				}
 			}
 		};
@@ -212,7 +212,7 @@ namespace trace {
 			auto it = material->GetMaterialData().find("tilling");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = glm::vec2(1.0f);
+				it->second.internal_data = glm::vec2(1.0f);
 
 			}
 		};
@@ -223,12 +223,12 @@ namespace trace {
 			auto roughness_map_it = material->GetMaterialData().find("ROUGHNESS_MAP");
 			if (roughness_map_it != material->GetMaterialData().end())
 			{
-				roughness_map_it->second.first = asset_manager->Get<GTexture>("black_texture");
+				roughness_map_it->second.internal_data = asset_manager->Get<GTexture>("black_texture");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_DIFFUSE_ROUGHNESS, directory, filename);
 				if (texture)
 				{
-					roughness_map_it->second.first = texture;
+					roughness_map_it->second.internal_data = texture;
 				}
 				else
 				{
@@ -241,7 +241,7 @@ namespace trace {
 						float factor = 1.0f;
 
 
-						it->second.first = glm::vec2(roughness, factor);
+						it->second.internal_data = glm::vec2(roughness, factor);
 					}
 				};
 			}
@@ -253,12 +253,12 @@ namespace trace {
 			auto metallic_it = material->GetMaterialData().find("METALLIC_MAP");
 			if (metallic_it != material->GetMaterialData().end())
 			{
-				metallic_it->second.first = asset_manager->Get<GTexture>("black_texture");
+				metallic_it->second.internal_data = asset_manager->Get<GTexture>("black_texture");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_METALNESS, directory, filename);
 				if (texture)
 				{
-					metallic_it->second.first = texture;
+					metallic_it->second.internal_data = texture;
 				}
 				else
 				{
@@ -270,7 +270,7 @@ namespace trace {
 						float factor = 1.0f;
 
 
-						it->second.first = glm::vec2(metallic, factor);
+						it->second.internal_data = glm::vec2(metallic, factor);
 					}
 				};
 			}
@@ -280,19 +280,19 @@ namespace trace {
 			auto diffuse_map_it = material->GetMaterialData().find("DIFFUSE_MAP");
 			if (diffuse_map_it != material->GetMaterialData().end())
 			{
-				diffuse_map_it->second.first = asset_manager->Get<GTexture>("albedo_map");
+				diffuse_map_it->second.internal_data = asset_manager->Get<GTexture>("albedo_map");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_DIFFUSE, directory, filename);
 				if (texture)
 				{
-					diffuse_map_it->second.first = texture;
+					diffuse_map_it->second.internal_data = texture;
 				}
 				else
 				{
 					auto it = material->GetMaterialData().find("diffuse_color");
 					if (it != material->GetMaterialData().end())
 					{
-						it->second.first = glm::vec4(0.0f);
+						it->second.internal_data = glm::vec4(0.0f);
 						aiColor4D color;
 						if (imp_material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
 						{
@@ -302,7 +302,7 @@ namespace trace {
 							diffuse_color.b = color.b;
 							diffuse_color.a = color.a;
 
-							it->second.first = diffuse_color;
+							it->second.internal_data = diffuse_color;
 						}
 					}
 				};
@@ -312,7 +312,7 @@ namespace trace {
 				auto it = material->GetMaterialData().find("diffuse_color");
 				if (it != material->GetMaterialData().end())
 				{
-					it->second.first = glm::vec4(0.0f);
+					it->second.internal_data = glm::vec4(0.0f);
 					aiColor4D color;
 					if (imp_material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
 					{
@@ -322,7 +322,7 @@ namespace trace {
 						diffuse_color.b = color.b;
 						diffuse_color.a = color.a;
 
-						it->second.first = diffuse_color;
+						it->second.internal_data = diffuse_color;
 					}
 				}
 			}
@@ -333,12 +333,12 @@ namespace trace {
 			auto it = material->GetMaterialData().find("NORMAL_MAP");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = asset_manager->Get<GTexture>("normal_map");
+				it->second.internal_data = asset_manager->Get<GTexture>("normal_map");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_NORMALS, directory, filename);
 				if (texture)
 				{
-					it->second.first = texture;
+					it->second.internal_data = texture;
 				}
 			}
 		};
@@ -350,12 +350,12 @@ namespace trace {
 				float height_scale = 0.0f;
 				if (aiGetMaterialFloat(imp_material, AI_MATKEY_BUMPSCALING, &height_scale) == AI_SUCCESS)
 				{
-					it->second.first = height_scale < 0.08f ? height_scale : 0.05f;
+					it->second.internal_data = height_scale < 0.08f ? height_scale : 0.05f;
 
 				}
 				else
 				{
-					it->second.first = height_scale;
+					it->second.internal_data = height_scale;
 				}
 
 			}
@@ -365,12 +365,12 @@ namespace trace {
 			auto it = material->GetMaterialData().find("HEIGHT_MAP");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = asset_manager->Get<GTexture>("black_texture");
+				it->second.internal_data = asset_manager->Get<GTexture>("black_texture");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_HEIGHT, directory, filename);
 				if (texture)
 				{
-					it->second.first = texture;
+					it->second.internal_data = texture;
 				}
 			}
 		};
@@ -380,12 +380,12 @@ namespace trace {
 			auto it = material->GetMaterialData().find("OCCLUSION_MAP");
 			if (it != material->GetMaterialData().end())
 			{
-				it->second.first = asset_manager->Get<GTexture>("albedo_map");
+				it->second.internal_data = asset_manager->Get<GTexture>("albedo_map");
 
 				Ref<GTexture> texture = load_assimp_texure(result, imp_material, aiTextureType::aiTextureType_AMBIENT_OCCLUSION, directory, filename);
 				if (texture)
 				{
-					it->second.first = texture;
+					it->second.internal_data = texture;
 				}
 			}
 		};

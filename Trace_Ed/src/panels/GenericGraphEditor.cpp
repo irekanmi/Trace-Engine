@@ -19,38 +19,26 @@
 
 
 namespace trace {
+    extern std::unordered_map<uint64_t, std::pair<std::vector<std::string>, std::vector<std::string>>> _node_pins_name;
+    extern std::unordered_map<uint64_t, std::string> _node_names;
+    extern std::unordered_map<uint64_t, std::function<void(GenericNode* node, int32_t node_index, GenericGraphEditor* editor)>> node_render;
+    extern std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> node_details_render;
+    extern std::unordered_map<uint64_t, std::function<void(GenericGraph* node, GenericGraphEditor* editor)>> graph_pop_up_render;
 
     static int start_node_id = 0x0A0B0C;
     static int start_output_id = 1;
     static int start_link_id = 0xFF00FF0F;
     static int _link_id = 0x0A;
     static int link_id = 0;
-    static int output_start_index = 64;
+    extern int generic_output_start_index;
+    extern int shift_amount;
     static bool is_window_focused = false;
     static bool is_delete_pressed = false;
+    static ImVec2 mouse_position;
+    static int32_t new_node = 0;
 
-    static uint32_t value_color[(int)GenericValueType::Max] =
-    {
-        IM_COL32(255, 204, 153, 128),
-        IM_COL32(51, 102, 255, 128),
-        IM_COL32(51, 204, 204, 128),
-        IM_COL32(153, 204, 0, 128),
-        IM_COL32(255, 204, 0, 128),
-    };
-
-    static uint32_t value_color_hovered[(int)GenericValueType::Max] =
-    {
-        IM_COL32(255, 204, 153, 255),
-        IM_COL32(51, 102, 255, 255),
-        IM_COL32(51, 204, 204, 255),
-        IM_COL32(153, 204, 0, 255),
-        IM_COL32(255, 204, 0, 255),
-    };
-
-    static std::unordered_map<uint64_t, std::string> type_names =
-    {
-        {0, "__Invalid_Node__"}
-    };
+    extern uint32_t generic_value_color[(int)GenericValueType::Max];
+    extern uint32_t generic_value_color_hovered[(int)GenericValueType::Max];
 
     bool GenericGraphEditor::Init()
     {
@@ -68,8 +56,12 @@ namespace trace {
             {
                 free_current_node();
             }
-            /*std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_currentGraph->GetName() + ".ini";
-            ImNodes::SaveCurrentEditorStateToIniFile(db_path.c_str());*/
+
+            std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_graphName + ".gnrbin";
+            FileStream stream(db_path, FileMode::WRITE);
+            Reflection::Serialize(m_graphCurrentIndex, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+            Reflection::Serialize(m_graphIndex, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+            Reflection::Serialize(m_graphNodeIndex, &stream, nullptr, Reflection::SerializationFormat::BINARY);
         }
     }
 
@@ -140,11 +132,10 @@ namespace trace {
         }
     }
 
-    void GenericGraphEditor::Render(float deltaTime, const std::string& window_name)
+    void GenericGraphEditor::Render(float deltaTime)
     {
         TraceEditor* editor = TraceEditor::get_instance();
 
-        ImGui::Begin(window_name.c_str());
         ImGui::Columns(2);
 
         if (m_currentGraph)
@@ -164,10 +155,11 @@ namespace trace {
             if (m_selectedNode)
             {
                 ImGui::InvisibleButton("Seperator", { 10.0f, GetLineHeight() });
-                auto it = node_selected_render.find(m_selectedNode->GetTypeID());
-                if (it != node_selected_render.end())
+                ImGui::Text("Node Details");
+                auto it = node_details_render.find(m_selectedNode->GetTypeID());
+                if (it != node_details_render.end())
                 {
-                    it->second(m_selectedNode);
+                    it->second(m_selectedNode, this);
                 }
             }
 
@@ -181,9 +173,9 @@ namespace trace {
             {
 
                 GenericNode* node = m_currentGraphNodePath[i];
-                if (ImGui::Button(type_names[node->GetTypeID()].c_str()))
+                if (ImGui::Button(_node_names[node->GetTypeID()].c_str()))
                 {
-                    set_current_node(node);
+                    SetCurrentNode(node);
                     m_currentGraphNodePath.resize(i);
                     break;
                 }
@@ -209,29 +201,110 @@ namespace trace {
             if (!ImGui::IsAnyItemHovered() && open_popup)
             {
                 ImGui::OpenPopup("add node");
+                mouse_position = ImGui::GetMousePos();
             }
 
-            auto it = type_node_render.find(m_currentNode->GetTypeID());
-            if (it != type_node_render.end())
+            auto it = node_render.find(m_currentNode->GetTypeID());
+            int32_t node_index = m_graphNodeIndex[m_currentNode->GetUUID()];
+            if (it != node_render.end())
             {
-                it->second(m_currentNode);
+                it->second(m_currentNode, node_index, this);
+            }
+            else
+            {
+                ImNodes::BeginNode(node_index);
+
+                ImNodes::BeginNodeTitleBar();
+                auto node_name_it = _node_names.find(m_currentNode->GetTypeID());
+                ImGui::Text(node_name_it->second.c_str());
+                ImNodes::EndNodeTitleBar();
+
+                for (uint32_t j = 0; j < m_currentNode->GetInputs().size(); j++)
+                {
+                    GenericNodeInput& input_0 = m_currentNode->GetInputs()[j];
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+                    ImNodes::BeginInputAttribute(((j+1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+                    auto input_name_it = _node_pins_name.find(m_currentNode->GetTypeID());
+                    ImGui::Text(input_name_it->second.first[j].c_str());
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+                }
+
+                for (uint32_t j = 0; j < m_currentNode->GetOutputs().size(); j++)
+                {
+                    GenericNodeOutput& output_0 = m_currentNode->GetOutputs()[j];
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((j + generic_output_start_index) << shift_amount) | node_index, ImNodesPinShape_Quad);
+                    auto output_name_it = _node_pins_name.find(m_currentNode->GetTypeID());
+                    ImGui::Text(output_name_it->second.first[j].c_str());
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+                }
+
+                ImNodes::EndNode();
             }
 
             for (UUID& id : m_currentNodeChildren)
             {
                 GenericNode* node = m_currentGraph->GetNode(id);
-                auto child_it = type_node_render.find(node->GetTypeID());
-                if (child_it != type_node_render.end())
+                auto child_it = node_render.find(node->GetTypeID());
+                int32_t node_index = m_graphNodeIndex[node->GetUUID()];
+                if (child_it != node_render.end())
                 {
-                    child_it->second(node);
+                    child_it->second(node, node_index, this);
                 }
+                else
+                {
+
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    auto node_name_it = _node_names.find(node->GetTypeID());
+                    ImGui::Text(node_name_it->second.c_str());
+                    ImNodes::EndNodeTitleBar();
+
+                    for (uint32_t j = 0; j < node->GetInputs().size(); j++)
+                    {
+                        GenericNodeInput& input_0 = node->GetInputs()[j];
+                        ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+                        ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+                        ImNodes::BeginInputAttribute(((j+1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+                        auto input_name_it = _node_pins_name.find(node->GetTypeID());
+                        ImGui::Text(input_name_it->second.first[j].c_str());
+                        ImNodes::EndInputAttribute();
+                        ImNodes::PopColorStyle();
+                        ImNodes::PopColorStyle();
+                    }
+                    
+                    for (uint32_t j = 0; j < node->GetOutputs().size(); j++)
+                    {
+                        GenericNodeOutput& output_0 = node->GetOutputs()[j];
+                        ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+                        ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+                        ImNodes::BeginOutputAttribute( ((j + generic_output_start_index) << shift_amount) | node_index, ImNodesPinShape_Quad);
+                        auto output_name_it = _node_pins_name.find(node->GetTypeID());
+                        ImGui::Text(output_name_it->second.first[j].c_str());
+                        ImNodes::EndOutputAttribute();
+                        ImNodes::PopColorStyle();
+                        ImNodes::PopColorStyle();
+                    }
+
+                    ImNodes::EndNode();
+
+                }
+
+
             }
 
             for (auto& link : m_currentNodeLinks)
             {
-                ImNodes::PushColorStyle(ImNodesCol_Link, value_color[(int)link.value_type]);
-                ImNodes::PushColorStyle(ImNodesCol_LinkHovered, value_color_hovered[(int)link.value_type]);
-                ImNodes::PushColorStyle(ImNodesCol_LinkSelected, value_color_hovered[(int)link.value_type]);
+                ImNodes::PushColorStyle(ImNodesCol_Link, generic_value_color[(int)link.value_type]);
+                ImNodes::PushColorStyle(ImNodesCol_LinkHovered, generic_value_color_hovered[(int)link.value_type]);
+                ImNodes::PushColorStyle(ImNodesCol_LinkSelected, generic_value_color_hovered[(int)link.value_type]);
                 ImNodes::Link(link.id, link.from, link.to);
                 ImNodes::PopColorStyle();
                 ImNodes::PopColorStyle();
@@ -240,10 +313,10 @@ namespace trace {
 
             if (ImGui::BeginPopup("add node"))
             {
-                if (ImGui::MenuItem("__Test(Button_t0)__"))
+                auto it = graph_pop_up_render.find(m_currentGraph->GetTypeID());
+                if (it != graph_pop_up_render.end())
                 {
-                    UUID node_id = 0;// m_currentGraph->CreateNode<GenericNode>();
-                    add_new_node(node_id);
+                    it->second(m_currentGraph, this);
                 }
                 ImGui::EndPopup();
             }
@@ -258,6 +331,43 @@ namespace trace {
         if (m_currentGraph)
         {
             int num_selected_nodes = ImNodes::NumSelectedNodes();
+            int num_selected_links = ImNodes::NumSelectedLinks();
+            if (num_selected_links > 0)
+            {
+                static std::vector<int> selected_links;
+                selected_links.resize(static_cast<size_t>(num_selected_links));
+                ImNodes::GetSelectedLinks(selected_links.data());
+                int32_t link_id = selected_links[0];
+                
+                if (is_delete_pressed && num_selected_links == 1)
+                {
+                    for (int32_t& _id : selected_links)
+                    {
+                        link_id = _id;
+                        Link& link = m_currentNodeLinks[link_id];
+                        int32_t mask = ~(~0 << shift_amount);
+                        int32_t from_node_index = link.from & mask;
+                        int32_t to_node_index = link.to & mask;
+
+                        int32_t from_value_index = ((~mask & link.from) >> 24) - generic_output_start_index;
+                        int32_t to_index = ((~mask & link.to) >> 24) - 1;
+
+                        GenericNode* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
+                        GenericNode* to_node = m_currentGraph->GetNode(m_graphIndex[to_node_index]);
+
+                        GenericNodeInput& input = to_node->GetInputs()[to_index];
+                        input.node_id = 0;
+                        input.value_index = -1;
+
+                        m_currentNodeLinks[link_id] = m_currentNodeLinks.back();
+                        m_currentNodeLinks[link_id].id = link_id;
+                        m_currentNodeLinks.pop_back();
+                        ImNodes::ClearLinkSelection(_id);
+                    }
+
+                }
+            }
+
             if (num_selected_nodes > 0)
             {
                 static std::vector<int> selected_nodes;
@@ -291,7 +401,7 @@ namespace trace {
                 int32_t node_index = m_graphNodeIndex[m_selectedNode->GetUUID()];
                 if (ImNodes::IsNodeHovered(&node_index) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                 {
-                    set_current_node(m_selectedNode);
+                    SetCurrentNode(m_selectedNode);
                     m_selectedNode = nullptr;
                 }
             }
@@ -299,11 +409,11 @@ namespace trace {
             int32_t start_attr, end_attr;
             if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
             {
-                int32_t mask = ~(~0 << 24);
+                int32_t mask = ~(~0 << shift_amount);
                 int32_t from_node_index = start_attr & mask;
                 int32_t to_node_index = end_attr & mask;
 
-                int32_t from_value_index = ((~mask & start_attr) >> 24) - output_start_index;
+                int32_t from_value_index = ((~mask & start_attr) >> 24) - generic_output_start_index;
                 int32_t to_index = ((~mask & end_attr) >> 24) - 1;
 
                 GenericNode* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
@@ -326,56 +436,23 @@ namespace trace {
 
             }
 
-            int num_selected_links = ImNodes::NumSelectedLinks();
-            if (num_selected_links > 0)
-            {
-                static std::vector<int> selected_links;
-                selected_links.resize(static_cast<size_t>(num_selected_links));
-                ImNodes::GetSelectedLinks(selected_links.data());
-                int32_t link_id = selected_links[0];
+            
 
-                if (is_delete_pressed)
-                {
-                    for (int32_t& _id : selected_links)
-                    {
-                        link_id = _id;
-                        Link& link = m_currentNodeLinks[link_id];
-                        int32_t mask = ~(~0 << 24);
-                        int32_t from_node_index = link.from & mask;
-                        int32_t to_node_index = link.to & mask;
-
-                        int32_t from_value_index = ((~mask & link.from) >> 24) - output_start_index;
-                        int32_t to_index = ((~mask & link.to) >> 24) - 1;
-
-                        GenericNode* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
-                        GenericNode* to_node = m_currentGraph->GetNode(m_graphIndex[to_node_index]);
-
-                        GenericNodeInput& input = to_node->GetInputs()[to_index];
-                        input.node_id = 0;
-                        input.value_index = -1;
-
-                        m_currentNodeLinks[link_id] = m_currentNodeLinks.back();
-                        m_currentNodeLinks.pop_back();
-                        ImNodes::ClearLinkSelection(_id);
-                    }
-
-                }
-            }
         };
 
 
 
         ImGui::Columns(1);
 
-
-
-
-        ImGui::End();
-
+        if (new_node != 0)
+        {
+            ImNodes::SetNodeScreenSpacePos(new_node, mouse_position);
+            new_node = 0;
+        }
 
     }
 
-    void GenericGraphEditor::SetAnimationGraph(GenericGraph* graph, const std::string& graph_name)
+    void GenericGraphEditor::SetGraph(GenericGraph* graph, const std::string& graph_name)
     {
         if (!graph)
         {
@@ -416,11 +493,6 @@ namespace trace {
         }
 
 
-        GenericNode* root = m_currentGraph->GetNode(m_currentGraph->GetRootNodeUUID());
-        TRC_ASSERT(root, "Ensure graph has a root");
-        set_current_node(root);
-
-
 
     }
 
@@ -442,7 +514,8 @@ namespace trace {
         for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
         {
             GenericNodeInput& input = current_node->GetInputs()[i];
-            if (input.node_id != 0)
+            auto it = std::find(m_currentNodeChildren.begin(), m_currentNodeChildren.end(), input.node_id);
+            if (input.node_id != 0 && it == m_currentNodeChildren.end())
             {
                 m_currentNodeChildren.push_back(input.node_id);
                 add_child_node(m_currentGraph->GetNode(input.node_id));
@@ -466,21 +539,13 @@ namespace trace {
 
         m_currentNodeLinks.clear();
         GenericNode* current_node = m_currentNode;
-        for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
-        {
-            GenericNodeInput& input = current_node->GetInputs()[i];
-            if (input.node_id != 0)
-            {
-                Link link = {};
-                link.to = ((i + 1) << 24) | m_graphNodeIndex[current_node->GetUUID()];
-                link.from = ((input.value_index + output_start_index) << 24) | m_graphNodeIndex[input.node_id];
-                link.id = static_cast<int32_t>(m_currentNodeLinks.size());
-                link.value_type = input.type;
-                m_currentNodeLinks.push_back(link);
+        add_child_links(m_currentNode);
 
-                add_child_links(m_currentGraph->GetNode(input.node_id));
-            }
+        for (uint32_t i = 0; i < m_currentNodeChildren.size(); i++)
+        {
+            add_child_links(m_currentGraph->GetNode(m_currentNodeChildren[i]));
         }
+
 
 
     }
@@ -511,7 +576,8 @@ namespace trace {
         for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
         {
             GenericNodeInput& input = current_node->GetInputs()[i];
-            if (input.node_id != 0)
+            auto it = std::find(m_currentNodeChildren.begin(), m_currentNodeChildren.end(), input.node_id);
+            if (input.node_id != 0 && it == m_currentNodeChildren.end())
             {
                 m_currentNodeChildren.push_back(input.node_id);
                 add_child_node(m_currentGraph->GetNode(input.node_id));
@@ -528,17 +594,26 @@ namespace trace {
             if (input.node_id != 0)
             {
                 Link link = {};
-                link.to = ((i + 1) << 24) | m_graphNodeIndex[current_node->GetUUID()];
-                link.from = ((input.value_index + output_start_index) << 24) | m_graphNodeIndex[input.node_id];
+                link.to = ((i + 1) << shift_amount) | m_graphNodeIndex[current_node->GetUUID()];
+                link.from = ((input.value_index + generic_output_start_index) << shift_amount) | m_graphNodeIndex[input.node_id];
                 link.id = static_cast<int32_t>(m_currentNodeLinks.size());
                 link.value_type = input.type;
+
+                auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link](Link& val) {
+                    return link.to == val.to && link.from == val.from;
+                    });
+
+                if (it != m_currentNodeLinks.end())
+                {
+                    continue;
+                }
                 m_currentNodeLinks.push_back(link);
                 add_child_links(m_currentGraph->GetNode(input.node_id));
             }
         }
     }
 
-    void GenericGraphEditor::set_current_node(GenericNode* current_node)
+    void GenericGraphEditor::SetCurrentNode(GenericNode* current_node)
     {
         if (m_currentNode)
         {
@@ -556,6 +631,11 @@ namespace trace {
         {
             FileStream stream(node_db_path, FileMode::READ);
             Reflection::DeserializeContainer(m_currentNodeChildren, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+            for (uint32_t i = 0; i < m_currentNodeChildren.size(); i++)
+            {
+               // TODO: Remove node that is no longer part of graph
+               //m_currentGraph->GetNode(m_currentNodeChildren[i]);
+            }
             generate_current_node_links();
         }
         else
@@ -607,7 +687,7 @@ namespace trace {
         int32_t node_index = m_graphNodeIndex[node_id];
         for (Link& link : m_currentNodeLinks)
         {
-            int32_t mask = ~(~0 << 24);
+            int32_t mask = ~(~0 << shift_amount);
             int32_t to_index = link.to & mask;
             int32_t from_index = link.from & mask;
             if (node_index == from_index)
@@ -677,19 +757,12 @@ namespace trace {
             ImGui::PushID((int)i);
             ImGui::InputText("Parameter Name", &param.name);
 
-            char* parameter_type_string[] =
-            {
-                "Float",
-                "Bool",
-                "Int"
-            };
-
-            if (ImGui::BeginCombo("Parameter Type", parameter_type_string[(int)param.type]))
+            if (ImGui::BeginCombo("Parameter Type", GenericHelper::GetTypeString(param.type).c_str()))
             {
                 for (uint32_t j = 0; j < (uint32_t)GenericValueType::Max; j++)
                 {
                     bool selected = (param.type == (GenericValueType)j);
-                    if (ImGui::Selectable(parameter_type_string[j], selected))
+                    if (ImGui::Selectable(GenericHelper::GetTypeString((GenericValueType)j).c_str(), selected))
                     {
                         param.type = (GenericValueType)j;
                     }
@@ -717,6 +790,9 @@ namespace trace {
         m_graphNodeIndex[node_id] = node_index;
         m_graphIndex[node_index] = node_id;
         m_currentNodeChildren.push_back(node_id);
+
+
+        new_node = node_index;
     }
 
     void GenericGraphEditor::remove_node(UUID node_id)

@@ -5,3 +5,5 @@
 
 #include "motion_matching/MotionMatchingTypeRegistry.h"
 #include "animation/AnimationsTypeRegistry01.h"
+#include "shader_graph/ShaderGraphTypeRegistry.h"
+#include "node_system/GenericGraphTypeRegistry.h"

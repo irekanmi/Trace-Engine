@@ -17,29 +17,31 @@ namespace trace {
 		void Shutdown();
 
 		void Update(float deltaTime);
-		void Render(float deltaTime, const std::string& window_name);
+		void Render(float deltaTime);
 		void OnEvent(Event* p_event);
 		void HandleKeyReleased(Event* p_event);
 		void HandleKeyPressed(Event* p_event);
 
 		GenericGraph* GetCurrentGraph() { return m_currentGraph; }
 
-		void SetAnimationGraph(GenericGraph* graph, const std::string& graph_name);
+		void SetGraph(GenericGraph* graph, const std::string& graph_name);
+		void SetCurrentNode(GenericNode* current_node);
 
-	private:
+		void add_new_node(UUID node_id);
+
+	public:
 		void generate_current_node_children();
 		void generate_current_node_links();
 		void generate_graph_node_id();
 		void add_child_node(GenericNode* current_node);
 		void add_child_links(GenericNode* current_node);
-		void set_current_node(GenericNode* current_node);
 		void free_current_node();
 		void delete_node(UUID node_id);
-		int32_t GenericGraphEditor::paramters_drop_down(int32_t id);
-		void GenericGraphEditor::render_graph_data();
-		void add_new_node(UUID node_id);
+		int32_t paramters_drop_down(int32_t id);
+		void render_graph_data();
 		void remove_node(UUID node_id);
 
+	private:
 
 		struct Link
 		{
@@ -58,8 +60,6 @@ namespace trace {
 		std::unordered_map<UUID, int32_t> m_graphNodeIndex;
 		std::unordered_map<int32_t, UUID> m_graphIndex;
 		int32_t m_graphCurrentIndex;
-		std::unordered_map<uint64_t, std::function<void(GenericNode* node)>> type_node_render;
-		std::unordered_map<uint64_t, std::function<void(GenericNode* node)>> node_selected_render;
 		std::vector<GenericNode*> m_currentGraphNodePath;
 		std::string m_graphName;
 

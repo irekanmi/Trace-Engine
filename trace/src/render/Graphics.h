@@ -3,6 +3,8 @@
 #include "core/Core.h"
 #include "core/defines.h"
 
+
+#include <any>
 #include <vector>
 #include <string>
 #include "glm/glm.hpp"
@@ -684,4 +686,12 @@ namespace trace {
 	};
 	
 	uint32_t getFmtSize(Format format);
+
+	struct InternalMaterialData
+	{
+		std::any internal_data;
+		uint32_t hash;
+		uint32_t offset;
+		ShaderData type;
+	};
 }

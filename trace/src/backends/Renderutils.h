@@ -27,7 +27,7 @@ namespace trace {
 	void AutoFillPipelineDesc(PipelineStateDesc& desc, bool input_layout = true, bool raterizer_state = true, bool depth_sten_state = true, bool color_blend_state = true, bool view_port = true, bool scissor = true, bool render_pass = true, bool primitive_topology = true);
 	void Enable_WeightedOIT(PipelineStateDesc& desc);
 	void Enable_Blending(PipelineStateDesc& desc, uint32_t num_render_target = 1);
-	std::unordered_map<std::string, std::pair<std::any, uint32_t>> GetPipelineMaterialData(Ref<GPipeline> pipeline);
+	std::unordered_map<std::string, InternalMaterialData> GetPipelineMaterialData(Ref<GPipeline> pipeline);
 
 
 	typedef bool (*__CreateContext)(GContext*);
@@ -82,7 +82,7 @@ namespace trace {
 	typedef bool (*__DestroyPipeline)(GPipeline*);
 	typedef bool (*__InitializePipeline)(GPipeline*);
 	typedef bool (*__ShutDownPipeline)(GPipeline*);
-	typedef bool (*__SetPipelineData)(GPipeline*, const std::string&, ShaderResourceStage, void*, uint32_t, int32_t render_graph_index);
+	typedef bool (*__SetPipelineData)(GPipeline*, const std::string&, ShaderResourceStage, void*, uint32_t, uint32_t offset, int32_t render_graph_index);
 	typedef bool (*__SetPipelineTextureData)(GPipeline*, const std::string&, ShaderResourceStage, GTexture*, int32_t render_graph_index, uint32_t);
 	typedef bool (*__BindPipeline_)(GPipeline*, int32_t render_graph_index);
 	//------------------------------
@@ -189,7 +189,7 @@ namespace trace {
 		static bool DestroyPipeline(GPipeline* pipeline);
 		static bool InitializePipeline(GPipeline* pipeline);
 		static bool ShutDownPipeline(GPipeline* pipeline);
-		static bool SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index = 0);
+		static bool SetPipelineData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t offset, int32_t render_graph_index);
 		static bool SetPipelineTextureData(GPipeline* pipeline, const std::string& resource_name, ShaderResourceStage resource_scope, GTexture* texture, int32_t render_graph_index, uint32_t index = 0);
 		static bool BindPipeline_(GPipeline* pipeline, int32_t render_graph_index = 0);
 

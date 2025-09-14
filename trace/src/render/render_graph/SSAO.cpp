@@ -254,6 +254,7 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				m_kernel.data(),
 				static_cast<uint32_t>(m_kernel.size() * sizeof(glm::vec4)),
+				0,
 				render_graph_index
 			);
 
@@ -265,6 +266,7 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&frame_size,
 				sizeof(glm::vec2),
+				0,
 				render_graph_index
 			);
 
@@ -276,6 +278,7 @@ namespace trace {
 				ShaderResourceStage::RESOURCE_STAGE_GLOBAL,
 				&proj,
 				sizeof(glm::mat4),
+				0,
 				render_graph_index
 			);
 

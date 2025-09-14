@@ -755,7 +755,7 @@ namespace vk {
 
 		return result;
 	}
-	bool __SetPipelineData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index)
+	bool __SetPipelineData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t offset, int32_t render_graph_index)
 	{
 		bool result = true;		
 
@@ -786,7 +786,7 @@ namespace vk {
 
 		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
-		return __SetPipelineData_Meta(pipeline, meta_data, resource_scope, data, size, render_graph_index);
+		return __SetPipelineData_Meta(pipeline, meta_data, resource_scope, data, size, offset, render_graph_index);
 	}
 	bool __SetPipelineInstanceData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t count)
 	{
@@ -875,7 +875,7 @@ namespace vk {
 		return result;
 
 	}
-	bool __SetPipelineData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, int32_t render_graph_index)
+	bool __SetPipelineData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t in_offset, int32_t render_graph_index)
 	{
 		bool result = true;
 
@@ -934,7 +934,7 @@ namespace vk {
 
 			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
 
-			uint32_t location = (struct_size * render_graph_index) + meta_data._offset;
+			uint32_t location = (struct_size * render_graph_index) + meta_data._offset + in_offset;
 
 			void* map_point = (char*)data_point + location;
 			memcpy(map_point, data, size);
@@ -952,7 +952,7 @@ namespace vk {
 			uint32_t buffer_index = static_cast<uint32_t>(_handle->instance_buffer_infos[meta_data._slot].size() - 1);
 			trace::BufferDescriptorInfo& buf_info = _handle->instance_buffer_infos[meta_data._slot][buffer_index];
 
-			uint32_t buf_offset = buf_info.offset + meta_data._offset;
+			uint32_t buf_offset = buf_info.offset + meta_data._offset + in_offset;
 
 			if (buf_offset + meta_data._size >= buffer.m_info.m_size)
 			{
@@ -1161,7 +1161,7 @@ namespace vk {
 		glm::ivec4 draw_inst(_handle->frame_update - 1, _handle->frame_update - 1/*_handle->instance_texture_infos.size() - _handle->bindless_2d_tex_count*/, 0, 0);
 		if (_handle->bindless)
 		{
-			__SetPipelineData(pipeline, "draw_instance_index", trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL, &draw_inst, sizeof(glm::ivec4));
+			__SetPipelineData(pipeline, "draw_instance_index", trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL, &draw_inst, sizeof(glm::ivec4), 0, render_graph_index);
 		}
 
 		vkCmdBindDescriptorSets( _device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _handle->m_layout, 0, set_count, _sets, offset_count, offsets);
