@@ -644,6 +644,140 @@ namespace trace {
 				ImGui::DragFloat("Alpha", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
 			}
 			}
+		},
+		{
+			ShaderNodeType::Screen_Color_Variable,
+			{
+			"Screen Color",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				
+			}
+			}
+		},
+		{
+			ShaderNodeType::Simple_Noise_Function,
+			{
+			"Simple Noise",
+			{"UV", "Scale"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("UV", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("Scale", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Gradient_Noise_Function,
+			{
+			"Gradient Noise",
+			{"UV", "Scale"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("UV", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("Scale", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Twist_Function,
+			{
+			"Twist",
+			{"UV", "Center", "Strength", "Offset"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("UV", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat2("Center", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("Strength", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
+				ImGui::DragFloat2("Offset", (float*)&_node->GetDefaultParameterData()[3], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Normal_From_Gradient_Noise,
+			{
+			"Normal From Gradient Noise",
+			{"UV", "Strength", "Texel Size", "Scale"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("UV", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("Strength", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("Texel Size", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
+				ImGui::DragFloat("Scale", (float*)&_node->GetDefaultParameterData()[3], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Time_Variable,
+			{
+			"Time",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Sin_Float,
+			{
+			"Sin Float",
+			{"In"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Radians_Float,
+			{
+			"Radians Float",
+			{"In"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Fract_Float,
+			{
+			"Fract Float",
+			{"In"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Screen_UV_Variable,
+			{
+			"Screen UV",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+
+			}
+			}
 		}
 	};
 

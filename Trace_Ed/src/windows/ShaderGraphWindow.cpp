@@ -28,7 +28,7 @@ namespace trace {
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
 		RenderGraphController scene_render_controller = {};
-		scene_render_controller.should_render = [this]()->bool { return m_isOpen; };
+		scene_render_controller.should_render = [this]()->bool { return m_isOpen && can_render; };
 		scene_render_controller.build_graph = [composer, this](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 		{
 			composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
@@ -76,7 +76,7 @@ namespace trace {
 		model.AddComponent<ModelRendererComponent>()._material = m_material;
 		visual_id = model.GetID();
 		m_scene->EnableEntity(model);
-		model.GetComponent<TransformComponent>()._transform.Scale(5.0f);
+		model.GetComponent<TransformComponent>()._transform.Scale(7.0f);
 		
 		Entity floor = m_scene->CreateEntity();
 		floor.AddComponent<ModelComponent>()._model = DefaultAssetsManager::Cube;
@@ -84,7 +84,7 @@ namespace trace {
 		m_scene->EnableEntity(floor);
 
 		Transform& transform = floor.GetComponent<TransformComponent>()._transform;
-		transform.SetPosition(glm::vec3(0.0f, -6.0f, 0.0f));
+		transform.SetPosition(glm::vec3(0.0f, -15.0f, 0.0f));
 		transform.SetScale(glm::vec3(100.0f, 1.0f, 100.0f));
 		
 
@@ -252,16 +252,16 @@ namespace trace {
 			{
 				if (ctrl)
 				{
+					can_render = false;
 					m_scene->DisableEntity(m_scene->GetEntity(visual_id));
 					graph_instance.DestroyInstance();
 					graph_instance.CreateInstance(m_shaderGraph);
 					if (Ref<GPipeline> pipeline = graph_instance.CompileGraph())
 					{
-						can_render = false;
 						m_material->RecreateMaterial(pipeline);
-						can_render = true;
 					}
 					m_scene->EnableEntity(m_scene->GetEntity(visual_id));
+					can_render = true;
 				}
 				break;
 			}

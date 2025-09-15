@@ -143,6 +143,8 @@ namespace trace {
 		tex_desc.m_format = Format::R8_UNORM;
 		uint32_t reveal = pass->CreateAttachmentOutput("reveal", tex_desc);
 
+		pass->AddColorAttachmentInput(frame_data.hdr_index);
+
 		pass->SetDepthStencilInput(g_buffer.depth_index);
 
 		
@@ -160,7 +162,7 @@ namespace trace {
 				RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 				RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
-				m_renderer->RenderTransparentUnLitObjects(render_graph_index);
+				m_renderer->RenderTransparentUnLitObjects(render_graph_index, render_graph, frame_data.hdr_index);
 				m_renderer->RenderQuads(render_graph_index);
 				m_renderer->RenderTextVerts(render_graph_index);
 				m_renderer->RenderParticles(render_graph_index);

@@ -1766,7 +1766,11 @@ namespace trace {
 		ImGui::Text("Render Pipeline");
 		ImGui::NextColumn();
 		Ref<GPipeline> sp = mat->GetRenderPipline();
-		if (ImGui::Button(sp->m_path.string().c_str())) popup = true;
+		std::string name = sp->m_path.string().empty() ? "None(GPipeline)" : sp->m_path.string();
+		if (ImGui::Button(name.c_str()))
+		{
+			popup = true;
+		}
 
 		/*if (popup)
 		{
@@ -1815,7 +1819,7 @@ namespace trace {
 			case trace::ShaderData::CUSTOM_DATA_FLOAT:
 			{
 				float* data = &std::any_cast<float&>(dst);
-				ImGui::DragFloat(name.c_str(), data);
+				ImGui::DragFloat(name.c_str(), data, 0.001f);
 				dst = *data;
 				break;
 			}
@@ -1961,21 +1965,21 @@ namespace trace {
 			case trace::ShaderData::CUSTOM_DATA_VEC2:
 			{
 				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
-				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data), 0.15f);
+				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data), 0.001f);
 				dst = data;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC3:
 			{
 				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
-				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data), 0.15f);
+				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data), 0.001f);
 				dst = data;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC4:
 			{
 				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
-				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data), 0.15f);
+				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data), 0.001f);
 				dst = data;
 				break;
 			}

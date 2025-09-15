@@ -67,4 +67,41 @@ namespace trace {
 		return 0;
 	}
 
+	uint32_t getShaderDataSize(ShaderData type)
+	{
+		switch (type)
+		{
+		case ShaderData::CUSTOM_DATA_BOOL:
+		{
+			return 1;
+		}
+		case ShaderData::CUSTOM_DATA_FLOAT:
+		{
+			return 4;
+		}
+		case ShaderData::CUSTOM_DATA_INT:
+		{
+			return 4;
+		}
+		case ShaderData::CUSTOM_DATA_VEC2:
+		case ShaderData::CUSTOM_DATA_IVEC2:
+		{
+			return 8;
+		}
+		case ShaderData::CUSTOM_DATA_VEC3:
+		case ShaderData::CUSTOM_DATA_IVEC3:
+		{
+			return 12;
+		}
+		case ShaderData::CUSTOM_DATA_VEC4:
+		case ShaderData::CUSTOM_DATA_IVEC4:
+		{
+			return 16;
+		}
+		}
+
+		TRC_ASSERT(false, "Ensure the input format is valid");
+		return 0;
+	}
+
 }

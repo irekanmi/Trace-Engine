@@ -263,7 +263,8 @@ namespace vk {
                     
                     if (data)
                     {
-                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, meta_data._size, m_data.second.offset, render_graph_index);
+                        uint32_t data_size = trace::getShaderDataSize(m_data.second.type);
+                        __SetPipelineData_Meta(pipeline, meta_data, trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE, data, data_size, m_data.second.offset, render_graph_index);
                     }
                 }
                 if (meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER)

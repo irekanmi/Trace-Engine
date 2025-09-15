@@ -9,6 +9,7 @@ OUT_VERTEX_DATA
 layout(std140, set = 0, binding = 0)uniform SceneBufferObject{
     mat4 _projection;
     mat4 _view;
+    vec4 _time_values;
     vec3 _view_position;
 };
 
@@ -46,5 +47,6 @@ void main()
     _fragPos = (_view * vec4(world_position, 1.0f)).xyz;
     
 
-    gl_Position = _projection * vec4(_fragPos, 1.0f);
+    _clip_space_pos = _projection * vec4(_fragPos, 1.0f);
+    gl_Position = _clip_space_pos;
 }

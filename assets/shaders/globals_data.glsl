@@ -18,8 +18,8 @@
 
 #endif
 
-#define OUT_VERTEX_DATA layout(location = 0)out data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; vec3 _view_position_; vec3 world_position; };
-#define IN_VERTEX_DATA layout(location = 0)in data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; vec3 _view_position_; vec3 world_position; };
+#define OUT_VERTEX_DATA layout(location = 0)out data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; vec4 _clip_space_pos; vec3 _view_position_; vec3 world_position; };
+#define IN_VERTEX_DATA layout(location = 0)in data_object { vec3 _normal_; vec3 _fragPos; vec2 _texCoord; vec4 _tangent_; vec4 _clip_space_pos; vec3 _view_position_; vec3 world_position; };
 
 
 

@@ -42,6 +42,7 @@ namespace trace {
 		REGISTER_TYPE_PARENT(ShaderGraph, GenericGraph);
 		REGISTER_MEMBER(ShaderGraph, m_type);
 		REGISTER_MEMBER(ShaderGraph, fragment_shader_root);
+		REGISTER_MEMBER(ShaderGraph, m_cullMode);
 	END_REGISTER_CLASS;
 
 }

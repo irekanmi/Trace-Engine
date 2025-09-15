@@ -686,6 +686,7 @@ namespace trace {
 	};
 	
 	uint32_t getFmtSize(Format format);
+	uint32_t getShaderDataSize(ShaderData type);
 
 	struct InternalMaterialData
 	{

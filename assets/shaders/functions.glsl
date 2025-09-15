@@ -309,5 +309,90 @@ float ShadowPCF(sampler2D shadow_map, vec2 tex_coords, int num_samples, float fr
     return 1.0f - ( total_samples_depth / samples_count /*pow(num_samples * 2 + 1, 2)*/ );
 }
 
+// Simple hash function
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+// Interpolation
+float simple_noise(vec2 uv, float scale) {
+    vec2 p = uv * scale;
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(a, b, u.x) +
+           (c - a) * u.y * (1.0 - u.x) +
+           (d - b) * u.x * u.y;
+}
+
+// 2D Gradient noise
+float gradientNoise(vec2 p, float scale) {
+    vec2 uv = p * scale;
+    vec2 i = floor(uv);
+    vec2 f = fract(uv);
+
+    // Four corners of the grid cell
+    float a = hash(i + vec2(0.0, 0.0));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+
+    // Smooth interpolation
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    // Interpolate values
+    return mix(a, b, u.x) +
+           (c - a) * u.y * (1.0 - u.x) +
+           (d - b) * u.x * u.y;
+}
+
+vec2 twist(vec2 p, vec2 center, float strength, vec2 uv_offset) {
+    // Offset UV so center is (0,0)
+    vec2 uv = p + uv_offset;
+    uv = fract(uv);
+    vec2 offset = uv - center;
+
+    // Distance from center
+    float radius = length(offset);
+
+    // Rotation angle increases with distance
+    float angle = strength * radius;
+
+    // Precompute trig
+    float s = sin(angle);
+    float c = cos(angle);
+
+    // Rotate offset
+    mat2 rot = mat2(c, -s, s, c);
+    vec2 twisted = rot * offset;
+
+    // Return new UV
+    return twisted + center;
+}
+
+vec3 normalFromGradientNoise(
+    vec2 uv,
+    float strength,
+    float texelSize,
+    float scale
+) {
+    float h  = gradientNoise(uv, scale);
+    float hX = gradientNoise(uv + vec2(texelSize, 0.0), scale);
+    float hY = gradientNoise(uv + vec2(0.0, texelSize), scale);
+
+    float dx = (hX - h) * strength;
+    float dy = (hY - h) * strength;
+
+    return normalize(vec3(-dx, -dy, 1.0));
+}
+
+
 
 #endif

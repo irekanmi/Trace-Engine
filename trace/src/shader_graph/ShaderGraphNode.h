@@ -42,7 +42,17 @@ namespace trace {
 		Split_Vec4_Helper,
 		Split_Vec3_Helper,
 		Split_Vec2_Helper,
-		Transparent_UnLit_Node
+		Transparent_UnLit_Node,
+		Screen_Color_Variable,
+		Simple_Noise_Function,
+		Gradient_Noise_Function,
+		Twist_Function,
+		Normal_From_Gradient_Noise,
+		Time_Variable,
+		Sin_Float,
+		Radians_Float,
+		Fract_Float,
+		Screen_UV_Variable
 	};
 
 	struct ShaderNodeMetaData

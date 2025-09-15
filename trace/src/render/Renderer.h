@@ -170,7 +170,7 @@ namespace trace {
 
 
 		void RenderOpaqueObjects(int32_t render_graph_index = 0);
-		void RenderTransparentUnLitObjects(int32_t render_graph_index = 0);
+		void RenderTransparentUnLitObjects(int32_t render_graph_index, RenderGraph* render_graph, uint32_t screen_color_index);
 		void RenderQuads(int32_t render_graph_index = 0);
 		void RenderTextVerts(int32_t render_graph_index = 0);
 		void RenderDebugData(int32_t render_graph_index = 0);

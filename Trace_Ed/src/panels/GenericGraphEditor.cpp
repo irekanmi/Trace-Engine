@@ -374,24 +374,30 @@ namespace trace {
                 selected_nodes.resize(static_cast<size_t>(num_selected_nodes));
                 ImNodes::GetSelectedNodes(selected_nodes.data());
                 int32_t index = selected_nodes[0];
-                UUID node_id = m_graphIndex[index];
-                m_selectedNode = m_currentGraph->GetNode(node_id);
-
-                if (is_delete_pressed)
+                auto it = m_graphIndex.find(index);
+                if (it != m_graphIndex.end())
                 {
-                    m_selectedNode = nullptr;
-                    for (int32_t& i : selected_nodes)
-                    {
-                        node_id = m_graphIndex[i];
-                        GenericNode* node = m_currentGraph->GetNode(node_id);
-                        if (node == m_currentNode)
-                        {
-                            continue;
-                        }
-                        m_currentGraph->DestroyNode(node_id);
-                        delete_node(node_id);
+                    UUID node_id = m_graphIndex[index];
+                    m_selectedNode = m_currentGraph->GetNode(node_id);
 
-                        ImNodes::ClearNodeSelection(i);
+                    if (is_delete_pressed)
+                    {
+                        m_selectedNode = nullptr;
+                        for (int32_t& i : selected_nodes)
+                        {
+                            node_id = m_graphIndex[i];
+                            GenericNode* node = m_currentGraph->GetNode(node_id);
+                            if (node == m_currentNode)
+                            {
+                                continue;
+                            }
+                            delete_node(node_id);
+                            m_currentGraph->DestroyNode(node_id);
+
+                            ImNodes::ClearNodeSelection(i);
+                        }
+
+                        generate_current_node_links();
                     }
                 }
             }
@@ -413,8 +419,8 @@ namespace trace {
                 int32_t from_node_index = start_attr & mask;
                 int32_t to_node_index = end_attr & mask;
 
-                int32_t from_value_index = ((~mask & start_attr) >> 24) - generic_output_start_index;
-                int32_t to_index = ((~mask & end_attr) >> 24) - 1;
+                int32_t from_value_index = ((~mask & start_attr) >> shift_amount) - generic_output_start_index;
+                int32_t to_index = ((~mask & end_attr) >> shift_amount) - 1;
 
                 GenericNode* from_node = m_currentGraph->GetNode(m_graphIndex[from_node_index]);
                 GenericNode* to_node = m_currentGraph->GetNode(m_graphIndex[to_node_index]);
@@ -631,11 +637,22 @@ namespace trace {
         {
             FileStream stream(node_db_path, FileMode::READ);
             Reflection::DeserializeContainer(m_currentNodeChildren, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-            for (uint32_t i = 0; i < m_currentNodeChildren.size(); i++)
+            uint32_t num_children = m_currentNodeChildren.size();
+            uint32_t i = 0;
+            std::vector<UUID> children = m_currentNodeChildren;
+            while(i < num_children)
             {
                // TODO: Remove node that is no longer part of graph
-               //m_currentGraph->GetNode(m_currentNodeChildren[i]);
+               auto it = m_currentGraph->GetNodes().find(m_currentNodeChildren[i]);
+               if (it == m_currentGraph->GetNodes().end())
+               {
+                   children.erase(std::find(children.begin(), children.end(), m_currentNodeChildren[i]));
+               }
+
+               i++;
             }
+
+            m_currentNodeChildren = children;
             generate_current_node_links();
         }
         else
@@ -705,16 +722,10 @@ namespace trace {
         }
 
 
-        node_index = -1;
-        auto it = std::find_if(m_currentNodeChildren.begin(), m_currentNodeChildren.end(), [&node_id, &node_index](UUID& val)
-            {
-                ++node_index;
-                return val == node_id;
-            });
+        
 
 
-        m_currentNodeChildren[node_index] = m_currentNodeChildren.back();
-        m_currentNodeChildren.pop_back();
+        m_currentNodeChildren.erase(std::find(m_currentNodeChildren.begin(), m_currentNodeChildren.end(), node_id));
 
         m_graphNodeIndex.erase(node_id);
         m_graphIndex.erase(node_index);

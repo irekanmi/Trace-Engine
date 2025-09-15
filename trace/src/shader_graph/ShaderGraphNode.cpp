@@ -837,6 +837,280 @@ namespace trace {
 					return out_code;
 				}
 			}
+		},
+		{
+			ShaderNodeType::Screen_Color_Variable,
+			{
+				{},
+				{{GenericValueType::Sampler2D, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "_screen_color";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Simple_Noise_Function,
+			{
+				{{GenericValueType::Vec2, 0, 0}, {GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "float {} = simple_noise({}, {});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+					
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Gradient_Noise_Function,
+			{
+				{{GenericValueType::Vec2, 0, 0}, {GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "float {} = gradientNoise({}, {});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+					
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Twist_Function,
+			{
+				{{GenericValueType::Vec2, 0, 0}, {GenericValueType::Vec2, 0, 0}, {GenericValueType::Float, 0, 0}, {GenericValueType::Vec2, 0, 0}},
+				{{GenericValueType::Vec2, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec2);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+					GenericParameterData& param3 = _node->GetDefaultParameterData()[3];
+					std::string in_3 = GenericHelper::GetParameterValueString(param3, GenericValueType::Vec2);
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+					GET_NODE_OUTPUT(_node, in_3, 3, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "vec2 {} = twist({}, {}, {}, {});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2, in_3);
+					
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Normal_From_Gradient_Noise,
+			{
+				{{GenericValueType::Vec2, 0, 0}, {GenericValueType::Float, 0, 0}, {GenericValueType::Float, 0, 0}, {GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+					GenericParameterData& param3 = _node->GetDefaultParameterData()[3];
+					std::string in_3 = GenericHelper::GetParameterValueString(param3, GenericValueType::Float);
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+					GET_NODE_OUTPUT(_node, in_3, 3, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "vec3 {} = normalFromGradientNoise({}, {}, {}, {});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2, in_3);
+					
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Time_Variable,
+			{
+				{},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "_time_values.x";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Sin_Float,
+			{
+				{{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "float {} = sin({});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Radians_Float,
+			{
+				{{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "float {} = radians({});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Fract_Float,
+			{
+				{{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "float {} = fract({});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Screen_UV_Variable,
+			{
+				{},
+				{{GenericValueType::Vec2, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "screen_uv";
+
+					return out_code;
+				}
+			}
 		}
 	};
 

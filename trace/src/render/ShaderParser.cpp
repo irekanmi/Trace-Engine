@@ -17,6 +17,8 @@
 
 shaderc_shader_kind convertToShadercFmt(trace::ShaderStage stage, trace::ShaderLang lang);
 
+std::unordered_map<std::string, std::string> include_files;
+
 // Interface that determines how include files in shader will be processed
 class IncludeInterface : public shaderc::CompileOptions::IncluderInterface
 {
@@ -31,14 +33,18 @@ public:
 		std::filesystem::path path(shader_res_path);
 		path /= requested_source;
 
-		IncludeInterface::include_src_name = path.string();
-		IncludeInterface::include_src_data = trace::ShaderParser::load_shader_file(IncludeInterface::include_src_name);
+		/*IncludeInterface::include_src_name = path.string();
+		IncludeInterface::include_src_data = trace::ShaderParser::load_shader_file(IncludeInterface::include_src_name);*/
+
+		std::string file_data = trace::ShaderParser::load_shader_file(path.string());
+		std::string file_name = requested_source;
+		include_files[file_name] = file_data;
 
 		shaderc_include_result* result = new shaderc_include_result();
-		result->content = IncludeInterface::include_src_data.c_str();
-		result->content_length = IncludeInterface::include_src_data.length();
-		result->source_name = IncludeInterface::include_src_name.c_str();
-		result->source_name_length = IncludeInterface::include_src_name.length();
+		result->content = include_files[file_name].c_str();
+		result->content_length = include_files[file_name].length();
+		result->source_name = include_files.find(file_name)->first.c_str();
+		result->source_name_length = include_files.find(file_name)->first.length();
 		result->user_data = nullptr;
 
 		return result;

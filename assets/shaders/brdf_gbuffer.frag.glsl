@@ -43,6 +43,8 @@ void main()
     INSTANCE_TEXTURE_INDEX(ROUGHNESS_MAP, 3);
 
     vec3 view_direction = normalize(-_fragPos);
+    vec3 ndc = (_clip_space_pos.xyz / _clip_space_pos.w) * 0.5f + 0.5f;
+    vec2 screen_uv = ndc.xy;
 
     vec3 normal;
     SAMPLE_NORMAL_MAP(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), _texCoord, _normal_, _tangent_, normal );

@@ -24,6 +24,9 @@ namespace trace {
 
 		ShaderGraphNode* GetFragmentShaderNode();
 
+		CullMode GetCullMode() { return m_cullMode; }
+		void SetCullMode(CullMode cull_mode) { m_cullMode = cull_mode; }
+
 		static Ref<ShaderGraph> Deserialize(UUID id);
 		static Ref<ShaderGraph> Deserialize(DataStream* stream);
 
@@ -31,6 +34,7 @@ namespace trace {
 		ShaderGraphNode* vertex_shader_root = nullptr;
 		UUID fragment_shader_root = 0;
 		MaterialType m_type = MaterialType::NONE;
+		CullMode m_cullMode = CullMode::BACK;
 
 	protected:
 		ACCESS_CLASS_MEMBERS(ShaderGraph);

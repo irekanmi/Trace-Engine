@@ -42,6 +42,7 @@ namespace trace {
 		UUID visual_id = 0;
 
 
+
 	protected:
 
 	};
