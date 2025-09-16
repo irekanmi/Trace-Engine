@@ -68,6 +68,29 @@ namespace trace {
 		return (ShaderGraphNode*)GetNode(fragment_shader_root);
 	}
 
+	Ref<GPipeline> ShaderGraph::GetPipeline()
+	{
+		std::string pipeline_name = GetName() + RENDER_PIPELINE_FILE_EXTENSION;
+		Ref<GPipeline> result = GenericAssetManager::get_instance()->TryGet<GPipeline>(pipeline_name);
+		if (result)
+		{
+			return result;
+		}
+
+		Ref<ShaderGraph> graph = GenericAssetManager::get_instance()->Get<ShaderGraph>(m_assetID);
+		ShaderGraphInstance instance;
+		instance.CreateInstance(graph);
+		result = instance.CompileGraph();
+		if (result)
+		{
+			result->SetShaderGraph(this);
+			result->SetType(m_type);
+		}
+		instance.DestroyInstance();
+
+		return result;
+	}
+
 	Ref<ShaderGraph> ShaderGraph::Deserialize(UUID id)
 	{
 		Ref<ShaderGraph> result;

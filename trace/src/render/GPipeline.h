@@ -13,8 +13,20 @@
 namespace trace {
 
 	class GTexture;
+	class ShaderGraph;
 
-	class TRACE_API GPipeline : public Resource
+	enum class MaterialType
+	{
+		NONE,
+		OPAQUE_LIT,
+		OPAQUE_UNLIT,
+		TRANSPARENT_LIT,
+		TRANSPARENT_UNLIT,
+		PARTICLE_LIT,
+		PARTICLE_UNLIT
+	};
+
+	class GPipeline : public Resource
 	{
 
 	public:
@@ -28,16 +40,6 @@ namespace trace {
 		PipelineStateDesc& GetDesc() { return m_desc; }
 
 		bool Initialize() { return false; };
-
-		void SetData(ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t slot = 0, uint32_t index = 0) {};
-		void SetTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t slot = 1, uint32_t index = 0) {};
-
-		void SetData(const std::string& resource_name ,ShaderResourceStage resource_scope, void* data, uint32_t size) {};
-		void SetTextureData(const std::string& resource_name, ShaderResourceStage resource_scope, GTexture* texture, uint32_t index = 0) {};
-
-		void SetMultipleData(ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t count, uint32_t slot = 0, uint32_t index = 0) {};
-		void SetMultipleTextureData(ShaderResourceStage resource_scope, GTexture* texture, uint32_t count, uint32_t slot = 1, uint32_t index = 0) {};
-
 
 		GHandle* GetRenderHandle() { return &m_renderHandle; }
 
@@ -53,6 +55,11 @@ namespace trace {
 		void SetPipelineType(uint32_t pipeline_type) { m_pipelineType = pipeline_type; }
 		void SetDesc(PipelineStateDesc& desc) { m_desc = desc; }
 
+		MaterialType GetType() { return m_type; }
+		void SetType(MaterialType type) { m_type = type; }
+		ShaderGraph* GetShaderGraph() { return m_shaderGraph; }
+		void SetShaderGraph(ShaderGraph* shader_graph) { m_shaderGraph = shader_graph; }
+
 		static Ref<GPipeline> Deserialize(UUID id);
 		static Ref<GPipeline> Deserialize(DataStream* stream);
 
@@ -64,6 +71,8 @@ namespace trace {
 		uint32_t m_pipelineType = 0;
 		GHandle m_renderHandle;
 		std::unordered_map<std::string, InternalMaterialData> m_shaderGraphVariables;
+		MaterialType m_type = MaterialType::OPAQUE_LIT;
+		ShaderGraph* m_shaderGraph = nullptr;
 
 	protected:
 

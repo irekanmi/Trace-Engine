@@ -22,6 +22,8 @@ namespace trace {
 		m_data.clear();
 		SetMaterialData(res);
 
+		m_type = pipeline->GetType();
+
 		if (!RenderFunc::InitializeMaterial(
 			this,
 			pipeline
@@ -48,6 +50,8 @@ namespace trace {
 		m_data.clear();
 		SetMaterialData(res);
 
+		m_type = pipeline->GetType();
+
 		for (auto& i : m_data)
 		{
 			auto it = prev.find(i.first);
@@ -68,7 +72,6 @@ namespace trace {
 			return false;
 		}
 
-		//RenderFunc::PostInitializeMaterial(mat.get(), pipeline);
 
 		return true;
 	}

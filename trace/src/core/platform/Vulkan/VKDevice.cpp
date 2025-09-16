@@ -538,6 +538,13 @@ namespace vk {
 
 		//device->m_pipeline = pipeline;
 		trace::VKPipeline* _pipeline = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
+
+		if (!_pipeline)
+		{
+			TRC_ERROR("These render handle is invalid -> {}, Function -> {}", (const void*)device->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		vkCmdBindPipeline(command_buffer->m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->m_handle);
 

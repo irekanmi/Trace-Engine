@@ -17,18 +17,7 @@ namespace trace {
 	
 
 	using MaterialData = std::unordered_map<std::string, InternalMaterialData>;
-	class GPipeline;
-
-	enum class MaterialType
-	{
-		NONE,
-		OPAQUE_LIT,
-		OPAQUE_UNLIT,
-		TRANSPARENT_LIT,
-		TRANSPARENT_UNLIT,
-		PARTICLE_LIT,
-		PARTICLE_UNLIT
-	};
+	
 
 	class MaterialInstance : public Resource
 	{

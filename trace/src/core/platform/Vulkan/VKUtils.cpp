@@ -2134,7 +2134,7 @@ namespace vk {
 
 		eastl::vector<VkVertexInputAttributeDescription>& attr_desc = attrs;
 
-		for (trace::InputLayout::Element& elem : layout.elements)
+		for (trace::Element& elem : layout.elements)
 		{
 			VkVertexInputAttributeDescription _att = {};
 			_att.binding = 0; // TODO
@@ -2216,7 +2216,7 @@ namespace vk {
 		{
 			for (uint32_t i = 0; i < state.num_render_target; i++)
 			{
-				trace::ColorBlendState::FrameInfo& _info = state.render_targets[i];
+				trace::FrameInfo& _info = state.render_targets[i];
 				// ------------------ TODO----------------------------------------
 				colorBlendAttachment[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
 					VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |

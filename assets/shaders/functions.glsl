@@ -183,7 +183,7 @@ vec3 normal_texuture_to_world_space(vec3 in_normal, vec4 in_tangent, vec3 normal
     _n = _n * 2.0f - 1.0f;
     vec3 obj_norm = normalize(in_normal); 
     vec3 _tangent = normalize( in_tangent.xyz - (dot(in_tangent.xyz, obj_norm) * obj_norm) );
-    vec3 _bitangent = cross(obj_norm, _tangent) * in_tangent.w;
+    vec3 _bitangent = normalize(cross(obj_norm, _tangent) * in_tangent.w);
     mat3 TBN = mat3(_tangent, _bitangent, obj_norm);
     return normalize(TBN * _n);
 }
@@ -390,7 +390,7 @@ vec3 normalFromGradientNoise(
     float dx = (hX - h) * strength;
     float dy = (hY - h) * strength;
 
-    return normalize(vec3(-dx, -dy, 1.0));
+    return vec3(-dx + 0.5f, -dy + 0.5f, 1.0f);
 }
 
 

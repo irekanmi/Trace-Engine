@@ -1111,6 +1111,337 @@ namespace trace {
 					return out_code;
 				}
 			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec4_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}},
+				{{GenericValueType::Vec4, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec4);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec4);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec4 {} = {} - {};)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec4_Float_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec4, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec4);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec4 {} = {} - vec4({});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec3_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec3);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec3);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec3 {} = {} - {};)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec3_Float_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec3);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec3 {} = {} - vec3({});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec2_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}},
+				{{GenericValueType::Vec2, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec2);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec2 {} = {} - {};)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec2_Float_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec2, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec2 {} = {} - vec2({});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Float_Function,
+			{
+				{GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Float);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(float {} = {} - {};)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Float_Function,
+			{
+				{GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Float);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(float {} = mix({}, {}, {});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Vec4_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec4, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec4);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec4);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec4 {} = mix({}, {}, {});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Vec3_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec3);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec3);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec3 {} = mix({}, {}, {});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Vec2_Function,
+			{
+				{GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec2, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec2);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(vec2 {} = mix({}, {}, {});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2);
+
+
+					return out_code;
+				}
+			}
 		}
 	};
 

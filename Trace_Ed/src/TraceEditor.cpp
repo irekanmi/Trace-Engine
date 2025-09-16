@@ -44,6 +44,7 @@
 #include "windows/SequenceWindow.h"
 #include "windows/AnimationWindow.h"
 #include "windows/ShaderGraphWindow.h"
+#include "windows/MaterialWindow.h"
 #include "resource/PrefabManager.h"
  
 
@@ -872,6 +873,10 @@ namespace trace {
 	void TraceEditor::OpenShaderGraph(std::string& path)
 	{
 		CreateEditorWindow<ShaderGraphWindow>(path, path);
+	}
+	void TraceEditor::OpenMaterial(std::string& path)
+	{
+		CreateEditorWindow<MaterialWindow>(path, path);
 	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{

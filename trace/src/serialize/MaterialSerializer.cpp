@@ -124,13 +124,13 @@ namespace trace {
 
 		for (auto& data : mat->GetMaterialData())
 		{
-			trace::UniformMetaData& meta_data = mat->GetRenderPipline()->GetSceneUniforms()[data.second.hash];
 			emit << YAML::BeginMap;
 			emit << YAML::Key << "Name" << YAML::Value << data.first;
 			emit << YAML::Key << "Type" << YAML::Value << (int)data.second.type;
 			emit << YAML::Key << "Offset" << YAML::Value << (int)data.second.offset;
+			emit << YAML::Key << "Hash" << YAML::Value << (int)data.second.hash;
 			emit << YAML::Key << "Value" << YAML::Value;
-			lambda(emit, meta_data.data_type, data.second.internal_data);
+			lambda(emit, data.second.type, data.second.internal_data);
 
 			emit << YAML::EndMap;
 		}
@@ -436,7 +436,11 @@ namespace trace {
 				if (val["Offset"])
 				{
 					it->second.offset = val["Offset"].as<uint32_t>();
-				}
+				}/*
+				if (val["Hash"])
+				{
+					it->second.hash = val["Hash"].as<uint32_t>();
+				}*/
 				it->second.type = type;
 				if (it != result->GetMaterialData().end())
 				{
@@ -444,7 +448,6 @@ namespace trace {
 				}
 			}
 		}
-		//result->RecreateMaterial(pipeline);
 
 		return result;
 	}

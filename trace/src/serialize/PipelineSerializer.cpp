@@ -10,6 +10,8 @@
 #include "backends/Renderutils.h"
 #include "render/Renderer.h"
 #include "reflection/SerializeTypes.h"
+#include "shader_graph/ShaderGraph.h"
+#include "serialize/GenericSerializer.h"
 
 
 #include "yaml_util.h"
@@ -38,93 +40,50 @@ namespace trace {
 		emit << YAML::Key << "Trace Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Pipeline Version" << YAML::Value << "0.0.0.0";
 		emit << YAML::Key << "Pipeline Type" << YAML::Value << pipeline->GetPipelineType();
-
-
-		PipelineStateDesc& desc = pipeline->GetDesc();
-		//emit << YAML::Key << "Vertex Shader" << YAML::Value << GetUUIDFromName(desc.vertex_shader->GetName());
-		//emit << YAML::Key << "Pixel Shader" << YAML::Value << GetUUIDFromName(desc.pixel_shader->GetName());
-		
-		emit << YAML::Key << "Vertex Shader" << YAML::Value << desc.vertex_shader->GetUUID();
-		emit << YAML::Key << "Pixel Shader" << YAML::Value << desc.pixel_shader->GetUUID();
-
-		// InputLayout
+		emit << YAML::Key << "Material Type" << YAML::Value << (int)pipeline->GetType();
+		if (pipeline->GetShaderGraph())
 		{
-			emit << YAML::Key << "InputLayout" << YAML::Value;
-			emit << YAML::BeginMap;
-			emit << YAML::Key << "Stride" << YAML::Value << (int)desc.input_layout.stride;
-			emit << YAML::Key << "Input Class" << YAML::Value << (int)desc.input_layout.input_class;
-			emit << YAML::Key << "Elements" << YAML::Value << YAML::BeginSeq;
+			emit << YAML::Key << "Shader Graph" << YAML::Value << pipeline->GetShaderGraph()->GetUUID();
+		}
+		else
+		{
 
-			for (auto& i : desc.input_layout.elements)
+
+
+			PipelineStateDesc& desc = pipeline->GetDesc();
+
+			emit << YAML::Key << "Vertex Shader" << YAML::Value << desc.vertex_shader->GetUUID();
+			emit << YAML::Key << "Pixel Shader" << YAML::Value << desc.pixel_shader->GetUUID();
+
+			// InputLayout
 			{
-				emit << YAML::BeginMap;
-				emit << YAML::Key << "Index" << YAML::Value << i.index;
-				emit << YAML::Key << "Offset" << YAML::Value << i.offset;
-				emit << YAML::Key << "Stride" << YAML::Value << i.stride;
-				emit << YAML::Key << "Format" << YAML::Value << (int)i.format;
+				emit << YAML::Key << "InputLayout" << YAML::Value;
+				Reflection::Serialize(desc.input_layout, &emit, nullptr, Reflection::SerializationFormat::YAML);
+			};
 
-				emit << YAML::EndMap;
-			}
-
-			emit << YAML::EndSeq;
-
-
-			emit << YAML::EndMap;
-		};
-
-		// RasterizerState
-		{
-			emit << YAML::Key << "RasterizerState" << YAML::Value;
-			emit << YAML::BeginMap;
-			emit << YAML::Key << "Cull Mode" << YAML::Value << (int) desc.rasteriser_state.cull_mode;
-			emit << YAML::Key << "Fill Mode" << YAML::Value << (int) desc.rasteriser_state.fill_mode;
-
-			emit << YAML::EndMap;
-
-		};
-
-		// ColorBlendState
-		{
-			emit << YAML::Key << "ColorBlendState" << YAML::Value;
-			emit << YAML::BeginMap;
-			emit << YAML::Key << "alpha_to_blend_coverage" << YAML::Value << desc.blend_state.alpha_to_blend_coverage;
-			emit << YAML::Key << "num_render_target" << YAML::Value << desc.blend_state.num_render_target;
-			emit << YAML::Key << "render_targets" << YAML::Value << YAML::BeginSeq;
-			for (uint32_t i = 0; i < desc.blend_state.num_render_target; i++)
+			// RasterizerState
 			{
-				emit << YAML::Key << "Index" << YAML::Value << i;
-				emit << YAML::Key << "Val" << YAML::Value << YAML::BeginMap;
-				emit << YAML::Key << "Src Color" << YAML::Value << (int)desc.blend_state.render_targets[0].src_color;
-				emit << YAML::Key << "Dst Color" << YAML::Value << (int)desc.blend_state.render_targets[0].dst_color;
-				emit << YAML::Key << "Color Op" << YAML::Value << (int)desc.blend_state.render_targets[0].color_op;
+				emit << YAML::Key << "RasterizerState" << YAML::Value;
+				Reflection::Serialize(desc.rasteriser_state, &emit, nullptr, Reflection::SerializationFormat::YAML);
 
-				emit << YAML::Key << "Src Alpha" << YAML::Value << (int)desc.blend_state.render_targets[0].src_alpha;
-				emit << YAML::Key << "Dst Alpha" << YAML::Value << (int)desc.blend_state.render_targets[0].dst_alpha;
-				emit << YAML::Key << "Alpha Op" << YAML::Value << (int)desc.blend_state.render_targets[0].alpha_op;
+			};
 
-				emit << YAML::EndMap;
-			}
+			// ColorBlendState
+			{
+				emit << YAML::Key << "ColorBlendState" << YAML::Value;
+				Reflection::Serialize(desc.blend_state, &emit, nullptr, Reflection::SerializationFormat::YAML);
+			};
 
-			emit << YAML::EndSeq;
-			emit << YAML::EndMap;
-		};
+			// DepthStencilState
+			{
+				emit << YAML::Key << "DepthStencilState" << YAML::Value;
+				Reflection::Serialize(desc.depth_sten_state, &emit, nullptr, Reflection::SerializationFormat::YAML);
 
-		// DepthStencilState
-		{
-			emit << YAML::Key << "DepthStencilState" << YAML::Value;
-			emit << YAML::BeginMap;
-			emit << YAML::Key << "depth_test_enable" << YAML::Value << desc.depth_sten_state.depth_test_enable;
-			emit << YAML::Key << "stencil_test_enable" << YAML::Value << desc.depth_sten_state.stencil_test_enable;
-			emit << YAML::Key << "Min Depth" << YAML::Value << desc.depth_sten_state.minDepth;
-			emit << YAML::Key << "Max Depth" << YAML::Value << desc.depth_sten_state.maxDepth;
+			};
 
-			emit << YAML::EndMap;
+			emit << YAML::Key << "Topology" << YAML::Value << (int)desc.topology;
 
-		};
-
-		emit << YAML::Key << "Topology" << YAML::Value << (int)desc.topology;
-
-
+		}
 		emit << YAML::EndMap;
 
 		FileHandle out_handle;
@@ -159,7 +118,7 @@ namespace trace {
 		stream->Write<InputClassification>(ds.input_layout.input_class);
 		int32_t input_layout_element_count = static_cast<int32_t>(ds.input_layout.elements.size());
 		stream->Write<int32_t>(input_layout_element_count);
-		stream->Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+		stream->Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(Element));
 
 		stream->Write<RasterizerState>(ds.rasteriser_state);
 
@@ -230,7 +189,7 @@ namespace trace {
 			stream.Write<InputClassification>(ds.input_layout.input_class);
 			int32_t input_layout_element_count = static_cast<int32_t>(ds.input_layout.elements.size());
 			stream.Write<int32_t>(input_layout_element_count);
-			stream.Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+			stream.Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(Element));
 
 			stream.Write<RasterizerState>(ds.rasteriser_state);
 
@@ -471,7 +430,25 @@ namespace trace {
 			return result;
 		}
 
+		if (data["Shader Graph"])
+		{
+			std::string shader_graph_path = GetPathFromUUID(data["Shader Graph"].as<uint64_t>()).string();
+			Ref<ShaderGraph> shader_graph = GenericSerializer::Deserialize<ShaderGraph>(shader_graph_path);
+			if (!shader_graph)
+			{
+				return Ref<GPipeline>();
+			}
+
+			return shader_graph->GetPipeline();
+		}
+
 		PipelineType type = (PipelineType)data["Pipeline Type"].as<int>();
+		MaterialType material_type = MaterialType::OPAQUE_LIT;
+		if (data["Material Type"])
+		{
+			material_type = (MaterialType)data["Material Type"].as<int>();
+		}
+
 		std::string vert_path = GetPathFromUUID(data["Vertex Shader"].as<uint64_t>()).string();
 		std::string frag_path = GetPathFromUUID(data["Pixel Shader"].as<uint64_t>()).string();
 				
@@ -483,10 +460,15 @@ namespace trace {
 		ShaderParser::generate_shader_resources(FragShader, s_res);
 
 		GRenderPass* pass = nullptr;
-		if ((type & PipelineType::Surface_Material) != 0)
+		switch (material_type)
 		{
-			pass = Renderer::get_instance()->GetRenderPass("GBUFFER_PASS");
+		case MaterialType::OPAQUE_LIT:
+		{
+			pass = (GRenderPass*)Renderer::get_instance()->GetAvaliableRenderPasses()["GBUFFER_PASS"];
+			break;
 		}
+		}
+
 
 		PipelineStateDesc _ds2 = {};
 		_ds2.vertex_shader = VertShader;
@@ -501,68 +483,28 @@ namespace trace {
 		InputLayout in_layout;
 		{
 			auto input = data["InputLayout"];
-			in_layout.input_class = (InputClassification)input["Input Class"].as<int>();
-			in_layout.stride = (uint32_t)input["Stride"].as<int>();
-
-			for (auto i : input["Elements"])
-			{
-				InputLayout::Element elem;
-				elem.index = (uint32_t)i["Index"].as<int>();
-				elem.offset = (uint32_t)i["Offset"].as<int>();
-				elem.stride = (uint32_t)i["Stride"].as<int>();
-				elem.format = (Format)i["Format"].as<int>();
-				in_layout.elements.push_back(elem);
-			}
+			Reflection::Deserialize(in_layout, &input, nullptr, Reflection::SerializationFormat::YAML);
 		};
 		_ds2.input_layout = in_layout;
 
 		RasterizerState rs;
 		{
 			auto _r = data["RasterizerState"];
-			rs.cull_mode = (CullMode)_r["Cull Mode"].as<int>();
-			rs.fill_mode = (FillMode)_r["Fill Mode"].as<int>();
+			Reflection::Deserialize(rs, &_r, nullptr, Reflection::SerializationFormat::YAML);
 		};
 		_ds2.rasteriser_state = rs;
 
 		ColorBlendState cbs;
 		{
 			auto _c = data["ColorBlendState"];
-			cbs.alpha_to_blend_coverage = _c["alpha_to_blend_coverage"].as<bool>();
-			if (_c["Alpha Op"])
-			{
-				cbs.render_targets[0].alpha_op = (BlendOp)_c["Alpha Op"].as<int>();
-				cbs.render_targets[0].color_op = (BlendOp)_c["Color Op"].as<int>();
-				cbs.render_targets[0].dst_alpha = (BlendFactor)_c["Dst Alpha"].as<int>();
-				cbs.render_targets[0].dst_color = (BlendFactor)_c["Dst Color"].as<int>();
-				cbs.render_targets[0].src_alpha = (BlendFactor)_c["Src Alpha"].as<int>();
-				cbs.render_targets[0].src_color = (BlendFactor)_c["Src Color"].as<int>();
-			}
-			else if (_c["num_render_target"])
-			{
-				cbs.num_render_target = _c["num_render_target"].as<uint32_t>();
-
-				for (auto& node : _c["render_targets"])
-				{
-					uint32_t i = node["Index"].as<uint32_t>();
-					auto _n = node["Val"];
-					cbs.render_targets[i].alpha_op = (BlendOp)_n["Alpha Op"].as<int>();
-					cbs.render_targets[i].color_op = (BlendOp)_n["Color Op"].as<int>();
-					cbs.render_targets[i].dst_alpha = (BlendFactor)_n["Dst Alpha"].as<int>();
-					cbs.render_targets[i].dst_color = (BlendFactor)_n["Dst Color"].as<int>();
-					cbs.render_targets[i].src_alpha = (BlendFactor)_n["Src Alpha"].as<int>();
-					cbs.render_targets[i].src_color = (BlendFactor)_n["Src Color"].as<int>();
-				}
-			}
+			Reflection::Deserialize(cbs, &_c, nullptr, Reflection::SerializationFormat::YAML);
 		}
 		_ds2.blend_state = cbs;
 
 		DepthStencilState dss;
 		{
 			auto _d = data["DepthStencilState"];
-			dss.depth_test_enable = _d["depth_test_enable"].as<bool>();
-			dss.stencil_test_enable = _d["stencil_test_enable"].as<bool>();
-			dss.minDepth = _d["Min Depth"].as<float>();
-			dss.maxDepth = _d["Max Depth"].as<float>();
+			Reflection::Deserialize(dss, &_d, nullptr, Reflection::SerializationFormat::YAML);;
 		};
 		_ds2.depth_sten_state = dss;
 
@@ -609,7 +551,7 @@ namespace trace {
 		int input_layout_element_count = 0;
 		stream->Read<int>(input_layout_element_count);
 		desc.input_layout.elements.resize(input_layout_element_count);
-		stream->Read(desc.input_layout.elements.data(), input_layout_element_count * sizeof(InputLayout::Element));
+		stream->Read(desc.input_layout.elements.data(), input_layout_element_count * sizeof(Element));
 
 		stream->Read<RasterizerState>(desc.rasteriser_state);
 

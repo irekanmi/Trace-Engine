@@ -214,6 +214,12 @@ namespace vk {
             TRC_ERROR("Invalid render handle, {} || {}, Function -> {}", (const void*)mat_instance->GetRenderHandle()->m_internalData, __FUNCTION__);
             return false;
         }
+        
+        if (!mat_instance->GetRenderPipline()->GetRenderHandle()->m_internalData)
+        {
+            TRC_ERROR("Invalid render handle, {} || {}, Function -> {}", (const void*)mat_instance->GetRenderHandle()->m_internalData, __FUNCTION__);
+            return false;
+        }
 
         trace::VKMaterialData* _handle = (trace::VKMaterialData*)mat_instance->GetRenderHandle()->m_internalData;
         trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;

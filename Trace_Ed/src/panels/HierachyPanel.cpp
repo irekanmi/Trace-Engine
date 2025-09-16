@@ -304,7 +304,14 @@ namespace trace {
 			{
 				UUID uuid = entity.GetID();
 				if(entity.HasComponent<PrefabComponent>()) ImGui::SetDragDropPayload("Prefab Entity", &uuid, sizeof(UUID));
-				else ImGui::SetDragDropPayload("Entity", &uuid, sizeof(UUID));
+				else
+				{
+					uintptr_t scene_loc = (uintptr_t)current_active_scene;
+					char data[16];
+					memcpy(data, &uuid, sizeof(UUID));
+					memcpy(data + sizeof(UUID), &scene_loc, sizeof(uintptr_t));
+					ImGui::SetDragDropPayload("Entity", data, 16);
+				}
 				ImGui::EndDragDropSource();
 			}
 

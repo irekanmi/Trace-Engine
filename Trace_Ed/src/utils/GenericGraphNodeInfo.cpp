@@ -536,7 +536,7 @@ namespace trace {
 		{
 			ShaderNodeType::Add_Float_Function,
 			{
-			"Multiply Float",
+			"Add Float",
 			{"A", "B"},
 			{"Value"},
 			[](GenericNode* node, GenericGraphEditor* editor)
@@ -776,6 +776,164 @@ namespace trace {
 			{
 				ConstantNode* _node = (ConstantNode*)node;
 
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec4_Function,
+			{
+			"Subtract Vec4",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat4("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat4("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec4_Float_Function,
+			{
+			"Subtract Vec4_Float",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat4("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec3_Function,
+			{
+			"Subtract Vec3",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat3("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat3("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec3_Float_Function,
+			{
+			"Subtract Vec3_Float",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat3("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec2_Function,
+			{
+			"Subtract Vec2",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat2("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Vec2_Float_Function,
+			{
+			"Subtract Vec2_Float",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Subtract_Float_Function,
+			{
+			"Subtract Float",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Float_Function,
+			{
+			"Lerp Float",
+			{"A", "B", "t"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Vec4_Function,
+			{
+			"Lerp Vec4",
+			{"A", "B", "t"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat4("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat4("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Vec3_Function,
+			{
+			"Lerp Vec3",
+			{"A", "B", "t"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat3("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat3("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Lerp_Vec2_Function,
+			{
+			"Lerp Vec2",
+			{"A", "B", "t"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat2("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
 			}
 			}
 		}

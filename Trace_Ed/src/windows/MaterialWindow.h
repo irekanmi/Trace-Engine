@@ -3,14 +3,13 @@
 #include "EditorWindow.h"
 #include "render/Camera.h"
 #include "scene/Scene.h"
-#include "shader_graph/ShaderGraph.h"
+#include "render/Material.h"
 
 namespace trace {
 
-	class GenericGraphEditor;
 	class InspectorPanel;
 
-	class ShaderGraphWindow : public EditorWindow
+	class MaterialWindow : public EditorWindow
 	{
 
 	public:
@@ -24,24 +23,17 @@ namespace trace {
 		virtual void OnEvent(Event* p_event);
 
 	private:
-		Ref<ShaderGraph> m_shaderGraph;
+		Ref<MaterialInstance> m_material;
 		Camera m_camera;
 		Scene* m_scene;
 		int32_t view_index;
-		GenericGraphEditor* m_editor;
 		InspectorPanel* m_inspector;
 		glm::vec2 m_viewportSize;
-		std::string graph_editor_name;
 		std::string inspector_name;
 		std::string viewport_name;
 		int gizmo_mode = 1;
-		std::string graph_path;
-		Ref<MaterialInstance> m_material;
-		ShaderGraphInstance graph_instance;
-		bool build_graph = false;
-		uint32_t skip_frames = 0;
+		std::string material_path;
 		UUID visual_id = 0;
-		Ref<GPipeline> render_pipeline;
 
 
 

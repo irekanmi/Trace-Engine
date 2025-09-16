@@ -1,9 +1,8 @@
 
-#include "ShaderGraphWindow.h"
-#include "serialize/GenericSerializer.h"
+#include "MaterialWindow.h"
+#include "serialize/MaterialSerializer.h"
 #include "render/Renderer.h"
 #include "../EditorRenderComposer.h"
-#include "../panels/GenericGraphEditor.h"
 #include "../panels/InspectorPanel.h"
 #include "../utils/ImGui_utils.h"
 #include "core/input/Input.h"
@@ -17,18 +16,18 @@ namespace trace {
 
 
 
-	bool ShaderGraphWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
+	bool MaterialWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
 	{
-		Ref<ShaderGraph> graph = GenericSerializer::Deserialize<ShaderGraph>(file_path);
-		if (!graph)
+		Ref<MaterialInstance> material = MaterialSerializer::Deserialize(file_path);
+		if (!material)
 		{
 			return false;
 		}
-		std::string asset_name = graph->GetName();
+		std::string asset_name = material->GetName();
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
 		RenderGraphController scene_render_controller = {};
-		scene_render_controller.should_render = [this]()->bool { return m_isOpen && !build_graph; };
+		scene_render_controller.should_render = [this]()->bool { return m_isOpen; };
 		scene_render_controller.build_graph = [composer, this](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 		{
 			composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
@@ -37,7 +36,7 @@ namespace trace {
 		view_index = composer->BindRenderGraphController(scene_render_controller, asset_name);
 		if (view_index < 0)
 		{
-			TRC_ERROR("{} asset is already opened for editing, Function: {}", graph->GetName(), __FUNCTION__);
+			TRC_ERROR("{} asset is already opened for editing, Function: {}", material->GetName(), __FUNCTION__);
 			return false;
 		}
 
@@ -56,26 +55,12 @@ namespace trace {
 
 
 
-		m_shaderGraph = graph;
-		m_editor = new GenericGraphEditor;//TODO: Use custom allocator
+		m_material = material;
 		m_inspector = new InspectorPanel;//TODO: Use custom allocator
 		m_scene = new Scene;//TODO: Use custom allocator
 		m_scene->m_path = asset_name;
 		m_scene->Create();
 
-		graph_instance.CreateInstance(m_shaderGraph);
-
-		Ref<GPipeline> pipeline = m_shaderGraph->GetPipeline();
-		render_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle_<GPipeline>(m_shaderGraph->GetName() + "duplicate", pipeline->GetDesc());
-		render_pipeline->SetType(pipeline->GetType());
-		render_pipeline->SetShaderGraph(m_shaderGraph.get());
-		MaterialData& mat_data = render_pipeline->GetShaderGraphVariables();
-		mat_data = pipeline->GetShaderGraphVariables();
-
-
-		m_material = GenericAssetManager::get_instance()->CreateAssetHandle_<MaterialInstance>(asset_name + MATERIAL_FILE_EXTENSION, render_pipeline);
-
-		m_material->SetType(m_shaderGraph->GetType());
 
 		Entity model = m_scene->CreateEntity();
 		model.AddComponent<ModelComponent>()._model = DefaultAssetsManager::Sphere;
@@ -83,7 +68,7 @@ namespace trace {
 		visual_id = model.GetID();
 		m_scene->EnableEntity(model);
 		model.GetComponent<TransformComponent>()._transform.Scale(7.0f);
-		
+
 		Entity floor = m_scene->CreateEntity();
 		floor.AddComponent<ModelComponent>()._model = DefaultAssetsManager::Cube;
 		floor.AddComponent<ModelRendererComponent>()._material = DefaultAssetsManager::default_material;
@@ -92,39 +77,26 @@ namespace trace {
 		Transform& transform = floor.GetComponent<TransformComponent>()._transform;
 		transform.SetPosition(glm::vec3(0.0f, -15.0f, 0.0f));
 		transform.SetScale(glm::vec3(100.0f, 1.0f, 100.0f));
-		
 
-		graph_editor_name = "Graph Editor###" + asset_name + std::to_string(0);
+
 		inspector_name = "Material Data###" + asset_name + std::to_string(1);
 		viewport_name = "Viewport###" + asset_name + std::to_string(2);
 
-		m_editor->Init();
-		m_editor->SetGraph(m_shaderGraph.get(), asset_name);
-		if (GenericNode* final_node = m_shaderGraph->GetFragmentShaderNode())
-		{
-			m_editor->SetCurrentNode(final_node);
-		}
 
-		graph_path = file_path;
+		material_path = file_path;
 		m_name = asset_name;
 		return true;
 	}
 
-	void ShaderGraphWindow::OnDestroy(TraceEditor* editor)
+	void MaterialWindow::OnDestroy(TraceEditor* editor)
 	{
-		m_editor->Shutdown();
 
 
-		graph_instance.DestroyInstance();
 
+		m_material.free();
 		m_scene->Destroy();
-		m_shaderGraph.free();
-		delete m_editor;
 		delete m_scene;
 
-		m_material->m_refCount = 1;
-		m_material.free();
-		render_pipeline.free();
 
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
@@ -132,48 +104,17 @@ namespace trace {
 
 	}
 
-	void ShaderGraphWindow::OnUpdate(float deltaTime)
+	void MaterialWindow::OnUpdate(float deltaTime)
 	{
-		if (build_graph)
-		{
-			skip_frames++;
-			if (skip_frames > 4)
-			{
-
-				graph_instance.DestroyInstance();
-				graph_instance.CreateInstance(m_shaderGraph);
-				if (Ref<GPipeline> pipeline = graph_instance.CompileGraph())
-				{
-					pipeline->SetShaderGraph(m_shaderGraph.get());
-					pipeline->SetType(m_shaderGraph->GetType());
-
-					render_pipeline->m_refCount = 1;
-					render_pipeline.free();
-
-					render_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle_<GPipeline>(m_shaderGraph->GetName() + "duplicate", pipeline->GetDesc());
-
-					render_pipeline->SetType(pipeline->GetType());
-					render_pipeline->SetShaderGraph(m_shaderGraph.get());
-					MaterialData& mat_data = render_pipeline->GetShaderGraphVariables();
-					mat_data = pipeline->GetShaderGraphVariables();
-
-					m_material->RecreateMaterial(render_pipeline);
-				}
-				build_graph = false;
-			}
-			return;
-		}
 
 		if (!m_isOpen)
 		{
 			return;
 		}
 
-		
+
 
 		m_scene->ResolveHierachyTransforms();
-		m_editor->Update(deltaTime);
-
 
 		glm::vec3 light_dir = glm::normalize(glm::vec3(0.5f, -0.5f, 0.0f));
 		Renderer* renderer = Renderer::get_instance();
@@ -198,50 +139,29 @@ namespace trace {
 
 	}
 
-	void ShaderGraphWindow::OnRender(float deltaTime)
+	void MaterialWindow::OnRender(float deltaTime)
 	{
-		if (build_graph)
-		{
-			return;
-		}
-
-		ImGui::Begin(graph_editor_name.c_str());
-		m_editor->Render(deltaTime);
-
-		ImVec2 min = ImGui::GetWindowPos();
-		ImVec2 max = min + ImGui::GetWindowSize();
-		is_focused = is_focused || ImGui::IsMouseHoveringRect(min, max);
-		ImGui::End();
-
+		
 		ImGui::Begin(inspector_name.c_str());
 		m_inspector->DrawEditMaterial(m_material, m_material->GetMaterialData());
 		ImGui::End();
 
 	}
 
-	void ShaderGraphWindow::DockChildWindows()
+	void MaterialWindow::DockChildWindows()
 	{
 		ImGuiID first_left;
 		ImGuiID first_right;
-		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.225f, &first_left, &first_right);
+		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.75f, &first_left, &first_right);
 		ImGui::DockBuilderDockWindow(viewport_name.c_str(), first_left);
-		ImGuiID second_left;
-		ImGuiID second_right;
-		ImGui::DockBuilderSplitNode(first_right, ImGuiDir_Left, 0.75f, &second_left, &second_right);
-		ImGui::DockBuilderDockWindow(graph_editor_name.c_str(), second_left);
-		ImGui::DockBuilderDockWindow(inspector_name.c_str(), second_right);
+		ImGui::DockBuilderDockWindow(inspector_name.c_str(), first_right);
 	}
 
-	void ShaderGraphWindow::RenderViewport(std::vector<void*>& texture_handles)
+	void MaterialWindow::RenderViewport(std::vector<void*>& texture_handles)
 	{
 		void* texture = texture_handles[view_index];
 
 		if (!texture)
-		{
-			return;
-		}
-
-		if (build_graph)
 		{
 			return;
 		}
@@ -266,7 +186,7 @@ namespace trace {
 		ImGui::PopStyleColor();
 	}
 
-	void ShaderGraphWindow::OnEvent(Event* p_event)
+	void MaterialWindow::OnEvent(Event* p_event)
 	{
 		bool ctrl = InputSystem::get_instance()->GetKey(Keys::KEY_CONTROL) || InputSystem::get_instance()->GetKey(Keys::KEY_LCONTROL) || InputSystem::get_instance()->GetKey(Keys::KEY_RCONTROL);
 		bool shift = InputSystem::get_instance()->GetKey(Keys::KEY_SHIFT) || InputSystem::get_instance()->GetKey(Keys::KEY_LSHIFT) || InputSystem::get_instance()->GetKey(Keys::KEY_RSHIFT);
@@ -281,7 +201,7 @@ namespace trace {
 			{
 				if (ctrl && !shift)
 				{
-					GenericSerializer::Serialize<ShaderGraph>(m_shaderGraph, graph_path);
+					MaterialSerializer::Serialize(m_material, material_path);
 				}
 				else if (ctrl && shift)
 				{
@@ -292,11 +212,6 @@ namespace trace {
 			}
 			case Keys::KEY_B:
 			{
-				if (ctrl)
-				{
-					build_graph = true;
-					skip_frames = 0;
-				}
 				break;
 			}
 			case Keys::KEY_C:
@@ -304,7 +219,7 @@ namespace trace {
 				if (ctrl && shift)
 				{
 					Entity entity = m_scene->GetEntity(visual_id);
-					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Cube;					
+					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Cube;
 				}
 				break;
 			}
@@ -313,7 +228,7 @@ namespace trace {
 				if (ctrl && shift)
 				{
 					Entity entity = m_scene->GetEntity(visual_id);
-					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Plane;					
+					entity.GetComponent<ModelComponent>()._model = DefaultAssetsManager::Plane;
 				}
 				break;
 			}
@@ -322,7 +237,6 @@ namespace trace {
 		}
 		}
 
-		m_editor->OnEvent(p_event);
 	}
 
 

@@ -36,6 +36,22 @@ namespace trace {
 	extern void ImportOBJ(const std::string& path, std::vector<std::string>& out_models, bool create_materials);
 
 
+	enum CreateItem
+	{
+		MATERIAL = 1,
+		PIPELINE,
+		FOLDER,
+		SCENE,
+		ANIMATION_CLIP,
+		ANIMATION_GRAPH,
+		ANIMATION_SEQUENCE,
+		HUMANOID_RIG,
+		FEATURE_DB,
+		MMT_INFO,
+		PARTICLE_EFFECT,
+		PARTICLE_GENERATOR,
+	};
+
 	static bool rename_file = false;
 	static float thumbnail_size = 96.0f;
 	std::unordered_map<std::string, std::function<void(std::filesystem::path&)>> process_callbacks;
@@ -107,44 +123,7 @@ namespace trace {
 
 			extensions_callbacks[MATERIAL_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
-				AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
-				assets_edit.editMaterialPath = path;
-				/*editor->GetInspectorPanel()->SetDrawCallbackFn([editor]() { editor->GetContentBrowser()->DrawEditMaterial(); },
-					[editor]()
-					{
-						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
-						std::string filename = assets_edit.editMaterialPath.filename().string();
-						assets_edit.editMaterial = GenericAssetManager::get_instance()->Get<MaterialInstance>(filename);
-						if (!assets_edit.editMaterial)
-						{
-							assets_edit.editMaterial = MaterialSerializer::Deserialize(assets_edit.editMaterialPath.string());
-						}
-						assets_edit.editMaterialPipe = assets_edit.editMaterial->GetRenderPipline();
-
-						if (assets_edit.editMaterial)
-						{
-							assets_edit.materialDataCache.clear();
-							assets_edit.materialDataCache = assets_edit.editMaterial->GetMaterialData();
-						}
-
-					},
-					[editor]()
-					{
-						AssetsEdit& assets_edit = editor->GetContentBrowser()->GetAssetsEdit();
-						if (assets_edit.editMaterialPipeChanged)
-						{
-							assets_edit.editMaterial->RecreateMaterial(assets_edit.editMaterialPipe);
-							assets_edit.editMaterialPipeChanged = false;
-						}
-						assets_edit.editMaterial->SetMaterialData(assets_edit.materialDataCache);
-						RenderFunc::PostInitializeMaterial(assets_edit.editMaterial.get(), assets_edit.editMaterialPipe);
-
-
-						assets_edit.editMaterial.free();
-						assets_edit.materialDataCache.clear();
-						assets_edit.editMaterialPipe.free();
-
-					});*/
+				editor->OpenMaterial(path.string());
 			};
 
 			
@@ -422,9 +401,13 @@ namespace trace {
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
 			{
-				/*UUID uuid = *(UUID*)payload->Data;
-				prefab_entity = editor->GetCurrentScene()->GetEntity(uuid);
-				prefab_popup = true;*/
+				uintptr_t scene_loc = 0;
+				UUID uuid = *(UUID*)payload->Data;
+				memcpy(&uuid, payload->Data, sizeof(UUID));
+				memcpy(&scene_loc, (char*)payload->Data + sizeof(UUID), sizeof(uintptr_t));
+				Scene* src_scene = (Scene*)scene_loc;
+				prefab_entity = src_scene->GetEntity(uuid);
+				prefab_popup = true;
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -653,21 +636,7 @@ namespace trace {
 	void ContentBrowser::OnWindowPopup()
 	{
 		TraceEditor* editor = TraceEditor::get_instance();
-		enum CreateItem
-		{
-			MATERIAL = 1,
-			PIPELINE,
-			FOLDER,
-			SCENE,
-			ANIMATION_CLIP,
-			ANIMATION_GRAPH,
-			ANIMATION_SEQUENCE,
-			HUMANOID_RIG,
-			FEATURE_DB,
-			MMT_INFO,
-			PARTICLE_EFFECT,
-			PARTICLE_GENERATOR,
-		};
+		
 
 		static CreateItem c_item = (CreateItem)0;
 
@@ -1183,6 +1152,9 @@ namespace trace {
 
 		TraceEditor* editor = TraceEditor::get_instance();
 
+		static CreateItem s_item = (CreateItem)0;
+		static std::string file_path = "";
+
 		if (ImGui::BeginPopupContextItem())
 		{
 			if(ImGui::MenuItem("Rename"))
@@ -1191,10 +1163,68 @@ namespace trace {
 				m_renamePath = path;
 			}
 			if(ImGui::MenuItem("Delete")){}
+			if (path.extension() == SHADER_GRAPH_FILE_EXTENSION)
+			{
+				if (ImGui::MenuItem("Create Material"))
+				{
+					s_item = CreateItem::MATERIAL;
+					file_path = path.string();
+				}
+			}
+
+
 			ImGui::EndPopup();
 		}
 
-		
+		switch (s_item)
+		{
+		case MATERIAL:
+		{
+			if (file_path != path.string())
+			{
+				break;
+			}
+			std::string res;
+			if (editor->InputTextPopup("Material Name", res))
+			{
+				if (!res.empty())
+				{
+					s_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + MATERIAL_FILE_EXTENSION);
+					if (id == 0)
+					{
+						Ref<ShaderGraph> shader_graph = GenericSerializer::Deserialize<ShaderGraph>(file_path);
+						Ref<GPipeline> sp = shader_graph->GetPipeline();
+						UUID sp_id = GetUUIDFromName(shader_graph->GetName() + RENDER_PIPELINE_FILE_EXTENSION);
+						if (sp_id == 0 && sp)
+						{
+							PipelineSerializer::Serialize(sp, file_path + RENDER_PIPELINE_FILE_EXTENSION);
+						}
+						Ref<MaterialInstance> mat = GenericAssetManager::get_instance()->CreateAssetHandle<MaterialInstance>(res + MATERIAL_FILE_EXTENSION, sp);
+						if (mat)
+						{
+							std::string path = (m_currentDir / (res + MATERIAL_FILE_EXTENSION)).string();
+							MaterialSerializer::Serialize(mat, path);
+							std::string filename = res + MATERIAL_FILE_EXTENSION;
+							UUID new_id = STR_ID(filename);
+							m_allFilesID[res + MATERIAL_FILE_EXTENSION] = new_id;
+							m_allIDPath[new_id] = path;
+							ProcessAllDirectory(true);
+							OnDirectoryChanged();
+						}
+
+						file_path = "";
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + MATERIAL_FILE_EXTENSION);
+					}
+				}
+			}
+			else s_item = (CreateItem)0;
+			break;
+		}
+		}
 
 	}
 	void ContentBrowser::RenameFile(std::filesystem::path& path, std::string& new_name)

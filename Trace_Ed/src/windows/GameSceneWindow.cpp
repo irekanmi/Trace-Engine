@@ -113,6 +113,7 @@ namespace trace {
 				m_currentScene.free();
 
 				m_currentScene = m_nextScene;
+				m_currentSceneName = m_nextScene->GetName();
 				m_nextScene.free();
 			}
 
@@ -393,6 +394,11 @@ namespace trace {
 	}
 	void GameSceneWindow::LoadScene(const std::string& file_path)
 	{
+		if (m_currentState == EditorState::ScenePlay)
+		{
+			return;
+		}
+
 		m_currentScene = SceneSerializer::Deserialize(file_path);
 		m_editScene = m_currentScene;
 		m_currentScenePath = file_path;
@@ -412,9 +418,13 @@ namespace trace {
 	}
 	void GameSceneWindow::SaveScene()
 	{
+		if (m_currentState == EditorState::ScenePlay)
+		{
+			return;
+		}
+
 		if (m_currentScenePath.empty())
 		{
-			m_currentScenePath = SaveSceneAs();
 			return;
 		}
 		if (m_currentScene)
@@ -520,6 +530,8 @@ namespace trace {
 		}
 
 		m_nextScene = scene;
+		m_currentScenePath = GetPathFromUUID(m_nextScene->GetUUID()).string();
+		m_currentSceneName = m_nextScene->GetName();
 
 		return true;
 	}

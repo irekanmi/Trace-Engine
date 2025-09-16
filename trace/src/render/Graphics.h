@@ -6,6 +6,7 @@
 
 #include <any>
 #include <vector>
+#include <array>
 #include <string>
 #include "glm/glm.hpp"
 
@@ -325,17 +326,18 @@ namespace trace {
 	};
 
 
+	struct Element
+	{
+		uint32_t index = 0;
+		uint32_t offset = 0;
+		uint32_t stride = 0;
+		Format format = Format::NONE;
+	};
+
 	struct InputLayout
 	{
 		uint32_t stride = 0;
 		InputClassification input_class = InputClassification::PER_VERTEX_DATA;
-		struct Element
-		{
-			uint32_t index = 0;
-			uint32_t offset = 0;
-			uint32_t stride = 0;
-			Format format = Format::NONE;
-		};
 		std::vector<Element> elements;
 	};
 
@@ -354,21 +356,22 @@ namespace trace {
 		float maxDepth = 1.0f;
 	};
 
+	struct FrameInfo
+	{
+		BlendFactor src_color = BlendFactor::BLEND_NONE;
+		BlendFactor dst_color = BlendFactor::BLEND_NONE;
+		BlendOp color_op = BlendOp::BLEND_OP_NONE;
+
+		BlendFactor src_alpha = BlendFactor::BLEND_NONE;
+		BlendFactor dst_alpha = BlendFactor::BLEND_NONE;
+		BlendOp alpha_op = BlendOp::BLEND_OP_NONE;
+	};
+
 	struct ColorBlendState
 	{
 		bool alpha_to_blend_coverage = false; // TODO
-		struct FrameInfo
-		{
-			BlendFactor src_color = BlendFactor::BLEND_NONE;
-			BlendFactor dst_color = BlendFactor::BLEND_NONE;
-			BlendOp color_op = BlendOp::BLEND_OP_NONE;
 
-			BlendFactor src_alpha = BlendFactor::BLEND_NONE;
-			BlendFactor dst_alpha = BlendFactor::BLEND_NONE;
-			BlendOp alpha_op = BlendOp::BLEND_OP_NONE;
-		};
-
-		FrameInfo render_targets[5];//TODO: Make size configurable
+		std::array<FrameInfo, 5> render_targets;//TODO: Make size configurable
 		uint32_t num_render_target = 1;
 
 	};
@@ -454,7 +457,7 @@ namespace trace {
 			layout.stride = sizeof(Vertex);
 			layout.input_class = InputClassification::PER_VERTEX_DATA;
 
-			InputLayout::Element _pos;
+			Element _pos;
 			_pos.format = Format::R32G32B32_FLOAT;
 			_pos.index = 0;
 			_pos.offset = offsetof(Vertex, pos);
@@ -462,7 +465,7 @@ namespace trace {
 
 			layout.elements.push_back(_pos);
 
-			InputLayout::Element _normal;
+			Element _normal;
 			_normal.format = Format::R32G32B32_FLOAT;
 			_normal.index = 1;
 			_normal.offset = offsetof(Vertex, normal);
@@ -470,7 +473,7 @@ namespace trace {
 
 			layout.elements.push_back(_normal);
 
-			InputLayout::Element _texCoord;
+			Element _texCoord;
 			_texCoord.format = Format::R32G32_FLOAT;
 			_texCoord.index = 2;
 			_texCoord.offset = offsetof(Vertex, texCoord);
@@ -478,7 +481,7 @@ namespace trace {
 
 			layout.elements.push_back(_texCoord);
 
-			InputLayout::Element _tangent;
+			Element _tangent;
 			_tangent.format = Format::R32G32B32A32_FLOAT;
 			_tangent.index = 3;
 			_tangent.offset = offsetof(Vertex, tangent);
@@ -511,7 +514,7 @@ namespace trace {
 			layout.stride = sizeof(SkinnedVertex);
 			layout.input_class = InputClassification::PER_VERTEX_DATA;
 
-			InputLayout::Element _pos;
+			Element _pos;
 			_pos.format = Format::R32G32B32_FLOAT;
 			_pos.index = 0;
 			_pos.offset = offsetof(SkinnedVertex, pos);
@@ -519,7 +522,7 @@ namespace trace {
 
 			layout.elements.push_back(_pos);
 
-			InputLayout::Element _normal;
+			Element _normal;
 			_normal.format = Format::R32G32B32_FLOAT;
 			_normal.index = 1;
 			_normal.offset = offsetof(SkinnedVertex, normal);
@@ -527,7 +530,7 @@ namespace trace {
 
 			layout.elements.push_back(_normal);
 
-			InputLayout::Element _texCoord;
+			Element _texCoord;
 			_texCoord.format = Format::R32G32_FLOAT;
 			_texCoord.index = 2;
 			_texCoord.offset = offsetof(SkinnedVertex, texCoord);
@@ -535,7 +538,7 @@ namespace trace {
 
 			layout.elements.push_back(_texCoord);
 
-			InputLayout::Element _tangent;
+			Element _tangent;
 			_tangent.format = Format::R32G32B32A32_FLOAT;
 			_tangent.index = 3;
 			_tangent.offset = offsetof(SkinnedVertex, tangent);
@@ -543,7 +546,7 @@ namespace trace {
 
 			layout.elements.push_back(_tangent);
 
-			InputLayout::Element _bones_id;
+			Element _bones_id;
 			_bones_id.format = Format::R32G32B32A32_SINT;
 			_bones_id.index = 4;
 			_bones_id.offset = offsetof(SkinnedVertex, bones_id);
@@ -552,7 +555,7 @@ namespace trace {
 			layout.elements.push_back(_bones_id);
 
 
-			InputLayout::Element _bone_weights;
+			Element _bone_weights;
 			_bone_weights.format = Format::R32G32B32A32_FLOAT;
 			_bone_weights.index = 5;
 			_bone_weights.offset = offsetof(SkinnedVertex, bone_weights);
@@ -581,7 +584,7 @@ namespace trace {
 			layout.stride = sizeof(Vertex2D);
 			layout.input_class = InputClassification::PER_VERTEX_DATA;
 
-			InputLayout::Element _pos;
+			Element _pos;
 			_pos.format = Format::R32G32_FLOAT;
 			_pos.index = 0;
 			_pos.offset = offsetof(Vertex2D, pos);
@@ -589,7 +592,7 @@ namespace trace {
 
 			layout.elements.push_back(_pos);
 
-			InputLayout::Element _texCoord;
+			Element _texCoord;
 			_texCoord.format = Format::R32G32_FLOAT;
 			_texCoord.index = 1;
 			_texCoord.offset = offsetof(Vertex2D, texCoord);
@@ -618,7 +621,7 @@ namespace trace {
 			layout.stride = sizeof(TextVertex);
 			layout.input_class = InputClassification::PER_VERTEX_DATA;
 
-			InputLayout::Element _pos;
+			Element _pos;
 			_pos.format = Format::R32G32B32_FLOAT;
 			_pos.index = 0;
 			_pos.offset = offsetof(TextVertex, pos);
@@ -626,7 +629,7 @@ namespace trace {
 
 			layout.elements.push_back(_pos);
 
-			InputLayout::Element _color;
+			Element _color;
 			_color.format = Format::R32G32B32_FLOAT;
 			_color.index = 1;
 			_color.offset = offsetof(TextVertex, color);
@@ -634,7 +637,7 @@ namespace trace {
 
 			layout.elements.push_back(_color);
 
-			InputLayout::Element _texCoord;
+			Element _texCoord;
 			_texCoord.format = Format::R32G32_FLOAT;
 			_texCoord.index = 2;
 			_texCoord.offset = offsetof(TextVertex, texCoord);

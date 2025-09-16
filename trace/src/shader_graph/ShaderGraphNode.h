@@ -52,7 +52,18 @@ namespace trace {
 		Sin_Float,
 		Radians_Float,
 		Fract_Float,
-		Screen_UV_Variable
+		Screen_UV_Variable,
+		Subtract_Vec4_Function,
+		Subtract_Vec4_Float_Function,
+		Subtract_Vec3_Function,
+		Subtract_Vec3_Float_Function,
+		Subtract_Vec2_Function,
+		Subtract_Vec2_Float_Function,
+		Subtract_Float_Function,
+		Lerp_Float_Function,
+		Lerp_Vec4_Function,
+		Lerp_Vec3_Function,
+		Lerp_Vec2_Function
 	};
 
 	struct ShaderNodeMetaData

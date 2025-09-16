@@ -27,6 +27,8 @@ namespace trace {
 		CullMode GetCullMode() { return m_cullMode; }
 		void SetCullMode(CullMode cull_mode) { m_cullMode = cull_mode; }
 
+		Ref<GPipeline> GetPipeline();
+
 		static Ref<ShaderGraph> Deserialize(UUID id);
 		static Ref<ShaderGraph> Deserialize(DataStream* stream);
 
