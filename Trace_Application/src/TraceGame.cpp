@@ -5,6 +5,8 @@
 #include "core/Coretypes.h"
 #include "serialize/FileStream.h"
 #include "builder/ProjectBuilder.h"
+#include "resource/GenericAssetManager.h"
+#include "render/RenderComposer.h"
 
 #include "scripting/ScriptEngine.h"
 #include "core/events/Events.h"
@@ -24,11 +26,24 @@ namespace trace {
 		load_appinfo();
 		ProjectBuilder::LoadBuildPack();
 
+		
+
 		return true;
 	}
 
 	void TraceGame::Start()
 	{
+
+		Renderer* renderer = Renderer::get_instance();
+		RenderComposer* composer = (RenderComposer*)renderer->GetRenderComposer();
+		RenderGraphController swapchain_controller = {};
+		swapchain_controller.should_render = []()->bool { return true; };
+		swapchain_controller.build_graph = [composer](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
+		{
+			composer->SetupFrameGraph(graph, black_board, frame_settings, render_graph_index);
+		};
+
+		swapchain_graph = composer->BindRenderGraphController(swapchain_controller, "FinalSwapchainGraph");
 
 		// Register Events
 		{
@@ -50,7 +65,7 @@ namespace trace {
 
 
 
-		m_currentScene = SceneManager::get_instance()->LoadScene_Runtime(m_startScene);
+		m_currentScene = GenericAssetManager::get_instance()->Load_Runtime<Scene>(m_startScene);
 
 		start_current_scene();
 
@@ -230,8 +245,8 @@ namespace trace {
 	void TraceGame::start_current_scene()
 	{
 		m_currentScene->OnStart();
-		m_currentScene->OnScriptStart();
 		m_currentScene->OnPhysicsStart();
+		m_currentScene->OnScriptStart();
 
 		if (m_currentScene)
 		{

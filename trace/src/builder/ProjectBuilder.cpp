@@ -11,6 +11,7 @@
 #include "core/Utils.h"
 #include "reflection/SerializeTypes.h"
 #include "external_utils.h"
+#include "resource/DefaultAssetsManager.h"
 
 #include "serialize/yaml_util.h"
 
@@ -55,7 +56,7 @@ namespace trace {
 		app_info.Write(build_version);
 
 		std::string& project_name = project->GetProjectName();
-		int32_t name_size = static_cast<int32_t>(project_name.length() + 1);
+		int32_t name_size = static_cast<int32_t>(project_name.size());
 		app_info.Write(name_size);
 		app_info.Write(project_name.data(), name_size);
 		uint64_t start_scene = project->GetStartScene();
@@ -83,7 +84,7 @@ namespace trace {
 		FileSystem::read_all_lines(in_handle, file_data);
 		FileSystem::close_file(in_handle);
 
-		int32_t file_data_size = static_cast<int32_t>(file_data.length() + 1);
+		int32_t file_data_size = static_cast<int32_t>(file_data.size());
 		ast_db.Write(file_data_size);
 		ast_db.Write(file_data.data(), file_data_size);
 
@@ -143,57 +144,11 @@ namespace trace {
 			return false;
 		}
 
-		std::unordered_map<UUID, AssetHeader> scn_map;
-		std::unordered_map<UUID, AssetHeader> tex_map;
-		std::unordered_map<UUID, AssetHeader> animc_map;
-		std::unordered_map<UUID, AssetHeader> shd_map;
-		std::unordered_map<UUID, AssetHeader> fnt_map;
-		std::unordered_map<UUID, AssetHeader> mdl_map;
-		std::unordered_map<UUID, AssetHeader> pip_map;
-		std::unordered_map<UUID, AssetHeader> mat_map;
-		std::unordered_map<UUID, AssetHeader> prefab_map;
 		std::unordered_map<UUID, AssetHeader> generic_assets_map;
-
-		// TRC_SCENE_ID
-		Reflection::DeserializeContainer(scn_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_TEXTURE_ID
-		Reflection::DeserializeContainer(tex_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_ANIMATION_CLIP_ID
-		Reflection::DeserializeContainer(animc_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		
-		// TRC_SHADER_ID
-		Reflection::DeserializeContainer(shd_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_FONT_ID
-		Reflection::DeserializeContainer(fnt_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_MODEL_ID
-		Reflection::DeserializeContainer(mdl_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_PIPELINE_ID
-		Reflection::DeserializeContainer(pip_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_MATERIAL_ID
-		Reflection::DeserializeContainer(mat_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
-
-		//TRC_PREFAB_ID
-		Reflection::DeserializeContainer(prefab_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		//TRC_GENERIC_ASSETS_ID
 		Reflection::DeserializeContainer(generic_assets_map, &stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		/*SceneManager::get_instance()->SetAssetMap(scn_map);
-		TextureManager::get_instance()->SetAssetMap(tex_map);
-		AnimationsManager::get_instance()->SetClipsAssetMap(animc_map);
-		ShaderManager::get_instance()->SetAssetMap(shd_map);
-		FontManager::get_instance()->SetAssetMap(fnt_map);
-		ModelManager::get_instance()->SetAssetMap(mdl_map);
-		PipelineManager::get_instance()->SetAssetMap(pip_map);
-		MaterialManager::get_instance()->SetAssetMap(mat_map);
-		PrefabManager::get_instance()->SetAssetMap(prefab_map);*/
 		GenericAssetManager::get_instance()->SetAssetMap(generic_assets_map);
 
 
@@ -203,46 +158,10 @@ namespace trace {
 	bool ProjectBuilder::build_project_data(Ref<Project> project, std::string output_dir, std::unordered_set<std::filesystem::path>& scenes)
 	{
 		int bin_id;
-		FileStream scn_bin(output_dir + "/Data/trscn.trbin", FileMode::WRITE);
-		bin_id = TRC_SCENE_ID;
-		scn_bin.Write(bin_id);
-		FileStream tex_bin(output_dir + "/Data/trtex.trbin", FileMode::WRITE);
-		bin_id = TRC_TEXTURE_ID;
-		tex_bin.Write(bin_id);
-		FileStream animc_bin(output_dir + "/Data/tranimc.trbin", FileMode::WRITE);
-		bin_id = TRC_ANIMATION_CLIP_ID;
-		animc_bin.Write(bin_id);
-		FileStream shd_bin(output_dir + "/Data/trshd.trbin", FileMode::WRITE);
-		bin_id = TRC_SHADER_ID;
-		shd_bin.Write(bin_id);
-		FileStream fnt_bin(output_dir + "/Data/trfnt.trbin", FileMode::WRITE);
-		bin_id = TRC_FONT_ID;
-		fnt_bin.Write(bin_id);
-		FileStream mdl_bin(output_dir + "/Data/trmdl.trbin", FileMode::WRITE);
-		bin_id = TRC_MODEL_ID;
-		mdl_bin.Write(bin_id);
-		FileStream mat_bin(output_dir + "/Data/trmat.trbin", FileMode::WRITE);
-		bin_id = TRC_MATERIAL_ID;
-		mat_bin.Write(bin_id);
-		FileStream pip_bin(output_dir + "/Data/trpip.trbin", FileMode::WRITE);
-		bin_id = TRC_PIPELINE_ID;
-		pip_bin.Write(bin_id);
-		FileStream prefab_bin(output_dir + "/Data/trprf.trbin", FileMode::WRITE);
-		bin_id = TRC_PREFAB_ID;
-		prefab_bin.Write(bin_id);
 		FileStream generic_bin(output_dir + "/Data/generic.trbin", FileMode::WRITE);
 		bin_id = TRC_GENERIC_ASSETS_ID;
 		generic_bin.Write(bin_id);
 
-		std::unordered_map<UUID, AssetHeader> scn_map;
-		std::unordered_map<UUID, AssetHeader> tex_map;
-		std::unordered_map<UUID, AssetHeader> animc_map;
-		std::unordered_map<UUID, AssetHeader> shd_map;
-		std::unordered_map<UUID, AssetHeader> fnt_map;
-		std::unordered_map<UUID, AssetHeader> mdl_map;
-		std::unordered_map<UUID, AssetHeader> pip_map;
-		std::unordered_map<UUID, AssetHeader> mat_map;
-		std::unordered_map<UUID, AssetHeader> prefab_map;
 		std::unordered_map<UUID, AssetHeader> generic_assets_map;
 
 
@@ -257,31 +176,35 @@ namespace trace {
 				continue;
 			}
 			AssetHeader scn_header;
-			scn_header.offset = scn_bin.GetPosition();
-			SceneSerializer::Serialize(current_scene, &scn_bin);
-			scn_header.data_size = scn_bin.GetPosition() - scn_header.offset;
+			scn_header.offset = generic_bin.GetPosition();
+			SceneSerializer::Serialize(current_scene, &generic_bin);
+			scn_header.data_size = generic_bin.GetPosition() - scn_header.offset;
 			std::pair<UUID, AssetHeader> scn_pair = std::make_pair(GetUUIDFromName(current_scene->GetName()), scn_header);
-			scn_map.emplace(scn_pair);
+			generic_assets_map.emplace(scn_pair);
 
 
-			SceneSerializer::SerializeTextures(tex_bin, tex_map, current_scene);
-			SceneSerializer::SerializeAnimationClips(animc_bin, animc_map, current_scene);
-			SceneSerializer::SerializeFonts(fnt_bin, fnt_map, current_scene);
-			SceneSerializer::SerializeMaterials(mat_bin, mat_map, current_scene);
-			SceneSerializer::SerializeModels(mdl_bin, mdl_map, current_scene);
-			SceneSerializer::SerializePipelines(pip_bin, pip_map, current_scene);
-			SceneSerializer::SerializeShaders(shd_bin, shd_map, current_scene);
-			SceneSerializer::SerializePrefabs(prefab_bin, prefab_map, current_scene);
+			SceneSerializer::SerializeTextures(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeAnimationClips(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeFonts(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeMaterials(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeModels(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializePipelines(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeShaders(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializePrefabs(generic_bin, generic_assets_map, current_scene);
 			SceneSerializer::SerializeAnimationGraphs(generic_bin, generic_assets_map, current_scene);
 			SceneSerializer::SerializeSkeletons(generic_bin, generic_assets_map, current_scene);
 			SceneSerializer::SerializeSequences(generic_bin, generic_assets_map, current_scene);
 			SceneSerializer::SerializeSkinnedModels(generic_bin, generic_assets_map, current_scene);
+			SceneSerializer::SerializeShaderGraphs(generic_bin, generic_assets_map, current_scene);
 
 
 		}
-		/*PipelineManager::get_instance()->BuildDefaultPipelines(pip_bin, pip_map);
-		PipelineManager::get_instance()->BuildDefaultPipelineShaders(shd_bin, shd_map);
-		ModelManager::get_instance()->BuildDefaultModels(mdl_bin, mdl_map);*/
+
+		DefaultAssetsManager::BuildDefaults(generic_bin, generic_assets_map);
+		GenericAssetManager::get_instance()->BuildPipeline(generic_bin, generic_assets_map);
+		
+		
+
 
 		/*
 		* buildpck.trbin
@@ -295,35 +218,6 @@ namespace trace {
 		FileStream pck_db(output_dir + "/Meta/buildpck.trbin", FileMode::WRITE);
 		bin_id = TRC_BUILD_PACK_ID;
 		pck_db.Write(bin_id);
-
-
-		// TRC_SCENE_ID
-		Reflection::SerializeContainer(scn_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_TEXTURE_ID
-		Reflection::SerializeContainer(tex_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_ANIMATION_CLIP_ID
-		Reflection::SerializeContainer(animc_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		
-		// TRC_SHADER_ID
-		Reflection::SerializeContainer(shd_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_FONT_ID
-		Reflection::SerializeContainer(fnt_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_MODEL_ID
-		Reflection::SerializeContainer(mdl_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_PIPELINE_ID
-		Reflection::SerializeContainer(pip_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		// TRC_MATERIAL_ID
-		Reflection::SerializeContainer(mat_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
-
-		//TRC_PREFAB_ID
-		Reflection::SerializeContainer(prefab_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);
 
 		//TRC_GENERIC_ASSETS_ID
 		Reflection::SerializeContainer(generic_assets_map, &pck_db, nullptr, Reflection::SerializationFormat::BINARY);

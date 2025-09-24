@@ -28,7 +28,7 @@ namespace trace {
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
 		RenderGraphController scene_render_controller = {};
-		scene_render_controller.should_render = [this]()->bool { return m_isOpen && !build_graph; };
+		scene_render_controller.should_render = [this]()->bool { return m_isOpen; };
 		scene_render_controller.build_graph = [composer, this](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 		{
 			composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
@@ -147,6 +147,8 @@ namespace trace {
 					pipeline->SetShaderGraph(m_shaderGraph.get());
 					pipeline->SetType(m_shaderGraph->GetType());
 
+					m_material->m_renderPipeline.free();
+
 					render_pipeline->m_refCount = 1;
 					render_pipeline.free();
 
@@ -161,7 +163,6 @@ namespace trace {
 				}
 				build_graph = false;
 			}
-			return;
 		}
 
 		if (!m_isOpen)
@@ -188,7 +189,10 @@ namespace trace {
 
 
 		renderer->AddLight(cmd_list, light_data, LightType::DIRECTIONAL, view_index);
-		m_scene->OnRender(cmd_list, view_index);
+		if (!build_graph)
+		{
+			m_scene->OnRender(cmd_list, view_index);
+		}
 		renderer->EndScene(cmd_list, view_index);
 
 		renderer->SubmitCommandList(cmd_list, view_index);
@@ -200,10 +204,6 @@ namespace trace {
 
 	void ShaderGraphWindow::OnRender(float deltaTime)
 	{
-		if (build_graph)
-		{
-			return;
-		}
 
 		ImGui::Begin(graph_editor_name.c_str());
 		m_editor->Render(deltaTime);
@@ -237,11 +237,6 @@ namespace trace {
 		void* texture = texture_handles[view_index];
 
 		if (!texture)
-		{
-			return;
-		}
-
-		if (build_graph)
 		{
 			return;
 		}

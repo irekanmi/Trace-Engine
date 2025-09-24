@@ -107,14 +107,10 @@ namespace trace {
 		{
 		case SceneEdit:
 		{
-			if (m_nextScene)
+			if (!m_sceneToOpen.empty())
 			{
-				m_hierachyPanel->SetSelectedEntity(Entity());
-				m_currentScene.free();
-
-				m_currentScene = m_nextScene;
-				m_currentSceneName = m_nextScene->GetName();
-				m_nextScene.free();
+				OpenScene(m_sceneToOpen);
+				m_sceneToOpen.clear();
 			}
 
 			if (m_viewportFocused || m_viewportHovered)
@@ -137,7 +133,10 @@ namespace trace {
 				renderer->EndScene(cmd_list, scene_render_graph_index);
 				renderer->SubmitCommandList(cmd_list);
 
-				HandleEntityDebugDraw();
+				if (m_currentScene)
+				{
+					HandleEntityDebugDraw();
+				}
 			}
 
 			break;
@@ -399,10 +398,8 @@ namespace trace {
 			return;
 		}
 
-		m_currentScene = SceneSerializer::Deserialize(file_path);
-		m_editScene = m_currentScene;
-		m_currentScenePath = file_path;
-		m_currentSceneName = m_currentScene->GetName();
+		m_sceneToOpen = file_path;
+		
 	}
 	void GameSceneWindow::NewScene()
 	{
@@ -449,18 +446,6 @@ namespace trace {
 				SceneSerializer::Serialize(m_currentScene, result);
 			}
 			return result;
-		}*/
-		return std::string();
-	}
-	std::string GameSceneWindow::OpenScene()
-	{
-		/*std::vector<std::string> result = pfd::open_file("Open Scene", m_currentProject_path.string(), { "Trace Scene", "*.trscn" }).result();
-		if (!result.empty())
-		{
-			CloseCurrentScene();
-			LoadScene(result[0]);
-			m_currentScenePath = result[0];
-			return result[0];
 		}*/
 		return std::string();
 	}
@@ -565,10 +550,23 @@ namespace trace {
 		{
 			return;
 		}
+		
 
-		m_sceneToOpen = path;
+		Ref<Scene> scene = SceneSerializer::Deserialize(path);
 
+		if (!scene)
+		{
+			TRC_ERROR("Unable to load Scene, Path: {}, Function: {}", path, __FUNCTION__);
+			return;
+		}
 
+		m_currentScene = scene;
+		m_editScene = m_currentScene;
+		m_currentScenePath = path;
+		m_currentSceneName = m_currentScene->GetName();
+		m_hierachyPanel->SetSelectedEntity(Entity());
+
+		//m_currentScene = m_currentScene;
 	}
 
 	void GameSceneWindow::OnEvent(Event* p_event)

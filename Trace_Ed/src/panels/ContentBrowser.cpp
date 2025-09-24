@@ -513,6 +513,7 @@ namespace trace {
 		"ssao_main_pass_pipeline",
 		"ssao_blur_pass_pipeline",
 		"tone_map_pass_pipeline",
+		"weightedOIT_pass_pipeline",
 		"black_texture",
 		"skinned_gbuffer_pipeline",
 		"transparent_texture",
@@ -561,6 +562,10 @@ namespace trace {
 			{
 				std::string filename = i["Name"].as<std::string>();
 				UUID id = i["UUID"].as<uint64_t>();
+				if (id == 0)
+				{
+					continue;
+				}
 				m_allFilesID[filename] = id;
 				m_allIDNames[id] = filename;
 			}

@@ -101,4 +101,26 @@ namespace trace {
 	{
 
 	}
+	
+	GamepadConnected::GamepadConnected(int32_t controller_id)
+	{
+		m_type = EventType::TRC_GAMEPAD_CONNECT;
+		m_controllerID = controller_id;
+	}
+
+	GamepadConnected::~GamepadConnected()
+	{
+
+	}
+	
+	GamepadDisconnected::GamepadDisconnected(int32_t controller_id)
+	{
+		m_type = EventType::TRC_GAMEPAD_DISCONNECT;
+		m_controllerID = controller_id;
+	}
+
+	GamepadDisconnected::~GamepadDisconnected()
+	{
+
+	}
 }

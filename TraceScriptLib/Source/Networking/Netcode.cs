@@ -512,6 +512,7 @@ namespace Trace
     {
         public Vec3 direction;
         public bool shoot_pressed;
+        public bool jump_pressed;
         public uint tick_frame;
     }
 
@@ -539,6 +540,7 @@ namespace Trace
             }
 
             key_pressed.Add(Keys.KEY_R, new RingBuffer<bool>(30));
+            key_pressed.Add(Keys.KEY_SPACE, new RingBuffer<bool>(30));
 
         }
 
@@ -547,6 +549,31 @@ namespace Trace
             if(Input.GetKeyPressed(Keys.KEY_R))
             {
                 key_pressed[Keys.KEY_R].PushBack(true);
+            }
+            
+            if(Input.GetGamepadKeyPressed(GamepadKeys.GAMEPAD_TRIGGER_RIGHT))
+            {
+                key_pressed[Keys.KEY_R].PushBack(true);
+            }
+            
+            if(Input.GetKeyPressed(Keys.KEY_SPACE))
+            {
+                key_pressed[Keys.KEY_SPACE].PushBack(true);
+            }
+            
+            if(Input.GetGamepadKeyPressed(GamepadKeys.GAMEPAD_BUTTON_1))
+            {
+                key_pressed[Keys.KEY_SPACE].PushBack(true);
+            }
+
+            if (Input.GetKeyPressed(Keys.KEY_C))
+            {
+                Debug.Trace("Spider man here");
+            }
+
+            if (Input.GetKey(Keys.KEY_V))
+            {
+                Debug.Trace("Key working");
             }
         }
 
@@ -585,15 +612,25 @@ namespace Trace
                 input.x -= 1.0f;
             }
 
+            input.z += Input.GetLeftStickY();
+            input.x -= Input.GetLeftStickX();
+
             bool shoot = false;
             if (!key_pressed[Keys.KEY_R].Empty)
             {
                 key_pressed[Keys.KEY_R].PopFront();
                 shoot = true;
             }
+            
+            bool jump = false;
+            if (!key_pressed[Keys.KEY_SPACE].Empty)
+            {
+                key_pressed[Keys.KEY_SPACE].PopFront();
+                jump = true;
+            }
 
             int index = (int)(current_tick % buffer_size);
-            inputs[index] = new BasicInput { direction = input, tick_frame = current_tick, shoot_pressed = shoot };
+            inputs[index] = new BasicInput { direction = input, tick_frame = current_tick, shoot_pressed = shoot, jump_pressed = jump };
 
             _tick = current_tick;
         }
@@ -641,6 +678,7 @@ namespace Trace
                 Stream.WriteInt(stream_handle, (int)inputs[i].tick_frame);
                 Stream.WriteVec3(stream_handle, inputs[i].direction);
                 Stream.WriteBool(stream_handle, inputs[i].shoot_pressed);
+                Stream.WriteBool(stream_handle, inputs[i].jump_pressed);
             }
         }
 
@@ -664,6 +702,7 @@ namespace Trace
                 uint tick = (uint)Stream.ReadInt(stream_handle);
                 Vec3 dir = Stream.ReadVec3(stream_handle);
                 bool shot = Stream.ReadBool(stream_handle);
+                bool jump = Stream.ReadBool(stream_handle);
                 
                 if(tick <= manager.GetCurrentTick())
                 {
@@ -671,7 +710,7 @@ namespace Trace
                 }
                 if (!outputs.ContainsKey(tick))
                 {
-                    outputs.Add(tick, new BasicInput { direction = dir, tick_frame = tick, shoot_pressed = shot });
+                    outputs.Add(tick, new BasicInput { direction = dir, tick_frame = tick, shoot_pressed = shot, jump_pressed = jump });
                 }
             }
 

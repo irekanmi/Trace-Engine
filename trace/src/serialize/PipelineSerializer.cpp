@@ -102,36 +102,45 @@ namespace trace {
 
 		std::string pipeline_name = pipeline->GetName();
 		Reflection::Serialize(pipeline_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		bool has_shader_graph = false;
+		if (pipeline->GetShaderGraph())
+		{
+			stream->Write(has_shader_graph);
+			stream->Write(pipeline->GetShaderGraph()->GetUUID());
 
-		uint32_t pip_type = pipeline->GetPipelineType();
-		stream->Write<uint32_t>(pip_type);
+			return true;
+		}
+		stream->Write(has_shader_graph);
 		PipelineStateDesc ds = pipeline->GetDesc();
-		Ref<GShader> vert = GenericAssetManager::get_instance()->Get<GShader>(ds.vertex_shader->GetUUID());
-		Ref<GShader> frag = GenericAssetManager::get_instance()->Get<GShader>(ds.pixel_shader->GetUUID());
-		uint64_t vertex_shader_id = GetUUIDFromName(ds.vertex_shader->GetName());
-		uint64_t pixel_shader_id = GetUUIDFromName(ds.pixel_shader->GetName());
-		stream->Write<uint64_t>(vertex_shader_id);
-		stream->Write<uint64_t>(pixel_shader_id);
 
-		uint32_t input_layout_stride = ds.input_layout.stride;
-		stream->Write<uint32_t>(input_layout_stride);
-		stream->Write<InputClassification>(ds.input_layout.input_class);
-		int32_t input_layout_element_count = static_cast<int32_t>(ds.input_layout.elements.size());
-		stream->Write<int32_t>(input_layout_element_count);
-		stream->Write(ds.input_layout.elements.data(), input_layout_element_count * sizeof(Element));
+		uint8_t pip_type = (uint8_t)pipeline->GetType();
+		stream->Write<uint8_t>(pip_type);
 
-		stream->Write<RasterizerState>(ds.rasteriser_state);
+		stream->Write(ds.vertex_shader->GetUUID());
+		stream->Write(ds.pixel_shader->GetUUID());
 
-		stream->Write<DepthStencilState>(ds.depth_sten_state);
+		// InputLayout
+		{
+			Reflection::Serialize(ds.input_layout, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		};
 
-		stream->Write<ColorBlendState>(ds.blend_state);
+		// RasterizerState
+		{
+			Reflection::Serialize(ds.rasteriser_state, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		stream->Write<PRIMITIVETOPOLOGY>(ds.topology);
+		};
 
-		stream->Write<Viewport>(ds.view_port);
+		// ColorBlendState
+		{
+			Reflection::Serialize(ds.blend_state, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		};
 
-		stream->Write<uint32_t>(ds.subpass_index);
+		// DepthStencilState
+		{
+			Reflection::Serialize(ds.depth_sten_state, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		};
 
+		Reflection::Serialize(ds.topology, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
 		std::string pass_name = Renderer::get_instance()->GetRenderPassName(ds.render_pass);
 		Reflection::Serialize(pass_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
@@ -535,8 +544,25 @@ namespace trace {
 			return result;
 		}
 
-		uint32_t pip_type;
-		stream->Read<uint32_t>(pip_type);
+		bool has_shader_graph = false;
+		stream->Read(has_shader_graph);
+		if (has_shader_graph)
+		{
+			UUID shader_graph_id = 0;
+			stream->Read(shader_graph_id);
+			Ref<ShaderGraph> shader_graph = GenericAssetManager::get_instance()->Load_Runtime<ShaderGraph>(shader_graph_id);
+			if (shader_graph)
+			{
+				return shader_graph->GetPipeline();
+			}
+			return result;
+		}
+
+		uint8_t pip_type;
+		stream->Read<uint8_t>(pip_type);
+		MaterialType mat_type = (MaterialType)pip_type;
+
+		
 
 		UUID vert_id = 0;
 		stream->Read<UUID>(vert_id);
@@ -546,24 +572,29 @@ namespace trace {
 		desc.vertex_shader = GenericAssetManager::get_instance()->Load_Runtime<GShader>(vert_id).get();
 		desc.pixel_shader = GenericAssetManager::get_instance()->Load_Runtime<GShader>(frag_id).get();
 
-		stream->Read<uint32_t>(desc.input_layout.stride);
-		stream->Read<InputClassification>(desc.input_layout.input_class);
-		int input_layout_element_count = 0;
-		stream->Read<int>(input_layout_element_count);
-		desc.input_layout.elements.resize(input_layout_element_count);
-		stream->Read(desc.input_layout.elements.data(), input_layout_element_count * sizeof(Element));
+		// InputLayout
+		{
+			Reflection::Deserialize(desc.input_layout, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		};
 
-		stream->Read<RasterizerState>(desc.rasteriser_state);
+		// RasterizerState
+		{
+			Reflection::Deserialize(desc.rasteriser_state, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		stream->Read<DepthStencilState>(desc.depth_sten_state);
+		};
 
-		stream->Read<ColorBlendState>(desc.blend_state);
+		// ColorBlendState
+		{
+			Reflection::Deserialize(desc.blend_state, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		};
 
-		stream->Read<PRIMITIVETOPOLOGY>(desc.topology);
+		// DepthStencilState
+		{
+			Reflection::Deserialize(desc.depth_sten_state, stream, nullptr, Reflection::SerializationFormat::BINARY);
+		};
 
-		stream->Read<Viewport>(desc.view_port);
+		Reflection::Deserialize(desc.topology, stream, nullptr, Reflection::SerializationFormat::BINARY);
 
-		stream->Read<uint32_t>(desc.subpass_index);
 
 
 		std::string pass_name;
@@ -578,7 +609,7 @@ namespace trace {
 		result = GenericAssetManager::get_instance()->CreateAssetHandle<GPipeline>(pipeline_name, desc, false);
 		if (result)
 		{
-			result->SetPipelineType(pip_type);
+			result->SetType(mat_type);
 		}
 
 		return result;

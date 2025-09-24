@@ -1420,33 +1420,7 @@ namespace trace {
 			}
 			case Network::PacketMessageType::RPC:
 			{
-				UUID id = 0;
-				data->Read(id);
-				TRC_ASSERT(id != 0, "This is not suppose to happen");
-				Entity entity = GetEntity(id);
-				TRC_ASSERT(entity, "This is not suppose to happen");
-				std::string script_name;
-				data->Read(script_name);
-				ScriptInstance* instance = entity.GetScript(script_name);
-				TRC_ASSERT(instance, "This is not suppose to happen");
-				uint64_t func_id = 0;
-				data->Read(func_id);
-				TRC_ASSERT(func_id != 0, "This is not suppose to happen");
-				Network::RPCType rpc_type = Network::RPCType::UNKNOW;
-				data->Read(rpc_type);
-				uint32_t src_instance_id = 0;
-				data->Read(src_instance_id);
-
-				if (rpc_type == Network::RPCType::CLIENT && instance_id != src_instance_id)
-				{
-					trace::StringID string_id;
-					string_id.value = func_id;
-					ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
-					TRC_ASSERT(method, "These is not suppose to happen");
-
-
-					InvokeScriptMethod_Instance(*method, *instance, nullptr);
-				}
+				InvokeNetworkRPC(data);
 				
 
 				break;
@@ -1567,38 +1541,7 @@ namespace trace {
 			}
 			case Network::PacketMessageType::RPC:
 			{
-				UUID id = 0;
-				data->Read(id);
-				TRC_ASSERT(id != 0, "This is not suppose to happen");
-				Entity entity = GetEntity(id);
-				TRC_ASSERT(entity, "This is not suppose to happen");
-				std::string script_name;
-				data->Read(script_name);
-				ScriptInstance* instance = entity.GetScript(script_name);
-				TRC_ASSERT(instance, "This is not suppose to happen");
-				uint64_t func_id = 0;
-				data->Read(func_id);
-				TRC_ASSERT(func_id != 0, "This is not suppose to happen");
-				Network::RPCType rpc_type = Network::RPCType::UNKNOW;
-				data->Read(rpc_type);
-				uint32_t src_instance_id = 0;
-				data->Read(src_instance_id);
-
-
-				trace::StringID string_id;
-				string_id.value = func_id;
-				ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
-				TRC_ASSERT(method, "These is not suppose to happen");
-				if (rpc_type == Network::RPCType::SERVER)
-				{
-					InvokeScriptMethod_Instance(*method, *instance, nullptr);
-				}
-				else if (rpc_type == Network::RPCType::CLIENT)
-				{
-					//TODO: Determine if it is listen server before you invoke the method
-					InvokeScriptMethod_Instance(*method, *instance, nullptr);
-					// Send RPC to other clients
-				}
+				InvokeNetworkRPC(data);
 				break;
 			}
 			}

@@ -174,7 +174,7 @@ namespace trace
 			}
 
 			m_clock.Tick(deltaTime);
-			m_Window->Update(deltaTime);//NOTE:
+			m_Window->Update(deltaTime);
 
 			mem_manager->BeginFrame();
 

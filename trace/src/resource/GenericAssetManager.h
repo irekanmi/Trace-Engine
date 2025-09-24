@@ -158,11 +158,19 @@ namespace trace {
 		{
 			m_assetMap = map;
 		}
+
+		void BuildPipeline(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map);
 		
 
 		template<typename T>
 		Ref<T> Load_Runtime(UUID id)
 		{
+
+			if (Ref<T> asset = TryGet<T>(id))
+			{
+				return asset;
+			}
+
 			auto it = m_assetMap.find(id);
 			if (it == m_assetMap.end())
 			{
@@ -197,7 +205,6 @@ namespace trace {
 	private:
 	protected:
 		std::unordered_map<UUID, Resource*> m_assets;
-		//HashTable<uint32_t> m_hashtable;
 		uint32_t m_numUnits;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
 

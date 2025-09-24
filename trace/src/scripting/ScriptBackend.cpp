@@ -29,6 +29,8 @@
 #include "spdlog/fmt/fmt.h"
 
 
+#define MAX_METHOD_PARAM_COUNT 16
+
 struct ComponentMap
 {
 	MonoClass* component_class = nullptr;
@@ -101,6 +103,27 @@ static std::unordered_map<std::string, ScriptFieldType> s_FieldTypes =
 	{ "Trace.Vec4",ScriptFieldType::Vec4},
 	{ "Trace.Action", ScriptFieldType::Action},
 	{ "Trace.Prefab", ScriptFieldType::Prefab}
+};
+
+static std::unordered_map<ScriptFieldType, uint32_t> s_FieldTypesSize = 
+{
+	{ ScriptFieldType::Float, 4},
+	{ ScriptFieldType::String, 0},
+	{ ScriptFieldType::Int32, 4},
+	{ ScriptFieldType::UInt32, 4},
+	{ ScriptFieldType::Int64, 8},
+	{ ScriptFieldType::UInt64, 8},
+	{ ScriptFieldType::Double, 8},
+	{ ScriptFieldType::Char, 1},
+	{ ScriptFieldType::Int16, 2},
+	{ ScriptFieldType::UInt16, 2},
+	{ ScriptFieldType::Bool, 1},
+	{ ScriptFieldType::Byte, 1},
+	{ ScriptFieldType::Vec2, 8},
+	{ ScriptFieldType::Vec3, 12},
+	{ ScriptFieldType::Vec4, 16},
+	{ ScriptFieldType::Action, 8},
+	{ ScriptFieldType::Prefab, 8}
 };
 
 
@@ -328,6 +351,33 @@ bool CreateScript(const std::string& name, Script& script, const std::string& na
 	{
 		std::string method_name = mono_method_get_name(method);		
 		script.GetMethods()[STR_ID(method_name)].m_internal = method;
+
+		MonoMethodSignature* sig = mono_method_signature(method);
+		MonoType* param_type = nullptr;
+		const char* name;
+
+		void* iter = nullptr;
+		std::vector<ScriptField> method_params;
+		for (int i = 0; i < mono_signature_get_param_count(sig); i++)
+		{
+			ScriptField field_res;
+			param_type = mono_signature_get_params(sig, &iter);
+			std::string field_type = mono_type_get_name(param_type);
+			if (s_FieldTypes.find(field_type) != s_FieldTypes.end())
+			{
+				field_res.field_type = s_FieldTypes.at(field_type);
+			}
+			else
+			{
+				field_res.field_type = ScriptFieldType::UnKnown;
+			}
+
+			method_params.push_back(field_res);
+		}
+
+		script.GetMethods()[STR_ID(method_name)].parameters = method_params;
+
+
 	}
 
 	uint32_t field_count = mono_class_num_fields(out_class);
@@ -601,6 +651,248 @@ void DetachThread(void* thread_info)
 		return;
 	}
 	mono_thread_detach((MonoThread*)thread_info);
+}
+
+void ReadMethodParams(ScriptMethod* method, void** out_params, glm::vec4* out_params_value, DataStream* data_stream)
+{
+	for (uint32_t i = 0; i < method->parameters.size(); i++)
+	{
+		ScriptField& field = method->parameters[i];
+
+		switch (field.field_type)
+		{
+		case ScriptFieldType::Bool:
+		{
+			data_stream->Read(&out_params_value[i], sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Int32:
+		{
+			data_stream->Read(&out_params_value[i], sizeof(int32_t));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Float:
+		{
+			data_stream->Read(&out_params_value[i], sizeof(float));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Vec2:
+		{
+			data_stream->Read(&out_params_value[i], sizeof(glm::vec2));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Vec3:
+		{
+			data_stream->Read(&out_params_value[i], sizeof(glm::vec3));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Vec4:
+		{
+			data_stream->Read(&out_params_value[i], sizeof(glm::vec4));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		}
+	}
+}
+
+void WriteMethodParams(ScriptMethod* method, MonoArray* method_params, DataStream* data_stream)
+{
+	for (uint32_t i = 0; i < method->parameters.size(); i++)
+	{
+		ScriptField& field = method->parameters[i];
+		MonoObject* val_i = mono_array_get(method_params, MonoObject*, i);
+
+		switch (field.field_type)
+		{
+		case ScriptFieldType::Bool:
+		{
+			bool value = *(bool*)mono_object_unbox(val_i);
+
+			data_stream->Write(value);
+			break;
+		}
+		case ScriptFieldType::Int32:
+		{
+			int32_t value = *(int32_t*)mono_object_unbox(val_i);
+
+			data_stream->Write(value);
+			break;
+		}
+		case ScriptFieldType::Float:
+		{
+			float value = *(float*)mono_object_unbox(val_i);
+
+			data_stream->Write(value);
+			break;
+		}
+		case ScriptFieldType::Vec2:
+		{
+			glm::vec2 value = *(glm::vec2*)mono_object_unbox(val_i);
+
+			data_stream->Write(value);
+			break;
+		}
+		case ScriptFieldType::Vec3:
+		{
+			glm::vec3 value = *(glm::vec3*)mono_object_unbox(val_i);
+
+			data_stream->Write(value);
+			break;
+		}
+		case ScriptFieldType::Vec4:
+		{
+			glm::vec4 value = *(glm::vec4*)mono_object_unbox(val_i);
+
+			data_stream->Write(value);
+			break;
+		}
+		}
+	}
+}
+
+void GetMethodParams(ScriptMethod* method, MonoArray* method_params, void** out_params, glm::vec4* out_params_value)
+{
+	for (uint32_t i = 0; i < method->parameters.size(); i++)
+	{
+		ScriptField& field = method->parameters[i];
+		MonoObject* val_i = mono_array_get(method_params, MonoObject*, i);
+
+		switch (field.field_type)
+		{
+		case ScriptFieldType::Bool:
+		{
+			bool value = *(bool*)mono_object_unbox(val_i);
+
+			memcpy(&out_params_value[i], &value, sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Int32:
+		{
+			int32_t value = *(int32_t*)mono_object_unbox(val_i);
+
+			memcpy(&out_params_value[i], &value, sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Float:
+		{
+			float value = *(float*)mono_object_unbox(val_i);
+
+			memcpy(&out_params_value[i], &value, sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Vec2:
+		{
+			glm::vec2 value = *(glm::vec2*)mono_object_unbox(val_i);
+
+			memcpy(&out_params_value[i], &value, sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Vec3:
+		{
+			glm::vec3 value = *(glm::vec3*)mono_object_unbox(val_i);
+
+			memcpy(&out_params_value[i], &value, sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		case ScriptFieldType::Vec4:
+		{
+			glm::vec4 value = *(glm::vec4*)mono_object_unbox(val_i);
+
+			memcpy(&out_params_value[i], &value, sizeof(bool));
+			out_params[i] = &out_params_value[i];
+			break;
+		}
+		}
+	}
+}
+
+void InvokeNetworkRPC(DataStream* rpc_data)
+{
+
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	Network::NetType net_type = net_manager->GetNetType();
+	uint32_t instance_id = net_manager->GetInstanceID();
+
+	UUID id = 0;
+	rpc_data->Read(id);
+	TRC_ASSERT(id != 0, "This is not suppose to happen");
+	Entity entity = s_MonoData.scene->GetEntity(id);
+	TRC_ASSERT(entity, "This is not suppose to happen");
+	std::string script_name;
+	rpc_data->Read(script_name);
+	ScriptInstance* instance = entity.GetScript(script_name);
+	TRC_ASSERT(instance, "This is not suppose to happen");
+	uint64_t func_id = 0;
+	rpc_data->Read(func_id);
+	TRC_ASSERT(func_id != 0, "This is not suppose to happen");
+	Network::RPCType rpc_type = Network::RPCType::UNKNOW;
+	rpc_data->Read(rpc_type);
+	uint32_t src_instance_id = 0;
+	rpc_data->Read(src_instance_id);
+
+
+
+	trace::StringID string_id;
+	string_id.value = func_id;
+	ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+
+	TRC_ASSERT(method, "These is not suppose to happen");
+
+	void* params[MAX_METHOD_PARAM_COUNT];
+	glm::vec4 param_data[MAX_METHOD_PARAM_COUNT];
+
+	ReadMethodParams(method, params, param_data, rpc_data);
+
+	
+
+	switch (net_type)
+	{
+
+	case Network::NetType::UNKNOWN:
+	{
+		break;
+	}
+	case Network::NetType::CLIENT:
+	{
+		if (rpc_type == Network::RPCType::CLIENT && instance_id != src_instance_id)
+		{			
+			InvokeScriptMethod_Instance(*method, *instance, params);
+		}
+		break;
+	}
+	case Network::NetType::LISTEN_SERVER:
+	{
+		if (rpc_type == Network::RPCType::SERVER)
+		{
+			InvokeScriptMethod_Instance(*method, *instance, params);
+		}
+		else if (rpc_type == Network::RPCType::CLIENT)
+		{
+			//TODO: Determine if it is listen server before you invoke the method
+			InvokeScriptMethod_Instance(*method, *instance, params);
+			// Send RPC to other clients
+		}
+		break;
+	}
+	}
+
 }
 
 
@@ -1324,6 +1616,51 @@ bool Input_GetKeyPressed(Keys key)
 bool Input_GetKeyReleased(Keys key)
 {
 	return InputSystem::get_instance()->GetKeyReleased(key);
+}
+
+bool Input_GetGamepadKey(GamepadKeys key, int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetGamepadKey(key, controller_id);
+}
+
+bool Input_GetGamepadKeyPressed(GamepadKeys key, int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetGamepadKeyPressed(key, controller_id);
+}
+
+bool Input_GetGamepadKeyReleased(GamepadKeys key, int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetGamepadKeyReleased(key, controller_id);
+}
+
+float Input_GetLeftStickX(int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetLeftStickX(controller_id);
+}
+
+float Input_GetLeftStickY(int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetLeftStickY(controller_id);
+}
+
+float Input_GetRightStickX(int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetRightStickX(controller_id);
+}
+
+float Input_GetRightStickY(int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetRightStickY(controller_id);
+}
+
+float Input_GetLeftTrigger(int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetLeftTrigger(controller_id);
+}
+
+float Input_GetRightTrigger(int controller_id = 0)
+{
+	return InputSystem::get_instance()->GetRightTrigger(controller_id);
 }
 
 bool Input_GetButton(Buttons button)
@@ -2141,7 +2478,7 @@ bool Networking_IsClient()
 	return net_manager->IsClient();
 }
 
-void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id, Network::RPCType type)
+void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id, Network::RPCType type, MonoArray* method_params)
 {
 	if (!s_MonoData.scene)
 	{
@@ -2168,20 +2505,24 @@ void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id,
 	{
 		TRC_ASSERT(false, "These is not suppose to happen");
 	}
+	trace::StringID string_id;
+	string_id.value = func_name_id;
+	ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
 
 	auto lambda = [&]()
-	{
-		
-		trace::StringID string_id;
-		string_id.value = func_name_id;
-		ScriptMethod* method = instance->GetScript()->GetMethod(string_id);
+	{		
 
 		if (!method)
 		{
 			TRC_ASSERT(false, "These is not suppose to happen");
 		}
 
-		InvokeScriptMethod_Instance(*method, *instance, nullptr);
+		void* params[MAX_METHOD_PARAM_COUNT];
+		glm::vec4 param_data[MAX_METHOD_PARAM_COUNT];
+
+		GetMethodParams(method, method_params, params, param_data);
+
+		InvokeScriptMethod_Instance(*method, *instance, params);
 	};
 
 	auto send_lambda = [&]()
@@ -2194,6 +2535,9 @@ void Networking_InvokeRPC(uint64_t uuid, MonoObject* src, uint64_t func_name_id,
 		data_stream->Write(func_name_id);
 		data_stream->Write(type);
 		data_stream->Write(instance_id);
+
+		WriteMethodParams(method, method_params, data_stream);
+
 	};
 
 	switch (net_type)
@@ -2343,6 +2687,15 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Input_GetKey);
 	ADD_INTERNAL_CALL(Input_GetKeyPressed);
 	ADD_INTERNAL_CALL(Input_GetKeyReleased);
+	ADD_INTERNAL_CALL(Input_GetGamepadKey);
+	ADD_INTERNAL_CALL(Input_GetGamepadKeyPressed);
+	ADD_INTERNAL_CALL(Input_GetGamepadKeyReleased);
+	ADD_INTERNAL_CALL(Input_GetLeftStickX);
+	ADD_INTERNAL_CALL(Input_GetLeftStickY);
+	ADD_INTERNAL_CALL(Input_GetRightStickX);
+	ADD_INTERNAL_CALL(Input_GetRightStickY);
+	ADD_INTERNAL_CALL(Input_GetLeftTrigger);
+	ADD_INTERNAL_CALL(Input_GetRightTrigger);
 	ADD_INTERNAL_CALL(Input_GetButton);
 	ADD_INTERNAL_CALL(Input_GetButtonPressed);
 	ADD_INTERNAL_CALL(Input_GetButtonReleased);

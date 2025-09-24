@@ -118,6 +118,7 @@ project "trace"
 		"yaml_cpp.lib",
 		"enet64.lib",
 		"ws2_32.lib",
+		"XInput.lib",
 		"winmm.lib"
 	}
 	

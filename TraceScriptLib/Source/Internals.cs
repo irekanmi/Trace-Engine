@@ -134,6 +134,33 @@ namespace Trace
         extern public static bool Input_GetKeyReleased(Keys key);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Input_GetGamepadKey(GamepadKeys key, int controller_id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Input_GetGamepadKeyPressed(GamepadKeys key, int controller_id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static bool Input_GetGamepadKeyReleased(GamepadKeys key, int controller_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Input_GetLeftStickX(int controller_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Input_GetLeftStickY(int controller_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Input_GetRightStickX(int controller_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Input_GetRightStickY(int controller_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Input_GetLeftTrigger(int controller_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static float Input_GetRightTrigger(int controller_id);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static bool Input_GetButton(Buttons buttons);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -326,7 +353,7 @@ namespace Trace
         extern public static bool Networking_IsClient();
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
-        extern public static void Networking_InvokeRPC(ulong uuid, Trace.Action src, UInt64 func_name_id, RPCType type);
+        extern public static void Networking_InvokeRPC(ulong uuid, Trace.Action src, UInt64 func_name_id, RPCType type, params object[] args);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static bool Networking_CreateListenServer(uint port);

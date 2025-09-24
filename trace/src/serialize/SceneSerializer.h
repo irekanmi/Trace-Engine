@@ -32,6 +32,7 @@ namespace trace {
 		static bool SerializeFonts(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);
 		static bool SerializeModels(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);
 		static bool SerializeMaterials(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);
+		static bool SerializeShaderGraphs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);
 		static bool SerializePipelines(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);
 		static bool SerializeShaders(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);
 		static bool SerializePrefabs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene);

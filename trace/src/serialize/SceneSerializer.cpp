@@ -11,6 +11,7 @@
 #include "serialize/MaterialSerializer.h"
 #include "serialize/AnimationsSerializer.h"
 #include "serialize/PipelineSerializer.h"
+#include "serialize/GenericSerializer.h"
 #include "scripting/ScriptEngine.h"
 #include "backends/Renderutils.h"
 
@@ -23,6 +24,7 @@
 #include "reflection/SerializeTypes.h"
 #include "serialize/SceneSerializeFunctions.h"
 #include "render/GShader.h"
+#include "shader_graph/ShaderGraph.h"
 
 #include <functional>
 #include <unordered_map>
@@ -126,30 +128,12 @@ namespace trace {
 
 	bool SceneSerializer::SerializePrefab(Ref<Prefab> prefab, DataStream* stream)
 	{
-		uint32_t prefab_str_count = static_cast<uint32_t>(prefab->GetName().size());
-		stream->Write<uint32_t>(prefab_str_count);
-		stream->Write((void*)prefab->GetName().data(), prefab_str_count);
-		
-		uint32_t pos_1 = stream->GetPosition();
-		uint32_t entity_count = 0;
-		stream->Write<uint32_t>(entity_count);
+		stream->Write<std::string>(prefab->GetName());
 
 		Scene* scene = PrefabManager::get_instance()->GetScene();
 		Entity handle = scene->GetEntity(prefab->GetHandle());
-		serialize_entity_components_binary(handle, stream, handle.GetScene());
-
-
-		for (auto& i : handle.GetComponent<HierachyComponent>().children)
-		{
-			Entity child = handle.GetScene()->GetEntity(i);
-			SerializePrefabEntity_Binary(child, stream, entity_count);
-			entity_count++;
-		}
-
-		uint32_t pos_2 = stream->GetPosition();
-		stream->SetPosition(pos_1);
-		stream->Write<uint32_t>(entity_count);
-		stream->SetPosition(pos_2);
+		
+		SerializeEntity(handle, stream);
 
 		return true;
 	}
@@ -260,13 +244,8 @@ namespace trace {
 	{
 		Ref<Prefab> result;
 
-		uint32_t prefab_str_count = 0;
 		std::string prefab_name;
-		stream->Read<uint32_t>(prefab_str_count);
-		prefab_name.resize(prefab_str_count);
-		stream->Read((void*)prefab_name.data(), prefab_str_count);
-		uint32_t entity_count = 0;
-		stream->Read<uint32_t>(entity_count);
+		stream->Read<std::string>(prefab_name);
 		Ref<Prefab> prefab = GenericAssetManager::get_instance()->TryGet<Prefab>(prefab_name);
 		if (prefab)
 		{
@@ -280,13 +259,8 @@ namespace trace {
 
 		Entity obj;
 
-		obj = deserialize_entity_components_binary(scene, stream);
+		obj = DeserializeEntity(scene, stream);
 
-
-		for (uint32_t i = 0; i < entity_count; i++)
-		{
-			deserialize_entity_components_binary(scene, stream);
-		}
 
 		prefab->SetHandle(obj.GetID());
 
@@ -302,38 +276,29 @@ namespace trace {
 
 	bool SceneSerializer::Serialize(Ref<Scene> scene, DataStream* stream)
 	{
-		uint32_t scene_str_count = static_cast<uint32_t>(scene->GetName().size());
-		stream->Write<uint32_t>(scene_str_count);
-		stream->Write((void*)scene->GetName().data(), scene_str_count);
+		stream->Write<std::string>(scene->GetName());
 		bool stimulate_physics = scene->GetStimulatePhysics();
 		stream->Write<bool>(stimulate_physics);
 
 		uint32_t pos_1 = stream->GetPosition();
-		uint32_t entity_count = 0;
+		uint32_t entity_count = scene->m_rootNode->children.size();
 		stream->Write<uint32_t>(entity_count);
-		auto process_hierachy = [&](Entity entity, UUID, Scene*)
-		{
-			Entity en(entity, scene.get());
-			serialize_entity_components_binary(en, stream, scene.get());
-			entity_count++;
-		};
 
-		scene->ProcessEntitiesByHierachy(process_hierachy, false);
-		uint32_t pos_2 = stream->GetPosition();
-		stream->SetPosition(pos_1);
-		stream->Write<uint32_t>(entity_count);
-		stream->SetPosition(pos_2);
+		for (UUID& i : scene->m_rootNode->children)
+		{
+			Entity en = scene->GetEntity(i);
+			SerializeEntity(en, stream);
+		}
+
+		
 
 		return true;
 	}
 
 	Ref<Scene> SceneSerializer::Deserialize(DataStream* stream)
 	{
-		uint32_t scene_str_count = 0;
 		std::string scene_name;
-		stream->Read<uint32_t>(scene_str_count);
-		scene_name.resize(scene_str_count);
-		stream->Read((void*)scene_name.data(), scene_str_count);
+		stream->Read<std::string>(scene_name);
 
 		bool stimulate_physics;
 		stream->Read<bool>(stimulate_physics);
@@ -352,7 +317,7 @@ namespace trace {
 		stream->Read<uint32_t>(entity_count);
 		for (uint32_t i = 0; i < entity_count; i++)
 		{
-			deserialize_entity_components_binary(scene.get(), stream);
+			DeserializeEntity(scene.get(), stream);
 		}
 
 		scene->InitializeSceneComponents();
@@ -387,19 +352,14 @@ namespace trace {
 		char* data = nullptr;// TODO: Use custom allocator
 		uint32_t data_size = 0;
 
-
-		auto img_lambda = [&](Entity entity) -> bool {
-			ImageComponent& img = entity.GetComponent<ImageComponent>();
-			if (!img.image)
-			{
-				return false;
-			}
-			UUID id = GetUUIDFromName(img.image->GetName());
+		auto serialize_tex = [&](Ref<GTexture> tex)
+		{
+			UUID id = tex->GetUUID();
 			auto it = map.find(id);
-			
+
 			if (it == map.end())
 			{
-				Ref<GTexture> res = img.image;
+				Ref<GTexture> res = tex;
 				TextureDesc tex_desc = res->GetTextureDescription();
 				uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
 				TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
@@ -416,6 +376,9 @@ namespace trace {
 				RenderFunc::GetTextureData(res.get(), (void*&)data);
 				AssetHeader ast_h;
 				ast_h.offset = stream.GetPosition();
+
+				DataStream* data_stream = &stream;
+				data_stream->Write(res->GetName());
 
 				stream.Write<uint32_t>(tex_desc.m_width);
 				stream.Write<uint32_t>(tex_desc.m_height);
@@ -447,6 +410,16 @@ namespace trace {
 				ast_h.data_size = stream.GetPosition() - ast_h.offset;
 				map.emplace(std::make_pair(id, ast_h));
 			}
+		};
+
+		auto img_lambda = [&](Entity entity) -> bool {
+			ImageComponent& img = entity.GetComponent<ImageComponent>();
+			if (!img.image)
+			{
+				return false;
+			}
+			
+			serialize_tex(img.image);
 
 			return false;
 		};
@@ -458,63 +431,15 @@ namespace trace {
 				return false;
 			}
 			Ref<MaterialInstance> res = renderer._material;
-			/*for (auto& m_data : res->GetMaterialData())
+			for (auto& m_data : res->GetMaterialData())
 			{
-				trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
-				if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
+				if (m_data.second.type == ShaderData::CUSTOM_DATA_TEXTURE)
 				{
-					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
-					UUID id = GetUUIDFromName(tex->GetName());
-
-					auto it = map.find(id);
-
-					if (it == map.end())
-					{
-
-						TextureDesc tex_desc = tex->GetTextureDescription();
-						uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
-						TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
-						total_tex_size += (float)tex_size;
-						if (data_size < tex_size)
-						{
-							if (data) delete[] data;// TODO: Use custom allocator
-							data = new char[tex_size];
-							data_size = tex_size;
-						}
-						RenderFunc::GetTextureData(tex.get(), (void*&)data);
-						AssetHeader ast_h;
-						ast_h.offset = stream.GetPosition();
-						stream.Write<uint32_t>(tex_desc.m_width);
-						stream.Write<uint32_t>(tex_desc.m_height);
-						stream.Write<uint32_t>(tex_desc.m_mipLevels);
-
-
-						stream.Write<Format>(tex_desc.m_format);
-
-						stream.Write<BindFlag>(tex_desc.m_flag);
-
-						stream.Write<UsageFlag>(tex_desc.m_usage);
-
-						stream.Write<uint32_t>(tex_desc.m_channels);
-						stream.Write<uint32_t>(tex_desc.m_numLayers);
-
-						stream.Write<ImageType>(tex_desc.m_image_type);
-
-						stream.Write<AddressMode>(tex_desc.m_addressModeU);
-						stream.Write<AddressMode>(tex_desc.m_addressModeV);
-						stream.Write<AddressMode>(tex_desc.m_addressModeW);
-
-						stream.Write<FilterMode>(tex_desc.m_minFilterMode);
-						stream.Write<FilterMode>(tex_desc.m_magFilterMode);
-
-						stream.Write<AttachmentType>(tex_desc.m_attachmentType);
-						stream.Write(data, tex_size);
-						ast_h.data_size = stream.GetPosition() - ast_h.offset;
-						map.emplace(std::make_pair(id, ast_h));
-					}
+					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.internal_data);
+					serialize_tex(tex);
 
 				}
-			}*/
+			}
 
 			return false;
 		};
@@ -527,63 +452,15 @@ namespace trace {
 				return false;
 			}
 			Ref<MaterialInstance> res = renderer._material;
-			/*for (auto& m_data : res->GetMaterialData())
+			for (auto& m_data : res->GetMaterialData())
 			{
-				trace::UniformMetaData& meta_data = res->GetRenderPipline()->GetSceneUniforms()[m_data.second.second];
-				if (meta_data.data_type == ShaderData::CUSTOM_DATA_TEXTURE)
+				if (m_data.second.type == ShaderData::CUSTOM_DATA_TEXTURE)
 				{
-					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.first);
-					UUID id = GetUUIDFromName(tex->GetName());
-
-					auto it = map.find(id);
-
-					if (it == map.end())
-					{
-
-						TextureDesc tex_desc = tex->GetTextureDescription();
-						uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
-						TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
-						total_tex_size += (float)tex_size;
-						if (data_size < tex_size)
-						{
-							if (data) delete[] data;// TODO: Use custom allocator
-							data = new char[tex_size];
-							data_size = tex_size;
-						}
-						RenderFunc::GetTextureData(tex.get(), (void*&)data);
-						AssetHeader ast_h;
-						ast_h.offset = stream.GetPosition();
-						stream.Write<uint32_t>(tex_desc.m_width);
-						stream.Write<uint32_t>(tex_desc.m_height);
-						stream.Write<uint32_t>(tex_desc.m_mipLevels);
-
-
-						stream.Write<Format>(tex_desc.m_format);
-
-						stream.Write<BindFlag>(tex_desc.m_flag);
-
-						stream.Write<UsageFlag>(tex_desc.m_usage);
-
-						stream.Write<uint32_t>(tex_desc.m_channels);
-						stream.Write<uint32_t>(tex_desc.m_numLayers);
-
-						stream.Write<ImageType>(tex_desc.m_image_type);
-
-						stream.Write<AddressMode>(tex_desc.m_addressModeU);
-						stream.Write<AddressMode>(tex_desc.m_addressModeV);
-						stream.Write<AddressMode>(tex_desc.m_addressModeW);
-
-						stream.Write<FilterMode>(tex_desc.m_minFilterMode);
-						stream.Write<FilterMode>(tex_desc.m_magFilterMode);
-
-						stream.Write<AttachmentType>(tex_desc.m_attachmentType);
-						stream.Write(data, tex_size);
-						ast_h.data_size = stream.GetPosition() - ast_h.offset;
-						map.emplace(std::make_pair(id, ast_h));
-					}
+					Ref<GTexture> tex = std::any_cast<Ref<GTexture>>(m_data.second.internal_data);
+					serialize_tex(tex);
 
 				}
-			}*/
+			}
 
 			return false;
 		};
@@ -657,7 +534,7 @@ namespace trace {
 			{
 				return false;
 			}
-			uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
+			constexpr uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
 			Reflection::CustomMemberCallback(*graph.get(), anim_clip_type_id, anim_clip_callback);
 
 			return false;
@@ -673,7 +550,7 @@ namespace trace {
 			{
 				return false;
 			}
-			uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
+			constexpr uint64_t anim_clip_type_id = Reflection::TypeID<Ref<AnimationClip>>();
 			Reflection::CustomMemberCallback(*sequence.get(), anim_clip_type_id, anim_clip_callback);
 
 			return false;
@@ -746,8 +623,10 @@ namespace trace {
 			FileHandle file_handle;
 			if (FileSystem::open_file(p.string(), (FileMode)(FileMode::READ | FileMode::BINARY), file_handle))
 			{
+				DataStream* data_stream = &stream;
 				AssetHeader ast_h;
 				ast_h.offset = stream.GetPosition();
+				data_stream->Write<std::string>(txt.font->GetName());
 				uint32_t file_size = 0;
 				FileSystem::read_all_bytes(file_handle, nullptr, file_size);
 				stream.Write<uint32_t>(file_size);
@@ -818,6 +697,8 @@ namespace trace {
 	bool SceneSerializer::SerializeMaterials(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 
+		
+
 		auto mat_lambda = [&](Entity entity) -> bool
 		{
 			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
@@ -825,7 +706,7 @@ namespace trace {
 			{
 				return false;
 			}
-			UUID id = GetUUIDFromName(renderer._material->GetName());
+			UUID id = renderer._material->GetUUID();
 			auto it = map.find(id);
 			if (it != map.end())
 			{
@@ -849,7 +730,7 @@ namespace trace {
 			{
 				return false;
 			}
-			UUID id = GetUUIDFromName(renderer._material->GetName());
+			UUID id = renderer._material->GetUUID();
 			auto it = map.find(id);
 			if (it != map.end())
 			{
@@ -858,6 +739,91 @@ namespace trace {
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
 			MaterialSerializer::Serialize(renderer._material, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+
+			return false;
+		};
+
+		scene->IterateComponent<SkinnedModelRenderer>(skin_mat_lambda);
+
+		return true;
+	}
+
+	bool SceneSerializer::SerializeShaderGraphs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
+	{
+		auto mat_lambda = [&](Entity entity) -> bool
+		{
+			ModelRendererComponent& renderer = entity.GetComponent<ModelRendererComponent>();
+			if (!renderer._material)
+			{
+				return false;
+			}
+			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
+			if (!pipeline)
+			{
+				return false;
+			}
+
+			if (!pipeline->GetShaderGraph())
+			{
+				return false;
+			}
+
+			UUID id = pipeline->GetShaderGraph()->GetUUID();
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return false;
+			}
+
+			Ref<ShaderGraph> graph = GenericAssetManager::get_instance()->Get<ShaderGraph>(id);
+
+
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			GenericSerializer::Serialize<ShaderGraph>(graph, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+
+			return false;
+		};
+
+		scene->IterateComponent<ModelRendererComponent>(mat_lambda);
+
+		auto skin_mat_lambda = [&](Entity entity) -> bool
+		{
+			SkinnedModelRenderer& renderer = entity.GetComponent<SkinnedModelRenderer>();
+			if (!renderer._material)
+			{
+				return false;
+			}
+			Ref<GPipeline> pipeline = renderer._material->GetRenderPipline();
+			if (!pipeline)
+			{
+				return false;
+			}
+
+			if (!pipeline->GetShaderGraph())
+			{
+				return false;
+			}
+
+			UUID id = pipeline->GetShaderGraph()->GetUUID();
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return false;
+			}
+
+			Ref<ShaderGraph> graph = GenericAssetManager::get_instance()->Get<ShaderGraph>(id);
+
+
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			GenericSerializer::Serialize<ShaderGraph>(graph, &stream);
 			header.data_size = stream.GetPosition() - header.offset;
 			map.emplace(std::make_pair(id, header));
 
@@ -1009,20 +975,14 @@ namespace trace {
 	bool SceneSerializer::SerializePrefabs(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<Scene> scene)
 	{
 
-		auto prefab_lambda = [&](Entity entity) -> bool
+		auto serialize_prefab = [&](Ref<Prefab> prefab)
 		{
-			PrefabComponent& comp = entity.GetComponent<PrefabComponent>();
-			Ref<Prefab> prefab = comp.handle;
-			if (!prefab)
-			{
-				return false;
-			}
 
-			UUID id = GetUUIDFromName(prefab->GetName());
+			UUID id = prefab->GetUUID();
 			auto it = map.find(id);
 			if (it != map.end())
 			{
-				return false;
+				return;
 			}
 
 			AssetHeader header = {};
@@ -1032,11 +992,70 @@ namespace trace {
 			header.data_size = stream.GetPosition() - header.offset;
 
 			map.emplace(std::make_pair(id, header));
+		};
 
+		auto prefab_lambda = [&](Entity entity) -> bool
+		{
+			PrefabComponent& comp = entity.GetComponent<PrefabComponent>();
+			Ref<Prefab> prefab = comp.handle;
+			if (!prefab)
+			{
+				return false;
+			}
+
+			serialize_prefab(prefab);
 			return false;
 		};
 
 		scene->IterateComponent<PrefabComponent>(prefab_lambda);
+
+		std::unordered_map<Script*, FieldManager>& field_instances = scene->m_scriptRegistry.GetFieldInstances();
+
+		for (auto [script, field] : field_instances)
+		{
+			for (auto [id, field_instance] : field)
+			{
+				for (auto [name, data] : field_instance.GetFields())
+				{
+					switch (data.type)
+					{
+					case ScriptFieldType::Prefab:
+					{
+						UUID id = 0;
+						memcpy(&id, data.data, sizeof(UUID));
+						if (id != 0)
+						{
+							Ref<Prefab> asset = GenericAssetManager::get_instance()->Get<Prefab>(id);
+							serialize_prefab(asset);
+						}
+						break;
+					}
+					}
+				}
+			}
+		}
+
+		Scene* prefab_scene = PrefabManager::get_instance()->GetScene();
+
+		if (scene.get() == prefab_scene)
+		{
+			return true;
+		}
+
+		Ref<Scene> scene_handle(prefab_scene, [](Resource*) {});
+		SceneSerializer::SerializeTextures(stream, map, scene_handle);
+		SceneSerializer::SerializeAnimationClips(stream, map, scene_handle);
+		SceneSerializer::SerializeFonts(stream, map, scene_handle);
+		SceneSerializer::SerializeMaterials(stream, map, scene_handle);
+		SceneSerializer::SerializeModels(stream, map, scene_handle);
+		SceneSerializer::SerializePipelines(stream, map, scene_handle);
+		SceneSerializer::SerializeShaders(stream, map, scene_handle);
+		SceneSerializer::SerializePrefabs(stream, map, scene_handle);
+		SceneSerializer::SerializeAnimationGraphs(stream, map, scene_handle);
+		SceneSerializer::SerializeSkeletons(stream, map, scene_handle);
+		SceneSerializer::SerializeSequences(stream, map, scene_handle);
+		SceneSerializer::SerializeSkinnedModels(stream, map, scene_handle);
+		SceneSerializer::SerializeShaderGraphs(stream, map, scene_handle);
 
 		return true;
 	}

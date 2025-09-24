@@ -11,6 +11,7 @@
 #include "render_graph/BloomPass.h"
 #include "render_graph/UIPass.h"
 #include "render_graph/ShadowPass.h"
+#include "render_graph/WeightedOITPass.h"
 #include "render_graph/RenderGraph.h"
 
 #include <functional>
@@ -58,6 +59,8 @@ namespace trace {
 		virtual int32_t BindRenderGraphController(RenderGraphController controller, const std::string& controller_name);
 		virtual bool UnBindRenderGraphController(const std::string& controller_name);
 
+		void SetupFrameGraph(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index = 0);
+
 	private:
 		GBufferPass gbuffer_pass;
 		LightingPass lighting_pass;
@@ -67,6 +70,7 @@ namespace trace {
 		BloomPass bloom_pass;
 		UIPass ui_pass;
 		ShadowPass shadow_pass;
+		WeightedOITPass weightedOITPass;
 
 
 	protected:

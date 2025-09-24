@@ -51,5 +51,8 @@ namespace trace {
 		GHandle m_renderHandle;
 		MaterialType m_type = MaterialType::OPAQUE_LIT;
 	protected:
+
+		friend class ShaderGraphWindow;
+
 	};
 }

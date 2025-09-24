@@ -27,8 +27,10 @@ namespace trace {
 		keyboard_prev = keyboard_curr;
 		mouse_prev = mouse_curr;
 
-		//keyboard_curr = { 0 };
-		//mouse_curr = { 0 };
+		for (auto& i : gamepads_curr)
+		{
+			gamepads_prev[i.first] = i.second;
+		}
 	}
 
 	KeyState InputSystem::GetKeyState(Keys key)
@@ -77,6 +79,36 @@ namespace trace {
 		return KeyState::KEY_NULL;
 	}
 
+	KeyState InputSystem::GetGamepadKeyState(GamepadKeys key, int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return KeyState::KEY_NULL;
+		}
+
+		if (gamepads_prev[controller_id].buttons[key])
+		{
+			if (it->second.buttons[key])
+			{
+				return KeyState::KEY_HELD;
+			}
+			else
+			{
+				return KeyState::KEY_RELEASE;
+			}
+		}
+		else
+		{
+			if (it->second.buttons[key])
+			{
+				return KeyState::KEY_PRESS;
+			}
+		}
+		return KeyState::KEY_NULL;
+	}
+
 	bool InputSystem::GetKey(Keys key)
 	{
 		return keyboard_curr.keys[key];
@@ -90,6 +122,28 @@ namespace trace {
 	bool InputSystem::GetKeyReleased(Keys key)
 	{
 		return GetKeyState(key) == KeyState::KEY_RELEASE;
+	}
+
+	bool InputSystem::GetGamepadKey(GamepadKeys key, int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return false;
+		}
+
+		return it->second.buttons[key];
+	}
+
+	bool InputSystem::GetGamepadKeyPressed(GamepadKeys key, int32_t controller_id)
+	{
+		return GetGamepadKeyState(key, controller_id) == KeyState::KEY_PRESS;
+	}
+
+	bool InputSystem::GetGamepadKeyReleased(GamepadKeys key, int32_t controller_id)
+	{
+		return GetGamepadKeyState(key, controller_id) == KeyState::KEY_RELEASE;
 	}
 
 	bool InputSystem::GetButton(Buttons button)
@@ -135,6 +189,78 @@ namespace trace {
 	float InputSystem::GetMouseY()
 	{
 		return mouse_curr.y;
+	}
+
+	float InputSystem::GetLeftStickX(int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return 0.0f;
+		}
+
+		return it->second.left_stick_x;
+	}
+
+	float InputSystem::GetLeftStickY(int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return 0.0f;
+		}
+
+		return it->second.left_stick_y;
+	}
+
+	float InputSystem::GetRightStickX(int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return 0.0f;
+		}
+
+		return it->second.right_stick_x;
+	}
+
+	float InputSystem::GetRightStickY(int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return 0.0f;
+		}
+
+		return it->second.right_stick_y;
+	}
+
+	float InputSystem::GetLeftTrigger(int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return 0.0f;
+		}
+
+		return it->second.left_trigger;
+	}
+
+	float InputSystem::GetRightTrigger(int32_t controller_id)
+	{
+		auto it = gamepads_curr.find(controller_id);
+		bool has_controller = it != gamepads_curr.end();
+		if (!has_controller)
+		{
+			return 0.0f;
+		}
+
+		return it->second.right_trigger;
 	}
 
 	InputSystem * InputSystem::get_instance()

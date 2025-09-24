@@ -26,6 +26,7 @@ namespace trace {
 		bloom_pass.Init(m_renderer);
 		ui_pass.Init(m_renderer);
 		shadow_pass.Init(m_renderer);
+		weightedOITPass.Init(m_renderer);
 
 
 		SetGraphsCount(MAX_RENDER_GRAPH);
@@ -39,6 +40,7 @@ namespace trace {
 
 		DestroyGraphs();
 
+		weightedOITPass.ShutDown();
 		shadow_pass.ShutDown();
 		ui_pass.ShutDown();
 		bloom_pass.ShutDown();
@@ -151,6 +153,7 @@ namespace trace {
 
 		return -1;
 	}
+
 	bool RenderComposer::UnBindRenderGraphController(const std::string& controller_name)
 	{
 		auto it = m_controllersMap.find(controller_name);
@@ -164,5 +167,49 @@ namespace trace {
 		m_controllersMap.erase(controller_name);
 
 		return true;
+	}
+
+	void RenderComposer::SetupFrameGraph(RenderGraph& frame_graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
+	{
+		FrameData& fd = black_board.add<FrameData>();
+		fd.frame_settings = frame_settings;
+
+		fd.hdr_index = INVALID_ID;
+		fd.frame_width = m_renderer->GetFrameWidth();
+		fd.frame_height = m_renderer->GetFrameHeight();
+		fd.ldr_index = INVALID_ID;
+		fd.swapchain_index = frame_graph.AddSwapchainResource("swapchain", m_renderer->GetSwapchain());
+		fd.ldr_index = fd.swapchain_index;
+
+		TextureDesc gPos = {};
+		gPos.m_addressModeU = gPos.m_addressModeV = gPos.m_addressModeW = AddressMode::CLAMP_TO_EDGE;
+		gPos.m_attachmentType = AttachmentType::COLOR;
+		gPos.m_flag = BindFlag::RENDER_TARGET_BIT;
+		gPos.m_format = Format::R8G8B8A8_UNORM;
+		gPos.m_width = fd.frame_width;
+		gPos.m_height = fd.frame_height;
+		gPos.m_minFilterMode = gPos.m_magFilterMode = FilterMode::LINEAR;
+		gPos.m_mipLevels = gPos.m_numLayers = 1;
+		gPos.m_usage = UsageFlag::DEFAULT;
+
+
+		frame_graph.SetRenderer(m_renderer);
+
+		shadow_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		gbuffer_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		if (TRC_HAS_FLAG(frame_settings, RENDER_SSAO))
+		{
+			ssao_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		}
+		lighting_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		forward_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		weightedOITPass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+
+		if (TRC_HAS_FLAG(frame_settings, RENDER_BLOOM))
+		{
+			bloom_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		}
+		toneMap_pass.Setup(&frame_graph, black_board, render_graph_index, render_graph_index);
+		frame_graph.SetFinalResourceOutput("swapchain");
 	}
 }

@@ -8,14 +8,92 @@
 #ifdef TRC_WINDOWS
 #include <Windows.h>
 #include <windowsx.h>
+#include <Xinput.h>
 #endif
 
 static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM lparam);
 
 static std::wstring to_ws(const std::string& str);
 
+//NOTE: This is custom defines to allow triggers to have values
+#define XINPUT_GAMEPAD_LEFT_TRIGGER 0x1100 
+#define XINPUT_GAMEPAD_RIGHT_TRIGGER 0x2200 
 
 namespace trace {
+
+	int gamepadkey_to_xinput(GamepadKeys pad_key)
+	{
+
+		switch (pad_key)
+		{
+		case GamepadKeys::GAMEPAD_BUTTON_1:
+		{
+			return XINPUT_GAMEPAD_Y;
+		}
+		case GamepadKeys::GAMEPAD_BUTTON_2:
+		{
+			return XINPUT_GAMEPAD_B;
+		}
+		case GamepadKeys::GAMEPAD_BUTTON_3:
+		{
+			return XINPUT_GAMEPAD_A;
+		}
+		case GamepadKeys::GAMEPAD_BUTTON_4:
+		{
+			return XINPUT_GAMEPAD_X;
+		}
+		case GamepadKeys::GAMEPAD_BUTTON_SELECT:
+		{
+			return XINPUT_GAMEPAD_BACK;
+		}
+		case GamepadKeys::GAMEPAD_BUTTON_START:
+		{
+			return XINPUT_GAMEPAD_START;
+		}
+		case GamepadKeys::GAMEPAD_DPAD_UP:
+		{
+			return XINPUT_GAMEPAD_DPAD_UP;
+		}
+		case GamepadKeys::GAMEPAD_DPAD_DOWN:
+		{
+			return XINPUT_GAMEPAD_DPAD_DOWN;
+		}
+		case GamepadKeys::GAMEPAD_DPAD_LEFT:
+		{
+			return XINPUT_GAMEPAD_DPAD_LEFT;
+		}
+		case GamepadKeys::GAMEPAD_DPAD_RIGHT:
+		{
+			return XINPUT_GAMEPAD_DPAD_RIGHT;
+		}
+		case GamepadKeys::GAMEPAD_STICK_LEFT:
+		{
+			return XINPUT_GAMEPAD_LEFT_THUMB;
+		}
+		case GamepadKeys::GAMEPAD_STICK_RIGHT:
+		{
+			return XINPUT_GAMEPAD_RIGHT_THUMB;
+		}
+		case GamepadKeys::GAMEPAD_TRIGGER_LEFT:
+		{
+			return XINPUT_GAMEPAD_LEFT_TRIGGER;
+		}
+		case GamepadKeys::GAMEPAD_TRIGGER_RIGHT:
+		{
+			return XINPUT_GAMEPAD_LEFT_TRIGGER;
+		}
+		case GamepadKeys::GAMEPAD_SHOULDER_LEFT:
+		{
+			return XINPUT_GAMEPAD_LEFT_SHOULDER;
+		}
+		case GamepadKeys::GAMEPAD_SHOULDER_RIGHT:
+		{
+			return XINPUT_GAMEPAD_RIGHT_SHOULDER;
+		}
+		}
+
+		return -1;
+	}
 
 	trace::Win32Window::Win32Window()
 	{
@@ -109,8 +187,6 @@ namespace trace {
 	void trace::Win32Window::Update(float deltaTime)
 	{
 
-		MSG msg;
-
 		/*if (!IsWindowEnabled(m_handle))
 		{
 			TRC_TRACE("Window diabled");
@@ -131,6 +207,62 @@ namespace trace {
 			DispatchMessage(&msg);
 		}*/
 
+		InputSystem* input_system = InputSystem::get_instance();
+
+		for (int32_t controller_index = 0; controller_index < XUSER_MAX_COUNT; controller_index++)
+		{
+			XINPUT_STATE controller_state = { 0 };
+
+			//TODO: Add functions to InputSystem that allow access to gamepad structure
+			bool has_controller = input_system->gamepads_curr.find(controller_index) != input_system->gamepads_curr.end();
+			if (XInputGetState(controller_index, &controller_state) == ERROR_SUCCESS)
+			{
+				if (!has_controller)
+				{
+					input_system->gamepads_curr[controller_index] = Gamepad{};
+					input_system->gamepads_prev[controller_index] = Gamepad{};
+					GamepadConnected controller_connect(controller_index);
+					trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_GAMEPAD_CONNECT, &controller_connect);
+					TRC_INFO("Controller Connected, Id:{}", controller_index);
+				}
+
+				Gamepad& game_controller = input_system->gamepads_curr[controller_index];
+				for (int32_t i = 0; i < (int32_t)GamepadKeys::GAMEPAD_MAX_KEYS; i++)
+				{
+					int win_def = gamepadkey_to_xinput((GamepadKeys)i);
+					bool skip = (win_def == XINPUT_GAMEPAD_LEFT_TRIGGER) || (win_def == XINPUT_GAMEPAD_RIGHT_TRIGGER);
+					if (skip)
+					{
+						continue;
+					}
+
+					game_controller.buttons[i] = (controller_state.Gamepad.wButtons & win_def) != 0;
+				}
+
+				game_controller.buttons[GamepadKeys::GAMEPAD_TRIGGER_LEFT] = controller_state.Gamepad.bLeftTrigger > 5;
+				game_controller.buttons[GamepadKeys::GAMEPAD_TRIGGER_RIGHT] = controller_state.Gamepad.bRightTrigger > 5;
+
+				game_controller.left_trigger = (float)controller_state.Gamepad.bLeftTrigger / 255.0f;
+				game_controller.right_trigger = (float)controller_state.Gamepad.bRightTrigger / 255.0f;
+
+				game_controller.left_stick_x = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbLX / 32767.0f);
+				game_controller.left_stick_y = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbLY / 32767.0f);
+
+				game_controller.right_stick_x = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbRX / 32767.0f);
+				game_controller.right_stick_y = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbRY / 32767.0f);
+			}
+			else
+			{
+				if (has_controller)
+				{
+					GamepadDisconnected controller_disconnect(controller_index);
+					trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_GAMEPAD_DISCONNECT, &controller_disconnect);
+					input_system->gamepads_curr.erase(controller_index);
+					input_system->gamepads_prev.erase(controller_index);
+					TRC_INFO("Controller Disconnected, Id:{}", controller_index);
+				}
+			}
+		}
 		
 	}
 

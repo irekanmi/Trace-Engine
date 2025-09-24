@@ -852,11 +852,13 @@ namespace trace {
 	}
 	void TraceEditor::OpenScene(std::string& path)
 	{
-		Ref<Scene> scene = SceneSerializer::Deserialize(path);
+		/*Ref<Scene> scene = SceneSerializer::Deserialize(path);
 		if (scene)
 		{
 			SetNextScene(scene);
-		}
+		}*/
+
+		scene_window->LoadScene(path);
 	}
 	void TraceEditor::OpenAnimationGraph(std::string& path)
 	{

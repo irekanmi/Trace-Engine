@@ -1,13 +1,12 @@
 #include "pch.h"
 
 #include "resource/GenericAssetManager.h"
+#include "resource/DefaultAssetsManager.h"
 
 namespace trace {
 	bool GenericAssetManager::Init(uint32_t max_units)
 	{
 		m_numUnits = max_units;
-		//m_hashtable.Init(max_units);
-		//m_hashtable.Fill(INVALID_ID);
 
 		return true;
 	}
@@ -50,6 +49,18 @@ namespace trace {
 
 
 		delete asset;//TODO: Use custom memory allocator
+	}
+
+	void GenericAssetManager::BuildPipeline(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map)
+	{
+		for (auto& i : m_assets)
+		{
+			if (GPipeline* pipeline = dynamic_cast<GPipeline*>(i.second))
+			{
+				Ref<GPipeline> asset = Get<GPipeline>(pipeline->GetUUID());
+				DefaultAssetsManager::BuildPipeline(stream, map, asset);
+			}
+		}
 	}
 
 

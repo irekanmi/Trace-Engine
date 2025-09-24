@@ -436,7 +436,7 @@ namespace trace {
 		PRIMITIVETOPOLOGY topology = PRIMITIVETOPOLOGY::NONE;
 		Viewport view_port = {};
 		GRenderPass* render_pass = nullptr;
-		uint32_t subpass_index = uint32_t(-1);
+		uint32_t subpass_index = 0;
 		RENDERPASS _renderPass = RENDERPASS::MAIN_PASS;
 
 		ShaderResources resources;

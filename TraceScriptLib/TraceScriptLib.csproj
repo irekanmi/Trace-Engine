@@ -21,8 +21,7 @@
     <OutputPath>..\Data\Assembly\</OutputPath>
     <BaseIntermediateOutputPath>..\bin-int\Debug-windows-x86_64\TraceScriptLib\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -34,8 +33,7 @@
     <OutputPath>..\Data\Assembly\</OutputPath>
     <BaseIntermediateOutputPath>..\bin-int\DebugRelease-windows-x86_64\TraceScriptLib\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -47,8 +45,7 @@
     <OutputPath>..\Data\Assembly\</OutputPath>
     <BaseIntermediateOutputPath>..\bin-int\Release-windows-x86_64\TraceScriptLib\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -60,8 +57,7 @@
     <OutputPath>..\Data\Assembly\</OutputPath>
     <BaseIntermediateOutputPath>..\bin-int\Public-windows-x86_64\TraceScriptLib\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -82,9 +78,9 @@
     <Compile Include="Source\Core\Input\Input.cs" />
     <Compile Include="Source\Core\Input\Keys.cs" />
     <Compile Include="Source\Internals.cs" />
+    <Compile Include="Source\Math\Maths.cs" />
     <Compile Include="Source\Networking\Netcode.cs" />
     <Compile Include="Source\Networking\Networking.cs" />
-    <Compile Include="Source\Math\Maths.cs" />
     <Compile Include="Source\Physics\Physics.cs" />
     <Compile Include="Source\Player.cs" />
     <Compile Include="Source\PlayerMove.cs" />

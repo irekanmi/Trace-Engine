@@ -43,7 +43,6 @@ namespace trace {
 		void NewScene();
 		void SaveScene();
 		std::string SaveSceneAs();
-		std::string OpenScene();
 		void OpenScene(std::string& path);
 		void OnScenePlay();
 		void OnSceneStimulate();

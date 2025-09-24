@@ -83,14 +83,14 @@ namespace Trace
             return InternalCalls.Networking_IsClient();
         }
 
-        public static void InvokeRPC(Trace.Action src, UInt64 func_name_id, RPCType type)// TODO: Allow for Parameters
+        public static void InvokeRPC(Trace.Action src, UInt64 func_name_id, RPCType type, params object[] args)// TODO: Allow for Parameters
         {
-            InternalCalls.Networking_InvokeRPC( src.GetID(), src, func_name_id, type);
+            InternalCalls.Networking_InvokeRPC( src.GetID(), src, func_name_id, type, args);
         }
         
-        public static void InvokeRPC(Trace.Action src, string func_name, RPCType type)
+        public static void InvokeRPC(Trace.Action src, string func_name, RPCType type, params object[] args)
         {
-            InvokeRPC(src, Utils.HashString(func_name), type);
+            InvokeRPC(src, Utils.HashString(func_name), type, args);
         }
 
         public static void SendScenePacket(float deltaTime)

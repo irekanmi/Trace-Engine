@@ -63,6 +63,7 @@ namespace trace {
 		ScriptMethod();
 		~ScriptMethod();
 
+		std::vector<ScriptField> parameters;
 		void* m_internal = nullptr;
 	private:
 

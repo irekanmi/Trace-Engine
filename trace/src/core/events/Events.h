@@ -27,13 +27,15 @@ namespace trace {
 		TRC_MOUSE_MOVE,
 		TRC_MOUSE_WHEEL,
 		TRC_MOUSE_DB_CLICK,
+		TRC_GAMEPAD_CONNECT,
+		TRC_GAMEPAD_DISCONNECT,
 
 		MAX_EVENTS
 	};
 
 	
 	
-	class TRACE_API Event
+	class Event
 	{
 
 	public:
@@ -71,7 +73,7 @@ namespace trace {
 	};
 
 
-	class TRACE_API ConsoleWriteEvent : public Event
+	class ConsoleWriteEvent : public Event
 	{
 	public:
 		ConsoleWriteEvent();
@@ -84,7 +86,7 @@ namespace trace {
 	protected:
 	};
 
-	class TRACE_API ApplicationStart : public Event
+	class ApplicationStart : public Event
 	{
 	public:
 		ApplicationStart();
@@ -96,7 +98,7 @@ namespace trace {
 	protected:
 	};
 
-	class TRACE_API ApplicationEnd : public Event
+	class ApplicationEnd : public Event
 	{
 	public:
 		ApplicationEnd();
@@ -108,7 +110,7 @@ namespace trace {
 	protected:
 	};
 
-	class TRACE_API WindowClose : public Event
+	class WindowClose : public Event
 	{
 
 	public:
@@ -120,7 +122,7 @@ namespace trace {
 
 	};
 
-	class TRACE_API KeyPressed : public Event
+	class KeyPressed : public Event
 	{
 
 	public:
@@ -138,7 +140,7 @@ namespace trace {
 
 	};
 
-	class TRACE_API KeyReleased : public Event
+	class KeyReleased : public Event
 	{
 
 	public:
@@ -156,7 +158,7 @@ namespace trace {
 
 	};
 	
-	class TRACE_API KeyTyped : public Event
+	class KeyTyped : public Event
 	{
 
 	public:
@@ -174,7 +176,7 @@ namespace trace {
 
 	};
 
-	class TRACE_API WindowResize : public Event
+	class WindowResize : public Event
 	{
 
 	public:
@@ -197,7 +199,7 @@ namespace trace {
 
 	};
 
-	class TRACE_API MousePressed : public Event
+	class MousePressed : public Event
 	{
 
 	public:
@@ -216,7 +218,7 @@ namespace trace {
 
 	};
 
-	class TRACE_API MouseReleased : public Event
+	class MouseReleased : public Event
 	{
 
 	public:
@@ -235,7 +237,7 @@ namespace trace {
 
 	};
 
-	class TRACE_API MouseMove : public Event
+	class MouseMove : public Event
 	{
 		
 
@@ -258,7 +260,7 @@ namespace trace {
 	protected:
 	};
 
-	class TRACE_API MouseWheel : public Event
+	class MouseWheel : public Event
 	{
 
 
@@ -280,7 +282,7 @@ namespace trace {
 	protected:
 	};
 
-	class TRACE_API MouseDBClick : public Event
+	class MouseDBClick : public Event
 	{
 
 	public:
@@ -295,6 +297,44 @@ namespace trace {
 
 	private:
 		Buttons m_button;
+	protected:
+
+	};
+	
+	class GamepadConnected : public Event
+	{
+
+	public:
+		GamepadConnected(int32_t controller_id);
+		~GamepadConnected();
+
+		virtual const char* GetName() override { return _STR(GamepadConnected); }
+
+		int32_t GetID() { return m_controllerID; }
+
+		void SetID(int32_t controller_id) { m_controllerID = controller_id; }
+
+	private:
+		int32_t m_controllerID;
+	protected:
+
+	};
+	
+	class GamepadDisconnected : public Event
+	{
+
+	public:
+		GamepadDisconnected(int32_t controller_id);
+		~GamepadDisconnected();
+
+		virtual const char* GetName() override { return _STR(GamepadDisconnected); }
+
+		int32_t GetID() { return m_controllerID; }
+
+		void SetID(int32_t controller_id) { m_controllerID = controller_id; }
+
+	private:
+		int32_t m_controllerID;
 	protected:
 
 	};

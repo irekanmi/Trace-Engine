@@ -2,9 +2,12 @@
 
 
 #include "Script.h"
-#include <string>
 #include "physics/Physics.h"
 #include "scene/UUID.h"
+#include "serialize/DataStream.h"
+
+
+#include <string>
 
 namespace trace {
 	class Scene;
@@ -44,6 +47,8 @@ bool SetInstanceFieldValue(ScriptInstance& instance, ScriptField& field, void* v
 
 void AttachThread(void*& thread_info);
 void DetachThread(void* thread_info);
+
+void InvokeNetworkRPC(DataStream* rpc_data);
 
 
 template<typename T>

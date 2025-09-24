@@ -9,6 +9,8 @@
 #include "external_utils.h"
 #include "core/Coretypes.h"
 #include "core/Utils.h"
+#include "serialize/PipelineSerializer.h"
+#include "serialize/MaterialSerializer.h"
 
 
 namespace trace {
@@ -678,6 +680,33 @@ namespace trace {
 		id = GetUUIDFromName("gbuffer_pipeline");
 		gbuffer_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
 
+		id = GetUUIDFromName("skinned_gbuffer_pipeline");
+		skinned_gbuffer_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
+		
+		id = GetUUIDFromName("particle_billboard_pipeline");
+		particle_billboard_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
+		
+		id = GetUUIDFromName("particle_velocity_aligned_pipeline");
+		particle_velocity_aligned_pipeline = asset_manager->Load_Runtime<GPipeline>(id);
+		
+
+
+		id = GetUUIDFromName("albedo_map");
+		default_diffuse_map = asset_manager->Load_Runtime<GTexture>(id);
+		
+		id = GetUUIDFromName("normal_map");
+		default_normal_map = asset_manager->Load_Runtime<GTexture>(id);
+		
+		id = GetUUIDFromName("specular_map");
+		default_specular_map = asset_manager->Load_Runtime<GTexture>(id);
+		
+		id = GetUUIDFromName("black_texture");
+		black_texture = asset_manager->Load_Runtime<GTexture>(id);
+		
+		id = GetUUIDFromName("transparent_texture");
+		transparent_texture = asset_manager->Load_Runtime<GTexture>(id);
+
+		
 
 		id = GetUUIDFromName("Cube");
 		Cube = asset_manager->Load_Runtime<Model>(id);
@@ -687,6 +716,11 @@ namespace trace {
 
 		id = GetUUIDFromName("Plane");
 		Plane = asset_manager->Load_Runtime<Model>(id);
+		
+		
+		
+		id = GetUUIDFromName("default");
+		default_material = asset_manager->Load_Runtime<MaterialInstance>(id);
 
 		return true;
 	}
@@ -721,4 +755,173 @@ namespace trace {
 		black_texture.free();
 		transparent_texture.free();
 	}
+	void DefaultAssetsManager::BuildDefaults(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map)
+	{
+		float total_tex_size = 0.0f;
+		char* data = nullptr;// TODO: Use custom allocator
+		uint32_t data_size = 0;
+
+		auto serialize_tex = [&](Ref<GTexture> tex)
+		{
+			UUID id = tex->GetUUID();
+			auto it = map.find(id);
+
+			if (it == map.end())
+			{
+				Ref<GTexture> res = tex;
+				TextureDesc tex_desc = res->GetTextureDescription();
+				uint32_t tex_size = tex_desc.m_width * tex_desc.m_height * getFmtSize(tex_desc.m_format);
+				TRC_INFO("Texture Name: {}, Texture Size: {}", res->GetName(), tex_size);
+				total_tex_size += (float)tex_size;
+				if (data_size < tex_size)
+				{
+					if (data)
+					{
+						delete[] data;// TODO: Use custom allocator
+					}
+					data = new char[tex_size];
+					data_size = tex_size;
+				}
+				RenderFunc::GetTextureData(res.get(), (void*&)data);
+				AssetHeader ast_h;
+				ast_h.offset = stream.GetPosition();
+
+				DataStream* data_stream = &stream;
+				data_stream->Write(res->GetName());
+
+				stream.Write<uint32_t>(tex_desc.m_width);
+				stream.Write<uint32_t>(tex_desc.m_height);
+				stream.Write<uint32_t>(tex_desc.m_mipLevels);
+
+
+				stream.Write<Format>(tex_desc.m_format);
+
+				stream.Write<BindFlag>(tex_desc.m_flag);
+
+				stream.Write<UsageFlag>(tex_desc.m_usage);
+
+				stream.Write<uint32_t>(tex_desc.m_channels);
+				stream.Write<uint32_t>(tex_desc.m_numLayers);
+
+				stream.Write<ImageType>(tex_desc.m_image_type);
+
+				stream.Write<AddressMode>(tex_desc.m_addressModeU);
+				stream.Write<AddressMode>(tex_desc.m_addressModeV);
+				stream.Write<AddressMode>(tex_desc.m_addressModeW);
+
+				stream.Write<FilterMode>(tex_desc.m_minFilterMode);
+				stream.Write<FilterMode>(tex_desc.m_magFilterMode);
+
+				stream.Write<AttachmentType>(tex_desc.m_attachmentType);
+
+
+				stream.Write(data, tex_size);
+				ast_h.data_size = stream.GetPosition() - ast_h.offset;
+				map.emplace(std::make_pair(id, ast_h));
+			}
+		};
+
+		serialize_tex(transparent_texture);
+		serialize_tex(black_texture);
+		serialize_tex(default_normal_map);
+		serialize_tex(default_specular_map);
+		serialize_tex(default_diffuse_map);
+
+		BuildPipeline(stream, map, particle_billboard_pipeline);
+		BuildPipeline(stream, map, particle_velocity_aligned_pipeline);
+		BuildPipeline(stream, map, debug_line_pipeline);
+		BuildPipeline(stream, map, quad_pipeline);
+		BuildPipeline(stream, map, text_pipeline);
+		BuildPipeline(stream, map, text_batch_pipeline);
+		BuildPipeline(stream, map, skinned_gbuffer_pipeline);
+		BuildPipeline(stream, map, gbuffer_pipeline);
+		BuildPipeline(stream, map, light_pipeline);
+		BuildPipeline(stream, map, skybox_pipeline);
+
+		auto serialize_model = [&](Ref<Model> model)
+		{
+			UUID id = GetUUIDFromName(model->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			Ref<Model> res = model;
+			AssetHeader ast_h;
+			ast_h.offset = stream.GetPosition();
+			std::string model_name = res->GetName();
+			Reflection::Serialize(model_name, &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			Reflection::Serialize(*res.get(), &stream, nullptr, Reflection::SerializationFormat::BINARY);
+			ast_h.data_size = stream.GetPosition() - ast_h.offset;
+
+			map.emplace(std::make_pair(id, ast_h));
+		};
+
+		serialize_model(Plane);
+		serialize_model(Sphere);
+		serialize_model(Cube);
+
+		auto serialize_material = [&](Ref<MaterialInstance> material)
+		{
+			UUID id = material->GetUUID();
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+			MaterialSerializer::Serialize(material, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		serialize_material(default_material);
+
+	}
+
+	void DefaultAssetsManager::BuildPipeline(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<GPipeline> in_pipeline)
+	{
+		auto serialize_shader = [&](GShader* shader)
+		{
+			Ref<GShader> shader_ref = GenericAssetManager::get_instance()->Get<GShader>(shader->GetUUID());
+			UUID id = GetUUIDFromName(shader_ref->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			PipelineSerializer::SerializeShader(shader_ref, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+		};
+
+		auto serialize_pipeline = [&](Ref<GPipeline> pipeline)
+		{
+			PipelineStateDesc& ds = pipeline->GetDesc();
+
+			serialize_shader(ds.vertex_shader);
+			serialize_shader(ds.pixel_shader);
+
+			UUID id = GetUUIDFromName(pipeline->GetName());
+			auto it = map.find(id);
+			if (it != map.end())
+			{
+				return;
+			}
+			AssetHeader header = {};
+			header.offset = stream.GetPosition();
+
+			PipelineSerializer::Serialize(pipeline, &stream);
+			header.data_size = stream.GetPosition() - header.offset;
+			map.emplace(std::make_pair(id, header));
+
+		};
+
+		serialize_pipeline(in_pipeline);
+	}
+
 }

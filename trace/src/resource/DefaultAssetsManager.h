@@ -6,8 +6,11 @@
 #include "render/GTexture.h"
 #include "render/GShader.h"
 #include "render/Model.h"
+#include "serialize/FileStream.h"
+#include "serialize/AssetsInfo.h"
 
 #include <string>
+#include <unordered_map>
 
 namespace trace {
 
@@ -20,7 +23,8 @@ namespace trace {
 		static bool LoadAssets_Runtime();
 		static void LoadAssetsPath();
 		static void ReleaseAssets();
-		static void BuildDefaults();
+		static void BuildDefaults(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map);
+		static void BuildPipeline(FileStream& stream, std::unordered_map<UUID, AssetHeader>& map, Ref<GPipeline> pipeline);
 
 	public:
 		static Ref<MaterialInstance> default_material;

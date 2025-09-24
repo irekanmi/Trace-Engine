@@ -28,6 +28,23 @@ namespace trace {
 			Write(&value, sizeof(T));
 		}
 
+		template<>
+		void Read(std::string& value)
+		{
+			uint32_t size = 0;
+			Read<uint32_t>(size);
+			value.resize(size);
+			Read(value.data(), size);
+		}
+
+		template<>
+		void Write(std::string& val)
+		{
+			uint32_t size = val.size();
+			Write<uint32_t>(size);
+			Write(val.data(), size);
+		}
+
 	private:
 	protected:
 

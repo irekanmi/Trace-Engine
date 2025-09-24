@@ -31,6 +31,7 @@ namespace trace {
 		Ref<Scene> m_currentScene;
 		Ref<Scene> m_nextScene;
 		UUID m_startScene;
+		int32_t swapchain_graph = -1;
 
 	protected:
 

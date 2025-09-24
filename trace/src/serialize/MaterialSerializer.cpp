@@ -275,7 +275,6 @@ namespace trace {
 		{
 			std::string name = i.first;
 			Reflection::Serialize(name, stream, nullptr, Reflection::SerializationFormat::BINARY);
-			//trace::UniformMetaData& meta_data = material->GetRenderPipline()->GetSceneUniforms()[i.second.hash];
 			int type = (int)i.second.type;
 			stream->Write<int>(type);
 			stream->Write(i.second.offset);
