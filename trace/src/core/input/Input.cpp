@@ -30,6 +30,7 @@ namespace trace {
 		for (auto& i : gamepads_curr)
 		{
 			gamepads_prev[i.first] = i.second;
+			i.second = Gamepad{};
 		}
 	}
 

@@ -209,6 +209,15 @@ namespace trace {
 
 		InputSystem* input_system = InputSystem::get_instance();
 
+		HWND focused_window = GetFocus();
+		
+		bool is_window_focused = m_handle == focused_window;
+
+		if (!is_window_focused)
+		{
+			return;
+		}
+
 		for (int32_t controller_index = 0; controller_index < XUSER_MAX_COUNT; controller_index++)
 		{
 			XINPUT_STATE controller_state = { 0 };
@@ -245,11 +254,19 @@ namespace trace {
 				game_controller.left_trigger = (float)controller_state.Gamepad.bLeftTrigger / 255.0f;
 				game_controller.right_trigger = (float)controller_state.Gamepad.bRightTrigger / 255.0f;
 
+				float dead_zone = 0.1f;
 				game_controller.left_stick_x = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbLX / 32767.0f);
+				game_controller.left_stick_x = fabs(game_controller.left_stick_x) > dead_zone ? game_controller.left_stick_x : 0.0f;
+
 				game_controller.left_stick_y = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbLY / 32767.0f);
+				game_controller.left_stick_y = fabs(game_controller.left_stick_y) > dead_zone ? game_controller.left_stick_y : 0.0f;
+
 
 				game_controller.right_stick_x = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbRX / 32767.0f);
+				game_controller.right_stick_x = fabs(game_controller.right_stick_x) > dead_zone ? game_controller.right_stick_x : 0.0f;
+
 				game_controller.right_stick_y = fmaxf(-1.0f, (float)controller_state.Gamepad.sThumbRY / 32767.0f);
+				game_controller.right_stick_y = fabs(game_controller.right_stick_y) > dead_zone ? game_controller.right_stick_y : 0.0f;
 			}
 			else
 			{

@@ -22,6 +22,7 @@ namespace trace {
 		Vec3,
 		Vec4,
 		Sampler2D,
+		Execute,
 		Max
 	};
 

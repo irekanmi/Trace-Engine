@@ -393,6 +393,42 @@ vec3 normalFromGradientNoise(
     return vec3(-dx + 0.5f, -dy + 0.5f, 1.0f);
 }
 
+vec3 PositionLookAt(vec3 target, vec3 _pos, vec3 scale, vec3 in_pos)
+{
+    vec3 forward = -normalize(target - _pos);
+    vec3 world_up = vec3(0.0f, 1.0f, 0.0f); 
+    vec3 ortho_right = normalize(cross(forward, world_up));
+    vec3 ortho_up = normalize(cross(ortho_right, forward));
+
+    mat4 transform = mat4(
+        vec4(ortho_right * scale, 0.0f),
+        vec4(ortho_up * scale, 0.0f),
+        vec4(forward * scale, 0.0f),
+        vec4(_pos, 1.0f)
+    );
+
+
+    return (transform * vec4(in_pos, 1.0f)).xyz;
+}
+
+
+mat4 PositionLookAt(vec3 dir, vec3 scale)
+{
+    vec3 forward = -normalize(dir);
+    vec3 world_up = vec3(0.0f, 1.0f, 0.0f); 
+    vec3 ortho_right = normalize(cross(forward, world_up));
+    vec3 ortho_up = normalize(cross(ortho_right, forward));
+
+    mat4 transform = mat4(
+        vec4(ortho_right * scale, 0.0f),
+        vec4(ortho_up * scale, 0.0f),
+        vec4(forward * scale, 0.0f),
+        vec4(0.0f)
+    );
+
+
+    return transform;
+}
 
 
 #endif

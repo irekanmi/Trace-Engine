@@ -47,6 +47,8 @@ namespace trace {
 	typedef bool (*__RayCast)(void*, glm::vec3, glm::vec3, float, RaycastHit&);
 	typedef bool (*__RayCastBox)(glm::vec3, glm::mat4, glm::vec3, glm::vec3, float, RaycastHit&);
 
+	typedef bool (*__AddForce)(RigidBody&, glm::vec3, ForceType);
+
 
 	class PhysicsFuncLoader
 	{
@@ -93,6 +95,8 @@ namespace trace {
 		static bool RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result);
 		static bool RayCastBox(glm::vec3 half_extents, glm::mat4 pose, glm::vec3 origin, glm::vec3 direction, float max_distance, RaycastHit& result);
 
+		static bool AddForce(RigidBody& rigid_body, glm::vec3 force, ForceType mode);
+
 
 
 	private:
@@ -130,6 +134,8 @@ namespace trace {
 
 		static __RayCast _rayCast;
 		static __RayCastBox _rayCastBox;
+
+		static __AddForce _addForce;
 
 
 	protected:

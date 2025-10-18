@@ -6,6 +6,7 @@
 #include "serialize/GenericSerializer.h"
 #include "resource/GenericAssetManager.h"
 #include "render/Camera.h"
+#include "particle_effects/effects_graph/ParticleEffectsNode.h"
 
 namespace trace {
 
@@ -13,6 +14,11 @@ namespace trace {
 
 	bool ParticleGenerator::Create()
 	{
+
+		UUID root_node = CreateNode<EffectsRootNode>();
+
+		m_effectRoot = root_node;
+
 		return true;
 	}
 
@@ -66,6 +72,10 @@ namespace trace {
 		return GenericSerializer::Deserialize<ParticleGenerator>(stream);
 	}
 
+	void ParticleGenerator::CreateParameter(const std::string& param_name, GenericValueType type)
+	{
+	}
+
 	bool ParticleGeneratorInstance::CreateInstance(Ref<ParticleGenerator> generator)
 	{
 		if (!generator)
@@ -73,12 +83,23 @@ namespace trace {
 			TRC_ERROR("Invalid Particle Generator Handle, Function: {}", __FUNCTION__);
 			return false;
 		}
-
+		bool result = true;
 		m_gen = generator;
 
-		
+		for (auto& i : m_gen->GetNodes())
+		{
+			result = i.second->Instanciate(this) && result;
+		}
 
-		return true;
+		return result;
+	}
+
+	void ParticleGeneratorInstance::DestroyInstance()
+	{
+		for (auto& i : m_nodesData)
+		{
+			delete i.second;
+		}
 	}
 
 	void ParticleGeneratorInstance::Start(ParticleEffectInstance* effect_instance)
@@ -140,11 +161,11 @@ namespace trace {
 		m_effectInstance = nullptr;
 	}
 
-	void ParticleGeneratorInstance::Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform)
+	void ParticleGeneratorInstance::Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform, int32_t render_graph_index)
 	{
 		for (ParticleRender*& render : m_gen->GetRenderers())
 		{
-			render->Render(this, camera, transform);
+			render->Render(this, camera, transform, render_graph_index);
 		}
 	}
 
@@ -183,6 +204,10 @@ namespace trace {
 		}
 
 		--m_numAlive;
+	}
+
+	void ParticleGeneratorInstance::set_parameter_data(const std::string& param_name, void* data, uint32_t size)
+	{
 	}
 
 }

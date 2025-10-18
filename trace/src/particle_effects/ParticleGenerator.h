@@ -10,6 +10,7 @@
 #include "serialize/DataStream.h"
 #include "particle_effects/ParticleData.h"
 #include "reflection/TypeRegistry.h"
+#include "node_system/GenericGraph.h"
 
 #include "glm/glm.hpp"
 
@@ -19,13 +20,15 @@ namespace trace {
 	class ParticleEffectInstance;
 	class Camera;
 
-	class ParticleGenerator : public Resource
+	class ParticleGenerator : public GenericGraph, public Resource
 	{
 
 	public:
 
 		bool Create();
 		virtual void Destroy() override;
+
+		virtual ~ParticleGenerator() {}
 
 		uint32_t GetCapacity() { return m_capacity; }
 		void SetCapacity(uint32_t capacity) { m_capacity = capacity; }
@@ -42,6 +45,7 @@ namespace trace {
 		std::vector<ParticleRender*>& GetRenderers() { return m_renderers; }
 		void SetRenderers(std::vector<ParticleRender*>& renderers) { m_renderers = renderers; }
 
+		UUID GetEffectRoot() { return m_effectRoot; }
 
 		static Ref<ParticleGenerator> Deserialize(UUID id);
 		static Ref<ParticleGenerator> Deserialize(DataStream* stream);
@@ -52,23 +56,28 @@ namespace trace {
 		std::vector<ParticleUpdate*> m_updates;
 		std::vector<ParticleRender*> m_renderers;
 		uint32_t m_capacity;
+		UUID m_effectRoot = 0;
 
 	protected:
+		virtual void CreateParameter(const std::string& param_name, GenericValueType type) override;
+
 		ACCESS_CLASS_MEMBERS(ParticleGenerator);
+		GET_TYPE_ID;
 
 	};
 
-	class ParticleGeneratorInstance
+	class ParticleGeneratorInstance : public GenericGraphInstance
 	{
 
 	public:
 
 		bool CreateInstance(Ref<ParticleGenerator> generator);
+		virtual void DestroyInstance() override;
 
 		void Start(ParticleEffectInstance* effect_instance);
 		void Update(ParticleEffectInstance* effect_instance, float deltaTime);
 		void Stop(ParticleEffectInstance* effect_instance);
-		void Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform);
+		void Render(ParticleEffectInstance* effect_instance, Camera* camera, glm::mat4 transform, int32_t render_graph_index = 0);
 		ParticleEffectInstance* GetEffectInstance() { return m_effectInstance; }
 
 		int32_t emit_particle();
@@ -92,6 +101,10 @@ namespace trace {
 
 	protected:
 		ACCESS_CLASS_MEMBERS(ParticleGeneratorInstance);
+
+
+		// Inherited via GenericGraphInstance
+		virtual void set_parameter_data(const std::string& param_name, void* data, uint32_t size) override;
 
 	};
 

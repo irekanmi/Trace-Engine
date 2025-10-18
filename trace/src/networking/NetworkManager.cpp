@@ -56,7 +56,7 @@ namespace trace::Network {
 		rpc_send_stream = NetworkStream(KB);
 		send_stream = NetworkStream(KB);
 
-		latency = 0.3f;
+		latency = 0.0f;
 
 		return result;
 	}
@@ -307,7 +307,7 @@ namespace trace::Network {
 
 		bool result = true;
 
-		result = server.Init(m_info, false, port);
+		result = server.Init(m_info, true, port);
 
 		if (result)
 		{
@@ -610,8 +610,8 @@ namespace trace::Network {
 						auto c_it = std::find(connected_clients.begin(), connected_clients.end(), packet.connection_handle);
 						if (c_it == connected_clients.end())
 						{
-							process_new_client(packet.connection_handle);
 							connected_clients.push_back(packet.connection_handle);
+							process_new_client(packet.connection_handle);
 						}
 						return;
 					}
@@ -677,6 +677,30 @@ namespace trace::Network {
 		}
 
 		return 0.0f;
+	}
+
+	void NetworkManager::SetInstanceName(const std::string& net_name)
+	{
+
+		switch (m_type)
+		{
+		case NetType::CLIENT:
+		{
+			break;
+		}
+		case NetType::LISTEN_SERVER:
+		{
+			break;
+		}
+		}
+
+		net_instance_name = net_name;
+
+	}
+
+	std::unordered_map<std::string, Connection>& NetworkManager::GetClientFoundConnections()
+	{
+		return client.GetFoundConnections();
 	}
 
 }

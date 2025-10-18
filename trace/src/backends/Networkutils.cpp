@@ -219,7 +219,7 @@ bool __ENet_CreateHost(HostType type, NetworkStateInfo* network_info, HostInfo* 
 
 		if (LAN)
 		{
-			address.port += 24;
+			address.port = 54545;
 			ENetSocket socket = enet_socket_create(ENetSocketType::ENET_SOCKET_TYPE_DATAGRAM);
 			int result = enet_socket_set_option(socket, ENetSocketOption::ENET_SOCKOPT_NONBLOCK, 1);
 			result = enet_socket_set_option(socket, ENetSocketOption::ENET_SOCKOPT_BROADCAST, 1);
@@ -473,8 +473,8 @@ bool __ENet_ReceivePacket_C(HostInfo* host, Packet& packet_data, Connection* out
 
 	//enet_host_flush(client);
 
-	uint32_t mille_sec = 5;// uint32_t(wait_time * 1000.0f);
-	while (enet_host_service(client, &network_event, wait_time) > 0)
+	uint32_t milli_sec = 5;// uint32_t(wait_time * 1000.0f);
+	while (enet_host_service(client, &network_event, milli_sec) > 0)
 	{
 		switch (network_event.type)
 		{
@@ -620,13 +620,14 @@ bool __ENet_SendPacket(HostInfo* host, Connection* connection, NetworkStream& pa
 		return false;
 	}
 
-	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : /*ENetPacketFlag::ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT | */ENetPacketFlag::ENET_PACKET_FLAG_UNSEQUENCED;
+	ENetPacketFlag flag = mode == PacketSendMode::RELIABLE ? ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE : (ENetPacketFlag)0;
 
-	ENetPacket* packet = enet_packet_create(packet_data.GetData(), packet_data.GetPosition(), flag);
+	ENetPacket* packet = enet_packet_create(packet_data.GetData(), packet_data.GetPosition(), ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE);
 
 	ENetPeer* peer = (ENetPeer*)connection->internal_handle;
 
 	enet_peer_send(peer, 0, packet);
+	//TRC_TRACE("Packet Size: {}", packet->dataLength);
 
 
 	return true;

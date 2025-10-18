@@ -6,6 +6,14 @@ using System.Runtime.InteropServices;
 namespace Trace
 {
 
+    public enum ForceType
+    {
+        FORCE,				
+		IMPULSE,			
+		VELOCITY_CHANGE,	
+		ACCELERATION
+    };
+
     [StructLayout(LayoutKind.Sequential)]
     public struct TriggerPair
     {

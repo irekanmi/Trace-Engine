@@ -212,7 +212,7 @@ namespace trace {
 
 
 					Camera cam;
-					cam.SetOrthographicSize(100.0f);
+					cam.SetOrthographicSize(200.0f);
 					cam.SetNear(-1000.0f);
 					cam.SetFar(500.0f);
 					cam.SetCameraType(CameraType::ORTHOGRAPHIC);

@@ -2,12 +2,13 @@
 
 #include "reflection/TypeRegistry.h"
 #include "particle_effects/EmissionVolume.h"
+#include "particle_effects/ParticleData.h"
 
 namespace trace {
 
 	class ParticleGeneratorInstance;
 
-	class ParticleSpawner
+	class ParticleSpawner : public ParticleBase
 	{
 
 	public:

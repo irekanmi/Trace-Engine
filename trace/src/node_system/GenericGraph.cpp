@@ -109,6 +109,11 @@ namespace trace {
 			return "sampler2D";
 			break;
 		}
+		case GenericValueType::Execute:
+		{
+			return "execute";
+			break;
+		}
 		}
 
 		return std::string();

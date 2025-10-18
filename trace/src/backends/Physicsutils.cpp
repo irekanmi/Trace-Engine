@@ -52,6 +52,8 @@ namespace trace {
 	__RayCast PhysicsFunc::_rayCast = nullptr;
 	__RayCastBox PhysicsFunc::_rayCastBox = nullptr;
 
+	__AddForce PhysicsFunc::_addForce = nullptr;
+
 	// Loader ---------------------------------------
 	bool PhysicsFuncLoader::LoadPhysxFunctions()
 	{
@@ -88,6 +90,8 @@ namespace trace {
 
 		PhysicsFunc::_rayCast = physx::__RayCast;
 		PhysicsFunc::_rayCastBox = physx::__RayCastBox;
+
+		PhysicsFunc::_addForce = physx::__AddForce;
 
 		return true;
 	}
@@ -265,6 +269,12 @@ namespace trace {
 	{
 		PHYSICS_FUNC_IS_VALID(_rayCastBox);
 		return _rayCastBox(half_extents, pose, origin, direction, max_distance, result);
+	}
+
+	bool PhysicsFunc::AddForce(RigidBody& rigid_body, glm::vec3 force, ForceType mode)
+	{
+		PHYSICS_FUNC_IS_VALID(_addForce);
+		return _addForce(rigid_body, force, mode);
 	}
 
 }

@@ -34,6 +34,11 @@ namespace Trace
         {
             InternalCalls.Stream_WriteQuat(stream_handle, ref value);
         }
+        
+        public static void WriteString(UInt64 stream_handle, string value)
+        {
+            InternalCalls.Stream_WriteString(stream_handle, value);
+        }
 
         public static bool ReadBool(UInt64 stream_handle)
         {
@@ -67,6 +72,10 @@ namespace Trace
         {
             InternalCalls.Stream_ReadQuat(stream_handle, out Quat value);
             return value;
+        }
+        public static string ReadString(UInt64 stream_handle)
+        {
+            return InternalCalls.Stream_ReadString(stream_handle);
         }
 
 

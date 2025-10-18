@@ -11,7 +11,9 @@ namespace trace {
 		REGISTER_TYPE(RigidBody);
 		REGISTER_MEMBER(RigidBody, mass);
 		REGISTER_MEMBER(RigidBody, density);
-		REGISTER_MEMBER(RigidBody, m_type);
+		REGISTER_MEMBER(RigidBody, m_type);		
+		REGISTER_MEMBER(RigidBody, _CCD);
+		REGISTER_MEMBER(RigidBody, use_gravity);
 	END_REGISTER_CLASS;
 
 	REGISTER_TYPE(PhyShapeType);

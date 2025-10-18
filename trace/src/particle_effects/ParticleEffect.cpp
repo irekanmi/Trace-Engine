@@ -75,6 +75,22 @@ namespace trace {
 		return true;
 	}
 
+	void ParticleEffectInstance::DestroyInstance()
+	{
+
+		m_ownerID = 0;
+		m_scene = nullptr;
+
+		for (ParticleGeneratorInstance& generator : m_generatorInstance)
+		{
+			generator.DestroyInstance();
+		}
+
+		m_generatorInstance.clear();
+		m_elaspedTime = 0.0f;
+
+	}
+
 	void ParticleEffectInstance::Start()
 	{
 		m_running = true;
@@ -120,13 +136,18 @@ namespace trace {
 		}
 	}
 
-	void ParticleEffectInstance::Render(Camera* camera)
+	void ParticleEffectInstance::Render(Camera* camera, int32_t render_graph_index)
 	{
+		if (m_ownerID == 0)
+		{
+			return;
+		}
+
 		//Render Generators
 		glm::mat4 transform = m_scene->GetEntityWorldTransform(m_scene->GetEntity(m_ownerID)).GetLocalMatrix();
 		for (ParticleGeneratorInstance& gen_instance : m_generatorInstance)
 		{
-			gen_instance.Render(this, camera, transform);
+			gen_instance.Render(this, camera, transform, render_graph_index);
 		}
 	}
 

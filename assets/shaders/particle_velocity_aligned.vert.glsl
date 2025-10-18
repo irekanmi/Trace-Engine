@@ -2,6 +2,7 @@
 
 #include "globals_data.glsl"
 #include "bindless.glsl"
+#include "functions.glsl"
 
 
 DEFAULT_VERTEX_INPUT
@@ -47,12 +48,9 @@ void main()
     vec3 ortho_right = normalize(cross(forward, world_up));
     vec3 ortho_up = normalize(cross(ortho_right, forward));
 
-    mat4 transform = mat4(
-        vec4(ortho_right * scale, 0.0f),
-        vec4(ortho_up * scale, 0.0f),
-        vec4(forward * scale, 0.0f),
-        vec4(pos, 1.0f)
-    );
+
+    mat4 transform = PositionLookAt(ortho_right, scale);
+    transform[3] = vec4(pos, 1.0f);
 
     mat4 local_pose = objects[binding_index.draw_instance_index.x].model;
 

@@ -244,7 +244,7 @@ namespace trace {
 				}
 			}
 
-			m_lock.Lock();
+			sm.lock.Lock();
 
 			sm.instances[index] = std::move(sm.instances.back());
 			sm.entities[index] = std::move(sm.entities.back());
@@ -254,7 +254,7 @@ namespace trace {
 			sm.entities.pop_back();
 			sm.handle_map.erase(id);
 
-			m_lock.Unlock();
+			sm.lock.Unlock();
 
 			return true;
 		}
@@ -336,7 +336,10 @@ namespace trace {
 			{
 				if (j.second.script->GetScriptName() == i.second.GetScriptName())
 				{
-					new_scripts[i.second.GetID()] = j.second;
+					new_scripts[i.second.GetID()].entities = j.second.entities;
+					new_scripts[i.second.GetID()].handle_map = j.second.handle_map;
+					new_scripts[i.second.GetID()].instances = j.second.instances;
+					new_scripts[i.second.GetID()].script = j.second.script;
 					found = true;
 				}
 			}
@@ -414,13 +417,13 @@ namespace trace {
 		{
 			ScriptManager& sm = it->second;
 
-			m_lock.Lock();
+			sm.lock.Lock();
 
 			sm.handle_map[id] = sm.instances.size();
 			sm.entities.emplace_back(id);
 			ScriptInstance& res = sm.instances.emplace_back();
 
-			m_lock.Unlock();
+			sm.lock.Unlock();
 
 			res.m_script = sm.script;
 

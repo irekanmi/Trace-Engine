@@ -280,7 +280,7 @@ namespace trace {
 		{
 			KeyPressed* press = reinterpret_cast<KeyPressed*>(p_event);
 
-			if (press->GetKeyCode() == KEY_O)
+			/*if (press->GetKeyCode() == KEY_O)
 			{
 				exposure += 0.4f;
 			}
@@ -303,7 +303,7 @@ namespace trace {
 			else if (press->GetKeyCode() == KEY_M)
 			{
 				frame_settings &= ~RENDER_BLOOM;
-			}
+			}*/
 
 			break;
 		}
@@ -695,7 +695,7 @@ namespace trace {
 
 		for (auto& i : graph_data.particle_effects)
 		{
-			i->Render(graph_data._camera);
+			i->Render(graph_data._camera, render_graph_index);
 		}
 	}
 

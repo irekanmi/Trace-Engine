@@ -890,6 +890,10 @@ namespace trace {
 			{}
 			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::DragFloat("Density", &body.density), Density)
 			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("CCD", &body._CCD), CCD)
+			{}
+			IMGUI_WIDGET_MODIFIED_IF(dirty, ImGui::Checkbox("Use Gravity", &body.use_gravity), UseGravity)
+			{}
 
 			return dirty;
 			});
@@ -985,45 +989,11 @@ namespace trace {
 			ImGui::Button(image_name.c_str(), button_size);
 
 			ImGui::PushID((uint32_t)entity);
-			if (ImGui::BeginDragDropTarget())
+			if (Ref<GTexture> new_tex = ImGuiDragDropTexture())
 			{
-				static char _buf[1024] = { 0 };
-				static auto load_texure = [&dirty, &entity](char* buf)
-				{
-					ImageComponent& comp = entity.GetComponent<ImageComponent>();
-					std::filesystem::path p = buf;
-					Ref<GTexture> tex = GenericAssetManager::get_instance()->TryGet<GTexture>(p.filename().string());
-					if (tex) {}
-					else tex = GenericAssetManager::get_instance()->CreateAssetHandle_<GTexture>(p.string(), p.string());
-
-					if (tex)
-					{
-						comp.image = tex;
-						dirty = true;
-					}
-				};
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".png"))
-				{
-					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
-					load_texure(_buf);					
-				}
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpeg"))
-				{
-					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
-					load_texure(_buf);
-				}
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpg"))
-				{
-					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
-					load_texure(_buf);
-				}
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".tga"))
-				{
-					memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
-					load_texure(_buf);
-				}
-				ImGui::EndDragDropTarget();
+				comp.image = new_tex;
 			}
+
 			ImGui::PopID();
 			static bool image_tex_modified = false;
 			if (ImGui::IsItemClicked())

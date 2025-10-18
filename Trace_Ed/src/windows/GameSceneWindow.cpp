@@ -38,6 +38,46 @@ int translateButtonTrace_ImGui(trace::Buttons button);
 
 namespace trace {
 
+	void draw_entity_debug_view(Entity entity)
+	{
+		Entity selected_entity = entity;
+		if (!selected_entity)
+		{
+			return;
+		}
+
+		Debugger* debugger = Debugger::get_instance();
+
+		TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
+
+		if (selected_entity.HasComponent<CharacterControllerComponent>())
+		{
+			CharacterControllerComponent& controller = selected_entity.GetComponent<CharacterControllerComponent>();
+			float scale_x = pose._transform.GetScale().x;
+			float scale_y = pose._transform.GetScale().y;
+			float scale_z = pose._transform.GetScale().z;
+			float height = controller.character.height * pose._transform.GetScale().y;
+			float radius = controller.character.radius * ((scale_x + scale_z) / 2.0f);
+			glm::mat4 controller_transform = pose._transform.GetLocalMatrix();
+			controller_transform = glm::translate(controller_transform, controller.character.offset);
+			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(255, 145, 255, 255));
+
+			radius += controller.character.contact_offset;
+			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(0, 255, 255, 25));
+		}
+
+		if (selected_entity.HasComponent<BoxColliderComponent>())
+		{
+			BoxColliderComponent& box = selected_entity.GetComponent<BoxColliderComponent>();
+			glm::vec3 extent = box.shape.box.half_extents * pose._transform.GetScale();
+			extent += glm::vec3(0.00005f);//NOTE: Added offset to allow the collider visible
+			Transform local;
+			local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
+			local.SetRotation(pose._transform.GetRotation());
+			debugger->DrawDebugBox(extent.x, extent.y, extent.z, local.GetLocalMatrix(), TRC_COL32(222, 74, 247, 255));
+		}
+	}
+
 	bool GameSceneWindow::OnCreate(TraceEditor* editor, const std::string& window_name)
 	{
 		m_name = window_name;
@@ -345,43 +385,8 @@ namespace trace {
 
 	void GameSceneWindow::HandleEntityDebugDraw()
 	{
-		Entity selected_entity = m_hierachyPanel->GetSelectedEntity();
-		if (!selected_entity)
-		{
-			return;
-		}
-
-		Debugger* debugger = Debugger::get_instance();
-
-		TransformComponent& pose = selected_entity.GetComponent<TransformComponent>();
-
-		if (selected_entity.HasComponent<CharacterControllerComponent>())
-		{
-			CharacterControllerComponent& controller = selected_entity.GetComponent<CharacterControllerComponent>();
-			float scale_x = pose._transform.GetScale().x;
-			float scale_y = pose._transform.GetScale().y;
-			float scale_z = pose._transform.GetScale().z;
-			float height = controller.character.height * pose._transform.GetScale().y;
-			float radius = controller.character.radius * ((scale_x + scale_z) / 2.0f);
-			glm::mat4 controller_transform = pose._transform.GetLocalMatrix();
-			controller_transform = glm::translate(controller_transform, controller.character.offset);
-			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(255, 145, 255, 255));
-
-			radius += controller.character.contact_offset;
-			debugger->DrawDebugCapsule(radius, height, controller_transform, TRC_COL32(0, 255, 255, 25));
-		}
-
-		if (selected_entity.HasComponent<BoxColliderComponent>())
-		{
-			BoxColliderComponent& box = selected_entity.GetComponent<BoxColliderComponent>();
-			glm::vec3 extent = box.shape.box.half_extents * pose._transform.GetScale();
-			extent += glm::vec3(0.00005f);//NOTE: Added offset to allow the collider visible
-			Transform local;
-			local.SetPosition(pose._transform.GetPosition() + box.shape.offset);
-			local.SetRotation(pose._transform.GetRotation());
-			debugger->DrawDebugBox(extent.x, extent.y, extent.z, local.GetLocalMatrix(), TRC_COL32(222, 74, 247, 255));
-		}
-
+		
+		draw_entity_debug_view(m_hierachyPanel->GetSelectedEntity());
 	}
 
 	void GameSceneWindow::CloseCurrentScene()
@@ -538,9 +543,9 @@ namespace trace {
 
 	void GameSceneWindow::stop_current_scene()
 	{
+		m_currentScene->OnScriptStop();
 		m_currentScene->OnNetworkStop();
 		m_currentScene->OnPhysicsStop();
-		m_currentScene->OnScriptStop();
 		m_currentScene->OnStop();
 	}
 

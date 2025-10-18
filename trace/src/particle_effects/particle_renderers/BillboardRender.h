@@ -15,7 +15,7 @@ namespace trace {
 
 	public:
 
-		virtual void Render(ParticleGeneratorInstance* gen_instance, Camera* camera, glm::mat4 transform) override;
+		virtual void Render(ParticleGeneratorInstance* gen_instance, Camera* camera, glm::mat4 transform, int32_t render_graph_index = 0) override;
 
 		Ref<GTexture> GetTexture() { return m_texture; }
 		void SetTexture(Ref<GTexture> texture) { m_texture = texture; }

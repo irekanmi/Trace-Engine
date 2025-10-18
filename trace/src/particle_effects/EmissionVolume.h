@@ -76,6 +76,12 @@ namespace trace {
 
         glm::vec3 GetRandomDirection() override;
 
+        glm::vec3 GetCenter() { return m_center; }
+        float GetRadius() { return m_radius; }
+
+        void SetCenter(glm::vec3 center) { m_center = center; }
+        void SetRadius(float radius) { m_radius = radius; }
+
     private:
         glm::vec3 m_center;
         float m_radius;
@@ -108,6 +114,12 @@ namespace trace {
 
         glm::vec3 GetRandomDirection() override;
 
+        glm::vec3 GetCenter() { return m_center; }
+        glm::vec3 GetExtents() { return m_extents; }
+
+        void SetCenter(glm::vec3 center) { m_center = center; }
+        void SetExtents(glm::vec3 extents) { m_extents = extents; }
+
     private:
         glm::vec3 m_center;
         glm::vec3 m_extents; // Half sizes
@@ -132,6 +144,14 @@ namespace trace {
         glm::vec3 GetRandomSurfacePoint() override;
 
         glm::vec3 GetRandomDirection() override;
+
+        glm::vec3 GetCenter() { return m_center; }
+        glm::vec3 GetNormal() { return m_normal; }
+        float GetRadius() { return m_radius; }
+
+        void SetCenter(glm::vec3 center) { m_center = center; }
+        void SetNormal(glm::vec3 normal) { m_normal = normal; }
+        void SetRadius(float radius) { m_radius = radius; }
 
     private:
         glm::vec3 get_tangent();

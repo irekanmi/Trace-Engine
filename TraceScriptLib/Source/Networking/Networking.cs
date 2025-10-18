@@ -17,6 +17,8 @@ namespace Trace
         public static event Action<uint> on_server_connect;
         public static event Action<uint> on_server_disconnect;
 
+        public static string selected_server_name;
+
         readonly public static uint DEAFAULT_SERVER_PORT = 2367;
         readonly public static uint DEAFAULT_DISCOVERY_PORT = 6932;
 
@@ -107,5 +109,21 @@ namespace Trace
         {
             return InternalCalls.Networking_GetClientAverageRTT(client_id);
         }
+
+        public static string GetInstanceName()
+        {
+            return InternalCalls.Networking_GetInstanceName();
+        }
+
+        public static void SetInstanceName(string net_instance_name)
+        {
+            InternalCalls.Networking_SetInstanceName(net_instance_name);
+        }
+
+        public static string[] GetFoundConnections()
+        {
+            return InternalCalls.Networking_GetFoundConnections();
+        }
+
     }
 }

@@ -45,6 +45,8 @@
 #include "windows/AnimationWindow.h"
 #include "windows/ShaderGraphWindow.h"
 #include "windows/MaterialWindow.h"
+#include "windows/ParticleEffectsWindow.h"
+#include "windows/ParticleGeneratorWindow.h"
 #include "resource/PrefabManager.h"
  
 
@@ -879,6 +881,14 @@ namespace trace {
 	void TraceEditor::OpenMaterial(std::string& path)
 	{
 		CreateEditorWindow<MaterialWindow>(path, path);
+	}
+	void TraceEditor::OpenParticleEffect(std::string& path)
+	{
+		CreateEditorWindow<ParticleEffectsWindow>(path, path);
+	}
+	void TraceEditor::OpenParticleGenerator(std::string& path)
+	{
+		CreateEditorWindow<ParticleGeneratorWindow>(path, path);
 	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{

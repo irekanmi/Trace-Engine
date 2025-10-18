@@ -2264,7 +2264,7 @@ namespace vk {
 		VkDescriptorPoolSize pool_sizes[] =
 		{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8192},
-			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, KB * VK_MAX_NUM_FRAMES},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (KB * 2) * VK_MAX_NUM_FRAMES},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 12)}
 		};
 
@@ -2300,7 +2300,7 @@ namespace vk {
 				bind.descriptorCount = i.count;
 				bind.descriptorType = convertDescriptorType(i.resource_type);
 				bind.stageFlags = convertShaderStage(i.shader_stage);
-				bind.descriptorCount = is_structure ? KB / 2 : KB;
+				bind.descriptorCount = is_structure ? KB * 2: KB * 4;
 				Instance_bindings.push_back(bind);
 				bindings_count++;
 				break;
@@ -2391,7 +2391,7 @@ namespace vk {
 
 				VkDescriptorPoolCreateInfo pool_info = {};
 				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 1000 * pool_sizes_count;
+				pool_info.maxSets = 2000 * pool_sizes_count;
 				pool_info.poolSizeCount = pool_sizes_count;
 				pool_info.pPoolSizes = pool_sizes;
 				pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;

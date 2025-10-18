@@ -1,6 +1,7 @@
 #pragma once
 
 #include "reflection/TypeRegistry.h"
+#include "particle_effects/ParticleData.h"
 
 #include "glm/glm.hpp"
 
@@ -8,7 +9,7 @@ namespace trace {
 
 	class ParticleGeneratorInstance;
 
-	class ParticleUpdate
+	class ParticleUpdate : public ParticleBase
 	{
 
 	public:
@@ -29,6 +30,10 @@ namespace trace {
 
         virtual void UpdateParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index, float deltaTime) override;
 
+        glm::vec3 GetGravity() { return m_gravity; }
+
+        void SetGravity(glm::vec3 gravity) { m_gravity = gravity; }
+
     private:
         glm::vec3 m_gravity;
 
@@ -45,6 +50,10 @@ namespace trace {
             : m_dragCoefficient(coefficient) {}
 
         virtual void UpdateParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index, float deltaTime) override;
+
+        float GetDragCoefficient() { return m_dragCoefficient; }
+
+        void SetDragCoefficient(float drag_coefficient) { m_dragCoefficient = drag_coefficient; }
 
     private:
         float m_dragCoefficient;
@@ -64,6 +73,11 @@ namespace trace {
 
         virtual void UpdateParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index, float deltaTime) override;
 
+        glm::vec3 GetWindForce() { return m_windForce; }
+        float GetTurbulence() { return m_turbulence; }
+
+        void SetWindForce(glm::vec3 wind_force) { m_windForce = wind_force; }
+        void SetTurbulence(float turbulence) { m_turbulence = turbulence; }
 
     private:
         glm::vec3 m_windForce;

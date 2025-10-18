@@ -19,6 +19,7 @@ namespace trace {
 			std::vector<UUID> entities;
 			std::unordered_map<UUID, size_t> handle_map;
 			Script* script = nullptr;
+			SpinLock lock;
 		};
 
 
@@ -60,7 +61,7 @@ namespace trace {
 		std::unordered_map<uintptr_t, ScriptManager> m_scripts;
 		std::unordered_map<Script*, FieldManager> m_fieldInstance;
 		Scene* m_scene = nullptr;
-		SpinLock m_lock;
+		
 
 	protected:
 		friend class Scene;

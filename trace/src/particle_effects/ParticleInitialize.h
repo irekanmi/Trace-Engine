@@ -7,7 +7,7 @@ namespace trace {
 
 	class ParticleGeneratorInstance;
 
-	class ParticleInitializer
+	class ParticleInitializer : public ParticleBase
 	{
 
 	public:
@@ -32,6 +32,12 @@ namespace trace {
 
 		virtual void Init(ParticleGeneratorInstance* particle_generator) override;
 		virtual void InitParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index) override;
+
+		glm::vec3 GetMinVelocity() { return m_minVelocity; }
+		glm::vec3 GetMaxVelocity() { return m_maxVelocity; }
+
+		void SetMinVelocity(glm::vec3 min_velocity) { m_minVelocity = min_velocity; }
+		void SetMaxVelocity(glm::vec3 max_velocity) { m_maxVelocity = max_velocity; }
 
     private:
         glm::vec3 m_minVelocity;
@@ -64,6 +70,28 @@ namespace trace {
 	protected:
 		ACCESS_CLASS_MEMBERS(LifetimeInitializer);
 		GET_TYPE_ID;
+	};
+
+	class CustomParticleInitializer : public ParticleInitializer
+	{
+
+	public:
+		CustomParticleInitializer() {};
+		~CustomParticleInitializer() {};
+
+		virtual void Init(ParticleGeneratorInstance* particle_generator) override;
+		virtual void InitParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index) override;
+
+		UUID GetNodeID() { return m_nodeID; }
+		void SetNodeID(UUID node_id) { m_nodeID = node_id; }
+
+	private:
+		UUID m_nodeID;
+
+	protected:
+		ACCESS_CLASS_MEMBERS(CustomParticleInitializer);
+		GET_TYPE_ID;
+
 	};
 
 }

@@ -25,6 +25,7 @@
 #include "serialize/SceneSerializeFunctions.h"
 #include "render/GShader.h"
 #include "shader_graph/ShaderGraph.h"
+#include "resource/DefaultAssetsManager.h"
 
 #include <functional>
 #include <unordered_map>
@@ -859,7 +860,8 @@ namespace trace {
 			AssetHeader header = {};
 			header.offset = stream.GetPosition();
 
-			PipelineSerializer::Serialize(pipeline, &stream);
+			//PipelineSerializer::Serialize(pipeline, &stream);
+			DefaultAssetsManager::BuildPipeline(stream, map, pipeline);
 			header.data_size = stream.GetPosition() - header.offset;
 			map.emplace(std::make_pair(id, header));
 

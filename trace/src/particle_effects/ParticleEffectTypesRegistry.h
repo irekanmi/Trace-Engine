@@ -10,6 +10,7 @@
 #include "particle_effects/ParticleUpdate.h"
 #include "particle_effects/EmissionVolume.h"
 #include "particle_effects/particle_renderers/BillboardRender.h"
+#include "particle_effects/effects_graph/ParticleEffectsNode.h"
 
 
 namespace trace {
@@ -26,16 +27,17 @@ namespace trace {
 	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(ParticleGenerator)
-		REGISTER_TYPE(ParticleGenerator);
+		REGISTER_TYPE_PARENT(ParticleGenerator, GenericGraph);
 		REGISTER_MEMBER(ParticleGenerator, m_spawner);
 		REGISTER_MEMBER(ParticleGenerator, m_initializers);
 		REGISTER_MEMBER(ParticleGenerator, m_updates);
 		REGISTER_MEMBER(ParticleGenerator, m_renderers);
 		REGISTER_MEMBER(ParticleGenerator, m_capacity);
+		REGISTER_MEMBER(ParticleGenerator, m_effectRoot);
 	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(ParticleGeneratorInstance)
-		REGISTER_TYPE(ParticleGeneratorInstance);
+		REGISTER_TYPE_PARENT(ParticleGeneratorInstance, GenericGraphInstance);
 		REGISTER_MEMBER(ParticleGeneratorInstance, m_gen);
 	END_REGISTER_CLASS;
 	
@@ -109,6 +111,11 @@ namespace trace {
 		REGISTER_MEMBER(LifetimeInitializer, m_max);
 	END_REGISTER_CLASS;
 	
+	BEGIN_REGISTER_CLASS(CustomParticleInitializer)
+		REGISTER_TYPE_PARENT(CustomParticleInitializer, ParticleInitializer);
+		REGISTER_MEMBER(CustomParticleInitializer, m_nodeID);
+	END_REGISTER_CLASS;
+	
 	BEGIN_REGISTER_CLASS(GravityUpdate)
 		REGISTER_TYPE_PARENT(GravityUpdate, ParticleUpdate);
 		REGISTER_MEMBER(GravityUpdate, m_gravity);
@@ -128,4 +135,32 @@ namespace trace {
 	BEGIN_REGISTER_CLASS(VelocityUpdate)
 		REGISTER_TYPE_PARENT(VelocityUpdate, ParticleUpdate);
 	END_REGISTER_CLASS;
+	
+
+
+	REGISTER_TYPE(EffectsNodeType);
+	
+	BEGIN_REGISTER_CLASS(ParticleEffectNode)
+		REGISTER_TYPE_PARENT(ParticleEffectNode, GenericNode);
+	END_REGISTER_CLASS;
+	
+	BEGIN_REGISTER_CLASS(EffectsFinalNode)
+		REGISTER_TYPE_PARENT(EffectsFinalNode, ParticleEffectNode);
+	END_REGISTER_CLASS;
+	
+	BEGIN_REGISTER_CLASS(EffectsRootNode)
+		REGISTER_TYPE_PARENT(EffectsRootNode, ParticleEffectNode);
+	END_REGISTER_CLASS;
+	
+	BEGIN_REGISTER_CLASS(GenericEffectNode)
+		REGISTER_TYPE_PARENT(GenericEffectNode, ParticleEffectNode);
+		REGISTER_MEMBER(GenericEffectNode, m_type);
+	END_REGISTER_CLASS;
+	
+	BEGIN_REGISTER_CLASS(GetParticleAttributeNode)
+		REGISTER_TYPE_PARENT(GetParticleAttributeNode, ParticleEffectNode);
+		REGISTER_MEMBER(GetParticleAttributeNode, m_attrID);
+	END_REGISTER_CLASS;
+
+
 }

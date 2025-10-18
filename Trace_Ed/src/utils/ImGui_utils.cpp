@@ -5,6 +5,7 @@
 #include "ImGuizmo.h"
 #include "core/Utils.h"
 #include "../panels/AnimationPanel.h" 
+#include "resource/GenericAssetManager.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -296,4 +297,50 @@ void DrawGrid(trace::CommandList& cmd_list, float cell_size, uint32_t num_lines,
 	// Global Z-Coordinate
 	renderer->DrawDebugLine(cmd_list, glm::vec3(0.0f, 0.0f, line_lenght * 10.0f), glm::vec3(0.0f, 0.0f, -line_lenght * 10.0f), TRC_COL32(55, 55, 255, 255), draw_index);
 
+}
+
+Ref<trace::GTexture> ImGuiDragDropTexture()
+{
+	Ref<trace::GTexture> result;
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		static char _buf[1024] = { 0 };
+		static auto load_texure = [&result](char* buf)
+		{
+			
+			std::filesystem::path p = buf;
+			Ref<trace::GTexture> tex = trace::GenericAssetManager::get_instance()->TryGet<trace::GTexture>(p.filename().string());
+			if (tex) {}
+			else tex = trace::GenericAssetManager::get_instance()->CreateAssetHandle_<trace::GTexture>(p.string(), p.string());
+
+			if (tex)
+			{
+				result = tex;
+			}
+		};
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".png"))
+		{
+			memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+			load_texure(_buf);
+		}
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpeg"))
+		{
+			memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+			load_texure(_buf);
+		}
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".jpg"))
+		{
+			memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+			load_texure(_buf);
+		}
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(".tga"))
+		{
+			memcpy_s(_buf, 1024, payload->Data, payload->DataSize);
+			load_texure(_buf);
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	return result;
 }

@@ -6,6 +6,7 @@
 #include "particle_effects/ParticleGenerator.h"
 #include "serialize/DataStream.h"
 #include "reflection/TypeRegistry.h"
+#include "node_system/GenericGraph.h"
 
 #include <vector>
 
@@ -18,6 +19,8 @@ namespace trace {
 	{
 
 	public:
+
+		virtual ~ParticleEffect() {}
 
 		bool Create();
 		virtual void Destroy() override;
@@ -47,6 +50,7 @@ namespace trace {
 	public:
 
 		bool CreateInstance(Ref<ParticleEffect> particle_effect, UUID entityID, Scene* scene);
+		void DestroyInstance();
 
 		Ref<ParticleEffect> GetParticleEffect() { return m_particleEffect; }
 		void SetParticleEffect(Ref<ParticleEffect> particle_effect) { m_particleEffect = particle_effect; }
@@ -58,7 +62,7 @@ namespace trace {
 		Scene* GetScene() { return m_scene; }
 		UUID GetOwnerID() { return m_ownerID; }
 
-		void Render(Camera* camera);
+		void Render(Camera* camera, int32_t render_graph_index = 0);
 
 	private:
 		float m_elaspedTime = 0.0f;

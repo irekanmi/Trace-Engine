@@ -57,6 +57,8 @@ namespace trace {
 
 		m_destroyed = false;
 
+		animations_counter = JobSystem::get_instance()->CreateCounter();
+
 		return true;
 	}
 	void Scene::Destroy()
@@ -95,15 +97,24 @@ namespace trace {
 		m_scriptRegistry.Clear();
 		m_registry.clear();
 
+		JobSystem::get_instance()->WaitForCounterAndFree(animations_counter);
+
 		m_destroyed = true;
 	}
 	void Scene::BeginFrame()
 	{
 		if (!m_entityToDestroy.empty())
 		{
-			for (Entity& entity : m_entityToDestroy)
+			for (UUID& id : m_entityToDestroy)
 			{
-				destroy_entity(entity);
+				if (Entity entity = GetEntity(id))
+				{
+					destroy_entity(entity);
+				}
+				else
+				{
+					int x = 0;
+				}
 			}
 			m_entityToDestroy.clear();
 		}
@@ -115,12 +126,10 @@ namespace trace {
 	{
 	}
 
-	//TEMP --------
-	Counter* animations_counter = nullptr;
 
 	void Scene::OnStart()
 	{
-		animations_counter = JobSystem::get_instance()->CreateCounter();
+		
 
 		ResolveHierachyTransforms();
 
@@ -536,6 +545,7 @@ namespace trace {
 				if (!on_update) return;
 				float dt = deltaTime;
 
+				manager.lock.Lock();
 				for (auto& i : manager.entities)
 				{
 					Entity entity = this->GetEntity(i);
@@ -550,6 +560,7 @@ namespace trace {
 					};
 					InvokeScriptMethod_Instance(*on_update, ins, params);
 				}
+				manager.lock.Unlock();
 
 			});
 	}
@@ -558,26 +569,47 @@ namespace trace {
 	{
 		if (m_physics3D)
 		{
+			LockModify();
+
 			auto bodies = m_registry.view<TransformComponent, RigidBodyComponent, ActiveComponent>();
 			for (auto i : bodies)
 			{
 				auto [transform, rigid, active] = bodies.get(i);
 
-				PhysicsFunc::SetRigidBodyTransform(rigid.body, transform._transform);
+				switch (rigid.body.GetType())
+				{
+				case RigidBodyType::Kinematic:
+				case RigidBodyType::Static:
+				{
+					PhysicsFunc::SetRigidBodyTransform(rigid.body, transform._transform);
+					break;
+				}
+				}
+
 			}
 
 			auto bcd = m_registry.view<TransformComponent, BoxColliderComponent, ActiveComponent>();
 			for (auto i : bcd)
 			{
 				auto [pose, bc, active] = bcd.get(i);
-				PhysicsFunc::UpdateShapeTransform(bc._internal, bc.shape, pose._transform);
+
+				if (bc.is_trigger)
+				{
+					PhysicsFunc::UpdateShapeTransform(bc._internal, bc.shape, pose._transform);
+				}
+
 			}
 
 			auto scd = m_registry.view<TransformComponent, SphereColliderComponent, ActiveComponent>();
 			for (auto i : scd)
 			{
 				auto [pose, sc, active] = scd.get(i);
-				PhysicsFunc::UpdateShapeTransform(sc._internal, sc.shape, pose._transform);
+
+				if (sc.is_trigger)
+				{
+					PhysicsFunc::UpdateShapeTransform(sc._internal, sc.shape, pose._transform);
+				}
+
 			}
 			
 			if (m_stimulatePhysics)
@@ -595,7 +627,15 @@ namespace trace {
 			{
 				auto [transform , rigid, active] = bodies.get(i);
 
-				PhysicsFunc::GetRigidBodyTransform(rigid.body, transform._transform);
+				switch (rigid.body.GetType())
+				{
+				case RigidBodyType::Dynamic:
+				{
+					PhysicsFunc::GetRigidBodyTransform(rigid.body, transform._transform);
+					break;
+				}
+				}
+
 			}
 
 			auto controllers = m_registry.view<TransformComponent, CharacterControllerComponent, ActiveComponent>();
@@ -610,6 +650,8 @@ namespace trace {
 
 				pose._transform.SetPosition(curr_pos);
 			}
+
+			UnlockModify();
 		}
 	}
 
@@ -705,9 +747,11 @@ namespace trace {
 						{
 							uint32_t start_position = obj_stream->GetPosition();
 							// Write class id
-							obj_stream->Write(script->GetScriptName());
+							std::string& script_name = script->GetScriptName();
+							TRC_ASSERT(!script_name.empty(), "These is not suppose to happen");
+							obj_stream->Write(script_name);
 							// run client_send_lambda()
-							uint32_t entity_data_position = obj_stream->GetPosition();
+							uint32_t entity_data_position_in = obj_stream->GetPosition();
 
 							// Generate method parameters .....
 							uint64_t stream_handle = (uint64_t)obj_stream;
@@ -718,9 +762,9 @@ namespace trace {
 							InvokeScriptMethod_Instance(*on_client_send, *instance, params);
 
 							uint32_t current_position = obj_stream->GetPosition();
-							if (current_position <= entity_data_position)
+							if (current_position <= entity_data_position_in)
 							{
-								obj_stream->MemSet(start_position, entity_data_position, 0x00);
+								obj_stream->MemSet(start_position, entity_data_position_in, 0x00);
 								obj_stream->SetPosition(start_position);
 							}
 							else
@@ -748,6 +792,11 @@ namespace trace {
 			}
 			case Network::NetType::LISTEN_SERVER:
 			{
+				if (net.type == Network::NetObjectType::SERVER)
+				{
+					continue;
+				}
+
 				Network::NetworkStream* obj_stream = &net.data_stream;
 				uint32_t start_position = obj_stream->GetPosition();
 				if (entity.GetID() == 0)
@@ -796,6 +845,11 @@ namespace trace {
 
 				uint32_t current_position = obj_stream->GetPosition();
 				obj_stream->Write(comp_pos, num_comp);
+				if (num_comp == 0)
+				{
+					obj_stream->MemSet(start_position, current_position, 0x00);
+					obj_stream->SetPosition(start_position);
+				}
 				break;
 			}
 			}
@@ -840,10 +894,17 @@ namespace trace {
 			}
 			case Network::NetType::LISTEN_SERVER:			
 			{
+				if (net.type == Network::NetObjectType::SERVER)
+				{
+					continue;
+				}
+
 				if (net.data_stream.GetPosition() > 0)
 				{
 					data_stream->Write(entity.GetID());
-					data_stream->Write(net.data_stream.GetData(), net.data_stream.GetPosition());
+					uint32_t data_size = net.data_stream.GetPosition();
+					data_stream->Write<uint32_t>(data_size);
+					data_stream->Write(net.data_stream.GetData(), data_size);
 					net.data_stream.SetPosition(0);
 					net.data_stream.MemSet(0, net.data_stream.GetSize(), 0x00);
 
@@ -1361,6 +1422,8 @@ namespace trace {
 				{
 					UUID id = 0;
 					data->Read(id);
+					uint32_t entity_data_size = 0;
+					data->Read(entity_data_size);
 					Entity entity = GetEntity(id);
 					if (id == 0)
 					{
@@ -1372,7 +1435,8 @@ namespace trace {
 					if (!entity)
 					{
 						TRC_WARN("Entity does exists in the scene, Function: {}", __FUNCTION__);
-						return;
+						data->SetPosition(data->GetPosition() + entity_data_size);
+						continue;
 					}
 
 					if (entity.HasComponent<AnimationGraphController>())
@@ -1566,6 +1630,11 @@ namespace trace {
 		for (auto i : net_objects)
 		{
 			auto [net_instance] = net_objects.get(i);
+			if (net_instance.type == Network::NetObjectType::SERVER)
+			{
+				continue;
+			}
+
 			Entity entity(i, this);
 
 			SerializeEntity(entity, data);
@@ -2241,7 +2310,8 @@ namespace trace {
 
 	Entity Scene::DuplicateEntity(Entity entity, UUID id)
 	{
-		Entity res = duplicate_entity_hierachy(this, entity, Entity(), id);
+		bool has_parent = this == entity.GetScene() && entity.GetParent();
+		Entity res = duplicate_entity_hierachy(this, entity, has_parent? entity.GetParent() : Entity(), id);
 
 		return res;
 	}
@@ -2282,10 +2352,12 @@ namespace trace {
 			{
 				return;
 			}
-			m_entityToDestroy.push_back(entity);
+			
+			m_entityToDestroy.push_back(entity.GetID());
 		}
 		else
 		{
+
 			destroy_entity(entity);
 		}
 	}
@@ -2793,6 +2865,9 @@ namespace trace {
 			void*& internal_ptr = rigid.body.GetInternal();
 			internal_ptr = nullptr;//NOTE: Because we are trying to copy from another object
 			PhysicsFunc::CreateRigidBody_Scene(m_physics3D, rigid.body, pose._transform);
+
+
+			PhysicsFunc::SetRigidBodyTransform(rigid.body, pose._transform);
 		}
 	}
 	void Scene::OnDestroyRigidBodyComponent(entt::registry& reg, entt::entity ent)
@@ -3030,7 +3105,7 @@ namespace trace {
 
 			m_scriptRegistry.Iterate(obj.GetID(), [](UUID uuid, Script* script, ScriptInstance* instance)
 				{
-					ScriptMethod* on_destroy = script->GetMethod("OnDestory");
+					ScriptMethod* on_destroy = script->GetMethod("OnDestroy");
 					if (!on_destroy)
 					{
 						return;
@@ -3108,12 +3183,16 @@ namespace trace {
 			return;
 		}
 
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
-		while (hi.children.size() > 0)
+
+		HierachyComponent hi = entity.GetComponent<HierachyComponent>();
+		int32_t size = hi.children.size();
+		while (size > 0)
 		{
-			UUID& id = hi.children.front();
+			UUID id = hi.children[size - 1];
 			Entity child = GetEntity(id);
+			TRC_ASSERT(child, "This is not suppose to happen");
 			destroy_entity(child);
+			size--;
 		}
 
 		if (hi.HasParent())
@@ -3132,6 +3211,7 @@ namespace trace {
 			OnEntityDestroy_Runtime(entity);
 			ScriptEngine::get_instance()->RemoveEnityActionClass(entity.GetID());
 		}
+
 
 		m_scriptRegistry.Erase(entity.GetID());
 		m_entityMap.erase(entity.GetID());

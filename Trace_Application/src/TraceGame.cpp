@@ -246,6 +246,7 @@ namespace trace {
 	{
 		m_currentScene->OnStart();
 		m_currentScene->OnPhysicsStart();
+		m_currentScene->OnNetworkStart();
 		m_currentScene->OnScriptStart();
 
 		if (m_currentScene)
@@ -256,8 +257,9 @@ namespace trace {
 
 	void TraceGame::stop_current_scene()
 	{
-		m_currentScene->OnPhysicsStop();
 		m_currentScene->OnScriptStop();
+		m_currentScene->OnNetworkStop();
+		m_currentScene->OnPhysicsStop();
 		m_currentScene->OnStop();
 	}
 

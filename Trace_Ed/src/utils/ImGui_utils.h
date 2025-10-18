@@ -70,6 +70,8 @@ Ref<T> ImGuiDragDropResourceCustom(ImRect rect, ImGuiID id, const std::string& t
 	return result;
 }
 
+Ref<trace::GTexture> ImGuiDragDropTexture();
+
 inline ImVec2 operator+(ImVec2& a, ImVec2& b)
 {
 	return ImVec2(a.x + b.x, a.y + b.y);

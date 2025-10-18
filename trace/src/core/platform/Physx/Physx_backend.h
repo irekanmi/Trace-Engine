@@ -36,5 +36,6 @@ namespace physx {
 	bool __SetCharacterControllerPosition(trace::CharacterController& controller, glm::vec3& position);
 	bool __RayCast(void* scene, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result);
 	bool __RayCastBox(glm::vec3 half_extents, glm::mat4 pose, glm::vec3 origin, glm::vec3 direction, float max_distance, trace::RaycastHit& result);
+	bool __AddForce(trace::RigidBody& rigid_body, glm::vec3 force, trace::ForceType mode);
 
 }

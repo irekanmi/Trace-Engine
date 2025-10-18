@@ -179,14 +179,7 @@ namespace trace
 			mem_manager->BeginFrame();
 
 			// Networking -------------------
-			Job network_job;
-			network_job.flags = JobFlagBit::NETWORK;
-			network_job.job_params = nullptr;
-			network_job.job_func = [net_manager, deltaTime](void*)
-			{
-				net_manager->Update(deltaTime);
-			};
-			job_system->RunJob(network_job, frame_sync);
+			net_manager->Update(deltaTime);
 			// --------------------------------
 
 			//------CLIENT-------//

@@ -15,7 +15,7 @@
 
 namespace trace {
 
-
+	extern void draw_entity_debug_view(Entity entity);
 
 	bool PrefabWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
 	{
@@ -106,6 +106,11 @@ namespace trace {
 		manager->GetScene()->RenderEntity(handle, cmd_list, view_index);
 		renderer->EndScene(cmd_list, view_index);
 		DrawGrid(cmd_list, 10.0f, 50, view_index);
+
+		if (m_hierachy->GetSelectedEntity())
+		{
+			draw_entity_debug_view(m_hierachy->GetSelectedEntity());
+		}
 
 		renderer->SubmitCommandList(cmd_list, view_index);
 

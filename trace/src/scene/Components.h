@@ -67,10 +67,14 @@ namespace trace {
 
 		void RemoveChild(UUID child)
 		{
-			auto it = std::find(children.begin(), children.end(), child);
-			if (it != children.end())
+			for (uint32_t i = 0; i < children.size(); i++)
 			{
-				children.erase(it);
+				if (children[i] == child)
+				{
+					children[i] = children.back();
+					children.pop_back();
+					return;
+				}
 			}
 		}
 

@@ -8,6 +8,8 @@
 #include "Components.h"
 #include "core/Coretypes.h"
 #include "serialize/DataStream.h"
+#include "multithreading/SpinLock.h"
+#include "multithreading/JobSystem.h"
 
 #define ENTT_USE_ATOMIC
 #include "entt.hpp"
@@ -115,6 +117,9 @@ namespace trace {
 		bool GetStimulatePhysics() { return m_stimulatePhysics; }
 		void SetStimulatePhysics(bool value) { m_stimulatePhysics = value; }
 
+		void LockModify() { m_modifyLock.Lock(); }
+		void UnlockModify() { m_modifyLock.Unlock(); }
+
 		template<typename Component>
 		Entity ParentHasComponent(Entity entity)
 		{
@@ -201,10 +206,12 @@ namespace trace {
 		std::unordered_map<UUID, Entity> m_entityMap;
 		HierachyComponent* m_rootNode;
 		bool m_running = false;
-		std::vector<Entity> m_entityToDestroy;
+		std::vector<UUID> m_entityToDestroy;
 		bool m_stimulatePhysics = true;
 		float m_accumulator = 0.0f;
 		bool m_destroyed = false;
+		SpinLock m_modifyLock;
+		Counter* animations_counter = nullptr;
 
 	protected:
 		friend class Entity;

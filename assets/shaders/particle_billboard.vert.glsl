@@ -2,6 +2,7 @@
 
 #include "globals_data.glsl"
 #include "bindless.glsl"
+#include "functions.glsl"
 
 
 DEFAULT_VERTEX_INPUT
@@ -13,7 +14,7 @@ layout(location = 0)out vec2 out_texCoord;
 layout(set = 0, binding = 0)uniform SceneData
 {
     mat4 _projection;
-    vec3 camera_position;
+    vec4 camera_position;
 };
 
 
@@ -41,18 +42,10 @@ void main()
 
     vec3 pos = objects[binding_index.draw_instance_index.x].positions[gl_InstanceIndex].xyz;
     vec3 scale = objects[binding_index.draw_instance_index.x].scale[gl_InstanceIndex].xyz;
-    vec3 cam_pos = camera_position;
-    vec3 forward = -normalize(cam_pos - pos);
-    vec3 world_up = vec3(0.0f, 1.0f, 0.0f); 
-    vec3 ortho_right = normalize(cross(forward, world_up));
-    vec3 ortho_up = normalize(cross(ortho_right, forward));
-
-    mat4 transform = mat4(
-        vec4(ortho_right * scale, 0.0f),
-        vec4(ortho_up * scale, 0.0f),
-        vec4(forward * scale, 0.0f),
-        vec4(pos, 1.0f)
-    );
+    vec3 cam_pos = camera_position.xyz;
+    
+    mat4 transform = PositionLookAt(cam_pos - pos, scale);
+    transform[3] = vec4(pos, 1.0f);
 
     mat4 local_pose = objects[binding_index.draw_instance_index.x].model;
 

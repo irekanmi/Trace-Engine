@@ -25,8 +25,6 @@ namespace physx {
 	static trace::Counter* job_counter = nullptr;
 	// physx doesn't allow rigid actor creation or modification while stimulation is running, so this lock prevents that
 	static trace::SpinLock stimulation_lock;
-	PxBoxGeometry box_geometry;
-	
 
 	class JobDispatcher : public PxCpuDispatcher
 	{
@@ -443,15 +441,15 @@ namespace physx {
 			return PxFilterFlag::eDEFAULT;
 		}
 
-		//// Send events for the kinematic actors but don't solve the contact
-		//if (PxFilterObjectIsKinematic(attributes0) && PxFilterObjectIsKinematic(attributes1))
-		//{
-		//	pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
-		//	pairFlags |= PxPairFlag::eNOTIFY_TOUCH_PERSISTS;
-		//	pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
-		//	pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
-		//	return PxFilterFlag::eSUPPRESS;
-		//}
+		// Send events for the kinematic actors but don't solve the contact
+		if (PxFilterObjectIsKinematic(attributes0) || PxFilterObjectIsKinematic(attributes1))
+		{
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_PERSISTS;
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;
+			pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
+			return PxFilterFlag::eDEFAULT;
+		}
 
 		// Trigger the contact callback for pairs (A,B) where the filtermask of A contains the ID of B and vice versa
 		if (maskTest)
@@ -611,7 +609,11 @@ namespace physx {
 		PxScene* scn = in_scene->scene;
 		PxRigidActor* body = reinterpret_cast<PxRigidActor*>(actor);
 
+		stimulation_lock.Lock();
+		scn->lockWrite();
 		scn->removeActor(*body);
+		scn->unlockWrite();
+		stimulation_lock.Unlock();
 
 		return true;
 	}
@@ -735,6 +737,7 @@ namespace physx {
 		{
 			res->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 			res->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+			res->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		}
 
 		PhysxScene* in_scene = reinterpret_cast<PhysxScene*>(scene);
@@ -845,6 +848,7 @@ namespace physx {
 		filterData.word1 = mask1;
 
 		PxRigidActor* actor = res->actor;
+		stimulation_lock.Lock();
 		if (actor)
 		{
 			actor->getScene()->lockWrite();
@@ -861,6 +865,7 @@ namespace physx {
 			actor->attachShape(*res->shp);
 			actor->getScene()->unlockWrite();
 		}
+		stimulation_lock.Unlock();
 
 		return true;
 	}
@@ -875,17 +880,23 @@ namespace physx {
 		PxRigidActor* body = reinterpret_cast<PxRigidActor*>(actor);
 		PhysxShape* res = reinterpret_cast<PhysxShape*>(shape);
 
+		stimulation_lock.Lock();
+
 		if (res->actor)
 		{
 			res->actor->detachShape(*res->shp);
 			if (res->scene)
 			{
+				res->scene->lockWrite();
 				res->scene->removeActor(*res->actor);
+				res->scene->unlockWrite();
 			}
 			PX_RELEASE(res->actor);
 		}
 
 		body->attachShape(*res->shp);
+		
+		stimulation_lock.Unlock();
 
 
 		return true;
@@ -901,17 +912,23 @@ namespace physx {
 		PxRigidActor* body = reinterpret_cast<PxRigidActor*>(actor);
 		PhysxShape* res = reinterpret_cast<PhysxShape*>(shape);
 
+		stimulation_lock.Lock();
+
 		if (res->actor)
 		{
 			res->actor->detachShape(*res->shp);
 			if (res->scene)
 			{
+				res->scene->lockWrite();
 				res->scene->removeActor(*res->actor);
+				res->scene->unlockWrite();
 			}
 			PX_RELEASE(res->actor);
 		}
 
 		body->detachShape(*res->shp);
+
+		stimulation_lock.Unlock();
 
 
 		return true;
@@ -943,6 +960,8 @@ namespace physx {
 			actor = res;
 			PxRigidBodyExt::updateMassAndInertia(*res, rigid_body.density);
 			PxRigidBodyExt::setMassAndUpdateInertia(*res, rigid_body.mass);
+			res->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, rigid_body._CCD);
+			res->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !rigid_body.use_gravity);
 			break;
 		}
 		case trace::RigidBodyType::Kinematic:
@@ -973,9 +992,11 @@ namespace physx {
 
 			PxScene* scn = in_scene->scene;
 			PxRigidActor* actor = reinterpret_cast<PxRigidActor*>(rigid_body.GetInternal());
+			stimulation_lock.Lock();
 			scn->lockWrite();
 			scn->addActor(*actor);
 			scn->unlockWrite();
+			stimulation_lock.Unlock();
 			return true;
 		}
 		return false;
@@ -1012,7 +1033,24 @@ namespace physx {
 
 		stimulation_lock.Lock();
 		body->getScene()->lockWrite();
-		body->setGlobalPose(pose);
+
+		switch (rigid_body.GetType())
+		{
+		case trace::RigidBodyType::Dynamic:
+		case trace::RigidBodyType::Static:
+		{
+			body->setGlobalPose(pose);
+			break;
+		}
+		case trace::RigidBodyType::Kinematic:
+		{
+			PxRigidDynamic* kine = (PxRigidDynamic*)body;
+			kine->setKinematicTarget(pose);
+			break;
+		}
+		}
+
+
 		body->getScene()->unlockWrite();
 		stimulation_lock.Unlock();
 
@@ -1021,7 +1059,7 @@ namespace physx {
 	bool __GetRigidBodyTransform(trace::RigidBody& rigid_body, trace::Transform& transform)
 	{
 		void*& actor = rigid_body.GetInternal();
-		if (!actor)
+		if (actor == nullptr)
 		{
 			TRC_WARN("Actor has already been destroyed");
 			return false;
@@ -1081,7 +1119,9 @@ namespace physx {
 		
 		TRC_ASSERT(res != nullptr, "Invalid Character Controller, Function: {}", __FUNCTION__);
 
+		stimulation_lock.Lock();
 		PX_RELEASE(res);
+		stimulation_lock.Unlock();
 
 		return true;
 	}
@@ -1185,5 +1225,37 @@ namespace physx {
 	{
 		TRC_ASSERT(false, "Implement this function");
 		return false;
+	}
+	bool __AddForce(trace::RigidBody& rigid_body, glm::vec3 force, trace::ForceType mode)
+	{
+		void*& actor = rigid_body.GetInternal();
+		if (!actor)
+		{
+			TRC_WARN("Actor has already been destroyed");
+			return false;
+		}
+
+		PxRigidActor* body = reinterpret_cast<PxRigidActor*>(actor);
+		PxVec3 pos = Glm3ToPx3(force);
+		PxForceMode::Enum force_mode = (PxForceMode::Enum)(mode);
+
+		stimulation_lock.Lock();
+		body->getScene()->lockWrite();
+
+		switch (rigid_body.GetType())
+		{
+		case trace::RigidBodyType::Dynamic:
+		{
+			PxRigidDynamic* kine = (PxRigidDynamic*)body;
+			kine->addForce(pos, force_mode);
+			break;
+		}
+		}
+
+
+		body->getScene()->unlockWrite();
+		stimulation_lock.Unlock();
+
+		return true;
 	}
 }

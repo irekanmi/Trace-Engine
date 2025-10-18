@@ -4,11 +4,17 @@
 #include "shader_graph/ShaderGraphNode.h"
 #include "shader_graph/ShaderGraph.h"
 #include "../panels/GenericGraphEditor.h"
+#include "particle_effects/ParticleEffect.h"
+#include "particle_effects/ParticleGenerator.h"
+#include "particle_effects/effects_graph/ParticleEffectsNode.h"
+#include "particle_effects/particle_renderers/BillboardRender.h"
 
 #include "imgui.h"
 #include "imnodes/imnodes.h"
 
 namespace trace {
+
+	std::string get_class_display_name(uint64_t class_id);
 
 	int generic_output_start_index = 64;
 	int shift_amount = 24;
@@ -23,6 +29,7 @@ namespace trace {
 		IM_COL32(200, 104, 0, 128),
 		IM_COL32(155, 194, 85, 128),
 		IM_COL32(198, 104, 65, 128),
+		IM_COL32(98, 194, 65, 128),
 	};
 
 	uint32_t generic_value_color_hovered[(int)GenericValueType::Max] =
@@ -35,6 +42,7 @@ namespace trace {
 		IM_COL32(200, 104, 0, 255),
 		IM_COL32(155, 194, 85, 255),
 		IM_COL32(198, 104, 65, 255),
+		IM_COL32(98, 194, 65, 255),
 	};
 
 	struct ShaderGraphNodeTypeInfo
@@ -54,6 +62,7 @@ namespace trace {
 	std::unordered_map<uint64_t, std::string> _node_names =
 	{
 		{Reflection::TypeID<FinalPBRNode>(), "PBR Node"},
+		{Reflection::TypeID<EffectsRootNode>(), "Effects Node"},
 	};
 
 
@@ -147,6 +156,205 @@ namespace trace {
 					ImNodes::PopColorStyle();
 					ImNodes::PopColorStyle();
 				}
+
+				ImNodes::EndNode();
+				
+			}
+		},
+		{
+			Reflection::TypeID<EffectsRootNode>(),
+			[](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+			{
+				EffectsRootNode* _node = (EffectsRootNode*)node;
+				ParticleGenerator* generator = (ParticleGenerator*)editor->GetCurrentGraph();
+
+				std::string node_name = "";
+
+				ImNodes::BeginNode(node_index);
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text(node_name.c_str());
+				ImNodes::EndNodeTitleBar();
+
+				ImGui::Text("Spawner: ");
+				ParticleSpawner* spawner = generator->GetSpawner();
+				std::string spawner_name = spawner ? get_class_display_name(spawner->GetTypeID()) : "None";
+				ImGui::SameLine();
+				if (ImGui::Button(spawner_name.c_str()))
+				{
+					editor->SetUserData(spawner);
+					ImGui::OpenPopup("Spawner Select Popup");
+				}
+
+				if (ImGui::BeginPopup("Spawner Select Popup"))
+				{
+					if (ImGui::MenuItem("Rate Spawner"))
+					{
+
+						if (spawner)
+						{
+							delete spawner;//TODO: Use custom allocator
+						}
+
+						
+
+						RateSpawner* rate_spawner = new RateSpawner;//TODO: Use custom allocator
+
+						generator->SetSpawner(rate_spawner);
+						if (spawner == editor->GetUserData())
+						{
+							editor->SetUserData(rate_spawner);
+						}
+
+						spawner = rate_spawner;
+					}
+
+
+					ImGui::EndPopup();
+				}
+
+				ImGui::Dummy(ImVec2(0.0f, 7.0f));
+
+				ImGui::Text("Initializers: ");
+				
+				auto& initializers = generator->GetInitializers();
+
+				for (ParticleInitializer* init : initializers)
+				{
+					if (init->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
+					{
+						continue;
+					}
+
+					std::string display_name = get_class_display_name(init->GetTypeID());
+
+					if (ImGui::Button(display_name.c_str()))
+					{
+						editor->SetUserData(init);
+					}
+				}
+
+				if (ImGui::Button(" + ###Initializer_Add"))
+				{
+					ImGui::OpenPopup("Initializer Select Popup");
+				}
+
+				if (ImGui::BeginPopup("Initializer Select Popup"))
+				{
+					if (ImGui::MenuItem("Velocity Initializer"))
+					{
+						initializers.push_back(new VelocityInitializer);
+					}
+					if (ImGui::MenuItem("Lifetime Initializer"))
+					{
+						initializers.push_back(new LifetimeInitializer);
+					}
+
+
+					ImGui::EndPopup();
+				}
+
+				ImGui::Dummy(ImVec2(0.0f, 7.0f));
+
+				ImGui::Text("Updates: ");
+				
+				auto& updates = generator->GetUpdates();
+
+				for (ParticleUpdate* update : updates)
+				{
+					if (update->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
+					{
+						continue;
+					}
+
+					std::string display_name = get_class_display_name(update->GetTypeID());
+
+					if (ImGui::Button(display_name.c_str()))
+					{
+						editor->SetUserData(update);
+					}
+				}
+
+				if (ImGui::Button(" + ###Update_Add"))
+				{
+					ImGui::OpenPopup("Update Select Popup");
+				}
+
+				if (ImGui::BeginPopup("Update Select Popup"))
+				{
+					if (ImGui::MenuItem("Gravity Update"))
+					{
+						updates.push_back(new GravityUpdate);
+					}
+					if (ImGui::MenuItem("Drag Update"))
+					{
+						updates.push_back(new DragUpdate);
+					}
+					if (ImGui::MenuItem("Wind Update"))
+					{
+						updates.push_back(new WindUpdate);
+					}
+					if (ImGui::MenuItem("Velocity Update"))
+					{
+						updates.push_back(new VelocityUpdate);
+					}
+
+
+					ImGui::EndPopup();
+				}
+
+				ImGui::Dummy(ImVec2(0.0f, 7.0f));
+
+				ImGui::Text("Renderers: ");
+
+				auto& renderers = generator->GetRenderers();
+
+				for (ParticleRender* renderer : renderers)
+				{
+					if (renderer->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
+					{
+						continue;
+					}
+
+					std::string display_name = get_class_display_name(renderer->GetTypeID());
+
+					if (ImGui::Button(display_name.c_str()))
+					{
+						editor->SetUserData(renderer);
+					}
+				}
+
+				if (ImGui::Button(" + ###Renderer_Add"))
+				{
+					ImGui::OpenPopup("Renderer Select Popup");
+				}
+
+				if (ImGui::BeginPopup("Renderer Select Popup"))
+				{
+					if (ImGui::MenuItem("BillBoard Render"))
+					{
+						renderers.push_back(new BillBoardRender);
+					}
+
+
+					ImGui::EndPopup();
+				}
+
+
+				/*for (uint32_t j = 0; j < node->GetInputs().size(); j++)
+				{
+					GenericNodeInput& input_0 = node->GetInputs()[j];
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute(((j + 1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+
+					std::string input_name = "";
+
+					ImGui::Text(input_name.c_str());
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+				}*/
 
 				ImNodes::EndNode();
 				
@@ -939,5 +1147,74 @@ namespace trace {
 		}
 	};
 
+
+	std::string get_class_display_name(uint64_t class_id)
+	{
+		switch (class_id)
+		{
+		case Reflection::TypeID<RateSpawner>():
+		{
+			return "Rate Spawner";
+			break;
+		}
+		case Reflection::TypeID<VelocityInitializer>():
+		{
+			return "Velocity Initializer";
+			break;
+		}
+		case Reflection::TypeID<LifetimeInitializer>():
+		{
+			return "Lifetime Initializer";
+			break;
+		}
+		case Reflection::TypeID<GravityUpdate>():
+		{
+			return "Gravity Update";
+			break;
+		}
+		case Reflection::TypeID<DragUpdate>():
+		{
+			return "Drag Update";
+			break;
+		}
+		case Reflection::TypeID<VelocityUpdate>():
+		{
+			return "Velocity Update";
+			break;
+		}
+		case Reflection::TypeID<WindUpdate>():
+		{
+			return "Wind Update";
+			break;
+		}
+		case Reflection::TypeID<BillBoardRender>():
+		{
+			return "BillBoard Render";
+			break;
+		}
+		case Reflection::TypeID<PointVolume>():
+		{
+			return "Point Volume";
+			break;
+		}
+		case Reflection::TypeID<SphereVolume>():
+		{
+			return "Sphere Volume";
+			break;
+		}
+		case Reflection::TypeID<BoxVolume>():
+		{
+			return "Box Volume";
+			break;
+		}
+		case Reflection::TypeID<CircleVolume>():
+		{
+			return "Circle Volume";
+			break;
+		}
+		}
+
+		return "UnKnown ClassType";
+	}
 
 }

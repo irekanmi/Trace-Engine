@@ -61,6 +61,9 @@ namespace trace::Network {
 		void ReleaseRPCStream();
 		float GetClientAverageRTT(uint32_t client_handle);
 		float GetServerAverageRTT();
+		std::string& GetInstanceName() { return net_instance_name; }
+		void SetInstanceName(const std::string& net_name);
+		std::unordered_map<std::string, Connection>& GetClientFoundConnections();
 
 
 		static NetworkManager* get_instance();
@@ -87,6 +90,7 @@ namespace trace::Network {
 		float latency = 0.0f;
 		std::vector<LatencyPacket> packets;
 		SpinLock packets_lock;
+		std::string net_instance_name;
 
 	protected:
 

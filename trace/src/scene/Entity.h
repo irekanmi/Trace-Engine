@@ -55,7 +55,9 @@ namespace trace {
 		void RemoveComponent()
 		{
 			TRC_ASSERT(HasComponent<T>(), __FUNCTION__);
+			m_scene->LockModify();
 			m_scene->m_registry.erase<T>(m_handle);
+			m_scene->UnlockModify();
 		}
 
 		template<typename T>
@@ -90,7 +92,7 @@ namespace trace {
 
 		operator entt::entity() { return m_handle; }
 		operator uint32_t() { return (uint32_t)m_handle; }
-		operator bool() { return m_handle != entt::null; }
+		operator bool() { return m_handle != entt::null && m_scene->m_registry.valid(m_handle); }
 		bool operator ==(Entity other) { return (m_handle == other.m_handle) && (m_scene == other.m_scene); }
 		bool operator !=(Entity other) { return !(*this == other); }
 

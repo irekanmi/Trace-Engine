@@ -88,6 +88,8 @@ namespace trace {
 
 		//TEMP ========================
 		void Update_Tester(float deltaTime);
+
+
 		void OpenSkeleton(std::string& path);
 		void OpenFeatureDB(std::string& path);
 		void OpenMMTInfo(std::string& path);
@@ -98,6 +100,8 @@ namespace trace {
 		void OpenAnimationClip(std::string& path);
 		void OpenShaderGraph(std::string& path);
 		void OpenMaterial(std::string& path);
+		void OpenParticleEffect(std::string& path);
+		void OpenParticleGenerator(std::string& path);
 
 
 		

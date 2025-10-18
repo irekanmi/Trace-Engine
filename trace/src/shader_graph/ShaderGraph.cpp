@@ -21,12 +21,15 @@ namespace trace {
 
 	bool ShaderGraph::Create()
 	{
+		//TEMP: Find a better way to keep asset loaded
+		m_refCount++;
 		return true;
 	}
 
 	bool ShaderGraph::Create(MaterialType type)
 	{
-
+		//TEMP: Find a better way to keep asset loaded
+		m_refCount++;
 		switch (type)
 		{
 		case MaterialType::OPAQUE_LIT:
@@ -137,6 +140,11 @@ namespace trace {
 	void ShaderGraphInstance::DestroyInstance()
 	{
 		final_code.clear();
+
+		for (auto& i : m_nodesData)
+		{
+			delete i.second;
+		}
 	}
 
 	void ShaderGraphInstance::WriteNodeCode(std::string& code)

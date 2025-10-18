@@ -36,6 +36,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static uint Action_GetNetID(ulong id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static object Action_GetParent(ulong id);
 
         #endregion
 
@@ -46,6 +49,12 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_SetPosition(ulong id, ref Vec3 position);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_GetScale(ulong id, out Vec3 scale);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TransformComponent_SetScale(ulong id, ref Vec3 scale);
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TransformComponent_GetWorldPosition(ulong id, out Vec3 position);
@@ -178,6 +187,22 @@ namespace Trace
 
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void TextComponent_SetString(ulong id, string text);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TextComponent_GetColor(ulong id, out Vec3 color);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void TextComponent_SetColor(ulong id, ref Vec3 color);
+
+        #endregion
+
+        #region RigidBody
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void RigidBody_AddForce(ulong Id, ref Vec3 force, ForceType mode);
+
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void RigidBody_UpdateTransform(ulong Id);
 
         #endregion
 
@@ -324,6 +349,9 @@ namespace Trace
         extern public static void Stream_WriteQuat(UInt64 stream_handle, ref Quat value);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Stream_WriteString(UInt64 stream_handle, string value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_ReadBool(UInt64 stream_handle, out bool value);
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -340,6 +368,9 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static void Stream_ReadQuat(UInt64 stream_handle, out Quat value);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static string Stream_ReadString(UInt64 stream_handle);
 
 
         #endregion
@@ -378,6 +409,14 @@ namespace Trace
         
         [MethodImplAttribute(MethodImplOptions.InternalCall)]
         extern public static float Networking_GetClientAverageRTT(uint client_id);
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static string Networking_GetInstanceName();
+        
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static void Networking_SetInstanceName(string name);
+        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        extern public static string[] Networking_GetFoundConnections();
 
 
 

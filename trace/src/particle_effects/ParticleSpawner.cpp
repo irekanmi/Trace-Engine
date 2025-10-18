@@ -18,9 +18,20 @@ namespace trace {
 
 	void RateSpawner::Run(ParticleGeneratorInstance* gen_instance, float deltaTime)
 	{
+
 		uint32_t num_particles = uint32_t(m_rate * deltaTime);
 		ParticleEffectInstance* effect = gen_instance->GetEffectInstance();
+
+		if (!effect)
+		{
+			return;
+		}
+
 		Scene* scene = effect->GetScene();
+		if (!scene)
+		{
+			return;
+		}
 		UUID owner_id = effect->GetOwnerID();		
 		glm::vec3 entity_pos(0.0f);
 

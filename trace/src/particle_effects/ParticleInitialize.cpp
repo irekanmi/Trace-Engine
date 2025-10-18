@@ -3,6 +3,7 @@
 #include "particle_effects/ParticleInitialize.h"
 #include "particle_effects/ParticleGenerator.h"
 #include "core/Utils.h"
+#include "particle_effects/effects_graph/ParticleEffectsNode.h"
 
 #include "glm/glm.hpp"
 
@@ -43,6 +44,28 @@ namespace trace {
 		lifetime = m_min + (m_max - m_min) * RandomFloat();
 		
 		particle_data.lifetime[particle_index] = lifetime;
+	}
+
+	void CustomParticleInitializer::Init(ParticleGeneratorInstance* particle_generator)
+	{
+		//Create Graph Instance
+
+
+	}
+
+	void CustomParticleInitializer::InitParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index)
+	{
+
+		// Run Graph Instance
+		ParticleEffectNode* node = (ParticleEffectNode*)particle_generator->GetGenerator()->GetNode(m_nodeID);
+
+		if (!node)
+		{
+			return;
+		}
+
+		node->Update(particle_index, particle_generator, 0.0f);
+		
 	}
 
 }

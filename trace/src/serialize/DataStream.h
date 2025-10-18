@@ -40,7 +40,7 @@ namespace trace {
 		template<>
 		void Write(std::string& val)
 		{
-			uint32_t size = val.size();
+			uint32_t size = static_cast<uint32_t>(val.size());
 			Write<uint32_t>(size);
 			Write(val.data(), size);
 		}

@@ -76,11 +76,12 @@ namespace Trace
         {
             get
             {
-                return Vec3.Zero;
+                InternalCalls.TransformComponent_GetScale(Id, out Vec3 scale);
+                return scale;
             }
             set
             {
-
+                InternalCalls.TransformComponent_SetScale(Id, ref value);
             }
         }
 
@@ -171,6 +172,19 @@ namespace Trace
                 InternalCalls.TextComponent_SetString(Id, value);
             }
         }
+        
+        public Vec3 Color
+        {
+            get
+            {
+                InternalCalls.TextComponent_GetColor(Id, out Vec3 result);
+                return result;
+            }
+            set
+            {
+                InternalCalls.TextComponent_SetColor(Id, ref value);
+            }
+        }
 
         public TextComponent Create(ulong id)
         {
@@ -235,6 +249,15 @@ namespace Trace
         RigidBodyComponent(ulong Id)
         {
             this.Id = Id;
+        }
+
+        public void AddForce(Vec3 force, ForceType mode)
+        {
+            InternalCalls.RigidBody_AddForce(Id, ref force, mode);
+        }
+        public void UpdateTransform()
+        {
+            InternalCalls.RigidBody_UpdateTransform(Id);
         }
 
         public RigidBodyComponent Create(ulong id)

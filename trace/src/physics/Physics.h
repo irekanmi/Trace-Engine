@@ -86,6 +86,14 @@ namespace trace {
 		Dynamic
 	};
 
+	enum class ForceType
+	{
+		FORCE,				
+		IMPULSE,			
+		VELOCITY_CHANGE,	
+		ACCELERATION
+	};
+
 	class RigidBody
 	{
 
@@ -101,6 +109,8 @@ namespace trace {
 		float density = 10.0f;
 		//NOTE:
 		glm::vec3 shape_offset = glm::vec3(0.0f);
+		bool _CCD = false;
+		bool use_gravity = true;
 
 	private:
 		RigidBodyType m_type = RigidBodyType::Static;

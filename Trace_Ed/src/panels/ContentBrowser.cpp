@@ -33,7 +33,6 @@
 #include <string>
 
 namespace trace {
-	extern void ImportOBJ(const std::string& path, std::vector<std::string>& out_models, bool create_materials);
 
 
 	enum CreateItem
@@ -170,6 +169,16 @@ namespace trace {
 			extensions_callbacks[MMT_INFO_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->OpenMMTInfo(path.string());
+			};
+
+			extensions_callbacks[PARTICLE_EFFECT_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenParticleEffect(path.string());
+			};
+
+			extensions_callbacks[PARTICLE_GENERATOR_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenParticleGenerator(path.string());
 			};
 
 			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
@@ -697,6 +706,14 @@ namespace trace {
 				if (ImGui::MenuItem("Motion Matching Info"))
 				{
 					c_item = MMT_INFO;
+				}
+				if (ImGui::MenuItem("Particle Effect"))
+				{
+					c_item = PARTICLE_EFFECT;
+				}
+				if (ImGui::MenuItem("Particle Generator"))
+				{
+					c_item = PARTICLE_GENERATOR;
 				}
 				ImGui::EndMenu();
 			}

@@ -4,8 +4,6 @@
 #include "ScriptBackend.h"
 #include "core/FileSystem.h"
 #include "core/io/Logging.h"
-#include "scene/Scene.h"
-#include "scene/Entity.h"
 #include "scene/Components.h"
 #include "core/input/Input.h"
 #include "scripting/ScriptEngine.h"
@@ -17,69 +15,16 @@
 #include "serialize/DataStream.h"
 #include "debug/Debugger.h"
 #include "resource/GenericAssetManager.h"
+#include "core/events/EventsSystem.h"
+#include "scripting/ScriptBackendTypes.h"
 
-#include "mono/jit/jit.h"
-#include "mono/metadata/assembly.h"
-#include "mono/metadata/attrdefs.h"
-#include "mono/metadata/threads.h"
-#include <iostream>
-#include <map>
-#include <unordered_map>
-#include <functional>
+
 #include "spdlog/fmt/fmt.h"
 
 
 #define MAX_METHOD_PARAM_COUNT 16
 
-struct ComponentMap
-{
-	MonoClass* component_class = nullptr;
-	//std::unordered_map<UUID, MonoObject*> components_data;
-};
 
-struct MonoData
-{
-	MonoDomain* rootDomain = nullptr;
-	MonoDomain* appDomain = nullptr;
-
-	MonoAssembly* coreAssembly = nullptr;
-	MonoImage* coreImage = nullptr;
-	std::string mono_dir;
-
-	MonoAssembly* mainAssembly = nullptr;
-	MonoImage* mainImage = nullptr;
-
-	bool reload_assembly = false;//NOTE: This variable is needed so that threads can release their attachment to the app domain
-	Scene* scene = nullptr;
-	std::unordered_map<MonoType*, std::function<bool(Entity&)>> has_components;
-	std::unordered_map<MonoType*, std::function<void(Entity&)>> remove_components;
-	std::unordered_map<MonoType*, std::function<void(Entity&, ScriptMethod*, ScriptInstance*)>> iterate_components;
-	std::unordered_map<MonoType*, std::function<Entity()>> get_entity_with_component;
-
-	MonoClass* physics_class = nullptr;
-	MonoMethod* on_collision_enter = nullptr;
-	MonoMethod* on_collision_exit = nullptr;
-	MonoMethod* on_trigger_enter = nullptr;
-	MonoMethod* on_trigger_exit = nullptr;
-
-};
-
-struct MonoScript
-{
-	MonoClass* kClass;
-
-};
-
-struct MonoInstance
-{
-	MonoObject* kObject;
-	uint32_t kHandle = 0;
-};
-
-struct M_Method
-{
-	MonoMethod* kMethod;
-};
 
 MonoData s_MonoData;
 
@@ -132,75 +77,9 @@ MonoAssembly* LoadAssembly(const std::string& filePath);
 void PrintAssemblyTypes(MonoAssembly* assembly);
 void LoadAssemblyTypes(MonoAssembly* assembly, std::unordered_map<std::string, Script>& data, bool core);
 
+void Script_OnEvent(Event* p_event);
 
 
-template<typename... Component>
-void RegisterComponent()
-{
-
-	([&]() 
-		{
-			std::string name = typeid(Component).name();
-			std::string comp_name = name.substr(name.find_last_of(':') + 1);
-
-			std::string _name = fmt::format("Trace.{}", comp_name);
-			MonoType* res = mono_reflection_type_from_name(_name.data(), s_MonoData.coreImage);
-			if (!res)
-			{
-				TRC_WARN("{} is not present in the assembly", name);
-				return;
-			}
-
-			/*auto& get_comp = s_MonoData.get_components[res];
-			get_comp.component_class = mono_class_from_name(s_MonoData.coreImage, "Trace", comp_name.c_str());;*/
-			s_MonoData.has_components[res] = [](Entity& entity) -> bool { return entity.HasComponent<Component>(); };
-			s_MonoData.remove_components[res] = [](Entity& entity) { entity.RemoveComponent<Component>(); };
-			s_MonoData.iterate_components[res] = [](Entity& entity, ScriptMethod* method, ScriptInstance* src_instance)
-			{ 
-				Scene* scene = entity.GetScene();
-				scene->IterateComponent<Component>([method, src_instance](Entity obj) -> bool
-					{
-						UUID id = obj.GetID();
-						MonoObject* ins = (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(id)->GetBackendHandle();
-
-						void* params[] =
-						{
-							ins,
-							&id
-						};
-
-
-						InvokeScriptMethod_Instance(*method, *src_instance, params);
-
-						return false;
-					});
-			};
-			s_MonoData.get_entity_with_component[res] = []() -> Entity
-			{ 
-				Scene* scene = s_MonoData.scene;
-				Entity result;
-				if (!scene)
-				{
-					return result;
-				}
-				scene->IterateComponent<Component>([&result](Entity obj) -> bool
-					{
-						result = obj;
-						return true;
-					});
-
-				return result;
-			};
-		}(), ...);
-
-
-}
-
-template<typename... Component>
-void RegisterComponent(ComponentGroup<Component...>)
-{
-	RegisterComponent<Component...>();
-}
 
 bool InitializeInternal(const std::string& bin_dir)
 {
@@ -216,7 +95,7 @@ bool InitializeInternal(const std::string& bin_dir)
 
 	BindInternalFuncs();
 
-	
+	EventsSystem::get_instance()->AddEventListener(EventType::TRC_KEY_TYPED, Script_OnEvent);
 
 	return true;
 }
@@ -231,13 +110,7 @@ bool ShutdownInternal()
 }
 
 
-bool LoadComponents()
-{
-
-	RegisterComponent(AllComponents{});
-
-	return true;
-}
+bool LoadComponents();
 
 bool LoadCoreAssembly(const std::string& file_path)
 {
@@ -255,6 +128,10 @@ bool LoadCoreAssembly(const std::string& file_path)
 	TRC_ASSERT(s_MonoData.on_trigger_enter != nullptr, "Can't find OnTriggerEnter inside Physics class, Function: {}", __FUNCTION__);
 	TRC_ASSERT(s_MonoData.on_trigger_exit != nullptr, "Can't find OnTriggerExit inside Physics class, Function: {}", __FUNCTION__);
 	s_MonoData.physics_class = physics_class;
+
+	s_MonoData.application_class = mono_class_from_name(s_MonoData.coreImage, "Trace", "Application");
+	s_MonoData.invoke_key_typed = mono_class_get_method_from_name(s_MonoData.application_class, "InvokeKeyTyped", 1);
+
 
 	PrintAssemblyTypes(s_MonoData.coreAssembly);
 
@@ -896,6 +773,37 @@ void InvokeNetworkRPC(DataStream* rpc_data)
 }
 
 
+void Script_OnEvent(Event* p_event)
+{
+	if (!s_MonoData.scene)
+	{
+		return;
+	}
+
+	switch (p_event->GetEventType())
+	{
+	case EventType::TRC_KEY_TYPED:
+	{
+		KeyTyped* typed = (KeyTyped*)p_event;
+		int letter = (int)typed->GetKeyCode();
+
+		void* params[] =
+		{
+			&letter
+		};
+
+		MonoObject* exp = nullptr;
+
+		mono_runtime_invoke(s_MonoData.invoke_key_typed, nullptr, params, &exp);
+		if (exp) mono_print_unhandled_exception(exp);
+
+		break;
+	}
+	}
+
+
+}
+
 
 MonoAssembly* LoadAssembly(const std::string& filePath)
 {
@@ -1334,6 +1242,34 @@ uint32_t Action_GetNetID(UUID uuid)
 
 }
 
+MonoObject* Action_GetParent(uint64_t entity_id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	}
+
+
+	Entity entity = s_MonoData.scene->GetEntity(entity_id);
+	if (!entity)
+	{
+		TRC_ERROR("Entity is not present in the current scene. Scene Name: {}, Function: {}", s_MonoData.scene->GetName(), __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	}
+
+	Entity parent = entity.GetParent();
+	if (!parent)
+	{
+		TRC_ERROR("Entity dose not have a parent.Entity: {} Scene Name: {}, Function: {}", entity.GetName(), s_MonoData.scene->GetName(), __FUNCTION__);
+		return (MonoObject*)ScriptEngine::get_instance()->GetEntityActionClass(0)->GetBackendHandle();
+	}
+
+	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(parent.GetID());
+
+	return (MonoObject*)ins->GetBackendHandle();
+}
+
 #pragma endregion
 
 #pragma region TransformComponent
@@ -1384,8 +1320,65 @@ void TransformComponent_SetPosition(UUID id, glm::vec3* position)
 
 	if (BoxColliderComponent* collider = entity.TryGetComponent<BoxColliderComponent>())
 	{
-		PhysicsFunc::UpdateShapeTransform(collider->_internal, collider->shape, transform._transform);
+		if (collider->is_trigger)
+		{
+			PhysicsFunc::UpdateShapeTransform(collider->_internal, collider->shape, transform._transform);
+		}
 	}
+	
+	if (SphereColliderComponent* collider = entity.TryGetComponent<SphereColliderComponent>())
+	{
+		if (collider->is_trigger)
+		{
+			PhysicsFunc::UpdateShapeTransform(collider->_internal, collider->shape, transform._transform);
+		}
+	}
+
+	if (RigidBodyComponent* rigid_body = entity.TryGetComponent<RigidBodyComponent>())
+	{
+		PhysicsFunc::SetRigidBodyTransform(rigid_body->body, transform._transform);
+	}
+
+}
+
+void TransformComponent_GetScale(UUID id, glm::vec3* scale)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	glm::vec3 res = entity.GetComponent<TransformComponent>()._transform.GetScale();
+	*scale = res;
+}
+
+void TransformComponent_SetScale(UUID id, glm::vec3* scale)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+	TransformComponent& transform = entity.GetComponent<TransformComponent>();
+	transform._transform.SetScale(*scale);
+
 
 }
 
@@ -1730,6 +1723,96 @@ void TextComponent_SetString(UUID id, MonoString* string)
 
 }
 
+void TextComponent_GetColor(UUID id, glm::vec3* color)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	*color = entity.GetComponent<TextComponent>().color;
+
+}
+
+void TextComponent_SetColor(UUID id, glm::vec3* color)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	entity.GetComponent<TextComponent>().color = *color;
+
+}
+
+#pragma endregion
+
+#pragma region RigidBody
+
+
+void RigidBody_AddForce(UUID id, glm::vec3* force, ForceType mode)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	RigidBodyComponent& comp = entity.GetComponent<RigidBodyComponent>();
+
+	PhysicsFunc::AddForce(comp.body, *force, mode);
+
+}
+
+void RigidBody_UpdateTransform(UUID id)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Entity entity = s_MonoData.scene->GetEntity(id);
+
+	if (!entity)
+	{
+		TRC_ERROR("Invalid Entity, func:{}", __FUNCTION__);
+		return;
+	}
+
+	RigidBodyComponent& comp = entity.GetComponent<RigidBodyComponent>();
+	TransformComponent& transform = entity.GetComponent<TransformComponent>();
+
+	PhysicsFunc::SetRigidBodyTransform(comp.body, transform._transform);
+
+}
+
 #pragma endregion
 
 #pragma region Scene
@@ -1822,6 +1905,7 @@ MonoObject* Scene_InstanciateEntity_Position(UUID id, glm::vec3* position)
 	Entity result = s_MonoData.scene->InstanciateEntity(entity, *position);
 	TRC_ASSERT(result, "Unable to Instaciate Entity, Funciton: {}", __FUNCTION__);
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+	TransformComponent_SetPosition(result.GetID(), position);
 
 	return (MonoObject*)ins->GetBackendHandle();
 }
@@ -1844,8 +1928,8 @@ MonoObject* Scene_InstanciateEntity_Prefab_Position(UUID prefab_id, glm::vec3* p
 
 	Entity result = s_MonoData.scene->InstanciatePrefab(prefab);
 	TRC_ASSERT(result, "Unable to Instaciate Prefab, Funciton: {}", __FUNCTION__);
-	result.GetComponent<TransformComponent>()._transform.SetPosition(*position);
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+	TransformComponent_SetPosition(result.GetID(), position);
 
 	return (MonoObject*)ins->GetBackendHandle();
 }
@@ -1868,8 +1952,8 @@ MonoObject* Scene_InstanciateEntity_Prefab_Position_NetID(UUID prefab_id, glm::v
 
 	Entity result = s_MonoData.scene->InstanciatePrefab(prefab, owner_id);
 	TRC_ASSERT(result, "Unable to Instaciate Prefab, Funciton: {}", __FUNCTION__);
-	result.GetComponent<TransformComponent>()._transform.SetPosition(*position);
 	ScriptInstance* ins = ScriptEngine::get_instance()->GetEntityActionClass(result.GetID());
+	TransformComponent_SetPosition(result.GetID(), position);
 
 	return (MonoObject*)ins->GetBackendHandle();
 }
@@ -2342,6 +2426,8 @@ void AnimationGraphController_SetParameterBool(UUID id, MonoString* parameter_na
 
 #pragma endregion
 
+
+
 #pragma region Maths
 
 void Maths_Quat_LookDirection(glm::vec3* direction, glm::quat* out_rotation)
@@ -2425,6 +2511,19 @@ void Stream_WriteQuat(uint64_t stream_handle, glm::quat* value)
 	stream->Write(*value);
 }
 
+void Stream_WriteString(uint64_t stream_handle, MonoString* value)
+{
+	DataStream* stream = (DataStream*)stream_handle;
+
+	std::string txt;
+
+	char* c_str = mono_string_to_utf8(value);
+	txt = c_str;
+	stream->Write(txt);
+	mono_free(c_str);
+
+}
+
 void Stream_ReadBool(uint64_t stream_handle, bool* value)
 {
 	DataStream* stream = (DataStream*)stream_handle;
@@ -2459,6 +2558,15 @@ void Stream_ReadQuat(uint64_t stream_handle, glm::quat* value)
 {
 	DataStream* stream = (DataStream*)stream_handle;
 	stream->Read(*value);
+}
+
+MonoString* Stream_ReadString(uint64_t stream_handle)
+{
+	DataStream* stream = (DataStream*)stream_handle;
+	std::string txt;
+	stream->Read(txt);
+
+	return mono_string_new(s_MonoData.appDomain, txt.c_str());
 }
 
 
@@ -2642,6 +2750,75 @@ float Networking_GetClientAverageRTT(uint32_t client_id)
 	return net_manager->GetClientAverageRTT(client_id);
 }
 
+MonoString* Networking_GetInstanceName()
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return nullptr;
+	}
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	
+	std::string& txt = net_manager->GetInstanceName();
+
+	if (txt.empty()) return nullptr;
+
+	return mono_string_new(s_MonoData.appDomain, txt.c_str());
+
+}
+
+void Networking_SetInstanceName(MonoString* string)
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return;
+	}
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+	std::string& txt = net_manager->GetInstanceName();
+
+	char* c_str = mono_string_to_utf8(string);
+	txt = c_str;
+	mono_free(c_str);
+
+}
+
+MonoArray* Networking_GetFoundConnections()
+{
+	if (!s_MonoData.scene)
+	{
+		TRC_WARN("Scene is not yet valid, Function: {}", __FUNCTION__);
+		return nullptr;
+	}
+
+	Network::NetworkManager* net_manager = Network::NetworkManager::get_instance();
+
+	auto found_connections = net_manager->GetClientFoundConnections();
+	if (found_connections.empty())
+	{
+		return nullptr;
+	}
+
+	MonoClass* string_class = mono_get_string_class();
+	MonoArray* arr_result = mono_array_new(s_MonoData.appDomain, string_class, found_connections.size());
+
+	int32_t index = 0;
+	for (auto& i : found_connections)
+	{
+		std::string txt = i.first;
+
+		MonoString* server_name = mono_string_new(s_MonoData.appDomain, txt.c_str());
+
+		mono_array_setref(arr_result, index, server_name);
+
+		index++;
+	}
+
+	return arr_result;
+}
+
 #pragma endregion
 
 #define ADD_INTERNAL_CALL(func) mono_add_internal_call("Trace.InternalCalls::"#func, &func)
@@ -2668,10 +2845,13 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Action_GetName);
 	ADD_INTERNAL_CALL(Action_IsOwner);
 	ADD_INTERNAL_CALL(Action_GetNetID);
+	ADD_INTERNAL_CALL(Action_GetParent);
 
 
 	ADD_INTERNAL_CALL(TransformComponent_GetPosition);
 	ADD_INTERNAL_CALL(TransformComponent_SetPosition);
+	ADD_INTERNAL_CALL(TransformComponent_GetScale);
+	ADD_INTERNAL_CALL(TransformComponent_SetScale);
 	ADD_INTERNAL_CALL(TransformComponent_GetWorldPosition);
 	ADD_INTERNAL_CALL(TransformComponent_SetWorldPosition);
 	ADD_INTERNAL_CALL(TransformComponent_GetWorldRotation);
@@ -2702,6 +2882,11 @@ void BindInternalFuncs()
 
 	ADD_INTERNAL_CALL(TextComponent_GetString);
 	ADD_INTERNAL_CALL(TextComponent_SetString);
+	ADD_INTERNAL_CALL(TextComponent_GetColor);
+	ADD_INTERNAL_CALL(TextComponent_SetColor);
+
+	ADD_INTERNAL_CALL(RigidBody_AddForce);
+	ADD_INTERNAL_CALL(RigidBody_UpdateTransform);
 
 	ADD_INTERNAL_CALL(Scene_GetEntityByName);
 	ADD_INTERNAL_CALL(Scene_GetEntity);
@@ -2747,6 +2932,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Stream_WriteVec2);
 	ADD_INTERNAL_CALL(Stream_WriteVec3);
 	ADD_INTERNAL_CALL(Stream_WriteQuat);
+	ADD_INTERNAL_CALL(Stream_WriteString);
 
 	ADD_INTERNAL_CALL(Stream_ReadBool);
 	ADD_INTERNAL_CALL(Stream_ReadInt);
@@ -2754,6 +2940,7 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Stream_ReadVec2);
 	ADD_INTERNAL_CALL(Stream_ReadVec3);
 	ADD_INTERNAL_CALL(Stream_ReadQuat);
+	ADD_INTERNAL_CALL(Stream_ReadString);
 
 	ADD_INTERNAL_CALL(Networking_IsServer);
 	ADD_INTERNAL_CALL(Networking_IsClient);
@@ -2766,6 +2953,9 @@ void BindInternalFuncs()
 	ADD_INTERNAL_CALL(Networking_SendScenePacket);
 	ADD_INTERNAL_CALL(Networking_GetServerAverageRTT);
 	ADD_INTERNAL_CALL(Networking_GetClientAverageRTT);
+	ADD_INTERNAL_CALL(Networking_GetInstanceName);
+	ADD_INTERNAL_CALL(Networking_SetInstanceName);
+	ADD_INTERNAL_CALL(Networking_GetFoundConnections);
 
 }
 

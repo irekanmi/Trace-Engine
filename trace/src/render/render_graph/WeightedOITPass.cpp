@@ -93,6 +93,7 @@ namespace trace {
 				_ds2,
 				false
 			);
+			Enable_Blending(_ds2, 1);
 			_ds2.render_pass = Renderer::get_instance()->GetRenderPass("LIGHTING_PASS");
 			_ds2.depth_sten_state = { false, false };
 			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };

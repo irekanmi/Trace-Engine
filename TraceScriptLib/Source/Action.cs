@@ -24,6 +24,15 @@ namespace Trace
             }
         }
 
+        public Trace.Action Parent
+        {
+            get
+            {
+                object obj = InternalCalls.Action_GetParent(Id);
+                return obj as Action;
+            }
+        }
+
         public bool IsValid()
         {
             return !(Id == 0);

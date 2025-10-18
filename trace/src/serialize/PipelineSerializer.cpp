@@ -103,13 +103,14 @@ namespace trace {
 		std::string pipeline_name = pipeline->GetName();
 		Reflection::Serialize(pipeline_name, stream, nullptr, Reflection::SerializationFormat::BINARY);
 		bool has_shader_graph = false;
-		if (pipeline->GetShaderGraph())
+		/*if (pipeline->GetShaderGraph())
 		{
+			has_shader_graph = true;
 			stream->Write(has_shader_graph);
 			stream->Write(pipeline->GetShaderGraph()->GetUUID());
 
 			return true;
-		}
+		}*/
 		stream->Write(has_shader_graph);
 		PipelineStateDesc ds = pipeline->GetDesc();
 

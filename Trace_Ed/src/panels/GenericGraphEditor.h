@@ -24,6 +24,9 @@ namespace trace {
 
 		GenericGraph* GetCurrentGraph() { return m_currentGraph; }
 
+		void* GetUserData() { return user_data; }
+		void SetUserData(void* ptr) { user_data = ptr; }
+
 		void SetGraph(GenericGraph* graph, const std::string& graph_name);
 		void SetCurrentNode(GenericNode* current_node);
 
@@ -62,6 +65,7 @@ namespace trace {
 		int32_t m_graphCurrentIndex;
 		std::vector<GenericNode*> m_currentGraphNodePath;
 		std::string m_graphName;
+		void* user_data = nullptr;
 
 
 	protected:

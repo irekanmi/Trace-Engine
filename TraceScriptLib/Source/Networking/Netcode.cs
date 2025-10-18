@@ -13,13 +13,13 @@ namespace Trace
 
     public class NetworkManager : Trace.Action
     {
-        private Prefab player_prefab;
         private Prefab network_controller_prefab;
         private bool has_net_instance = false;
         private int tick_rate = 30;
         private float interpolation_offset = 0.1f;
         private int server_packet_rate = 30;
         private int client_packet_rate = 30;
+        private bool Lan = false;
 
         private float accumulator = 0.0f;
         private uint current_tick = 0;
@@ -45,13 +45,20 @@ namespace Trace
 
             if (Network.IsClient())
             {
-                Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
+                if(Lan)
+                {
+                    Network.ConnectToLAN(Network.selected_server_name);
+                }
+                else
+                {
+                    Network.ConnectTo("127.0.0.1", Network.DEAFAULT_SERVER_PORT);
+
+                }
                 Network.on_server_connect += OnServerConnected;
             }
 
             if(Network.IsServer())
             {
-                Scene.InstanciatePrefab_Net(player_prefab, new Vec3(0.0f, 0.0f, 0.0f), Network.InstanceID());
                 Scene.InstanciatePrefab_Net(network_controller_prefab, new Vec3(0.0f, 0.0f, 0.0f), Network.InstanceID());
                 Network.on_client_connect += OnClientConnected;
             }
@@ -104,8 +111,16 @@ namespace Trace
 
                 if (Input.GetKeyReleased(Keys.KEY_J))
                 {
-                    Network.CreateClient(false);
-                    Application.LoadAndSetScene("GameScene.trscn");
+                    Network.CreateClient(Lan);
+                    if(Lan)
+                    {
+                        Application.LoadAndSetScene("SelectServer.trscn");
+
+                    }
+                    else
+                    {
+                        Application.LoadAndSetScene("GameScene.trscn");
+                    }
                     has_net_instance = true;
                 }
 
@@ -232,7 +247,6 @@ namespace Trace
         
         private void OnClientConnected(uint net_id)
         {
-            Scene.InstanciatePrefab_Net(player_prefab, new Vec3(0.0f, 0.0f, 0.0f), net_id);
             Scene.InstanciatePrefab_Net(network_controller_prefab, new Vec3(0.0f, 0.0f, 0.0f), net_id);
         }
 
@@ -245,6 +259,10 @@ namespace Trace
             
             if (Network.IsClient())
             {
+                if (!obj.IsOwner())
+                {
+                    return;
+                }
                 Scene.IterateEntityScripts(obj, this, "StimulateObjects_Client");
             }
         }
@@ -275,10 +293,7 @@ namespace Trace
         
         private void StimulateObjects_Client(Trace.Action obj)
         {
-            if (!obj.IsOwner())
-            {
-                return;
-            }
+            
 
             bool is_predicted_action = obj is ReplicatedAction;
 
@@ -749,6 +764,7 @@ namespace Trace
         protected RingBuffer<float> remote_state_timestamp;
         protected int remote_state_count = 12;
         protected NetworkManager manager;
+        protected bool initialized = false;
 
         public override void OnNetworkCreate()
         {
@@ -765,6 +781,8 @@ namespace Trace
             
             remote_state_history = new RingBuffer<ActionDataType>(client_state_history_count);
             remote_state_timestamp = new RingBuffer<float>(client_state_history_count);
+
+            initialized = true;
 
         }
 
@@ -836,37 +854,88 @@ namespace Trace
 
     }
 
-
-    class TransformSync : Trace.Action
+    public struct TransformData : IActionData
     {
+        public Vec3 pos;
+        public Quat rot;
+
+        public void Serialize(ulong stream_handle, Trace.Action owner)
+        {
+
+        }
+        public void Deserialize(ulong stream_handle, Trace.Action owner)
+        {
+
+        }
+    }
+
+    class TransformSync : PredictedAction<TransformData, NetworkController>
+    {
+
+       
+
+
+
+        public override void OnNetworkCreate()
+        {
+            base.OnNetworkCreate();
+
+        }
+
+        public override void OnUpdate(float deltaTime)
+        {
+
+
+            if(!Network.IsClient())
+            {
+                return;
+            }
+
+            if(!initialized)
+            {
+                return;
+            }
+
+            float rtt = Network.GetServerAverageRTT();
+
+            float time = manager.GetServerTime();
+            time -= (manager.GetInterpolationOffset()) + (rtt / 2.0f);
+            if (GetRemoteState(time, out TransformData a, out TransformData b, out float t))
+            {
+                TransformComponent transform = GetComponent<TransformComponent>();
+                Vec3 new_pos = Maths.Lerp(a.pos, b.pos, t);
+                transform.Position = new_pos;
+                transform.Rotation = Maths.Slerp(a.rot, b.rot, t);
+            }
+
+        }
 
         public override void OnServerSend(UInt64 stream_handle)
         {
-            TransformComponent pose = GetComponent<TransformComponent>();
-            Stream.WriteVec3(stream_handle, pose.Position);
-            Stream.WriteQuat(stream_handle, pose.Rotation);
+            Stream.WriteFloat(stream_handle, manager.GetServerTime());
+            Stream.WriteVec3(stream_handle, transformComponent.Position);
+            Stream.WriteQuat(stream_handle, transformComponent.Rotation);
 
         }
 
         public override void OnClientReceive(UInt64 stream_handle)
         {
 
+            float server_time = Stream.ReadFloat(stream_handle);
             Vec3 new_pos = Stream.ReadVec3(stream_handle);
             Quat new_rot = Stream.ReadQuat(stream_handle);
 
-
-            if (IsOwner())
-            {
-                return;
-            }
-            else
-            {
-                TransformComponent pose = GetComponent<TransformComponent>();
-                pose.Position = new_pos;
-                pose.Rotation = new_rot;
-            }
+            TransformData new_data = new TransformData { pos = new_pos, rot = new_rot };
+            AddRemoteState(ref new_data, server_time);
+            
 
         }
+
+        public override void Step(float fixed_deltaTime, uint tick, NetworkController controller = null)
+        {
+            
+        }
+
 
 
     }
