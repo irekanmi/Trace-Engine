@@ -33,6 +33,22 @@ namespace trace {
         );
     }
 
+    BoxVolume::BoxVolume()
+    {
+        m_center = glm::vec3(0.0f);
+        m_extents = glm::vec3(0.5f); // Half sizes
+        glm::vec3 axis[3] = {
+            glm::vec3(1.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 1.0f)
+        }; // Orientation axes
+
+        m_axis[0] = axis[0];
+        m_axis[1] = axis[1];
+        m_axis[2] = axis[2];
+
+    }
+
     glm::vec3 BoxVolume::GetRandomPoint()
     {
         // Random point inside box
@@ -79,6 +95,13 @@ namespace trace {
         case 5: normal = -m_axis[2]; break;
         }
         return normal;
+    }
+
+    void BoxVolume::SetAxis(glm::vec3* axis)
+    {
+        m_axis[0] = axis[0];
+        m_axis[1] = axis[1];
+        m_axis[2] = axis[2];
     }
 
     glm::vec3 CircleVolume::GetRandomPoint()

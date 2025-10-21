@@ -91,6 +91,13 @@ namespace trace {
 			result = i.second->Instanciate(this) && result;
 		}
 
+		std::vector<StringID>& custom_data = m_gen->GetCustomData();
+
+		for (StringID& i : custom_data)
+		{
+			m_particleData.custom_data.emplace(std::make_pair(i, std::vector<glm::vec4>()));
+		}
+
 		return result;
 	}
 
@@ -100,6 +107,7 @@ namespace trace {
 		{
 			delete i.second;
 		}
+
 	}
 
 	void ParticleGeneratorInstance::Start(ParticleEffectInstance* effect_instance)
@@ -204,6 +212,105 @@ namespace trace {
 		}
 
 		--m_numAlive;
+	}
+
+	bool ParticleGeneratorInstance::GetParticleAttribute(StringID attr_name, glm::vec4& out_data, uint32_t particle_index)
+	{
+
+		switch (attr_name.value)
+		{
+		case Reflection::hash("position"):
+		{
+			out_data = m_particleData.positions[particle_index];
+			return true;
+			break;
+		}
+		case Reflection::hash("velocity"):
+		{
+			out_data = m_particleData.velocities[particle_index];
+			return true;
+			break;
+		}
+		case Reflection::hash("lifetime"):
+		{
+			out_data.x = m_particleData.lifetime[particle_index];
+			return true;
+			break;
+		}
+		case Reflection::hash("scale"):
+		{
+			out_data = m_particleData.scale[particle_index];
+			return true;
+			break;
+		}
+		case Reflection::hash("color"):
+		{
+			out_data = m_particleData.color[particle_index];
+			return true;
+			break;
+		}
+		default:
+			auto it = m_particleData.custom_data.find(attr_name);
+			if (it == m_particleData.custom_data.end())
+			{
+				return false;
+			}
+
+			out_data = m_particleData.custom_data[attr_name][particle_index];
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bool ParticleGeneratorInstance::SetParticleAttribute(StringID attr_name, glm::vec4& data, uint32_t particle_index)
+	{
+		switch (attr_name)
+		{
+		case Reflection::hash("position"):
+		{
+			m_particleData.positions[particle_index] = data;
+			return true;
+			break;
+		}
+		case Reflection::hash("velocity"):
+		{
+			m_particleData.velocities[particle_index] = data;
+			return true;
+			break;
+		}
+		case Reflection::hash("lifetime"):
+		{
+			m_particleData.lifetime[particle_index] = data.x;
+			return true;
+			break;
+		}
+		case Reflection::hash("scale"):
+		{
+			m_particleData.scale[particle_index] = data;
+			return true;
+			break;
+		}
+		case Reflection::hash("color"):
+		{
+			m_particleData.color[particle_index] = data;
+			return true;
+			break;
+		}
+		default:
+			auto it = m_particleData.custom_data.find(attr_name);
+			if (it == m_particleData.custom_data.end())
+			{
+				return false;
+			}
+
+			m_particleData.custom_data[attr_name][particle_index] = data;
+
+			return true;
+		}
+
+		return false;
 	}
 
 	void ParticleGeneratorInstance::set_parameter_data(const std::string& param_name, void* data, uint32_t size)

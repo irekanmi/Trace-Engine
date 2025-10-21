@@ -12,6 +12,7 @@
 
 
 #include "ImGuizmo.h"
+#include "imgui_stdlib.h"
 
 
 namespace trace {
@@ -177,6 +178,38 @@ namespace trace {
 		{
 			m_particleGenerator->SetCapacity(capacity);
 		}
+
+		std::vector<StringID>& custom_data = m_particleGenerator->GetCustomData();
+
+		ImGui::Text("Custom Particle Data");
+
+		uint32_t index = 0;
+		for (StringID& i : custom_data)
+		{
+			
+			std::string custom_name = STRING_FROM_ID(i);
+			
+			ImGui::PushID(index);
+
+			if (ImGui::InputText("##Custom_Name", &custom_name))
+			{
+				i = STR_ID(custom_name);
+			}
+
+			ImGui::PopID();
+			
+
+			index++;
+		}
+
+		ImGui::Dummy(ImVec2(0.0f, 3.0f));
+		if (ImGui::Button("Add Custom Data"))
+		{
+			std::string data_name = "Custom" + std::to_string(index);
+			custom_data.push_back(STR_ID(data_name));
+		}
+
+		ImGui::Separator();
 		
 		void* user_data = m_editor->GetUserData();
 		if (user_data)
@@ -423,6 +456,22 @@ namespace trace {
 						shape->SetExtents(extents);
 					}
 
+					glm::vec3* axis = shape->GetAxis();
+					ImGui::Dummy(ImVec2(0.0f, 3.0f));
+					ImGui::Text("Axis: ");
+
+					if (DrawVec3("X", axis[0]))
+					{
+						shape->SetAxis(axis);
+					}
+					if (DrawVec3("Y", axis[1]))
+					{
+						shape->SetAxis(axis);
+					}
+					if (DrawVec3("Z", axis[2]))
+					{
+						shape->SetAxis(axis);
+					}
 					
 					break;
 				}
@@ -492,6 +541,20 @@ namespace trace {
 			{
 				init->SetMax(max);
 			}
+
+			break;
+		}
+		case Reflection::TypeID<CustomParticleInitializer>():
+		{
+			CustomParticleInitializer* init = (CustomParticleInitializer*)base_type;
+
+			std::string node_name = STRING_FROM_ID(init->GetName());
+
+			if (ImGui::InputText("Name", &node_name) && !node_name.empty())
+			{
+				init->SetName(STR_ID(node_name));
+			}
+			
 
 			break;
 		}

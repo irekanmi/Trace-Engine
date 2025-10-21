@@ -34,6 +34,7 @@ namespace trace {
 		REGISTER_MEMBER(ParticleGenerator, m_renderers);
 		REGISTER_MEMBER(ParticleGenerator, m_capacity);
 		REGISTER_MEMBER(ParticleGenerator, m_effectRoot);
+		REGISTER_MEMBER(ParticleGenerator, m_customDataNames);
 	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(ParticleGeneratorInstance)
@@ -114,6 +115,7 @@ namespace trace {
 	BEGIN_REGISTER_CLASS(CustomParticleInitializer)
 		REGISTER_TYPE_PARENT(CustomParticleInitializer, ParticleInitializer);
 		REGISTER_MEMBER(CustomParticleInitializer, m_nodeID);
+		REGISTER_MEMBER(CustomParticleInitializer, m_name);
 	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(GravityUpdate)
@@ -155,11 +157,18 @@ namespace trace {
 	BEGIN_REGISTER_CLASS(GenericEffectNode)
 		REGISTER_TYPE_PARENT(GenericEffectNode, ParticleEffectNode);
 		REGISTER_MEMBER(GenericEffectNode, m_type);
+		REGISTER_MEMBER(GenericEffectNode, m_nodeValues);
 	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(GetParticleAttributeNode)
 		REGISTER_TYPE_PARENT(GetParticleAttributeNode, ParticleEffectNode);
 		REGISTER_MEMBER(GetParticleAttributeNode, m_attrID);
+	END_REGISTER_CLASS;
+	
+	BEGIN_REGISTER_CLASS(SetParticleAttributeNode)
+		REGISTER_TYPE_PARENT(SetParticleAttributeNode, ParticleEffectNode);
+		REGISTER_MEMBER(SetParticleAttributeNode, m_attrID);
+		REGISTER_MEMBER(SetParticleAttributeNode, m_value);
 	END_REGISTER_CLASS;
 
 

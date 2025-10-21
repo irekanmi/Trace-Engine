@@ -84,6 +84,7 @@ namespace trace {
 		for (ParticleGeneratorInstance& generator : m_generatorInstance)
 		{
 			generator.DestroyInstance();
+			
 		}
 
 		m_generatorInstance.clear();

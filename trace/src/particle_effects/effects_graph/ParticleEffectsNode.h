@@ -8,12 +8,18 @@ namespace trace {
 	enum class EffectsNodeType
 	{
 		UnKnown,
-		GetPosition,
-		SetPosition,
+		Split_Vec4,
 
 		Max
 	};
 
+	struct EffectsNodeMetaData
+	{
+		std::vector<GenericNodeInput> inputs;
+		std::vector<GenericNodeOutput> outputs;
+		std::function<void(int32_t, GenericGraphInstance*, float, GenericNode*)> update_code;
+
+	};
 
 	class ParticleEffectNode : public GenericNode
 	{
@@ -80,17 +86,27 @@ namespace trace {
 		virtual void Destroy(GenericGraph* graph) override;
 		virtual bool Instanciate(GenericGraphInstance* graph_instance) override;
 		virtual void Update(int32_t particle_index, GenericGraphInstance* instance, float deltaTime) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0);
+
+		std::array<glm::vec4, 6>& GetNodeValues() { return m_nodeValues; }
 		
 		EffectsNodeType GetType() { return m_type; }
-		void SetType(EffectsNodeType type) { m_type = type; }
+		void SetType(EffectsNodeType type);
 
 		struct NodeData
 		{
 			uint32_t frame_index = 0;
+			glm::vec4 out_0;
+			glm::vec4 out_1;
+			glm::vec4 out_2;
+			glm::vec4 out_3;
+			glm::vec4 out_4;
+			glm::vec4 out_5;
 		};
 
 	private:
 		EffectsNodeType m_type;
+		std::array<glm::vec4, 6> m_nodeValues;// Default Input values
 
 		ACCESS_CLASS_MEMBERS(GenericEffectNode);
 		GET_TYPE_ID;
@@ -107,8 +123,44 @@ namespace trace {
 		virtual bool Instanciate(GenericGraphInstance* graph_instance) override;
 		virtual void Update(int32_t particle_index, GenericGraphInstance* instance, float deltaTime) override;
 
-		UUID GetAttrID() { return m_attrID; }
-		void SetAttrID(UUID attr_id);
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0);
+
+		StringID GetAttrID() { return m_attrID; }
+		void SetAttrID(StringID attr_id);
+
+		struct NodeData
+		{
+			uint32_t frame_index = 0;
+			glm::vec4 attr_value = glm::vec4(0.0f);
+			bool has_value = false;
+		};
+
+	private:
+		StringID m_attrID;
+		glm::vec4 m_value;
+
+		ACCESS_CLASS_MEMBERS(GetParticleAttributeNode);
+		GET_TYPE_ID;
+
+	};
+
+
+	class SetParticleAttributeNode : public ParticleEffectNode
+	{
+
+	public:
+		virtual void Init(GenericGraph* graph) override;
+		virtual void Destroy(GenericGraph* graph) override;
+		virtual bool Instanciate(GenericGraphInstance* graph_instance) override;
+		virtual void Update(int32_t particle_index, GenericGraphInstance* instance, float deltaTime) override;
+
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0);
+
+		StringID GetAttrID() { return m_attrID; }
+		void SetAttrID(StringID attr_id);
+
+		glm::vec4 GetDefaultValue() { return m_value; }
+		void SetDefaultValue(glm::vec4 value) { m_value = value; }
 
 		struct NodeData
 		{
@@ -116,9 +168,10 @@ namespace trace {
 		};
 
 	private:
-		UUID m_attrID;
+		StringID m_attrID;
+		glm::vec4 m_value;
 
-		ACCESS_CLASS_MEMBERS(GetParticleAttributeNode);
+		ACCESS_CLASS_MEMBERS(SetParticleAttributeNode);
 		GET_TYPE_ID;
 
 	};

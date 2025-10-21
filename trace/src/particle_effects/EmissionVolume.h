@@ -45,7 +45,7 @@ namespace trace {
         glm::vec3 GetRandomDirection() override;
 
     private:
-        glm::vec3 m_position;
+        glm::vec3 m_position = glm::vec3(0.0f);
 
     protected:
         ACCESS_CLASS_MEMBERS(PointVolume);
@@ -83,8 +83,8 @@ namespace trace {
         void SetRadius(float radius) { m_radius = radius; }
 
     private:
-        glm::vec3 m_center;
-        float m_radius;
+        glm::vec3 m_center = glm::vec3(0.0f);
+        float m_radius = 1.0f;
 
     protected:
         ACCESS_CLASS_MEMBERS(SphereVolume);
@@ -98,7 +98,7 @@ namespace trace {
     {
 
     public:
-        BoxVolume() {}
+        BoxVolume();
         BoxVolume(const glm::vec3& c,
             const glm::vec3& size,
             const glm::mat3& rotation)
@@ -116,9 +116,11 @@ namespace trace {
 
         glm::vec3 GetCenter() { return m_center; }
         glm::vec3 GetExtents() { return m_extents; }
+        glm::vec3* GetAxis() { return m_axis; }
 
         void SetCenter(glm::vec3 center) { m_center = center; }
         void SetExtents(glm::vec3 extents) { m_extents = extents; }
+        void SetAxis(glm::vec3* axis);
 
     private:
         glm::vec3 m_center;
@@ -157,9 +159,9 @@ namespace trace {
         glm::vec3 get_tangent();
 
     private:
-        glm::vec3 m_center;
-        glm::vec3 m_normal;
-        float m_radius;
+        glm::vec3 m_center = glm::vec3(0.0f);
+        glm::vec3 m_normal = glm::vec3(0.0f, 1.0f, 0.0f);
+        float m_radius = 1.0f;
     protected:
         ACCESS_CLASS_MEMBERS(CircleVolume);
         GET_TYPE_ID;

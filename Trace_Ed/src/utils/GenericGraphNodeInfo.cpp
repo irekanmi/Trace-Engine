@@ -10,6 +10,7 @@
 #include "particle_effects/particle_renderers/BillboardRender.h"
 
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include "imnodes/imnodes.h"
 
 namespace trace {
@@ -29,7 +30,7 @@ namespace trace {
 		IM_COL32(200, 104, 0, 128),
 		IM_COL32(155, 194, 85, 128),
 		IM_COL32(198, 104, 65, 128),
-		IM_COL32(98, 194, 65, 128),
+		IM_COL32(0, 194, 65, 128),
 	};
 
 	uint32_t generic_value_color_hovered[(int)GenericValueType::Max] =
@@ -42,7 +43,7 @@ namespace trace {
 		IM_COL32(200, 104, 0, 255),
 		IM_COL32(155, 194, 85, 255),
 		IM_COL32(198, 104, 65, 255),
-		IM_COL32(98, 194, 65, 255),
+		IM_COL32(0, 194, 65, 255),
 	};
 
 	struct ShaderGraphNodeTypeInfo
@@ -57,12 +58,15 @@ namespace trace {
 	struct AccessHelper
 	{
 		static std::unordered_map<ShaderNodeType, ShaderGraphNodeTypeInfo> node_type_info;
+		static std::unordered_map<EffectsNodeType, ShaderGraphNodeTypeInfo> effect_node_type_info;
 	};
 
 	std::unordered_map<uint64_t, std::string> _node_names =
 	{
 		{Reflection::TypeID<FinalPBRNode>(), "PBR Node"},
 		{Reflection::TypeID<EffectsRootNode>(), "Effects Node"},
+		{Reflection::TypeID<GetParticleAttributeNode>(), "Get Particle Attribute"},
+		{Reflection::TypeID<SetParticleAttributeNode>(), "Set Particle Attribute"},
 	};
 
 
@@ -221,16 +225,38 @@ namespace trace {
 
 				for (ParticleInitializer* init : initializers)
 				{
+					std::string display_name = get_class_display_name(init->GetTypeID());
 					if (init->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
 					{
-						continue;
+						CustomParticleInitializer* custom_init = (CustomParticleInitializer*)init;
+						GenericNode* graph_node = generator->GetNode(custom_init->GetNodeID());
+						int32_t graph_node_index = editor->get_node_index(graph_node->GetUUID());
+
+						std::string& node_name = STRING_FROM_ID(custom_init->GetName());
+
+						display_name = node_name.empty() ? display_name : node_name;
+
+						GenericNodeInput& input_0 = graph_node->GetInputs()[0];
+						ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+						ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+						ImNodes::BeginInputAttribute(((0 + 1) << shift_amount) | graph_node_index, ImNodesPinShape_Quad);
+						
+						if (ImGui::Button(display_name.c_str()))
+						{
+							editor->SetUserData(init);
+						}
+
+						ImNodes::EndInputAttribute();
+						ImNodes::PopColorStyle();
+						ImNodes::PopColorStyle();
 					}
-
-					std::string display_name = get_class_display_name(init->GetTypeID());
-
-					if (ImGui::Button(display_name.c_str()))
+					else
 					{
-						editor->SetUserData(init);
+
+						if (ImGui::Button(display_name.c_str()))
+						{
+							editor->SetUserData(init);
+						}
 					}
 				}
 
@@ -249,6 +275,25 @@ namespace trace {
 					{
 						initializers.push_back(new LifetimeInitializer);
 					}
+					if (ImGui::MenuItem("Custom Initializer"))
+					{
+						CustomParticleInitializer* new_init = new CustomParticleInitializer;//TODO: Use custom allocator
+						UUID new_node = generator->CreateNode<EffectsFinalNode>();
+						new_init->SetNodeID(new_node);
+
+						GenericNodeInput input = {};
+						input.node_id = new_node;
+						input.type = GenericValueType::Execute;
+						input.value_index = INVALID_ID;
+
+						GenericNode* root_node = generator->GetNode(generator->GetEffectRoot());
+						root_node->GetInputs().push_back(input);
+
+						initializers.push_back(new_init);
+
+						editor->add_new_node_not_child(new_node);
+					}
+
 
 
 					ImGui::EndPopup();
@@ -359,6 +404,151 @@ namespace trace {
 				ImNodes::EndNode();
 				
 			}
+		},
+		{
+			Reflection::TypeID<GenericEffectNode>(),
+			[](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ParticleGenerator* generator = (ParticleGenerator*)editor->GetCurrentGraph();
+
+				std::string& node_name = AccessHelper::effect_node_type_info.at(_node->GetType()).display_name;
+
+				ImNodes::BeginNode(node_index);
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text(node_name.c_str());
+				ImNodes::EndNodeTitleBar();
+
+				for (uint32_t j = 0; j < node->GetInputs().size(); j++)
+				{
+					GenericNodeInput& input_0 = node->GetInputs()[j];
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute(((j + 1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+					std::string& input_name = AccessHelper::effect_node_type_info.at(_node->GetType()).inputs[j];
+					ImGui::Text(input_name.c_str());
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+				}
+
+				for (uint32_t j = 0; j < node->GetOutputs().size(); j++)
+				{
+					GenericNodeOutput& output_0 = node->GetOutputs()[j];
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((j + generic_output_start_index) << shift_amount) | node_index, ImNodesPinShape_Quad);
+					std::string& output_name = AccessHelper::effect_node_type_info.at(_node->GetType()).outputs[j];
+					ImGui::Text(output_name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+				}
+
+				ImNodes::EndNode();
+				
+			}
+		},
+		{
+			Reflection::TypeID<GetParticleAttributeNode>(),
+			[](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+			{
+				GetParticleAttributeNode* _node = (GetParticleAttributeNode*)node;
+				ParticleGenerator* generator = (ParticleGenerator*)editor->GetCurrentGraph();
+
+				
+
+				ImNodes::BeginNode(node_index);
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text("Get Attribute");
+				ImNodes::EndNodeTitleBar();
+
+				GenericNodeInput& input_0 = node->GetInputs()[0];
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+				ImNodes::BeginInputAttribute(((0 + 1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+				ImGui::Text("<-");
+				ImNodes::EndInputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				GenericNodeOutput& output_0 = node->GetOutputs()[0];
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+				ImNodes::BeginOutputAttribute(((0 + generic_output_start_index) << shift_amount) | node_index, ImNodesPinShape_Quad);
+				ImGui::Text("->");
+				ImNodes::EndOutputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				GenericNodeOutput& output_1 = node->GetOutputs()[1];
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_1.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_1.type]);
+				ImNodes::BeginOutputAttribute(((1 + generic_output_start_index) << shift_amount) | node_index, ImNodesPinShape_Quad);
+				ImGui::Text("Value");
+				ImNodes::EndOutputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				std::string& attr_name = STRING_FROM_ID(_node->GetAttrID());
+				ImGui::Button(attr_name.empty() ? "None(Attribute)" : attr_name.c_str());
+
+
+				ImNodes::EndNode();
+				
+			}
+		},
+		{
+			Reflection::TypeID<SetParticleAttributeNode>(),
+			[](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+			{
+				SetParticleAttributeNode* _node = (SetParticleAttributeNode*)node;
+				ParticleGenerator* generator = (ParticleGenerator*)editor->GetCurrentGraph();
+
+				
+
+				ImNodes::BeginNode(node_index);
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text("Set Attribute");
+				ImNodes::EndNodeTitleBar();
+
+				GenericNodeInput& input_0 = node->GetInputs()[0];
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+				ImNodes::BeginInputAttribute(((0 + 1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+				ImGui::Text("<-");
+				ImNodes::EndInputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				GenericNodeInput& input_1 = node->GetInputs()[1];
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_1.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_1.type]);
+				ImNodes::BeginInputAttribute(((1 + 1) << shift_amount) | node_index, ImNodesPinShape_Quad);
+				ImGui::Text("Value");
+				ImNodes::EndInputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				GenericNodeOutput& output_0 = node->GetOutputs()[0];
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+				ImNodes::BeginOutputAttribute(((0 + generic_output_start_index) << shift_amount) | node_index, ImNodesPinShape_Quad);
+				ImGui::Text("->");
+				ImNodes::EndOutputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				std::string& attr_name = STRING_FROM_ID(_node->GetAttrID());
+				ImGui::Button(attr_name.empty() ? "None(Attribute)" : attr_name.c_str());
+
+
+				ImNodes::EndNode();
+				
+			}
 		}
 	};
 	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> node_details_render =
@@ -414,6 +604,50 @@ namespace trace {
 				AccessHelper::node_type_info.at(_node->GetType()).details_render(node, editor);
 
 			}
+		},
+		{
+			Reflection::TypeID<GenericEffectNode>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				
+				AccessHelper::effect_node_type_info.at(_node->GetType()).details_render(node, editor);
+
+			}
+		},
+		{
+			Reflection::TypeID<GetParticleAttributeNode>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GetParticleAttributeNode* _node = (GetParticleAttributeNode*)node;
+				
+				std::string attr_name = STRING_FROM_ID(_node->GetAttrID());
+				if (ImGui::InputText("Attribute Name", &attr_name) && !attr_name.empty())
+				{
+					_node->SetAttrID(STR_ID(attr_name));
+				}
+
+			}
+		},
+		{
+			Reflection::TypeID<SetParticleAttributeNode>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				SetParticleAttributeNode* _node = (SetParticleAttributeNode*)node;
+				
+				std::string attr_name = STRING_FROM_ID(_node->GetAttrID());
+				if (ImGui::InputText("Attribute Name", &attr_name) && !attr_name.empty())
+				{
+					_node->SetAttrID(STR_ID(attr_name));
+				}
+
+				glm::vec4 value = _node->GetDefaultValue();
+				if (ImGui::DragFloat4("Default", (float*)&value, 0.001f))
+				{
+					_node->SetDefaultValue(value);
+				}
+
+			}
 		}
 	};
 	
@@ -438,6 +672,69 @@ namespace trace {
 					{
 						UUID new_node = graph->CreateNode<ConstantNode>();
 						ConstantNode* _node = (ConstantNode*)graph->GetNode(new_node);
+
+						_node->SetType(i.first);
+
+						editor->add_new_node(new_node);
+					}
+				}
+			}
+		},
+		{
+			Reflection::TypeID<ParticleGenerator>(),
+			[](GenericGraph* graph, GenericGraphEditor* editor)
+			{
+				if (ImGui::MenuItem("Get Attribute"))
+				{
+					UUID new_node = graph->CreateNode<GetParticleAttributeNode>();
+					editor->add_new_node(new_node);
+				}
+				
+				if (ImGui::MenuItem("Get Position"))
+				{
+					UUID new_node = graph->CreateNode<GetParticleAttributeNode>();
+					GetParticleAttributeNode* _node = (GetParticleAttributeNode*)graph->GetNode(new_node);
+					_node->SetAttrID(STR_ID("position"));
+					editor->add_new_node(new_node);
+				}
+				
+				if (ImGui::MenuItem("Get Velocity"))
+				{
+					UUID new_node = graph->CreateNode<GetParticleAttributeNode>();
+					GetParticleAttributeNode* _node = (GetParticleAttributeNode*)graph->GetNode(new_node);
+					_node->SetAttrID(STR_ID("velocity"));
+					editor->add_new_node(new_node);
+				}
+				
+				if (ImGui::MenuItem("Set Attribute"))
+				{
+					UUID new_node = graph->CreateNode<SetParticleAttributeNode>();
+					editor->add_new_node(new_node);
+				}
+				
+				if (ImGui::MenuItem("Set Position"))
+				{
+					UUID new_node = graph->CreateNode<SetParticleAttributeNode>();
+					SetParticleAttributeNode* _node = (SetParticleAttributeNode*)graph->GetNode(new_node);
+					_node->SetAttrID(STR_ID("position"));
+					editor->add_new_node(new_node);
+				}
+
+
+				if (ImGui::MenuItem("Set Velocity"))
+				{
+					UUID new_node = graph->CreateNode<SetParticleAttributeNode>();
+					SetParticleAttributeNode* _node = (SetParticleAttributeNode*)graph->GetNode(new_node);
+					_node->SetAttrID(STR_ID("velocity"));
+					editor->add_new_node(new_node);
+				}
+
+				for (auto& i : AccessHelper::effect_node_type_info)
+				{
+					if (ImGui::MenuItem(i.second.display_name.c_str()))
+					{
+						UUID new_node = graph->CreateNode<GenericEffectNode>();
+						GenericEffectNode* _node = (GenericEffectNode*)graph->GetNode(new_node);
 
 						_node->SetType(i.first);
 
@@ -1147,6 +1444,22 @@ namespace trace {
 		}
 	};
 
+	std::unordered_map<EffectsNodeType, ShaderGraphNodeTypeInfo> AccessHelper::effect_node_type_info =
+	{
+		{
+			EffectsNodeType::Split_Vec4,
+			{
+			"Split Vec4",
+			{ "<-", "In"},
+			{"->", "XYZ", "XY", "X", "Y", "Z", "W"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat4("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		}
+	};
 
 	std::string get_class_display_name(uint64_t class_id)
 	{
@@ -1210,6 +1523,11 @@ namespace trace {
 		case Reflection::TypeID<CircleVolume>():
 		{
 			return "Circle Volume";
+			break;
+		}
+		case Reflection::TypeID<CustomParticleInitializer>():
+		{
+			return "Custom Particle Initializer";
 			break;
 		}
 		}

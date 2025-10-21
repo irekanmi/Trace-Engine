@@ -31,6 +31,8 @@ namespace trace {
 		void SetCurrentNode(GenericNode* current_node);
 
 		void add_new_node(UUID node_id);
+		void add_new_node_not_child(UUID node_id);
+		int32_t get_node_index(UUID node_id);
 
 	public:
 		void generate_current_node_children();

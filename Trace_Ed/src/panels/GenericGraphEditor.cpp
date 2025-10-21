@@ -597,7 +597,7 @@ namespace trace {
         for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
         {
             GenericNodeInput& input = current_node->GetInputs()[i];
-            if (input.node_id != 0)
+            if (input.node_id != 0 && input.value_index != INVALID_ID)
             {
                 Link link = {};
                 link.to = ((i + 1) << shift_amount) | m_graphNodeIndex[current_node->GetUUID()];
@@ -805,6 +805,29 @@ namespace trace {
 
         new_node = node_index;
     }
+
+    void GenericGraphEditor::add_new_node_not_child(UUID node_id)
+    {
+        int32_t node_index = ++m_graphCurrentIndex;
+        m_graphNodeIndex[node_id] = node_index;
+        m_graphIndex[node_index] = node_id;
+
+
+        new_node = node_index;
+    }
+
+    int32_t GenericGraphEditor::get_node_index(UUID node_id)
+    {
+        auto it = m_graphNodeIndex.find(node_id);
+
+        if (it != m_graphNodeIndex.end())
+        {
+            return it->second;
+        }
+
+        return -1;
+    }
+
 
     void GenericGraphEditor::remove_node(UUID node_id)
     {

@@ -11,6 +11,7 @@
 #include "particle_effects/ParticleData.h"
 #include "reflection/TypeRegistry.h"
 #include "node_system/GenericGraph.h"
+#include "core/Utils.h"
 
 #include "glm/glm.hpp"
 
@@ -46,6 +47,7 @@ namespace trace {
 		void SetRenderers(std::vector<ParticleRender*>& renderers) { m_renderers = renderers; }
 
 		UUID GetEffectRoot() { return m_effectRoot; }
+		std::vector<StringID>& GetCustomData() { return m_customDataNames; }
 
 		static Ref<ParticleGenerator> Deserialize(UUID id);
 		static Ref<ParticleGenerator> Deserialize(DataStream* stream);
@@ -57,6 +59,8 @@ namespace trace {
 		std::vector<ParticleRender*> m_renderers;
 		uint32_t m_capacity;
 		UUID m_effectRoot = 0;
+		std::vector<StringID> m_customDataNames;
+
 
 	protected:
 		virtual void CreateParameter(const std::string& param_name, GenericValueType type) override;
@@ -70,6 +74,10 @@ namespace trace {
 	{
 
 	public:
+
+		~ParticleGeneratorInstance() 
+		{
+		}
 
 		bool CreateInstance(Ref<ParticleGenerator> generator);
 		virtual void DestroyInstance() override;
@@ -89,6 +97,8 @@ namespace trace {
 
 		ParticleData& GetParticlesData() { return m_particleData; }
 		float GetElaspedTime() { return m_elaspedTime; }
+		bool GetParticleAttribute(StringID attr_name, glm::vec4& out_data, uint32_t particle_index);
+		bool SetParticleAttribute(StringID attr_name, glm::vec4& data, uint32_t particle_index);
 
 		uint32_t GetNumAlive() { return m_numAlive; }
 

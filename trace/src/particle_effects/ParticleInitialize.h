@@ -2,6 +2,7 @@
 
 #include "particle_effects/ParticleData.h"
 #include "reflection/TypeRegistry.h"
+#include "core/Utils.h"
 
 namespace trace {
 
@@ -85,8 +86,12 @@ namespace trace {
 		UUID GetNodeID() { return m_nodeID; }
 		void SetNodeID(UUID node_id) { m_nodeID = node_id; }
 
+		StringID GetName() { return m_name; }
+		void SetName(StringID name) { m_name = name; }
+
 	private:
 		UUID m_nodeID;
+		StringID m_name;
 
 	protected:
 		ACCESS_CLASS_MEMBERS(CustomParticleInitializer);
