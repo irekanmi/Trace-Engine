@@ -63,6 +63,7 @@ namespace trace {
 		REGISTER_TYPE_PARENT(BillBoardRender, ParticleRender);
 		REGISTER_MEMBER(BillBoardRender, m_texture);
 		REGISTER_MEMBER(BillBoardRender, m_velocityAligned);
+		REGISTER_MEMBER(BillBoardRender, m_material);
 	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(PointVolume)

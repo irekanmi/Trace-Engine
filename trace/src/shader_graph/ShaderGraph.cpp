@@ -56,6 +56,20 @@ namespace trace {
 			return true;
 			break;
 		}
+		case MaterialType::PARTICLE_BILLBOARD:
+		{
+
+			UUID final_node = CreateNode<ConstantNode>();
+			ConstantNode* _node = (ConstantNode*)GetNode(final_node);
+			_node->SetType(ShaderNodeType::Particle_Billboard_Node);
+			fragment_shader_root = final_node;
+			m_cullMode = CullMode::NONE;
+
+			m_type = type;
+
+			return true;
+			break;
+		}
 		}
 
 		return false;
@@ -442,25 +456,27 @@ void main()
 			Ref<GPipeline> pipeline = asset_manager->Get<GPipeline>(pipeline_name);
 			if (pipeline)
 			{
-				pipeline->m_refCount = 1;
-				pipeline.free();
+				pipeline->RecreatePipeline(_ds);
+			}
+			else
+			{
+				pipeline = asset_manager->CreateAssetHandle<GPipeline>(pipeline_name, _ds);
+
 			}
 
-			Ref<GPipeline> result = asset_manager->CreateAssetHandle<GPipeline>(pipeline_name, _ds);
-
-			if (result)
+			if (pipeline)
 			{
 				for (auto& i : variable_map)
 				{
-					uint32_t hash = result->GetHashTable().Get(i.second);
+					uint32_t hash = pipeline->GetHashTable().Get(i.second);
 					shader_variables[i.first].hash = hash;
 				}
 
-				MaterialData& pipeline_var = result->GetShaderGraphVariables();
+				MaterialData& pipeline_var = pipeline->GetShaderGraphVariables();
 				pipeline_var = shader_variables;
 			}
 
-			return result;
+			return pipeline;
 
 			break;
 		}
@@ -579,25 +595,167 @@ void main()
 			Ref<GPipeline> pipeline = asset_manager->Get<GPipeline>(pipeline_name);
 			if (pipeline)
 			{
-				pipeline->m_refCount = 1;
-				pipeline.free();
+				pipeline->RecreatePipeline(_ds);
+			}
+			else
+			{
+				pipeline = asset_manager->CreateAssetHandle<GPipeline>(pipeline_name, _ds);
+
 			}
 
-			Ref<GPipeline> result = asset_manager->CreateAssetHandle<GPipeline>(pipeline_name, _ds);
-
-			if (result)
+			if (pipeline)
 			{
 				for (auto& i : variable_map)
 				{
-					uint32_t hash = result->GetHashTable().Get(i.second);
+					uint32_t hash = pipeline->GetHashTable().Get(i.second);
 					shader_variables[i.first].hash = hash;
 				}
 
-				MaterialData& pipeline_var = result->GetShaderGraphVariables();
+				MaterialData& pipeline_var = pipeline->GetShaderGraphVariables();
 				pipeline_var = shader_variables;
 			}
 
-			return result;
+			return pipeline;
+
+			break;
+		}
+		case MaterialType::PARTICLE_BILLBOARD:
+		{	
+
+			
+
+			std::string fragment_shader_code = R"(
+#version 450
+
+
+#include "OIT_data.glsl"
+#include "utils.glsl"
+#include "bindless.glsl"
+#include "functions.glsl"
+
+
+OUT_OIT_DATA
+
+
+
+
+layout(location = 0)in vec2 _texCoord;
+
+BINDLESS_COMBINED_SAMPLER2D;
+
+
+layout(location = 2) in Data{{
+    vec3 position;
+    vec3 color;
+    vec3 scale;
+	float lifetime;
+}};
+
+struct InstanceBufferObject
+{{
+    {}
+}};
+
+layout(std140, set = 1, binding = 3) readonly buffer MaterialData{{
+    InstanceBufferObject objects[];
+}};
+
+void main()
+{{
+	{}
+	
+
+
+	{}
+}}
+			
+			)";
+
+			bool has_data = !shader_variables.empty();
+			bool has_texture = !texture_inputs.empty();
+
+			fragment_shader_code = fmt::format(fragment_shader_code, has_data ? shader_struct_variables : "vec4 _data_0;", has_texture ? texture_inputs : " ", final_code);
+
+			FileHandle file;
+			FileSystem::open_file("C:/Dev/Trace_Projects/Project_TD_t0/Debug/shader_graph_debug.glsl", FileMode::WRITE, file);
+			FileSystem::writestring(file, fragment_shader_code);
+			FileSystem::close_file(file);
+
+			std::vector<std::pair<std::string, int>> data_index;
+			std::vector<uint32_t> spriv_code = ShaderParser::glsl_to_spirv(fragment_shader_code, ShaderStage::PIXEL_SHADER, data_index);
+
+			if (spriv_code.empty())
+			{
+				return Ref<GPipeline>();
+			}
+
+			std::string& asset_name = m_shaderGraph->GetName();
+			std::string shader_name = asset_name + ".frag";
+
+			GenericAssetManager* asset_manager = GenericAssetManager::get_instance();
+
+			Ref<GShader> frag_shader = asset_manager->Get<GShader>(shader_name);
+			if (frag_shader)
+			{
+				frag_shader->m_refCount = 1;
+				frag_shader.free();
+			}
+
+			frag_shader = asset_manager->CreateAssetHandle_<GShader>(shader_name, spriv_code, data_index, ShaderStage::PIXEL_SHADER);
+
+			if (!frag_shader)
+			{
+				return Ref<GPipeline>();
+			}
+
+			Ref<GShader> vert_shader = asset_manager->Get<GShader>("particle_billboard.vert.glsl");
+
+
+			ShaderResources s_res = {};
+			ShaderParser::generate_shader_resources(vert_shader.get(), s_res);
+			ShaderParser::generate_shader_resources(frag_shader.get(), s_res);
+
+			PipelineStateDesc _ds;
+			_ds.vertex_shader = vert_shader.get();
+			_ds.pixel_shader = frag_shader.get();
+			_ds.resources = s_res;
+
+			AutoFillPipelineDesc(
+				_ds,
+				false
+			);
+			_ds.input_layout = Vertex::get_input_layout();
+			_ds.render_pass = Renderer::get_instance()->GetRenderPass("WOIT_PASS");
+			Enable_WeightedOIT(_ds);
+			_ds.depth_sten_state = { true, false, false, 1.0f, 0.0f };
+			_ds.rasteriser_state = { m_shaderGraph->GetCullMode(), FillMode::SOLID};
+
+			std::string pipeline_name = asset_name + RENDER_PIPELINE_FILE_EXTENSION;
+
+			Ref<GPipeline> pipeline = asset_manager->Get<GPipeline>(pipeline_name);
+			if (pipeline)
+			{
+				pipeline->RecreatePipeline(_ds);
+			}
+			else
+			{
+				pipeline = asset_manager->CreateAssetHandle<GPipeline>(pipeline_name, _ds);
+
+			}
+
+			if (pipeline)
+			{
+				for (auto& i : variable_map)
+				{
+					uint32_t hash = pipeline->GetHashTable().Get(i.second);
+					shader_variables[i.first].hash = hash;
+				}
+
+				MaterialData& pipeline_var = pipeline->GetShaderGraphVariables();
+				pipeline_var = shader_variables;
+			}
+
+			return pipeline;
 
 			break;
 		}

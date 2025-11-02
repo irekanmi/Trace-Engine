@@ -387,6 +387,8 @@ namespace trace {
 			graph_data.shadow_casters.clear();
 			graph_data.skinned_shadow_casters.clear();
 
+			graph_data.m_partilcleBillBoard.clear();
+
 		}
 
 		
@@ -699,6 +701,65 @@ namespace trace {
 		}
 	}
 
+	void Renderer::RenderParticleBillboard(int32_t render_graph_index)
+	{
+		RenderGraphFrameData& graph_data = m_renderGraphsData[render_graph_index];
+
+		std::vector<RenderObjectData>& particle_billboard = graph_data.m_partilcleBillBoard;
+		Camera* _camera = graph_data._camera;
+
+		if (!_camera)
+		{
+			return;
+		}
+
+		glm::mat4 proj = _camera->GetProjectionMatix();
+		glm::mat4 view = _camera->GetViewMatrix();
+		glm::vec3 view_position = _camera->GetPosition();
+		glm::mat4 view_proj = proj * view;
+
+
+		for (RenderObjectData& data : particle_billboard)
+		{
+
+			glm::mat4* M_model = &data.transform;
+			Model* _model = data.object;
+			if (!data.material)
+			{
+				continue;
+			}
+
+			glm::vec3 pos, rot, scl;
+			DecomposeMatrix(*M_model, pos, rot, scl);
+			glm::vec4 position(pos, 0.0f);
+			glm::vec4 scale(scl, 0.0f);
+			glm::vec4 color(1.0f);
+			glm::mat4 model_pose(1.0f);
+
+			MaterialInstance* _mi = data.material;
+			Ref<GPipeline> sp = _mi->GetRenderPipline();
+
+			RenderFunc::OnDrawStart(&g_device, sp.get());
+			RenderFunc::ApplyMaterial(_mi, render_graph_index);
+			
+			RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_proj, sizeof(glm::mat4), 0, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_camera_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &_camera->GetPosition(), sizeof(glm::vec3), 0, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &position, sizeof(glm::vec4), 0, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &color, sizeof(glm::vec4), 0, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_scales", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &scale, sizeof(glm::vec4), 0, render_graph_index);
+			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &model_pose, sizeof(glm::mat4), 0, render_graph_index);
+
+
+			RenderFunc::BindPipeline(&g_device, sp.get());
+			RenderFunc::BindPipeline_(sp.get(), render_graph_index);
+			RenderFunc::BindVertexBuffer(&g_device, quad_model.GetVertexBuffer());
+			RenderFunc::BindIndexBuffer(&g_device, quad_model.GetIndexBuffer());
+
+			RenderFunc::DrawIndexed(&g_device, 0, quad_model.GetIndexCount());
+			RenderFunc::OnDrawEnd(&g_device, sp.get());
+		}
+	}
+
 
 	void Renderer::draw_mesh(CommandParams& params, int32_t render_graph_index)
 	{
@@ -814,6 +875,11 @@ namespace trace {
 			case MaterialType::TRANSPARENT_UNLIT:
 			{
 				graph_data.m_transparentUnLitObjects.push_back(data);
+				break;
+			}
+			case MaterialType::PARTICLE_BILLBOARD:
+			{
+				graph_data.m_partilcleBillBoard.push_back(data);
 				break;
 			}
 			}

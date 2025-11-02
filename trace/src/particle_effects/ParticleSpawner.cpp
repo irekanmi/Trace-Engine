@@ -19,7 +19,20 @@ namespace trace {
 	void RateSpawner::Run(ParticleGeneratorInstance* gen_instance, float deltaTime)
 	{
 
-		uint32_t num_particles = uint32_t(m_rate * deltaTime);
+		m_accumulator += deltaTime;
+		float rate_inv = 1.0f / m_rate;
+		uint32_t num_particles = 0;
+
+		if (m_accumulator >= rate_inv)
+		{
+			num_particles = uint32_t(m_accumulator / rate_inv);
+			m_accumulator = 0.0f;
+		}
+		else
+		{
+			return;
+		}
+
 		ParticleEffectInstance* effect = gen_instance->GetEffectInstance();
 
 		if (!effect)
@@ -49,10 +62,11 @@ namespace trace {
 				glm::vec4 position(m_emissionVolume->GetRandomPoint(), 0.0f);
 
 				position += glm::vec4(entity_pos, 0.0f);
+				position.w = 0.75f;
 				particle_data.positions[index] = position;
 				particle_data.scale[index] = glm::vec4(1.0f);
 				particle_data.color[index] = glm::vec4(1.0f);
-				particle_data.lifetime[index] = 0.75f;
+				particle_data.rotation[index] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 				gen_instance->initialize_particle(index);
 			}

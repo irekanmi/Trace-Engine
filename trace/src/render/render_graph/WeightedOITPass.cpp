@@ -167,6 +167,7 @@ namespace trace {
 				m_renderer->RenderQuads(render_graph_index);
 				m_renderer->RenderTextVerts(render_graph_index);
 				m_renderer->RenderParticles(render_graph_index);
+				m_renderer->RenderParticleBillboard(render_graph_index);
 
 				});
 

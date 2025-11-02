@@ -65,7 +65,9 @@ namespace trace {
 		glm::vec4 velocity = particle_data.velocities[particle_index];
 		glm::vec4 position = particle_data.positions[particle_index];
 
-		position += velocity * deltaTime;
+		position.x += velocity.x * deltaTime;
+		position.y += velocity.y * deltaTime;
+		position.z += velocity.z * deltaTime;
 
 		particle_data.positions[particle_index] = position;
 	}

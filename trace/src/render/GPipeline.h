@@ -23,7 +23,8 @@ namespace trace {
 		TRANSPARENT_LIT,
 		TRANSPARENT_UNLIT,
 		PARTICLE_LIT,
-		PARTICLE_UNLIT
+		PARTICLE_UNLIT,
+		PARTICLE_BILLBOARD
 	};
 
 	class GPipeline : public Resource

@@ -15,6 +15,7 @@
 #include "imgui.h"
 #include "imgui_stdlib.h"
 #include "imnodes/imnodes.h"
+#include "imnodes/imnodes_internal.h"
 #include "portable-file-dialogs.h"
 
 
@@ -52,6 +53,11 @@ namespace trace {
         TraceEditor* editor = TraceEditor::get_instance();
         if (m_currentGraph)
         {
+            if (current_context != nullptr)
+            {
+                ImNodes::EditorContextFree((ImNodesEditorContext*)current_context);
+                current_context = nullptr;
+            }
             if (m_currentNode)
             {
                 free_current_node();
@@ -188,6 +194,12 @@ namespace trace {
 
             }
         }
+
+        if (current_context != nullptr)
+        {
+            ImNodes::EditorContextSet((ImNodesEditorContext*)current_context);
+        }
+
         ImNodes::BeginNodeEditor();
 
 
@@ -597,23 +609,26 @@ namespace trace {
         for (uint32_t i = 0; i < current_node->GetInputs().size(); i++)
         {
             GenericNodeInput& input = current_node->GetInputs()[i];
-            if (input.node_id != 0 && input.value_index != INVALID_ID)
+            if (input.node_id != 0)
             {
-                Link link = {};
-                link.to = ((i + 1) << shift_amount) | m_graphNodeIndex[current_node->GetUUID()];
-                link.from = ((input.value_index + generic_output_start_index) << shift_amount) | m_graphNodeIndex[input.node_id];
-                link.id = static_cast<int32_t>(m_currentNodeLinks.size());
-                link.value_type = input.type;
-
-                auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link](Link& val) {
-                    return link.to == val.to && link.from == val.from;
-                    });
-
-                if (it != m_currentNodeLinks.end())
+                if (input.value_index != INVALID_ID)
                 {
-                    continue;
+                    Link link = {};
+                    link.to = ((i + 1) << shift_amount) | m_graphNodeIndex[current_node->GetUUID()];
+                    link.from = ((input.value_index + generic_output_start_index) << shift_amount) | m_graphNodeIndex[input.node_id];
+                    link.id = static_cast<int32_t>(m_currentNodeLinks.size());
+                    link.value_type = input.type;
+
+                    auto it = std::find_if(m_currentNodeLinks.begin(), m_currentNodeLinks.end(), [link](Link& val) {
+                        return link.to == val.to && link.from == val.from;
+                        });
+
+                    if (it != m_currentNodeLinks.end())
+                    {
+                        continue;
+                    }
+                    m_currentNodeLinks.push_back(link);
                 }
-                m_currentNodeLinks.push_back(link);
                 add_child_links(m_currentGraph->GetNode(input.node_id));
             }
         }
@@ -663,10 +678,23 @@ namespace trace {
         }
 
 
-        ImNodes::DestroyContext();
+        /*if (current_context != nullptr)
+        {
+            ImNodes::DestroyContext((ImNodesContext*)current_context);
+        }
         ImNodesContext* new_context = ImNodes::CreateContext();
         ImNodes::SetCurrentContext(new_context);
+        current_context = new_context;
+        ImNodes::EditorContextSet(new_context->DefaultEditorCtx);*/
 
+        if (current_context != nullptr)
+        {
+            ImNodes::EditorContextFree((ImNodesEditorContext*)current_context);
+            current_context = nullptr;
+        }
+        ImNodesEditorContext* new_context = ImNodes::EditorContextCreate();
+        current_context = new_context;
+        ImNodes::EditorContextSet((ImNodesEditorContext*)current_context);
 
         std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_graphName + std::to_string(uint64_t(m_currentNode->GetUUID())) + ".ini";
         if (std::filesystem::exists(db_path))

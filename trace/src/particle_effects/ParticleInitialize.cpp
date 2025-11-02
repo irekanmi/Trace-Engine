@@ -39,11 +39,11 @@ namespace trace {
 	{
 		ParticleData& particle_data = particle_generator->GetParticlesData();
 
-		float lifetime = particle_data.lifetime[particle_index];
+		float lifetime = particle_data.positions[particle_index].w;
 
 		lifetime = m_min + (m_max - m_min) * RandomFloat();
 		
-		particle_data.lifetime[particle_index] = lifetime;
+		particle_data.positions[particle_index].w = lifetime;
 	}
 
 	void CustomParticleInitializer::Init(ParticleGeneratorInstance* particle_generator)

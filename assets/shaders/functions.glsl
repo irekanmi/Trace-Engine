@@ -430,5 +430,36 @@ mat4 PositionLookAt(vec3 dir, vec3 scale)
     return transform;
 }
 
+mat3 quatToMat3(vec4 q)
+{
+    float x = q.x, y = q.y, z = q.z, w = q.w;
+
+    float xx = x * x;
+    float yy = y * y;
+    float zz = z * z;
+    float xy = x * y;
+    float xz = x * z;
+    float yz = y * z;
+    float wx = w * x;
+    float wy = w * y;
+    float wz = w * z;
+
+    mat3 res;
+    res[0][0] = 1.0f - 2.0f * (yy + zz);
+    res[0][1] = 2.0f * (xy + wz);
+    res[0][2] = 2.0f * (xz - wy);
+
+    res[1][0] = 2.0f * (xy - wz);
+    res[1][1] = 1.0f - 2.0f * (xx + zz);
+    res[1][2] = 2.0f * (yz + wx);
+
+    res[2][0] = 2.0f * (xz + wy);
+    res[2][1] = 2.0f * (yz - wx);
+    res[2][2] = 1.0f - 2.0f * (xx + yy);
+
+    return res;
+
+}
+
 
 #endif

@@ -40,6 +40,7 @@ namespace trace {
 
 	private:
 		float m_rate = 100.0f;
+		float m_accumulator = 0.0f;
 
 	protected:
 		ACCESS_CLASS_MEMBERS(RateSpawner);

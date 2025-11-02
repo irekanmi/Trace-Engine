@@ -1442,6 +1442,106 @@ namespace trace {
 					return out_code;
 				}
 			}
+		},
+		{
+			ShaderNodeType::Particle_Billboard_Node,
+			{
+				{{GenericValueType::Vec3, 0, 0}, {GenericValueType::Float, 0, 0}},
+				{},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec3);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					std::string code = R"(
+	vec4 out_color;
+    out_color.rgb = {};
+    out_color.a = {};
+    PROCESS_COLOR(out_color);
+			)";
+
+					out_code = fmt::format(code, in_0, in_1);
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Position_Variable,
+			{
+				{},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "position";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Scale_Variable,
+			{
+				{},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "scale";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Color_Variable,
+			{
+				{},
+				{{GenericValueType::Vec3, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "color";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Lifetime_Variable,
+			{
+				{},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "lifetime";
+
+					return out_code;
+				}
+			}
 		}
 	};
 

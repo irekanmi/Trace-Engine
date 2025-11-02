@@ -15,7 +15,10 @@ BINDLESS_COMBINED_SAMPLER2D;
 
 
 layout(location = 2) in Data{
-    vec4 color;
+    vec3 position;
+    vec3 color;
+    vec3 scale;
+    float lifetime;
 };
 
 void main()
@@ -24,7 +27,7 @@ void main()
 
     vec4 image_color = texture(GET_BINDLESS_TEXTURE2D(u_textures), in_texCoord);
     float alpha = image_color.a;
-    vec4 out_color = image_color * color;
+    vec4 out_color = image_color * vec4(color, 1.0f);
     out_color.a = alpha;
     //FragColor = out_color;
     PROCESS_COLOR(out_color);

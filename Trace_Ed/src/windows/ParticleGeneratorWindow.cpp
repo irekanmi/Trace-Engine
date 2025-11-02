@@ -110,7 +110,7 @@ namespace trace {
 	{
 		m_editor->Shutdown();
 
-
+		m_particleGenerator.free();
 
 		m_scene->Destroy();
 		delete m_editor;
@@ -654,6 +654,21 @@ namespace trace {
 			if (ImGui::Checkbox("Velocity Aligned", &velocity_align))
 			{
 				render->SetVelocityAligned(velocity_align);
+			}
+
+			std::string mat_name = "None(Material)";
+			if (Ref<MaterialInstance> mat = render->GetMaterial())
+			{
+				mat_name = mat->GetName();
+			}
+
+			ImGui::Text("Material: ");
+			ImGui::SameLine();
+			ImGui::Button(mat_name.c_str());
+
+			if (Ref<MaterialInstance> new_mat = ImGuiDragDropResource<MaterialInstance>(MATERIAL_FILE_EXTENSION))
+			{
+				render->SetMaterial(new_mat);
 			}
 
 			break;

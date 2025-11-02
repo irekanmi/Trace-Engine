@@ -1441,6 +1441,68 @@ namespace trace {
 				ImGui::DragFloat("t", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
 			}
 			}
+		},
+		{
+			ShaderNodeType::Particle_Billboard_Node,
+			{
+			"Particle Billboard",
+			{"Color", "Alpha"},
+			{},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::ColorEdit3("Color", (float*)&_node->GetDefaultParameterData()[0], ImGuiColorEditFlags_HDR);
+				ImGui::DragFloat("Alpha", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Position_Variable,
+			{
+			"Particle Position",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Scale_Variable,
+			{
+			"Particle Scale",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Color_Variable,
+			{
+			"Particle Color",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Lifetime_Variable,
+			{
+			"Particle Lifetime",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
 		}
 	};
 

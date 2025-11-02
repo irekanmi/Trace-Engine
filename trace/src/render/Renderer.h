@@ -72,6 +72,7 @@ namespace trace {
 		std::vector<RenderSkinnedObjectData> m_opaqueSkinnedObjects;
 
 		std::vector<RenderObjectData> m_transparentUnLitObjects;
+		std::vector<RenderObjectData> m_partilcleBillBoard;
 		uint32_t m_opaqueObjectsSize = 0;
 
 		// Instanced Quad ............................
@@ -175,6 +176,7 @@ namespace trace {
 		void RenderTextVerts(int32_t render_graph_index = 0);
 		void RenderDebugData(int32_t render_graph_index = 0);
 		void RenderParticles(int32_t render_graph_index = 0);
+		void RenderParticleBillboard(int32_t render_graph_index = 0);
 
 		static Renderer* get_instance();
 

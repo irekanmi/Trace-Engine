@@ -63,7 +63,12 @@ namespace trace {
 		Lerp_Float_Function,
 		Lerp_Vec4_Function,
 		Lerp_Vec3_Function,
-		Lerp_Vec2_Function
+		Lerp_Vec2_Function,
+		Particle_Billboard_Node,
+		Particle_Position_Variable,
+		Particle_Color_Variable,
+		Particle_Scale_Variable,
+		Particle_Lifetime_Variable,
 	};
 
 	struct ShaderNodeMetaData

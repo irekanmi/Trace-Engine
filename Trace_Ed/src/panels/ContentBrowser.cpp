@@ -1110,11 +1110,14 @@ namespace trace {
 				"Opaque UnLit",
 				"Transparent Lit",
 				"Transparent UnLit",
+				"Particle Lit",
+				"Particle UnLit",
+				"Particle Billboard",
 			};
 
 			if (ImGui::BeginCombo("Material Type", shader_type_string[(int32_t)shader_graph_type]))
 			{
-				for (uint32_t j = 1; j < 5; j++)
+				for (uint32_t j = 1; j < 8; j++)
 				{
 					bool selected = (shader_graph_type == (MaterialType)j);
 					if (ImGui::Selectable(shader_type_string[j], selected))

@@ -98,6 +98,17 @@ namespace trace {
 			m_particleData.custom_data.emplace(std::make_pair(i, std::vector<glm::vec4>()));
 		}
 
+		m_particleData.positions.resize(m_gen->GetCapacity());
+		m_particleData.color.resize(m_gen->GetCapacity());
+		m_particleData.velocities.resize(m_gen->GetCapacity());
+		m_particleData.scale.resize(m_gen->GetCapacity());
+		m_particleData.rotation.resize(m_gen->GetCapacity());
+
+		for (auto& i : m_particleData.custom_data)
+		{
+			i.second.resize(m_gen->GetCapacity());
+		}
+
 		return result;
 	}
 
@@ -118,17 +129,7 @@ namespace trace {
 		{
 			init->Init(this);
 		}
-
-		m_particleData.positions.resize(m_gen->GetCapacity());
-		m_particleData.color.resize(m_gen->GetCapacity());
-		m_particleData.velocities.resize(m_gen->GetCapacity());
-		m_particleData.scale.resize(m_gen->GetCapacity());
-		m_particleData.lifetime.resize(m_gen->GetCapacity());
-
-		for (auto& i : m_particleData.custom_data)
-		{
-			i.second.resize(m_gen->GetCapacity());
-		}
+				
 
 		m_elaspedTime = 0.0f;
 	}
@@ -138,7 +139,7 @@ namespace trace {
 
 		for (uint32_t index = 0; index < m_numAlive; index++)
 		{
-			float& life_time = m_particleData.lifetime[index];
+			float& life_time = m_particleData.positions[index].w;
 			if (life_time <= 0.0f)
 			{
 				kill_particle(index);
@@ -204,7 +205,8 @@ namespace trace {
 		std::swap(m_particleData.positions[index], m_particleData.positions[dst_index]);
 		std::swap(m_particleData.color[index], m_particleData.color[dst_index]);
 		std::swap(m_particleData.velocities[index], m_particleData.velocities[dst_index]);
-		std::swap(m_particleData.lifetime[index], m_particleData.lifetime[dst_index]);
+		std::swap(m_particleData.scale[index], m_particleData.scale[dst_index]);
+		std::swap(m_particleData.rotation[index], m_particleData.rotation[dst_index]);
 
 		for (auto& i : m_particleData.custom_data)
 		{
@@ -233,7 +235,7 @@ namespace trace {
 		}
 		case Reflection::hash("lifetime"):
 		{
-			out_data.x = m_particleData.lifetime[particle_index];
+			out_data.x = m_particleData.positions[particle_index].w;
 			return true;
 			break;
 		}
@@ -246,6 +248,12 @@ namespace trace {
 		case Reflection::hash("color"):
 		{
 			out_data = m_particleData.color[particle_index];
+			return true;
+			break;
+		}
+		case Reflection::hash("rotation"):
+		{
+			out_data = m_particleData.rotation[particle_index];
 			return true;
 			break;
 		}
@@ -282,7 +290,7 @@ namespace trace {
 		}
 		case Reflection::hash("lifetime"):
 		{
-			m_particleData.lifetime[particle_index] = data.x;
+			m_particleData.positions[particle_index].w = data.x;
 			return true;
 			break;
 		}
@@ -295,6 +303,12 @@ namespace trace {
 		case Reflection::hash("color"):
 		{
 			m_particleData.color[particle_index] = data;
+			return true;
+			break;
+		}
+		case Reflection::hash("rotation"):
+		{
+			m_particleData.rotation[particle_index] = data;
 			return true;
 			break;
 		}
