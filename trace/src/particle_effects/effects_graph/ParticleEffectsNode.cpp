@@ -43,6 +43,167 @@ namespace trace {
 				}
 			}
 		},
+		{
+			EffectsNodeType::Vec4_To_Quat,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Quat, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_0 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						glm::vec4 result = *(glm::vec4*)node_1->GetValueInternal(instance, input_1.value_index);
+						glm::quat data(result.w, result.x, result.y, result.z);
+						memcpy(&info->out_1, &data, sizeof(glm::quat));
+					}					
+				}
+			}
+		},
+		{
+			EffectsNodeType::Quat_To_Euler,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Quat, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec3, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_0 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						glm::quat result = *(glm::quat*)node_1->GetValueInternal(instance, input_1.value_index);
+						glm::vec3 data = glm::eulerAngles(result);
+						memcpy(&info->out_1, &data, sizeof(glm::vec3));
+					}					
+				}
+			}
+		},
+		{
+			EffectsNodeType::Euler_To_Quat,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Quat, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_0 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						glm::vec3 result = *(glm::vec3*)node_1->GetValueInternal(instance, input_1.value_index);
+						glm::quat data(result);
+						memcpy(&info->out_1, &data, sizeof(glm::quat));
+					}					
+				}
+			}
+		},
+		{
+			EffectsNodeType::Quat_To_Vec4,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Quat, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec4, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_0 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						glm::quat result = *(glm::quat*)node_1->GetValueInternal(instance, input_1.value_index);
+						glm::vec4 data(result.x, result.y, result.z, result.w);
+						memcpy(&info->out_1, &data, sizeof(glm::vec4));
+					}					
+				}
+			}
+		},
+		{
+			EffectsNodeType::Vec3_Constant,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec3, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_1 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_1->GetValueInternal(instance, input_1.value_index);
+						info->out_1.x = result;
+					}	
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						info->out_1.y = result;
+					}	
+
+					GenericNodeInput& input_3 = node->GetInputs()[3];
+					if (input_3.node_id != 0)
+					{
+						ParticleEffectNode* node_3 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_3.node_id);
+
+						node_3->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_3->GetValueInternal(instance, input_3.value_index);
+						info->out_1.z = result;
+					}					
+				}
+			}
+		},
 	};
 
 	void ParticleEffectNode::Init(GenericGraph* graph)

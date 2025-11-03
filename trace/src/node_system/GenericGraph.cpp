@@ -114,6 +114,11 @@ namespace trace {
 			return "execute";
 			break;
 		}
+		case GenericValueType::Quat:
+		{
+			return "quat";
+			break;
+		}
 		}
 
 		return std::string();

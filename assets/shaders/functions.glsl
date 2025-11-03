@@ -430,6 +430,23 @@ mat4 PositionLookAt(vec3 dir, vec3 scale)
     return transform;
 }
 
+mat3 PositionLookAt(vec3 dir)
+{
+    vec3 forward = -normalize(dir);
+    vec3 world_up = vec3(0.0f, 1.0f, 0.0f); 
+    vec3 ortho_right = normalize(cross(forward, world_up));
+    vec3 ortho_up = normalize(cross(ortho_right, forward));
+
+    mat3 transform = mat3(
+       ortho_right,
+       ortho_up,
+       forward
+    );
+
+
+    return transform;
+}
+
 mat3 quatToMat3(vec4 q)
 {
     float x = q.x, y = q.y, z = q.z, w = q.w;

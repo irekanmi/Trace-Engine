@@ -9,6 +9,11 @@ namespace trace {
 	{
 		UnKnown,
 		Split_Vec4,
+		Vec4_To_Quat,
+		Quat_To_Euler,
+		Euler_To_Quat,
+		Quat_To_Vec4,
+		Vec3_Constant,
 
 		Max
 	};

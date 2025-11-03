@@ -56,6 +56,7 @@ namespace trace {
 				RenderFunc::SetPipelineData(sp.get(), "_positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.positions.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 				RenderFunc::SetPipelineData(sp.get(), "_colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.color.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 				RenderFunc::SetPipelineData(sp.get(), "_scales", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.scale.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
+				RenderFunc::SetPipelineData(sp.get(), "_rotation", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.rotation.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 				RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &model_pose, sizeof(glm::mat4), 0, render_graph_index);
 
 				RenderFunc::ApplyMaterial(m_material.get(), render_graph_index);
@@ -120,6 +121,7 @@ namespace trace {
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_positions", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.positions.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.color.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_scales", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.scale.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
+					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_rotation", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.rotation.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &model_pose, sizeof(glm::mat4), 0, render_graph_index);
 					RenderFunc::BindPipeline_(DefaultAssetsManager::particle_billboard_pipeline.get(), render_graph_index);
 					RenderFunc::BindPipeline(device, DefaultAssetsManager::particle_billboard_pipeline.get());

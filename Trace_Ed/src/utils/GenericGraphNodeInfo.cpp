@@ -31,6 +31,7 @@ namespace trace {
 		IM_COL32(155, 194, 85, 128),
 		IM_COL32(198, 104, 65, 128),
 		IM_COL32(0, 194, 65, 128),
+		IM_COL32(10, 94, 165, 128),
 	};
 
 	uint32_t generic_value_color_hovered[(int)GenericValueType::Max] =
@@ -44,6 +45,7 @@ namespace trace {
 		IM_COL32(155, 194, 85, 255),
 		IM_COL32(198, 104, 65, 255),
 		IM_COL32(0, 194, 65, 255),
+		IM_COL32(10, 94, 165, 255),
 	};
 
 	struct ShaderGraphNodeTypeInfo
@@ -1520,7 +1522,68 @@ namespace trace {
 				ImGui::DragFloat4("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
 			}
 			}
-		}
+		},
+		{
+			EffectsNodeType::Vec4_To_Quat,
+			{
+			"Vec4 To Quat",
+			{ "<-", "In"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Quat_To_Euler,
+			{
+			"Quat To Euler",
+			{ "<-", "In"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Euler_To_Quat,
+			{
+			"Euler To Quat",
+			{ "<-", "In"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Quat_To_Vec4,
+			{
+			"Quat To Vec4",
+			{ "<-", "In"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Vec3_Constant,
+			{
+			"Vec3",
+			{ "<-", "X", "Y", "Z"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat3("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
 	};
 
 	std::string get_class_display_name(uint64_t class_id)

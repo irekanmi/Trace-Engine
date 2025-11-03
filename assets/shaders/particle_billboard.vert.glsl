@@ -55,12 +55,20 @@ void main()
     scale = scl;
     lifetime = pos.w;
     
-    //mat3 rot_scale = quatToMat3(rot) * mat3(vec3(scale.x, 0.0f, 0.0f,), vec3(0.0f, scale.y, 0.0f), vec3(0.0f, 0.0f, scale.z));
+    mat3 rot_scale = quatToMat3(rot);
+    rot_scale[0] = rot_scale[0] * scale;
+    rot_scale[1] = rot_scale[1] * scale;
+    rot_scale[2] = rot_scale[2] * scale;
+    mat3 look_at = PositionLookAt(cam_pos - position);
+    mat3 final_rot = look_at * rot_scale;
 
-
-    mat4 transform = PositionLookAt(cam_pos - position, scale);
-    transform[3] = vec4(position, 1.0f);
-
+     mat4 transform = mat4(
+        vec4(final_rot[0], 0.0f),
+        vec4(final_rot[1], 0.0f),
+        vec4(final_rot[2], 0.0f),
+        vec4(position, 1.0f)
+     );
+     
     mat4 local_pose = objects[binding_index.draw_instance_index.x]._model;
 
     gl_Position = _projection * local_pose * transform * vec4(in_pos, 1.0f);
