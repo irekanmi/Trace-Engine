@@ -27,6 +27,7 @@ namespace trace {
 	public:
 
 		bool Create();
+		bool Create(void* ptr);
 		virtual void Destroy() override;
 
 		virtual ~ParticleGenerator() {}

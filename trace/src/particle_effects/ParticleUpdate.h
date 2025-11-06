@@ -2,6 +2,7 @@
 
 #include "reflection/TypeRegistry.h"
 #include "particle_effects/ParticleData.h"
+#include "core/Utils.h"
 
 #include "glm/glm.hpp"
 
@@ -20,6 +21,31 @@ namespace trace {
 		GET_TYPE_ID;
 
 	};
+
+    class CustomParticleUpdate : public ParticleUpdate
+    {
+
+    public:
+        CustomParticleUpdate() {};
+        ~CustomParticleUpdate() {};
+
+        virtual void UpdateParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index, float deltaTime) override;
+
+        UUID GetNodeID() { return m_nodeID; }
+        void SetNodeID(UUID node_id) { m_nodeID = node_id; }
+
+        StringID GetName() { return m_name; }
+        void SetName(StringID name) { m_name = name; }
+
+    private:
+        UUID m_nodeID;
+        StringID m_name;
+
+    protected:
+        ACCESS_CLASS_MEMBERS(CustomParticleUpdate);
+        GET_TYPE_ID;
+
+    };
 
     class GravityUpdate : public ParticleUpdate 
     {

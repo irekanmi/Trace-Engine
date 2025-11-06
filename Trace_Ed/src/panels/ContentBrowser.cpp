@@ -1071,7 +1071,7 @@ namespace trace {
 					if (id == 0)
 					{
 						std::string asset_path = (m_currentDir / (res + PARTICLE_GENERATOR_FILE_EXTENSION)).string();
-						Ref<ParticleGenerator> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<ParticleGenerator>(asset_path);
+						Ref<ParticleGenerator> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<ParticleGenerator>(asset_path, nullptr);
 						GenericSerializer::Serialize<ParticleGenerator>(asset, asset_path);
 						std::string filename = res + PARTICLE_GENERATOR_FILE_EXTENSION;
 						UUID new_id = STR_ID(filename);

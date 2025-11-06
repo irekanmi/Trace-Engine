@@ -1537,7 +1537,87 @@ namespace trace {
 					ConstantNode* _node = (ConstantNode*)node;
 					std::string out_code = "";
 
-					out_vars[0] = "lifetime";
+					out_vars[0] = "lifetime.x";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Power_Float_Function,
+			{
+				{GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Float);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Float);
+
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+					out_code = R"(float {} = pow({}, {});)";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1);
+
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Percentage_Life_Variable,
+			{
+				{},
+				{{GenericValueType::Float, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+					out_vars[0] = "lifetime.y";
+
+					return out_code;
+				}
+			}
+		},
+		{
+			ShaderNodeType::Rotate_Point_Function,
+			{
+				{{GenericValueType::Vec2, 0, 0}, {GenericValueType::Vec2, 0, 0}, {GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Vec2, 0}},
+				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
+				{
+					ShaderGraphInstance* instance = (ShaderGraphInstance*)graph_instance;
+					ConstantNode* _node = (ConstantNode*)node;
+					std::string out_code = "";
+
+
+					GenericParameterData& param0 = _node->GetDefaultParameterData()[0];
+					std::string in_0 = GenericHelper::GetParameterValueString(param0, GenericValueType::Vec2);
+					GenericParameterData& param1 = _node->GetDefaultParameterData()[1];
+					std::string in_1 = GenericHelper::GetParameterValueString(param1, GenericValueType::Vec2);
+					GenericParameterData& param2 = _node->GetDefaultParameterData()[2];
+					std::string in_2 = GenericHelper::GetParameterValueString(param2, GenericValueType::Float);
+
+					GET_NODE_OUTPUT(_node, in_0, 0, instance);
+					GET_NODE_OUTPUT(_node, in_1, 1, instance);
+					GET_NODE_OUTPUT(_node, in_2, 2, instance);
+
+					out_vars[0] = "var_" + std::to_string(instance->GetNextVarIndex());
+
+					out_code = "vec2 {} = rotate_point({}, {}, {});";
+
+					out_code = fmt::format(out_code, out_vars[0], in_0, in_1, in_2);
+
 
 					return out_code;
 				}

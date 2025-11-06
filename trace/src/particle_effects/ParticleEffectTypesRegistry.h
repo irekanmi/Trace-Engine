@@ -118,6 +118,12 @@ namespace trace {
 		REGISTER_MEMBER(CustomParticleInitializer, m_nodeID);
 		REGISTER_MEMBER(CustomParticleInitializer, m_name);
 	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(CustomParticleUpdate)
+		REGISTER_TYPE_PARENT(CustomParticleUpdate, ParticleUpdate);
+		REGISTER_MEMBER(CustomParticleUpdate, m_nodeID);
+		REGISTER_MEMBER(CustomParticleUpdate, m_name);
+	END_REGISTER_CLASS;
 	
 	BEGIN_REGISTER_CLASS(GravityUpdate)
 		REGISTER_TYPE_PARENT(GravityUpdate, ParticleUpdate);

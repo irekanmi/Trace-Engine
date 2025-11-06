@@ -225,8 +225,13 @@ namespace trace {
 				
 				auto& initializers = generator->GetInitializers();
 
+				int remove_index = -1;
+				int index = -1;
 				for (ParticleInitializer* init : initializers)
 				{
+					++index;
+
+					ImGui::PushID(index);
 					std::string display_name = get_class_display_name(init->GetTypeID());
 					if (init->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
 					{
@@ -259,8 +264,60 @@ namespace trace {
 						{
 							editor->SetUserData(init);
 						}
+
+
+
 					}
+
+					if (ImGui::BeginPopupContextItem("Initializer_Item_Popup"))
+					{
+
+						if (ImGui::MenuItem("Delete"))
+						{
+							remove_index = index;
+							void* user_data = editor->GetUserData();
+							if (user_data == init)
+							{
+								editor->SetUserData(nullptr);
+							}
+
+							if (init->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
+							{
+								GenericNode* root_node = generator->GetNode(generator->GetEffectRoot());
+								std::vector<GenericNodeInput>& root_inputs = root_node->GetInputs();
+								UUID node_id = ((CustomParticleInitializer*)init)->GetNodeID();
+
+								for (GenericNodeInput& in : root_inputs)
+								{
+									if (in.node_id == node_id)
+									{
+										std::swap(in, root_inputs.back());
+										break;
+									}
+								}
+								root_inputs.pop_back();
+
+								generator->DestroyNode(node_id);
+								editor->generate_current_node_links();
+							}
+
+						}
+
+						ImGui::EndPopup();
+					}
+					ImGui::PopID();
 				}
+
+				//Delete 
+				if (remove_index > -1)
+				{
+					ParticleBase* particle_base = initializers[remove_index];
+					
+					initializers.erase(initializers.begin() + remove_index);
+
+					delete particle_base;//TODO: Use custom allocator
+				}
+
 
 				if (ImGui::Button(" + ###Initializer_Add"))
 				{
@@ -304,22 +361,104 @@ namespace trace {
 				ImGui::Dummy(ImVec2(0.0f, 7.0f));
 
 				ImGui::Text("Updates: ");
+
+				remove_index = -1;
+				index = -1;
 				
 				auto& updates = generator->GetUpdates();
 
 				for (ParticleUpdate* update : updates)
 				{
-					if (update->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
-					{
-						continue;
-					}
+					++index;
 
+					ImGui::PushID(index);
 					std::string display_name = get_class_display_name(update->GetTypeID());
-
-					if (ImGui::Button(display_name.c_str()))
+					if (update->GetTypeID() == Reflection::TypeID<CustomParticleUpdate>())
 					{
-						editor->SetUserData(update);
+						CustomParticleUpdate* custom_update = (CustomParticleUpdate*)update;
+						GenericNode* graph_node = generator->GetNode(custom_update->GetNodeID());
+						int32_t graph_node_index = editor->get_node_index(graph_node->GetUUID());
+
+						std::string& node_name = STRING_FROM_ID(custom_update->GetName());
+
+						display_name = node_name.empty() ? display_name : node_name;
+
+						GenericNodeInput& input_0 = graph_node->GetInputs()[0];
+						ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+						ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+						ImNodes::BeginInputAttribute(((0 + 1) << shift_amount) | graph_node_index, ImNodesPinShape_Quad);
+
+						if (ImGui::Button(display_name.c_str()))
+						{
+							editor->SetUserData(update);
+						}
+
+						ImNodes::EndInputAttribute();
+						ImNodes::PopColorStyle();
+						ImNodes::PopColorStyle();
 					}
+					else
+					{
+
+						if (ImGui::Button(display_name.c_str()))
+						{
+							editor->SetUserData(update);
+						}
+
+
+
+					}
+
+
+					if (ImGui::BeginPopupContextItem("Update_Item_Popup"))
+					{
+
+						if (ImGui::MenuItem("Delete"))
+						{
+							remove_index = index;
+							void* user_data = editor->GetUserData();
+							if (user_data == update)
+							{
+								editor->SetUserData(nullptr);
+							}
+
+							if (update->GetTypeID() == Reflection::TypeID<CustomParticleUpdate>())
+							{
+								GenericNode* root_node = generator->GetNode(generator->GetEffectRoot());
+								std::vector<GenericNodeInput>& root_inputs = root_node->GetInputs();
+								UUID node_id = ((CustomParticleInitializer*)update)->GetNodeID();
+
+								for (GenericNodeInput& in : root_inputs)
+								{
+									if (in.node_id == node_id)
+									{
+										std::swap(in, root_inputs.back());
+										break;
+									}
+								}
+								root_inputs.pop_back();
+
+								generator->DestroyNode(node_id);
+								editor->generate_current_node_links();
+							}
+
+						}
+
+						ImGui::EndPopup();
+					}
+					ImGui::PopID();
+					
+
+				}
+
+				//Delete 
+				if (remove_index > -1)
+				{
+					ParticleBase* particle_base = updates[remove_index];
+
+					updates.erase(updates.begin() + remove_index);
+
+					delete particle_base;//TODO: Use custom allocator
 				}
 
 				if (ImGui::Button(" + ###Update_Add"))
@@ -345,6 +484,24 @@ namespace trace {
 					{
 						updates.push_back(new VelocityUpdate);
 					}
+					if (ImGui::MenuItem("Custom Update"))
+					{
+						CustomParticleUpdate* new_update = new CustomParticleUpdate;//TODO: Use custom allocator
+						UUID new_node = generator->CreateNode<EffectsFinalNode>();
+						new_update->SetNodeID(new_node);
+
+						GenericNodeInput input = {};
+						input.node_id = new_node;
+						input.type = GenericValueType::Execute;
+						input.value_index = INVALID_ID;
+
+						GenericNode* root_node = generator->GetNode(generator->GetEffectRoot());
+						root_node->GetInputs().push_back(input);
+
+						updates.push_back(new_update);
+
+						editor->add_new_node_not_child(new_node);
+					}
 
 
 					ImGui::EndPopup();
@@ -354,10 +511,16 @@ namespace trace {
 
 				ImGui::Text("Renderers: ");
 
+				remove_index = -1;
+				index = -1;
+
 				auto& renderers = generator->GetRenderers();
 
 				for (ParticleRender* renderer : renderers)
 				{
+					++index;
+
+					ImGui::PushID(index);
 					if (renderer->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
 					{
 						continue;
@@ -369,6 +532,55 @@ namespace trace {
 					{
 						editor->SetUserData(renderer);
 					}
+
+					if (ImGui::BeginPopupContextItem("Renderer_Item_Popup"))
+					{
+
+						if (ImGui::MenuItem("Delete"))
+						{
+							remove_index = index;
+							void* user_data = editor->GetUserData();
+							if (user_data == renderer)
+							{
+								editor->SetUserData(nullptr);
+							}
+
+							if (renderer->GetTypeID() == Reflection::TypeID<CustomParticleInitializer>())
+							{
+								GenericNode* root_node = generator->GetNode(generator->GetEffectRoot());
+								std::vector<GenericNodeInput>& root_inputs = root_node->GetInputs();
+								UUID node_id = ((CustomParticleInitializer*)renderer)->GetNodeID();
+
+								for (GenericNodeInput& in : root_inputs)
+								{
+									if (in.node_id == node_id)
+									{
+										std::swap(in, root_inputs.back());
+										break;
+									}
+								}
+								root_inputs.pop_back();
+
+								generator->DestroyNode(node_id);
+								editor->generate_current_node_links();
+							}
+
+						}
+
+						ImGui::EndPopup();
+					}
+
+					ImGui::PopID();
+				}
+
+				//Delete 
+				if (remove_index > -1)
+				{
+					ParticleBase* particle_base = renderers[remove_index];
+
+					renderers.erase(renderers.begin() + remove_index);
+
+					delete particle_base;//TODO: Use custom allocator
 				}
 
 				if (ImGui::Button(" + ###Renderer_Add"))
@@ -387,21 +599,6 @@ namespace trace {
 					ImGui::EndPopup();
 				}
 
-
-				/*for (uint32_t j = 0; j < node->GetInputs().size(); j++)
-				{
-					GenericNodeInput& input_0 = node->GetInputs()[j];
-					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
-					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
-					ImNodes::BeginInputAttribute(((j + 1) << shift_amount) | node_index, ImNodesPinShape_Quad);
-
-					std::string input_name = "";
-
-					ImGui::Text(input_name.c_str());
-					ImNodes::EndInputAttribute();
-					ImNodes::PopColorStyle();
-					ImNodes::PopColorStyle();
-				}*/
 
 				ImNodes::EndNode();
 				
@@ -1505,7 +1702,48 @@ namespace trace {
 				ConstantNode* _node = (ConstantNode*)node;
 			}
 			}
-		}
+		},
+		{
+			ShaderNodeType::Power_Float_Function,
+			{
+			"Pow Float",
+			{"A", "B"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat("A", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+			}
+			}
+		},
+		{
+			ShaderNodeType::Particle_Percentage_Life_Variable,
+			{
+			"Particle Percentage_Life",
+			{},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+			}
+			}
+		},
+		{
+			ShaderNodeType::Rotate_Point_Function,
+			{
+			"Rotate Point",
+			{"Point", "Center", "Angle"},
+			{"Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				ConstantNode* _node = (ConstantNode*)node;
+				ImGui::DragFloat2("Point", (float*)&_node->GetDefaultParameterData()[0], 0.001f);
+				ImGui::DragFloat2("Center", (float*)&_node->GetDefaultParameterData()[1], 0.001f);
+				ImGui::DragFloat("Angle", (float*)&_node->GetDefaultParameterData()[2], 0.001f);
+			}
+			}
+		},
 	};
 
 	std::unordered_map<EffectsNodeType, ShaderGraphNodeTypeInfo> AccessHelper::effect_node_type_info =
@@ -1584,6 +1822,302 @@ namespace trace {
 			}
 			}
 		},
+		{
+			EffectsNodeType::Vec4_Constant,
+			{
+			"Vec4",
+			{ "<-", "X", "Y", "Z", "W"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat4("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Vec2_Constant,
+			{
+			"Vec2",
+			{ "<-", "X", "Y"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat2("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Vec2_Constant,
+			{
+			"Vec2",
+			{ "<-", "X", "Y"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat2("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Float_Constant,
+			{
+			"Float",
+			{ "<-", "X"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Percentage_Over_Life,
+			{
+			"Percentage Over Life",
+			{ "<-"},
+			{"->", "Value"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Vec4,
+			{
+			"Lerp Vec4",
+			{ "<-", "A", "B", "t"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat4("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat4("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetNodeValues()[2], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Vec3,
+			{
+			"Lerp Vec3",
+			{ "<-", "A", "B", "t"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat3("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat3("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetNodeValues()[2], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Vec2,
+			{
+			"Lerp Vec2",
+			{ "<-", "A", "B", "t"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat2("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat2("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetNodeValues()[2], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Float,
+			{
+			"Lerp Float",
+			{ "<-", "A", "B", "t"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+				ImGui::DragFloat("t", (float*)&_node->GetNodeValues()[2], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec4,
+			{
+			"Multiply Vec4",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat4("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat4("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec3,
+			{
+			"Multiply Vec3",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat3("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat3("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec2,
+			{
+			"Multiply Vec2",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat2("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat2("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec4_Float,
+			{
+			"Multiply Vec4_Float",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat4("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec3_Float,
+			{
+			"Multiply Vec3_Float",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat3("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec2_Float,
+			{
+			"Multiply Vec2_Float",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat2("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Float,
+			{
+			"Multiply Float",
+			{ "<-", "A", "B"},
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat("A", (float*)&_node->GetNodeValues()[0], 0.001f);
+				ImGui::DragFloat("B", (float*)&_node->GetNodeValues()[1], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Random_Vec4,
+			{
+			"Random Vec4",
+			{ "<-", },
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Random_Vec3,
+			{
+			"Random Vec3",
+			{ "<-", },
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Random_Vec2,
+			{
+			"Random Vec2",
+			{ "<-", },
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Random_Float,
+			{
+			"Random Float",
+			{ "<-", },
+			{"->", "Out"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+			}
+			}
+		},
+		{
+			EffectsNodeType::Split_Vec3,
+			{
+			"Split Vec3",
+			{ "<-", "In"},
+			{"->", "XY", "X", "Y", "Z"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat3("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
+		{
+			EffectsNodeType::Split_Vec2,
+			{
+			"Split Vec2",
+			{ "<-", "In"},
+			{"->", "X", "Y"},
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				GenericEffectNode* _node = (GenericEffectNode*)node;
+				ImGui::DragFloat2("Default", (float*)&_node->GetNodeValues()[0], 0.001f);
+			}
+			}
+		},
 	};
 
 	std::string get_class_display_name(uint64_t class_id)
@@ -1653,6 +2187,11 @@ namespace trace {
 		case Reflection::TypeID<CustomParticleInitializer>():
 		{
 			return "Custom Particle Initializer";
+			break;
+		}
+		case Reflection::TypeID<CustomParticleUpdate>():
+		{
+			return "Custom Particle Update";
 			break;
 		}
 		}

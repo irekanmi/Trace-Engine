@@ -558,6 +558,20 @@ namespace trace {
 
 			break;
 		}
+		case Reflection::TypeID<CustomParticleUpdate>():
+		{
+			CustomParticleUpdate* update = (CustomParticleUpdate*)base_type;
+
+			std::string node_name = STRING_FROM_ID(update->GetName());
+
+			if (ImGui::InputText("Name", &node_name) && !node_name.empty())
+			{
+				update->SetName(STR_ID(node_name));
+			}
+			
+
+			break;
+		}
 		case Reflection::TypeID<GravityUpdate>():
 		{
 			GravityUpdate* update = (GravityUpdate*)base_type;

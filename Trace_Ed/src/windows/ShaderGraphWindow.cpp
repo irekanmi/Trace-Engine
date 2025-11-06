@@ -77,6 +77,8 @@ namespace trace {
 
 		m_material->SetType(m_shaderGraph->GetType());
 
+		graph_instance.DestroyInstance();
+
 		Entity model = m_scene->CreateEntity();
 		model.AddComponent<ModelComponent>()._model = DefaultAssetsManager::Sphere;
 		model.AddComponent<ModelRendererComponent>()._material = m_material;
@@ -140,7 +142,6 @@ namespace trace {
 			if (skip_frames > 4)
 			{
 
-				graph_instance.DestroyInstance();
 				graph_instance.CreateInstance(m_shaderGraph);
 				if (Ref<GPipeline> pipeline = graph_instance.CompileGraph())
 				{
@@ -161,6 +162,7 @@ namespace trace {
 
 					m_material->RecreateMaterial(render_pipeline);
 				}
+				graph_instance.DestroyInstance();
 				build_graph = false;
 			}
 		}

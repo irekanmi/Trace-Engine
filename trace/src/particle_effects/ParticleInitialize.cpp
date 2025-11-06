@@ -2,8 +2,8 @@
 
 #include "particle_effects/ParticleInitialize.h"
 #include "particle_effects/ParticleGenerator.h"
-#include "core/Utils.h"
 #include "particle_effects/effects_graph/ParticleEffectsNode.h"
+#include "core/Utils.h"
 
 #include "glm/glm.hpp"
 
@@ -44,6 +44,7 @@ namespace trace {
 		lifetime = m_min + (m_max - m_min) * RandomFloat();
 		
 		particle_data.positions[particle_index].w = lifetime;
+		particle_data.scale[particle_index].w = lifetime;//NOTE: Used to calculate the over lifetime of a particle
 	}
 
 	void CustomParticleInitializer::Init(ParticleGeneratorInstance* particle_generator)

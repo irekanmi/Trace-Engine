@@ -18,7 +18,7 @@ layout(location = 2) in Data{
     vec3 position;
     vec3 color;
     vec3 scale;
-    float lifetime;
+    vec2 lifetime;
 };
 
 void main()

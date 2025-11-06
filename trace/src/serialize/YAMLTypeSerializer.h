@@ -4,6 +4,7 @@
 #include "reflection/TypeHash.h"
 #include "reflection/Type.h"
 #include "core/io/Logging.h"
+#include "core/Utils.h"
 #include "reflection/Member.h"
 
 #include <cinttypes>
@@ -44,7 +45,7 @@ namespace trace {
 	constexpr bool has_yaml_as_v = has_yaml_as<T>::value;
 
 	template<typename T>
-	constexpr bool can_serialize = std::is_same_v<T, char> || std::is_enum_v<T> || has_emit_operator_v<T>;
+	constexpr bool can_serialize = std::is_same_v<T, char> || std::is_same_v<T, StringID> || std::is_enum_v<T> || has_emit_operator_v<T>;
 
 	class YAMLTypeSerializer
 	{

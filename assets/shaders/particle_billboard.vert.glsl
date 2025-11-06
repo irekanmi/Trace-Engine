@@ -15,6 +15,7 @@ layout(set = 0, binding = 0)uniform SceneData
 {
     mat4 _projection;
     vec4 _camera_position;
+    vec4 _time_values;
 };
 
 
@@ -35,7 +36,7 @@ layout(location = 2) out Data{
     vec3 position;
     vec3 color;
     vec3 scale;
-    float lifetime;
+    vec2 lifetime;
 };
 
 
@@ -46,14 +47,15 @@ void main()
 
     vec4 pos = objects[binding_index.draw_instance_index.x]._positions[gl_InstanceIndex];
     vec3 col = objects[binding_index.draw_instance_index.x]._colors[gl_InstanceIndex].xyz;
-    vec3 scl = objects[binding_index.draw_instance_index.x]._scales[gl_InstanceIndex].xyz;
+    vec4 scl = objects[binding_index.draw_instance_index.x]._scales[gl_InstanceIndex];
     vec4 rot = objects[binding_index.draw_instance_index.x]._rotation[gl_InstanceIndex];
     vec3 cam_pos = _camera_position.xyz;
 
     position = pos.xyz;
     color = col;
-    scale = scl;
-    lifetime = pos.w;
+    scale = scl.xyz;
+    lifetime.x = pos.w;
+    lifetime.y = lifetime.x / scl.w;
     
     mat3 rot_scale = quatToMat3(rot);
     rot_scale[0] = rot_scale[0] * scale;

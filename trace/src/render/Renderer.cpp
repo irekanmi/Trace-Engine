@@ -718,6 +718,9 @@ namespace trace {
 		glm::vec3 view_position = _camera->GetPosition();
 		glm::mat4 view_proj = proj * view;
 
+		glm::vec4 _time_values(0.0f);
+		_time_values.x = Application::get_instance()->GetClock().GetElapsedTime();
+
 
 		for (RenderObjectData& data : particle_billboard)
 		{
@@ -748,6 +751,8 @@ namespace trace {
 			RenderFunc::SetPipelineData(sp.get(), "_colors", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &color, sizeof(glm::vec4), 0, render_graph_index);
 			RenderFunc::SetPipelineData(sp.get(), "_scales", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &scale, sizeof(glm::vec4), 0, render_graph_index);
 			RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &model_pose, sizeof(glm::mat4), 0, render_graph_index);
+
+			RenderFunc::SetPipelineData(sp.get(), "_time_values", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &_time_values, sizeof(glm::vec4), 0, render_graph_index);
 
 
 			RenderFunc::BindPipeline(&g_device, sp.get());

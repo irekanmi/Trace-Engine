@@ -159,6 +159,8 @@ namespace trace {
 		{
 			delete i.second;
 		}
+
+		m_nodesData.clear();
 	}
 
 	void ShaderGraphInstance::WriteNodeCode(std::string& code)
@@ -648,7 +650,7 @@ layout(location = 2) in Data{{
     vec3 position;
     vec3 color;
     vec3 scale;
-	float lifetime;
+	vec2 lifetime;
 }};
 
 struct InstanceBufferObject
@@ -658,6 +660,13 @@ struct InstanceBufferObject
 
 layout(std140, set = 1, binding = 3) readonly buffer MaterialData{{
     InstanceBufferObject objects[];
+}};
+
+layout(set = 0, binding = 0)uniform SceneData
+{{
+    mat4 _projection;
+    vec4 _camera_position;
+    vec4 _time_values;
 }};
 
 void main()

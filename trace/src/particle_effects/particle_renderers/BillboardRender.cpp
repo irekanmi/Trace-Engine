@@ -7,6 +7,7 @@
 #include "render/Camera.h"
 #include "render/Renderer.h"
 #include "particle_effects/ParticleEffect.h"
+#include "core/Application.h"
 
 
 namespace trace {
@@ -38,6 +39,9 @@ namespace trace {
 		// NOTE: Enable if particle should be spawned in local_position
 		model_pose = transform;
 
+		glm::vec4 _time_values(0.0f);
+		_time_values.x = Application::get_instance()->GetClock().GetElapsedTime();
+
 		
 
 		if (m_material && m_material->GetType() == MaterialType::PARTICLE_BILLBOARD)
@@ -58,6 +62,8 @@ namespace trace {
 				RenderFunc::SetPipelineData(sp.get(), "_scales", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.scale.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 				RenderFunc::SetPipelineData(sp.get(), "_rotation", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.rotation.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 				RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &model_pose, sizeof(glm::mat4), 0, render_graph_index);
+
+				RenderFunc::SetPipelineData(sp.get(), "_time_values", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &_time_values, sizeof(glm::vec4), 0, render_graph_index);
 
 				RenderFunc::ApplyMaterial(m_material.get(), render_graph_index);
 
@@ -123,6 +129,9 @@ namespace trace {
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_scales", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.scale.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_rotation", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, offset + particle_data.rotation.data(), particles_to_render * sizeof(glm::vec4), 0, render_graph_index);
 					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &model_pose, sizeof(glm::mat4), 0, render_graph_index);
+
+					RenderFunc::SetPipelineData(DefaultAssetsManager::particle_billboard_pipeline.get(), "_time_values", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &_time_values, sizeof(glm::vec4), 0, render_graph_index);
+
 					RenderFunc::BindPipeline_(DefaultAssetsManager::particle_billboard_pipeline.get(), render_graph_index);
 					RenderFunc::BindPipeline(device, DefaultAssetsManager::particle_billboard_pipeline.get());
 					RenderFunc::BindVertexBuffer(device, quad_model.GetVertexBuffer());

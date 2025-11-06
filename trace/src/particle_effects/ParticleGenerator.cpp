@@ -15,6 +15,12 @@ namespace trace {
 	bool ParticleGenerator::Create()
 	{
 
+		return true;
+	}
+	
+	bool ParticleGenerator::Create(void* ptr)
+	{
+
 		UUID root_node = CreateNode<EffectsRootNode>();
 
 		m_effectRoot = root_node;
@@ -136,8 +142,8 @@ namespace trace {
 
 	void ParticleGeneratorInstance::Update(ParticleEffectInstance* effect_instance, float deltaTime)
 	{
-
-		for (uint32_t index = 0; index < m_numAlive; index++)
+		int32_t num_alive = m_numAlive;
+		for (int32_t index = num_alive - 1; index >= 0; index--)
 		{
 			float& life_time = m_particleData.positions[index].w;
 			if (life_time <= 0.0f)
@@ -278,13 +284,17 @@ namespace trace {
 		{
 		case Reflection::hash("position"):
 		{
-			m_particleData.positions[particle_index] = data;
+			m_particleData.positions[particle_index].x = data.x;
+			m_particleData.positions[particle_index].y = data.y;
+			m_particleData.positions[particle_index].z = data.z;
 			return true;
 			break;
 		}
 		case Reflection::hash("velocity"):
 		{
-			m_particleData.velocities[particle_index] = data;
+			m_particleData.velocities[particle_index].x = data.x;
+			m_particleData.velocities[particle_index].y = data.y;
+			m_particleData.velocities[particle_index].z = data.z;
 			return true;
 			break;
 		}
@@ -296,13 +306,17 @@ namespace trace {
 		}
 		case Reflection::hash("scale"):
 		{
-			m_particleData.scale[particle_index] = data;
+			m_particleData.scale[particle_index].x = data.x;
+			m_particleData.scale[particle_index].y = data.y;
+			m_particleData.scale[particle_index].z = data.z;
 			return true;
 			break;
 		}
 		case Reflection::hash("color"):
 		{
-			m_particleData.color[particle_index] = data;
+			m_particleData.color[particle_index].x = data.x;
+			m_particleData.color[particle_index].y = data.y;
+			m_particleData.color[particle_index].z = data.z;
 			return true;
 			break;
 		}

@@ -377,6 +377,23 @@ vec2 twist(vec2 p, vec2 center, float strength, vec2 uv_offset) {
     return twisted + center;
 }
 
+vec2 rotate_point(vec2 p, vec2 center, float angle)
+{
+    
+    vec2 offset = p - center;
+
+    // Precompute trig
+    float s = sin(angle);
+    float c = cos(angle);
+
+    // Rotate offset
+    mat2 rot = mat2(c, -s, s, c);
+    vec2 twisted = rot * offset;
+
+    // Return new UV
+    return twisted + center;
+}
+
 vec3 normalFromGradientNoise(
     vec2 uv,
     float strength,

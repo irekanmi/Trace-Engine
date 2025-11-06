@@ -5,6 +5,8 @@
 #include "node_system/GenericGraph.h"
 #include "core/Application.h"
 
+#include "glm/gtx/compatibility.hpp"
+
 namespace trace {
 
 
@@ -204,6 +206,800 @@ namespace trace {
 				}
 			}
 		},
+		{
+			EffectsNodeType::Vec4_Constant,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec4, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_1 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_1->GetValueInternal(instance, input_1.value_index);
+						info->out_1.x = result;
+					}	
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						info->out_1.y = result;
+					}	
+
+					GenericNodeInput& input_3 = node->GetInputs()[3];
+					if (input_3.node_id != 0)
+					{
+						ParticleEffectNode* node_3 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_3.node_id);
+
+						node_3->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_3->GetValueInternal(instance, input_3.value_index);
+						info->out_1.z = result;
+					}	
+
+					GenericNodeInput& input_4 = node->GetInputs()[4];
+					if (input_4.node_id != 0)
+					{
+						ParticleEffectNode* node_4 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_4.node_id);
+
+						node_4->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_4->GetValueInternal(instance, input_4.value_index);
+						info->out_1.w = result;
+					}					
+				}
+			}
+		},
+		{
+			EffectsNodeType::Vec2_Constant,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec2, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_1 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_1->GetValueInternal(instance, input_1.value_index);
+						info->out_1.x = result;
+					}	
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						info->out_1.y = result;
+					}				
+				}
+			}
+		},
+		{
+			EffectsNodeType::Float_Constant,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_1 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						float result = *(float*)node_1->GetValueInternal(instance, input_1.value_index);
+						info->out_1.x = result;
+					}			
+				}
+			}
+		},
+		{
+			EffectsNodeType::Percentage_Over_Life,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_1 = effect_node->GetNodeValues()[0];
+
+					ParticleData& particles_data = instance->GetParticlesData();
+					float current_age = particles_data.positions[particle_index].w;
+					float lifetime = particles_data.scale[particle_index].w;
+
+					float percentage = current_age / lifetime;
+
+					info->out_1.x = percentage;
+		
+				}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Vec4,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec4, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec4 a = effect_node->GetNodeValues()[0];
+					glm::vec4 b = effect_node->GetNodeValues()[1];
+					float t = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec4 result = *(glm::vec4*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						glm::vec4 result = *(glm::vec4*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					GenericNodeInput& input_3 = node->GetInputs()[3];
+					if (input_3.node_id != 0)
+					{
+						ParticleEffectNode* node_3 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_3.node_id);
+
+						node_3->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_3->GetValueInternal(instance, input_3.value_index);
+						t = result;
+					}
+
+					glm::vec4 final_result = glm::lerp(a, b, t);
+					info->out_1 = glm::vec4(final_result);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Vec3,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec3, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec3 a = effect_node->GetNodeValues()[0];
+					glm::vec3 b = effect_node->GetNodeValues()[1];
+					float t = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec3 result = *(glm::vec3*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						glm::vec3 result = *(glm::vec3*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					GenericNodeInput& input_3 = node->GetInputs()[3];
+					if (input_3.node_id != 0)
+					{
+						ParticleEffectNode* node_3 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_3.node_id);
+
+						node_3->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_3->GetValueInternal(instance, input_3.value_index);
+						t = result;
+					}
+
+					glm::vec3 final_result = glm::lerp(a, b, t);
+					info->out_1 = glm::vec4(final_result, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Vec2,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec2, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec2 a = effect_node->GetNodeValues()[0];
+					glm::vec2 b = effect_node->GetNodeValues()[1];
+					float t = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec2 result = *(glm::vec2*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						glm::vec2 result = *(glm::vec2*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					GenericNodeInput& input_3 = node->GetInputs()[3];
+					if (input_3.node_id != 0)
+					{
+						ParticleEffectNode* node_3 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_3.node_id);
+
+						node_3->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_3->GetValueInternal(instance, input_3.value_index);
+						t = result;
+					}
+
+					glm::vec2 final_result = glm::lerp(a, b, t);
+					info->out_1 = glm::vec4(final_result, 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Lerp_Float,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					float a = effect_node->GetNodeValues()[0].x;
+					float b = effect_node->GetNodeValues()[1].x;
+					float t = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					GenericNodeInput& input_3 = node->GetInputs()[3];
+					if (input_3.node_id != 0)
+					{
+						ParticleEffectNode* node_3 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_3.node_id);
+
+						node_3->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_3->GetValueInternal(instance, input_3.value_index);
+						t = result;
+					}
+
+					float final_result = glm::lerp(a, b, t);
+					info->out_1 = glm::vec4(final_result, 0.0f, 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec4,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec4, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec4 a = effect_node->GetNodeValues()[0];
+					glm::vec4 b = effect_node->GetNodeValues()[1];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec4 result = *(glm::vec4*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						glm::vec4 result = *(glm::vec4*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					glm::vec4 final_result = a * b;
+					info->out_1 = glm::vec4(final_result);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec3,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec3 a = effect_node->GetNodeValues()[0];
+					glm::vec3 b = effect_node->GetNodeValues()[1];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec3 result = *(glm::vec3*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						glm::vec3 result = *(glm::vec3*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					glm::vec3 final_result = a * b;
+					info->out_1 = glm::vec4(final_result, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec2,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec2, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec2 a = effect_node->GetNodeValues()[0];
+					glm::vec2 b = effect_node->GetNodeValues()[1];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec2 result = *(glm::vec2*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						glm::vec2 result = *(glm::vec2*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					glm::vec2 final_result = a * b;
+					info->out_1 = glm::vec4(final_result, 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec4_Float,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec4, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec4, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec4 a = effect_node->GetNodeValues()[0];
+					float b = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec4 result = *(glm::vec4*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					glm::vec4 final_result = a * b;
+					info->out_1 = glm::vec4(final_result);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec3_Float, 
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec3, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec3 a = effect_node->GetNodeValues()[0];
+					float b = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec3 result = *(glm::vec3*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					glm::vec3 final_result = a * b;
+					info->out_1 = glm::vec4(final_result, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Vec2_Float,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec2, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					glm::vec2 a = effect_node->GetNodeValues()[0];
+					float b = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						glm::vec2 result = *(glm::vec2*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					glm::vec2 final_result = a * b;
+					info->out_1 = glm::vec4(final_result, 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Multiply_Float,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}, GenericNodeInput{GenericValueType::Float, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					float a = effect_node->GetNodeValues()[0].x;
+					float b = effect_node->GetNodeValues()[1].x;
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_1->GetValueInternal(instance, input_1.value_index);
+						a = result;
+					}
+
+					GenericNodeInput& input_2 = node->GetInputs()[2];
+					if (input_2.node_id != 0)
+					{
+						ParticleEffectNode* node_2 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_2.node_id);
+
+						node_2->Update(particle_index, instance, deltaTime);
+
+						float result = *(float*)node_2->GetValueInternal(instance, input_2.value_index);
+						b = result;
+					}
+
+					float final_result = a * b;
+					info->out_1 = glm::vec4(final_result, 0.0f, 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Random_Vec4,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec4, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					
+					info->out_1 = glm::vec4(RandomFloat(), RandomFloat(), RandomFloat(), RandomFloat());
+				}
+			}
+		},
+		{
+			EffectsNodeType::Random_Vec3,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec3, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					
+					info->out_1 = glm::vec4(RandomFloat(), RandomFloat(), RandomFloat(), 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Random_Vec2,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec2, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					
+					info->out_1 = glm::vec4(RandomFloat(), RandomFloat(), 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Random_Float,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					
+					info->out_1 = glm::vec4(RandomFloat(), 0.0f, 0.0f, 0.0f);
+				}
+			}
+		},
+		{
+			EffectsNodeType::Split_Vec3,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec3, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Vec2, 0}, {GenericValueType::Float, 1}, {GenericValueType::Float, 2}, {GenericValueType::Float, 3}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_0 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						info->out_0 = *(glm::vec4*)node_1->GetValueInternal(instance, input_1.value_index);
+					}
+
+					info->out_1 = info->out_0;
+					info->out_2.x = info->out_0.x;
+					info->out_3.x = info->out_0.y;
+					info->out_4.x = info->out_0.z;
+					info->out_5.x = info->out_0.w;
+					
+				}
+			}
+		},
+		{
+			EffectsNodeType::Split_Vec2,
+			{
+				{GenericNodeInput{GenericValueType::Execute, 0, 0}, GenericNodeInput{GenericValueType::Vec2, 0, 0}},
+				{{GenericValueType::Execute, 0} , {GenericValueType::Float, 0}, {GenericValueType::Float, 1}},
+				[](int32_t particle_index, GenericGraphInstance* graph_instance, float deltaTime, GenericNode* node)
+				{
+					ParticleGeneratorInstance* instance = (ParticleGeneratorInstance*)graph_instance;
+					GenericEffectNode* effect_node = (GenericEffectNode*)node;
+
+					GenericEffectNode::NodeData* info = (GenericEffectNode::NodeData*)instance->GetNodesData()[node->GetUUID()];
+
+					info->out_0 = effect_node->GetNodeValues()[0];
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+					if (input_1.node_id != 0)
+					{
+						ParticleEffectNode* node_1 = (ParticleEffectNode*)instance->GetGenerator()->GetNode(input_1.node_id);
+
+						node_1->Update(particle_index, instance, deltaTime);
+						
+						info->out_0 = *(glm::vec4*)node_1->GetValueInternal(instance, input_1.value_index);
+					}
+
+					info->out_1 = info->out_0;
+					info->out_2.x = info->out_0.x;
+					info->out_3.x = info->out_0.y;
+					info->out_4.x = info->out_0.z;
+					info->out_5.x = info->out_0.w;
+					
+				}
+			}
+		},
 	};
 
 	void ParticleEffectNode::Init(GenericGraph* graph)
@@ -256,11 +1052,11 @@ namespace trace {
 
 		NodeData* info = (NodeData*)instance->GetNodesData()[m_uuid];
 
-		if (info->frame_index == Application::get_instance()->GetUpdateID())
+		/*if (info->frame_index == Application::get_instance()->GetUpdateID())
 		{
 			return;
 		}
-		info->frame_index = Application::get_instance()->GetUpdateID();
+		info->frame_index = Application::get_instance()->GetUpdateID();*/
 
 		if (m_inputs[0].node_id == 0)
 		{
@@ -320,11 +1116,11 @@ namespace trace {
 
 		NodeData* info = (NodeData*)instance->GetNodesData()[m_uuid];
 
-		if (info->frame_index == Application::get_instance()->GetUpdateID())
+		/*if (info->frame_index == Application::get_instance()->GetUpdateID())
 		{
 			return;
 		}
-		info->frame_index = Application::get_instance()->GetUpdateID();
+		info->frame_index = Application::get_instance()->GetUpdateID();*/
 
 		if (m_inputs[0].node_id != 0)
 		{
@@ -421,11 +1217,11 @@ namespace trace {
 
 		NodeData* info = (NodeData*)instance->GetNodesData()[m_uuid];
 
-		if (info->frame_index == Application::get_instance()->GetUpdateID())
+		/*if (info->frame_index == Application::get_instance()->GetUpdateID())
 		{
 			return;
 		}
-		info->frame_index = Application::get_instance()->GetUpdateID();
+		info->frame_index = Application::get_instance()->GetUpdateID();*/
 
 		if (m_inputs[0].node_id != 0)
 		{
@@ -492,11 +1288,11 @@ namespace trace {
 
 		NodeData* info = (NodeData*)instance->GetNodesData()[m_uuid];
 
-		if (info->frame_index == Application::get_instance()->GetUpdateID())
+		/*if (info->frame_index == Application::get_instance()->GetUpdateID())
 		{
 			return;
 		}
-		info->frame_index = Application::get_instance()->GetUpdateID();
+		info->frame_index = Application::get_instance()->GetUpdateID();*/
 
 		if (m_inputs[0].node_id != 0)
 		{

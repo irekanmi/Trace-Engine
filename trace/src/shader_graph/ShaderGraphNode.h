@@ -69,6 +69,9 @@ namespace trace {
 		Particle_Color_Variable,
 		Particle_Scale_Variable,
 		Particle_Lifetime_Variable,
+		Power_Float_Function,
+		Particle_Percentage_Life_Variable,
+		Rotate_Point_Function,
 	};
 
 	struct ShaderNodeMetaData

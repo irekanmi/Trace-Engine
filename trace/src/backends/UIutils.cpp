@@ -588,7 +588,10 @@ bool __ImGui_DestroyTextureHandle(trace::GTexture* texture)
 		auto it = g_texture_handles.find(texture->GetName());
 		if (it != g_texture_handles.end())
 		{
-			ImGui_ImplVulkan_RemoveTexture(it->second);
+			//ImGui_ImplVulkan_RemoveTexture(it->second);
+			ImGuiIO& io = ImGui::GetIO();
+			trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
+			frame_rendered_textures[_device->m_imageIndex].push_back(it->second);
 			g_texture_handles.erase(texture->GetName());
 		}
 

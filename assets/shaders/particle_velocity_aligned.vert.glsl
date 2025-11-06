@@ -34,7 +34,7 @@ layout(location = 2) out Data{
     vec3 position;
     vec3 color;
     vec3 scale;
-    float lifetime;
+    vec2 lifetime;
 };
 
 
@@ -44,13 +44,14 @@ void main()
 
     vec4 pos = objects[binding_index.draw_instance_index.x]._positions[gl_InstanceIndex];
     vec3 col = objects[binding_index.draw_instance_index.x]._colors[gl_InstanceIndex].xyz;
-    vec3 scl = objects[binding_index.draw_instance_index.x]._scales[gl_InstanceIndex].xyz;
+    vec4 scl = objects[binding_index.draw_instance_index.x]._scales[gl_InstanceIndex];
     vec3 velocity = objects[binding_index.draw_instance_index.x]._velocities[gl_InstanceIndex].xyz;
 
     position = pos.xyz;
     color = col;
-    scale = scl;
-    lifetime = pos.w;
+    scale = scl.xyz;
+    lifetime.x = pos.w;
+    lifetime.y = lifetime.x / scl.w;
 
     vec3 forward = -normalize(velocity);
     vec3 world_up = vec3(0.0f, 1.0f, 0.0f); 

@@ -2,6 +2,7 @@
 
 #include "particle_effects/ParticleUpdate.h"
 #include "particle_effects/ParticleGenerator.h"
+#include "particle_effects/effects_graph/ParticleEffectsNode.h"
 #include "core/Utils.h"
 
 
@@ -70,6 +71,19 @@ namespace trace {
 		position.z += velocity.z * deltaTime;
 
 		particle_data.positions[particle_index] = position;
+	}
+
+	void CustomParticleUpdate::UpdateParticle(ParticleGeneratorInstance* particle_generator, uint32_t particle_index, float deltaTime)
+	{
+		// Run Graph Instance
+		ParticleEffectNode* node = (ParticleEffectNode*)particle_generator->GetGenerator()->GetNode(m_nodeID);
+
+		if (!node)
+		{
+			return;
+		}
+
+		node->Update(particle_index, particle_generator, deltaTime);
 	}
 
 }
