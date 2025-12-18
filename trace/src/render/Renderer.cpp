@@ -849,7 +849,7 @@ namespace trace {
 		cmd_list._commands.emplace_back(cmd);
 	}
 
-	void Renderer::DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index)
+	void Renderer::DrawModel(CommandList& cmd_list, UUID model_id, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index)
 	{
 		if (!_model || !material)
 		{
@@ -858,6 +858,9 @@ namespace trace {
 		Command cmd;
 		cmd.params.ptrs[0] = _model.get();
 		cmd.params.ptrs[1] = material.get();
+
+		memcpy(&cmd.params.ptrs[2], &model_id, sizeof(UUID));
+
 		cmd.params.val[0] = render_graph_index;
 		cmd.params.val[1] = cast_shadow ? 1 : 0;
 		cmd.func = [&](CommandParams params) {
@@ -869,6 +872,10 @@ namespace trace {
 			data.transform = *(glm::mat4*)(params.data);
 			data.material = mat;
 			data.object = model;
+
+			UUID obj_id = 0;
+			memcpy(&obj_id, &params.ptrs[2], sizeof(UUID));
+			data.object_id = obj_id;
 
 			switch (mat->GetType())
 			{

@@ -1188,9 +1188,10 @@ namespace trace {
 
 		for (auto entity : model_view)
 		{
+			Entity ent(entity, this);
 			auto [model, model_renderer, transform, active] = model_view.get(entity);
 
-			renderer->DrawModel(cmd_list, model._model, model_renderer._material, transform.transform, model_renderer.cast_shadow, use_draw_index ? draw_index : 0); // TODO Implement Hierachies
+			renderer->DrawModel(cmd_list, ent.GetID(), model._model, model_renderer._material, transform.transform, model_renderer.cast_shadow, use_draw_index ? draw_index : 0); // TODO Implement Hierachies
 
 		}
 
@@ -1709,7 +1710,7 @@ namespace trace {
 		{
 			if (ModelRendererComponent* model_renderer = entity.TryGetComponent<ModelRendererComponent>())
 			{
-				renderer->DrawModel(cmd_list, model->_model, model_renderer->_material, hi.transform, model_renderer->cast_shadow, draw_index);
+				renderer->DrawModel(cmd_list, entity.GetID(), model->_model, model_renderer->_material, hi.transform, model_renderer->cast_shadow, draw_index);
 			}
 		}
 

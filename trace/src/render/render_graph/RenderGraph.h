@@ -102,7 +102,7 @@ namespace trace {
 		void SetDepthStencilOutput(const std::string& name);
 		void SetDepthStencilOutput(uint32_t index);
 		void SetRunCB(std::function<void(Renderer*, RenderGraph*, RenderGraphPass*, int32_t, std::vector<uint32_t>&)> run_cb) { m_run_cb = run_cb; }
-		void SetResizeCB(std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> resize_cb) { m_resize_cb = resize_cb; }
+		void SetPassEndCB(std::function<void(Renderer*, RenderGraph*, RenderGraphPass*, int32_t, std::vector<uint32_t>&)> pass_end_cb) { m_pass_end_cb = pass_end_cb; }
 		uint32_t GetDepthStencilInput() { return m_depthStencilInput; }
 		uint32_t GetDepthStencilOutput() { return m_depthStencilOutput; }
 		std::vector<uint32_t>& GetAttachmentInputs() { return m_attachmentInputs; }
@@ -139,7 +139,7 @@ namespace trace {
 		GHandle m_renderHandle;
 		GPU_QUEUE m_queue;
 		std::function<void(Renderer* , RenderGraph*, RenderGraphPass*,int32_t, std::vector<uint32_t>&)> m_run_cb;
-		std::function<void(RenderGraph*, RenderGraphPass*, uint32_t, uint32_t)> m_resize_cb;
+		std::function<void(Renderer* , RenderGraph*, RenderGraphPass*,int32_t, std::vector<uint32_t>&)> m_pass_end_cb;
 
 
 	protected:

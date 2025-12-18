@@ -1292,6 +1292,101 @@ namespace vk {
 		return result;
 	}
 
+	bool _ReadImageData(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, trace::TextureDesc& desc, glm::ivec3 offset, glm::uvec3 extent, void*& out_data, trace::VKCommmandBuffer& cmd_buf, trace::VKBuffer& staging_buffer)
+	{
+
+		uint32_t data_size = extent.x * extent.y * trace::getFmtSize(desc.m_format);
+		
+
+		VkImageUsageFlags image_usage = 0;
+		VkImageAspectFlags aspect_flags = 0;
+		VkMemoryPropertyFlags memory_property = 0;
+		VkImageCreateFlags flags = 0;
+		if (TRC_HAS_FLAG(desc.m_flag, trace::BindFlag::SHADER_RESOURCE_BIT))
+		{
+			image_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			aspect_flags |= VK_IMAGE_ASPECT_COLOR_BIT;
+		}
+		if (TRC_HAS_FLAG(desc.m_flag, trace::BindFlag::DEPTH_STENCIL_BIT))
+		{
+			image_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+			aspect_flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
+		if (desc.m_usage == trace::UsageFlag::DEFAULT)
+		{
+			memory_property |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		}
+		if (desc.m_image_type == trace::ImageType::CUBE_MAP)
+		{
+			flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+		}
+
+
+		
+
+		
+		VkImageSubresourceRange range = {};
+		range.aspectMask = aspect_flags;
+		range.baseArrayLayer = 0;
+		range.baseMipLevel = 0;
+		range.layerCount = 1;
+		range.levelCount = 1;
+
+		vk::_TransitionImageLayout(
+			instance,
+			device,
+			&cmd_buf,
+			image,
+			vk::convertFmt(desc.m_format),
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			range
+		);
+
+		VkBufferImageCopy copy = {};
+		copy.imageOffset = { offset.x, offset.y, offset.z };
+		copy.imageExtent = { extent.x, extent.y, extent.z };
+		copy.imageSubresource.aspectMask = aspect_flags;
+		copy.imageSubresource.baseArrayLayer = 0;
+		copy.imageSubresource.layerCount = 1;
+		copy.imageSubresource.mipLevel = 0;
+		copy.bufferOffset = 0;
+		copy.bufferRowLength = 0;
+		copy.bufferImageHeight = 0;
+
+		vkCmdCopyImageToBuffer(
+			cmd_buf.m_handle,
+			image->m_handle,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,//TODO: Textures should know there current layout
+			staging_buffer.m_handle,
+			1,
+			&copy
+		);
+
+		vk::_TransitionImageLayout(
+			instance,
+			device,
+			&cmd_buf,
+			image,
+			vk::convertFmt(desc.m_format),
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			range
+		);
+				
+
+		void* data;
+		vkMapMemory(device->m_device, staging_buffer.m_memory, 0, data_size, 0, &data);
+		memcpy(out_data, data, data_size);
+		vkUnmapMemory(device->m_device, staging_buffer.m_memory);
+
+		
+
+		
+
+		return true;
+	}
+
 	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler, float max_lod)
 	{
 		VkResult result;

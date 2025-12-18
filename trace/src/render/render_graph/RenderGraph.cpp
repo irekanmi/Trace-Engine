@@ -493,7 +493,12 @@ namespace trace {
 
 				pass->m_run_cb(m_renderer, this, pass, render_graph_index, pass->m_attachmentInputs);
 
+
 				RenderFunc::EndRenderGraphPass(this, pass);
+				if (pass->m_pass_end_cb)
+				{
+					pass->m_pass_end_cb(m_renderer, this, pass, render_graph_index, pass->m_attachmentInputs);
+				}
 			}
 
 			RenderFunc::EndRenderGraph(this);
@@ -537,7 +542,7 @@ namespace trace {
 		for (auto& pass_index : m_submissionPasses)
 		{
 			RenderGraphPass* pass = &GetPass(pass_index);
-			pass->m_resize_cb(this, pass, width, height);
+			//pass->m_resize_cb(this, pass, width, height);
 
 			for (auto& res_index : pass->GetAttachmentOutputs())
 			{

@@ -22,4 +22,5 @@ namespace vk {
 	bool __EndRenderGraph(trace::RenderGraph* render_graph);
 	bool __BindRenderGraphTexture(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, int32_t render_graph_index, uint32_t index = 0);
 	bool __BindRenderGraphBuffer(trace::RenderGraph* render_graph, trace::GPipeline* pipeline, const std::string& bind_name, trace::ShaderResourceStage resource_stage, trace::RenderGraphResource* resource, uint32_t index = 0);
+	bool __GetRenderGraphTextureData(trace::RenderGraph* render_graph, trace::RenderGraphResource* resource, glm::ivec3 offset, glm::uvec3 extent, void*& out_data);
 }

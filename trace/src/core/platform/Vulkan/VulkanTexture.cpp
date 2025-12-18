@@ -467,4 +467,66 @@ namespace vk {
 		return result;
 	}
 
+	bool __GetTextureData_Extent(trace::GTexture* texture, glm::ivec3 offset, glm::uvec3 extent, void*& out_data)
+	{
+		bool result = true;
+
+		if (!texture)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, Function -> {}", (const void*)texture, __FUNCTION__);
+			return false;
+		}
+
+		if (!out_data)
+		{
+			TRC_ERROR("Please input pointer doesn't has a value for output handle -> {}, Function -> {}", (const void*)out_data, __FUNCTION__);
+			return false;
+		}
+
+		if (!texture->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)texture->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKImage* _handle = (trace::VKImage*)texture->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+		trace::TextureDesc& desc = texture->GetTextureDescription();
+
+		trace::VKBuffer staging_buffer;
+
+		trace::BufferInfo buffer_info;
+		buffer_info.m_size = extent.x * extent.y * trace::getFmtSize(desc.m_format);//TODO: Add support for 3D textures
+		buffer_info.m_stide = 0;
+		buffer_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+		buffer_info.m_flag = trace::BindFlag::NIL;
+		//buffer_info.m_data = desc.m_data[0];
+
+		vk::_CreateBuffer(
+			_instance,
+			_device,
+			&staging_buffer,
+			buffer_info
+		);
+
+		trace::VKCommmandBuffer cmd_buf;
+		vk::_BeginCommandBufferSingleUse(_device, _device->m_graphicsCommandPool, &cmd_buf);
+
+
+		vk::_ReadImageData(_instance, _device, _handle, desc, offset, extent, out_data, cmd_buf, staging_buffer);
+
+		vk::_EndCommandBufferSingleUse(
+			_device,
+			_device->m_graphicsCommandPool,
+			_device->m_graphicsQueue,
+			&cmd_buf
+		);
+
+		vk::_DestoryBuffer(_instance, _device, &staging_buffer);
+
+		return result;
+	}
+
 }

@@ -81,15 +81,7 @@ namespace trace {
 
 			});
 
-		pass->SetResizeCB([&](RenderGraph* graph, RenderGraphPass* pass, uint32_t width, uint32_t height)
-			{
-				TextureDesc desc;
-				desc.m_width = width;
-				desc.m_height = height;
-
-				graph->ModifyTextureResource(graph->GetResource(color_output_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(depth_index).resource_name, desc);
-			});
+		
 	}
 
 	void MainPass::ShutDown()

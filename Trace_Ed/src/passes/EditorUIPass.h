@@ -25,6 +25,8 @@ namespace trace {
 
 	private:
 		Ref<GPipeline> m_pipeline;
+		Ref<GPipeline> m_object_pick_pipeline;
+		GRenderPass m_object_pick_renderpass;
 
 	protected:
 

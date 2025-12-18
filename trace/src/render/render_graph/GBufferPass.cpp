@@ -144,17 +144,7 @@ namespace trace {
 
 			});
 
-		pass->SetResizeCB([&](RenderGraph* graph, RenderGraphPass* pass, uint32_t width, uint32_t height)
-			{
-				TextureDesc desc;
-				desc.m_width = width;
-				desc.m_height = height;
-
-				graph->ModifyTextureResource(graph->GetResource(position_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(normal_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(color_index).resource_name, desc);
-				graph->ModifyTextureResource(graph->GetResource(depth_index).resource_name, desc);
-			});
+		
 	}
 
 	static std::vector<glm::vec4> clear_values = {

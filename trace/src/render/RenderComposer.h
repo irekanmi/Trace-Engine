@@ -34,6 +34,7 @@ namespace trace {
 	struct RenderGraphInfo
 	{
 		RenderGraph graph;
+		RGBlackBoard black_board;
 		bool built = false;
 	};
 

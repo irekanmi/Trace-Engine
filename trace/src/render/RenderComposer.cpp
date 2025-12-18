@@ -90,8 +90,8 @@ namespace trace {
 		int32_t last_index = m_graphs.size() - 1;
 		for (int32_t i = last_index; i >= 0; i--)
 		{
-			RGBlackBoard black_board;
-			PreFrame(m_graphs[i].graph, black_board, frame_settings, i);
+			
+			PreFrame(m_graphs[i].graph, m_graphs[i].black_board, frame_settings, i);
 
 			if (!m_graphs[i].built)
 			{
@@ -99,6 +99,11 @@ namespace trace {
 			}
 			m_graphs[i].graph.Execute(i);
 			
+		}
+
+		for (int32_t i = last_index; i >= 0; i--)
+		{
+			m_graphs [i].black_board = RGBlackBoard();
 		}
 	}
 

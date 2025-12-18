@@ -814,6 +814,41 @@ namespace vk {
 		return false;
 	}
 
+	bool __GetRenderGraphTextureData(trace::RenderGraph* render_graph, trace::RenderGraphResource* resource, glm::ivec3 offset, glm::uvec3 extent, void*& out_data)
+	{
+		bool result = true;
+
+		if (!render_graph)
+		{
+			TRC_ERROR("Unable to bind render graph please enter a valid pointer, {} ", (const void*)render_graph);
+			return false;
+		}
+
+		if (!render_graph->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Unable to bind render graph resource  please enter a valid render_graph, {}", (const void*)render_graph->GetRenderHandle()->m_internalData);
+			return false;
+		}
+
+		trace::VKRenderGraph* handle = reinterpret_cast<trace::VKRenderGraph*>(render_graph->GetRenderHandle()->m_internalData);
+		trace::VKHandle* instance = reinterpret_cast<trace::VKHandle*>(handle->m_instance);
+		trace::VKDeviceHandle* device = reinterpret_cast<trace::VKDeviceHandle*>(handle->m_device);
+
+		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
+		trace::VKImage& image = res_handle->resource.texture;
+
+		trace::TextureDesc desc = {};
+		desc.m_format = resource->resource_data.texture.format;
+		desc.m_flag = trace::BindFlag::SHADER_RESOURCE_BIT;
+		desc.m_usage = trace::UsageFlag::DEFAULT;
+
+		trace::VKCommmandBuffer& cmd_buf = device->m_graphicsCommandBuffers[device->m_imageIndex];
+
+		result = vk::_ReadImageData(instance, device, &image, desc, offset, extent, out_data, cmd_buf, device->copy_staging_buffer);
+
+		return result;
+	}
+
 
 	bool compute_pass_handle(trace::RenderGraphPass* pass, trace::RenderGraph* render_graph, trace::VKDeviceHandle* _device, trace::VKHandle* instance)
 	{

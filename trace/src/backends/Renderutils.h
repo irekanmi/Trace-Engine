@@ -112,6 +112,7 @@ namespace trace {
 	typedef bool (*__DestroyTexture)(GTexture* );
 	typedef bool (*__GetTextureNativeHandle)(GTexture*, void*& );
 	typedef bool (*__GetTextureData)(GTexture*, void*&);
+	typedef bool (*__GetTextureData_Extent)(trace::GTexture*, glm::ivec3, glm::uvec3, void*&);
 	//----------------------------
 
 	// RenderGraph ----------------
@@ -123,6 +124,7 @@ namespace trace {
 	typedef bool (*__EndRenderGraph)(RenderGraph* );
 	typedef bool (*__BindRenderGraphTexture)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, int32_t render_graph_index, uint32_t);
 	typedef bool (*__BindRenderGraphBuffer)(RenderGraph*, GPipeline*, const std::string&, ShaderResourceStage, RenderGraphResource*, uint32_t);
+	typedef bool (*__GetRenderGraphTextureData)(trace::RenderGraph*, trace::RenderGraphResource*, glm::ivec3, glm::uvec3, void*&);
 	//------------------------------
 
 	// Batching -----------------------
@@ -212,6 +214,7 @@ namespace trace {
 		static bool GetTextureNativeHandle(GTexture* texture, void*& out_handle);
 		//NOTE: Ensure that the memory passed in is big enough to collect texture data
 		static bool GetTextureData(GTexture* texture, void*& out_data);
+		static bool GetTextureData_Extent(trace::GTexture* texture, glm::ivec3 offset, glm::uvec3 extent, void*& out_data);
 
 		static bool BuildRenderGraph(GDevice* device, RenderGraph* render_graph, int32_t render_graph_index);
 		static bool DestroyRenderGraph(GDevice* device, RenderGraph* render_graph);
@@ -221,6 +224,7 @@ namespace trace {
 		static bool EndRenderGraph(RenderGraph* render_graph);
 		static bool BindRenderGraphTexture(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, int32_t render_graph_index, uint32_t index = 0);
 		static bool BindRenderGraphBuffer(RenderGraph* render_graph, GPipeline* pipeline, const std::string& bind_name, ShaderResourceStage resource_stage, RenderGraphResource* resource, uint32_t index = 0);
+		static bool GetRenderGraphTextureData(RenderGraph* render_graph, RenderGraphResource* resource, glm::ivec3 offset, glm::uvec3 extent, void*& out_data);
 
 		static bool CreateBatchBuffer(GBuffer* buffer, BufferInfo create_info);
 		static bool DestroyBatchBuffer(GBuffer* buffer);
@@ -294,6 +298,7 @@ namespace trace {
 		static __DestroyTexture _destroyTexture;
 		static __GetTextureNativeHandle _getTextureNativeHandle;
 		static __GetTextureData _getTextureData;
+		static __GetTextureData_Extent _getTextureData_Extent;
 
 		static __BuildRenderGraph _buildRenderGraph;
 		static __DestroyRenderGraph _destroyRenderGraph;
@@ -303,6 +308,7 @@ namespace trace {
 		static __EndRenderGraph _endRenderGraph;
 		static __BindRenderGraphTexture _bindRenderGraphTexture;
 		static __BindRenderGraphBuffer _bindRenderGraphBuffer;
+		static __GetRenderGraphTextureData _getRenderGraphTextureData;
 
 		static __CreateBatchBuffer _createBatchBuffer;
 		static __DestroyBatchBuffer _destroyBatchBuffer;

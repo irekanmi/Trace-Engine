@@ -38,6 +38,7 @@ namespace trace {
 		glm::mat4 transform = glm::mat4(1.0f);
 		Model* object = nullptr;
 		MaterialInstance* material = nullptr;
+		UUID object_id = 0;
 	};
 	struct RenderSkinnedObjectData
 	{
@@ -130,7 +131,7 @@ namespace trace {
 		void EndScene(CommandList& cmd_list, int32_t render_graph_index = 0);
 		void DrawMesh(CommandList& cmd_list, Ref<Mesh> _mesh, glm::mat4 model, int32_t render_graph_index = 0);
 		void DrawModel(CommandList& cmd_list, Ref<Model> _model, glm::mat4 transform, int32_t render_graph_index = 0);
-		void DrawModel(CommandList& cmd_list, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index = 0);
+		void DrawModel(CommandList& cmd_list, UUID model_id, Ref<Model> _model, Ref<MaterialInstance> material, glm::mat4 transform, bool cast_shadow, int32_t render_graph_index = 0);
 		void DrawSkinnedModel(CommandList& cmd_list, Ref<SkinnedModel> _model, Ref<MaterialInstance> material, glm::mat4 transform, glm::mat4* bone_transforms, uint32_t bone_count, bool cast_shadow, int32_t render_graph_index = 0);
 		void DrawSky(CommandList& cmd_list, SkyBox* sky, int32_t render_graph_index = 0);
 		void DrawLight(CommandList& cmd_list, Ref<Mesh> _mesh, Light& light_data, LightType light_type, int32_t render_graph_index = 0);

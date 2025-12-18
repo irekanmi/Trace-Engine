@@ -331,6 +331,7 @@ namespace trace {
 		RenderFunc::_destroyTexture = vk::__DestroyTexture;
 		RenderFunc::_getTextureNativeHandle = vk::__GetTextureNativeHandle;
 		RenderFunc::_getTextureData = vk::__GetTextureData;
+		RenderFunc::_getTextureData_Extent = vk::__GetTextureData_Extent;
 
 		RenderFunc::_buildRenderGraph = vk::__BuildRenderGraph;
 		RenderFunc::_destroyRenderGraph = vk::__DestroyRenderGraph;
@@ -340,6 +341,7 @@ namespace trace {
 		RenderFunc::_endRenderGraph = vk::__EndRenderGraph;
 		RenderFunc::_bindRenderGraphTexture = vk::__BindRenderGraphTexture;
 		RenderFunc::_bindRenderGraphBuffer = vk::__BindRenderGraphBuffer;
+		RenderFunc::_getRenderGraphTextureData = vk::__GetRenderGraphTextureData;
 
 		RenderFunc::_createBatchBuffer = vk::__CreateBatchBuffer;
 		RenderFunc::_destroyBatchBuffer = vk::__DestroyBatchBuffer;
@@ -413,6 +415,7 @@ namespace trace {
 	__DestroyTexture RenderFunc::_destroyTexture = nullptr;
 	__GetTextureNativeHandle RenderFunc::_getTextureNativeHandle = nullptr;
 	__GetTextureData RenderFunc::_getTextureData = nullptr;
+	__GetTextureData_Extent RenderFunc::_getTextureData_Extent = nullptr;
 
 	__BuildRenderGraph RenderFunc::_buildRenderGraph = nullptr;
 	__DestroyRenderGraph RenderFunc::_destroyRenderGraph = nullptr;
@@ -422,6 +425,7 @@ namespace trace {
 	__EndRenderGraph RenderFunc::_endRenderGraph = nullptr;
 	__BindRenderGraphTexture RenderFunc::_bindRenderGraphTexture = nullptr;
 	__BindRenderGraphBuffer RenderFunc::_bindRenderGraphBuffer = nullptr;
+	__GetRenderGraphTextureData RenderFunc::_getRenderGraphTextureData = nullptr;
 
 	__CreateBatchBuffer RenderFunc::_createBatchBuffer = nullptr;
 	__DestroyBatchBuffer RenderFunc::_destroyBatchBuffer = nullptr;
@@ -799,6 +803,16 @@ namespace trace {
 		return result;
 	}
 
+	bool RenderFunc::GetTextureData_Extent(trace::GTexture* texture, glm::ivec3 offset, glm::uvec3 extent, void*& out_data)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_getTextureData_Extent);
+		result = _getTextureData_Extent(texture, offset, extent, out_data);
+
+		return result;
+	}
+
 	bool RenderFunc::BuildRenderGraph(GDevice* device, RenderGraph* render_graph, int32_t render_graph_index)
 	{
 		bool result = true;
@@ -875,6 +889,16 @@ namespace trace {
 
 		RENDER_FUNC_IS_VALID(_bindRenderGraphBuffer);
 		result = _bindRenderGraphBuffer(render_graph, pipeline, bind_name, resource_stage, resource, index);
+
+		return result;
+	}
+
+	bool RenderFunc::GetRenderGraphTextureData(RenderGraph* render_graph, RenderGraphResource* resource, glm::ivec3 offset, glm::uvec3 extent, void*& out_data)
+	{
+		bool result = true;
+
+		RENDER_FUNC_IS_VALID(_getRenderGraphTextureData);
+		result = _getRenderGraphTextureData(render_graph, resource, offset, extent, out_data);
 
 		return result;
 	}

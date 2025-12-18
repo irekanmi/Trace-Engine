@@ -48,6 +48,7 @@ namespace vk {
 	void _CopyBufferToImage(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, trace::VKBuffer* buffer);
 	bool _TransitionImageLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKCommmandBuffer* command_buffer, trace::VKImage* image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, VkImageSubresourceRange sub_resource_range);
 	bool _GenerateMipLevels(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, VkFormat format, uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layer_index);
+	bool _ReadImageData(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, trace::TextureDesc& desc, glm::ivec3 offset, glm::uvec3 extent, void*& out_data, trace::VKCommmandBuffer& cmd_buf, trace::VKBuffer& staging_buffer);
 
 	// Samplers
 	VkResult _CreateSampler(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::TextureDesc& desc, VkSampler& sampler, float max_lod);

@@ -48,6 +48,7 @@ class Player : Trace.Action
         pos += dir;
         pose.Position = pos;
 
+
     }   
 
     
