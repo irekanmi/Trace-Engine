@@ -5,6 +5,7 @@
 #include "core/input/Keys.h"
 
 #include <functional>
+#include <string>
 
 namespace trace {
 

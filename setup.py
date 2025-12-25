@@ -71,7 +71,7 @@ def setup_project():
     os_type = detect_os()
 
     if os_type == "Windows":
-        subprocess.run(["externals\premake\premake5", "vs2022"], check=True)
+        subprocess.run(["externals\\premake\\premake5", "vs2022"], check=True)
     else:
         raise SystemExit("Unsupported OS")
 

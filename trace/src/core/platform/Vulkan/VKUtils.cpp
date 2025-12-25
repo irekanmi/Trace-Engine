@@ -322,6 +322,7 @@ namespace vk {
 
 		TRC_INFO(" Graphics | Compute | Transfer | Present ");
 		bool used_queues[4] = { false };
+		
 		int n = 0;
 		uint32_t index_count = 0;
 		for (auto& i : queue_props)
@@ -334,8 +335,7 @@ namespace vk {
 				{
 					used_queues[n] = true;
 					index_count++;
-				}
-				
+				}				
 			}
 
 			if (i.queueFlags & VK_QUEUE_TRANSFER_BIT)
@@ -374,14 +374,19 @@ namespace vk {
 		}
 		
 		TRC_TRACE(" {} | {} | {} | {} ", device->m_queues.graphics_queue, device->m_queues.compute_queue, device->m_queues.transfer_queue, device->m_queues.present_queue);
+		std::set<uint32_t> _queues;
+		_queues.emplace(device->m_queues.graphics_queue);
+		_queues.emplace(device->m_queues.compute_queue);
+		_queues.emplace(device->m_queues.present_queue);
+		_queues.emplace(device->m_queues.transfer_queue);
 
+		
+		index_count = _queues.size();
+		std::vector<uint32_t> indices;
 
-				
-
-		std::vector<uint32_t> indices(index_count);
-		for (uint32_t i = 0; i < index_count; i++)
+		for (uint32_t i : _queues)
 		{
-			indices[i] = i;
+			indices.emplace_back(i);
 		}
 
 		
