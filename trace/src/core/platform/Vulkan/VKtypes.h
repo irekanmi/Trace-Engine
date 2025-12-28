@@ -192,7 +192,7 @@ namespace trace {
 		VkDeviceMemory m_memory = VK_NULL_HANDLE;
 		void* m_device = nullptr;
 		VKHandle* m_instance = nullptr;
-		void* data_point;// if the usage is of UsageFlag::UPLOAD then it will be mapped to these data point
+		void* data_point = nullptr;// if the usage is of UsageFlag::UPLOAD then it will be mapped to these data point
 		BufferInfo m_info;
 	};
 
@@ -295,6 +295,8 @@ namespace trace {
 		VKImage nullImage;
 		VKBuffer nullBuffer;
 		VKHandle* instance;
+
+		VkDescriptorPool global_descriptor_pool;
 	};
 
 
@@ -374,7 +376,13 @@ namespace trace {
 		VkImageLayout image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	};
 
+	struct VKDescriptorSet
+	{
+		VkDescriptorSet internal_handle = VK_NULL_HANDLE;
 
+		// Resources
+		std::map<uint32_t, VKBuffer> buffers;// key: binding_index, value: VKBuffer
+	};
 
 
 
