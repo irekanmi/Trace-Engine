@@ -214,6 +214,16 @@ namespace trace {
 		VKBuffer resource[VK_MAX_NUM_FRAMES];
 	};
 
+	struct VKDescriptorSet
+	{
+		VkDescriptorSet internal_handle = VK_NULL_HANDLE;
+
+		// Resources
+		std::map<uint32_t, VKBuffer> buffers;// key: binding_index, value: VKBuffer
+
+		std::map<uint32_t, std::vector<VKImage*>> textures;// key: binding_index, value: bound image
+	};
+
 	struct VKPipeline
 	{
 		VkPipeline m_handle = VK_NULL_HANDLE;
@@ -242,6 +252,11 @@ namespace trace {
 
 		// Each binding should have their own resources
 		std::unordered_map<uint32_t, BufferBindingInfo> buffer_resources;//NOTE: first(uin32_t) is the set and binding combined
+
+		std::unordered_map<uint32_t, std::array<VKDescriptorSet, VK_MAX_NUM_FRAMES>> views_set;// Per view descriptor set; key: view_index, value: view_set
+
+		//layout(set = 2) storage buffer, used for per object(for each draw call) data
+		VKBuffer draw_call_buffer[VK_MAX_NUM_FRAMES];
 	};
 
 	struct VKDeviceHandle
@@ -376,13 +391,7 @@ namespace trace {
 		VkImageLayout image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	};
 
-	struct VKDescriptorSet
-	{
-		VkDescriptorSet internal_handle = VK_NULL_HANDLE;
-
-		// Resources
-		std::map<uint32_t, VKBuffer> buffers;// key: binding_index, value: VKBuffer
-	};
+	
 
 
 

@@ -564,6 +564,108 @@ namespace vk {
 
 	}
 
+	void create_pipeline_set_resources(trace::GPipeline* pipeline, trace::VKPipeline* _handle)
+	{
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+
+		trace::PipelineStateDesc& desc = pipeline->GetDesc();
+
+		//Per View Set (set = 0)
+		trace::VKDescriptorSet set_handle = {};
+		VkDescriptorSet view_set = VK_NULL_HANDLE;
+
+		VkDescriptorSetAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		alloc_info.descriptorPool = _device->global_descriptor_pool;
+		alloc_info.descriptorSetCount = 1;
+		alloc_info.pSetLayouts = &_handle->Scene_layout;
+
+		VK_ASSERT(vkAllocateDescriptorSets(_device->m_device, &alloc_info, &view_set));
+
+		for (auto& i : desc.resources.resources)
+		{
+			bool is_structure = i.def == trace::ShaderDataDef::STRUCTURE;
+			bool is_image = i.def == trace::ShaderDataDef::IMAGE;
+
+			trace::ShaderResourceStage res_stage = i.resource_stage;
+
+			if (res_stage != trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+			{
+				continue;
+			}
+
+			if (is_structure)
+			{
+
+				uint32_t total_size = 0;
+				uint32_t max_alignment = 0;
+				for (trace::ShaderResource::Member& member : i.members)
+				{
+					uint32_t alignment = get_type_alignment_std140(member.resource_data_type);
+					max_alignment = alignment > max_alignment ? alignment : max_alignment;
+					total_size = get_alignment(total_size, alignment);
+					total_size += member.resource_size;
+				}
+
+				VkBufferUsageFlags usage_flag;
+				uint32_t bind_flag = 0;
+
+				bool is_uniform_buffer = i.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+				bool is_storage_buffer = i.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
+
+
+				if (is_uniform_buffer)
+				{
+					usage_flag = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+					bind_flag |= trace::BindFlag::CONSTANT_BUFFER_BIT;
+				}
+				if (is_storage_buffer)
+				{
+					usage_flag = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+					bind_flag |= trace::BindFlag::UNORDERED_RESOURCE_BIT;
+				}
+
+				trace::VKBuffer slot_buffer;
+				trace::BufferInfo create_info;
+				create_info.m_flag = (trace::BindFlag)bind_flag;
+				create_info.m_size = total_size;
+				create_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+
+				vk::_CreateBuffer(_device->instance, _device, &slot_buffer, create_info);
+
+				VkDescriptorBufferInfo buf_info = {};
+				buf_info.buffer = slot_buffer.m_handle;
+				buf_info.offset = 0;
+				buf_info.range = VK_WHOLE_SIZE;
+
+				VkWriteDescriptorSet write = {};
+				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				write.descriptorCount = 1;
+				write.dstArrayElement = 0;
+				write.dstBinding = i.slot;
+				write.pBufferInfo = &buf_info;
+				write.pImageInfo = nullptr;
+				write.pNext = nullptr;
+				write.pTexelBufferView = nullptr;
+
+				vkUpdateDescriptorSets(
+					_device->m_device,
+					1,
+					&write,
+					0,
+					nullptr
+				);
+			}
+
+			if (is_image)
+			{
+
+			}
+		}
+
+	}
+
 	bool __CreatePipeline(trace::GPipeline* pipeline, trace::PipelineStateDesc desc)
 	{
 		bool result = true;

@@ -1,19 +1,20 @@
 ## Vulkan Descriptor Set
 
-``cpp
+```cpp
 
 struct VKDescriptorSet
 {
     VkDescriptorSet internal_handle;
 
     // Resources
-    buffers
+    //buffers
     std::map<uint32_t, VKBuffer> buffers;
     //TODO texture cahces
+    std::map<uint32_t, std::vector<VKImage*>> textures;
     
 }
 
-``
+```
 
 - This structure holds the resources reqiured for a vulkan descriptor set 
 
@@ -27,38 +28,52 @@ be modified. Note new `struct VKDescriptorSet` will be created on the fly
 when required per view(render graph index) because camera data from each view
 will not necessarily be the same for each view.
 
-``cpp
+```cpp
 struct VKPipeline
 {
-    ...
-    std::unordered_map<uint32_t, VKDescriptorSet> views_set;// Per view descriptor set; key: view_index, value: view_set
-    ...
+    //...
+    std::unordered_map<uint32_t, std::array<VKDescriptorSet, VK_MAX_NUM_FRAMES>> views_set;// Per view descriptor set; key: view_index, value: view_set
+    //...
 }
 
-``
+```
 
--  The set with index zero in the shader `layout(set = 1)` is the set that holds 
-per instance(object) data mostly material data, with that this set will stored 
-in the `struct VKMaterialData`
+- The set with index zero in the shader `layout(set = 1)` is the set that holds material data, with that this set will
+stored in the `struct VKMaterialData`
 
-``cpp
+```cpp
 struct VKMaterialData
 {
     VKDescriptorSet instance_set;
 }
 
-``
+```
+
+- The set with index zero in the shader `layout(set = 2)` is the set that holds per object(for each draw call) for 
+example and object model matrix or the skinning matrix. Note this set is assumed to a single structure and only holds 
+buffer and no 
+
+```cpp
+
+struct VKPipeline
+{
+    //...
+    VKBuffer draw_call_buffer[VK_MAX_NUM_FRAMES];
+    //...
+}
+
+```
 
 
 ### --...--
 
-``cpp
+```cpp
 
 struct VKDeviceHandle
 {
-    ...
+    //...
     VkDescriptorPool global_descriptor_pool;
 }
 
 
-``
+```

@@ -527,7 +527,22 @@ namespace vk {
 		}
 
 
+		//Global Descriptor Pool
+		VkDescriptorPoolSize pool_sizes[] =
+		{
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, KB * 2},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (KB * 2)},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 6)}
+		};
 
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.maxSets = KB * 8;
+		pool_info.poolSizeCount = ARRAYSIZE(pool_sizes);
+		pool_info.pPoolSizes = pool_sizes;
+
+
+		VK_ASSERT(vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &device->global_descriptor_pool));
 
 
 
