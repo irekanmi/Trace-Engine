@@ -12,7 +12,7 @@ layout(location = 0)in vec2 in_texCoord;
 
 //layout(set = 1, binding = 0)uniform sampler2D u_srcTexture[];
 //INSTANCE_COMBINED_SAMPLER2D(u_srcTexture);
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(1, 7);
 layout(set = 0, binding = 3)uniform SampleData{
     float filterRadius;
 };

@@ -211,7 +211,8 @@ namespace trace {
 		RESOURCE_STAGE_NONE = 0,
 		RESOURCE_STAGE_GLOBAL,
 		RESOURCE_STAGE_INSTANCE,
-		RESOURCE_STAGE_LOCAL
+		RESOURCE_STAGE_LOCAL,
+		RESOURCE_STAGE_DRAW_CALL,
 	};
 
 	enum RENDERPASS
@@ -386,6 +387,7 @@ namespace trace {
 		uint32_t _count = 0;
 		uint32_t meta_id = 0;// NOTE: It is the combination of the resource stage and the slot
 		uint32_t _struct_index = INVALID_ID;
+		uint32_t _struct_size = 0;
 		uint16_t _frame_index = uint16_t(-1); // TODO: Create enum for maximum 16bit integer
 		uint16_t _num_frame_update = 0;
 		ShaderResourceType _resource_type = ShaderResourceType::SHADER_RESOURCE_TYPE_NOUSE;

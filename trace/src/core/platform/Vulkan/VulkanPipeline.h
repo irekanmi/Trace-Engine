@@ -18,4 +18,7 @@ namespace vk {
 	bool __SetPipelineTextureData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, trace::VKImage* texture, int32_t render_graph_index, uint32_t index = 0);
 	bool __BindPipeline_(trace::GPipeline* pipeline, int32_t render_graph_index = 0);
 
+	bool SetPipelineData(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::VKDescriptorSet& set_handle, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t in_offset, int32_t render_graph_index);
+	bool SetPipelineTextureData(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::VKDescriptorSet& set_handle, trace::ShaderResourceStage resource_scope, trace::VKImage* texture, int32_t render_graph_index, uint32_t index = 0);
+
 }

@@ -11,9 +11,9 @@ layout(location = 0)in vec2 in_texCoord;
 
 
 
-layout(set = 0, binding = 4)uniform sampler2D u_Texture[];
+layout(set = 0, binding = 4)uniform sampler2D u_Texture;
 //INSTANCE_COMBINED_SAMPLER2D(u_srcTexture);
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(1, 7);
 
 void main()
 {

@@ -5,7 +5,7 @@
 layout(location = 0)out vec4 FragColor;
 
 layout(location = 0) in Data{
-    uint color;
+    flat uint color;
 };
 
 

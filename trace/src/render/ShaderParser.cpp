@@ -181,12 +181,17 @@ namespace trace {
 			{
 				res_stage = ShaderResourceStage::RESOURCE_STAGE_GLOBAL;
 			}
-			else if (set.set == 1)
+			else if (set.set == 2)
 			{
 				res_stage = ShaderResourceStage::RESOURCE_STAGE_INSTANCE;
 			}
+			else if (set.set == 1)
+			{
+				res_stage = ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL;
+			}
 
-			bool is_instance = (set.set == 1);
+			bool is_instance = (set.set == 2);
+			bool is_draw_call = (set.set == 1);
 
 			for (uint32_t j = 0; j < set.binding_count; j++)
 			{
@@ -215,7 +220,7 @@ namespace trace {
 				ShaderResource resource;
 
 				resource.resource_name = binding->name;
-				resource.count = binding->count > 0 ? binding->count : 1;
+				resource.count = binding->count;
 				resource.resource_stage = res_stage;
 				resource.shader_stage = shader_stage;
 				resource.slot = binding->binding;
@@ -230,7 +235,7 @@ namespace trace {
 					SpvReflectBlockVariable& block = binding->block;
 
 					resource.def = ShaderDataDef::STRUCTURE;
-					if (is_instance && is_storage_buffer)
+					if (is_draw_call && is_storage_buffer)
 					{
 						SpvReflectBlockVariable& block_var = block.members[0];
 						resource.resource_size = block_var.padded_size;

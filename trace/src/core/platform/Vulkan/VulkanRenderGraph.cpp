@@ -727,15 +727,14 @@ namespace vk {
 			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
 			return false;
 		}
-		uint32_t copy_count = 0;
-		VkCopyDescriptorSet copies[10] = {};
-		VkWriteDescriptorSet write = {};
+		
+		/*VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		VkDescriptorImageInfo image_info = {};
 
 		image_info.sampler = device->nullImage.m_sampler;
 		image_info.imageView = device->nullImage.m_view;
-		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;*/
 		trace::UniformMetaData& meta_data = pipeline->GetSceneUniforms()[hash_id];
 
 
@@ -743,15 +742,14 @@ namespace vk {
 		if (resource)
 		{
 			trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(resource->render_handle.m_internalData);
-			image_info.sampler = res_handle->resource.texture.m_sampler;
+			/*image_info.sampler = res_handle->resource.texture.m_sampler;
 			image_info.imageView = res_handle->resource.texture.m_view;
-			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;*/
 
-			//if ((void*)pipe_handle->last_tex_update[device->m_imageIndex] == (void*)res_handle->resource.texture.m_handle) return false;
 
 			if (resource->resource_data.texture.attachment_type == trace::AttachmentType::DEPTH)
 			{
-				image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+				//image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 			}
 
 			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &res_handle->resource.texture, render_graph_index, index);
@@ -762,46 +760,6 @@ namespace vk {
 			__SetPipelineTextureData_Meta(pipeline, meta_data, resource_stage, &device->nullImage, render_graph_index, index);
 		}
 
-		//write.descriptorCount = 1; //HACK: Fix
-		//write.dstBinding = meta_data._slot;
-		//write.pImageInfo = &image_info;
-		//write.dstArrayElement = index;
-		//
-		//switch (meta_data._resource_type)
-		//{
-		//case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
-		//{
-		//	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		//	break;
-		//}
-		//}
-
-		//switch (resource_stage)
-		//{
-
-
-		//case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
-		//{
-		//	write.dstSet = pipe_handle->Scene_set;
-
-		//	break;
-		//}
-
-		//case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
-		//{
-		//	write.dstSet = pipe_handle->Instance_set;
-		//	break;
-		//}
-
-		//}
-
-		//vkUpdateDescriptorSets(
-		//	device->m_device,
-		//	1,
-		//	&write,
-		//	copy_count,
-		//	copies
-		//);
 
 
 		return result;

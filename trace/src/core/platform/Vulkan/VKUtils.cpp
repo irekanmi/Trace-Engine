@@ -10,6 +10,7 @@
 #include "spirv_cross/spirv_cross.hpp"
 #include "spirv_cross/spirv_glsl.hpp"
 #include "render/GRenderPass.h"
+#include "render/GPipeline.h"
 
 struct PhyScr
 {
@@ -60,7 +61,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
 	{
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 	{
-		TRC_ERROR(pCallbackData->pMessage);
+			TRC_ERROR(pCallbackData->pMessage);
 		break;
 	}
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
@@ -540,6 +541,7 @@ namespace vk {
 		pool_info.maxSets = KB * 8;
 		pool_info.poolSizeCount = ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
 
 		VK_ASSERT(vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &device->global_descriptor_pool));
@@ -2224,6 +2226,187 @@ namespace vk {
 
 	}
 
+	void _CreateDescriptorSetResources(trace::GPipeline* pipeline, trace::VKPipeline* _handle, trace::VKDescriptorSet& out_set_handle, trace::ShaderResourceStage resource_stage)
+	{
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+
+		trace::PipelineStateDesc& desc = pipeline->GetDesc();
+
+		VkDescriptorSet view_set = VK_NULL_HANDLE;
+
+		VkDescriptorSetAllocateInfo alloc_info = {};
+		alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		alloc_info.descriptorPool = _device->global_descriptor_pool;
+		alloc_info.descriptorSetCount = 2;
+		alloc_info.pSetLayouts = VK_NULL_HANDLE;
+
+		switch (resource_stage)
+		{
+		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+		{
+			alloc_info.pSetLayouts = _handle->Scene_layout ? &_handle->Scene_layout : VK_NULL_HANDLE;
+			alloc_info.descriptorSetCount = 1;
+			break;
+		}
+		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
+		{
+			alloc_info.pSetLayouts = _handle->Instance_layout ? &_handle->Instance_layout : VK_NULL_HANDLE;
+			alloc_info.descriptorSetCount = 1;
+			break;
+		}
+		case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
+		{
+			alloc_info.pSetLayouts = _handle->DrawCall_layout ? &_handle->DrawCall_layout : VK_NULL_HANDLE;
+			alloc_info.descriptorSetCount = 1;
+			break;
+		}
+		}
+
+		if (alloc_info.pSetLayouts == VK_NULL_HANDLE)
+		{
+			return;
+		}
+
+		VK_ASSERT(vkAllocateDescriptorSets(_device->m_device, &alloc_info, &view_set));
+
+		for (auto& i : desc.resources.resources)
+		{
+			bool is_structure = i.def == trace::ShaderDataDef::STRUCTURE;
+			bool is_image = i.def == trace::ShaderDataDef::IMAGE;
+
+			trace::ShaderResourceStage res_stage = i.resource_stage;
+
+			if (res_stage != resource_stage)
+			{
+				continue;
+			}
+
+			if (is_structure)
+			{
+
+				uint32_t total_size = 0;
+				uint32_t max_alignment = 0;
+				for (trace::ShaderResource::Member& member : i.members)
+				{
+					uint32_t alignment = get_type_alignment_std140(member.resource_data_type);
+					max_alignment = alignment > max_alignment ? alignment : max_alignment;
+					total_size = get_alignment(total_size, alignment);
+					total_size += member.resource_size;
+				}
+
+				VkBufferUsageFlags usage_flag;
+				uint32_t bind_flag = 0;
+
+				bool is_uniform_buffer = i.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
+				bool is_storage_buffer = i.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
+
+
+				if (is_uniform_buffer)
+				{
+					usage_flag = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+					bind_flag |= trace::BindFlag::CONSTANT_BUFFER_BIT;
+				}
+				if (is_storage_buffer)
+				{
+					usage_flag = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+					bind_flag |= trace::BindFlag::UNORDERED_RESOURCE_BIT;
+				}
+
+				trace::VKBuffer slot_buffer;
+				trace::BufferInfo create_info;
+				create_info.m_flag = (trace::BindFlag)bind_flag;
+				create_info.m_size = total_size;
+				create_info.m_usageFlag = trace::UsageFlag::UPLOAD;
+
+				vk::_CreateBuffer(_device->instance, _device, &slot_buffer, create_info);
+
+				VkDescriptorBufferInfo buf_info = {};
+				buf_info.buffer = slot_buffer.m_handle;
+				buf_info.offset = 0;
+				buf_info.range = VK_WHOLE_SIZE;
+
+				VkWriteDescriptorSet write = {};
+				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				write.descriptorCount = 1;
+				write.dstArrayElement = 0;
+				write.dstBinding = i.slot;
+				write.pBufferInfo = &buf_info;
+				write.pImageInfo = nullptr;
+				write.pNext = nullptr;
+				write.pTexelBufferView = nullptr;
+				write.dstSet = view_set;
+				write.descriptorType = is_uniform_buffer ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+
+				vkUpdateDescriptorSets(
+					_device->m_device,
+					1,
+					&write,
+					0,
+					nullptr
+				);
+
+				out_set_handle.buffers[i.slot] = slot_buffer;
+			}
+
+			if (is_image)
+			{
+				if (i.count >= 1)
+				{
+					for (uint32_t j = 0; j < i.count; j++)
+					{
+						VkWriteDescriptorSet write = {};
+						write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						write.descriptorCount = 1;
+						write.dstBinding = i.slot;
+						write.pBufferInfo = nullptr;
+						write.pImageInfo = nullptr;
+						write.pNext = nullptr;
+						write.pTexelBufferView = nullptr;
+						write.dstArrayElement = j;
+						write.dstSet = view_set;
+						write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+						VkDescriptorImageInfo img_info = {};
+						img_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+						img_info.imageView = _device->nullImage.m_view;
+						img_info.sampler = _device->nullImage.m_sampler;
+						write.descriptorType = vk::convertDescriptorType(i.resource_type);
+						write.pImageInfo = &img_info;
+
+						vkUpdateDescriptorSets(
+							_device->m_device,
+							1,
+							&write,
+							0,
+							nullptr
+						);
+
+						out_set_handle.textures[i.slot].push_back(&_device->nullImage);
+
+					}
+				}
+			}
+		}
+
+		out_set_handle.internal_handle = view_set;
+	}
+
+	void _DestroyDescriptorSetResources(trace::VKPipeline* _handle, trace::VKDescriptorSet& set_handle)
+	{
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+
+
+		for (auto& i : set_handle.buffers)
+		{
+			_DestoryBuffer(_instance, _device, &i.second);
+		}
+
+		vkFreeDescriptorSets(_device->m_device, _device->global_descriptor_pool, 1, &set_handle.internal_handle);
+
+	}
+
 	void parseInputLayout(trace::InputLayout& layout, VkVertexInputBindingDescription& binding, eastl::vector<VkVertexInputAttributeDescription>& attrs)
 	{
 
@@ -2373,19 +2556,21 @@ namespace vk {
 		std::vector<VkDescriptorSetLayoutBinding> SceneGlobalData_bindings;
 
 		std::vector<VkDescriptorSetLayoutBinding> Instance_bindings;
+		std::vector<VkDescriptorSetLayoutBinding> DrawCall_bindings;
 
 
-		const uint32_t pool_sizes_count = 3;
+		/*const uint32_t pool_sizes_count = 3;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 8192},
 			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (KB * 2) * VK_MAX_NUM_FRAMES},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 12)}
-		};
+		};*/
 
 
 		
-		uint32_t bindings_count = 0;
+		uint32_t instance_bindings_count = 0;
+		uint32_t draw_call_bindings_count = 0;
 		for (auto& i : desc.resources.resources)
 		{
 			bool is_structure = i.def == trace::ShaderDataDef::STRUCTURE;
@@ -2415,9 +2600,12 @@ namespace vk {
 				bind.descriptorCount = i.count;
 				bind.descriptorType = convertDescriptorType(i.resource_type);
 				bind.stageFlags = convertShaderStage(i.shader_stage);
-				bind.descriptorCount = is_structure ? KB * 2: KB * 4;
+				bind.descriptorCount = is_structure ? 1 : pipeline->bindless_2d_tex_count[i.slot];
 				Instance_bindings.push_back(bind);
-				bindings_count++;
+				instance_bindings_count++;
+				if (is_image)
+				{
+				}
 				break;
 			}
 			case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
@@ -2438,6 +2626,21 @@ namespace vk {
 				}
 				break;
 			}
+			case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
+			{
+				VkDescriptorSetLayoutBinding bind = {};
+				bind.binding = i.slot;
+				bind.descriptorCount = is_structure ? 1 : KB / 2;//TODO: Find a to dynamicaly specify the maximum number of descriptors from the shader
+				bind.descriptorType = convertDescriptorType(i.resource_type);
+				bind.stageFlags = convertShaderStage(i.shader_stage);
+
+				DrawCall_bindings.push_back(bind);
+				draw_call_bindings_count++;
+				if (is_image)
+				{
+				}
+				break;
+			}
 
 			}
 
@@ -2447,12 +2650,7 @@ namespace vk {
 		uint32_t set_layout_count = 0;
 		if (!desc.resources.resources.empty())
 		{
-			std::vector<VkDescriptorBindingFlags> binds_flags(bindings_count, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
-			VkDescriptorSetLayoutBindingFlagsCreateInfo binds_flag = {};
-			binds_flag.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-			binds_flag.pNext = nullptr;
-			binds_flag.bindingCount = bindings_count;
-			binds_flag.pBindingFlags = binds_flags.data();
+			
 
 
 			if (!SceneGlobalData_bindings.empty())
@@ -2464,36 +2662,43 @@ namespace vk {
 				//_info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Scene_layout);
-
-				VkDescriptorPoolCreateInfo pool_info = {};
-				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 8096;//1000 * pool_sizes_count;
-				pool_info.poolSizeCount = pool_sizes_count;
-				pool_info.pPoolSizes = pool_sizes;
-
-				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Scene_pool);
-
-				VkDescriptorSetLayout test[VK_MAX_DESCRIPTOR_SET];
-				for (uint32_t i = 0; i < VK_MAX_DESCRIPTOR_SET; i++)
-				{
-					test[i] = pipeline->Scene_layout;
-				}
-
-				VkDescriptorSetAllocateInfo alloc_info = {};
-				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				alloc_info.descriptorPool = pipeline->Scene_pool;
-				alloc_info.descriptorSetCount = VK_MAX_DESCRIPTOR_SET;
-				alloc_info.pSetLayouts = test;
-
-
-				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Scene_sets);
-				VK_ASSERT(result);
+								
 				_layouts[set_layout_count++] = pipeline->Scene_layout;
+
+				//===============================================================
+			}
+			if (!DrawCall_bindings.empty())
+			{
+				std::vector<VkDescriptorBindingFlags> binds_flags(draw_call_bindings_count, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
+				VkDescriptorSetLayoutBindingFlagsCreateInfo binds_flag = {};
+				binds_flag.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+				binds_flag.pNext = nullptr;
+				binds_flag.bindingCount = draw_call_bindings_count;
+				binds_flag.pBindingFlags = binds_flags.data();
+
+				pipeline->bindless = true;
+				VkDescriptorSetLayoutCreateInfo _info = {};
+				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				_info.bindingCount = static_cast<uint32_t>(DrawCall_bindings.size());
+				_info.pBindings = DrawCall_bindings.data();
+				_info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+				_info.pNext = &binds_flag;
+
+				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->DrawCall_layout);
+
+				_layouts[set_layout_count++] = pipeline->DrawCall_layout;
 
 				//===============================================================
 			}
 			if (!Instance_bindings.empty())
 			{
+				std::vector<VkDescriptorBindingFlags> binds_flags(instance_bindings_count, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
+				VkDescriptorSetLayoutBindingFlagsCreateInfo binds_flag = {};
+				binds_flag.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+				binds_flag.pNext = nullptr;
+				binds_flag.bindingCount = instance_bindings_count;
+				binds_flag.pBindingFlags = binds_flags.data();
+
 				pipeline->bindless = true;
 				VkDescriptorSetLayoutCreateInfo _info = {};
 				_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -2503,33 +2708,6 @@ namespace vk {
 				_info.pNext = &binds_flag;
 
 				result = vkCreateDescriptorSetLayout(device->m_device, &_info, instance->m_alloc_callback, &pipeline->Instance_layout);
-
-				VkDescriptorPoolCreateInfo pool_info = {};
-				pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				pool_info.maxSets = 2000 * pool_sizes_count;
-				pool_info.poolSizeCount = pool_sizes_count;
-				pool_info.pPoolSizes = pool_sizes;
-				pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-
-				result = vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &pipeline->Instance_pool);
-
-				VkDescriptorSetLayout test[VK_MAX_NUM_FRAMES];
-				for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
-				{
-					test[i] = pipeline->Instance_layout;
-				}
-
-				VkDescriptorSetAllocateInfo alloc_info = {};
-				alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				alloc_info.descriptorPool = pipeline->Instance_pool;
-				alloc_info.descriptorSetCount = VK_MAX_NUM_FRAMES;
-				alloc_info.pSetLayouts = test;
-
-
-				result = vkAllocateDescriptorSets(device->m_device, &alloc_info, pipeline->Instance_sets);
-
-				TRC_TRACE(vulkan_result_string(result, true));
-				VK_ASSERT(result);
 
 				_layouts[set_layout_count++] = pipeline->Instance_layout;
 
@@ -2545,6 +2723,120 @@ namespace vk {
 		create_info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
 		create_info.pPushConstantRanges = ranges.data();
 
+	}
+
+	uint32_t get_type_alignment_std430(trace::ShaderData type)
+	{
+		switch (type)
+		{
+		case trace::ShaderData::CUSTOM_DATA_BOOL:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_FLOAT:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_INT:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_IVEC2:
+		{
+			return 8;
+		}
+		case trace::ShaderData::CUSTOM_DATA_IVEC3:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_IVEC4:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_MAT2:
+		{
+			return 8;
+		}
+		case trace::ShaderData::CUSTOM_DATA_MAT3:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_MAT4:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_VEC2:
+		{
+			return 8;
+		}
+		case trace::ShaderData::CUSTOM_DATA_VEC3:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_VEC4:
+		{
+			return 16;
+		}
+		}
+
+		return 0;
+	}
+
+	uint32_t get_type_alignment_std140(trace::ShaderData type)
+	{
+		switch (type)
+		{
+		case trace::ShaderData::CUSTOM_DATA_BOOL:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_FLOAT:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_INT:
+		{
+			return 4;
+		}
+		case trace::ShaderData::CUSTOM_DATA_IVEC2:
+		{
+			return 8;
+		}
+		case trace::ShaderData::CUSTOM_DATA_IVEC3:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_IVEC4:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_MAT2:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_MAT3:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_MAT4:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_VEC2:
+		{
+			return 8;
+		}
+		case trace::ShaderData::CUSTOM_DATA_VEC3:
+		{
+			return 16;
+		}
+		case trace::ShaderData::CUSTOM_DATA_VEC4:
+		{
+			return 16;
+		}
+		}
+
+		return 0;
 	}
 
 	VkFormat convertFmt(trace::Format format)

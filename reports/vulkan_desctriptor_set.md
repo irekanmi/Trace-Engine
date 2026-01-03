@@ -58,7 +58,7 @@ buffer and no
 struct VKPipeline
 {
     //...
-    VKBuffer draw_call_buffer[VK_MAX_NUM_FRAMES];
+    std::array<VKDescriptorSet, VK_MAX_NUM_FRAMES> draw_call_sets;
     //...
 }
 

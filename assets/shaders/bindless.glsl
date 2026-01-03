@@ -19,6 +19,7 @@ layout( push_constant )uniform Bindless{
 #define INSTANCE_UNIFORM_BUFFER(name, _struct) INSTANCE_UNIFORM_BUFFER_SLOT(name, _struct, UNIFORM_BUFFER_BINDING)
 
 #define BINDLESS_COMBINED_SAMPLER2D INSTANCE_COMBINED_SAMPLER2D(_bindlessSampler2D, COMBINED_SAMPLER2D_BINDING)
+#define BINDLESS_COMBINED_SAMPLER2D_SET(set_index, slot) layout(set = set_index, binding = slot)uniform sampler2D _bindlessSampler2D[]; int count_bindlessSampler2D = 0
 
 
 #define KB 1024
@@ -37,5 +38,7 @@ struct TexIndex
 #define GET_BINDLESS_TEXTURE2D(name) GET_INSTANCE_TEXTURE(_bindlessSampler2D, name)
 
 #define GET_INSTANCE_PARAM(param, name) u_##name[binding_index.draw_instance_index.x].param
+
+#define GET_MATERIAL_TEXTURE(name) _bindlessSampler2D[name.index]
 
 #endif

@@ -20,8 +20,8 @@ IN_VERTEX_DATA
 //     float height_scale;
 // });
 
-struct MaterialData
-{
+
+layout(std140, set = 2, binding = 2) uniform MaterialData {
     vec4 diffuse_color;
     vec4 emissive_color;
     vec2 tilling;
@@ -30,11 +30,7 @@ struct MaterialData
     float height_scale;
 };
 
-layout(std140, set = 1, binding = 2)readonly buffer InstanceBufferObject{
-    MaterialData objects[];
-};
-
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(2, 7);
 
 
 #define GBUFFER_FRAG 1
@@ -72,37 +68,37 @@ void main()
 
     
     //vec2 parallax_tex_coord = _texCoord * GET_INSTANCE_PARAM(tilling, InstanceBufferObject);
-    vec2 parallax_tex_coord = _texCoord * objects[binding_index.draw_instance_index.x].tilling;
-    //parallax_tex_coord = ParallaxMapping(GET_BINDLESS_TEXTURE2D(HEIGHT_MAP), GET_INSTANCE_PARAM(height_scale, InstanceBufferObject), parallax_tex_coord, tangent_space_view_dir);
-    parallax_tex_coord = ParallaxMapping(GET_BINDLESS_TEXTURE2D(HEIGHT_MAP), objects[binding_index.draw_instance_index.x].height_scale, parallax_tex_coord, tangent_space_view_dir);
+    vec2 parallax_tex_coord = _texCoord * tilling;
+    //parallax_tex_coord = ParallaxMapping(GET_MATERIAL_TEXTURE(HEIGHT_MAP), GET_INSTANCE_PARAM(height_scale, InstanceBufferObject), parallax_tex_coord, tangent_space_view_dir);
+    parallax_tex_coord = ParallaxMapping(GET_MATERIAL_TEXTURE(HEIGHT_MAP), height_scale, parallax_tex_coord, tangent_space_view_dir);
 
     vec3 normal;
-    vec3 _n = texture(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), parallax_tex_coord).rgb;  
+    vec3 _n = texture(GET_MATERIAL_TEXTURE(NORMAL_MAP), parallax_tex_coord).rgb;  
     _n = _n * 2.0f - 1.0f;
     normal = normalize(TBN * _n);
 
 
-    vec4 color = texture(GET_BINDLESS_TEXTURE2D(DIFFUSE_MAP), parallax_tex_coord);
+    vec4 color = texture(GET_MATERIAL_TEXTURE(DIFFUSE_MAP), parallax_tex_coord);
     //vec4 diff_color = GET_INSTANCE_PARAM(diffuse_color, InstanceBufferObject);
-    vec4 diff_color = objects[binding_index.draw_instance_index.x].diffuse_color;
+    vec4 diff_color = diffuse_color;
     //diff_color.rgb = pow(diff_color.rgb, vec3(2.2f));
     vec4 final_color = mix(color, diff_color, diff_color.a);
 
     FRAG_POS = _fragPos;
     FRAG_NORMAL = normal;
 
-    FRAG_NORMAL_W = texture(GET_BINDLESS_TEXTURE2D(OCCLUSION_MAP), parallax_tex_coord).r;
+    FRAG_NORMAL_W = texture(GET_MATERIAL_TEXTURE(OCCLUSION_MAP), parallax_tex_coord).r;
 
     uint color_compressed = vec4ToUint32(final_color);
     FRAG_COLOR_R = color_compressed;
 
-    float metal = texture(GET_BINDLESS_TEXTURE2D(METALLIC_MAP), parallax_tex_coord).r;
-    float rough = texture(GET_BINDLESS_TEXTURE2D(ROUGHNESS_MAP), parallax_tex_coord).r;
+    float metal = texture(GET_MATERIAL_TEXTURE(METALLIC_MAP), parallax_tex_coord).r;
+    float rough = texture(GET_MATERIAL_TEXTURE(ROUGHNESS_MAP), parallax_tex_coord).r;
 
     //vec2 metallic = GET_INSTANCE_PARAM(metallic, InstanceBufferObject);
-    vec2 metallic = objects[binding_index.draw_instance_index.x].metallic;
+    vec2 metallic = metallic;
     //vec2 roughness = GET_INSTANCE_PARAM(roughness, InstanceBufferObject);
-    vec2 roughness = objects[binding_index.draw_instance_index.x].roughness;
+    vec2 roughness = roughness;
 
     metal = mix(metal, metallic.x, metallic.y);
     rough = mix(rough, roughness.x, roughness.y);
@@ -112,5 +108,5 @@ void main()
     FRAG_COLOR_G = surface_data_compressed;
 
     //g_Emission.xyz = GET_INSTANCE_PARAM(emissive_color, InstanceBufferObject).xyz;
-    g_Emission.xyz = objects[binding_index.draw_instance_index.x].emissive_color.xyz;
+    g_Emission.xyz = emissive_color.xyz;
 }

@@ -175,8 +175,8 @@ namespace trace {
 						RenderFunc::SetPipelineData(sp.get(), "_projection", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &proj, sizeof(glm::mat4), 0, render_graph_index);
 						RenderFunc::SetPipelineData(sp.get(), "_view", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view, sizeof(glm::mat4), 0, render_graph_index);
 						RenderFunc::SetPipelineData(sp.get(), "_view_position", ShaderResourceStage::RESOURCE_STAGE_GLOBAL, &view_position, sizeof(glm::vec3), 0, render_graph_index);
-						RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, M_model, sizeof(glm::mat4), 0, render_graph_index);
-						RenderFunc::SetPipelineData(sp.get(), "object_id", ShaderResourceStage::RESOURCE_STAGE_INSTANCE, &object_id, sizeof(glm::vec4), 0, render_graph_index);
+						RenderFunc::SetPipelineData(sp.get(), "_model", ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL, M_model, sizeof(glm::mat4), 0, render_graph_index);
+						RenderFunc::SetPipelineData(sp.get(), "object_id", ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL, &object_id, sizeof(glm::vec4), 0, render_graph_index);
 						RenderFunc::BindPipeline(renderer->GetDevice(), sp.get());
 						RenderFunc::BindPipeline_(sp.get(), render_graph_index);
 						RenderFunc::BindVertexBuffer(renderer->GetDevice(), _model->GetVertexBuffer());
@@ -192,7 +192,7 @@ namespace trace {
 			object_pick_pass->SetPassEndCB([object_pick_render_target](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 				{
 					void* p_data = &pixel_data;
-					glm::ivec3 offset(100, 100, 0);
+					glm::ivec3 offset(0, 0, 0);
 					glm::uvec3 extent(1, 1, 1);
 
 

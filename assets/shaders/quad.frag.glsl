@@ -11,7 +11,7 @@ OUT_OIT_DATA
 
 layout(location = 0)in vec2 in_texCoord;
 
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(1, 7);
 
 
 layout(location = 2) in Data{

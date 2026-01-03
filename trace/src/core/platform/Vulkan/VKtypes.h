@@ -228,15 +228,16 @@ namespace trace {
 	{
 		VkPipeline m_handle = VK_NULL_HANDLE;
 		VkPipelineLayout m_layout = VK_NULL_HANDLE;
+		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
+		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
+		VkDescriptorSetLayout DrawCall_layout = VK_NULL_HANDLE;
 
 		VkDescriptorSet Scene_sets[VK_MAX_DESCRIPTOR_SET] = {};
-		VkDescriptorSetLayout Scene_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
 		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
 
 		VkDescriptorSet Instance_sets[VK_MAX_NUM_FRAMES] = {};
-		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
 		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
 		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
@@ -256,7 +257,8 @@ namespace trace {
 		std::unordered_map<uint32_t, std::array<VKDescriptorSet, VK_MAX_NUM_FRAMES>> views_set;// Per view descriptor set; key: view_index, value: view_set
 
 		//layout(set = 2) storage buffer, used for per object(for each draw call) data
-		VKBuffer draw_call_buffer[VK_MAX_NUM_FRAMES];
+		std::array<VKDescriptorSet, VK_MAX_NUM_FRAMES> draw_call_sets;
+		int32_t draw_call_index = -1;
 	};
 
 	struct VKDeviceHandle
@@ -341,7 +343,7 @@ namespace trace {
 
 	struct VKMaterialData
 	{
-		VkDescriptorSet m_sets[3] = {};
+		VKDescriptorSet m_set = {};
 
 		void* m_instance;
 		void* m_device;

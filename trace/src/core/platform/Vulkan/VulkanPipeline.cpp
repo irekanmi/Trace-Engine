@@ -13,8 +13,6 @@
 	extern trace::VKDeviceHandle g_VkDevice;
 
 	bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline* pipeline, trace::VKPipeline* handle);
-	uint32_t get_type_alignment_std430(trace::ShaderData type);
-	uint32_t get_type_alignment_std140(trace::ShaderData type);
 	
 
 namespace trace {
@@ -92,7 +90,7 @@ namespace trace {
 				uint32_t temp_globals_size = total_size_global;
 				for (auto& mem : i.members)
 				{
-					uint32_t alignment = get_type_alignment_std140(mem.resource_data_type);
+					uint32_t alignment = vk::get_type_alignment_std140(mem.resource_data_type);
 					struct_size = get_alignment(struct_size, alignment);
 					max_alignment = alignment > max_alignment ? alignment : max_alignment;
 
@@ -110,6 +108,7 @@ namespace trace {
 					_pipeline->GetSceneUniforms()[current_id]._shader_stage = i.shader_stage;
 					_pipeline->GetSceneUniforms()[current_id].data_type = mem.resource_data_type;
 					_pipeline->GetSceneUniforms()[current_id]._offset = mem.offset;
+					_pipeline->GetSceneUniforms()[current_id]._struct_size = i.resource_size;
 					
 
 					//struct_size = get_alignment(struct_size, offset_alignment);
@@ -172,9 +171,9 @@ namespace trace {
 			
 		}
 		
-		update_data_indices(_pipeline, _hashTable, _handle);
-
 		
+
+		/*
 		generate_pipeline_resources(device, _pipeline, _handle);
 
 		VkDescriptorBufferInfo* bufs = new VkDescriptorBufferInfo[2048];// TODO: Use custom allocator and find a better way to update buffers
@@ -296,6 +295,8 @@ namespace trace {
 			);
 		}
 		delete[] bufs;// TODO: Use custom allocator and find a better way to update buffers
+		*/
+
 		out_size = total_size_global;
 		result = true;
 		return result;
@@ -331,7 +332,7 @@ bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline
 			{
 				if (resource.resource_stage == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
 				{
-					uint32_t alignment = get_type_alignment_std140(member.resource_data_type);
+					uint32_t alignment = vk::get_type_alignment_std140(member.resource_data_type);
 					max_alignment = alignment > max_alignment ? alignment : max_alignment;
 					total_size = get_alignment(total_size, alignment);
 				}
@@ -401,123 +402,10 @@ bool generate_pipeline_resources(trace::VKDeviceHandle* device, trace::GPipeline
 	return true;
 }
 
-uint32_t get_type_alignment_std430(trace::ShaderData type)
-{
-	switch (type)
-	{
-	case trace::ShaderData::CUSTOM_DATA_BOOL:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_FLOAT:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_INT:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_IVEC2:
-	{
-		return 8;
-	}
-	case trace::ShaderData::CUSTOM_DATA_IVEC3:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_IVEC4:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_MAT2:
-	{
-		return 8;
-	}
-	case trace::ShaderData::CUSTOM_DATA_MAT3:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_MAT4:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_VEC2:
-	{
-		return 8;
-	}
-	case trace::ShaderData::CUSTOM_DATA_VEC3:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_VEC4:
-	{
-		return 16;
-	}
-	}
-
-	return 0;
-}
-
-uint32_t get_type_alignment_std140(trace::ShaderData type)
-{
-	switch (type)
-	{
-	case trace::ShaderData::CUSTOM_DATA_BOOL:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_FLOAT:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_INT:
-	{
-		return 4;
-	}
-	case trace::ShaderData::CUSTOM_DATA_IVEC2:
-	{
-		return 8;
-	}
-	case trace::ShaderData::CUSTOM_DATA_IVEC3:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_IVEC4:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_MAT2:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_MAT3:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_MAT4:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_VEC2:
-	{
-		return 8;
-	}
-	case trace::ShaderData::CUSTOM_DATA_VEC3:
-	{
-		return 16;
-	}
-	case trace::ShaderData::CUSTOM_DATA_VEC4:
-	{
-		return 16;
-	}
-	}
-
-	return 0;
-}
 
 namespace vk {
 
-	void update_pipeline_instance_sets(trace::GPipeline* pipeline, trace::VKPipeline* _handle, trace::VKBuffer& buffer,uint32_t new_size)
+	void update_pipeline_draw_call_set(trace::VKPipeline* _handle, trace::VKDescriptorSet& set_handle, int slot, trace::VKBuffer& buffer,uint32_t new_size)
 	{
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
@@ -529,6 +417,31 @@ namespace vk {
 			buffer,
 			new_size
 			);
+
+		VkDescriptorBufferInfo buf_info = {};
+		buf_info.buffer = buffer.m_handle;
+		buf_info.offset = 0;
+		buf_info.range = VK_WHOLE_SIZE;
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.descriptorCount = 1;
+		write.dstArrayElement = 0;
+		write.dstBinding = slot;
+		write.pBufferInfo = &buf_info;
+		write.pImageInfo = nullptr;
+		write.pNext = nullptr;
+		write.pTexelBufferView = nullptr;
+		write.dstSet = set_handle.internal_handle;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+
+		vkUpdateDescriptorSets(
+			_device->m_device,
+			1,
+			&write,
+			0,
+			nullptr
+		);
 
 	}
 
@@ -564,7 +477,7 @@ namespace vk {
 
 	}
 
-	void create_pipeline_set_resources(trace::GPipeline* pipeline, trace::VKPipeline* _handle)
+	void create_pipeline_view_set_resources(trace::GPipeline* pipeline, trace::VKPipeline* _handle, int32_t view_index)
 	{
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
@@ -572,99 +485,29 @@ namespace vk {
 		trace::PipelineStateDesc& desc = pipeline->GetDesc();
 
 		//Per View Set (set = 0)
-		trace::VKDescriptorSet set_handle = {};
-		VkDescriptorSet view_set = VK_NULL_HANDLE;
-
-		VkDescriptorSetAllocateInfo alloc_info = {};
-		alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		alloc_info.descriptorPool = _device->global_descriptor_pool;
-		alloc_info.descriptorSetCount = 1;
-		alloc_info.pSetLayouts = &_handle->Scene_layout;
-
-		VK_ASSERT(vkAllocateDescriptorSets(_device->m_device, &alloc_info, &view_set));
-
-		for (auto& i : desc.resources.resources)
+		for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
 		{
-			bool is_structure = i.def == trace::ShaderDataDef::STRUCTURE;
-			bool is_image = i.def == trace::ShaderDataDef::IMAGE;
-
-			trace::ShaderResourceStage res_stage = i.resource_stage;
-
-			if (res_stage != trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-			{
-				continue;
-			}
-
-			if (is_structure)
-			{
-
-				uint32_t total_size = 0;
-				uint32_t max_alignment = 0;
-				for (trace::ShaderResource::Member& member : i.members)
-				{
-					uint32_t alignment = get_type_alignment_std140(member.resource_data_type);
-					max_alignment = alignment > max_alignment ? alignment : max_alignment;
-					total_size = get_alignment(total_size, alignment);
-					total_size += member.resource_size;
-				}
-
-				VkBufferUsageFlags usage_flag;
-				uint32_t bind_flag = 0;
-
-				bool is_uniform_buffer = i.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_UNIFORM_BUFFER;
-				bool is_storage_buffer = i.resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
-
-
-				if (is_uniform_buffer)
-				{
-					usage_flag = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-					bind_flag |= trace::BindFlag::CONSTANT_BUFFER_BIT;
-				}
-				if (is_storage_buffer)
-				{
-					usage_flag = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-					bind_flag |= trace::BindFlag::UNORDERED_RESOURCE_BIT;
-				}
-
-				trace::VKBuffer slot_buffer;
-				trace::BufferInfo create_info;
-				create_info.m_flag = (trace::BindFlag)bind_flag;
-				create_info.m_size = total_size;
-				create_info.m_usageFlag = trace::UsageFlag::UPLOAD;
-
-				vk::_CreateBuffer(_device->instance, _device, &slot_buffer, create_info);
-
-				VkDescriptorBufferInfo buf_info = {};
-				buf_info.buffer = slot_buffer.m_handle;
-				buf_info.offset = 0;
-				buf_info.range = VK_WHOLE_SIZE;
-
-				VkWriteDescriptorSet write = {};
-				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				write.descriptorCount = 1;
-				write.dstArrayElement = 0;
-				write.dstBinding = i.slot;
-				write.pBufferInfo = &buf_info;
-				write.pImageInfo = nullptr;
-				write.pNext = nullptr;
-				write.pTexelBufferView = nullptr;
-
-				vkUpdateDescriptorSets(
-					_device->m_device,
-					1,
-					&write,
-					0,
-					nullptr
-				);
-			}
-
-			if (is_image)
-			{
-
-			}
+			trace::VKDescriptorSet& set_handle = _handle->views_set[view_index][i];
+			_CreateDescriptorSetResources(pipeline, _handle, set_handle, trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL);
 		}
+		
 
 	}
+
+	void create_pipeline_draw_call_resources(trace::GPipeline* pipeline, trace::VKPipeline* _handle)
+	{
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+
+		trace::PipelineStateDesc& desc = pipeline->GetDesc();
+		for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
+		{
+			trace::VKDescriptorSet& set_handle = _handle->draw_call_sets[i];
+			_CreateDescriptorSetResources(pipeline, _handle, set_handle, trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL);
+		}
+		
+	}
+	
 
 	bool __CreatePipeline(trace::GPipeline* pipeline, trace::PipelineStateDesc desc)
 	{
@@ -694,7 +537,7 @@ namespace vk {
 		pipeline->SetDesc(desc);
 
 
-		pipeline->GetHashTable().Init(1063);// TODO: let number be configurable or more dynamic
+		pipeline->GetHashTable().Init(1063);// TODO: Find a different structure to hold data instead of using hash table
 
 		uint32_t _ids = INVALID_ID;
 		pipeline->GetHashTable().Fill(_ids);
@@ -713,6 +556,8 @@ namespace vk {
 		scissor.extent.height = static_cast<uint32_t>(desc.view_port.height);
 
 		trace::VKRenderPass* pass = reinterpret_cast<trace::VKRenderPass*>(desc.render_pass->GetRenderHandle()->m_internalData);
+
+		update_data_indices(pipeline, pipeline->GetHashTable(), _handle);
 
 		VkResult pipeline_result = vk::_CreatePipeline(
 			_instance,
@@ -821,6 +666,10 @@ namespace vk {
 			_device,
 			map_data_size
 		);
+
+		create_pipeline_view_set_resources(pipeline, _handle, 0);
+		create_pipeline_draw_call_resources(pipeline, _handle);
+		
 
 		return result;
 	}
@@ -999,8 +848,13 @@ namespace vk {
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 
-		bool is_storage_buffer = meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
 
+		if (_handle->views_set.find(render_graph_index) == _handle->views_set.end())
+		{
+			create_pipeline_view_set_resources(pipeline, _handle, render_graph_index);
+		}
+
+		bool is_storage_buffer = meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
 		
 		if (size > meta_data._size)
 		{
@@ -1019,78 +873,27 @@ namespace vk {
 			return true;
 		}
 
-		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+		trace::VKDescriptorSet* set_handle = nullptr;
+		switch (resource_scope)
 		{
-			
-			int32_t set_index = (_device->m_imageIndex * MAX_RENDER_GRAPH) + render_graph_index;
-			void* data_point;
-			trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
-			VkDescriptorSet& set = _handle->Scene_sets[set_index];
-			uint32_t struct_size = buffer.m_info.m_size / MAX_RENDER_GRAPH;
-
-			if (size > buffer.m_info.m_size)
-			{
-				uint32_t new_size = buffer.m_info.m_size * 2;
-				resize_buffer_and_update_set(pipeline, _handle, meta_data, buffer, new_size, set);
-			}
-
-			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
-
-			uint32_t location = (struct_size * render_graph_index) + meta_data._offset + in_offset;
-
-			void* map_point = (char*)data_point + location;
-			memcpy(map_point, data, size);
-			vkUnmapMemory(_device->m_device, buffer.m_memory);
-
-			return true;
+		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+		{
+			set_handle = &_handle->views_set[render_graph_index][_device->m_imageIndex];
+			break;
 		}
-
-		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+		case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
 		{
-
-
-			trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
-
-			uint32_t buffer_index = static_cast<uint32_t>(_handle->instance_buffer_infos[meta_data._slot].size() - 1);
-			trace::BufferDescriptorInfo& buf_info = _handle->instance_buffer_infos[meta_data._slot][buffer_index];
-
-			uint32_t buf_offset = buf_info.offset + meta_data._offset + in_offset;
-
-			if (buf_offset + meta_data._size >= buffer.m_info.m_size)
-			{
-				if (is_storage_buffer)
-				{
-					//TODO: the device gets lost if the buffer is resized here, which crashes the program
-					VkDescriptorSet& set = _handle->Instance_sets[_device->m_imageIndex];
-					uint32_t new_size = buffer.m_info.m_size * 2;
-					resize_buffer_and_update_set(pipeline, _handle, meta_data, buffer, new_size, set);
-				}
-				else
-				{
-					update_pipeline_instance_sets(pipeline, _handle, buffer, buffer.m_info.m_size * 4);
-					
-				}
-
-
-			}
-
-			buf_info.is_bindless = is_storage_buffer ? false : true;
-
-			void* data_point;
-
-			vkMapMemory( _device->m_device, buffer.m_memory, 0, VK_WHOLE_SIZE, VK_NO_FLAGS, &data_point);
-
-			uint32_t location = buf_offset;
-
-			void* map_point = (char*)data_point + location;
-			memcpy(map_point, data, size);
-
-			vkUnmapMemory(_device->m_device, buffer.m_memory);
+			set_handle = &_handle->draw_call_sets[_device->m_imageIndex];
+			break;
+		}
 		}
 		
+		if (!set_handle)
+		{
+			return false;
+		}
 
-
-		return result;
+		return SetPipelineData(pipeline, meta_data, *set_handle, resource_scope, data, size, in_offset, render_graph_index);
 	}
 	bool __SetPipelineTextureData(trace::GPipeline* pipeline, const std::string& resource_name, trace::ShaderResourceStage resource_scope, trace::GTexture* texture, int32_t render_graph_index, uint32_t index)
 	{
@@ -1135,11 +938,9 @@ namespace vk {
 	}
 	bool __SetPipelineTextureData_Meta(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::ShaderResourceStage resource_scope, trace::VKImage* texture, int32_t render_graph_index, uint32_t index)
 	{
-		bool result = true;
-
 		if (!pipeline)
 		{
-			TRC_ERROR("Please input valid pointer -> {}, tex ->{}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
 			return false;
 		}
 
@@ -1152,63 +953,34 @@ namespace vk {
 		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
-		trace::VKImage* _tex = texture;
 
-		VkWriteDescriptorSet write = {};
-		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		switch (meta_data._resource_type)
+
+		if (_handle->views_set.find(render_graph_index) == _handle->views_set.end())
 		{
-		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
+			create_pipeline_view_set_resources(pipeline, _handle, render_graph_index);
+		}
+
+		trace::VKDescriptorSet* set_handle = nullptr;
+		switch (resource_scope)
 		{
-			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+		{
+			set_handle = &_handle->views_set[render_graph_index][_device->m_imageIndex];
+			break;
+		}
+		case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
+		{
+			set_handle = &_handle->draw_call_sets[_device->m_imageIndex];
 			break;
 		}
 		}
 
-		VkDescriptorImageInfo image_info = {};
-		image_info.sampler = _tex->m_sampler;
-		image_info.imageView = _tex->m_view;
-		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		write.descriptorCount = 1; //HACK: Fix
-		write.dstBinding = meta_data._slot;
-		write.pImageInfo = &image_info;
-		write.dstArrayElement = index;
-
-		bool _updated = true;
-		if (meta_data._frame_index != _device->m_imageIndex)
+		if (!set_handle)
 		{
-			meta_data._frame_index = _device->m_imageIndex;
-			meta_data._num_frame_update = 0;
-			_updated = false;
+			return false;
 		}
 
-		//uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME) + meta_data._num_frame_update;
-		uint32_t set_index = (_device->m_imageIndex * MAX_RENDER_GRAPH) + render_graph_index;
-		++meta_data._num_frame_update;
-
-		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
-		{
-			write.dstSet = _handle->Scene_sets[set_index];
-
-			vkUpdateDescriptorSets(
-				_device->m_device,
-				1,
-				&write,
-				0,
-				nullptr
-			);
-		}
-
-		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
-		{
-			std::vector<trace::TextureDescriptorInfo>& tex_infos = _handle->instance_texture_infos[meta_data._slot];
-			int index = ((int)tex_infos.size() - _handle->bindless_2d_tex_count[meta_data._slot]) + (int)meta_data._index;
-			tex_infos[index].texture = _tex;
-		}
-
-
-		return result;
+		return SetPipelineTextureData(pipeline, meta_data, *set_handle, resource_scope, texture, render_graph_index, index);
 	}
 	bool __BindPipeline_(trace::GPipeline* pipeline, int32_t render_graph_index)
 	{
@@ -1235,41 +1007,269 @@ namespace vk {
 
 		uint32_t set_count = 0;
 		VkDescriptorSet _sets[3];
-		if (_handle->Scene_sets[0])
+		if (_handle->Scene_layout != VK_NULL_HANDLE)
 		{
-			uint32_t set_index = (_device->m_imageIndex * MAX_RENDER_GRAPH) + render_graph_index;
-			_sets[set_count++] = _handle->Scene_sets[set_index];
+			_sets[set_count++] = _handle->views_set[render_graph_index][_device->m_imageIndex].internal_handle;
 		}
 
-		if (_handle->Instance_sets[0])
+		if (_handle->DrawCall_layout != VK_NULL_HANDLE)
 		{
-			uint32_t set_index = (_device->m_imageIndex * VK_MAX_DESCRIPTOR_SET_PER_FRAME);
-			_sets[set_count++] = _handle->Instance_set ? _handle->Instance_set : _handle->Instance_sets[set_index];
+			_sets[set_count++] = _handle->draw_call_sets[_device->m_imageIndex].internal_handle;
+		}
+
+		if (_handle->Instance_layout != VK_NULL_HANDLE)
+		{
+			_sets[set_count++] = _handle->Instance_set;
 		}
 
 
 
-		uint32_t offset_count = 0;
+		/*uint32_t offset_count = 0;
 		uint32_t offsets[12] = {};
 
 		for (auto& stct : pipeline->GetSceneStructs())
 		{
 			offsets[offset_count++] = stct.second;
 		}
+*/
 
 
-		offset_count = 0;
-
-		glm::ivec4 draw_inst(_handle->frame_update - 1, _handle->frame_update - 1/*_handle->instance_texture_infos.size() - _handle->bindless_2d_tex_count*/, 0, 0);
+		glm::ivec4 draw_inst(_handle->draw_call_index, _handle->draw_call_index/*_handle->instance_texture_infos.size() - _handle->bindless_2d_tex_count*/, 0, 0);
 		if (_handle->bindless)
 		{
 			__SetPipelineData(pipeline, "draw_instance_index", trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL, &draw_inst, sizeof(glm::ivec4), 0, render_graph_index);
 		}
 
-		vkCmdBindDescriptorSets( _device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _handle->m_layout, 0, set_count, _sets, offset_count, offsets);
+		vkCmdBindDescriptorSets( _device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _handle->m_layout, 0, set_count, _sets, 0, nullptr);
 
 		return result;
 		
+	}
+
+	bool SetPipelineData(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::VKDescriptorSet& set_handle, trace::ShaderResourceStage resource_scope, void* data, uint32_t size, uint32_t in_offset, int32_t render_graph_index)
+	{
+		bool result = true;
+
+
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid buffer pointer -> {}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+		if (_handle->views_set.find(render_graph_index) == _handle->views_set.end())
+		{
+			create_pipeline_view_set_resources(pipeline, _handle, render_graph_index);
+		}
+
+		bool is_storage_buffer = meta_data._resource_type == trace::ShaderResourceType::SHADER_RESOURCE_TYPE_STORAGE_BUFFER;
+
+		if (size > meta_data._size)
+		{
+			TRC_ERROR("Please ensure data size is not greater than resource data");
+		}
+		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
+		{
+			vkCmdPushConstants(
+				_device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle,
+				_handle->m_layout,
+				vk::convertShaderStage(meta_data._shader_stage),
+				meta_data._offset,
+				meta_data._size,
+				data
+			);
+			return true;
+		}
+
+		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL)
+		{
+
+			trace::VKBuffer& buffer = set_handle.buffers[meta_data._slot];
+			uint32_t struct_size = meta_data._struct_size;
+			uint32_t location = meta_data._offset + in_offset;
+
+			void* data_point;
+			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
+
+			void* map_point = (char*)data_point + location;
+			memcpy(map_point, data, size);
+			vkUnmapMemory(_device->m_device, buffer.m_memory);
+
+			return true;
+		}
+
+		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+		{
+
+			trace::VKBuffer& buffer = set_handle.buffers[meta_data._slot];
+			uint32_t struct_size = meta_data._struct_size;
+			uint32_t location = meta_data._offset + in_offset;
+
+			void* data_point;
+			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
+
+			void* map_point = (char*)data_point + location;
+			memcpy(map_point, data, size);
+			vkUnmapMemory(_device->m_device, buffer.m_memory);
+
+			return true;
+		}
+
+		//if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE)
+		//{
+
+
+		//	trace::VKBuffer& buffer = _handle->buffer_resources[meta_data.meta_id].resource[_device->m_imageIndex];
+
+		//	uint32_t buffer_index = static_cast<uint32_t>(_handle->instance_buffer_infos[meta_data._slot].size() - 1);
+		//	trace::BufferDescriptorInfo& buf_info = _handle->instance_buffer_infos[meta_data._slot][buffer_index];
+
+		//	uint32_t buf_offset = buf_info.offset + meta_data._offset + in_offset;
+
+		//	if (buf_offset + meta_data._size >= buffer.m_info.m_size)
+		//	{
+		//		if (is_storage_buffer)
+		//		{
+		//			//TODO: the device gets lost if the buffer is resized here, which crashes the program
+		//			VkDescriptorSet& set = _handle->Instance_sets[_device->m_imageIndex];
+		//			uint32_t new_size = buffer.m_info.m_size * 2;
+		//			resize_buffer_and_update_set(pipeline, _handle, meta_data, buffer, new_size, set);
+		//		}
+		//		else
+		//		{
+		//			update_pipeline_instance_sets(pipeline, _handle, buffer, buffer.m_info.m_size * 4);
+		//			
+		//		}
+
+
+		//	}
+
+		//	buf_info.is_bindless = is_storage_buffer ? false : true;
+
+		//	void* data_point;
+
+		//	vkMapMemory( _device->m_device, buffer.m_memory, 0, VK_WHOLE_SIZE, VK_NO_FLAGS, &data_point);
+
+		//	uint32_t location = buf_offset;
+
+		//	void* map_point = (char*)data_point + location;
+		//	memcpy(map_point, data, size);
+
+		//	vkUnmapMemory(_device->m_device, buffer.m_memory);
+		//}
+
+		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL)
+		{
+			trace::VKBuffer& buffer = set_handle.buffers[meta_data._slot];
+			uint32_t struct_size = meta_data._struct_size;
+			uint32_t location = (struct_size * _handle->draw_call_index) + meta_data._offset + in_offset;
+
+			if (location >= buffer.m_info.m_size)
+			{
+				uint32_t new_size = (buffer.m_info.m_size * 2) + struct_size;
+				update_pipeline_draw_call_set(_handle, set_handle, meta_data._slot, buffer, new_size);
+			}
+
+			void* data_point;
+			vkMapMemory(_device->m_device, buffer.m_memory, 0, buffer.m_info.m_size, VK_NO_FLAGS, &data_point);
+
+			void* map_point = (char*)data_point + location;
+			memcpy(map_point, data, size);
+			vkUnmapMemory(_device->m_device, buffer.m_memory);
+
+			return true;
+		}
+
+		return result;
+	}
+
+	bool SetPipelineTextureData(trace::GPipeline* pipeline, trace::UniformMetaData& meta_data, trace::VKDescriptorSet& set_handle, trace::ShaderResourceStage resource_scope, trace::VKImage* texture, int32_t render_graph_index, uint32_t index)
+	{
+		bool result = true;
+
+		if (!pipeline)
+		{
+			TRC_ERROR("Please input valid pointer -> {}, tex ->{}, Function -> {}", (const void*)pipeline, __FUNCTION__);
+			return false;
+		}
+
+		if (!pipeline->GetRenderHandle()->m_internalData)
+		{
+			TRC_ERROR("Invalid render handle, {}, Function -> {}", (const void*)pipeline->GetRenderHandle()->m_internalData, __FUNCTION__);
+			return false;
+		}
+
+		trace::VKPipeline* _handle = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+		trace::VKImage* _tex = texture;
+
+		if (_handle->views_set.find(render_graph_index) == _handle->views_set.end())
+		{
+			create_pipeline_view_set_resources(pipeline, _handle, render_graph_index);
+		}
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		switch (meta_data._resource_type)
+		{
+		case trace::ShaderResourceType::SHADER_RESOURCE_TYPE_COMBINED_SAMPLER:
+		{
+			write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			break;
+		}
+		}
+
+		VkDescriptorImageInfo image_info = {};
+		image_info.sampler = _tex->m_sampler;
+		image_info.imageView = _tex->m_view;
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		write.descriptorCount = 1; //HACK: Fix
+		write.dstBinding = meta_data._slot;
+		write.pImageInfo = &image_info;
+		write.dstArrayElement = index;
+
+
+		write.dstSet = set_handle.internal_handle;
+
+		switch (resource_scope)
+		{
+		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
+		case trace::ShaderResourceStage::RESOURCE_STAGE_INSTANCE:
+		{
+			vkUpdateDescriptorSets(
+				_device->m_device,
+				1,
+				&write,
+				0,
+				nullptr
+			);
+			break;
+		}
+		case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
+		{
+			std::vector<trace::TextureDescriptorInfo>& tex_infos = _handle->instance_texture_infos[meta_data._slot];
+			int index = ((int)tex_infos.size() - _handle->bindless_2d_tex_count[meta_data._slot]) + (int)meta_data._index;
+			tex_infos[index].texture = _tex;
+			break;
+		}
+		}
+
+
+		return result;
 	}
 
 }

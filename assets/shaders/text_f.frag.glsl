@@ -13,7 +13,7 @@ layout(location = 2)in TextData
 };
 
 //layout(set = 1, binding = 0)uniform sampler2D u_texture;
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(1, 7);
 
 const float pxRange = 2.0f; // set to distance field's pixel range
 

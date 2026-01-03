@@ -8,6 +8,9 @@
 #include <map>
 #include "render/GTexture.h"
 
+namespace trace {
+	class GPipeline;
+}
 
 namespace vk {
 
@@ -107,6 +110,10 @@ namespace vk {
 	void _CopyBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset);
 	void _CopyBufferQueue(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset);
 
+	// Descriptor Sets
+	void _CreateDescriptorSetResources(trace::GPipeline* pipeline, trace::VKPipeline* _handle, trace::VKDescriptorSet& out_set_handle, trace::ShaderResourceStage resource_stage);
+	void _DestroyDescriptorSetResources(trace::VKPipeline* _handle, trace::VKDescriptorSet& set_handle);
+
 
 	// Utils
 	bool _ResultIsSuccess(VkResult result);
@@ -117,6 +124,9 @@ namespace vk {
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState* colorBlendAttachment);
 	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts, std::vector<VkPushConstantRange>& ranges);
+
+	uint32_t get_type_alignment_std430(trace::ShaderData type);
+	uint32_t get_type_alignment_std140(trace::ShaderData type);
 
 	VkFormat convertFmt(trace::Format format);
 	VkImageViewType convertImageViewType(trace::ImageType image_type);

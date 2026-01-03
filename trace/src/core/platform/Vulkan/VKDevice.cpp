@@ -30,7 +30,7 @@ namespace vk {
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
-		for (auto& i : pipeline->instance_buffer_infos)
+		/*for (auto& i : pipeline->instance_buffer_infos)
 		{
 			write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			write.descriptorCount = static_cast<uint32_t>(i.second.size());
@@ -71,8 +71,9 @@ namespace vk {
 			);
 
 			buffer_info.clear();
-		}
+		}*/
 
+		VkDescriptorSet set = pipeline->draw_call_sets[pipeline->m_device->m_imageIndex].internal_handle;
 		for (auto& i : pipeline->instance_texture_infos)
 		{
 			static std::vector<VkDescriptorImageInfo> texture_info;
@@ -82,7 +83,7 @@ namespace vk {
 			write.descriptorCount = static_cast<uint32_t>(i.second.size());
 			write.dstArrayElement = 0;
 			write.dstBinding = i.first;
-			write.dstSet = pipeline->Instance_set;
+			write.dstSet = set;
 			texture_info.reserve(i.second.size());
 			for (auto& j : i.second)
 			{
@@ -107,20 +108,22 @@ namespace vk {
 
 
 
-		pipeline->frame_update = 0;
+		/*pipeline->frame_update = 0;
 		for (auto& i : pipeline->instance_buffer_infos)
 		{
 			i.second.clear();
-		}
+		}*/
 		for (auto& i : pipeline->instance_texture_infos)
 		{
 			i.second.clear();
 		}
+		pipeline->draw_call_index = -1;
 
-		for (auto& i : pipeline->buffer_resources)
+
+		/*for (auto& i : pipeline->buffer_resources)
 		{
 			i.second.current_frame_offset = 0;
-		}
+		}*/
 	}
 
 	bool __CreateDevice(trace::GDevice* device)
@@ -1078,7 +1081,7 @@ namespace vk {
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		
 		
-		for (auto& stct : pipeline->GetSceneStructs())
+		/*for (auto& stct : pipeline->GetSceneStructs())
 		{
 			trace::UniformMetaData& struct_meta = pipeline->GetSceneUniforms()[stct.first];
 
@@ -1098,7 +1101,7 @@ namespace vk {
 
 			pipe_handle->instance_buffer_infos[struct_meta._slot].push_back(buf_info);
 			buffer_offset += struct_meta._size;
-		}
+		}*/
 
 		for (auto& i : pipe_handle->bindless_2d_tex_count)
 		{
@@ -1114,11 +1117,14 @@ namespace vk {
 		_handle->pipeline_to_reset.emplace(pipe_handle);
 
 
-		uint32_t set_index = _handle->m_imageIndex;
+		/*uint32_t set_index = _handle->m_imageIndex;
 		pipe_handle->Scene_set = pipe_handle->Scene_sets[set_index];
 		pipe_handle->Instance_set = pipe_handle->Instance_sets[set_index];
 
-		pipe_handle->frame_update++;
+		pipe_handle->frame_update++;*/
+
+
+		pipe_handle->draw_call_index++;
 
 		return result;
 	}
@@ -1146,10 +1152,10 @@ namespace vk {
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 
-		for (auto& stct : pipeline->GetSceneStructs())
+		/*for (auto& stct : pipeline->GetSceneStructs())
 		{
 			stct.second = INVALID_ID;
-		}
+		}*/
 
 		return result;
 	}

@@ -351,7 +351,7 @@ namespace trace {
 					render_graph,
 					m_downSamplePipeline.get(),
 					"down",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL,
 					render_graph->GetResource_ptr(bd.bloom_samples[i - 1]),
 					render_graph_index
 				);
@@ -403,7 +403,7 @@ namespace trace {
 					render_graph,
 					m_upSamplePipeline.get(),
 					"up",
-					ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+					ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL,
 					render_graph->GetResource_ptr(bd.bloom_samples[i + 1]),
 					render_graph_index
 				);
@@ -454,7 +454,7 @@ namespace trace {
 				render_graph,
 				m_upSamplePipeline.get(),
 				"up",
-				ShaderResourceStage::RESOURCE_STAGE_INSTANCE,
+				ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL,
 				render_graph->GetResource_ptr(bd.bloom_samples[0]),
 				render_graph_index
 			);

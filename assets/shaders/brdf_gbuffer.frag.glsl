@@ -11,24 +11,14 @@ IN_VERTEX_DATA
 
 
 
-// INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
-//     vec4 diffuse_color;
-//     float metallic;
-//     float roughness;
-// });
-
-struct InstanceBufferObject
+layout(std140, set = 2, binding = 3) uniform InstanceBufferObject
 {
     vec4 diffuse_color;
     float metallic;
     float roughness;
 };
 
-layout(std140, set = 1, binding = 3) readonly buffer MaterialData{
-    InstanceBufferObject objects[];
-};
-
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(2, 7);
 
 
 #define GBUFFER_FRAG 1
@@ -47,11 +37,11 @@ void main()
     vec2 screen_uv = ndc.xy;
 
     vec3 normal;
-    SAMPLE_NORMAL_MAP(GET_BINDLESS_TEXTURE2D(NORMAL_MAP), _texCoord, _normal_, _tangent_, normal );
+    SAMPLE_NORMAL_MAP(GET_MATERIAL_TEXTURE(NORMAL_MAP), _texCoord, _normal_, _tangent_, normal );
 
-    vec4 color = texture(GET_BINDLESS_TEXTURE2D(DIFFUSE_MAP), _texCoord);
+    vec4 color = texture(GET_MATERIAL_TEXTURE(DIFFUSE_MAP), _texCoord);
     //vec4 diff_color = GET_INSTANCE_PARAM(diffuse_color, InstanceBufferObject);
-    vec4 diff_color = objects[binding_index.draw_instance_index.x].diffuse_color;
+    vec4 diff_color = diffuse_color;
     diff_color.rgb = pow(diff_color.rgb, vec3(2.2f));
     vec4 final_color = mix(color, diff_color, diff_color.a);
 
@@ -63,8 +53,8 @@ void main()
     uint color_compressed = vec4ToUint32(final_color);
     FRAG_COLOR_R = color_compressed;
 
-    float metal = texture(GET_BINDLESS_TEXTURE2D(METALLIC_MAP), _texCoord).r;
-    float rough = texture(GET_BINDLESS_TEXTURE2D(ROUGHNESS_MAP), _texCoord).r;
+    float metal = texture(GET_MATERIAL_TEXTURE(METALLIC_MAP), _texCoord).r;
+    float rough = texture(GET_MATERIAL_TEXTURE(ROUGHNESS_MAP), _texCoord).r;
 
     vec4 surface_data = vec4(metal, rough, 0.0f, 0.0f);
     uint surface_data_compressed = vec4ToUint32(surface_data);
