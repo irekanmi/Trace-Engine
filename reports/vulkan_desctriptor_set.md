@@ -38,7 +38,7 @@ struct VKPipeline
 
 ```
 
-- The set with index zero in the shader `layout(set = 1)` is the set that holds material data, with that this set will
+- The set with index zero in the shader `layout(set = 2)` is the set that holds material data, with that this set will
 stored in the `struct VKMaterialData`
 
 ```cpp
@@ -49,7 +49,7 @@ struct VKMaterialData
 
 ```
 
-- The set with index zero in the shader `layout(set = 2)` is the set that holds per object(for each draw call) for 
+- The set with index zero in the shader `layout(set = 1)` is the set that holds per object(for each draw call) for 
 example and object model matrix or the skinning matrix. Note this set is assumed to a single structure and only holds 
 buffer and no 
 
