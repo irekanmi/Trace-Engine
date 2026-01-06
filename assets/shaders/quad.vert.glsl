@@ -27,7 +27,7 @@ layout(std140, set = 1, binding = 3) readonly buffer DrawData{
 };
 
 layout(location = 2) out Data{
-    uint color;
+    flat uint color;
 };
 
 

@@ -2600,12 +2600,9 @@ namespace vk {
 				bind.descriptorCount = i.count;
 				bind.descriptorType = convertDescriptorType(i.resource_type);
 				bind.stageFlags = convertShaderStage(i.shader_stage);
-				bind.descriptorCount = is_structure ? 1 : pipeline->bindless_2d_tex_count[i.slot];
+				bind.descriptorCount = is_structure ? 1 : pipeline->bindless_2d_tex_count[8];
 				Instance_bindings.push_back(bind);
 				instance_bindings_count++;
-				if (is_image)
-				{
-				}
 				break;
 			}
 			case trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL:
@@ -2636,9 +2633,6 @@ namespace vk {
 
 				DrawCall_bindings.push_back(bind);
 				draw_call_bindings_count++;
-				if (is_image)
-				{
-				}
 				break;
 			}
 

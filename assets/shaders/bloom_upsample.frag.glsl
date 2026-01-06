@@ -19,7 +19,7 @@ layout(set = 0, binding = 3)uniform SampleData{
 
 void main()
 {
-    INSTANCE_TEXTURE_INDEX(up, 0);
+    INSTANCE_TEXTURE_INDEX_DRAW_CALL(up, 0);
 
     FragColor = sampleTent_3x3(GET_BINDLESS_TEXTURE2D(up), in_texCoord, filterRadius);
     FragColor.a = 1.0f;

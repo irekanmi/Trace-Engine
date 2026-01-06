@@ -572,6 +572,8 @@ namespace vk {
 			desc.subpass_index
 		);
 
+		
+
 		if (pipeline_result == VK_SUCCESS)
 		{
 			TRC_INFO("Pipeline created  |__// ...");

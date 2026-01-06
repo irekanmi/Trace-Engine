@@ -30,7 +30,7 @@ layout(std140, set = 2, binding = 2) uniform MaterialData {
     float height_scale;
 };
 
-BINDLESS_COMBINED_SAMPLER2D_SET(2, 7);
+BINDLESS_COMBINED_SAMPLER2D_SET(2, 8);
 
 
 #define GBUFFER_FRAG 1

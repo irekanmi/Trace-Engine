@@ -448,6 +448,7 @@ namespace trace {
 			}
 		}
 
+		RenderFunc::PostInitializeMaterial(result.get(), result->GetRenderPipline());
 		return result;
 	}
 	Ref<MaterialInstance> MaterialSerializer::Deserialize(DataStream* stream)
@@ -597,8 +598,7 @@ namespace trace {
 
 		}
 
-		//result->RecreateMaterial(pipeline);
-
+		RenderFunc::PostInitializeMaterial(result.get(), result->GetRenderPipline());
 		return result;
 	}
 	bool MaterialSerializer::Deserialize(Ref<GPipeline> pipeline, MaterialInstance* material, MemoryStream& stream)

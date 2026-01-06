@@ -24,7 +24,7 @@ float median(float r, float g, float b) {
 
 void main()
 {
-    INSTANCE_TEXTURE_INDEX(u_texture, 0);
+    INSTANCE_TEXTURE_INDEX_DRAW_CALL(u_texture, 0);
 
     vec4 color = vec4(0.0f);
     float sPxRange;

@@ -11,7 +11,7 @@ OUT_OIT_DATA
 
 layout(location = 0)in vec2 in_texCoord;
 
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(1, 7);
 
 
 layout(location = 2) in Data{
@@ -23,7 +23,7 @@ layout(location = 2) in Data{
 
 void main()
 {
-    INSTANCE_TEXTURE_INDEX(u_textures, 0);
+    INSTANCE_TEXTURE_INDEX_DRAW_CALL(u_textures, 0);
 
     vec4 image_color = texture(GET_BINDLESS_TEXTURE2D(u_textures), in_texCoord);
     float alpha = image_color.a;

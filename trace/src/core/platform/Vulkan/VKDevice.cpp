@@ -1103,15 +1103,18 @@ namespace vk {
 			buffer_offset += struct_meta._size;
 		}*/
 
-		for (auto& i : pipe_handle->bindless_2d_tex_count)
+		/*for (auto& i : pipe_handle->bindless_2d_tex_count)
 		{
-			for (int j = 0; j < i.second; j++)
-			{
-				trace::TextureDescriptorInfo tex_info = {};
-				tex_info.binding = i.first;
-				tex_info.texture = &_handle->nullImage;
-				pipe_handle->instance_texture_infos[i.first].push_back(tex_info);
-			}
+		}*/
+
+		auto& i = pipe_handle->bindless_2d_tex_count[7];
+		for (int j = 0; j < i; j++)
+		{
+			trace::TextureDescriptorInfo tex_info = {};
+			tex_info.binding = 7;
+			tex_info.texture = &_handle->nullImage;
+			std::vector<trace::TextureDescriptorInfo>& texs = pipe_handle->instance_texture_infos[7];
+			texs.push_back(tex_info);
 		}
 
 		_handle->pipeline_to_reset.emplace(pipe_handle);

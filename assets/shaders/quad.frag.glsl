@@ -15,12 +15,12 @@ BINDLESS_COMBINED_SAMPLER2D_SET(1, 7);
 
 
 layout(location = 2) in Data{
-    uint color;
+    flat uint color;
 };
 
 void main()
 {
-    INSTANCE_TEXTURE_INDEX(u_textures, 0);
+    INSTANCE_TEXTURE_INDEX_DRAW_CALL(u_textures, 0);
 
     vec4 image_color = texture(GET_BINDLESS_TEXTURE2D(u_textures), in_texCoord);
     vec4 base_color = colorFromUint32(color);
