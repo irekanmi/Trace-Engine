@@ -1158,7 +1158,7 @@ namespace vk {
 			_device->frame_mem_size[render_graph_index] = graph_handle->memory_size;
 
 		}
-		else if (graph_handle->memory_size < _device->frame_mem_size[render_graph_index])
+		else if (graph_handle->memory_size < _device->frame_mem_size[render_graph_index] && graph_handle->memory_size > 0)
 		{
 			mem_count++;
 			if (mem_count > 30)

@@ -1784,6 +1784,7 @@ namespace trace {
 				bool* data = &std::any_cast<bool&>(dst);
 				ImGui::Checkbox(name.c_str(), data);
 				dst = *data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_FLOAT:
@@ -1791,6 +1792,7 @@ namespace trace {
 				float* data = &std::any_cast<float&>(dst);
 				ImGui::DragFloat(name.c_str(), data, 0.001f);
 				dst = *data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_INT:
@@ -1798,6 +1800,7 @@ namespace trace {
 				int* data = &std::any_cast<int&>(dst);
 				ImGui::DragInt(name.c_str(), data);
 				dst = *data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_IVEC2:
@@ -1805,6 +1808,7 @@ namespace trace {
 				glm::ivec2& data = std::any_cast<glm::ivec2&>(dst);
 				ImGui::DragInt2(name.c_str(), glm::value_ptr(data));
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_IVEC3:
@@ -1812,6 +1816,7 @@ namespace trace {
 				glm::ivec3& data = std::any_cast<glm::ivec3&>(dst);
 				ImGui::DragInt3(name.c_str(), glm::value_ptr(data));
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_IVEC4:
@@ -1819,6 +1824,7 @@ namespace trace {
 				glm::ivec4* data = &std::any_cast<glm::ivec4&>(dst);
 				ImGui::DragInt4(name.c_str(), (int*)data);
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_MAT2:
@@ -1828,7 +1834,7 @@ namespace trace {
 				ImGui::DragFloat2((name + "row_0").c_str(), glm::value_ptr(data[0]));
 				ImGui::DragFloat2((name + "row_1").c_str(), glm::value_ptr(data[1]));
 				dst = data;
-				break;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_MAT3:
@@ -1839,6 +1845,7 @@ namespace trace {
 				ImGui::DragFloat3((name + "row_1").c_str(), glm::value_ptr(data[1]));
 				ImGui::DragFloat3((name + "row_2").c_str(), glm::value_ptr(data[2]));
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_MAT4:
@@ -1850,6 +1857,7 @@ namespace trace {
 				ImGui::DragFloat4((name + "row_2").c_str(), glm::value_ptr(data[2]));
 				ImGui::DragFloat4((name + "row_3").c_str(), glm::value_ptr(data[3]));
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_TEXTURE:
@@ -1937,6 +1945,7 @@ namespace trace {
 				glm::vec2& data = std::any_cast<glm::vec2&>(dst);
 				ImGui::DragFloat2(name.c_str(), glm::value_ptr(data), 0.001f);
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC3:
@@ -1944,6 +1953,7 @@ namespace trace {
 				glm::vec3& data = std::any_cast<glm::vec3&>(dst);
 				ImGui::DragFloat3(name.c_str(), glm::value_ptr(data), 0.001f);
 				dst = data;
+				dirty = true;
 				break;
 			}
 			case trace::ShaderData::CUSTOM_DATA_VEC4:
@@ -1951,6 +1961,7 @@ namespace trace {
 				glm::vec4& data = std::any_cast<glm::vec4&>(dst);
 				ImGui::DragFloat4(name.c_str(), glm::value_ptr(data), 0.001f);
 				dst = data;
+				dirty = true;
 				break;
 			}
 			}
@@ -1984,6 +1995,10 @@ namespace trace {
 			else tex_modified = false;
 		}
 
+		if (dirty)
+		{
+			RenderFunc::PostInitializeMaterial(asset.get(), asset->GetRenderPipline());
+		}
 
 		return dirty;
 	}

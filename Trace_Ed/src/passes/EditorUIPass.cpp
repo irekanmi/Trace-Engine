@@ -109,7 +109,7 @@ namespace trace {
 		FrameData& frame_data = black_board.get<FrameData>();
 		std::vector<RenderGraphInfo>& graphs = render_composer->GetGraphs();
 
-		bool add_object_pick_pass = (render_graph_index == 0) && (graphs.size() > 1);
+		bool add_object_pick_pass = (render_graph_index == 0) && (graphs.size() > 1) && (graphs[1].built);
 		uint32_t object_pick_render_target = INVALID_ID;
 
 		if (add_object_pick_pass)

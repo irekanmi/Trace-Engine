@@ -627,7 +627,19 @@ namespace vk {
 		vkDeviceWaitIdle(_device->m_device);
 		vk::_DestroyPipeline(_instance, _device, _handle);
 
-		
+		for (auto& i : _handle->views_set)
+		{
+			for (uint32_t j = 0; j < VK_MAX_NUM_FRAMES; j++)
+			{
+				vk::_DestroyDescriptorSetResources(_handle, i.second[j]);
+			}
+		}
+
+		for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
+		{
+			vk::_DestroyDescriptorSetResources(_handle, _handle->draw_call_sets[i]);
+		}
+
 
 		delete pipeline->GetRenderHandle()->m_internalData;
 		pipeline->GetRenderHandle()->m_internalData = nullptr;

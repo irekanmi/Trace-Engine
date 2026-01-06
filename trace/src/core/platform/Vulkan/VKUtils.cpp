@@ -541,7 +541,7 @@ namespace vk {
 		pool_info.maxSets = KB * 8;
 		pool_info.poolSizeCount = ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
-		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 
 		VK_ASSERT(vkCreateDescriptorPool(device->m_device, &pool_info, instance->m_alloc_callback, &device->global_descriptor_pool));
@@ -553,6 +553,9 @@ namespace vk {
 
 	void _DestoryDevice(trace::VKDeviceHandle* device, trace::VKHandle* instance)
 	{
+
+		//Global Descriptor Pool
+		vkDestroyDescriptorPool(device->m_device, device->global_descriptor_pool, instance->m_alloc_callback);
 
 		//Per Frame descriptor buffer
 		for (uint32_t i = 0; i < VK_MAX_NUM_FRAMES; i++)
@@ -1995,7 +1998,11 @@ namespace vk {
 
 		
 
-		
+		if (pipeline->DrawCall_layout)
+		{
+			vkDestroyDescriptorSetLayout(device->m_device, pipeline->DrawCall_layout, instance->m_alloc_callback);
+			pipeline->DrawCall_layout = VK_NULL_HANDLE;
+		}
 
 		
 

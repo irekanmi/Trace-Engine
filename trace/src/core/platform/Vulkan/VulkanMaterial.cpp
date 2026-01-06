@@ -68,8 +68,17 @@ namespace vk {
             TRC_WARN("This material is not valid or has not been initialized, {}", (const void*)mat_instance->GetRenderHandle()->m_internalData);
             return false;
         }
+
+        trace::VKMaterialData* _handle = (trace::VKMaterialData*)mat_instance->GetRenderHandle()->m_internalData;
+        trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
+        trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
+
+
+        trace::GPipeline* pipeline = mat_instance->GetRenderPipline().get();
+        trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+
+        vk::_DestroyDescriptorSetResources(sp, _handle->m_set);
         
-        //TODO: Implement destruction of descriptor sets
         delete mat_instance->GetRenderHandle()->m_internalData;
         mat_instance->GetRenderHandle()->m_internalData = nullptr;
 
@@ -105,6 +114,8 @@ namespace vk {
         
 
         trace::VKPipeline* sp = (trace::VKPipeline*)pipeline->GetRenderHandle()->m_internalData;
+
+        vkQueueWaitIdle(_device->m_graphicsQueue);
 
         trace::PipelineStateDesc& desc = mat_instance->GetRenderPipline()->GetDesc();
 
