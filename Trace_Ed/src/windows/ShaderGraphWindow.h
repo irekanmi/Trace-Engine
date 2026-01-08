@@ -42,6 +42,7 @@ namespace trace {
 		uint32_t skip_frames = 0;
 		UUID visual_id = 0;
 		Ref<GPipeline> render_pipeline;
+		std::string render_pipeline_name;
 
 
 

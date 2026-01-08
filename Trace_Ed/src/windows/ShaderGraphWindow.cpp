@@ -20,6 +20,7 @@ namespace trace {
 	bool ShaderGraphWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
 	{
 		Ref<ShaderGraph> graph = GenericSerializer::Deserialize<ShaderGraph>(file_path);
+		render_pipeline_name = graph->GetName() + "duplicate";
 		if (!graph)
 		{
 			return false;
@@ -66,7 +67,7 @@ namespace trace {
 		graph_instance.CreateInstance(m_shaderGraph);
 
 		Ref<GPipeline> pipeline = m_shaderGraph->GetPipeline();
-		render_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle_<GPipeline>(m_shaderGraph->GetName() + "duplicate", pipeline->GetDesc());
+		render_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle_<GPipeline>(render_pipeline_name, pipeline->GetDesc());
 		render_pipeline->SetType(pipeline->GetType());
 		render_pipeline->SetShaderGraph(m_shaderGraph.get());
 		MaterialData& mat_data = render_pipeline->GetShaderGraphVariables();
@@ -148,19 +149,32 @@ namespace trace {
 					pipeline->SetShaderGraph(m_shaderGraph.get());
 					pipeline->SetType(m_shaderGraph->GetType());
 
-					m_material->m_renderPipeline.free();
+					RenderFunc::DestroyMaterial(m_material.get());
+					m_material->SetRenderPipeline(Ref<GPipeline>());
 
 					render_pipeline->m_refCount = 1;
 					render_pipeline.free();
 
-					render_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle_<GPipeline>(m_shaderGraph->GetName() + "duplicate", pipeline->GetDesc());
+					render_pipeline = GenericAssetManager::get_instance()->CreateAssetHandle_<GPipeline>(render_pipeline_name, pipeline->GetDesc());
 
 					render_pipeline->SetType(pipeline->GetType());
 					render_pipeline->SetShaderGraph(m_shaderGraph.get());
-					MaterialData& mat_data = render_pipeline->GetShaderGraphVariables();
-					mat_data = pipeline->GetShaderGraphVariables();
+					m_material->SetRenderPipeline(render_pipeline);
 
-					m_material->RecreateMaterial(render_pipeline);
+					MaterialData mat_data = GetPipelineMaterialData(pipeline);
+
+					MaterialData prev_mat_data = m_material->GetMaterialData();
+					for (auto& i : mat_data)
+					{
+						auto it = prev_mat_data.find(i.first);
+						if (it != prev_mat_data.end() && it->second.type == i.second.type)
+						{
+							i.second.internal_data = it->second.internal_data;
+						}
+					}
+					m_material->SetMaterialData(mat_data);
+					RenderFunc::InitializeMaterial(m_material.get(), render_pipeline);
+
 				}
 				graph_instance.DestroyInstance();
 				build_graph = false;

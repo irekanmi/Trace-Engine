@@ -20,7 +20,7 @@ namespace trace {
 	{
 		{
 			ShaderNodeType::Float_Constant,
-			{
+			{	
 				{},
 				{{GenericValueType::Float, 0}},
 				[](std::string* out_vars, GenericNode* node, GenericGraphInstance* graph_instance) -> std::string
@@ -1866,7 +1866,7 @@ namespace trace {
 		case GenericValueType::Vec3:
 		case GenericValueType::Vec4:
 		{
-			info->out_0 = "objects[binding_index.draw_instance_index.x]." + *instance->GetParamString(param.name);
+			info->out_0 = *instance->GetParamString(param.name);
 			break;
 		}
 		case GenericValueType::Sampler2D:

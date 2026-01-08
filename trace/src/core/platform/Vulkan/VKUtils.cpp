@@ -2607,7 +2607,7 @@ namespace vk {
 				bind.descriptorCount = i.count;
 				bind.descriptorType = convertDescriptorType(i.resource_type);
 				bind.stageFlags = convertShaderStage(i.shader_stage);
-				bind.descriptorCount = is_structure ? 1 : pipeline->bindless_2d_tex_count[8];
+				bind.descriptorCount = is_structure ? 1 : pipeline->bindless_2d_tex_count[8] > 0 ? pipeline->bindless_2d_tex_count[8] : 1;
 				Instance_bindings.push_back(bind);
 				instance_bindings_count++;
 				break;

@@ -346,7 +346,7 @@ namespace trace {
 			{
 				std::string text = fmt::format("\tINSTANCE_TEXTURE_INDEX({}, {});\n", param.name, texture_index);
 				texture_inputs += text;
-				m_paramString[param.name] = fmt::format("GET_BINDLESS_TEXTURE2D({})", param.name);
+				m_paramString[param.name] = fmt::format("GET_MATERIAL_TEXTURE({})", param.name);
 				texture_index++;
 
 			}
@@ -375,16 +375,11 @@ IN_VERTEX_DATA
 
 
 
-struct InstanceBufferObject
-{{
+layout(std140, set = 2, binding = 3) uniform InstanceBufferObject {{
     {}
 }};
 
-layout(std140, set = 1, binding = 3) readonly buffer MaterialData{{
-    InstanceBufferObject objects[];
-}};
-
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(2, 8);
 
 void main()
 {{
@@ -502,11 +497,6 @@ IN_VERTEX_DATA
 
 layout(set = 0, binding = 4)uniform sampler2D _screen_color;
 
-struct InstanceBufferObject
-{{
-    {}
-}};
-
 layout(std140, set = 0, binding = 0)uniform SceneBufferObject{{
     mat4 _projection;
     mat4 _view;
@@ -514,11 +504,11 @@ layout(std140, set = 0, binding = 0)uniform SceneBufferObject{{
     vec3 _view_position;
 }};
 
-layout(std140, set = 1, binding = 3) readonly buffer MaterialData{{
-    InstanceBufferObject objects[];
+layout(std140, set = 2, binding = 3) uniform InstanceBufferObject {{
+    {}
 }};
 
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(2, 8);
 
 void main()
 {{
@@ -643,7 +633,7 @@ OUT_OIT_DATA
 
 layout(location = 0)in vec2 _texCoord;
 
-BINDLESS_COMBINED_SAMPLER2D;
+BINDLESS_COMBINED_SAMPLER2D_SET(2, 8);
 
 
 layout(location = 2) in Data{{
@@ -653,13 +643,8 @@ layout(location = 2) in Data{{
 	vec2 lifetime;
 }};
 
-struct InstanceBufferObject
-{{
+layout(std140, set = 2, binding = 3) uniform InstanceBufferObject {{
     {}
-}};
-
-layout(std140, set = 1, binding = 3) readonly buffer MaterialData{{
-    InstanceBufferObject objects[];
 }};
 
 layout(set = 0, binding = 0)uniform SceneData
