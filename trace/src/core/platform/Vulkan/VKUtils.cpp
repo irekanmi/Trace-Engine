@@ -2301,6 +2301,7 @@ namespace vk {
 					total_size = get_alignment(total_size, alignment);
 					total_size += member.resource_size;
 				}
+				total_size = i.resource_size;
 
 				VkBufferUsageFlags usage_flag;
 				uint32_t bind_flag = 0;
@@ -2404,7 +2405,7 @@ namespace vk {
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)_handle->m_device;
 		trace::VKHandle* _instance = (trace::VKHandle*)_handle->m_instance;
 
-
+		vkQueueWaitIdle(_device->m_graphicsQueue);
 		for (auto& i : set_handle.buffers)
 		{
 			_DestoryBuffer(_instance, _device, &i.second);
