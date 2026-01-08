@@ -15,6 +15,7 @@
 //-----------
 
 #include <unordered_map>
+#include <typeindex>
 
 namespace trace {
 
@@ -41,7 +42,7 @@ namespace trace {
 				return result;
 			}
 
-			result = Ref(GetNextValidHandle<T>((UUID)STR_ID(name)), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			result = Ref(GetNextValidHandle<T>((UUID)STR_ID(name)), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad<T>));
 			//TEMP: For debug only
 			result->m_path = name;
 
@@ -68,7 +69,7 @@ namespace trace {
 				return result;
 			}
 
-			result = Ref(GetNextValidHandle<T>((UUID)STR_ID(name)), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad));
+			result = Ref(GetNextValidHandle<T>((UUID)STR_ID(name)), BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad<T>));
 			//TEMP: For debug only
 			result->m_path = path;
 
@@ -111,32 +112,16 @@ namespace trace {
 		{
 			Ref<T> result;
 			T* _asset = nullptr;
-			/*uint32_t& _id = m_hashtable.Get_Ref(name);
-			if (_id == INVALID_ID)
-			{
-				return result;
-			}
-			_asset = (T*)m_assets[_id];
-			if (!_asset)
-			{
-				_id = INVALID_ID;
-				return result;
-			}
-			else if (_asset->m_id == INVALID_ID)
-			{
-				_id = INVALID_ID;
-				return result;
-			}*/
-
-			auto it = m_assets.find(asset_id);
-			if (it == m_assets.end())
+			
+			auto it = m_assets[typeid(T)].find(asset_id);
+			if (it == m_assets[typeid(T)].end())
 			{
 				return result;
 			}
 			
 			_asset = (T*)it->second;
 
-			result = Ref{ _asset , BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad) };
+			result = Ref{ _asset , BIND_RENDER_COMMAND_FN(GenericAssetManager::UnLoad<T>) };
 			return result;
 		}
 
@@ -145,13 +130,13 @@ namespace trace {
 		{
 			UUID new_id = STR_ID(new_name);
 			UUID prev_id = asset->GetUUID();
-			Resource* asset_data = m_assets[prev_id];
-			m_assets.erase(prev_id);
+			Resource* asset_data = m_assets[typeid(T)][prev_id];
+			m_assets[typeid(T)].erase(prev_id);
 			asset_data->m_assetID = new_id;
-			m_assets[new_id] = asset_data;
+			m_assets[typeid(T)][new_id] = asset_data;
 		}
 
-		virtual void UnLoad(Resource* asset);
+		//virtual void UnLoad(Resource* asset);
 		
 
 		virtual void SetAssetMap(std::unordered_map<UUID, AssetHeader> map)
@@ -187,24 +172,50 @@ namespace trace {
 		}
 
 		template<typename T>
-		void InvalidateHandle(Ref<T> handle)
+		void UnLoad(Resource* asset)
 		{
-			if (!handle)
+			if (asset->m_refCount > 0)
 			{
+				TRC_WARN("{} asset is still in use", __FUNCTION__);
 				return;
 			}
-			const std::string& name = handle->GetName();
-			m_hashtable.Set(name, INVALID_ID);
 
-			m_assets[handle->m_id] = nullptr;
-			handle->m_id = INVALID_ID;
-			delete handle;//TODO: Use custom allocator
+			auto it = m_assets[typeid(T)].find(asset->GetUUID());
+			if (it == m_assets[typeid(T)].end())
+			{
+				TRC_WARN("These not suppose to happen, Asset ID: {}, Name: {}, Function: {}", asset->GetUUID(), STRING_FROM_ID(asset->GetUUID()), __FUNCTION__);
+				return;
+			}
+
+
+			asset->Destroy();
+			TRC_TRACE("{} is destroyed", asset->GetName());
+			m_assets[typeid(T)].erase(asset->GetUUID());
+			asset->m_assetID = 0;
+
+
+			delete asset;//TODO: Use custom memory allocator
 		}
+
+		//template<typename T>
+		//void InvalidateHandle(Ref<T> handle)
+		//{
+		//	if (!handle)
+		//	{
+		//		return;
+		//	}
+		//	const std::string& name = handle->GetName();
+		//	m_hashtable.Set(name, INVALID_ID);
+
+		//	m_assets[handle->m_id] = nullptr;
+		//	handle->m_id = INVALID_ID;
+		//	delete handle;//TODO: Use custom allocator
+		//}
 
 		static GenericAssetManager* get_instance();
 	private:
 	protected:
-		std::unordered_map<UUID, Resource*> m_assets;
+		std::unordered_map<std::type_index, std::unordered_map<UUID, Resource*>> m_assets;
 		uint32_t m_numUnits;
 		std::unordered_map<UUID, AssetHeader> m_assetMap;
 
@@ -220,7 +231,7 @@ namespace trace {
 			Resource* asset = nullptr;
 			asset = new T; //TODO: Use custom memory allocator
 			_asset = (T*)asset;
-			m_assets[asset_id] = asset;
+			m_assets[typeid(T)][asset_id] = asset;
 			_asset->m_assetID = asset_id;
 			if constexpr (std::is_same<T, GShader>{} || std::is_same<T, MaterialInstance>{})
 			{

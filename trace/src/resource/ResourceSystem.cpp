@@ -31,8 +31,8 @@ namespace trace {
 	{
 		DefaultAssetsManager::ReleaseAssets();
 
-		PrefabManager::get_instance()->Shutdown();
 		GenericAssetManager::get_instance()->Shutdown();
+		PrefabManager::get_instance()->Shutdown();
 		
 		SAFE_DELETE(GenericAssetManager::get_instance(), GenericAssetManager);
 		SAFE_DELETE(PrefabManager::get_instance(), PrefabManager);
