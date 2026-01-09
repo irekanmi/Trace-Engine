@@ -311,7 +311,14 @@ float ShadowPCF(sampler2D shadow_map, vec2 tex_coords, int num_samples, float fr
 
 // Simple hash function
 float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    p = vec2(
+        dot(p, vec2(127.1, 311.7)),
+        dot(p, vec2(269.5, 183.3))
+    );
+
+    p = sin(p) * 43758.5453123;
+
+    return fract(p.x + p.y);
 }
 
 // Interpolation
