@@ -214,8 +214,6 @@ namespace trace {
 		renderer->SubmitCommandList(cmd_list, view_index);
 
 		m_camera.Update(deltaTime);
-
-
 	}
 
 	void ShaderGraphWindow::OnRender(float deltaTime)
@@ -230,6 +228,29 @@ namespace trace {
 		ImGui::End();
 
 		ImGui::Begin(inspector_name.c_str());
+		ImGui::Text("Shader Graph Prop: ");
+		
+		const char* type_string[] = { "None", "Front", "Back"};
+		const char* current_type = type_string[(int)m_shaderGraph->GetCullMode()];
+		if (ImGui::BeginCombo("Cull Mode", current_type))
+		{
+			for (int i = 0; i < ARRAYSIZE(type_string); i++)
+			{
+				bool selected = (current_type == type_string[i]);
+				if (ImGui::Selectable(type_string[i], selected))
+				{
+					m_shaderGraph->SetCullMode((CullMode)i);
+				}
+
+				if (selected)
+					ImGui::SetItemDefaultFocus();
+			}
+
+			ImGui::EndCombo();
+		}
+
+
+		ImGui::Dummy(ImVec2(0.0f, 12.0f));
 		m_inspector->DrawEditMaterial(m_material, m_material->GetMaterialData());
 		ImGui::End();
 
