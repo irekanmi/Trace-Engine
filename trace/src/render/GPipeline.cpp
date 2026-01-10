@@ -47,7 +47,6 @@ namespace trace {
 		RenderFunc::DestroyPipeline(this);
 		m_hashTable.Fill(INVALID_ID);
 		m_sceneUniforms.clear();
-		m_scenceStruct.clear();
 
 		if (!RenderFunc::CreatePipeline(this, desc))
 		{

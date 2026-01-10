@@ -232,13 +232,6 @@ namespace trace {
 		VkDescriptorSetLayout Instance_layout = VK_NULL_HANDLE;
 		VkDescriptorSetLayout DrawCall_layout = VK_NULL_HANDLE;
 
-		VkDescriptorSet Scene_sets[VK_MAX_DESCRIPTOR_SET] = {};
-		VkDescriptorPool Scene_pool = VK_NULL_HANDLE;
-		VkDescriptorSet Scene_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
-
-
-		VkDescriptorSet Instance_sets[VK_MAX_NUM_FRAMES] = {};
-		VkDescriptorPool Instance_pool = VK_NULL_HANDLE;
 		VkDescriptorSet Instance_set = VK_NULL_HANDLE; // TODO: Check is assigning set to bind to a variable is efficient
 
 		VKHandle* m_instance = nullptr;
@@ -246,13 +239,11 @@ namespace trace {
 
 		int frame_update = 0;// NOTE: This variable shows the number of times the pipeline has been used in particular frame
 
-		std::unordered_map<int, std::vector<BufferDescriptorInfo>> instance_buffer_infos;
 		std::unordered_map<int, std::vector<TextureDescriptorInfo>> instance_texture_infos;
 		std::unordered_map<int, int> bindless_2d_tex_count;
 		bool bindless = false;
 
-		// Each binding should have their own resources
-		std::unordered_map<uint32_t, BufferBindingInfo> buffer_resources;//NOTE: first(uin32_t) is the set and binding combined
+		
 
 		std::unordered_map<uint32_t, std::array<VKDescriptorSet, VK_MAX_NUM_FRAMES>> views_set;// Per view descriptor set; key: view_index, value: view_set
 

@@ -61,7 +61,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
 	{
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 	{
-			TRC_ERROR(pCallbackData->pMessage);
+		TRC_ERROR(pCallbackData->pMessage);
 		break;
 	}
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
@@ -1978,22 +1978,12 @@ namespace vk {
 		{
 			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Scene_layout, instance->m_alloc_callback);
 			pipeline->Scene_layout = VK_NULL_HANDLE;
-			if (pipeline->Scene_pool)
-			{
-				vkDestroyDescriptorPool(device->m_device, pipeline->Scene_pool, instance->m_alloc_callback);
-				pipeline->Scene_pool = VK_NULL_HANDLE;
-			}
 		}
 		
 		if (pipeline->Instance_layout)
 		{
 			vkDestroyDescriptorSetLayout(device->m_device, pipeline->Instance_layout, instance->m_alloc_callback);
 			pipeline->Instance_layout = VK_NULL_HANDLE;
-			if (pipeline->Instance_pool)
-			{
-				vkDestroyDescriptorPool(device->m_device, pipeline->Instance_pool, instance->m_alloc_callback);
-				pipeline->Instance_pool = VK_NULL_HANDLE;
-			}
 		}
 
 		
