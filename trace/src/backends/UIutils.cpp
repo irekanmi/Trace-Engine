@@ -365,7 +365,7 @@ bool __ImGui_InitUIRenderBackend(trace::Application* application, trace::Rendere
 
 	// TODO: Get font path from AppSettings::exe_path
 	std::string font_path = trace::DefaultAssetsManager::assets_path + "/fonts" + "/Ruda-Bold.ttf";
-	io.FontDefault = io.Fonts->AddFontFromFileTTF(font_path.c_str(), 13.0f);
+	io.FontDefault = io.Fonts->AddFontFromFileTTF(font_path.c_str(), 14.0f);
 
 
 
