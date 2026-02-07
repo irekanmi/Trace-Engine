@@ -252,6 +252,13 @@ namespace trace {
 		int32_t draw_call_index = -1;
 	};
 
+	struct StagingBufferReads
+	{
+		void* result = nullptr;
+		uint32_t offset = 0;
+		uint32_t size = 0;
+	};
+
 	struct VKDeviceHandle
 	{
 		VkPhysicalDevice m_physicalDevice;
@@ -305,6 +312,8 @@ namespace trace {
 		VKHandle* instance;
 
 		VkDescriptorPool global_descriptor_pool;
+
+		std::vector<StagingBufferReads> buffer_reads;
 	};
 
 

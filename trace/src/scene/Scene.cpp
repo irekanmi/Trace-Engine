@@ -2513,6 +2513,11 @@ namespace trace {
 
 	bool Scene::IsParent(Entity parent, Entity child)
 	{
+		if (!parent || !child)
+		{
+			return false;
+		}
+
 		HierachyComponent& hi = child.GetComponent<HierachyComponent>();
 		UUID pId = hi.parent;
 

@@ -108,11 +108,6 @@ namespace vk {
 
 
 
-		/*pipeline->frame_update = 0;
-		for (auto& i : pipeline->instance_buffer_infos)
-		{
-			i.second.clear();
-		}*/
 		for (auto& i : pipeline->instance_texture_infos)
 		{
 			i.second.clear();
@@ -120,10 +115,6 @@ namespace vk {
 		pipeline->draw_call_index = -1;
 
 
-		/*for (auto& i : pipeline->buffer_resources)
-		{
-			i.second.current_frame_offset = 0;
-		}*/
 	}
 
 	bool __CreateDevice(trace::GDevice* device)
@@ -938,6 +929,19 @@ namespace vk {
 			}
 			TRC_INFO("Recreating Swapchain...");
 			return false;
+		}
+
+		//Handle Staging buffer reads
+		if (!_handle->buffer_reads.empty())
+		{
+			for (auto& i : _handle->buffer_reads)
+			{
+				void* data;
+				vkMapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory, i.offset, i.size, 0, &data);
+				memcpy(i.result, data, i.size);
+				vkUnmapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory);
+			}
+			_handle->buffer_reads.clear();
 		}
 
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;

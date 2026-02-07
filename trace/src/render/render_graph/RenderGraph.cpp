@@ -164,12 +164,27 @@ namespace trace {
 		m_depthStencilInput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
 		output_tex->read_passes.push_back(pass_index);
-		RenderGraphEdge edge = {};
-		edge.from = output_tex->written_passes.back();
-		edge.to = pass_index;
-		edge.resource = index;
-		m_edges.push_back(edge);
-		m_renderGraph->GetPass(edge.from).GetPassEdges().push_back(edge);
+
+		if (output_tex->external)
+		{
+			RenderGraphEdge edge = {};
+			edge.from = INVALID_ID;
+			edge.to = pass_index;
+			edge.resource = index;
+			m_edges.push_back(edge);
+		}
+		else
+		{
+
+			RenderGraphEdge edge = {};
+			edge.from = output_tex->written_passes.back();
+			edge.to = pass_index;
+			edge.resource = index;
+			m_edges.push_back(edge);
+			m_renderGraph->GetPass(edge.from).GetPassEdges().push_back(edge);
+
+		}
+
 	}
 
 	void RenderGraphPass::SetDepthStencilOutput(const std::string& name)
@@ -301,9 +316,12 @@ namespace trace {
 			return FindResourceIndex(it->resource_name);
 		}
 
+		RenderGraphResource& external_resource = source->GetResource(index);
+
 		RenderGraphResourceData resource_data = {};
 		resource_data.external_resource.external_graph = source;
 		resource_data.external_resource.resource_index = index;
+		resource_data.texture = external_resource.resource_data.texture;
 
 
 		RenderGraphResource resource = {};
@@ -311,6 +329,7 @@ namespace trace {
 		resource.resource_name = resource_name;
 		resource.resource_type = RenderGraphResourceType::External_Texture;
 		resource.resource_data = resource_data;
+		resource.render_handle = external_resource.render_handle;
 
 		uint32_t resource_index = static_cast<uint32_t>(m_resources.size());
 		m_resources.push_back(resource);

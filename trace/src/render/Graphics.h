@@ -289,6 +289,30 @@ namespace trace {
 		Post_Process = BIT(3)
 	};
 
+	enum StencilOp
+	{
+		STENCIL_KEEP,
+		STENCIL_ZERO,
+		STENCIL_REPLACE,
+		/*STENCIL_INCREMENT_AND_CLAMP,
+		STENCIL_DECREMENT_AND_CLAMP,
+		STENCIL_INVERT,
+		STENCIL_INCREMENT_AND_WRAP,
+		STENCIL_DECREMENT_AND_WRAP,*/
+	};
+
+	enum CompareOp
+	{
+		COMPARE_NEVER,
+		COMPARE_LESS,
+		COMPARE_EQUAL,
+		COMPARE_LESS_OR_EQUAL,
+		COMPARE_GREATER,
+		COMPARE_NOT_EQUAL,
+		COMPARE_GREATER_OR_EQUAL,
+		COMPARE_ALWAYS,
+	};
+
 	typedef uint32_t FrameSettings;
 
 	struct BufferInfo
@@ -348,6 +372,17 @@ namespace trace {
 		FillMode fill_mode = FillMode::NONE;
 	};
 
+	struct StencilState
+	{
+		StencilOp    failOp = StencilOp::STENCIL_KEEP;
+		StencilOp    passOp = StencilOp::STENCIL_KEEP;
+		StencilOp    depth_failOp = StencilOp::STENCIL_KEEP;
+		CompareOp    compareOp = CompareOp::COMPARE_ALWAYS;
+		uint32_t     compare_mask = 0xff;
+		uint32_t     write_mask = 1;
+		uint32_t     reference = 1;
+	};
+
 	struct DepthStencilState
 	{
 		bool depth_test_enable = false;
@@ -355,6 +390,7 @@ namespace trace {
 		bool stencil_test_enable = false;
 		float minDepth = 0.0f;
 		float maxDepth = 1.0f;
+		StencilState stencil_state = {};
 	};
 
 	struct FrameInfo

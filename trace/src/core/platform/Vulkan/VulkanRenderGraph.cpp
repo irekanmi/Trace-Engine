@@ -802,7 +802,15 @@ namespace vk {
 
 		trace::VKCommmandBuffer& cmd_buf = device->m_graphicsCommandBuffers[device->m_imageIndex];
 
-		result = vk::_ReadImageData(instance, device, &image, desc, offset, extent, out_data, cmd_buf, device->copy_staging_buffer);
+		result = vk::_ReadImageData(instance, device, &image, desc, offset, extent, out_data, cmd_buf, device->copy_staging_buffer, false);
+
+		uint32_t data_size = extent.x * extent.y * trace::getFmtSize(desc.m_format);
+
+		trace::StagingBufferReads buffer_read = {};
+		buffer_read.result = out_data;
+		buffer_read.offset = 0;
+		buffer_read.size = data_size;
+		device->buffer_reads.push_back(buffer_read);
 
 		return result;
 	}
@@ -922,7 +930,7 @@ namespace vk {
 		{
 			trace::RenderGraphResource* tex = &render_graph->GetResource(pass->GetDepthStencilInput());
 			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 			depth_desc.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			depth_desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			depth_desc.format = convertFmt(tex->resource_data.texture.format);

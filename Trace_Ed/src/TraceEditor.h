@@ -44,6 +44,7 @@ namespace trace {
 		bool DrawPipelinesPopup(std::string& result);
 		bool DrawShadersPopup(std::string& result);
 		bool InputTextPopup(const std::string& label, std::string& result);
+		void SelectObject(glm::ivec2 pos, std::function<void(UUID)> callback);
 
 		static TraceEditor* get_instance();
 
@@ -139,7 +140,14 @@ namespace trace {
 		ImGuiID main_dockspace_Top;
 		ImGuiID main_dockspace_Bottom;
 
+		std::function<void(UUID)> select_obj_callback;
+		glm::ivec2 select_pos;
+		bool should_select = false;
+		glm::ivec4 pixel_data = glm::ivec4(INVALID_ID);
+
+
 	protected:
+		friend class EditorUIPass;
 	};
 
 }

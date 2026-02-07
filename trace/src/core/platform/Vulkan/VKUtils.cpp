@@ -1317,7 +1317,7 @@ namespace vk {
 		return result;
 	}
 
-	bool _ReadImageData(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, trace::TextureDesc& desc, glm::ivec3 offset, glm::uvec3 extent, void*& out_data, trace::VKCommmandBuffer& cmd_buf, trace::VKBuffer& staging_buffer)
+	bool _ReadImageData(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKImage* image, trace::TextureDesc& desc, glm::ivec3 offset, glm::uvec3 extent, void*& out_data, trace::VKCommmandBuffer& cmd_buf, trace::VKBuffer& staging_buffer, bool read_immediate)
 	{
 
 		uint32_t data_size = extent.x * extent.y * trace::getFmtSize(desc.m_format);
@@ -1399,11 +1399,13 @@ namespace vk {
 			range
 		);
 				
-
-		void* data;
-		vkMapMemory(device->m_device, staging_buffer.m_memory, 0, data_size, 0, &data);
-		memcpy(out_data, data, data_size);
-		vkUnmapMemory(device->m_device, staging_buffer.m_memory);
+		if (read_immediate)
+		{
+			void* data;
+			vkMapMemory(device->m_device, staging_buffer.m_memory, 0, data_size, 0, &data);
+			memcpy(out_data, data, data_size);
+			vkUnmapMemory(device->m_device, staging_buffer.m_memory);
+		}
 
 		
 
@@ -2490,6 +2492,21 @@ namespace vk {
 		create_info.stencilTestEnable = state.stencil_test_enable ? VK_TRUE : VK_FALSE;
 		create_info.front = {}; // TODO
 		create_info.back = {}; // TODO
+
+		if (state.stencil_test_enable)
+		{
+			VkStencilOpState stencil = {};
+			stencil.compareMask = state.stencil_state.compare_mask;
+			stencil.compareOp = (VkCompareOp)state.stencil_state.compareOp;
+			stencil.depthFailOp = (VkStencilOp)state.stencil_state.depth_failOp;
+			stencil.failOp = (VkStencilOp)state.stencil_state.failOp;
+			stencil.passOp = (VkStencilOp)state.stencil_state.passOp;
+			stencil.reference = (VkStencilOp)state.stencil_state.reference;
+			stencil.writeMask = (VkStencilOp)state.stencil_state.write_mask;
+
+			create_info.front = stencil;
+			create_info.back = stencil;
+		}
 
 	}
 

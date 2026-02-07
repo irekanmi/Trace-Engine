@@ -240,6 +240,17 @@ namespace trace {
 		
 		PrefabManager::get_instance()->GetScene()->ResolveHierachyTransforms();
 
+		//This is to ensure that select_callback is called when the pixel data is
+		//recieved at the end of the frame
+		if (pixel_data != glm::ivec4(INVALID_ID))
+		{
+			UUID selected_obj = 0;
+			memcpy(&selected_obj, &pixel_data, sizeof(UUID));
+
+			select_obj_callback(selected_obj);
+
+			pixel_data = glm::ivec4(INVALID_ID);
+		}
 
 		for(auto& i : m_windows)
 		{
@@ -813,6 +824,13 @@ namespace trace {
 		}
 
 		return res;
+	}
+
+	void TraceEditor::SelectObject(glm::ivec2 pos, std::function<void(UUID)> callback)
+	{
+		select_pos = pos;
+		select_obj_callback = callback;
+		should_select = true;
 	}
 
 
