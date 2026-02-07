@@ -33,7 +33,7 @@ namespace trace {
 			color_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
 
 
-			AttachmentInfo att_infos[] = {
+			AttachmentInfo att_infos[2] = {
 				color_attach
 			};
 
@@ -54,7 +54,23 @@ namespace trace {
 			
 			color_attach.attachment_format = Format::R32G32B32A32_FLOAT;
 			color_attach.load_operation = AttachmentLoadOp::LOAD_OP_CLEAR;
+
+			AttachmentInfo depth_attach;
+			depth_attach.attachmant_index = 1;
+			depth_attach.attachment_format = Format::D32_SFLOAT_S8_SUINT;
+			depth_attach.initial_format = TextureFormat::DEPTH_STENCIL;
+			depth_attach.final_format = TextureFormat::DEPTH_STENCIL;
+			depth_attach.is_depth = true;
+			depth_attach.load_operation = AttachmentLoadOp::LOAD_OP_LOAD;
+			depth_attach.store_operation = AttachmentStoreOp::STORE_OP_STORE;
+
 			att_infos[0] = color_attach;
+			att_infos[1] = depth_attach;
+
+			subpass_desc;
+			subpass_desc.attachment_count = 2;
+			subpass_desc.attachments = att_infos;
+
 			pass_desc.subpass = subpass_desc;
 
 			RenderFunc::CreateRenderPass(&m_object_pick_renderpass, pass_desc);
@@ -82,7 +98,7 @@ namespace trace {
 			_ds2
 		);
 		_ds2.render_pass = Renderer::get_instance()->GetRenderPass("OBJECT_PICK_PASS");
-		_ds2.depth_sten_state = { true, true, false, 0.0f, 1.0f };
+		_ds2.depth_sten_state = { true, false, false, 0.0f, 1.0f };
 		_ds2.rasteriser_state = { CullMode::BACK, FillMode::SOLID };
 
 
@@ -99,17 +115,16 @@ namespace trace {
 	{
 	}
 
-	static glm::vec4 pixel_data(0.0f);
-
 	void EditorUIPass::Setup(RenderGraph* render_graph, RGBlackBoard& black_board, int32_t render_graph_index, int32_t draw_index)
 	{
+		TraceEditor* editor = TraceEditor::get_instance();
 		RenderComposer* render_composer = Renderer::get_instance()->GetRenderComposer();
 
 
 		FrameData& frame_data = black_board.get<FrameData>();
 		std::vector<RenderGraphInfo>& graphs = render_composer->GetGraphs();
 
-		bool add_object_pick_pass = (render_graph_index == 0) && (graphs.size() > 1) && (graphs[1].built);
+		bool add_object_pick_pass = (render_graph_index == 0) && (graphs.size() > 1) && (graphs[1].built) && editor->should_select;
 		uint32_t object_pick_render_target = INVALID_ID;
 
 		if (add_object_pick_pass)
@@ -118,18 +133,23 @@ namespace trace {
 			auto object_pick_pass = render_graph->AddPass("OBJECT_PICK_PASS", GPU_QUEUE::GRAPHICS);
 
 			FrameData& scene_frame_data = graphs[1].black_board.get<FrameData>();
+			GBufferData& gbuffer_data = graphs[1].black_board.get<GBufferData>();
+			uint32_t depth_index = render_graph->AddTextureResource("GRAPH_DEPTH_BUFFER", &graphs[1].graph, gbuffer_data.depth_index);
 
-			TextureDesc depth = {};
-			depth.m_addressModeU = depth.m_addressModeV = depth.m_addressModeW = AddressMode::CLAMP_TO_BORDER;
-			depth.m_attachmentType = AttachmentType::COLOR;
-			depth.m_flag = BindFlag::RENDER_TARGET_BIT;
-			depth.m_format = Format::R32G32B32A32_FLOAT;
-			depth.m_width = scene_frame_data.frame_width;
-			depth.m_height = scene_frame_data.frame_height;
-			depth.m_minFilterMode = depth.m_magFilterMode = FilterMode::LINEAR;
-			depth.m_mipLevels = depth.m_numLayers = 1;
-			depth.m_usage = UsageFlag::DEFAULT;
-			object_pick_render_target = object_pick_pass->CreateAttachmentOutput("out_id", depth);
+			TextureDesc object_id_map = {};
+			object_id_map.m_addressModeU = object_id_map.m_addressModeV = object_id_map.m_addressModeW = AddressMode::CLAMP_TO_BORDER;
+			object_id_map.m_attachmentType = AttachmentType::COLOR;
+			object_id_map.m_flag = BindFlag::RENDER_TARGET_BIT;
+			object_id_map.m_format = Format::R32G32B32A32_FLOAT;
+			object_id_map.m_width = scene_frame_data.frame_width;
+			object_id_map.m_height = scene_frame_data.frame_height;
+			object_id_map.m_minFilterMode = object_id_map.m_magFilterMode = FilterMode::LINEAR;
+			object_id_map.m_mipLevels = object_id_map.m_numLayers = 1;
+			object_id_map.m_usage = UsageFlag::DEFAULT;
+
+			object_pick_render_target = object_pick_pass->CreateAttachmentOutput("out_id", object_id_map);
+			object_pick_pass->SetDepthStencilInput(depth_index);
+
 			Ref<GPipeline> object_pick_pipeline = m_object_pick_pipeline;
 
 			object_pick_pass->SetRunCB([scene_frame_data, object_pick_pipeline](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
@@ -189,20 +209,22 @@ namespace trace {
 
 				});
 
-			object_pick_pass->SetPassEndCB([object_pick_render_target](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
+			object_pick_pass->SetPassEndCB([object_pick_render_target, editor](Renderer* renderer, RenderGraph* render_graph, RenderGraphPass* render_graph_pass, int32_t render_graph_index, std::vector<uint32_t>& inputs)
 				{
-					void* p_data = &pixel_data;
-					glm::ivec3 offset(0, 0, 0);
-					glm::uvec3 extent(1, 1, 1);
+					void* p_data = &editor->pixel_data;
+					
+					glm::ivec3 offset(editor->select_pos.x, editor->select_pos.y, 0);
+					glm::uvec3 extent(1, 1, 1);	
 
 
 					RenderGraphResource* resource = render_graph->GetResource_ptr(object_pick_render_target);
 					RenderFunc::GetRenderGraphTextureData(render_graph, resource, offset, extent, p_data);
 
-					UUID selected_obj = 0;
-					memcpy(&selected_obj, p_data, sizeof(UUID));
+					
 
 				});
+
+			editor->should_select = false;
 
 		}
 

@@ -264,6 +264,12 @@ namespace trace {
 		
 	}
 
+	void HierachyPanel::SetSelectedEntity(Entity entity)
+	{
+		m_selectedEntity = entity;
+		set_scroll_y = true;
+	}
+
 	void HierachyPanel::DrawAllEntites(Scene* current_active_scene)
 	{
 		//TraceEditor* editor = TraceEditor::get_instance();
@@ -274,6 +280,7 @@ namespace trace {
 			bool is_active = entity.HasComponent<ActiveComponent>();
 
 			bool selected = (m_selectedEntity == entity);
+			bool has_child = current_active_scene->IsParent(entity, m_selectedEntity);
 			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 			TagComponent& tag = current_active_scene->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
@@ -294,6 +301,12 @@ namespace trace {
 				text_color.w = 0.35f;
 				ImGui::PushStyleColor(ImGuiCol_Text, text_color);
 			}
+
+			if (has_child)
+			{
+				ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+			}
+
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 			if (entity.HasComponent<PrefabComponent>() || !is_active)
 			{
@@ -373,6 +386,11 @@ namespace trace {
 				ImGui::EndPopup();
 			}
 
+			if (selected && set_scroll_y)
+			{
+				ImGui::SetScrollHereY();
+				set_scroll_y = false;
+			}
 
 			if (clicked)
 			{
@@ -396,7 +414,8 @@ namespace trace {
 
 
 			bool selected = (m_selectedEntity == entity);
-			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+			bool has_child = current_active_scene->IsParent(entity, m_selectedEntity);
+			ImGuiTreeNodeFlags tree_flags = (selected ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth | (has_child ? ImGuiTreeNodeFlags_DefaultOpen : 0);
 			TagComponent& tag = current_active_scene->m_registry.get<TagComponent>(entity);
 			void* id = (void*)(uint64_t)(uint32_t)entity;
 
@@ -417,6 +436,12 @@ namespace trace {
 				text_color.w = 0.35f;
 				ImGui::PushStyleColor(ImGuiCol_Text, text_color);
 			}
+
+			if (has_child)
+			{
+				ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+			}
+
 			bool clicked = ImGui::TreeNodeEx(id, tree_flags, tag.GetTag().c_str());
 			if (entity.HasComponent<PrefabComponent>() || !is_active)
 			{
@@ -490,6 +515,11 @@ namespace trace {
 				ImGui::EndPopup();
 			}
 
+			if (selected && set_scroll_y)
+			{
+				ImGui::SetScrollHereY();
+				set_scroll_y = false;
+			}
 
 			if (clicked)
 			{

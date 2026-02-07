@@ -21,11 +21,12 @@ namespace trace {
 		Entity GetSelectedEntity() { return m_selectedEntity; }
 
 
-		void SetSelectedEntity(Entity entity) { m_selectedEntity = entity; }
+		void SetSelectedEntity(Entity entity);
 
 	private:
 		Entity m_selectedEntity;
 		Entity m_selectedPrefabEntity;
+		bool set_scroll_y = false;
 
 		void DrawAllEntites(Scene* scene);
 		void DrawEntityHierachy(HierachyComponent& hierachy, Scene* scene);

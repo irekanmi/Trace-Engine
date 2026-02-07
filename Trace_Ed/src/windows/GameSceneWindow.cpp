@@ -331,6 +331,11 @@ namespace trace {
 			{
 				DrawGizmo(gizmo_mode, m_currentScene.get(), m_hierachyPanel->GetSelectedEntity().GetID(), &m_editorCamera);
 			}
+
+			window_size = ImGui::GetWindowSize();
+			window_pos = ImGui::GetWindowPos();
+			title_bar_size = window_size.y - view_size.y;
+
 			ImGui::End();
 
 			ImGui::PopStyleVar();
@@ -592,6 +597,42 @@ namespace trace {
 		{
 			trace::KeyReleased* release = reinterpret_cast<trace::KeyReleased*>(p_event);
 			HandleKeyRelesed(release);
+
+			break;
+		}
+		case TRC_BUTTON_RELEASED:
+		{
+			if (m_currentState != SceneEdit)
+			{
+				break;
+			}
+
+			trace::MouseReleased* release = reinterpret_cast<trace::MouseReleased*>(p_event);
+
+			if (release->GetButton() != Buttons::BUTTON_LEFT)
+			{
+				break;
+			}
+
+			ImVec2 mouse_pos = ImGui::GetMousePos();
+			bool can_click_viewport = ( mouse_pos.x > window_pos.x ) && (mouse_pos.y > (window_pos.y + title_bar_size));
+			can_click_viewport = can_click_viewport && (mouse_pos.x < (window_pos.x + window_size.x)) && (mouse_pos.y < (window_pos.y + window_size.y));
+
+			if (can_click_viewport && m_currentScene)
+			{
+				glm::ivec2 viewport_pos(mouse_pos.x - window_pos.x, mouse_pos.y - window_pos.y - title_bar_size);
+				TraceEditor* editor = TraceEditor::get_instance();
+				editor->SelectObject(viewport_pos, [&](UUID res) {
+					Entity res_obj = m_currentScene->GetEntity(res);
+					if (res_obj)
+					{
+						m_hierachyPanel->SetSelectedEntity(res_obj);
+					}
+
+				});
+
+
+			}
 
 			break;
 		}

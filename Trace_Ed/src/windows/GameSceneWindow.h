@@ -87,6 +87,10 @@ namespace trace {
 		bool m_fullScreen = false;
 		bool m_stopCurrentScene = false;
 
+		ImVec2 window_pos;
+		ImVec2 window_size;
+		float title_bar_size;
+
 	protected:
 
 	};
