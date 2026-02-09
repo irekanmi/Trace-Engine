@@ -9,18 +9,6 @@
 OUT_FRAG_DATA
 IN_VERTEX_DATA
 
-
-
-// INSTANCE_UNIFORM_BUFFER(InstanceBufferObject, {
-//     vec4 diffuse_color;
-//     vec4 emissive_color;
-//     vec2 tilling;
-//     vec2 metallic;
-//     vec2 roughness;
-//     float height_scale;
-// });
-
-
 layout(std140, set = 2, binding = 2) uniform MaterialData {
     vec4 diffuse_color;
     vec4 emissive_color;

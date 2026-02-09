@@ -199,6 +199,17 @@ namespace trace {
 		RenderGraphResource* output_tex = &m_renderGraph->GetResource(index);
 		m_depthStencilOutput = index;
 		uint32_t pass_index = m_renderGraph->FindPassIndex(m_passName);
+
+		if (!output_tex->written_passes.empty())
+		{
+			RenderGraphEdge edge = {};
+			edge.from = output_tex->written_passes.back();
+			edge.to = pass_index;
+			edge.resource = index;
+			m_edges.push_back(edge);
+			m_renderGraph->GetPass(edge.from).GetPassEdges().push_back(edge);
+		}
+
 		output_tex->written_passes.push_back(pass_index);
 		if (output_tex->first_write_pass == INVALID_ID)
 		{

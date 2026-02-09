@@ -25,6 +25,7 @@ namespace trace {
 		editor_ui_pass.Init(m_renderer);
 		shadow_pass.Init(m_renderer);
 		weightedOITPass.Init(m_renderer);
+		objectHighlightPass.Init(m_renderer);
 
 
 		SetGraphsCount(MAX_RENDER_GRAPH);
@@ -36,6 +37,7 @@ namespace trace {
 	{
 		DestroyGraphs();
 
+		objectHighlightPass.ShutDown();
 		weightedOITPass.ShutDown();
 		shadow_pass.ShutDown();
 		editor_ui_pass.ShutDown();

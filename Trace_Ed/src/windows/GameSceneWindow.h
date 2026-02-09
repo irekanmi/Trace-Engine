@@ -91,6 +91,8 @@ namespace trace {
 		ImVec2 window_size;
 		float title_bar_size;
 
+		std::vector<Entity> selected_entities;
+
 	protected:
 
 	};

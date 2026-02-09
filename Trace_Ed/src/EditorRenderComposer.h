@@ -5,6 +5,7 @@
 #include "render/render_graph/UIPass.h"
 #include "render/render_graph/WeightedOITPass.h"
 #include "passes/EditorUIPass.h"
+#include "passes/ObjectHighlightPass.h"
 
 namespace trace {
 
@@ -30,12 +31,14 @@ namespace trace {
 		EditorUIPass editor_ui_pass;
 		ShadowPass shadow_pass;
 		WeightedOITPass weightedOITPass;
+		ObjectHighlightPass objectHighlightPass;
 
 		float x = 800.0f;
 		float y = 600.0f;
 		FrameSettings current_settings;
 
 	protected:
+		friend class GameSceneWindow;
 
 	};
 

@@ -107,9 +107,15 @@ namespace trace {
 		scene_render_controller.build_graph = [composer, this](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
 		{
 			composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
+
+			if (!selected_entities.empty())
+			{
+				composer->objectHighlightPass.Setup(&graph, black_board, render_graph_index, 0);
+			}
 		};
 
 		scene_render_graph_index = composer->BindRenderGraphController(scene_render_controller, "SceneRenderGraph");
+		composer->objectHighlightPass.SetHighlightedEntities(scene_render_graph_index, &selected_entities);
 
 		return true;
 	}
@@ -226,6 +232,10 @@ namespace trace {
 		if (m_hierachyPanel->GetSelectedEntity())
 		{
 			m_inspectorPanel->DrawEntityComponent(m_hierachyPanel->GetSelectedEntity());
+		}
+		else
+		{
+			selected_entities.clear();
 		}
 		ImGui::End();
 
@@ -614,6 +624,11 @@ namespace trace {
 				break;
 			}
 
+			if (ImGuizmo::IsOver())
+			{
+				break;
+			}
+
 			ImVec2 mouse_pos = ImGui::GetMousePos();
 			bool can_click_viewport = ( mouse_pos.x > window_pos.x ) && (mouse_pos.y > (window_pos.y + title_bar_size));
 			can_click_viewport = can_click_viewport && (mouse_pos.x < (window_pos.x + window_size.x)) && (mouse_pos.y < (window_pos.y + window_size.y));
@@ -627,6 +642,9 @@ namespace trace {
 					if (res_obj)
 					{
 						m_hierachyPanel->SetSelectedEntity(res_obj);
+
+						selected_entities.clear();
+						selected_entities.push_back(res_obj);
 					}
 
 				});

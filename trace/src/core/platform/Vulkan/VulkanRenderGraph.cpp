@@ -841,8 +841,8 @@ namespace vk {
 			VkAttachmentDescription att_desc = {};
 			VkAttachmentReference att_ref = {};
 
-			att_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			att_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			att_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 			att_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 			if (tex->resource_type == trace::RenderGraphResourceType::SwapchainImage)
