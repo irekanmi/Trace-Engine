@@ -19,15 +19,15 @@ void main()
     texel_size_X = 1.0f / texel_size_X;
     texel_size_Y = 1.0f / texel_size_Y;
 
-    for(float i = (-1.0f * matrix_size); i < matrix_size; i++)
+    for(float i = (-1.0f * matrix_size); i <= matrix_size; i++)
     {
-        for(float j = (-1.0f * matrix_size); j < matrix_size; j++)
+        for(float j = (-1.0f * matrix_size); j <= matrix_size; j++)
         {
             vec4 value = texture(color_buffer, in_texCoord + vec2(i * texel_size_X, j * texel_size_Y));
             float total = value.r + value.g + value.b + value.a;
             if(total > 0.0f)
             {
-                FragColor = vec4(1.0f, 1.0f, 0.878f, 1.0f);//TODO: Use custom color
+                FragColor = vec4(1.0f, 0.549f, 0.0f, 1.0f);//TODO: Use custom color
                 return;
             }
         }

@@ -293,8 +293,12 @@ namespace trace {
 			view_port.width = static_cast<float>(width);
 			view_port.height = static_cast<float>(height);
 
-			rect.right = width;
-			rect.bottom = height;
+			uint32_t edge_offset = 2;
+
+			rect.top += edge_offset;
+			rect.left += edge_offset;
+			rect.right = width - (edge_offset * 2);
+			rect.bottom = height - (edge_offset * 2);
 			RenderFunc::BindViewport(m_renderer->GetDevice(), view_port);
 			RenderFunc::BindRect(m_renderer->GetDevice(), rect);
 
@@ -377,7 +381,7 @@ namespace trace {
 					render_graph_index
 				);
 
-				float matrix_size = 2.0f;
+				float matrix_size = 1.0f;
 				RenderFunc::SetPipelineData(
 					imageDialationPipeline.get(),
 					"matrix_size",
