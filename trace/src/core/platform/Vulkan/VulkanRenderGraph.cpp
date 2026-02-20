@@ -810,7 +810,7 @@ namespace vk {
 		buffer_read.result = out_data;
 		buffer_read.offset = 0;
 		buffer_read.size = data_size;
-		device->buffer_reads.push_back(buffer_read);
+		device->buffer_reads[device->m_imageIndex].push_back(buffer_read);
 
 		return result;
 	}

@@ -313,7 +313,7 @@ namespace trace {
 
 		VkDescriptorPool global_descriptor_pool;
 
-		std::vector<StagingBufferReads> buffer_reads;
+		std::vector<StagingBufferReads> buffer_reads[VK_MAX_NUM_FRAMES];
 	};
 
 

@@ -931,18 +931,7 @@ namespace vk {
 			return false;
 		}
 
-		//Handle Staging buffer reads
-		if (!_handle->buffer_reads.empty())
-		{
-			for (auto& i : _handle->buffer_reads)
-			{
-				void* data;
-				vkMapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory, i.offset, i.size, 0, &data);
-				memcpy(i.result, data, i.size);
-				vkUnmapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory);
-			}
-			_handle->buffer_reads.clear();
-		}
+		
 
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
 		_handle->m_bufCurrentOffset = 0;
@@ -963,7 +952,18 @@ namespace vk {
 			return false;
 		}
 
-		
+		//Handle Staging buffer reads
+		if (!_handle->buffer_reads[_handle->m_imageIndex].empty())
+		{
+			for (auto& i : _handle->buffer_reads[_handle->m_imageIndex])
+			{
+				void* data;
+				vkMapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory, i.offset, i.size, 0, &data);
+				memcpy(i.result, data, i.size);
+				vkUnmapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory);
+			}
+			_handle->buffer_reads[_handle->m_imageIndex].clear();
+		}
 
 		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
 		vk::_CommandBuffer_Reset(command_buffer);
