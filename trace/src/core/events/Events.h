@@ -251,13 +251,19 @@ namespace trace {
 
 		float GetMouseX() { return m_x; }
 		float GetMouseY() { return m_y; }
+		float GetDeltaX() { return m_deltaX; }
+		float GetDeltaY() { return m_deltaY; }
 
 		void SetMouseX(float mouse_X) { m_x = mouse_X; }
 		void SetMouseY(float mouse_Y) { m_y = mouse_Y; }
+		void SetDeltaX(float deltaX) { m_deltaX = deltaX; }
+		void SetDeltaY(float deltaY) { m_deltaY = deltaY; }
 
 	private:
 		float m_x;
 		float m_y;
+		float m_deltaX = 0.0f;
+		float m_deltaY = 0.0f;
 	protected:
 	};
 

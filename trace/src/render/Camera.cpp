@@ -26,6 +26,11 @@ namespace trace {
 		return m_lookDirection;
 	}
 
+	glm::vec3 Camera::GetRightDir()
+	{
+		return m_rightDirection;
+	}
+
 	glm::vec3 Camera::GetUpDir()
 	{
 		return m_upDirection;
@@ -116,13 +121,13 @@ namespace trace {
 
 		}
 
-		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_Q) == KeyState::KEY_HELD)
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_E) == KeyState::KEY_HELD)
 		{
 			m_position += m_upDirection * move_speed * deltaTime;
 			is_dirty[1] = true;
 
 		}
-		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_E) == KeyState::KEY_HELD)
+		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_Q) == KeyState::KEY_HELD)
 		{
 			m_position -= m_upDirection * move_speed * deltaTime;
 			is_dirty[1] = true;
@@ -134,58 +139,28 @@ namespace trace {
 		{
 
 			float _rot = 1.0f * rotate_speed * deltaTime;
-			glm::mat4 _rotation = glm::identity<glm::mat4>();
-			_rotation = glm::rotate(_rotation, glm::radians(_rot), m_rightDirection);
-
-			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
-			m_lookDirection = glm::normalize(m_lookDirection);
-			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
-			m_upDirection = glm::normalize(m_upDirection);
-			is_dirty[1] = true;
+			Rotate(_rot, m_rightDirection);
 
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_DOWN) == KeyState::KEY_HELD)
 		{
 
 			float _rot = -1.0f * rotate_speed * deltaTime;
-			glm::mat4 _rotation = glm::identity<glm::mat4>();
-			_rotation = glm::rotate(_rotation, glm::radians(_rot), m_rightDirection);
-
-			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
-			m_lookDirection = glm::normalize(m_lookDirection);
-			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
-			m_upDirection = glm::normalize(m_upDirection);
-			is_dirty[1] = true;
+			Rotate(_rot, m_rightDirection);
 
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_RIGHT) == KeyState::KEY_HELD)
 		{
 
 			float _rot = -1.0f * rotate_speed * deltaTime;
-			glm::mat4 _rotation = glm::identity<glm::mat4>();
-			_rotation = glm::rotate(_rotation, glm::radians(_rot), glm::vec3(0.0f, 1.0f, 0.0f));
-
-			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
-			m_lookDirection = glm::normalize(m_lookDirection);
-			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
-			m_upDirection = glm::normalize(m_upDirection);
-			m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
-			is_dirty[1] = true;
+			Rotate(_rot, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		}
 		if (InputSystem::get_instance()->GetKeyState(Keys::KEY_LEFT) == KeyState::KEY_HELD)
 		{
 
 			float _rot = 1.0f * rotate_speed * deltaTime;
-			glm::mat4 _rotation = glm::identity<glm::mat4>();
-			_rotation = glm::rotate(_rotation, glm::radians(_rot), glm::vec3(0.0f, 1.0f, 0.0f));
-
-			m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
-			m_lookDirection = glm::normalize(m_lookDirection);
-			m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
-			m_upDirection = glm::normalize(m_upDirection);
-			m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
-			is_dirty[1] = true;
+			Rotate(_rot, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		}
 
@@ -249,6 +224,19 @@ namespace trace {
 
 		is_dirty[0] = true;
 
+	}
+
+	void Camera::Rotate(float degree, glm::vec3 axis)
+	{
+		glm::mat4 _rotation = glm::identity<glm::mat4>();
+		_rotation = glm::rotate(_rotation, glm::radians(degree), axis);
+
+		m_lookDirection = _rotation * glm::vec4(m_lookDirection, 0.0f);
+		m_lookDirection = glm::normalize(m_lookDirection);
+		m_upDirection = _rotation * glm::vec4(m_upDirection, 0.0f);
+		m_upDirection = glm::normalize(m_upDirection);
+		m_rightDirection = glm::normalize(glm::cross(m_lookDirection, m_upDirection));
+		is_dirty[1] = true;
 	}
 
 

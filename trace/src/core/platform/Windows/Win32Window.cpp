@@ -429,7 +429,21 @@ static LRESULT CALLBACK win_proc(HWND wnd, uint32_t msg, WPARAM wparam, LPARAM l
 		int32_t yPos = GET_Y_LPARAM(lparam);
 
 		trace::MouseMove move(static_cast<float>(xPos), static_cast<float>(yPos));
+
+		float mouse_x = trace::InputSystem::get_instance()->GetMouseX();
+		float mouse_y = trace::InputSystem::get_instance()->GetMouseY();
+
+		if (mouse_x > 0.0f)
+		{
+			move.SetDeltaX(move.GetMouseX() - mouse_x);
+		}
+		if (mouse_y > 0.0f)
+		{
+			move.SetDeltaY(move.GetMouseY() - mouse_y);
+		}
+
 		trace::EventsSystem::get_instance()->DispatchEvent(trace::EventType::TRC_MOUSE_MOVE, &move);
+
 
 		trace::InputSystem::get_instance()->SetMouseX(static_cast<float>(xPos));
 		trace::InputSystem::get_instance()->SetMouseY(static_cast<float>(yPos));

@@ -26,6 +26,7 @@ namespace trace {
 		CameraType GetCameraType() { return m_type; }
 		glm::vec3 GetPosition();
 		glm::vec3 GetLookDir();
+		glm::vec3 GetRightDir();
 		glm::vec3 GetUpDir();
 		glm::mat4 GetViewMatrix();
 		glm::mat4 GetProjectionMatix();
@@ -52,6 +53,8 @@ namespace trace {
 		void SetCameraType(CameraType type) { m_type = type; }
 
 		void SetOrthographicSize(float ortho_size) { m_orthographicSize = ortho_size; is_dirty[0] = true; }
+
+		void Rotate(float degree, glm::vec3 axis);
 
 	private:
 		glm::mat4 m_projection = glm::identity<glm::mat4>();

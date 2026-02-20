@@ -40,7 +40,7 @@ namespace trace {
 		int32_t controller_id = -1;
 	};
 
-	class TRACE_API InputSystem : public Object
+	class InputSystem : public Object
 	{
 
 	public:
