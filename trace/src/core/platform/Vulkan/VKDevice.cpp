@@ -73,7 +73,7 @@ namespace vk {
 			buffer_info.clear();
 		}*/
 
-		VkDescriptorSet set = pipeline->draw_call_sets[pipeline->m_device->m_imageIndex].internal_handle;
+		VkDescriptorSet set = pipeline->draw_call_sets[pipeline->m_device->m_currentFrame].internal_handle;
 		for (auto& i : pipeline->instance_texture_infos)
 		{
 			static std::vector<VkDescriptorImageInfo> texture_info;
@@ -437,7 +437,7 @@ namespace vk {
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		VkViewport viewport = {};
 		viewport.x = view_port.x;
@@ -472,7 +472,7 @@ namespace vk {
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 
 		VkRect2D scissor = {};
@@ -504,7 +504,7 @@ namespace vk {
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vkCmdSetLineWidth(command_buffer->m_handle, value);
 
@@ -514,7 +514,7 @@ namespace vk {
 	{
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -539,7 +539,7 @@ namespace vk {
 			return false;
 		}
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 		vkCmdBindPipeline(command_buffer->m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->m_handle);
 
 		return result;
@@ -549,7 +549,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !buffer)
 		{
@@ -567,7 +567,7 @@ namespace vk {
 
 
 		trace::VKBuffer* buf = reinterpret_cast<trace::VKBuffer*>(buffer->GetRenderHandle()->m_internalData);
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(command_buffer->m_handle, 0, 1, &buf->m_handle, offsets);
@@ -579,7 +579,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !buffer)
 		{
@@ -602,7 +602,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !buffer)
 		{
@@ -620,7 +620,7 @@ namespace vk {
 
 
 		trace::VKBuffer* buf = reinterpret_cast<trace::VKBuffer*>(buffer->GetRenderHandle()->m_internalData);
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vkCmdBindIndexBuffer(command_buffer->m_handle, buf->m_handle, 0, VK_INDEX_TYPE_UINT32);
 
@@ -631,7 +631,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !buffer)
 		{
@@ -655,7 +655,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -670,9 +670,9 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vkCmdDraw(
 			command_buffer->m_handle,
@@ -683,13 +683,13 @@ namespace vk {
 		);
 
 		return result;
-	}	
+	}
 	bool __DrawInstanced(trace::GDevice* device, uint32_t start_vertex, uint32_t count, uint32_t num_instances)
 	{
 
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -704,9 +704,9 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vkCmdDraw(
 			command_buffer->m_handle,
@@ -723,7 +723,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -738,8 +738,8 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vkCmdDrawIndexed(
 			command_buffer->m_handle,
@@ -757,7 +757,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -772,8 +772,8 @@ namespace vk {
 		}
 
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
-		
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vkCmdDrawIndexed(
 			command_buffer->m_handle,
@@ -791,7 +791,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !render_pass || !frame_buffer)
 		{
@@ -808,10 +808,10 @@ namespace vk {
 		trace::VKDeviceHandle* _handle = (trace::VKDeviceHandle*)device->GetRenderHandle()->m_internalData;
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
-		
+
 		trace::VKRenderPass* pass = reinterpret_cast<trace::VKRenderPass*>(render_pass->GetRenderHandle()->m_internalData);
 		trace::Framebuffer_VK* frameBuffer = reinterpret_cast<trace::Framebuffer_VK*>(frame_buffer->GetRenderHandle()->m_internalData);
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		VkRenderPassBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -820,7 +820,7 @@ namespace vk {
 		begin_info.renderArea.offset.y = static_cast<int32_t>(pass->render_area->y);
 		begin_info.renderArea.extent.width = static_cast<uint32_t>(pass->render_area->z);
 		begin_info.renderArea.extent.height = static_cast<uint32_t>(pass->render_area->w);
-		begin_info.framebuffer = frameBuffer->m_handle[_handle->m_imageIndex].m_handle;
+		begin_info.framebuffer = frameBuffer->m_handle[_handle->m_currentFrame].m_handle;
 
 		VkClearValue clear_colors[2] = {};
 		clear_colors[0].color.float32[0] = pass->clear_color->r;
@@ -844,7 +844,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -869,7 +869,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !render_pass)
 		{
@@ -887,7 +887,7 @@ namespace vk {
 		// HACK: Find another way to get the vulkan instance
 		trace::VKHandle* _instance = &g_Vkhandle;
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		vk::_EndRenderPass(_instance, _handle, command_buffer);
 
@@ -898,7 +898,7 @@ namespace vk {
 
 		bool result = true;
 
-		
+
 
 		if (!device || !swapchain)
 		{
@@ -922,7 +922,7 @@ namespace vk {
 		{
 			vkDeviceWaitIdle(_handle->m_device);
 
-			if(_recreate_swapchain(swapchain))
+			if (_recreate_swapchain(swapchain))
 			{
 				TRC_ERROR("Unable to recreate swapchain");
 				return false;
@@ -931,7 +931,7 @@ namespace vk {
 			return false;
 		}
 
-		
+
 
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
 		_handle->m_bufCurrentOffset = 0;
@@ -945,27 +945,29 @@ namespace vk {
 
 		vk::_FenceReset(_handle, &_handle->m_inFlightFence[_handle->m_currentFrame]);
 
-		
+		uint32_t last_image_index = _handle->m_imageIndex;
+
 		if (!vk::_AcquireSwapchainImage(_instance, _handle, swap_chain, _handle->m_imageAvailableSemaphores[_handle->m_currentFrame], nullptr, &_handle->m_imageIndex, UINT32_MAX))
 		{
 			TRC_ASSERT(false, "Failed to acquire swapchain image");
 			return false;
 		}
 
+
 		//Handle Staging buffer reads
-		if (!_handle->buffer_reads[_handle->m_imageIndex].empty())
+		if (!_handle->buffer_reads[_handle->m_currentFrame].empty())
 		{
-			for (auto& i : _handle->buffer_reads[_handle->m_imageIndex])
+			for (auto& i : _handle->buffer_reads[_handle->m_currentFrame])
 			{
 				void* data;
 				vkMapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory, i.offset, i.size, 0, &data);
 				memcpy(i.result, data, i.size);
 				vkUnmapMemory(_handle->m_device, _handle->copy_staging_buffer.m_memory);
 			}
-			_handle->buffer_reads[_handle->m_imageIndex].clear();
+			_handle->buffer_reads[_handle->m_currentFrame].clear();
 		}
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 		vk::_CommandBuffer_Reset(command_buffer);
 		trace::CommandBufferUsage command_use = trace::CommandBufferUsage::NO_USE;
 		vk::_BeginCommandBuffer(command_buffer, command_use);
@@ -977,7 +979,7 @@ namespace vk {
 		static int frame_index = 1;
 		bool result = true;
 
-		
+
 
 		if (!device)
 		{
@@ -996,7 +998,7 @@ namespace vk {
 		trace::VKHandle* _instance = &g_Vkhandle;
 
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		uint32_t frame_offset = uint32_t(MB / (_handle->frames_in_flight)) * _handle->m_imageIndex;
 		char* from = _handle->m_bufferData[_handle->m_imageIndex];
@@ -1040,9 +1042,9 @@ namespace vk {
 
 		vk::_CommandBufferSubmitted(command_buffer);
 		// Destroy previous frame resources 
-		destroy_frame_resources(device, _handle->m_imageIndex);
+		destroy_frame_resources(device, _handle->m_currentFrame);
 
-		
+
 
 		if (_result != VK_SUCCESS)
 		{
@@ -1050,7 +1052,7 @@ namespace vk {
 			return false;
 		}
 
-		
+
 
 
 		frame_index++;
@@ -1082,9 +1084,9 @@ namespace vk {
 		trace::VKHandle* _instance = &g_Vkhandle;
 		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
-		
-		
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
+
+
 		/*for (auto& stct : pipeline->GetSceneStructs())
 		{
 			trace::UniformMetaData& struct_meta = pipeline->GetSceneUniforms()[stct.first];
@@ -1157,7 +1159,7 @@ namespace vk {
 		trace::VKHandle* _instance = &g_Vkhandle;
 		trace::VKPipeline* pipe_handle = reinterpret_cast<trace::VKPipeline*>(pipeline->GetRenderHandle()->m_internalData);
 
-		trace::VKCommmandBuffer* command_buffer = &_handle->m_graphicsCommandBuffers[_handle->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(_handle, _handle->m_graphicsCommandBuffers);
 
 		/*for (auto& stct : pipeline->GetSceneStructs())
 		{

@@ -95,6 +95,7 @@ namespace trace {
 		tool_bar_name = "Tool Bar###" + asset_name + std::to_string(3);
 
 		m_editor->Init();
+		m_editor->can_check_child_node = false;
 		m_editor->SetGraph(m_particleGenerator.get(), asset_name);
 		if (GenericNode* final_node = m_particleGenerator->GetNode(m_particleGenerator->GetEffectRoot()))
 		{
@@ -332,6 +333,22 @@ namespace trace {
 				break;
 			}
 			}
+			break;
+		}
+		case TRC_MOUSE_MOVE:
+		{
+			MouseMove* move = (MouseMove*)p_event;
+
+			if (!InputSystem::get_instance()->GetButton(Buttons::BUTTON_RIGHT))
+			{
+				break;
+			}
+
+			float rotation_scale = -0.35f;
+
+			m_camera.Rotate(rotation_scale * move->GetDeltaX(), glm::vec3(0.0f, 1.0f, 0.0f));
+			m_camera.Rotate(rotation_scale * move->GetDeltaY(), m_camera.GetRightDir());
+
 			break;
 		}
 		}

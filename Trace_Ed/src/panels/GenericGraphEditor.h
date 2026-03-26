@@ -47,6 +47,9 @@ namespace trace {
 		void render_graph_data();
 		void remove_node(UUID node_id);
 
+	public:
+		bool can_check_child_node = true;
+
 	private:
 
 		struct Link

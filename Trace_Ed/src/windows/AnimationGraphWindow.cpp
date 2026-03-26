@@ -293,6 +293,22 @@ namespace trace {
 			}
 			break;
 		}
+		case TRC_MOUSE_MOVE:
+		{
+			MouseMove* move = (MouseMove*)p_event;
+
+			if (!InputSystem::get_instance()->GetButton(Buttons::BUTTON_RIGHT))
+			{
+				break;
+			}
+
+			float rotation_scale = -0.35f;
+
+			m_camera.Rotate(rotation_scale * move->GetDeltaX(), glm::vec3(0.0f, 1.0f, 0.0f));
+			m_camera.Rotate(rotation_scale * move->GetDeltaY(), m_camera.GetRightDir());
+
+			break;
+		}
 		}
 
 		m_editor->OnEvent(p_event);

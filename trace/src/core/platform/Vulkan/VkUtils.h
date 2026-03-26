@@ -70,7 +70,7 @@ namespace vk {
 	void _CommandBufferSubmitted(trace::VKCommmandBuffer* command_buffer);
 	void _CommandBuffer_Reset(trace::VKCommmandBuffer* command_buffer);
 
-	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, eastl::vector<trace::VKCommmandBuffer> &buffers);
+	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, std::vector<trace::VKCommmandBuffer> &buffers);
 
 	// FrameBuffers
 	VkResult _CreateFrameBuffer(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKFrameBuffer* frame_buffer,const eastl::vector<VkImageView>& attachments, trace::VKRenderPass* render_pass, uint32_t width, uint32_t height, uint32_t attachment_count);
@@ -124,6 +124,7 @@ namespace vk {
 	void parseDepthStenState(trace::DepthStencilState& state, VkPipelineDepthStencilStateCreateInfo& create_info);
 	void parseColorBlendState(trace::ColorBlendState& state, VkPipelineColorBlendStateCreateInfo& create_info, VkPipelineColorBlendAttachmentState* colorBlendAttachment);
 	void parsePipelineLayout(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::PipelineStateDesc& desc, VkPipelineLayoutCreateInfo& create_info, trace::VKPipeline* pipeline, VkDescriptorSetLayout* _layouts, std::vector<VkPushConstantRange>& ranges);
+	trace::VKCommmandBuffer& _GetCurrentFrameCommandBuffer(trace::VKDeviceHandle* device, std::vector<trace::VKCommmandBuffer>& cmd_buffers);
 
 	uint32_t get_type_alignment_std430(trace::ShaderData type);
 	uint32_t get_type_alignment_std140(trace::ShaderData type);

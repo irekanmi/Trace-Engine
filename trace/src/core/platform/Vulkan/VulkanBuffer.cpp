@@ -111,8 +111,8 @@ namespace vk {
 		/*vkDeviceWaitIdle(_device->m_device);
 		vk::_DestoryBuffer(_instance, _device, _handle);*/
 
-		_device->frames_resources[_device->m_imageIndex]._buffers.push_back(_handle->m_handle);
-		_device->frames_resources[_device->m_imageIndex]._memorys.push_back(_handle->m_memory);
+		_device->frames_resources[_device->m_currentFrame]._buffers.push_back(_handle->m_handle);
+		_device->frames_resources[_device->m_currentFrame]._memorys.push_back(_handle->m_memory);
 
 		delete buffer->GetRenderHandle()->m_internalData;//TODO: Use custom allocator
 

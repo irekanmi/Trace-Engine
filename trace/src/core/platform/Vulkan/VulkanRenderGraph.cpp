@@ -190,7 +190,7 @@ namespace vk {
 
 		for (auto& evnt : handle->events)
 		{
-			_device->frames_resources[_device->m_imageIndex]._events.push_back(evnt.evnt);
+			_device->frames_resources[_device->m_currentFrame]._events.push_back(evnt.evnt);
 
 		}
 
@@ -204,12 +204,12 @@ namespace vk {
 
 				if (res_handle->resource.texture.m_view != VK_NULL_HANDLE)
 				{
-					_device->frames_resources[_device->m_imageIndex]._image_views.push_back(res_handle->resource.texture.m_view);
+					_device->frames_resources[_device->m_currentFrame]._image_views.push_back(res_handle->resource.texture.m_view);
 					res_handle->resource.texture.m_view = VK_NULL_HANDLE;
 				}
-				_device->frames_resources[_device->m_imageIndex]._images.push_back(res_handle->resource.texture.m_handle);
+				_device->frames_resources[_device->m_currentFrame]._images.push_back(res_handle->resource.texture.m_handle);
 				res_handle->resource.texture.m_handle = VK_NULL_HANDLE;
-				_device->frames_resources[_device->m_imageIndex]._samplers.push_back(res_handle->resource.texture.m_sampler);
+				_device->frames_resources[_device->m_currentFrame]._samplers.push_back(res_handle->resource.texture.m_sampler);
 				res_handle->resource.texture.m_sampler = VK_NULL_HANDLE;
 
 				delete res_handle;
@@ -229,9 +229,9 @@ namespace vk {
 			trace::RenderGraphPass* pass = &render_graph->GetPass(pass_index);
 			trace::VKRenderGraphPass* pass_handle = reinterpret_cast<trace::VKRenderGraphPass*>(pass->GetRenderHandle()->m_internalData);
 
-			_device->frames_resources[_device->m_imageIndex]._renderPasses.push_back(pass_handle->physical_pass.m_handle);
+			_device->frames_resources[_device->m_currentFrame]._renderPasses.push_back(pass_handle->physical_pass.m_handle);
 
-			_device->frames_resources[_device->m_imageIndex]._framebuffers.push_back(pass_handle->frame_buffer);
+			_device->frames_resources[_device->m_currentFrame]._framebuffers.push_back(pass_handle->frame_buffer);
 			delete pass_handle;
 			pass->GetRenderHandle()->m_internalData = nullptr;
 		}
@@ -298,7 +298,7 @@ namespace vk {
 
 
 				//vkCmdPipelineBarrier(
-				//	device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+				//	vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 				//	VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 				//	VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
 				//	0,
@@ -321,7 +321,7 @@ namespace vk {
 		if (wait_evnt)
 		{
 			vkCmdWaitEvents(
-				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+				vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 				static_cast<uint32_t>(pass_handle->wait_events.size()),
 				pass_handle->wait_events.data(),
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -381,7 +381,7 @@ namespace vk {
 
 
 					vkCmdPipelineBarrier(
-						device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+						vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 						VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 						VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 						0,
@@ -415,7 +415,7 @@ namespace vk {
 					res_internal->image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 					vkCmdPipelineBarrier(
-						device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+						vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 						VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 						VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 						0,
@@ -479,7 +479,7 @@ namespace vk {
 		begin_info.clearValueCount = clear_count;
 		begin_info.pClearValues = clear_colors;
 
-		trace::VKCommmandBuffer* command_buffer = &device->m_graphicsCommandBuffers[device->m_imageIndex];
+		trace::VKCommmandBuffer* command_buffer = &vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers);
 
 		vkCmdBeginRenderPass(command_buffer->m_handle, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
 		command_buffer->m_state = trace::CommandBufferState::COMMAND_IN_RENDER_PASS;
@@ -510,7 +510,7 @@ namespace vk {
 		_EndRenderPass(
 			instance,
 			device,
-			&device->m_graphicsCommandBuffers[device->m_imageIndex]
+			&vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers)
 		);
 
 
@@ -586,7 +586,7 @@ namespace vk {
 
 
 				vkCmdPipelineBarrier(
-					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+					vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 					VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
 					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 					0,
@@ -604,7 +604,7 @@ namespace vk {
 		if (image_bar_count > 0)
 		{
 			vkCmdPipelineBarrier(
-				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+				vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				0,
@@ -625,7 +625,7 @@ namespace vk {
 			for (auto& evnt : pass_handle->signal_events)
 			{
 				vkCmdSetEvent(
-					device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+					vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 					evnt,
 					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
 				);
@@ -681,7 +681,7 @@ namespace vk {
 		/*for (auto& evnt : handle->events)
 		{
 			vkCmdResetEvent(
-				device->m_graphicsCommandBuffers[device->m_imageIndex].m_handle,
+				vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers).m_handle,
 				evnt.evnt,
 				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
 			);
@@ -727,7 +727,7 @@ namespace vk {
 			TRC_CRITICAL("Can't set value for an invalid resource. please check if pipeline has been initialized");
 			return false;
 		}
-		
+
 		/*VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		VkDescriptorImageInfo image_info = {};
@@ -800,7 +800,7 @@ namespace vk {
 		desc.m_flag = trace::BindFlag::SHADER_RESOURCE_BIT;
 		desc.m_usage = trace::UsageFlag::DEFAULT;
 
-		trace::VKCommmandBuffer& cmd_buf = device->m_graphicsCommandBuffers[device->m_imageIndex];
+		trace::VKCommmandBuffer& cmd_buf = vk::_GetCurrentFrameCommandBuffer(device, device->m_graphicsCommandBuffers);
 
 		result = vk::_ReadImageData(instance, device, &image, desc, offset, extent, out_data, cmd_buf, device->copy_staging_buffer, false);
 
@@ -810,7 +810,7 @@ namespace vk {
 		buffer_read.result = out_data;
 		buffer_read.offset = 0;
 		buffer_read.size = data_size;
-		device->buffer_reads[device->m_imageIndex].push_back(buffer_read);
+		device->buffer_reads[device->m_currentFrame].push_back(buffer_read);
 
 		return result;
 	}
@@ -1149,7 +1149,7 @@ namespace vk {
 
 
 		static uint32_t mem_count = 0;
-		uint32_t previous_frame = _device->m_imageIndex ? _device->m_imageIndex - 1 : _device->frames_in_flight - 1;
+		uint32_t previous_frame = _device->m_currentFrame ? _device->m_currentFrame - 1 : _device->frames_in_flight - 1;
 
 		if (graph_handle->memory_size > _device->frame_mem_size[render_graph_index])
 		{

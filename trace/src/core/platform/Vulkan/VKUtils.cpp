@@ -1581,7 +1581,7 @@ namespace vk {
 		command_buffer->m_state = trace::CommandBufferState::COMMAND_READY;
 	}
 
-	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, eastl::vector<trace::VKCommmandBuffer>& buffers)
+	void _CreateCommandBuffers(trace::VKHandle* instance, trace::VKDeviceHandle* device, VkCommandPool command_pool, std::vector<trace::VKCommmandBuffer>& buffers)
 	{
 
 		//TODO: Find a way to provide number of avaliable swapchain images
@@ -2145,8 +2145,8 @@ namespace vk {
 
 		_CopyBuffer(instance, device, &buffer, &new_buffer, buffer.m_info.m_size, 0, 0);
 
-		device->frames_resources[device->m_imageIndex]._buffers.push_back(buffer.m_handle);
-		device->frames_resources[device->m_imageIndex]._memorys.push_back(buffer.m_memory);
+		device->frames_resources[device->m_currentFrame]._buffers.push_back(buffer.m_handle);
+		device->frames_resources[device->m_currentFrame]._memorys.push_back(buffer.m_memory);
 		
 		buffer = new_buffer;
 	}
@@ -2212,7 +2212,7 @@ namespace vk {
 
 	void _CopyBufferQueue(trace::VKHandle* instance, trace::VKDeviceHandle* device, trace::VKBuffer* src, trace::VKBuffer* dst, uint32_t size, uint32_t src_offset, uint32_t dst_offset)
 	{
-		trace::VKCommmandBuffer cmd_buf = device->m_graphicsCommandBuffers[device->m_imageIndex];
+		trace::VKCommmandBuffer cmd_buf = device->m_graphicsCommandBuffers[device->m_currentFrame];
 
 		VkBufferCopy copy_region = {};
 		copy_region.size = size;
@@ -2732,6 +2732,11 @@ namespace vk {
 		create_info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
 		create_info.pPushConstantRanges = ranges.data();
 
+	}
+
+	trace::VKCommmandBuffer& _GetCurrentFrameCommandBuffer(trace::VKDeviceHandle* device, std::vector<trace::VKCommmandBuffer>& cmd_buffers)
+	{
+		return cmd_buffers[device->m_currentFrame];
 	}
 
 	uint32_t get_type_alignment_std430(trace::ShaderData type)

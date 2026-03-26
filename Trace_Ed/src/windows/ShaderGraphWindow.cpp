@@ -102,6 +102,7 @@ namespace trace {
 		viewport_name = "Viewport###" + asset_name + std::to_string(2);
 
 		m_editor->Init();
+		m_editor->can_check_child_node = false;
 		m_editor->SetGraph(m_shaderGraph.get(), asset_name);
 		if (GenericNode* final_node = m_shaderGraph->GetFragmentShaderNode())
 		{
@@ -350,6 +351,22 @@ namespace trace {
 				break;
 			}
 			}
+			break;
+		}
+		case TRC_MOUSE_MOVE:
+		{
+			MouseMove* move = (MouseMove*)p_event;
+
+			if (!InputSystem::get_instance()->GetButton(Buttons::BUTTON_RIGHT))
+			{
+				break;
+			}
+
+			float rotation_scale = -0.35f;
+
+			m_camera.Rotate(rotation_scale * move->GetDeltaX(), glm::vec3(0.0f, 1.0f, 0.0f));
+			m_camera.Rotate(rotation_scale * move->GetDeltaY(), m_camera.GetRightDir());
+
 			break;
 		}
 		}

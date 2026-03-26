@@ -587,7 +587,7 @@ namespace vk {
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 		{
 			vkCmdPushConstants(
-				_device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle,
+				_device->m_graphicsCommandBuffers[_device->m_currentFrame].m_handle,
 				_handle->m_layout,
 				vk::convertShaderStage(meta_data._shader_stage),
 				meta_data._offset,
@@ -602,12 +602,12 @@ namespace vk {
 		{
 		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
-			set_handle = &_handle->views_set[render_graph_index][_device->m_imageIndex];
+			set_handle = &_handle->views_set[render_graph_index][_device->m_currentFrame];
 			break;
 		}
 		case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
 		{
-			set_handle = &_handle->draw_call_sets[_device->m_imageIndex];
+			set_handle = &_handle->draw_call_sets[_device->m_currentFrame];
 			break;
 		}
 		}
@@ -689,12 +689,12 @@ namespace vk {
 		{
 		case trace::ShaderResourceStage::RESOURCE_STAGE_GLOBAL:
 		{
-			set_handle = &_handle->views_set[render_graph_index][_device->m_imageIndex];
+			set_handle = &_handle->views_set[render_graph_index][_device->m_currentFrame];
 			break;
 		}
 		case trace::ShaderResourceStage::RESOURCE_STAGE_DRAW_CALL:
 		{
-			set_handle = &_handle->draw_call_sets[_device->m_imageIndex];
+			set_handle = &_handle->draw_call_sets[_device->m_currentFrame];
 			break;
 		}
 		}
@@ -733,12 +733,12 @@ namespace vk {
 		VkDescriptorSet _sets[3];
 		if (_handle->Scene_layout != VK_NULL_HANDLE)
 		{
-			_sets[set_count++] = _handle->views_set[render_graph_index][_device->m_imageIndex].internal_handle;
+			_sets[set_count++] = _handle->views_set[render_graph_index][_device->m_currentFrame].internal_handle;
 		}
 
 		if (_handle->DrawCall_layout != VK_NULL_HANDLE)
 		{
-			_sets[set_count++] = _handle->draw_call_sets[_device->m_imageIndex].internal_handle;
+			_sets[set_count++] = _handle->draw_call_sets[_device->m_currentFrame].internal_handle;
 		}
 
 		if (_handle->Instance_layout != VK_NULL_HANDLE)
@@ -764,7 +764,7 @@ namespace vk {
 			__SetPipelineData(pipeline, "draw_instance_index", trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL, &draw_inst, sizeof(glm::ivec4), 0, render_graph_index);
 		}
 
-		vkCmdBindDescriptorSets( _device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _handle->m_layout, 0, set_count, _sets, 0, nullptr);
+		vkCmdBindDescriptorSets(vk::_GetCurrentFrameCommandBuffer(_device, _device->m_graphicsCommandBuffers).m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, _handle->m_layout, 0, set_count, _sets, 0, nullptr);
 
 		return result;
 		
@@ -807,7 +807,7 @@ namespace vk {
 		if (resource_scope == trace::ShaderResourceStage::RESOURCE_STAGE_LOCAL)
 		{
 			vkCmdPushConstants(
-				_device->m_graphicsCommandBuffers[_device->m_imageIndex].m_handle,
+				vk::_GetCurrentFrameCommandBuffer(_device, _device->m_graphicsCommandBuffers).m_handle,
 				_handle->m_layout,
 				vk::convertShaderStage(meta_data._shader_stage),
 				meta_data._offset,

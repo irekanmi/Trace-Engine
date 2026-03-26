@@ -284,10 +284,10 @@ namespace vk {
 			_handle->m_sampler
 		);*/
 
-		_device->frames_resources[_device->m_imageIndex]._images.push_back(_handle->m_handle);
-		_device->frames_resources[_device->m_imageIndex]._image_views.push_back(_handle->m_view);
-		_device->frames_resources[_device->m_imageIndex]._samplers.push_back(_handle->m_sampler);
-		_device->frames_resources[_device->m_imageIndex]._memorys.push_back(_handle->m_mem);
+		_device->frames_resources[_device->m_currentFrame]._images.push_back(_handle->m_handle);
+		_device->frames_resources[_device->m_currentFrame]._image_views.push_back(_handle->m_view);
+		_device->frames_resources[_device->m_currentFrame]._samplers.push_back(_handle->m_sampler);
+		_device->frames_resources[_device->m_currentFrame]._memorys.push_back(_handle->m_mem);
 
 
 		delete texture->GetRenderHandle()->m_internalData;

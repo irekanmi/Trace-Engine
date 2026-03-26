@@ -69,6 +69,7 @@ namespace trace {
 		std::unordered_map<uint64_t, std::function<void(Animation::Node* node)>> type_node_render;
 		std::unordered_map<uint64_t, std::function<void(Animation::Node* node)>> node_selected_render;
 		std::vector<Animation::Node*> m_currentGraphNodePath;
+		void* current_context = nullptr;
 
 
 	protected:

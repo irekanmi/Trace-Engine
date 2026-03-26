@@ -270,7 +270,7 @@ namespace trace {
 
 		VkFormat m_depthFormat;
 
-		eastl::vector<VKCommmandBuffer> m_graphicsCommandBuffers;
+		std::vector<VKCommmandBuffer> m_graphicsCommandBuffers;
 		VkCommandPool m_graphicsCommandPool;
 
 		bool m_recreatingSwapcahin = false;

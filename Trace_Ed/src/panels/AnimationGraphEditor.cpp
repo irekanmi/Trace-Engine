@@ -899,6 +899,11 @@ namespace trace {
 
             }
         }
+
+        if (current_context != nullptr)
+        {
+            ImNodes::EditorContextSet((ImNodesEditorContext*)current_context);
+        }
 		ImNodes::BeginNodeEditor();
         
 
@@ -1409,7 +1414,7 @@ namespace trace {
         TraceEditor* editor = TraceEditor::get_instance();
         std::string node_db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_currentGraph->GetName() + std::to_string(uint64_t(m_currentNode->GetUUID())) + ".trnodes";
         if (std::filesystem::exists(node_db_path))
-        {
+        {                                                                  
             FileStream stream(node_db_path, FileMode::READ);
             Reflection::DeserializeContainer(m_currentNodeChildren, &stream, nullptr, Reflection::SerializationFormat::BINARY);
             generate_current_node_links();
@@ -1421,10 +1426,14 @@ namespace trace {
 
         }
 
-
-        ImNodes::DestroyContext();
-        ImNodesContext* new_context = ImNodes::CreateContext();
-        ImNodes::SetCurrentContext(new_context);
+        if (current_context != nullptr)
+        {
+            ImNodes::EditorContextFree((ImNodesEditorContext*)current_context);
+            current_context = nullptr;
+        }
+        ImNodesEditorContext* new_context = ImNodes::EditorContextCreate();
+        current_context = new_context;
+        ImNodes::EditorContextSet((ImNodesEditorContext*)current_context);
 
 
         std::string db_path = editor->GetCurrentProject()->GetProjectCurrentDirectory() + "/InternalAssetsDB/" + m_currentGraph->GetName() + std::to_string(uint64_t(m_currentNode->GetUUID())) + ".ini";

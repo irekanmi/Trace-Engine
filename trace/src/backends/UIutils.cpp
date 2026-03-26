@@ -409,7 +409,7 @@ bool __ImGui_UINewFrame()
 	{
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
-		uint32_t current_frame = _device->m_imageIndex;
+		uint32_t current_frame = _device->m_currentFrame;//m_imageIndex;
 		for (auto& i : frame_rendered_textures[current_frame])
 		{
 			ImGui_ImplVulkan_RemoveTexture(i);
@@ -477,7 +477,7 @@ bool __ImGui_UIRenderFrame(trace::Renderer* renderer)
 	case trace::RenderAPI::Vulkan:
 	{
 		trace::VKDeviceHandle* vk = reinterpret_cast<trace::VKDeviceHandle*>(renderer->GetDevice()->GetRenderHandle()->m_internalData);
-		trace::VKCommmandBuffer& cmd_buf = vk->m_graphicsCommandBuffers[vk->m_imageIndex];
+		trace::VKCommmandBuffer& cmd_buf = vk->m_graphicsCommandBuffers[vk->m_currentFrame];
 		// Record dear imgui primitives into command buffer
 		ImGui_ImplVulkan_RenderDrawData(main_draw_data, cmd_buf.m_handle);
 		break;
@@ -591,7 +591,7 @@ bool __ImGui_DestroyTextureHandle(trace::GTexture* texture)
 			//ImGui_ImplVulkan_RemoveTexture(it->second);
 			ImGuiIO& io = ImGui::GetIO();
 			trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
-			frame_rendered_textures[_device->m_imageIndex].push_back(it->second);
+			frame_rendered_textures[_device->m_currentFrame].push_back(it->second);
 			g_texture_handles.erase(texture->GetName());
 		}
 
@@ -637,7 +637,7 @@ bool __ImGui_GetDrawRenderGraphTextureHandle(trace::RenderGraphResource* texture
 		trace::VKDeviceHandle* _device = (trace::VKDeviceHandle*)io.UserData;
 		trace::VKRenderGraphResource* res_handle = reinterpret_cast<trace::VKRenderGraphResource*>(texture->render_handle.m_internalData);
 		VkDescriptorSet tex_set = ImGui_ImplVulkan_AddTexture(res_handle->resource.texture.m_sampler, res_handle->resource.texture.m_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		frame_rendered_textures[_device->m_imageIndex].push_back(tex_set);
+		frame_rendered_textures[_device->m_currentFrame].push_back(tex_set);
 		out_handle = tex_set;
 		break;
 	}

@@ -636,6 +636,13 @@ namespace trace {
 
     void GenericGraphEditor::SetCurrentNode(GenericNode* current_node)
     {
+        
+        if (!can_check_child_node && m_currentNode)
+        {
+            return;
+        }
+
+
         if (m_currentNode)
         {
             m_currentGraphNodePath.push_back(m_currentNode);
