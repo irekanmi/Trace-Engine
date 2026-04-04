@@ -103,6 +103,7 @@ namespace trace {
 		void OpenMaterial(std::string& path);
 		void OpenParticleEffect(std::string& path);
 		void OpenParticleGenerator(std::string& path);
+		void OpenBlendSpace2D(std::string& path);
 
 
 		

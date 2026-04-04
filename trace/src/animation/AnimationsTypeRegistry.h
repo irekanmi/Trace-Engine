@@ -148,6 +148,15 @@ namespace trace::Animation {
 		REGISTER_TYPE_PARENT(RetargetPoseNode, PoseNode);
 		REGISTER_MEMBER(RetargetPoseNode, m_skeleton);
 	END_REGISTER_CLASS;
+	
+	BEGIN_REGISTER_CLASS(BlendSpace2DNode)
+		REGISTER_TYPE_PARENT(BlendSpace2DNode, PoseNode);
+		REGISTER_MEMBER(BlendSpace2DNode, m_blendSpace);
+		REGISTER_MEMBER(BlendSpace2DNode, m_x);
+		REGISTER_MEMBER(BlendSpace2DNode, m_y);
+		REGISTER_MEMBER(BlendSpace2DNode, m_looping);
+		REGISTER_MEMBER(BlendSpace2DNode, m_duration);
+	END_REGISTER_CLASS;
 
 
 	REGISTER_TYPE_PARENT(FinalOutputNode, PoseNode);

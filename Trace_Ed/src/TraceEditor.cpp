@@ -47,7 +47,9 @@
 #include "windows/MaterialWindow.h"
 #include "windows/ParticleEffectsWindow.h"
 #include "windows/ParticleGeneratorWindow.h"
+#include "windows/BlendSpace2DWindow.h"
 #include "resource/PrefabManager.h"
+#include "core/maths/MathHelpers.h"
  
 
 #include "glm/gtc/type_ptr.hpp"
@@ -282,6 +284,8 @@ namespace trace {
 			auto it = m_windows.begin() + last_index;
 			m_windows.erase(it, m_windows.end());
 		}
+
+		Update_Tester(deltaTime);
 
 		m_deltaTime = deltaTime;
 
@@ -908,6 +912,10 @@ namespace trace {
 	{
 		CreateEditorWindow<ParticleGeneratorWindow>(path, path);
 	}
+	void TraceEditor::OpenBlendSpace2D(std::string& path)
+	{
+		CreateEditorWindow<BlendSpace2DWindow>(path, path);
+	}
 	void TraceEditor::HandleKeyPressed(KeyPressed* p_event)
 	{
 		InputSystem* input = InputSystem::get_instance();
@@ -968,42 +976,36 @@ namespace trace {
 		ImGui::DockBuilderDockWindow(window_name.c_str(), main_dockspace_Top);
 	}
 
+	std::vector<glm::vec2> points = {
+		{10.0f, -10.0f},
+		{-10.0f, -10.0f},
+		{1.0f, -10.0f},
+		{1.0f, 10.0f},
+		{5.0f, -6.0f},
+		{10.0f, 7.0f},
+		{15.0f, 7.0f},
+		{6.0f, -1.0f}
+	};
+
+	std::vector<Triangle2D> triangles;
+
 	void TraceEditor::Update_Tester(float deltaTime)
 	{
-		/*if (!m_currentScene)
-		{
-			return;
-		}
-
-		glm::vec2 gamepad(0.0f);
-		if (InputSystem::get_instance()->GetKey(Keys::KEY_W))
-		{
-			gamepad.y -= 1.0f;
-		}
-		if (InputSystem::get_instance()->GetKey(Keys::KEY_S))
-		{
-			gamepad.y += 1.0f;
-		}
-		if (InputSystem::get_instance()->GetKey(Keys::KEY_A))
-		{
-			gamepad.x -= 1.0f;
-		}
-		if (InputSystem::get_instance()->GetKey(Keys::KEY_D))
-		{
-			gamepad.x += 1.0f;
-			
-		}
-
-		Entity x_bot = m_currentScene->GetEntityByName("X_bot");
-		if (x_bot)
-		{
-			if (SpringMotionMatchingController* spring_ctrl = x_bot.TryGetComponent<SpringMotionMatchingController>())
-			{
-				spring_ctrl->target_dir = glm::vec3(gamepad.x * speed, 0.0f, gamepad.y * speed);
-			}
-		}*/
 		
+		/*Debugger* debugger = Debugger::get_instance();
 
+		for (glm::vec2& point : points)
+		{
+			glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(point, 0.0f));
+			debugger->DrawDebugSphere(0.5f, 7, transform, TRC_COL32(127, 27, 127, 255));
+		}
+		
+		MathHelpers::DelaunayTrianglation(points, triangles);
+
+		for (Triangle2D& triangle : triangles)
+		{
+			debugger->DrawDebugTriangle(triangle, glm::mat4(1.0f), TRC_COL32(27, 127, 125, 255));
+		}*/
 	}
 
 	bool TraceEditor::CreateProject(const std::string& dir, const std::string& name)

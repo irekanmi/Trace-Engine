@@ -17,6 +17,7 @@
 #include "external_utils.h"
 #include "core/defines.h"
 #include "shader_graph/ShaderGraph.h"
+#include "animation/BlendSpace2D.h"
 
 #include "serialize/GenericSerializer.h"
 #include "motion_matching/MotionMatchDatabase.h"
@@ -49,6 +50,7 @@ namespace trace {
 		MMT_INFO,
 		PARTICLE_EFFECT,
 		PARTICLE_GENERATOR,
+		BLEND_SPACE_2D,
 	};
 
 	static bool rename_file = false;
@@ -179,6 +181,11 @@ namespace trace {
 			extensions_callbacks[PARTICLE_GENERATOR_FILE_EXTENSION] = [editor](std::filesystem::path& path)
 			{
 				editor->OpenParticleGenerator(path.string());
+			};
+			
+			extensions_callbacks[BLEND_SPACE_2D_FILE_EXTENSION] = [editor](std::filesystem::path& path)
+			{
+				editor->OpenBlendSpace2D(path.string());
 			};
 
 			extensions_callbacks[".ttf"] = [editor](std::filesystem::path& path)
@@ -715,6 +722,10 @@ namespace trace {
 				{
 					c_item = PARTICLE_GENERATOR;
 				}
+				if (ImGui::MenuItem("BlendSpace 2D"))
+				{
+					c_item = BLEND_SPACE_2D;
+				}
 				ImGui::EndMenu();
 			}
 
@@ -1083,6 +1094,37 @@ namespace trace {
 					else
 					{
 						TRC_ERROR("{} has already been created", res + PARTICLE_GENERATOR_FILE_EXTENSION);
+					}
+				}
+			}
+			else c_item = (CreateItem)0;
+			break;
+		}
+		case BLEND_SPACE_2D:
+		{
+			std::string res;
+			if (editor->InputTextPopup("Blend Space 2D Name", res))
+			{
+				if (!res.empty())
+				{
+					c_item = (CreateItem)0;
+					UUID id = GetUUIDFromName(res + BLEND_SPACE_2D_FILE_EXTENSION);
+
+					if (id == 0)
+					{
+						std::string asset_path = (m_currentDir / (res + BLEND_SPACE_2D_FILE_EXTENSION)).string();
+						Ref<BlendSpace2D> asset = GenericAssetManager::get_instance()->CreateAssetHandle_<BlendSpace2D>(asset_path);
+						GenericSerializer::Serialize<BlendSpace2D>(asset, asset_path);
+						std::string filename = res + BLEND_SPACE_2D_FILE_EXTENSION;
+						UUID new_id = STR_ID(filename);
+						m_allFilesID[res + BLEND_SPACE_2D_FILE_EXTENSION] = new_id;
+						m_allIDPath[new_id] = asset_path;
+						ProcessAllDirectory(true);
+						OnDirectoryChanged();
+					}
+					else
+					{
+						TRC_ERROR("{} has already been created", res + BLEND_SPACE_2D_FILE_EXTENSION);
 					}
 				}
 			}

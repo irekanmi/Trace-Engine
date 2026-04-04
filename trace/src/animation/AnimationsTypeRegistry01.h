@@ -10,6 +10,7 @@
 #include "animation/Bone.h"
 #include "animation/Skeleton.h"
 #include "animation/HumanoidRig.h"
+#include "animation/BlendSpace2D.h"
 
 #include "reflection/TypeRegistry.h"
 
@@ -46,6 +47,12 @@ namespace trace {
 	REGISTER_MEMBER(AnimationClip, m_type);
 	REGISTER_MEMBER(AnimationClip, m_hasRootMotion);
 	REGISTER_MEMBER(AnimationClip, m_rootMotionInfo);
+	END_REGISTER_CLASS;
+
+	BEGIN_REGISTER_CLASS(BlendSpace2D)
+		REGISTER_TYPE(BlendSpace2D);
+		REGISTER_MEMBER(BlendSpace2D, m_points);
+		REGISTER_MEMBER(BlendSpace2D, m_animationMap);
 	END_REGISTER_CLASS;
 
 }

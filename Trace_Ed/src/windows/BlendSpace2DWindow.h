@@ -3,15 +3,17 @@
 #include "EditorWindow.h"
 #include "render/Camera.h"
 #include "scene/Scene.h"
-#include "animation/Animation.h"
+#include "scene/Entity.h"
+#include "animation/BlendSpace2D.h"
+#include "animation/Skeleton.h"
+#include "animation/AnimationPose.h"
 
 namespace trace {
 
 	class HierachyPanel;
-	class InspectorPanel;
-	class AnimationPanel;
+	class BlendSpacePanel;
 
-	class AnimationWindow : public EditorWindow
+	class BlendSpace2DWindow : public EditorWindow
 	{
 
 	public:
@@ -25,21 +27,26 @@ namespace trace {
 		virtual void OnEvent(Event* p_event);
 
 	private:
-		Ref<AnimationClip> m_animation;
+		Ref<BlendSpace2D> m_blendSpace;
 		Camera m_camera;
+		Animation::SkeletonInstance m_skeleton;
+		UUID object_id;
 		Scene* m_scene;
 		int32_t view_index;
 		HierachyPanel* m_hierachy;
-		InspectorPanel* m_inspector;
-		AnimationPanel* m_editor;
+		BlendSpacePanel* m_editor;
 		glm::vec2 m_viewportSize;
 		std::string hierachy_name;
-		std::string inspector_name;
 		std::string blend_space_editor_name;
 		std::string viewport_name;
 		int gizmo_mode = 1;
-		std::string animation_path;
+		std::string blend_space_path;
 		bool has_prefab = false;
+		bool has_skeleton = false;
+		Animation::Pose final_pose;
+		Animation::Pose pose_a;
+		Animation::Pose pose_b;
+		Animation::Pose pose_c;
 
 
 	protected:

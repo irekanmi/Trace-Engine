@@ -248,6 +248,15 @@ namespace trace {
 		}
 	}
 
+	void Debugger::DrawDebugTriangle(Triangle2D& triangle, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
+	{
+
+		AddDebugLine(glm::vec3(triangle.vertex0, 0.0f), glm::vec3(triangle.vertex1, 0.0f), transform, TRC_COL32(128, 105, 78, 255));
+		AddDebugLine(glm::vec3(triangle.vertex0, 0.0f), glm::vec3(triangle.vertex2, 0.0f), transform, TRC_COL32(128, 105, 78, 255));
+		AddDebugLine(glm::vec3(triangle.vertex1, 0.0f), glm::vec3(triangle.vertex2, 0.0f), transform, TRC_COL32(128, 105, 78, 255));
+
+	}
+
 	void Debugger::DrawDebugSemiCircle(float radius, uint32_t steps, glm::mat4 transform, uint32_t color, int32_t render_graph_index)
 	{
 		float ar = (glm::pi<float>()) / (float)steps;

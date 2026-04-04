@@ -5,6 +5,8 @@
 #include "core/Coretypes.h"
 #include "motion_matching/MotionMatcher.h"
 #include "motion_matching/Inertialize.h"
+#include "animation/BlendSpace2D.h"
+
 
 namespace trace::Animation {
 
@@ -445,6 +447,65 @@ namespace trace::Animation {
 	protected:
 
 		ACCESS_CLASS_MEMBERS(MotionMatchingNode);
+		GET_TYPE_ID;
+	};
+
+
+
+	class BlendSpace2DNode : public PoseNode
+	{
+
+	public:
+
+		struct RuntimeData
+		{
+			float start_time = 0.0f;
+			float elapsed_time = 0.0f;
+			PoseNodeResult final_pose;
+			Pose pose_a;
+			Pose pose_b;
+			Pose pose_c;
+			Node::Definition definition;
+		};
+
+
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
+		virtual void Reset(GraphInstance* instance);
+
+		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
+
+		void SetBlendSpace(Ref<BlendSpace2D> blend_space);
+		Ref<BlendSpace2D> GetBlendSpace() { return m_blendSpace; }
+
+		void SetX(float x) { m_x = x; }
+		void SetY(float y) { m_y = y; }
+		float GetX() { return m_x; }
+		float GetY() { return m_y; }
+
+		void SetLooping(bool loop) { m_looping = loop; }
+		bool GetLooping() { return m_looping; }
+
+		void SetDuration(float duration) { m_duration = duration; }
+		float GetDuration() { return m_duration; }
+
+	private:
+		Ref<BlendSpace2D> m_blendSpace;
+		float m_duration = 0.0f;
+		float m_x = 0.0f;
+		float m_y = 0.0f;
+		bool m_looping = false;
+
+	protected:
+
+		ACCESS_CLASS_MEMBERS(BlendSpace2DNode);
 		GET_TYPE_ID;
 	};
 

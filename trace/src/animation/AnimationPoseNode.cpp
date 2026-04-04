@@ -1788,4 +1788,176 @@ namespace trace::Animation {
 	// --------------------------------------------------------------
 
 
+	bool BlendSpace2DNode::Instanciate(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* result = new RuntimeData;
+		instance_data_set[this] = result;
+
+		result->final_pose.pose_data.Init(&instance->GetSkeletonInstance());
+		result->pose_a.Init(&instance->GetSkeletonInstance());
+		result->pose_b.Init(&instance->GetSkeletonInstance());
+		result->pose_c.Init(&instance->GetSkeletonInstance());
+
+		return true;
+	}
+
+	void BlendSpace2DNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
+		{
+			return;
+		}
+
+		if (data->elapsed_time == 0.0f)
+		{
+			data->start_time = Application::get_instance()->GetClock().GetElapsedTime();
+		}
+
+		data->definition.update_id = Application::get_instance()->GetUpdateID();
+
+		float X = m_x;
+		NodeInput& input_0 = m_inputs[0];
+		if (input_0.node_id != 0)
+		{
+			Node* in_node = nodes[input_0.node_id];
+			in_node->Update(instance, deltaTime, data_stream);
+			X = *in_node->GetValue<bool>(instance, input_0.value_index);
+		}
+
+		float Y = m_y;
+		NodeInput& input_1 = m_inputs[1];
+		if (input_1.node_id != 0)
+		{
+			Node* in_node = nodes[input_1.node_id];
+			in_node->Update(instance, deltaTime, data_stream);
+			Y = *in_node->GetValue<bool>(instance, input_1.value_index);
+		}
+
+		if (!m_blendSpace)
+		{
+			return;
+		}
+		float next_frame_time = data->elapsed_time + deltaTime;
+
+		m_blendSpace->GetPoseAt(&data->final_pose.pose_data, data->pose_a, data->pose_b, data->pose_c, X, Y, data->elapsed_time);
+
+		data->elapsed_time += deltaTime;
+		
+	}
+
+	void* BlendSpace2DNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		switch (value_index)
+		{
+		case 0:
+		{
+			return &data->final_pose;
+			break;
+		}
+		}
+
+		return nullptr;
+	}
+
+	void BlendSpace2DNode::Init(Graph* graph)
+	{
+		NodeInput input_0 = {};
+		input_0.node_id = 0;
+		input_0.type = ValueType::Float;
+		input_0.value_index = INVALID_ID;
+		m_inputs.push_back(input_0);
+
+		NodeInput input_1 = {};
+		input_1.node_id = 0;
+		input_1.type = ValueType::Float;
+		input_1.value_index = INVALID_ID;
+		m_inputs.push_back(input_1);
+
+		NodeOutput output = {};
+		output.type = ValueType::Pose;
+		output.value_index = 0;
+
+		m_outputs.push_back(output);
+	}
+
+	PoseNodeResult* BlendSpace2DNode::GetFinalPose(GraphInstance* instance)
+	{
+		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+	void BlendSpace2DNode::Reset(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data->elapsed_time = 0.0f;
+		data->start_time = 0.0f;
+
+	}
+
+	void BlendSpace2DNode::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->start_time);
+		data_stream->Write(data->elapsed_time);
+	}
+
+	void BlendSpace2DNode::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Read(data->start_time);
+		data_stream->Read(data->elapsed_time);
+	}
+
+	void BlendSpace2DNode::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data_stream->Write(data->elapsed_time);
+	}
+
+	void BlendSpace2DNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		float elapsed_time = 0.0f;
+		data_stream->Read(elapsed_time);
+
+		if (accept_packet)
+		{
+			data->elapsed_time = elapsed_time;
+		}
+	}
+
+	void BlendSpace2DNode::SetBlendSpace(Ref<BlendSpace2D> blend_space)
+	{
+		m_blendSpace = blend_space;
+	}
+
 }

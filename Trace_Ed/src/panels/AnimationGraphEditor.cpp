@@ -93,6 +93,10 @@ namespace trace {
             {
                 Reflection::TypeID<Animation::RetargetPoseNode>(),
                 "Retarget Pose Node"
+            },
+            {
+                Reflection::TypeID<Animation::BlendSpace2DNode>(),
+                "Blend Space 2D Node"
             }
     };
 
@@ -452,6 +456,60 @@ namespace trace {
 
                     ImNodes::EndNode();
                 }
+            },
+            {
+                Reflection::TypeID<Animation::BlendSpace2DNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::BlendSpace2DNode* sample_node = (Animation::BlendSpace2DNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    Ref<BlendSpace2D> blend_space = sample_node->GetBlendSpace();
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("BlendSpace2D Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeInput& input_0 = node->GetInputs()[0];
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)input_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)input_0.type]);
+                    ImNodes::BeginInputAttribute((1 << 24) | node_index);
+                    ImGui::Text("X");
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeInput& input_1 = node->GetInputs()[1];
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)input_1.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)input_1.type]);
+                    ImNodes::BeginInputAttribute((2 << 24) | node_index);
+                    ImGui::Text("Y");
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+                    
+                    std::string clip_name = "None(BlendSpace2D)";
+
+                    if (blend_space)
+                    {
+                        clip_name = blend_space->GetName();
+                    }
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text(clip_name.c_str());
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
+
+                    ImNodes::EndNode();
+                }
             }
 
         };
@@ -739,6 +797,53 @@ namespace trace {
 
 
                 }
+            },
+            {
+                Reflection::TypeID<Animation::BlendSpace2DNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::BlendSpace2DNode* sample_node = (Animation::BlendSpace2DNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    Ref<BlendSpace2D> blend_space = sample_node->GetBlendSpace();
+
+                    std::string clip_name = "None(BlendSpace2D)";
+                    if (blend_space)
+                    {
+                        clip_name = blend_space;
+                    }
+
+                    ImGui::Text("Blend Space: ");
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(clip_name.c_str()))
+                    {
+                    }
+
+                    if (Ref<BlendSpace2D> new_resource = ImGuiDragDropResource<BlendSpace2D>(BLEND_SPACE_2D_FILE_EXTENSION))
+                    {
+                        sample_node->SetBlendSpace(new_resource);
+                    }
+
+                    ImGui::Text("Loop Clip: ");
+                    ImGui::SameLine();
+                    bool loop = sample_node->GetLooping();
+                    if (ImGui::Checkbox("##Looping", &loop))
+                    {
+                        sample_node->SetLooping(loop);
+                    }
+                    
+                    float X = sample_node->GetX();
+                    float Y = sample_node->GetY();
+                    if (ImGui::DragFloat("X", &X))
+                    {
+                        sample_node->SetX(X);
+                    }
+                    if (ImGui::DragFloat("Y", &Y))
+                    {
+                        sample_node->SetY(Y);
+                    }
+
+                }
             }
         };
 
@@ -1000,6 +1105,11 @@ namespace trace {
                     if (ImGui::MenuItem("Retarget Pose Node"))
                     {
                         UUID node_id = m_currentGraph->CreateNode<Animation::RetargetPoseNode>();
+                        add_new_node(node_id);
+                    }
+                    if (ImGui::MenuItem("BlendSpace2D Node"))
+                    {
+                        UUID node_id = m_currentGraph->CreateNode<Animation::BlendSpace2DNode>();
                         add_new_node(node_id);
                     }
                     ImGui::EndPopup();

@@ -3,6 +3,7 @@
 #include "render/GPipeline.h"
 #include "resource/Ref.h"
 #include "core/Coretypes.h"
+#include "core/maths/Primitives.h"
 
 #include "glm/glm.hpp"
 #include <unordered_map>
@@ -61,6 +62,7 @@ namespace trace {
 		void DrawDebugCapsule(float radius, float height, glm::mat4 transform, uint32_t color = 1);
 		void DrawDebugCylinder(float radius, float height, glm::mat4 transform, uint32_t color = 1);
 		void DrawDebugCircle(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
+		void DrawDebugTriangle(Triangle2D& triangle, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 		void DrawDebugSemiCircle(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 		void DrawDebugSphere(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);
 		void DrawDebugHemiSphere(float radius, uint32_t steps, glm::mat4 transform, uint32_t color = 1, int32_t render_graph_index = 0);

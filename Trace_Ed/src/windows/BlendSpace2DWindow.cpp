@@ -1,18 +1,20 @@
 
 
 
-#include "AnimationWindow.h"
+#include "BlendSpace2DWindow.h"
 
 
-#include "serialize/AnimationsSerializer.h"
+#include "serialize/GenericSerializer.h"
 #include "render/Renderer.h"
 #include "../EditorRenderComposer.h"
 #include "../panels/HierachyPanel.h"
 #include "../panels/InspectorPanel.h"
 #include "../panels/AnimationPanel.h"
+#include "../panels/BlendSpacePanel.h"
 #include "resource/PrefabManager.h"
 #include "../utils/ImGui_utils.h"
 #include "core/input/Input.h"
+
 
 
 #include "ImGuizmo.h"
@@ -22,27 +24,27 @@ namespace trace {
 
 
 
-	bool AnimationWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
+	bool BlendSpace2DWindow::OnCreate(TraceEditor* editor, const std::string& name, const std::string& file_path)
 	{
-		Ref<AnimationClip> animation = AnimationsSerializer::DeserializeAnimationClip(file_path);
-		if (!animation)
+		Ref<BlendSpace2D> blend_space = GenericSerializer::Deserialize<BlendSpace2D>(file_path);
+		if (!blend_space)
 		{
 			return false;
 		}
-		std::string asset_name = animation->GetName();
+		std::string asset_name = blend_space->GetName();
 		Renderer* renderer = Renderer::get_instance();
 		EditorRenderComposer* composer = (EditorRenderComposer*)renderer->GetRenderComposer();
 		RenderGraphController scene_render_controller = {};
 		scene_render_controller.should_render = [this]()->bool { return m_isOpen; };
 		scene_render_controller.build_graph = [composer, this](RenderGraph& graph, RGBlackBoard& black_board, FrameSettings frame_settings, int32_t render_graph_index)
-		{
-			composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
-		};
+			{
+				composer->FullFrameGraph(graph, black_board, frame_settings, m_viewportSize, render_graph_index);
+			};
 
 		view_index = composer->BindRenderGraphController(scene_render_controller, asset_name);
 		if (view_index < 0)
 		{
-			TRC_ERROR("{} asset is already opened for editing, Function: {}", animation->GetName(), __FUNCTION__);
+			TRC_ERROR("{} asset is already opened for editing, Function: {}", blend_space->GetName(), __FUNCTION__);
 			return false;
 		}
 
@@ -61,35 +63,31 @@ namespace trace {
 
 
 
-		m_animation = animation;
+		m_blendSpace = blend_space;
 		m_hierachy = new HierachyPanel;//TODO: Use custom allocator
-		m_inspector = new InspectorPanel;//TODO: Use custom allocator
-		m_editor = new AnimationPanel;//TODO: Use custom allocator
+		m_editor = new BlendSpacePanel("Blend Space", "-X-", "-Y-");//TODO: Use custom allocator
 		m_scene = new Scene;//TODO: Use custom allocator
 		m_scene->m_path = asset_name;
 		m_scene->Create();
-		hierachy_name = "Hierachy###" + asset_name;
-		inspector_name = "Inspector###" + asset_name + std::to_string(0);
+		hierachy_name = "Hierachy###" + asset_name + std::to_string(0);
 		blend_space_editor_name = "Animation Editor###" + asset_name + std::to_string(1);
 		viewport_name = "Viewport###" + asset_name + std::to_string(2);
 		has_prefab = false;
 
-		m_editor->Init();
-		m_editor->SetAnimationClip(m_scene, m_animation, 0);
+		m_editor->SetBlendSpace(m_blendSpace);
 
-		animation_path = file_path;
+		blend_space_path = file_path;
 		m_name = asset_name;
 		return true;
 	}
 
-	void AnimationWindow::OnDestroy(TraceEditor* editor)
+	void BlendSpace2DWindow::OnDestroy(TraceEditor* editor)
 	{
 		m_editor->Shutdown();
 
 		m_scene->Destroy();
-		m_animation.free();
+		m_blendSpace.free();
 		delete m_hierachy;
-		delete m_inspector;
 		delete m_editor;
 		delete m_scene;
 
@@ -99,7 +97,7 @@ namespace trace {
 
 	}
 
-	void AnimationWindow::OnUpdate(float deltaTime)
+	void BlendSpace2DWindow::OnUpdate(float deltaTime)
 	{
 
 		if (!m_isOpen)
@@ -138,70 +136,100 @@ namespace trace {
 
 	}
 
-	void AnimationWindow::OnRender(float deltaTime)
+	void BlendSpace2DWindow::OnRender(float deltaTime)
 	{
 
-		if (has_prefab)
+		if (has_prefab && has_skeleton)
 		{
 			m_hierachy->Render(m_scene, "View", hierachy_name, deltaTime);
 		}
 		else
 		{
 			ImGui::Begin(hierachy_name.c_str());
-			ImGui::Button("Load View");
-			if (ImGui::BeginTooltip())
+			if (!has_prefab)
 			{
-				ImGui::Text("Drag and Drop Prefab/Scene Asset to be able to visualize sequence");
-				ImGui::EndTooltip();
+				ImGui::Button("Load Character");
+				if (ImGui::BeginTooltip())
+				{
+					ImGui::Text("Drag and Drop Prefab Asset to be able to visualize blend_space");
+					ImGui::EndTooltip();
+				}
+				if (Ref<Prefab> character = ImGuiDragDropResource<Prefab>(PREFAB_FILE_EXTENSION))
+				{
+					Entity entity = m_scene->InstanciatePrefab(character);
+					object_id = entity.GetID();
+					if (has_skeleton)
+					{
+						m_skeleton.CreateInstance(m_skeleton.GetSkeleton(), m_scene, object_id);
+						final_pose.Init(&m_skeleton);
+						pose_a.Init(&m_skeleton);
+						pose_b.Init(&m_skeleton);
+						pose_c.Init(&m_skeleton);
+					}
+					has_prefab = true;
+				}
 			}
-			if (Ref<Prefab> character = ImGuiDragDropResource<Prefab>(PREFAB_FILE_EXTENSION))
+			if (!has_skeleton)
 			{
-				Entity entity = m_scene->InstanciatePrefab(character);
-				m_editor->SetAnimationClip(m_scene, m_animation, entity.GetID());
-				has_prefab = true;
-			}
-			else if (Ref<Scene> scene = ImGuiDragDropResource<Scene>(SCENE_FILE_EXTENSION))
-			{
-				Scene::Copy(scene.get(), m_scene);
-				m_editor->SetAnimationClip(m_scene, m_animation, 0);
-				has_prefab = true;
+				ImGui::Button("Load Skeleton");
+				if (ImGui::BeginTooltip())
+				{
+					ImGui::Text("Drag and Drop Skeleton Asset to be able to visualize blend_space");
+					ImGui::EndTooltip();
+				}
+				if (Ref<Animation::Skeleton> skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+				{
+					if (has_prefab)
+					{
+						m_skeleton.CreateInstance(skeleton, m_scene, object_id);
+						final_pose.Init(&m_skeleton);
+						pose_a.Init(&m_skeleton);
+						pose_b.Init(&m_skeleton);
+						pose_c.Init(&m_skeleton);
+					}
+					else
+					{
+						m_skeleton.SetSkeleton(skeleton);
+					}
+					has_skeleton = true;
+				}
 			}
 			ImGui::End();
 
 		}
 
-		ImGui::Begin(inspector_name.c_str());
-		m_inspector->DrawEntityComponent(m_hierachy->GetSelectedEntity(), m_editor);
-		ImGui::End();
 
 
 		ImGui::Begin(blend_space_editor_name.c_str());
-		m_editor->Render(m_scene, deltaTime);
+		m_editor->Draw();
 		ImVec2 min = ImGui::GetWindowPos();
 		ImVec2 max = min + ImGui::GetWindowSize();
 		is_focused = is_focused || ImGui::IsMouseHoveringRect(min, max);
 		ImGui::End();
 
+		if (has_prefab && has_skeleton && m_blendSpace->GetPoints().size() > 2)
+		{
+			m_blendSpace->GetPoseAt(&final_pose, pose_a, pose_b, pose_c, m_editor->previewX, m_editor->previewY, Application::get_instance()->GetClock().GetElapsedTime());
+			final_pose.SetEntityLocalPose();
+		}
+
 	}
 
-	void AnimationWindow::DockChildWindows()
+	void BlendSpace2DWindow::DockChildWindows()
 	{
-		ImGuiID top;
-		ImGuiID bottom;
-		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Up, 0.5f, &top, &bottom);
-		ImGui::DockBuilderDockWindow(blend_space_editor_name.c_str(), bottom);
+		
 		ImGuiID first_left;
 		ImGuiID first_right;
-		ImGui::DockBuilderSplitNode(top, ImGuiDir_Left, 0.15f, &first_left, &first_right);
+		ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.15f, &first_left, &first_right);
 		ImGui::DockBuilderDockWindow(hierachy_name.c_str(), first_left);
 		ImGuiID second_left;
 		ImGuiID second_right;
 		ImGui::DockBuilderSplitNode(first_right, ImGuiDir_Left, 0.6f, &second_left, &second_right);
-		ImGui::DockBuilderDockWindow(inspector_name.c_str(), second_right);
+		ImGui::DockBuilderDockWindow(blend_space_editor_name.c_str(), second_right);
 		ImGui::DockBuilderDockWindow(viewport_name.c_str(), second_left);
 	}
 
-	void AnimationWindow::RenderViewport(std::vector<void*>& texture_handles)
+	void BlendSpace2DWindow::RenderViewport(std::vector<void*>& texture_handles)
 	{
 		void* texture = texture_handles[view_index];
 
@@ -226,7 +254,7 @@ namespace trace {
 		ImGui::Image(texture, view_size);
 		if (m_hierachy->GetSelectedEntity())
 		{
-			DrawGizmo(gizmo_mode, m_scene, m_hierachy->GetSelectedEntity().GetID(), &m_camera, m_editor);
+			DrawGizmo(gizmo_mode, m_scene, m_hierachy->GetSelectedEntity().GetID(), &m_camera);
 		}
 		ImGui::End();
 
@@ -234,7 +262,7 @@ namespace trace {
 		ImGui::PopStyleColor();
 	}
 
-	void AnimationWindow::OnEvent(Event* p_event)
+	void BlendSpace2DWindow::OnEvent(Event* p_event)
 	{
 		bool ctrl = InputSystem::get_instance()->GetKey(Keys::KEY_CONTROL) || InputSystem::get_instance()->GetKey(Keys::KEY_LCONTROL) || InputSystem::get_instance()->GetKey(Keys::KEY_RCONTROL);
 		switch (p_event->GetEventType())
@@ -248,7 +276,7 @@ namespace trace {
 			{
 				if (ctrl)
 				{
-					AnimationsSerializer::SerializeAnimationClip(m_animation, animation_path);
+					GenericSerializer::Serialize<BlendSpace2D>(m_blendSpace, blend_space_path);
 				}
 				break;
 			}
@@ -293,7 +321,7 @@ namespace trace {
 		}
 		}
 
-		m_editor->OnEvent(p_event);
+		//m_editor->OnEvent(p_event);
 	}
 
 
