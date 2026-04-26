@@ -37,7 +37,7 @@ namespace trace {
 
 
 	//Temp------------
-	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR | RENDER_BLOOM;
+	static FrameSettings frame_settings = RENDER_DEFAULT | RENDER_HDR;//| RENDER_BLOOM;
 	//----------------
 
 	static Model quad_model;

@@ -913,8 +913,8 @@ namespace vk {
 		if (pass->GetDepthStencilOutput() != INVALID_ID)
 		{
 			trace::RenderGraphResource* tex = &render_graph->GetResource(pass->GetDepthStencilOutput());
-			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depth_desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depth_desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 			depth_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			depth_desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			depth_desc.format = convertFmt(tex->resource_data.texture.format);

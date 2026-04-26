@@ -529,16 +529,17 @@ namespace vk {
 
 
 		//Global Descriptor Pool
+		//TODO: Find a way to determine the appropriate size of the pool
 		VkDescriptorPoolSize pool_sizes[] =
 		{
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, KB * 2},
-			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (KB * 2)},
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 6)}
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, KB * 4},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, (KB * 4)},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (KB * 10)}
 		};
 
 		VkDescriptorPoolCreateInfo pool_info = {};
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		pool_info.maxSets = KB * 8;
+		pool_info.maxSets = KB * 16;
 		pool_info.poolSizeCount = ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -2267,7 +2268,8 @@ namespace vk {
 			return;
 		}
 
-		VK_ASSERT(vkAllocateDescriptorSets(_device->m_device, &alloc_info, &view_set));
+		VkResult allocate_result = vkAllocateDescriptorSets(_device->m_device, &alloc_info, &view_set);
+		VK_ASSERT(allocate_result);
 
 		for (auto& i : desc.resources.resources)
 		{

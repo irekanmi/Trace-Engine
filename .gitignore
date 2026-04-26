@@ -6,7 +6,6 @@ bin-int/
 ipch/
 /Debug/
 externals/
-assets/textures
 assets/meshes
 Data/Build
 .idea/

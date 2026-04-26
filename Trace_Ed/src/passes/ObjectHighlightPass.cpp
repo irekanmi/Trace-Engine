@@ -227,15 +227,15 @@ namespace trace {
 			stencil_state.compareOp = CompareOp::COMPARE_EQUAL;
 			stencil_state.compare_mask = 0xff;
 			stencil_state.depth_failOp = StencilOp::STENCIL_KEEP;
-			stencil_state.failOp = StencilOp::STENCIL_REPLACE;
+			stencil_state.failOp = StencilOp::STENCIL_ZERO;
 			stencil_state.passOp = StencilOp::STENCIL_KEEP;
-			stencil_state.reference = 2;
+			stencil_state.reference = 0;
 			stencil_state.write_mask = 0xff;
 
 			dp_state.stencil_state = stencil_state;
 
 			_ds2.depth_sten_state = dp_state;
-			_ds2.rasteriser_state = { CullMode::NONE, FillMode::SOLID };
+			_ds2.rasteriser_state = { CullMode::FRONT, FillMode::SOLID };
 
 			finalBlendPipeline = asset_manager->CreateAssetHandle<GPipeline>("final_highlight_blend_pipeline", _ds2);
 			if (!finalBlendPipeline)
