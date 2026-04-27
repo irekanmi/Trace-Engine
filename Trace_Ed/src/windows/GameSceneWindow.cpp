@@ -3,7 +3,6 @@
 #include "../TraceEditor.h"
 #include "backends/UIutils.h"
 #include "resource/GenericAssetManager.h"
-
 #include "scene/Components.h"
 #include "core/input/Input.h"
 #include "core/memory/StackAllocator.h"
@@ -32,6 +31,7 @@
 #include "portable-file-dialogs.h"
 #include "spdlog/fmt/fmt.h"
 #include "serialize/yaml_util.h"
+#include "glm/gtx/norm.hpp"
 
 int translateKeyTrace_ImGui(trace::Keys key);
 int translateButtonTrace_ImGui(trace::Buttons button);
@@ -208,6 +208,10 @@ namespace trace {
 				m_currentScene->OnScriptUpdate(deltaTime);
 				m_currentScene->OnPhysicsUpdate(deltaTime);
 				m_currentScene->OnUpdate(deltaTime);
+
+				//TEMP
+				play_update_test(deltaTime);
+
 				if (m_isOpen)
 				{
 					m_currentScene->OnRender(scene_render_graph_index);
@@ -562,6 +566,77 @@ namespace trace {
 		m_currentScene->OnNetworkStop();
 		m_currentScene->OnPhysicsStop();
 		m_currentScene->OnStop();
+	}
+
+	uint32_t num_iterations = 25;
+	float precision = 0.25f;
+	void GameSceneWindow::play_update_test(float deltaTime)
+	{
+
+		Ref<Scene> scene = m_currentScene;
+
+		Entity target = scene->GetEntityByName("target");
+		Entity root = scene->GetEntityByName("root");
+
+		Transform target_pose = scene->GetEntityWorldTransform(target);
+		Transform root_pose = scene->GetEntityWorldTransform(root);
+
+
+		std::vector<Entity> entities = {
+			root
+		};
+
+		HierachyComponent hi = root.GetComponent<HierachyComponent>();
+		while (!hi.children.empty())
+		{
+			Entity child = scene->GetEntity(hi.children[0]);
+
+			entities.push_back(child);
+
+			hi = child.GetComponent<HierachyComponent>();
+		}
+
+		for (uint32_t i = 0; i < num_iterations; i++)
+		{
+			Transform effector_pose = scene->GetEntityGlobalPose(entities.back(), true);
+			//Check if close to target
+			float distance2 = glm::length2(target_pose.GetPosition() - effector_pose.GetPosition());
+			float precision2 = precision * precision;
+			if (distance2 <= precision2)
+			{
+				break;
+			}
+
+			int32_t num_bones = entities.size() - 1;
+			for (int32_t j = num_bones - 1; j >= 0; j--)
+			{
+				effector_pose = scene->GetEntityGlobalPose(entities.back(), true);
+				Transform pose = scene->GetEntityGlobalPose(entities[j], true);
+				glm::vec3 bone_pos = pose.GetPosition();
+				glm::vec3 target_dir = glm::normalize(target_pose.GetPosition() - bone_pos);
+				glm::vec3 effector_dir = glm::normalize(effector_pose.GetPosition() - bone_pos);
+
+				glm::quat delta = glm::rotation(effector_dir, target_dir);
+				glm::quat world_rot = pose.GetRotation();
+				glm::quat final_rot = glm::normalize(delta * world_rot);
+				if (j != 0)
+				{
+					Transform parent_pose = scene->GetEntityGlobalPose(entities[j - 1], true);
+					glm::vec3 forward = final_rot * glm::vec3(0.0f, 0.0f, 1.0f);
+					glm::vec3 dir = parent_pose.Inverse().GetLocalMatrix() * glm::vec4(glm::normalize(forward), 0.0f);
+					glm::quat rot = glm::quatLookAt(glm::normalize(-dir), glm::vec3(0.0f, 1.0f, 0.0f));
+					glm::vec3 new_forward = rot * glm::vec3(0.0f, 0.0f, 1.0f);
+					entities[j].GetComponent<TransformComponent>()._transform.SetRotation(rot);
+				}
+				else
+				{
+					entities[j].GetComponent<TransformComponent>()._transform.SetRotation(final_rot);
+				}
+				
+
+			}
+		}
+
 	}
 
 	void GameSceneWindow::OpenScene(std::string& path)

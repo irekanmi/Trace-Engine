@@ -60,6 +60,7 @@ namespace trace {
 	private:
 		void start_current_scene();
 		void stop_current_scene();
+		void play_update_test(float deltaTime);
 
 	private:
 		HierachyPanel* m_hierachyPanel;

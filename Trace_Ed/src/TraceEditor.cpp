@@ -976,36 +976,11 @@ namespace trace {
 		ImGui::DockBuilderDockWindow(window_name.c_str(), main_dockspace_Top);
 	}
 
-	std::vector<glm::vec2> points = {
-		{10.0f, -10.0f},
-		{-10.0f, -10.0f},
-		{1.0f, -10.0f},
-		{1.0f, 10.0f},
-		{5.0f, -6.0f},
-		{10.0f, 7.0f},
-		{15.0f, 7.0f},
-		{6.0f, -1.0f}
-	};
-
-	std::vector<Triangle2D> triangles;
 
 	void TraceEditor::Update_Tester(float deltaTime)
 	{
-		
-		/*Debugger* debugger = Debugger::get_instance();
 
-		for (glm::vec2& point : points)
-		{
-			glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(point, 0.0f));
-			debugger->DrawDebugSphere(0.5f, 7, transform, TRC_COL32(127, 27, 127, 255));
-		}
 		
-		MathHelpers::DelaunayTrianglation(points, triangles);
-
-		for (Triangle2D& triangle : triangles)
-		{
-			debugger->DrawDebugTriangle(triangle, glm::mat4(1.0f), TRC_COL32(27, 127, 125, 255));
-		}*/
 	}
 
 	bool TraceEditor::CreateProject(const std::string& dir, const std::string& name)

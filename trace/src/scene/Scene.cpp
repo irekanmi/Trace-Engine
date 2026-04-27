@@ -2570,12 +2570,11 @@ namespace trace {
 
 	Transform Scene::GetEntityGlobalPose(Entity entity, bool recompute)
 	{
-		HierachyComponent& hi = entity.GetComponent<HierachyComponent>();
 
 		Transform transform;
 		if (m_running && !recompute)
 		{
-			glm::mat4 pose = hi.transform;
+			glm::mat4 pose = entity.GetComponent<HierachyComponent>().transform;
 
 			transform = Transform(pose);
 
@@ -2585,9 +2584,9 @@ namespace trace {
 		TransformComponent& pose = entity.GetComponent<TransformComponent>();
 		transform = pose._transform;
 
-		if (hi.HasParent())
+		if (entity.GetComponent<HierachyComponent>().HasParent())
 		{
-			Transform parent_transform = GetEntityGlobalPose(GetEntity(hi.parent));
+			Transform parent_transform = GetEntityGlobalPose(GetEntity(entity.GetComponent<HierachyComponent>().parent), recompute);
 			transform = Transform::CombineTransform(parent_transform, transform);
 		}
 
