@@ -2009,6 +2009,8 @@ namespace trace {
 		_res.RemoveComponent<TransformComponent>();
 		CopyComponent(AllComponents{}, e, _res);
 		_res.AddOrReplaceComponent<HierachyComponent>();
+
+		HierachyComponent& res_hi = _res.GetComponent<HierachyComponent>();
 		if (parent)
 		{
 			scene->SetParent(_res, parent);
@@ -2128,6 +2130,7 @@ namespace trace {
 			});
 
 		HierachyComponent& hierachy = e.GetComponent<HierachyComponent>();
+		res_hi.is_enabled = hierachy.is_enabled;
 		Scene* _scene = e.GetScene();
 		for (auto& i : hierachy.children)
 		{
@@ -2147,6 +2150,8 @@ namespace trace {
 		_res.RemoveComponent<TransformComponent>();
 		CopyComponent(AllComponents{}, handle, _res);
 		_res.AddOrReplaceComponent<HierachyComponent>();
+
+		HierachyComponent& res_hi = _res.GetComponent<HierachyComponent>();
 		if (parent)
 		{
 			scene->SetParent(_res, parent);
@@ -2164,9 +2169,11 @@ namespace trace {
 		}
 
 		HierachyComponent& hierachy = handle.GetComponent<HierachyComponent>();
+		res_hi.is_enabled = hierachy.is_enabled;
 		Scene* _scene = handle.GetScene();
 		for (auto& i : hierachy.children)
 		{
+
 			Entity entity = _scene->GetEntity(i);
 			instancite_prefab_hierachy(scene, entity, _res, prefab_map);
 		}
@@ -2313,6 +2320,10 @@ namespace trace {
 	{
 		bool has_parent = this == entity.GetScene() && entity.GetParent();
 		Entity res = duplicate_entity_hierachy(this, entity, has_parent? entity.GetParent() : Entity(), id);
+		if (entity.HasComponent<ActiveComponent>())
+		{
+			EnableEntity(res);
+		}
 
 		return res;
 	}

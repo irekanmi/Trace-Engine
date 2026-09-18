@@ -573,6 +573,7 @@ namespace trace {
 	void GameSceneWindow::play_update_test(float deltaTime)
 	{
 
+
 		Ref<Scene> scene = m_currentScene;
 
 		Entity target = scene->GetEntityByName("target");
@@ -589,7 +590,8 @@ namespace trace {
 		HierachyComponent hi = root.GetComponent<HierachyComponent>();
 		while (!hi.children.empty())
 		{
-			Entity child = scene->GetEntity(hi.children[0]);
+			Entity child = scene->GetEntity(hi.children.back());			
+			
 
 			entities.push_back(child);
 
