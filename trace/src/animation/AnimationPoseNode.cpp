@@ -9,6 +9,7 @@
 #include "debug/Debugger.h"
 #include "networking/NetworkStream.h"
 #include "reflection/SerializeTypes.h"
+#include "solvers/TwoBoneIK.h"
 
 
 namespace trace::Animation {
@@ -320,9 +321,14 @@ namespace trace::Animation {
 			return;
 		}
 
+		Ref<AnimationClip>& clip = animations[clip_index];
+		if (!clip)
+		{
+			return;
+		}
+
 		m_animClipIndex = clip_index;
 
-		Ref<AnimationClip>& clip = animations[clip_index];
 		m_duration = clip->GetDuration();
 
 
@@ -1785,7 +1791,7 @@ namespace trace::Animation {
 	// ------------------------------------------
 
 
-	// --------------------------------------------------------------
+	// BlendSpace2D --------------------------------------------------------------
 
 
 	bool BlendSpace2DNode::Instanciate(GraphInstance* instance)
@@ -1959,5 +1965,158 @@ namespace trace::Animation {
 	{
 		m_blendSpace = blend_space;
 	}
+
+	// ------------------------------------------------------------------------------------------------
+
+	// IK Node -------------------------------------------------------------------------------
+
+	bool IKNode::Instanciate(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* result = new RuntimeData;
+		instance_data_set[this] = result;
+
+		result->final_pose.pose_data.Init(&instance->GetSkeletonInstance());
+
+		return true;
+	}
+
+	void IKNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		if (data->definition.update_id == Application::get_instance()->GetUpdateID())
+		{
+			return;
+		}
+
+		if (data->elapsed_time == 0.0f)
+		{
+			data->start_time = Application::get_instance()->GetClock().GetElapsedTime();
+		}
+
+		data->definition.update_id = Application::get_instance()->GetUpdateID();
+
+		NodeInput& input = m_inputs[0];
+		if (input.node_id == 0)
+		{
+			return;
+		}
+		Node* in_node = nodes[input.node_id];
+		in_node->Update(instance, deltaTime, data_stream);
+		Animation::Pose& clip_pose = in_node->GetValue<PoseNodeResult>(instance, input.value_index)->pose_data;
+
+
+
+		NodeInput& input_1 = m_inputs[1];
+		if (input_1.node_id != 0)
+		{
+			Node* in_node = nodes[input_1.node_id];
+			in_node->Update(instance, deltaTime, data_stream);
+		}
+
+		float next_frame_time = data->elapsed_time + deltaTime;
+
+
+		data->elapsed_time += deltaTime;
+
+	}
+
+	void* IKNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		switch (value_index)
+		{
+		case 0:
+		{
+			return &data->final_pose;
+			break;
+		}
+		}
+
+		return nullptr;
+	}
+
+	void IKNode::Init(Graph* graph)
+	{
+		NodeInput input_0 = {};
+		input_0.node_id = 0;
+		input_0.type = ValueType::Pose;
+		input_0.value_index = INVALID_ID;
+		m_inputs.push_back(input_0);
+
+		NodeInput input_1 = {};
+		input_1.node_id = 0;
+		input_1.type = ValueType::Float;
+		input_1.value_index = INVALID_ID;
+		m_inputs.push_back(input_1);
+
+		NodeOutput output = {};
+		output.type = ValueType::Pose;
+		output.value_index = 0;
+
+		m_outputs.push_back(output);
+	}
+
+	PoseNodeResult* IKNode::GetFinalPose(GraphInstance* instance)
+	{
+		return (PoseNodeResult*)GetValueInternal(instance);
+	}
+
+	void IKNode::Reset(GraphInstance* instance)
+	{
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		data->elapsed_time = 0.0f;
+		data->start_time = 0.0f;
+
+	}
+
+	void IKNode::OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+		
+	}
+
+	void IKNode::OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+	}
+
+	void IKNode::OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+
+	}
+
+	void IKNode::OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet)
+	{
+		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+
+		RuntimeData* data = reinterpret_cast<RuntimeData*>(instance_data_set[this]);
+	}
+
+
 
 }

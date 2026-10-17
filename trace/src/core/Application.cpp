@@ -199,7 +199,7 @@ namespace trace
 
 			float end_time = m_clock.GetInternalElapsedTime();
 			float total_frame_time = end_time - _time;
-			float frame_per_sec = 1.0f / 30;
+			float frame_per_sec = 1.0f / 60;
 
 			//TODO fix, Application is lock to 60 FPS and not found the reason
 			if (m_vsync)

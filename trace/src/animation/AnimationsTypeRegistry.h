@@ -158,6 +158,11 @@ namespace trace::Animation {
 		REGISTER_MEMBER(BlendSpace2DNode, m_duration);
 	END_REGISTER_CLASS;
 
+	BEGIN_REGISTER_CLASS(IKNode)
+		REGISTER_TYPE_PARENT(IKNode, PoseNode);
+		REGISTER_MEMBER(IKNode, m_weight);
+	END_REGISTER_CLASS;
+
 
 	REGISTER_TYPE_PARENT(FinalOutputNode, PoseNode);
 

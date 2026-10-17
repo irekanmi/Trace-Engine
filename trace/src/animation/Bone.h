@@ -26,6 +26,7 @@ namespace trace::Animation {
 
 		int32_t GetParentIndex() { return m_parent; }
 		void SetParentIndex(int32_t index) { m_parent = index; }
+		bool HasParent() { return m_parent != -1; }
 
 
 	private:

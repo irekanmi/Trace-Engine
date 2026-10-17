@@ -509,4 +509,44 @@ namespace trace::Animation {
 		GET_TYPE_ID;
 	};
 
+
+	class IKNode : public PoseNode
+	{
+
+	public:
+
+		struct RuntimeData
+		{
+			float start_time = 0.0f;
+			float elapsed_time = 0.0f;
+			PoseNodeResult final_pose;
+			Node::Definition definition;
+		};
+
+
+	public:
+		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
+		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(Graph* graph) override;
+		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
+		virtual void Reset(GraphInstance* instance);
+
+		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnStateRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
+		virtual void OnNetworkRead_Client(GraphInstance* instance, Network::NetworkStream* data_stream, bool accept_packet) override;
+
+
+		void SetWeight(float weight) { m_weight = weight; }
+		float GetWeight() { return m_weight; }
+
+	private:
+		float m_weight = 0.0f;
+	protected:
+
+		ACCESS_CLASS_MEMBERS(IKNode);
+		GET_TYPE_ID;
+	};
+
 }

@@ -576,8 +576,12 @@ namespace trace {
 
 		Ref<Scene> scene = m_currentScene;
 
+		//CCD
+		/*
 		Entity target = scene->GetEntityByName("target");
 		Entity root = scene->GetEntityByName("root");
+		Entity pole = scene->GetEntityByName("pole_vector");
+
 
 		Transform target_pose = scene->GetEntityWorldTransform(target);
 		Transform root_pose = scene->GetEntityWorldTransform(root);
@@ -624,10 +628,13 @@ namespace trace {
 				if (j != 0)
 				{
 					Transform parent_pose = scene->GetEntityGlobalPose(entities[j - 1], true);
-					glm::vec3 forward = final_rot * glm::vec3(0.0f, 0.0f, 1.0f);
-					glm::vec3 dir = parent_pose.Inverse().GetLocalMatrix() * glm::vec4(glm::normalize(forward), 0.0f);
-					glm::quat rot = glm::quatLookAt(glm::normalize(-dir), glm::vec3(0.0f, 1.0f, 0.0f));
-					glm::vec3 new_forward = rot * glm::vec3(0.0f, 0.0f, 1.0f);
+					//glm::vec3 forward = final_rot * glm::vec3(0.0f, 0.0f, 1.0f);
+					//glm::vec3 dir = parent_pose.Inverse().GetLocalMatrix() * glm::vec4(glm::normalize(forward), 0.0f);
+					//glm::quat rot = glm::quatLookAt(glm::normalize(-dir), glm::vec3(0.0f, 1.0f, 0.0f));
+					//entities[j].GetComponent<TransformComponent>()._transform.SetRotation(rot);
+
+					Transform inverse_pose = parent_pose.Inverse();					
+					glm::quat rot = inverse_pose.GetRotation() * final_rot;
 					entities[j].GetComponent<TransformComponent>()._transform.SetRotation(rot);
 				}
 				else
@@ -638,6 +645,119 @@ namespace trace {
 
 			}
 		}
+		*/
+
+		//Two bone IK
+		
+		Entity target = scene->GetEntityByName("target");
+		Entity root = scene->GetEntityByName("root");
+		Entity pole = scene->GetEntityByName("pole_vector");
+		Entity mid = scene->GetEntityByName("child_0");
+		Entity end = scene->GetEntityByName("child_1");
+
+		Transform t_pose = scene->GetEntityGlobalPose(target);
+		Transform r_pose = scene->GetEntityGlobalPose(root);
+		Transform p_pose = scene->GetEntityGlobalPose(pole);
+		Transform m_pose = scene->GetEntityGlobalPose(mid);
+		Transform e_pose = scene->GetEntityGlobalPose(end);
+
+		Transform& m_local_pose = mid.GetComponent<TransformComponent>()._transform;
+		Transform& e_local_pose = end.GetComponent<TransformComponent>()._transform;
+		
+		glm::vec3 target_dir = t_pose.GetPosition() - r_pose.GetPosition();
+		float target_len = glm::length(target_dir);
+		target_dir = glm::normalize(target_dir);
+
+		float upper_len = glm::length(m_pose.GetPosition() - r_pose.GetPosition());
+		float lower_len = glm::length(e_pose.GetPosition() - m_pose.GetPosition());
+		
+		float min_len = glm::abs(upper_len - lower_len);
+		float max_len = glm::abs(upper_len + lower_len - 0.01f);
+		target_len = glm::clamp(target_len, min_len, max_len);
+
+		float A = lower_len;
+		float B = upper_len;
+		float C = target_len;
+
+		//Cosine rule
+		// A^2 = B^2 + C^2 - 2AB*cos(Ø)
+		// cos(Ø) = ( B^2 + C^2 - A^2) / 2BC
+
+		float angle = ((C * C) + (B * B) - (A * A)) / (2 * B * C);
+		angle = glm::clamp(angle, -1.0f, 1.0f);
+		angle = glm::acos(angle);
+
+		
+		//Determine bend direction using pole vector
+		
+		glm::vec3 pole_dir;
+
+		glm::vec3 to_end = glm::normalize(e_pose.GetPosition() - r_pose.GetPosition());
+		glm::vec3 to_mid = glm::normalize(m_pose.GetPosition() - r_pose.GetPosition());
+
+		float _dot_prod = glm::dot(to_mid, to_end);
+		if (_dot_prod == 1.0f)
+		{
+			pole_dir = p_pose.GetPosition() - r_pose.GetPosition();
+			pole_dir = glm::normalize(pole_dir);
+		}
+		else
+		{
+			pole_dir = to_end * _dot_prod;
+			pole_dir = glm::normalize(to_mid - pole_dir);
+		}
+
+		
+
+		glm::vec3 plane_normal = glm::normalize(glm::cross(target_dir, pole_dir));
+		glm::vec3 bend_direction = glm::normalize(glm::cross(plane_normal, target_dir));
+
+		glm::vec3 final_mid_pos = r_pose.GetPosition() + (target_dir * glm::cos(angle) * upper_len) + (bend_direction * glm::sin(angle) * upper_len);
+		
+		glm::vec3 current_upper_dir = glm::normalize(m_pose.GetPosition() - r_pose.GetPosition());
+		glm::vec3 desired_upper_dir = glm::normalize(final_mid_pos - r_pose.GetPosition());
+
+		glm::quat upper_rotation = glm::rotation(current_upper_dir, desired_upper_dir);		
+		
+		glm::quat root_rotation = glm::normalize(upper_rotation * r_pose.GetRotation());
+		root.GetComponent<TransformComponent>()._transform.SetRotation(root_rotation);
+
+		//r_pose = scene->GetEntityGlobalPose(root, true);
+		//m_pose = scene->GetEntityGlobalPose(mid, true);
+		//e_pose = scene->GetEntityGlobalPose(end, true);
+
+		//
+
+		//glm::vec3 current_lower_dir = glm::normalize(e_pose.GetPosition() - m_pose.GetPosition());
+		//glm::vec3 desired_lower_dir = glm::normalize(t_pose.GetPosition() - m_pose.GetPosition());
+
+		//glm::quat lower_rotation = glm::rotation(current_lower_dir, desired_lower_dir);
+
+		//glm::quat mid_rot = glm::normalize(lower_rotation * m_pose.GetRotation());
+		//mid.GetComponent<TransformComponent>()._transform.SetRotation(glm::normalize(r_pose.Inverse().GetRotation() * mid_rot));
+		
+		
+
+		glm::vec3 new_mid = root_rotation * m_local_pose.GetPosition();
+		new_mid += r_pose.GetPosition();
+		glm::quat new_mid_rot = root_rotation * m_local_pose.GetRotation();
+		glm::vec3 new_end = new_mid_rot * e_local_pose.GetPosition();
+		new_end += new_mid;
+
+
+		glm::vec3 current_lower_dir = glm::normalize(new_end - new_mid);
+		glm::vec3 desired_lower_dir = glm::normalize(t_pose.GetPosition() - new_mid);
+
+		glm::quat lower_rotation = glm::rotation(current_lower_dir, desired_lower_dir);
+
+		glm::quat mid_rot = glm::normalize(lower_rotation * new_mid_rot);
+
+		r_pose = scene->GetEntityGlobalPose(root, true);
+		mid.GetComponent<TransformComponent>()._transform.SetRotation(glm::normalize(r_pose.Inverse().GetRotation() * mid_rot));
+
+		
+
+
 
 	}
 

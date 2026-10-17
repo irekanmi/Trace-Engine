@@ -97,6 +97,10 @@ namespace trace {
             {
                 Reflection::TypeID<Animation::BlendSpace2DNode>(),
                 "Blend Space 2D Node"
+            },
+            {
+                Reflection::TypeID<Animation::IKNode>(),
+                "IK Node"
             }
     };
 
@@ -510,6 +514,52 @@ namespace trace {
 
                     ImNodes::EndNode();
                 }
+            },
+            {
+                Reflection::TypeID<Animation::IKNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::IKNode* sample_node = (Animation::IKNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+                    ImNodes::BeginNode(node_index);
+
+                    ImNodes::BeginNodeTitleBar();
+                    ImGui::Text("IK Node");
+                    ImNodes::EndNodeTitleBar();
+
+                    Animation::NodeInput& input_0 = node->GetInputs()[0];
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)input_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)input_0.type]);
+                    ImNodes::BeginInputAttribute((1 << 24) | node_index);
+                    ImGui::Text("Weight");
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeInput& input_1 = node->GetInputs()[1];
+
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)input_1.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)input_1.type]);
+                    ImNodes::BeginInputAttribute((2 << 24) | node_index);
+                    ImGui::Text("Target");
+                    ImNodes::EndInputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+                    Animation::NodeOutput& output_0 = node->GetOutputs()[0];
+                    ImNodes::PushColorStyle(ImNodesCol_Pin, value_color[(int)output_0.type]);
+                    ImNodes::PushColorStyle(ImNodesCol_PinHovered, value_color_hovered[(int)output_0.type]);
+                    ImNodes::BeginOutputAttribute(((output_start_index + output_0.value_index) << 24) | node_index);
+                    ImGui::Text("Out");
+                    ImNodes::EndOutputAttribute();
+                    ImNodes::PopColorStyle();
+                    ImNodes::PopColorStyle();
+
+
+
+                    ImNodes::EndNode();
+                }
             }
 
         };
@@ -842,6 +892,24 @@ namespace trace {
                     {
                         sample_node->SetY(Y);
                     }
+
+                }
+            },
+            {
+                Reflection::TypeID<Animation::IKNode>(),
+                [&](Animation::Node* node)
+                {
+                    Animation::IKNode* sample_node = (Animation::IKNode*)node;
+                    int32_t node_index = m_graphNodeIndex[sample_node->GetUUID()];
+
+                    float weight = sample_node->GetWeight();
+                    if (ImGui::DragFloat("Weight", &weight))
+                    {
+                        sample_node->SetWeight(weight);
+                    }
+
+                    ImGui::Text("Target: ");
+                    
 
                 }
             }
@@ -1648,7 +1716,9 @@ namespace trace {
             for (int32_t i = 0; i < m_currentGraph->GetAnimationDataSet().size(); i++)
             {
                Ref<AnimationClip>& clip = m_currentGraph->GetAnimationDataSet()[i];
-                if (ImGui::MenuItem(clip->GetName().c_str()))
+               std::string clip_name = clip ? clip->GetName() : "None(Animation Clip)";
+
+                if (ImGui::MenuItem(clip_name.c_str()))
                 {
                     result = i;
                     break;
