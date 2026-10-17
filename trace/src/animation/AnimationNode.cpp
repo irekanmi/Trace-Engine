@@ -5,14 +5,14 @@
 #include "networking/NetworkStream.h"
 
 namespace trace::Animation {
-	bool EntryNode::Instanciate(GraphInstance* instance)
+	bool EntryNode::Instanciate(GenericGraphInstance* instance)
 	{
-		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+		std::unordered_map<UUID, void*>& instance_data_set = instance->GetNodesData();
 
 		Result* result = new Result;
-		instance_data_set[this] = result;
+		instance_data_set[m_uuid] = result;
 		result->entry_node = 0;
-		
+
 
 		return true;
 	}
@@ -21,12 +21,12 @@ namespace trace::Animation {
 
 	void EntryNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
-		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
-		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+		std::unordered_map<UUID, GenericNode*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<UUID, void*>& instance_data_set = instance->GetNodesData();
 
-		Result* result = reinterpret_cast<Result*>(instance_data_set[this]);
+		Result* result = reinterpret_cast<Result*>(instance_data_set[m_uuid]);
 
-		for (NodeInput& input : m_inputs)
+		for (GenericNodeInput& input : m_inputs)
 		{
 			if (input.node_id == 0)
 			{
@@ -36,11 +36,11 @@ namespace trace::Animation {
 			result->entry_node = input.node_id;
 		}
 	}
-	void* EntryNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	void* EntryNode::GetValueInternal(GenericGraphInstance* instance, uint32_t value_index)
 	{
-		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+		std::unordered_map<UUID, void*>& instance_data_set = instance->GetNodesData();
 
-		Result* result = reinterpret_cast<Result*>(instance_data_set[this]);
+		Result* result = reinterpret_cast<Result*>(instance_data_set[m_uuid]);
 
 		switch (value_index)
 		{
@@ -53,11 +53,11 @@ namespace trace::Animation {
 
 		return nullptr;
 	}
-	void EntryNode::Init(Graph* graph)
+	void EntryNode::Init(GenericGraph* graph)
 	{
-		NodeInput input = {};
+		GenericNodeInput input = {};
 		input.node_id = 0;
-		input.type = ValueType::Unknown;
+		input.type = GenericValueType::Unknown;
 		input.value_index = 0;
 	}
 
@@ -65,24 +65,24 @@ namespace trace::Animation {
 	// -----------------------------------------------------------------------
 
 	// Get Parameter ----------------------------------------------------
-	bool GetParameterNode::Instanciate(GraphInstance* instance)
+	bool GetParameterNode::Instanciate(GenericGraphInstance* instance)
 	{
 		return true;
 	}
 	void GetParameterNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
 	}
-	void* GetParameterNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	void* GetParameterNode::GetValueInternal(GenericGraphInstance* instance, uint32_t value_index)
 	{
-		std::vector<Parameter>& parameters = instance->GetGraph()->GetParameters();
+		std::vector<GenericParameter>& parameters = ((GraphInstance*)instance)->GetGraph()->GetParameters();
 
 		if (m_parameterIndex < 0 || m_parameterIndex > parameters.size() - 1)
 		{
 			return nullptr;
 		}
 
-		Parameter& param = parameters[m_parameterIndex];
-		ParameterData* param_data = instance->GetParameterData(param);
+		GenericParameter& param = parameters[m_parameterIndex];
+		GenericParameterData* param_data = instance->GetParameterData(param);
 
 		switch (value_index)
 		{
@@ -95,10 +95,10 @@ namespace trace::Animation {
 
 		return nullptr;
 	}
-	void GetParameterNode::Init(Graph* graph)
+	void GetParameterNode::Init(GenericGraph* graph)
 	{
-		NodeOutput output = {};
-		output.type = ValueType::Unknown;
+		GenericNodeOutput output = {};
+		output.type = GenericValueType::Unknown;
 		output.value_index = 0;
 
 		m_outputs.push_back(output);
@@ -106,65 +106,45 @@ namespace trace::Animation {
 
 	void GetParameterNode::SetParameterIndex(int32_t index, Graph* graph)
 	{
-		std::vector<Parameter>& parameters = graph->GetParameters();
+		std::vector<GenericParameter>& parameters = graph->GetParameters();
 
 		if (index < 0 || index > parameters.size() - 1)
 		{
 			return;
 		}
 
-		Parameter& param = parameters[m_parameterIndex];
+		GenericParameter& param = parameters[m_parameterIndex];
 		m_parameterIndex = index;
 
-		ValueType type = ValueType::Unknown;
-
-		switch (param.second)
-		{
-		case ParameterType::Bool:
-		{
-			type = ValueType::Bool;
-			break;
-		}
-		case ParameterType::Int:
-		{
-			type = ValueType::Int;
-			break;
-		}
-		case ParameterType::Float:
-		{
-			type = ValueType::Float;
-			break;
-		}
-		}
 
 		m_outputs[0].value_index = 0;
-		m_outputs[0].type = type;
+		m_outputs[0].type = param.type;
 	}
 
-	bool IfNode::Instanciate(GraphInstance* instance)
+	bool IfNode::Instanciate(GenericGraphInstance* instance)
 	{
-		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+		std::unordered_map<UUID, void*>& instance_data_set = instance->GetNodesData();
 
 		Result* result = new Result;
-		instance_data_set[this] = result;
+		instance_data_set[m_uuid] = result;
 
 		return true;
 	}
 
 	void IfNode::Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream)
 	{
-		std::unordered_map<UUID, Node*>& nodes = instance->GetGraph()->GetNodes();
-		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+		std::unordered_map<UUID, GenericNode*>& nodes = instance->GetGraph()->GetNodes();
+		std::unordered_map<UUID, void*>& instance_data_set = instance->GetNodesData();
 
-		Result* result = reinterpret_cast<Result*>(instance_data_set[this]);
+		Result* result = reinterpret_cast<Result*>(instance_data_set[m_uuid]);
 
-		NodeInput& input = m_inputs[0];
+		GenericNodeInput& input = m_inputs[0];
 		if (input.node_id == 0)
 		{
 			return;
 		}
 
-		Node* in_node = nodes[input.node_id];
+		Node* in_node = (Node*)nodes[input.node_id];
 		in_node->Update(instance, deltaTime, data_stream);
 
 		bool& node_result = *in_node->GetValue<bool>(instance, input.value_index);
@@ -180,11 +160,11 @@ namespace trace::Animation {
 		}
 	}
 
-	void* IfNode::GetValueInternal(GraphInstance* instance, uint32_t value_index)
+	void* IfNode::GetValueInternal(GenericGraphInstance* instance, uint32_t value_index)
 	{
-		std::unordered_map<Node*, void*>& instance_data_set = instance->GetNodesData();
+		std::unordered_map<UUID, void*>& instance_data_set = instance->GetNodesData();
 
-		Result* result = reinterpret_cast<Result*>(instance_data_set[this]);
+		Result* result = reinterpret_cast<Result*>(instance_data_set[m_uuid]);
 
 		switch (value_index)
 		{
@@ -203,21 +183,21 @@ namespace trace::Animation {
 		return nullptr;
 	}
 
-	void IfNode::Init(Graph* graph)
+	void IfNode::Init(GenericGraph* graph)
 	{
-		NodeInput input = {};
+		GenericNodeInput input = {};
 		input.node_id = 0;
-		input.type = ValueType::Bool;
+		input.type = GenericValueType::Bool;
 		input.value_index = INVALID_ID;
 
 		m_inputs.push_back(input);
 
-		NodeOutput out_1 = {};
-		out_1.type = ValueType::Bool;
+		GenericNodeOutput out_1 = {};
+		out_1.type = GenericValueType::Bool;
 		out_1.value_index = 0;
 
-		NodeOutput out_2 = {};
-		out_2.type = ValueType::Bool;
+		GenericNodeOutput out_2 = {};
+		out_2.type = GenericValueType::Bool;
 		out_2.value_index = 1;
 
 		m_outputs.push_back(out_1);

@@ -18,7 +18,6 @@
 #include "panels/InspectorPanel.h"
 #include "panels/ContentBrowser.h"
 #include "panels/AnimationPanel.h"
-#include "panels/AnimationGraphEditor.h"
 #include "panels/AnimationSequencer.h"
 #include "EditorRenderComposer.h"
 #include "builder/ProjectBuilder.h"

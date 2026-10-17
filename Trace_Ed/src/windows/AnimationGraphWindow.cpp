@@ -4,7 +4,7 @@
 #include "render/Renderer.h"
 #include "../EditorRenderComposer.h"
 #include "../panels/HierachyPanel.h"
-#include "../panels/AnimationGraphEditor.h"
+#include "../panels/GenericGraphEditor.h"
 #include "resource/PrefabManager.h"
 #include "../utils/ImGui_utils.h"
 #include "core/input/Input.h"
@@ -58,7 +58,7 @@ namespace trace {
 
 		m_graph = graph;
 		m_hierachy = new HierachyPanel;//TODO: Use custom allocator
-		m_editor = new AnimationGraphEditor;//TODO: Use custom allocator
+		m_editor = new GenericGraphEditor;//TODO: Use custom allocator
 		m_scene = new Scene;//TODO: Use custom allocator
 		m_scene->m_path = asset_name;
 		m_scene->Create();
@@ -69,7 +69,12 @@ namespace trace {
 		has_prefab = false;
 		
 		m_editor->Init();
-		m_editor->SetAnimationGraph(m_graph);
+		m_editor->can_check_child_node = true;
+		m_editor->SetGraph(m_graph.get(), asset_name);
+		if (GenericNode* final_node = (GenericNode*)m_graph->GetRootNode())
+		{
+			m_editor->SetCurrentNode(final_node);
+		}
 
 		graph_path = file_path;
 		m_name = asset_name;
@@ -198,7 +203,13 @@ namespace trace {
 		}
 		ImGui::End();
 
-		m_editor->Render(deltaTime, graph_editor_name);
+		ImGui::Begin(graph_editor_name.c_str());
+		m_editor->Render(deltaTime);
+
+		ImVec2 min = ImGui::GetWindowPos();
+		ImVec2 max = min + ImGui::GetWindowSize();
+		is_focused = is_focused || ImGui::IsMouseHoveringRect(min, max);
+		ImGui::End();
 
 	}
 

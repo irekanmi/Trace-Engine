@@ -8,7 +8,7 @@
 namespace trace {
 
 	class HierachyPanel;
-	class AnimationGraphEditor;
+	class GenericGraphEditor;
 
 	class AnimationGraphWindow : public EditorWindow
 	{
@@ -29,7 +29,7 @@ namespace trace {
 		Scene* m_scene;
 		int32_t view_index;
 		HierachyPanel* m_hierachy;
-		AnimationGraphEditor* m_editor;
+		GenericGraphEditor* m_editor;
 		glm::vec2 m_viewportSize;
 		std::string hierachy_name;
 		std::string graph_editor_name;

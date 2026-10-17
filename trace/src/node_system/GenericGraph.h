@@ -90,7 +90,7 @@ namespace trace {
 
 	public:
 
-	private:
+	protected:
 		std::unordered_map<UUID, GenericNode*> m_nodes;
 		UUID m_rootNode = 0;
 		std::vector<GenericParameter> m_parameters;

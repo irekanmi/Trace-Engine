@@ -24,6 +24,7 @@ namespace trace {
 		Sampler2D,
 		Execute,
 		Quat,
+		Pose,
 		Max
 	};
 

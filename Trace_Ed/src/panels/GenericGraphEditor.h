@@ -10,6 +10,14 @@ namespace trace {
 	{
 
 	public:
+		struct Link
+		{
+			int id = -1;
+			int from = -1;
+			int to = -1;
+			GenericValueType value_type;
+		};
+
 		GenericGraphEditor() {};
 		~GenericGraphEditor() {};
 
@@ -34,6 +42,19 @@ namespace trace {
 		void add_new_node(UUID node_id);
 		void add_new_node_not_child(UUID node_id);
 		int32_t get_node_index(UUID node_id);
+		int get_start_node_id();
+		int get_start_output_id();
+		std::vector<UUID>& get_current_node_children();
+		int32_t& get_graph_node_index(UUID uuid);
+		int get_link_id();
+		std::vector<Link>& get_current_node_links();
+		GenericNode*& get_selected_node() { return m_selectedNode; }
+		UUID get_graph_index(int32_t index);
+		int get_start_link_id();
+		bool is_delete();
+		void set_graph_index(int32_t index, UUID value);
+		void set_graph_node_index(UUID uuid, int32_t value);
+		int32_t& get_graph_current_index() { return m_graphCurrentIndex; }
 
 	public:
 		void generate_current_node_children();
@@ -52,13 +73,7 @@ namespace trace {
 
 	private:
 
-		struct Link
-		{
-			int id = -1;
-			int from = -1;
-			int to = -1;
-			GenericValueType value_type;
-		};
+		
 
 		GenericGraph* m_currentGraph = nullptr;
 		bool new_graph = true;

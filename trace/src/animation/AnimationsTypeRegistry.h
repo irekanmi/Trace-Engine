@@ -22,12 +22,6 @@ namespace trace::Animation {
 	REGISTER_TYPE(StringID);//TODO: Move this type to a registry file that relates with Coretypes
 	REGISTER_TYPE(size_t);//TODO: Move this type to a registry file that relates with Coretypes
 
-	REGISTER_TYPE(ParameterType);
-
-	BEGIN_REGISTER_CLASS(ParameterData)
-		REGISTER_TYPE(ParameterData);
-		REGISTER_MEMBER(ParameterData, data);
-	END_REGISTER_CLASS;
 
 
 	REGISTER_TYPE(ConditionType);
@@ -49,14 +43,8 @@ namespace trace::Animation {
 		REGISTER_MEMBER(TransitionSet, second);
 	END_REGISTER_CLASS;
 
-	BEGIN_REGISTER_CLASS(Parameter)
-		REGISTER_TYPE(Parameter);
-		REGISTER_MEMBER(Parameter, first);
-		REGISTER_MEMBER(Parameter, second);
-	END_REGISTER_CLASS;
-
 	BEGIN_REGISTER_CLASS(Graph)
-		REGISTER_TYPE(Graph);
+		REGISTER_TYPE_PARENT(Graph, GenericGraph);
 		REGISTER_MEMBER(Graph, m_nodes);
 		REGISTER_MEMBER(Graph, m_rootNode);
 		REGISTER_MEMBER(Graph, m_skeleton);
@@ -65,23 +53,9 @@ namespace trace::Animation {
 		REGISTER_MEMBER(Graph, m_parameterTranstions);
 	END_REGISTER_CLASS;
 
-	REGISTER_TYPE(ValueType);
-
-	BEGIN_REGISTER_CLASS(NodeInput)
-		REGISTER_TYPE(NodeInput);
-		REGISTER_MEMBER(NodeInput, type);
-		REGISTER_MEMBER(NodeInput, node_id);
-		REGISTER_MEMBER(NodeInput, value_index);
-	END_REGISTER_CLASS;
-
-	BEGIN_REGISTER_CLASS(NodeOutput)
-		REGISTER_TYPE(NodeOutput);
-		REGISTER_MEMBER(NodeOutput, type);
-		REGISTER_MEMBER(NodeOutput, value_index);
-	END_REGISTER_CLASS;
 
 	BEGIN_REGISTER_CLASS(Node)
-		REGISTER_TYPE(Node);
+		REGISTER_TYPE_PARENT(Node, GenericNode);
 		REGISTER_MEMBER(Node, m_inputs);
 		REGISTER_MEMBER(Node, m_outputs);
 		REGISTER_MEMBER(Node, m_uuid);

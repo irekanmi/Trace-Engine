@@ -48,11 +48,11 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
-		virtual void Destroy(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
+		virtual void Destroy(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
@@ -103,11 +103,11 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
-		virtual void Destroy(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
+		virtual void Destroy(GenericGraph* graph) override;
 		void SetName(StringID name) { m_name = name; }
 		StringID GetName() { return m_name; }
 		virtual void Reset(GraphInstance* instance);
@@ -149,10 +149,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
@@ -199,10 +199,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 		virtual void Reset(GraphInstance* instance);
 
@@ -245,10 +245,10 @@ namespace trace::Animation {
 		};
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 
@@ -276,10 +276,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
@@ -319,10 +319,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
@@ -369,10 +369,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 
 		virtual void OnStateWrite_Server(GraphInstance* instance, Network::NetworkStream* data_stream) override;
@@ -410,7 +410,7 @@ namespace trace::Animation {
 			float elasped_time = 0.0f;
 			PoseNodeResult final_pose;
 			Node::Definition definition;
-			
+
 
 			int32_t current_index = 0;
 			float time_accummulator = 0.0f;
@@ -425,10 +425,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 		MotionMatching::MotionMatcher& GetMotionMatcher() { return m_matcher; }
 		Ref<Skeleton> GetSkeleton() { return m_skeleton; }
@@ -442,7 +442,7 @@ namespace trace::Animation {
 		Ref<Skeleton> m_skeleton;
 
 	private:
-		
+
 
 	protected:
 
@@ -470,10 +470,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 		virtual void Reset(GraphInstance* instance);
 
@@ -525,10 +525,10 @@ namespace trace::Animation {
 
 
 	public:
-		virtual bool Instanciate(GraphInstance* instance) override;
+		virtual bool Instanciate(GenericGraphInstance* instance) override;
 		virtual void Update(GraphInstance* instance, float deltaTime, Network::NetworkStream* data_stream = nullptr) override;
-		virtual void* GetValueInternal(GraphInstance* instance, uint32_t value_index = 0) override;
-		virtual void Init(Graph* graph) override;
+		virtual void* GetValueInternal(GenericGraphInstance* instance, uint32_t value_index = 0) override;
+		virtual void Init(GenericGraph* graph) override;
 		virtual PoseNodeResult* GetFinalPose(GraphInstance* instance) override;
 		virtual void Reset(GraphInstance* instance);
 

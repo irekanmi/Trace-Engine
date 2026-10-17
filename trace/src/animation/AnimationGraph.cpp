@@ -68,21 +68,21 @@ namespace trace::Animation {
         m_skeletonInstance.SetSkeleton(graph->GetSkeleton());        
 
         
-        std::vector<Parameter>& parameters = graph->GetParameters();
+        std::vector<GenericParameter>& parameters = graph->GetParameters();
         m_parameterData.resize(parameters.size());
         m_parameterDirty.resize(parameters.size());
         std::fill(m_parameterDirty.begin(), m_parameterDirty.end(), true);
 
         uint32_t i = 0;
-        for (Parameter& param : parameters)
+        for (GenericParameter& param : parameters)
         {
-            m_parameterLUT[param.first] = i;
+            m_parameterLUT[param.name] = i;
             i++;
         }
 
 
         m_skeletonInstance.CreateInstance(graph->GetSkeleton(), scene, entity_id);
-        std::unordered_map<UUID, Node*>& nodes = m_graph->GetNodes();
+        std::unordered_map<UUID, GenericNode*>& nodes = m_graph->GetNodes();
         for (auto& i : nodes)
         {
             i.second->Instanciate(this);
@@ -156,13 +156,6 @@ namespace trace::Animation {
     }
 
 
-    ParameterData* GraphInstance::GetParameterData(Parameter& param)
-    {
-        int32_t index = m_parameterLUT[param.first];
-
-        return &m_parameterData[index];
-    }
-
     void GraphInstance::OnStateWrite_Server(Network::NetworkStream* data_stream)
     {
         uint16_t parameter_count = static_cast<uint16_t>(m_parameterData.size());
@@ -171,7 +164,7 @@ namespace trace::Animation {
         {
             std::string param_name = param.first;
             data_stream->Write(param_name);
-            ParameterData& param_data = m_parameterData[param.second];
+            GenericParameterData& param_data = m_parameterData[param.second];
             data_stream->Write(param_data.data, 16);
         }
 
@@ -187,7 +180,7 @@ namespace trace::Animation {
             data_stream->Write(node_id);
             uint32_t node_start_position = data_stream->GetPosition();
 
-            node.second->OnStateWrite_Server(this, data_stream);
+            ((Node*)node.second)->OnStateWrite_Server(this, data_stream);
 
             uint32_t current_position = data_stream->GetPosition();
 
@@ -226,7 +219,7 @@ namespace trace::Animation {
             {
                 TRC_ASSERT(false, "These is not suppose to happen");
             }
-            ParameterData& param_data = m_parameterData[it->second];
+            GenericParameterData& param_data = m_parameterData[it->second];
             data_stream->Read(param_data.data, 16);
         }
 
@@ -237,7 +230,7 @@ namespace trace::Animation {
         {
             UUID node_id = 0;
             data_stream->Read(node_id);
-            Node* node = m_graph->GetNode(node_id);
+            Node* node = (Node*)m_graph->GetNode(node_id);
             TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
             node->OnStateRead_Client(this, data_stream);
         }
@@ -306,7 +299,7 @@ namespace trace::Animation {
             {
                 TRC_ASSERT(false, "These is not suppose to happen");
             }
-            ParameterData& param_data = m_parameterData[it->second];
+            GenericParameterData& param_data = m_parameterData[it->second];
             data_stream->Read(param_data.data, 16);
         }
 
@@ -317,7 +310,7 @@ namespace trace::Animation {
         {
             UUID node_id = 0;
             data_stream->Read(node_id);
-            Node* node = m_graph->GetNode(node_id);
+            Node* node = (Node*)m_graph->GetNode(node_id);
             TRC_ASSERT(node, "This pointer should be valid, Function: {}", __FUNCTION__);
             node->OnNetworkRead_Client(this, data_stream, accept_packet);
         }
@@ -339,7 +332,7 @@ namespace trace::Animation {
             return;
         }
 
-        ParameterData& param_data = m_parameterData[it->second];
+        GenericParameterData& param_data = m_parameterData[it->second];
 
         
         memcpy(param_data.data, data, size);
@@ -371,11 +364,11 @@ namespace trace::Animation {
 
     }
 
-    void Graph::CreateParameter(const std::string& param_name, ParameterType type)
+    void Graph::CreateParameter(const std::string& param_name, GenericValueType type)
     {
-        Parameter param;
-        param.first = param_name;
-        param.second = type;
+        GenericParameter param;
+        param.name = param_name;
+        param.type = type;
         m_parameters.emplace_back(param);
     }
 
@@ -384,48 +377,6 @@ namespace trace::Animation {
         if (skeleton)
         {
             m_skeleton = skeleton;
-        }
-    }
-
-    Node* Graph::GetNode(UUID node_id)
-    {
-        auto it = m_nodes.find(node_id);
-        
-        if (it != m_nodes.end())
-        {
-            return m_nodes[node_id];
-        }
-
-        TRC_ASSERT(false, "Ensure to Get valid nodes, Function: {}", __FUNCTION__);
-        return nullptr;
-    }
-
-    void Graph::DestroyNode(UUID node_id)
-    {
-        Node* node = GetNode(node_id);
-        if (node)
-        {
-            node->Destroy(this);
-            m_nodes.erase(node_id);
-            delete node;//TODO: Use custom allocator
-        }
-    }
-
-    void Graph::DestroyNodeWithInputs(UUID node_id)
-    {
-        Node* node = GetNode(node_id);
-        if (node)
-        {
-            node->Destroy(this);
-            for (NodeInput& input : node->GetInputs())
-            {
-                if (input.node_id != 0)
-                {
-                    DestroyNode(input.node_id);
-                }
-            }
-            m_nodes.erase(node_id);
-            delete node;//TODO: Use custom allocator
         }
     }
 

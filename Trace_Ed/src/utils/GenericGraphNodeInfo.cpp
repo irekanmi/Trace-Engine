@@ -8,6 +8,10 @@
 #include "particle_effects/ParticleGenerator.h"
 #include "particle_effects/effects_graph/ParticleEffectsNode.h"
 #include "particle_effects/particle_renderers/BillboardRender.h"
+#include "animation/AnimationNode.h"
+#include "animation/AnimationPoseNode.h"
+#include "../TraceEditor.h"
+#include "ImGui_utils.h" 
 
 #include "imgui.h"
 #include "imgui_stdlib.h"
@@ -16,6 +20,7 @@
 namespace trace {
 
 	std::string get_class_display_name(uint64_t class_id);
+	int32_t animations_drop_down(Animation::Graph* graph);
 
 	int generic_output_start_index = 64;
 	int shift_amount = 24;
@@ -32,6 +37,7 @@ namespace trace {
 		IM_COL32(198, 104, 65, 128),
 		IM_COL32(0, 194, 65, 128),
 		IM_COL32(10, 94, 165, 128),
+		IM_COL32(110, 20, 190, 128),
 	};
 
 	uint32_t generic_value_color_hovered[(int)GenericValueType::Max] =
@@ -46,6 +52,7 @@ namespace trace {
 		IM_COL32(198, 104, 65, 255),
 		IM_COL32(0, 194, 65, 255),
 		IM_COL32(10, 94, 165, 255),
+		IM_COL32(110, 20, 190, 255),
 	};
 
 	struct ShaderGraphNodeTypeInfo
@@ -69,6 +76,58 @@ namespace trace {
 		{Reflection::TypeID<EffectsRootNode>(), "Effects Node"},
 		{Reflection::TypeID<GetParticleAttributeNode>(), "Get Particle Attribute"},
 		{Reflection::TypeID<SetParticleAttributeNode>(), "Set Particle Attribute"},
+		{
+                Reflection::TypeID<Animation::FinalOutputNode>(),
+                "Final Output"
+        },
+        {
+            Reflection::TypeID<Animation::GetParameterNode>(),
+            "Get Parameter"
+        },
+        {
+            Reflection::TypeID<Animation::StateMachine>(),
+            "State Machine"
+        },
+        {
+            Reflection::TypeID<Animation::StateNode>(),
+            "State"
+        },
+        {
+            Reflection::TypeID<Animation::TransitionNode>(),
+            "Transition"
+        },
+        {
+            Reflection::TypeID<Animation::AnimationSampleNode>(),
+            "Animation Sample"
+        },
+        {
+            Reflection::TypeID<Animation::IfNode>(),
+            "If Node"
+        },
+        {
+            Reflection::TypeID<Animation::RetargetAnimationNode>(),
+            "Retarget Animation Node"
+        },
+        {
+            Reflection::TypeID<Animation::WarpAnimationNode>(),
+            "Warp Animation Node"
+        },
+        {
+            Reflection::TypeID<Animation::MotionMatchingNode>(),
+            "Motion Matching Node"
+        },
+        {
+            Reflection::TypeID<Animation::RetargetPoseNode>(),
+            "Retarget Pose Node"
+        },
+        {
+            Reflection::TypeID<Animation::BlendSpace2DNode>(),
+            "Blend Space 2D Node"
+        },
+        {
+            Reflection::TypeID<Animation::IKNode>(),
+            "IK Node"
+        }
 	};
 
 
@@ -748,7 +807,456 @@ namespace trace {
 				ImNodes::EndNode();
 				
 			}
-		}
+		},
+		{
+			Reflection::TypeID<Animation::FinalOutputNode>(),
+			[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+			{
+				Animation::FinalOutputNode* output = (Animation::FinalOutputNode*)node;
+				ImNodes::BeginNode(node_index);
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text("Final Output Pose");
+				ImNodes::EndNodeTitleBar();
+
+				GenericNodeInput& input_0 = node->GetInputs()[0];
+
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+				ImNodes::BeginInputAttribute((1 << 24) | node_index , ImNodesPinShape_Quad);
+				ImGui::Text("Pose");
+				ImNodes::EndInputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				ImNodes::EndNode();
+			}
+		},
+		{
+			Reflection::TypeID<Animation::GetParameterNode>(),
+			[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+			{
+				Animation::GetParameterNode* param = (Animation::GetParameterNode*)node;
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+				ImNodes::BeginNode(node_index);
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text("Get Paramater");
+				ImNodes::EndNodeTitleBar();
+
+				GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+				int32_t param_index = param->GetParameterIndex();
+				if (param_index != -1)
+				{
+					GenericParameter& parameter = graph->GetParameters()[param_index];
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text(parameter.name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+				}
+
+
+
+				ImNodes::EndNode();
+			}
+		},
+			{
+				Reflection::TypeID<Animation::StateMachine>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::StateMachine* state_machine = (Animation::StateMachine*)node;
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("State Machine");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text("Pose");
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::StateNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::StateNode* state = (Animation::StateNode*)node;
+					ImNodes::BeginNode(node_index);
+
+					std::string& name = STRING_FROM_ID(state->GetName());
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text(name.c_str());
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeInput& input_0 = node->GetInputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute((1 << 24) | node_index , ImNodesPinShape_Quad);
+					ImGui::Text("Pose");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::TransitionNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::TransitionNode* transition = (Animation::TransitionNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("Transition Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeInput& input_0 = node->GetInputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute((1 << 24) | node_index);
+					ImGui::Text("Condition");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::AnimationSampleNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::AnimationSampleNode* sample_node = (Animation::AnimationSampleNode*)node;
+					Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("Animation Sample Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+					int32_t anim_index = sample_node->GetAnimClipIndex();
+					std::string clip_name = "None(Animation Clip)";
+
+					if (anim_index != -1)
+					{
+						Ref<AnimationClip> clip = graph->GetAnimationDataSet()[anim_index];
+						clip_name = clip->GetName();
+					}
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text(clip_name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::IfNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::IfNode* sample_node = (Animation::IfNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("If Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeInput& input_0 = node->GetInputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute((1 << 24) | node_index);
+					ImGui::Text("Condition");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text("True");
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeOutput& output_1 = node->GetOutputs()[1];
+
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_1.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_1.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_1.value_index) << 24) | node_index);
+					ImGui::Text("False");
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::RetargetAnimationNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::RetargetAnimationNode* sample_node = (Animation::RetargetAnimationNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("Retarget Animation Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+					Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+					std::string clip_name = "None(Animation Clip)";
+
+					if (clip)
+					{
+						clip_name = clip->GetName();
+					}
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text(clip_name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::WarpAnimationNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::WarpAnimationNode* sample_node = (Animation::WarpAnimationNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("Warp Animation Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+					Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+					std::string clip_name = "None(Animation Clip)";
+
+					if (clip)
+					{
+						clip_name = clip->GetName();
+					}
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text(clip_name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::MotionMatchingNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::MotionMatchingNode* sample_node = (Animation::MotionMatchingNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("Motion Matching Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+					std::string _name = "Out Pose";
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text(_name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::RetargetPoseNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::RetargetPoseNode* sample_node = (Animation::RetargetPoseNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("Retarget Pose Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeInput& input_0 = node->GetInputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute((1 << 24) | node_index, ImNodesPinShape_Quad);
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text("Out Pose");
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::BlendSpace2DNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::BlendSpace2DNode* sample_node = (Animation::BlendSpace2DNode*)node;
+					
+					Ref<BlendSpace2D> blend_space = sample_node->GetBlendSpace();
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("BlendSpace2D Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeInput& input_0 = node->GetInputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute((1 << 24) | node_index);
+					ImGui::Text("X");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_1.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_1.type]);
+					ImNodes::BeginInputAttribute((2 << 24) | node_index);
+					ImGui::Text("Y");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+
+					std::string clip_name = "None(BlendSpace2D)";
+
+					if (blend_space)
+					{
+						clip_name = blend_space->GetName();
+					}
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text(clip_name.c_str());
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			},
+			{
+				Reflection::TypeID<Animation::IKNode>(),
+				[&](GenericNode* node, int32_t node_index, GenericGraphEditor* editor)
+				{
+					Animation::IKNode* sample_node = (Animation::IKNode*)node;
+					
+					ImNodes::BeginNode(node_index);
+
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text("IK Node");
+					ImNodes::EndNodeTitleBar();
+
+					GenericNodeInput& input_0 = node->GetInputs()[0];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_0.type]);
+					ImNodes::BeginInputAttribute((1 << 24) | node_index);
+					ImGui::Text("Weight");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeInput& input_1 = node->GetInputs()[1];
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)input_1.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)input_1.type]);
+					ImNodes::BeginInputAttribute((2 << 24) | node_index);
+					ImGui::Text("Target");
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					GenericNodeOutput& output_0 = node->GetOutputs()[0];
+					ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)output_0.type]);
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)output_0.type]);
+					ImNodes::BeginOutputAttribute(((generic_output_start_index + output_0.value_index) << 24) | node_index);
+					ImGui::Text("Out");
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+
+
+					ImNodes::EndNode();
+				}
+			}
+
 	};
 	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> node_details_render =
 	{
@@ -847,7 +1355,346 @@ namespace trace {
 				}
 
 			}
-		}
+		},
+		{
+			Reflection::TypeID<Animation::GetParameterNode>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				Animation::GetParameterNode* param = (Animation::GetParameterNode*)node;
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+
+				std::string parameter_name = "None(Parameter)";
+				int32_t param_index = param->GetParameterIndex();
+				if (param_index != -1)
+				{
+					GenericParameter& parameter = graph->GetParameters()[param_index];
+					parameter_name = parameter.name;
+				}
+				ImGui::Text("Parameter Name: ");
+				ImGui::SameLine();
+				if (ImGui::Button(parameter_name.c_str()))
+				{
+					ImGui::OpenPopup("Parameters Drop Down");
+				}
+
+				int32_t new_index = editor->paramters_drop_down(param_index);
+				if (new_index >= 0 && new_index != param_index)
+				{
+					param->SetParameterIndex(param_index, graph);
+
+				}
+
+			}
+		},
+		{
+			Reflection::TypeID<Animation::StateNode>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				static bool change_name = false;
+				TraceEditor* main_editor = TraceEditor::get_instance();
+				Animation::StateNode* state = (Animation::StateNode*)node;
+				std::string& name = STRING_FROM_ID(state->GetName());
+
+				ImGui::Text("Name: ");
+				ImGui::SameLine();
+				if (ImGui::Button(name.c_str()))
+				{
+					change_name = true;
+				}
+
+				if (change_name)
+				{
+					std::string res;
+					if (main_editor->InputTextPopup("State Name", res))
+					{
+						if (!res.empty())
+						{
+							state->SetName(STR_ID(res));
+						}
+					}
+					else
+					{
+						change_name = false;
+					}
+				}
+
+
+
+			}
+		},
+			{
+				Reflection::TypeID<Animation::TransitionNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::TransitionNode* transition = (Animation::TransitionNode*)node;
+
+					float duration = transition->GetDuration();
+
+					if (ImGui::DragFloat("Duration", &duration, 0.05f))
+					{
+						transition->SetDuration(duration);
+					}
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::AnimationSampleNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::AnimationSampleNode* sample_node = (Animation::AnimationSampleNode*)node;
+					Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+
+					int32_t anim_index = sample_node->GetAnimClipIndex();
+					std::string clip_name = "None(Animation Clip)";
+					if (anim_index != -1)
+					{
+						Ref<AnimationClip> clip = graph->GetAnimationDataSet()[anim_index];
+						clip_name = clip->GetName();
+					}
+
+					ImGui::Text("Animation Clip: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(clip_name.c_str()))
+					{
+						ImGui::OpenPopup("Animations Drop Down");
+					}
+
+					anim_index = animations_drop_down(graph);
+					if (anim_index != -1)
+					{
+						sample_node->SetAnimationClip(anim_index, graph);
+					}
+
+					ImGui::Text("Loop Clip: ");
+					ImGui::SameLine();
+					bool loop = sample_node->GetLooping();
+					if (ImGui::Checkbox("##Looping", &loop))
+					{
+						sample_node->SetLooping(loop);
+					}
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::RetargetAnimationNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::RetargetAnimationNode* sample_node = (Animation::RetargetAnimationNode*)node;
+
+					Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+					std::string clip_name = "None(Animation Clip)";
+					if (clip)
+					{
+						clip_name = clip->GetName();
+					}
+
+					ImGui::Text("Animation Clip: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(clip_name.c_str()))
+					{
+
+					}
+
+					if (Ref<AnimationClip> new_clip = ImGuiDragDropResource<AnimationClip>(ANIMATION_CLIP_FILE_EXTENSION))
+					{
+						sample_node->SetAnimationClip(new_clip);
+					}
+
+					Ref<Animation::Skeleton> skeleton = sample_node->GetSkeleton();
+					std::string skeleton_name = "None(Skeleton)";
+					if (skeleton)
+					{
+						skeleton_name = skeleton->GetName();
+					}
+
+					ImGui::Text("Skeleton: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(skeleton_name.c_str()))
+					{
+
+					}
+
+					if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+					{
+						sample_node->SetSkeleton(new_skeleton);
+					}
+
+
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::WarpAnimationNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::WarpAnimationNode* sample_node = (Animation::WarpAnimationNode*)node;
+
+					Ref<AnimationClip> clip = sample_node->GetAnimationClip();
+					std::string clip_name = "None(Animation Clip)";
+					if (clip)
+					{
+						clip_name = clip->GetName();
+					}
+
+					ImGui::Text("Animation Clip: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(clip_name.c_str()))
+					{
+
+					}
+
+					if (Ref<AnimationClip> new_clip = ImGuiDragDropResource<AnimationClip>(ANIMATION_CLIP_FILE_EXTENSION))
+					{
+						sample_node->SetAnimationClip(new_clip);
+					}
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::MotionMatchingNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::MotionMatchingNode* sample_node = (Animation::MotionMatchingNode*)node;
+
+					Ref<MotionMatching::FeatureDatabase> db = sample_node->GetMotionMatcher().GetDatabase();
+					std::string db_name = "None(Feature Database)";
+					if (db)
+					{
+						db_name = db->GetName();
+					}
+
+					ImGui::Text("Database: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(db_name.c_str()))
+					{
+
+					}
+
+					if (Ref<MotionMatching::FeatureDatabase> new_db = ImGuiDragDropResource<MotionMatching::FeatureDatabase>(FEATURE_DB_FILE_EXTENSION))
+					{
+						sample_node->GetMotionMatcher().SetDatabase(new_db);
+					}
+
+					Ref<Animation::Skeleton> skeleton = sample_node->GetSkeleton();
+					std::string skeleton_name = "None(Skeleton)";
+					if (skeleton)
+					{
+						skeleton_name = skeleton->GetName();
+					}
+
+					ImGui::Text("Skeleton: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(skeleton_name.c_str()))
+					{
+
+					}
+
+					if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+					{
+						sample_node->SetSkeleton(new_skeleton);
+					}
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::RetargetPoseNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::RetargetPoseNode* sample_node = (Animation::RetargetPoseNode*)node;
+
+					Ref<Animation::Skeleton> skeleton = sample_node->GetSkeleton();
+					std::string skeleton_name = "None(Skeleton)";
+					if (skeleton)
+					{
+						skeleton_name = skeleton->GetName();
+					}
+
+					ImGui::Text("Skeleton: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(skeleton_name.c_str()))
+					{
+
+					}
+
+					if (Ref<Animation::Skeleton> new_skeleton = ImGuiDragDropResource<Animation::Skeleton>(SKELETON_FILE_EXTENSION))
+					{
+						sample_node->SetSkeleton(new_skeleton);
+					}
+
+
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::BlendSpace2DNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::BlendSpace2DNode* sample_node = (Animation::BlendSpace2DNode*)node;
+					Ref<BlendSpace2D> blend_space = sample_node->GetBlendSpace();
+
+					std::string clip_name = "None(BlendSpace2D)";
+					if (blend_space)
+					{
+						clip_name = blend_space;
+					}
+
+					ImGui::Text("Blend Space: ");
+					ImGui::SameLine();
+
+					if (ImGui::Button(clip_name.c_str()))
+					{
+					}
+
+					if (Ref<BlendSpace2D> new_resource = ImGuiDragDropResource<BlendSpace2D>(BLEND_SPACE_2D_FILE_EXTENSION))
+					{
+						sample_node->SetBlendSpace(new_resource);
+					}
+
+					ImGui::Text("Loop Clip: ");
+					ImGui::SameLine();
+					bool loop = sample_node->GetLooping();
+					if (ImGui::Checkbox("##Looping", &loop))
+					{
+						sample_node->SetLooping(loop);
+					}
+
+					float X = sample_node->GetX();
+					float Y = sample_node->GetY();
+					if (ImGui::DragFloat("X", &X))
+					{
+						sample_node->SetX(X);
+					}
+					if (ImGui::DragFloat("Y", &Y))
+					{
+						sample_node->SetY(Y);
+					}
+
+				}
+			},
+			{
+				Reflection::TypeID<Animation::IKNode>(),
+				[](GenericNode* node, GenericGraphEditor* editor)
+				{
+					Animation::IKNode* sample_node = (Animation::IKNode*)node;
+
+					float weight = sample_node->GetWeight();
+					if (ImGui::DragFloat("Weight", &weight))
+					{
+						sample_node->SetWeight(weight);
+					}
+
+					ImGui::Text("Target: ");
+
+
+				}
+			}
 	};
 	
 
@@ -940,6 +1787,57 @@ namespace trace {
 						editor->add_new_node(new_node);
 					}
 				}
+			}
+		},
+		{
+			Reflection::TypeID<Animation::Graph>(),
+			[](GenericGraph* graph, GenericGraphEditor* editor)
+			{
+				if (ImGui::MenuItem("State Machine"))
+					{
+						UUID node_id = graph->CreateNode<Animation::StateMachine>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("Animation Sample"))
+					{
+						UUID node_id = graph->CreateNode<Animation::AnimationSampleNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("Get Parameter"))
+					{
+						UUID node_id = graph->CreateNode<Animation::GetParameterNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("If Node"))
+					{
+						UUID node_id = graph->CreateNode<Animation::IfNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("Retarget Node"))
+					{
+						UUID node_id = graph->CreateNode<Animation::RetargetAnimationNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("Warp Node"))
+					{
+						UUID node_id = graph->CreateNode<Animation::WarpAnimationNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("Motion Matching Node"))
+					{
+						UUID node_id = graph->CreateNode<Animation::MotionMatchingNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("Retarget Pose Node"))
+					{
+						UUID node_id = graph->CreateNode<Animation::RetargetPoseNode>();
+						editor->add_new_node(node_id);
+					}
+					if (ImGui::MenuItem("BlendSpace2D Node"))
+					{
+						UUID node_id = graph->CreateNode<Animation::BlendSpace2DNode>();
+						editor->add_new_node(node_id);
+					}
 			}
 		}
 	};
@@ -2120,6 +3018,391 @@ namespace trace {
 		},
 	};
 
+	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> custom_graph_render =
+	{
+		{
+			Reflection::TypeID<Animation::StateMachine>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+
+				ImNodes::PushStyleVar(ImNodesStyleVar_LinkLineSegmentsPerLength, 0.0f);
+				ImNodes::BeginNode(editor->get_start_node_id());
+
+				ImNodes::BeginNodeTitleBar();
+				ImGui::Text("Entry");
+				ImNodes::EndNodeTitleBar();
+
+
+				ImNodes::PushColorStyle(ImNodesCol_Pin, generic_value_color[(int)GenericValueType::Pose]);
+				ImNodes::PushColorStyle(ImNodesCol_PinHovered, generic_value_color_hovered[(int)GenericValueType::Pose]);
+				ImNodes::BeginOutputAttribute(editor->get_start_output_id());
+				ImNodes::EndOutputAttribute();
+				ImNodes::PopColorStyle();
+				ImNodes::PopColorStyle();
+
+				ImNodes::EndNode();
+
+				for (UUID& id : editor->get_current_node_children())
+				{
+					Animation::StateNode* state = (Animation::StateNode*)graph->GetNode(id);
+					int32_t node_index = editor->get_graph_node_index(state->GetUUID());
+					ImNodes::BeginNode(node_index);
+
+					std::string& name = STRING_FROM_ID(state->GetName());
+					ImNodes::BeginNodeTitleBar();
+					ImGui::Text(name.c_str());
+					ImNodes::EndNodeTitleBar();
+
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, IM_COL32(255, 0, 255, 128));
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, IM_COL32(255, 0, 255, 255));
+					ImNodes::BeginInputAttribute(((editor->get_link_id() + 1) << 24) | node_index);
+					ImNodes::EndInputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					ImNodes::PushColorStyle(ImNodesCol_Pin, IM_COL32(0, 255, 255, 128));
+					ImNodes::PushColorStyle(ImNodesCol_PinHovered, IM_COL32(0, 255, 255, 255));
+					ImNodes::BeginOutputAttribute(((editor->get_link_id() + 2) << 24) | node_index);
+					ImNodes::EndOutputAttribute();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+
+					ImNodes::EndNode();
+
+					ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(255, 255, 255, 128));
+					ImNodes::PushColorStyle(ImNodesCol_LinkHovered, IM_COL32(255, 255, 255, 200));
+					ImNodes::PushColorStyle(ImNodesCol_LinkSelected, IM_COL32(255, 255, 255, 255));
+					for (auto& link : editor->get_current_node_links())
+					{
+						ImNodes::Link(link.id, link.from, link.to);
+					}
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+					ImNodes::PopColorStyle();
+				}
+
+
+
+				ImNodes::PopStyleVar();
+			}
+		}
+	};
+
+	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> custom_node_actions =
+	{
+		{
+			Reflection::TypeID<Animation::StateMachine>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+				Animation::StateMachine* state_machine = (Animation::StateMachine*)node;
+				GenericNode* _selected_node = editor->get_selected_node();
+
+				int num_selected_nodes = ImNodes::NumSelectedNodes();
+				if (num_selected_nodes == 1)
+				{
+					static std::vector<int> selected_nodes;
+					selected_nodes.resize(static_cast<size_t>(num_selected_nodes));
+					ImNodes::GetSelectedNodes(selected_nodes.data());
+					int32_t index = selected_nodes[0];
+					if (index != editor->get_start_node_id() && selected_nodes[0] != 0)
+					{
+						_selected_node = graph->GetNode(editor->get_graph_index(index));
+					}
+				}
+
+				if (_selected_node)
+				{
+					int32_t node_index = editor->get_graph_index(_selected_node->GetUUID());
+					if (ImNodes::IsNodeHovered(&node_index) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+					{
+						editor->SetCurrentNode(_selected_node);
+						_selected_node = nullptr;
+					}
+				}
+
+				int num_selected_links = ImNodes::NumSelectedLinks();
+				if (num_selected_links == 1)
+				{
+					static std::vector<int> selected_links;
+					selected_links.resize(static_cast<size_t>(num_selected_links));
+					ImNodes::GetSelectedLinks(selected_links.data());
+					int32_t index = selected_links[0];
+					if (index != editor->get_start_link_id())
+					{
+						_selected_node = graph->GetNode(editor->get_graph_index(index));
+
+						int32_t link_index = editor->get_graph_index(_selected_node->GetUUID());
+						if (ImNodes::IsLinkHovered(&link_index) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+						{
+							editor->SetCurrentNode(_selected_node);
+							_selected_node = nullptr;
+						}
+					}
+
+					if (editor->is_delete())
+					{
+						int32_t link_id = index;
+						if (link_id == editor->get_start_link_id())
+						{
+							Animation::EntryNode* entry_node = (Animation::EntryNode*)graph->GetNode(state_machine->GetEntryNode());
+							GenericNodeInput& input = entry_node->GetInputs().back();
+							input.node_id = 0;
+
+							int32_t link_index = -1;
+							auto it = std::find_if(editor->get_current_node_links().begin(), editor->get_current_node_links().end(), [link_id, &link_index](GenericGraphEditor::Link& link)
+								{
+									++link_index;
+									return link.id == link_id;
+								});
+
+							if (it != editor->get_current_node_links().end())
+							{
+								editor->get_current_node_links()[link_index] = editor->get_current_node_links().back();
+								editor->get_current_node_links().pop_back();
+							}
+
+
+						}
+						else
+						{
+							int32_t link_index = -1;
+							auto it = std::find_if(editor->get_current_node_links().begin(), editor->get_current_node_links().end(), [link_id, &link_index](GenericGraphEditor::Link& link)
+								{
+									++link_index;
+									return link.id == link_id;
+								});
+
+							if (it != editor->get_current_node_links().end())
+							{
+								GenericGraphEditor::Link& link = editor->get_current_node_links()[link_index];
+								UUID transition_id = editor->get_graph_index(link.id);
+								int32_t mask = ~(~0 << 24);
+								int32_t from_node_index = link.from & mask;
+								Animation::StateNode* from_node = (Animation::StateNode*)graph->GetNode(editor->get_graph_index(from_node_index));
+
+								Animation::Node* transition_node = (Animation::Node*)graph->GetNode(transition_id);
+								if (_selected_node == transition_node)
+								{
+									_selected_node = nullptr;
+								}
+
+								from_node->RemoveTransition(graph, transition_id);
+
+								editor->remove_node(transition_id);
+								editor->get_current_node_links()[link_index] = editor->get_current_node_links().back();
+								editor->get_current_node_links().pop_back();
+							}
+						}
+						ImNodes::ClearLinkSelection(link_id);
+					}
+				}
+
+				int32_t start_attr, end_attr;
+				if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
+				{
+					int32_t mask = ~(~0 << 24);
+					int32_t from_node_index = start_attr & mask;
+					int32_t to_node_index = end_attr & mask;
+					if (start_attr == editor->get_start_output_id())
+					{
+						Animation::EntryNode* entry_node = (Animation::EntryNode*)graph->GetNode(state_machine->GetEntryNode());
+						if (entry_node->GetInputs().empty())
+						{
+							Animation::Node* to_node = (Animation::Node*)graph->GetNode(editor->get_graph_index(to_node_index));
+							GenericNodeInput& input = entry_node->GetInputs().emplace_back();
+							input.type = GenericValueType::Unknown;
+							input.node_id = to_node->GetUUID();
+							input.value_index = 0;
+
+							GenericGraphEditor::Link link = {};
+							link.from = start_attr;
+							link.to = end_attr;
+							link.id = editor->get_start_link_id();
+							editor->get_current_node_links().push_back(link);
+
+						}
+						else if (entry_node->GetInputs()[0].node_id == 0)
+						{
+							Animation::Node* to_node = (Animation::Node*)graph->GetNode(editor->get_graph_index(to_node_index));
+							GenericNodeInput& input = entry_node->GetInputs().back();
+							input.type = GenericValueType::Unknown;
+							input.node_id = to_node->GetUUID();
+							input.value_index = 0;
+
+							GenericGraphEditor::Link link = {};
+							link.from = start_attr;
+							link.to = end_attr;
+							link.id = editor->get_start_link_id();
+							editor->get_current_node_links().push_back(link);
+						}
+					}
+					else
+					{
+						int32_t from_value_index = ((~mask & start_attr) >> 24) - 1;
+						int32_t to_index = ((~mask & end_attr) >> 24) - 1;
+
+						Animation::StateNode* from_node = (Animation::StateNode*)graph->GetNode(editor->get_graph_index(from_node_index));
+						Animation::StateNode* to_node = (Animation::StateNode*)graph->GetNode(editor->get_graph_index(to_node_index));
+
+						UUID transition_id = from_node->CreateTransition(graph, to_node->GetUUID());
+
+						int32_t& graph_current_index = editor->get_graph_current_index();
+						int32_t node_index = ++graph_current_index;
+						editor->set_graph_node_index(transition_id, node_index);
+						editor->set_graph_index(node_index, transition_id);
+
+						GenericGraphEditor::Link link = {};
+						link.from = start_attr;
+						link.to = end_attr;
+						link.id = node_index;
+						editor->get_current_node_links().push_back(link);
+
+					}
+
+				}
+			}
+		}
+	};
+
+	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> custom_pop_up =
+	{
+		{
+			Reflection::TypeID<Animation::StateMachine>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+
+				Animation::StateMachine* state_machine = (Animation::StateMachine*)node;
+				if (ImGui::BeginPopup("add node"))
+				{
+					if (ImGui::MenuItem("State"))
+					{
+						UUID node_id = state_machine->CreateState(graph, STR_ID("New State"));
+						editor->add_new_node(node_id);
+
+					}
+
+					ImGui::EndPopup();
+				}
+			}
+		}
+	};
+
+	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> custom_node_link_create =
+	{
+		{
+			Reflection::TypeID<Animation::StateMachine>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+				Animation::StateMachine* state_machine = (Animation::StateMachine*)node;
+				for (UUID& state_id : state_machine->GetStates())
+				{
+					Animation::StateNode* state = (Animation::StateNode*)graph->GetNode(state_id);
+					for (UUID& transition_id : state->GetTransitions())
+					{
+						Animation::TransitionNode* transition = (Animation::TransitionNode*)graph->GetNode(transition_id);
+						if (transition->GetFromState() != state_id)
+						{
+							continue;
+						}
+						GenericGraphEditor::Link link = {};
+						link.from = ((editor->get_link_id() + 2) << 24) | editor->get_graph_node_index(state_id);
+						int32_t to_node = ((editor->get_link_id() + 1) << 24) | editor->get_graph_node_index(transition->GetTargetState());
+						link.to = to_node;
+						link.id = editor->get_graph_node_index(transition->GetUUID());
+						editor->get_current_node_links().push_back(link);
+					}
+				}
+				Animation::EntryNode* entry_node = (Animation::EntryNode*)graph->GetNode(state_machine->GetEntryNode());
+				if (!entry_node->GetInputs().empty())
+				{
+					GenericNodeInput& input = entry_node->GetInputs().back();
+					if (input.node_id != 0)
+					{
+						GenericGraphEditor::Link link = {};
+						link.from = editor->get_start_output_id();
+						int32_t to_node = ((editor->get_link_id() + 1) << 24) | editor->get_graph_node_index(input.node_id);
+						link.to = to_node;
+						link.id = editor->get_start_link_id();
+						editor->get_current_node_links().push_back(link);
+					}
+				}
+				
+			}
+		}
+	};
+
+	std::unordered_map<uint64_t, std::function<void(GenericNode* node, GenericGraphEditor* editor)>> custom_node_child_create =
+	{
+		{
+			Reflection::TypeID<Animation::StateMachine>(),
+			[](GenericNode* node, GenericGraphEditor* editor)
+			{
+				Animation::Graph* graph = (Animation::Graph*)editor->GetCurrentGraph();
+				Animation::StateMachine* state_machine = (Animation::StateMachine*)node;
+				for (UUID& state_id : state_machine->GetStates())
+				{
+					editor->get_current_node_children().push_back(state_id);
+				}
+
+
+			}
+		}
+	};
+
+	std::unordered_map<uint64_t, std::function<void(GenericGraph* graph, GenericGraphEditor* editor)>> graph_details_render =
+	{
+		{
+			Reflection::TypeID<Animation::Graph>(),
+			[](GenericGraph* graph, GenericGraphEditor* editor)
+			{
+				Animation::Graph* anim_graph = (Animation::Graph*)graph;
+				Ref<Animation::Skeleton> skeleton = anim_graph->GetSkeleton();
+				std::string skeleton_name = "None(Skeleton)";
+				if (skeleton)
+				{
+					skeleton_name = skeleton->GetName();
+				}
+
+				ImGui::Text("Skeleton: ");
+				ImGui::SameLine();
+				ImGui::Button(skeleton_name.c_str());
+				skeleton = ImGuiDragDropResource<Animation::Skeleton>(".trcsk");
+				if (skeleton)
+				{
+					anim_graph->SetSkeleton(skeleton);
+				}
+
+				ImGui::Text("Animations: ");
+				std::vector<Ref<AnimationClip>>& clips = anim_graph->GetAnimationDataSet();
+				for (uint32_t i = 0; i < clips.size(); i++)
+				{
+					std::string clip_name = "None(Animation Clip)";
+					Ref<AnimationClip> clip = clips[i];
+					if (clip)
+					{
+						clip_name = clip->GetName();
+					}
+					ImGui::Button(clip_name.c_str());
+					clip = ImGuiDragDropResource<AnimationClip>(".trcac");
+					if (clip)
+					{
+						clips[i] = clip;
+					}
+
+				}
+				if (ImGui::Button("Add Animation"))
+				{
+					clips.push_back(Ref<AnimationClip>());
+				}
+			}
+		}
+	};
+
 	std::string get_class_display_name(uint64_t class_id)
 	{
 		switch (class_id)
@@ -2197,6 +3480,29 @@ namespace trace {
 		}
 
 		return "UnKnown ClassType";
+	}
+
+	int32_t animations_drop_down(Animation::Graph* graph)
+	{
+		int32_t result = -1;
+
+		if (ImGui::BeginPopup("Animations Drop Down"))
+		{
+			for (int32_t i = 0; i < graph->GetAnimationDataSet().size(); i++)
+			{
+				Ref<AnimationClip>& clip = graph->GetAnimationDataSet()[i];
+				std::string clip_name = clip ? clip->GetName() : "None(Animation Clip)";
+
+				if (ImGui::MenuItem(clip_name.c_str()))
+				{
+					result = i;
+					break;
+				}
+			}
+			ImGui::EndPopup();
+		}
+
+		return result;
 	}
 
 }
